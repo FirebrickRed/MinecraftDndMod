@@ -1,0 +1,346 @@
+weapons:
+  ## SIMPLE MELEE WEAPONS ##
+  club:
+    name: "Club"
+    damage_dice: "1d4"
+    damage_type: "Bludgeoning"
+    type: "Simple Melee"
+    properties: ["Light"]
+    material: "WOODEN_SHOVEL"
+    item_model_name: "club"
+
+  belaying_pin:
+    name: "Belaying Pin"
+    damage_dice: "1d4"
+    damage_type: "Bludgeoning"
+    type: "Simple Melee"
+    properties: ["Light"]
+    material: "WOODEN_SHOVEL"
+    item_model_name: "belaying_pin"
+
+  dagger:
+    name: "Dagger"
+    damage_dice: "1d4"
+    damage_type: "Piercing"
+    type: "Simple Melee"
+    properties: ["Finesse", "Light", "Thrown (20/60)"]
+    material: "IRON_SWORD"
+    item_model_name: "dagger"
+
+  greatclub:
+    name: "Greatclub"
+    damage_dice: "1d8"
+    damage_type: "Bludgeoning"
+    type: "Simple Melee"
+    properties: ["Two-Handed"]
+    material: "WOODEN_AXE"
+    item_model_name: "greatclub"
+
+  handaxe:
+    name: "Handaxe"
+    damage_dice: "1d6"
+    damage_type: "Slashing"
+    type: "Simple Melee"
+    properties: ["Light", "Thrown (20/60)"]
+    material: "STONE_AXE"
+    item_model_name: "handaxe"
+
+  javelin:
+    name: "Javelin"
+    damage_dice: "1d6"
+    damage_type: "Piercing"
+    type: "Simple Melee"
+    properties: ["Thrown (30/120)"]
+    material: "TRIDENT"
+    item_model_name: "javelin"
+
+  light_hammer:
+    name: "Light Hammer"
+    damage_dice: "1d4"
+    damage_type: "Bludgeoning"
+    type: "Simple Melee"
+    properties: ["Light", "Thrown (20/60)"]
+    material: "GOLDEN_PICKAXE"
+    item_model_name: "light_hammer"
+
+  mace:
+    name: "Mace"
+    damage_dice: "1d6"
+    damage_type: "Bludgeoning"
+    type: "Simple Melee"
+    properties: []
+    material: "IRON_SHOVEL"
+    item_model_name: "mace"
+
+  quarterstaff:
+    name: "Quarterstaff"
+    damage_dice: "1d6"
+    damage_type: "Bludgeoning"
+    type: "Simple Melee"
+    properties: ["Versatile (1d8)"]
+    material: "STICK"
+    item_model_name: "quarterstaff"
+
+  sickle:
+    name: "Sickle"
+    damage_dice: "1d4"
+    damage_type: "Slashing"
+    type: "Simple Melee"
+    properties: ["Light"]
+    material: "WOODEN_HOE"
+    item_model_name: "sickle"
+
+  spear:
+    name: "Spear"
+    damage_dice: "1d6"
+    damage_type: "Piercing"
+    type: "Simple Melee"
+    properties: ["Thrown (20/60)", "Versatile (1d8)"]
+    material: "TRIDENT"
+    item_model_name: "spear"
+
+  ## SIMPLE RANGED WEAPONS ##
+  light_crossbow:
+    name: "Light Crossbow"
+    damage_dice: "1d8"
+    damage_type: "Piercing"
+    type: "Simple Ranged"
+    properties: ["Ammunition (80/320)", "Loading", "Two-Handed"]
+    material: "CROSSBOW"
+    item_model_name: "light_crossbow"
+
+  dart:
+    name: "Dart"
+    damage_dice: "1d4"
+    damage_type: "Piercing"
+    type: "Simple Ranged"
+    properties: ["Finesse", "Thrown (20/60)"]
+    material: "ARROW"
+    item_model_name: "dart"
+
+  shortbow:
+    name: "Shortbow"
+    damage_dice: "1d6"
+    damage_type: "Piercing"
+    type: "Simple Ranged"
+    properties: ["Ammunition (80/320)", "Two-Handed"]
+    material: "BOW"
+    item_model_name: "shortbow"
+
+  sling:
+    name: "Sling"
+    damage_dice: "1d4"
+    damage_type: "Bludgeoning"
+    type: "Simple Ranged"
+    properties: ["Ammunition (30/120)"]
+    material: "SNOWBALL"
+    item_model_name: "sling"
+
+  ## MARTIAL MELEE WEAPONS ##
+  battleaxe:
+    name: "Battleaxe"
+    damage_dice: "1d8"
+    damage_type: "Slashing"
+    type: "Martial Melee"
+    properties: ["Versatile (1d10)"]
+    material: "IRON_AXE"
+    item_model_name: "battleaxe"
+
+  flail:
+    name: "Flail"
+    damage_dice: "1d8"
+    damage_type: "Bludgeoning"
+    type: "Martial Melee"
+    properties: []
+    material: "CHAIN"
+    item_model_name: "flail"
+
+  glaive:
+    name: "Glaive"
+    damage_dice: "1d10"
+    damage_type: "Slashing"
+    type: "Martial Melee"
+    properties: ["Heavy", "Reach", "Two-Handed"]
+    material: "IRON_HOE"
+    item_model_name: "glaive"
+
+  greataxe:
+    name: "Greataxe"
+    damage_dice: "1d12"
+    damage_type: "Slashing"
+    type: "Martial Melee"
+    properties: ["Heavy", "Two-Handed"]
+    material: "DIAMOND_AXE"
+    item_model_name: "greataxe"
+
+  greatsword:
+    name: "Greatsword"
+    damage_dice: "2d6"
+    damage_type: "Slashing"
+    type: "Martial Melee"
+    properties: ["Heavy", "Two-Handed"]
+    material: "DIAMOND_SWORD"
+    item_model_name: "greatsword"
+
+  halberd:
+    name: "Halberd"
+    damage_dice: "1d10"
+    damage_type: "Slashing"
+    type: "Martial Melee"
+    properties: ["Heavy", "Reach", "Two-Handed"]
+    material: "NETHERITE_HOE"
+    item_model_name: "halberd"
+
+  lance:
+    name: "Lance"
+    damage_dice: "1d12"
+    damage_type: "Piercing"
+    type: "Martial Melee"
+    properties: ["Reach", "Special"]
+    material: "IRON_SWORD"
+    item_model_name: "lance"
+
+  longsword:
+    name: "Longsword"
+    damage_dice: "1d8"
+    damage_type: "Slashing"
+    type: "Martial Melee"
+    properties: ["Versatile (1d10)"]
+    material: "IRON_SWORD"
+    item_model_name: "longsword"
+
+  maul:
+    name: "Maul"
+    damage_dice: "2d6"
+    damage_type: "Bludgeoning"
+    type: "Martial Melee"
+    properties: []
+    material: "IRON_SWORD"
+    item_model_name: "maul"
+
+  morningstar:
+    name: "Morningstar"
+    damage_dice: "1d8"
+    damage_type: "Piercing"
+    type: "Martial Melee"
+    properties: []
+    material: "IRON_SWORD"
+    item_model_name: "morningstar"
+
+  pike:
+    name: "pike"
+    damage_dice: "1d10"
+    damage_type: "Piercing"
+    type: "Martial Melee"
+    properties: ["Heavy", "Reach", "Two Handed"]
+    material: "IRON_SWORD"
+    item_model_name: "pike"
+
+  rapier:
+    name: "Rapier"
+    damage_dice: "1d8"
+    damage_type: "Piercing"
+    type: "Martial Melee"
+    properties: ["Finesse"]
+    material: "IRON_SWORD"
+    item_model_name: "rapier"
+
+  scimitar:
+    name: "Scimitar"
+    damage_dice: "1d6"
+    damage_type: "Slashing"
+    type: "Martial Melee"
+    properties: ["Finesse", "Light"]
+    material: "IRON_SWORD"
+    item_model_name: "scimitar"
+
+  shortsword:
+    name: "Short Sword"
+    damage_dice: "1d6"
+    damage_type: "Piercing"
+    type: "Martial Melee"
+    properties: ["Finesse", "Light"]
+    material: "IRON_SWORD"
+    item_model_name: "shortsword"
+
+  trident:
+    name: "Trident"
+    damage_dice: "1d6"
+    damage_type: "Piercing"
+    type: "Martial Melee"
+    properties: ["Thrown (20/60)", "Versatile (1d8)"]
+    material: "TRIDENT"
+    item_model_name: "trident"
+
+  warpick:
+    name: "War pick"
+    damage_dice: "1d8"
+    damage_type: "Piercing"
+    type: "Martial Melee"
+    properties: []
+    material: "IRON_SWORD"
+    item_model_name: "warpick"
+
+  warhammer:
+    name: "Warhammer"
+    damage_dice: "1d8"
+    damage_type: "Bludgeoning"
+    type: "Martial Melee"
+    properties: ["Versatile (1d10)"]
+    material: "IRON_SHOVEL"
+    item_model_name: "warhammer"
+
+  whip:
+    name: "Whip"
+    damage_dice: "1d4"
+    damage_type: "Slashing"
+    type: "Martial Melee"
+    properties: ["Finesse", "Reach"]
+    material: "LEAD"
+    item_model_name: "whip"
+
+  ## MARTIAL RANGED WEAPONS ##
+  blowgun:
+    name: "Blowgun"
+    damage_dice: "1"
+    damage_type: "Piercing"
+    type: "Martial Ranged"
+    properties: ["Ammunition (25/100)", "Loading"]
+    material: "STICK"
+    item_model_name: "blowgun"
+
+  hand_crossbow:
+    name: "Hand Crossbow"
+    damage_dice: "1d6"
+    damage_type: "Piercing"
+    type: "Martial Ranged"
+    properties: ["Ammunition (30/120)", "Light", "Loading"]
+    material: "CROSSBOW"
+    item_model_name: "hand_crossbow"
+
+  heavy_crossbow:
+    name: "Heavy Crossbow"
+    damage_dice: "1d10"
+    damage_type: "Piercing"
+    type: "Martial Ranged"
+    properties: ["Ammunition (100/400)", "Heavy", "Loading", "Two-Handed"]
+    material: "CROSSBOW"
+    item_model_name: "heavy_crossbow"
+
+  longbow:
+    name: "Longbow"
+    damage_dice: "1d8"
+    damage_type: "Piercing"
+    type: "Martial Ranged"
+    properties: ["Heavy", "Two-Handed", "Ammunition (150/600)"]
+    material: "BOW"
+    item_model_name: "longbow"
+
+  net:
+    name: "Net"
+    damage_dice: "0d4"
+    damage_type: "Piercing"
+    type: "Martial Ranged"
+    properties: ["Special", "Thrown (5/15)"]
+    material: "BOW"
+    item_model_name: "net"
