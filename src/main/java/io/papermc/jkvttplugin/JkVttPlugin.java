@@ -1,12 +1,7 @@
 package io.papermc.jkvttplugin;
 
-import io.papermc.jkvttplugin.CustomNPCs.NpcManager;
 import io.papermc.jkvttplugin.commands.*;
-import io.papermc.jkvttplugin.listeners.CharacterSheetListener;
-import io.papermc.jkvttplugin.listeners.NpcListener;
-import io.papermc.jkvttplugin.listeners.PlanetListener;
-import io.papermc.jkvttplugin.listeners.WeaponListener;
-import io.papermc.jkvttplugin.util.DndWeapon;
+import io.papermc.jkvttplugin.listeners.*;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;

@@ -54,7 +54,9 @@ public class NpcManager {
                 attacks.add(new NpcData.NpcAttack(attackName, toHit, damage));
             }
 
-            npcs.put(key.toLowerCase(), new NpcData(name, type, hitPoints, armorClass, speed, abilities, attacks));
+            List<String> inventory = npcData.getStringList("inventory");
+
+            npcs.put(key.toLowerCase(), new NpcData(name, type, hitPoints, armorClass, speed, abilities, attacks, inventory));
         }
 
         JkVttPlugin.getInstance().getLogger().info("Loaded " + npcs.size() + " NPCs");

@@ -11,8 +11,9 @@ public class NpcData {
     private final int speed;
     private final Map<String, Integer> abilities;
     private final List<NpcAttack> attacks;
+    private final List<String> inventory;
 
-    public NpcData(String name, String type, int hitPoints, int armorClass, int speed, Map<String, Integer> abilities, List<NpcAttack> attacks) {
+    public NpcData(String name, String type, int hitPoints, int armorClass, int speed, Map<String, Integer> abilities, List<NpcAttack> attacks, List<String> inventory) {
         this.name = name;
         this.type = type;
         this.hitPoints = hitPoints;
@@ -20,6 +21,7 @@ public class NpcData {
         this.speed = speed;
         this.abilities = abilities;
         this.attacks = attacks;
+        this.inventory = inventory;
     }
 
     public String getName() { return name; }
@@ -29,6 +31,7 @@ public class NpcData {
     public int getSpeed() { return speed; }
     public Map<String, Integer> getAbilities() { return abilities; }
     public List<NpcAttack> getAttacks() { return attacks; }
+    public List<String> getInventory() { return inventory; }
 
     @Override
     public String toString() {

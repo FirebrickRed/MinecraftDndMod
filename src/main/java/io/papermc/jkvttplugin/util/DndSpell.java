@@ -48,7 +48,7 @@ public class DndSpell {
     public static List<DndSpell> getSpellsByClass(String className) {
         List<DndSpell> filteredSpells = new ArrayList<>();
 
-        System.out.println("In DndSpell GetSPellsByClass: " + className + " " + spells);
+//        System.out.println("In DndSpell GetSPellsByClass: " + className + " " + spells);
         for (DndSpell spell : spells.values()) {
             if (spell.classes.contains(className.toLowerCase())) {
                 filteredSpells.add(spell);

@@ -86,6 +86,7 @@ public class CharacterSheetListener implements Listener {
     private Map<Player, Map<Ability, Integer>> playerAbilityScores = new HashMap<>();
     private DndBackground selectedBackground;
     private Map<Player, Boolean> awaitingNameInput = new HashMap<>();
+    private Map<Player, Set<DndSpell>> knownSpells = new HashMap<>();
 
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
@@ -424,6 +425,8 @@ public class CharacterSheetListener implements Listener {
         DndClass playerClass = sheet.getMainDndClass();
         int numberOfKnownCantrips = playerClass.getAvailableSpellSlots(0)[0];
 
+        knownSpells.putIfAbsent(player, new HashSet<>());
+
         meta.setTitle("Spell Selection");
         meta.setAuthor("Dungeon Master");
 
@@ -443,9 +446,10 @@ public class CharacterSheetListener implements Listener {
             for (DndSpell spell : levelSpells) {
                 spellCount++;
 
-                boolean isSelected = knownSpells.contains(spell);
+                boolean isSelected = knownSpells.get(player).contains(spell);
                 String action = isSelected ? "REMOVE" : "SELECT";
                 Component spellComponent = Component.text((isSelected ? "❌ " : "➕ ") + "[" + spell.getName() + "]")
+//                        .clickEvent(ClickEvent.runCommand("/togglespell " + spell.getName()))
                         .hoverEvent(HoverEvent.showText(spell.getHoverString()));
 
                 pageContent = pageContent.append(spellComponent).append(Component.newline());

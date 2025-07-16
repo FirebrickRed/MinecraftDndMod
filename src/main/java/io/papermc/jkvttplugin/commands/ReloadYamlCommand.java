@@ -41,17 +41,17 @@ public class ReloadYamlCommand implements CommandExecutor {
 
 
         // Broken for now
-//        File npcFile = new File(JkVttPlugin.getInstance().getDataFolder(), "npcs.yml");
-//        if (npcFile.exists()) {
-//            sender.sendMessage("Deleting old npcs.yml...");
-//            npcFile.delete();
-//        }
+        File npcFile = new File(JkVttPlugin.getInstance().getDataFolder(), "npcs.yml");
+        if (npcFile.exists()) {
+            sender.sendMessage("Deleting old npcs.yml...");
+            npcFile.delete();
+        }
 
-//        JkVttPlugin.getInstance().saveResource("npcs.yml", true);
-//        sender.sendMessage("Saved latest npcs.yml!");
-//
-//        NpcManager.loadNpcs();
-//        sender.sendMessage("NPCs reloaded!");
+        JkVttPlugin.getInstance().saveResource("npcs.yml", true);
+        sender.sendMessage("Saved latest npcs.yml!");
+
+        NpcManager.loadNpcs();
+        sender.sendMessage("NPCs reloaded!");
 
         sender.sendMessage("YAML files successfully reloaded!");
 
