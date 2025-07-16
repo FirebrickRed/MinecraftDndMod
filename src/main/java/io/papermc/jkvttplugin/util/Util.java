@@ -3,7 +3,7 @@ package io.papermc.jkvttplugin.util;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
-import org.bukkit.entity.Item;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -16,6 +16,8 @@ public class Util {
 
         meta.displayName(displayName);
         meta.lore(lore);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
         meta.setItemModel(new NamespacedKey("jkvttresourcepack", itemModelName));
 
