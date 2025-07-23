@@ -5,14 +5,13 @@ import io.papermc.jkvttplugin.player.Classes.DndClass;
 import io.papermc.jkvttplugin.player.Races.DndRace;
 import io.papermc.jkvttplugin.util.Ability;
 import io.papermc.jkvttplugin.util.DndSpell;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CharacterSheet {
+    private final UUID playerId;
     private String characterName;
     private int totalHealth;
     private int currentHealth;
@@ -26,7 +25,8 @@ public class CharacterSheet {
     private Map<DndClass, Integer> classLevels;
     private Map<Ability, Integer> abilities;
 
-    public CharacterSheet(DndRace dndRace, DndClass dndClass, Map<Ability, Integer> abilityScores, DndBackground dndBackground) {
+    public CharacterSheet(Player player, DndRace dndRace, DndClass dndClass, Map<Ability, Integer> abilityScores, DndBackground dndBackground) {
+        this.playerId = player.getUniqueId();
         this.abilities = new HashMap<>();
 
         for (Ability ability : Ability.values()) {
@@ -43,6 +43,10 @@ public class CharacterSheet {
         this.tempHealth = 0;
         this.armorClass = 10 + getModifier(Ability.DEXTERITY);
         this.availableSpellSlots = dndClass.getAvailableSpellSlots(1);
+    }
+
+    public UUID getPlayerId() {
+        return playerId;
     }
 
     public void setCharacterName(String characterName) {

@@ -1,8 +1,8 @@
 package io.papermc.jkvttplugin.listeners;
 
 import io.papermc.jkvttplugin.JkVttPlugin;
+import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.player.CharacterSheet;
-import io.papermc.jkvttplugin.player.PlayerManager;
 import io.papermc.jkvttplugin.player.Races.DndRace;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -47,7 +47,7 @@ public class PlanetListener implements Listener {
         }
 
         int remainingAir = playerBreath.get(playerId);
-        CharacterSheet sheet = PlayerManager.getCharacterSheet(player);
+        CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
         if (sheet == null) return;
         DndRace race = sheet.getRaceForPlayer();
         if (race == null) return;
@@ -69,7 +69,7 @@ public class PlanetListener implements Listener {
 
     private void handleAirDepletion(Player player) {
         UUID playerId = player.getUniqueId();
-        CharacterSheet sheet = PlayerManager.getCharacterSheet(player);
+        CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
         if (sheet == null) return;
         DndRace race = sheet.getRaceForPlayer();
         if (race == null) return;

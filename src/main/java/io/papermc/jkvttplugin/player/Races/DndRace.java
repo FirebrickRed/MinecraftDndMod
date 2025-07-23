@@ -1,6 +1,5 @@
 package io.papermc.jkvttplugin.player.Races;
 
-import java.awt.*;
 import java.util.List;
 
 import org.bukkit.inventory.ItemStack;
@@ -36,6 +35,15 @@ public abstract class DndRace {
     // Method to return any sub-race (optional)
     public List<DndRace> getSubRaces() {
         return List.of(); // Override for sub-races
+    }
+
+    public DndRace getSubRaceByName(String name) {
+        for (DndRace subrace : getSubRaces()) {
+            if (subrace.getRaceName().equalsIgnoreCase(name)) {
+                return subrace;
+            }
+        }
+        return null;
     }
 
     public enum DndRaceType {

@@ -1,8 +1,8 @@
 package io.papermc.jkvttplugin.commands;
 
+import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.player.CharacterSheet;
 import io.papermc.jkvttplugin.player.Classes.DndClass;
-import io.papermc.jkvttplugin.player.PlayerManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -27,7 +27,7 @@ public class EquipmentCommand implements CommandExecutor {
         }
 
         Player player = (Player) sender;
-        CharacterSheet sheet = PlayerManager.getCharacterSheet(player);
+        CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
         if (sheet == null) {
             player.sendMessage("You must create a character first!");
             return true;
@@ -101,7 +101,7 @@ public class EquipmentCommand implements CommandExecutor {
     }
 
     private void handleChooseGear(Player player, String choiceKey, String selectedIndexString) {
-        CharacterSheet sheet = PlayerManager.getCharacterSheet(player);
+        CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
         if (!pendingChoices.containsKey(player)) {
             player.sendMessage("You have no equipment choices pending.");
             return;
@@ -138,7 +138,7 @@ public class EquipmentCommand implements CommandExecutor {
     }
 
     private void giveFinalEquipment(Player player, Map<String, String> selections) {
-        CharacterSheet sheet = PlayerManager.getCharacterSheet(player);
+        CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
         if (sheet == null) return;
 
         player.sendMessage("Granting your chosen equipment...");

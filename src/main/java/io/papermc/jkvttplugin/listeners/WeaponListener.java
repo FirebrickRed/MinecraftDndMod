@@ -1,7 +1,7 @@
 package io.papermc.jkvttplugin.listeners;
 
+import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.player.CharacterSheet;
-import io.papermc.jkvttplugin.player.PlayerManager;
 import io.papermc.jkvttplugin.util.Ability;
 import io.papermc.jkvttplugin.util.DndWeapon;
 import net.kyori.adventure.text.Component;
@@ -29,7 +29,7 @@ public class WeaponListener implements Listener {
         DndWeapon weapon = DndWeapon.getWeapon(itemName);
         if (weapon == null) return;
 
-        CharacterSheet characterSheet = PlayerManager.getCharacterSheet(player);
+        CharacterSheet characterSheet = CharacterSheetManager.getCharacterSheet(player);
         if (characterSheet == null) {
             player.sendMessage(Component.text("You do not have a character sheet!"));
             return;

@@ -1,6 +1,7 @@
 package io.papermc.jkvttplugin.util;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemFlag;
@@ -23,5 +24,18 @@ public class Util {
 
         item.setItemMeta(meta);
         return item;
+    }
+
+    public static int getInventorySize(int itemCount) {
+        return ((itemCount - 1) / 9 + 1) * 9;
+    }
+
+    public static boolean hasDisplayName(ItemStack item, String name) {
+        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) {
+            return false;
+        }
+
+        String display = PlainTextComponentSerializer.plainText().serialize(item.getItemMeta().displayName());
+        return display.equalsIgnoreCase(name);
     }
 }
