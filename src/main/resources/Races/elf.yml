@@ -1,0 +1,76 @@
+race:
+  name: Elf
+  creature_type: Humanoid
+  source_url: "https://dnd5e.fandom.com/wiki/Elf"
+  description: Elves are a magical people of otherworldly grace, living in places of ethereal beauty, in the midst of ancient forests or in silvery spires glittering with faerie light. Elves love nature and magic, art and artistry, music and poetry.
+  ability_scores:
+    fixed:
+      Dexterity: 2
+  size: Medium
+  speed: 30
+  traits:
+  - Darkvision
+  - Fey Ancestry
+  - Trance
+  - Keen Senses
+  languages: 
+   - Common
+   - Elven
+  subraces:
+    dark_elf:
+      name: Dark Elf
+      ability_scores:
+        fixed:
+          Charisma: 1
+      traits:
+        - Superior Darkvision
+        - Sunlight Sensitivity
+        - Drow Magic
+        - Drow Weapon Training
+    high_elf:
+      name: High Elf
+      ability_scores:
+        fixed:
+          Intelligence: 1
+      traits:
+      - 'Cantrip: choose from Wizard list'
+      - Elf Weapon Training
+      languages:
+        - players_choice:
+            choose: 1
+            options: [] # leave blank for all languages
+    wood_elf:
+      name: Wood Elf
+      ability_scores:
+        fixed:
+          Wisdom: 1
+      traits:
+      - Elf Weapon Training
+      - Fleet of Foot
+      - Mask of the Wild
+    pallid_elf:
+      name: Pallid Elf
+      ability_scores:
+        fixed:
+          Wisdom: 1
+      traits:
+      - Incisive Sense
+      - Blessing of the Moonweaver
+    astral_elf:
+      name: Astral Elf
+      ability_scores:
+        choices:
+          choose: 2
+          increment: 1
+          unique: true
+      traits:
+        - Astral Fire
+        - Darkvision
+        - Fey Ancestry
+        - Keen Senses
+        - Starlight Step
+        - Astral Trance
+      languages:
+        - players_choice:
+            choose: 1
+            options: []

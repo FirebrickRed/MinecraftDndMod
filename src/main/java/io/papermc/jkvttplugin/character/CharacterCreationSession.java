@@ -1,26 +1,28 @@
 package io.papermc.jkvttplugin.character;
 
+import io.papermc.jkvttplugin.data.loader.RaceLoader;
+import io.papermc.jkvttplugin.data.model.DndRace;
+import io.papermc.jkvttplugin.data.model.DndSubRace;
 import io.papermc.jkvttplugin.player.Background.DndBackground;
 import io.papermc.jkvttplugin.player.Classes.DndClass;
-import io.papermc.jkvttplugin.player.Races.DndRace;
-import io.papermc.jkvttplugin.util.Ability;
+import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumMap;
 
-import static io.papermc.jkvttplugin.character.CharacterSheetManager.createCharacterSheet;
 import static io.papermc.jkvttplugin.character.CharacterSheetUI.*;
 
 public class CharacterCreationSession {
     private final Player player;
     private DndRace selectedRace;
+    private DndSubRace selectedSubRace;
     private DndClass selectedClass;
-    private final Map<Ability, Integer> abilityScores = new HashMap<>();
+    private final EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
     private DndBackground selectedBackground;
     private String characterName;
 
@@ -35,27 +37,26 @@ public class CharacterCreationSession {
     public void handleRaceSelection(InventoryClickEvent event) {
         ItemStack clickedItem = event.getCurrentItem();
 
+        // ToDo: check item clicked needs to be updated can totally be made its own function
         if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-//        if (!Util.hasDisplayName(clickedItem)) return;
         if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
 
-//        String raceName = Util.getDisplayName(clickedItem);
         String raceName = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
+        String normalizedRaceName = Util.normalize(raceName);
 
-        DndRace.DndRaceType selectedRaceType = DndRace.DndRaceType.fromString(raceName);
-        if (selectedRaceType == null) return;
+        DndRace selectedRace = RaceLoader.getRace(normalizedRaceName);
+        if (selectedRace == null) {
+            player.sendMessage("That race is not available.");
+            return;
+        }
 
-        this.selectedRace = selectedRaceType.getDndRace();
+        this.selectedRace = selectedRace;
 
-        // Not sure if this is what we want here...
-        System.out.println("Check here if Inventory is closing too soon");
-        player.closeInventory();
-
-        if (this.selectedRace.getSubRaces().isEmpty()) {
+        if (selectedRace.hasSubraces()) {
+            player.openInventory(buildSubRaceInventory(selectedRace));
+        } else {
             player.sendMessage("You have selected " + raceName + " as your race!");
             player.openInventory(buildClassInventory());
-        } else {
-            player.openInventory(buildSubRaceInventory(this.selectedRace));
         }
     }
 
@@ -68,17 +69,15 @@ public class CharacterCreationSession {
         String selectedItem = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
 
         if ("Back to Race".equals(selectedItem)) {
-            player.closeInventory();
             player.openInventory(buildRaceInventory());
             return;
         }
 
-        DndRace subRace = selectedRace.getSubRaceByName(selectedItem);
+        DndSubRace subRace = selectedRace.getSubRaceByName(selectedItem);
 
         if (subRace != null) {
-            this.selectedRace = subRace;
+            this.selectedSubRace = subRace;
             player.sendMessage("You have selected " + selectedItem + " as your subrace!");
-            player.closeInventory();
             player.openInventory(buildClassInventory());
         }
     }
@@ -95,10 +94,42 @@ public class CharacterCreationSession {
         if (selectedClassType != null) {
             this.selectedClass = selectedClassType.getDndClass();
             player.sendMessage("You have selected " + className + " as your class!");
-            player.openInventory(buildAbilityScoreInventory(abilityScores));
+            player.openInventory(buildBackgroundInventory());
         } else {
             player.sendMessage("Invalid class selection: " + className);
         }
+    }
+
+    public void handleBackgroundSelection(InventoryClickEvent event) {
+        ItemStack clickedItem = event.getCurrentItem();
+
+        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
+        if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
+
+        String backgroundName = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
+        DndBackground.DndBackgroundType selectedBackgroundType = DndBackground.DndBackgroundType.fromString(backgroundName);
+
+        if (selectedBackgroundType != null) {
+            selectedBackground = selectedBackgroundType.getDndBackground();
+            player.sendMessage("You have selected " + backgroundName + " as your background!");
+            player.openInventory(buildAbilityScoreInventory(abilityScores));
+        }
+
+//        if (selectedBackgroundType != null) {
+//            selectedBackground = selectedBackgroundType.getDndBackground();
+//            player.sendMessage("You have selected " + backgroundName + " as your background!");
+//            player.closeInventory();
+//
+//            // Create the character sheet
+//            createCharacterSheet(
+//                    player,
+//                    selectedRace,
+//                    selectedClass,
+//                    abilityScores,
+//                    selectedBackground
+//            );
+//
+//        }
     }
 
     public void handleAbilityScoreSelection(InventoryClickEvent event) {
@@ -113,8 +144,10 @@ public class CharacterCreationSession {
 
         if (displayName.equalsIgnoreCase("Confirm")) {
             player.sendMessage("You have confirmed your ability scores!");
+//            player.openInventory(buildBackgroundInventory());
+            // if player has spells to choose or given spells
+            // else
             player.closeInventory();
-            player.openInventory(buildBackgroundInventory());
             return;
         }
 
@@ -139,32 +172,6 @@ public class CharacterCreationSession {
         ItemStack updated = CharacterSheetUI.buildAbilityScoreItem(ability, newScore);
         event.getInventory().setItem(10 + column - 1, updated);
         event.setCancelled(true);
-    }
-
-    public void handleBackgroundSelection(InventoryClickEvent event) {
-        ItemStack clickedItem = event.getCurrentItem();
-
-        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-        if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
-
-        String backgroundName = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
-        DndBackground.DndBackgroundType selectedBackgroundType = DndBackground.DndBackgroundType.fromString(backgroundName);
-
-        if (selectedBackgroundType != null) {
-            selectedBackground = selectedBackgroundType.getDndBackground();
-            player.sendMessage("You have selected " + backgroundName + " as your background!");
-            player.closeInventory();
-
-            // Create the character sheet
-            createCharacterSheet(
-                    player,
-                    selectedRace,
-                    selectedClass,
-                    abilityScores,
-                    selectedBackground
-            );
-
-        }
     }
 
     public void setCharacterName(String name) {

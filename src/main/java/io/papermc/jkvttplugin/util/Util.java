@@ -38,4 +38,8 @@ public class Util {
         String display = PlainTextComponentSerializer.plainText().serialize(item.getItemMeta().displayName());
         return display.equalsIgnoreCase(name);
     }
+
+    public static String normalize(String name) {
+        return name.trim().toLowerCase();
+    }
 }

@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin;
 import io.papermc.jkvttplugin.character.CharacterSheetItemListener;
 import io.papermc.jkvttplugin.commands.*;
 import io.papermc.jkvttplugin.character.CharacterSheetListener;
+import io.papermc.jkvttplugin.data.DataManager;
 import io.papermc.jkvttplugin.listeners.NpcListener;
 import io.papermc.jkvttplugin.listeners.PlanetListener;
 import io.papermc.jkvttplugin.listeners.WeaponListener;
@@ -25,6 +26,10 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
 //
 //        NpcManager.loadNpcs();
 //        DndWeapon.loadWeapons();
+
+        // Load Data
+        DataManager dataManager = new DataManager(this);
+        dataManager.loadAllData();
 
         // Listeners
         Bukkit.getPluginManager().registerEvents(this, this);

@@ -3,7 +3,7 @@ package io.papermc.jkvttplugin.player;
 import io.papermc.jkvttplugin.player.Background.DndBackground;
 import io.papermc.jkvttplugin.player.Classes.DndClass;
 import io.papermc.jkvttplugin.player.Races.DndRace;
-import io.papermc.jkvttplugin.util.Ability;
+import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.DndSpell;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;

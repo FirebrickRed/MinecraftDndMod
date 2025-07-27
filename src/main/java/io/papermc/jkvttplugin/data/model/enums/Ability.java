@@ -1,4 +1,4 @@
-package io.papermc.jkvttplugin.util;
+package io.papermc.jkvttplugin.data.model.enums;
 
 public enum Ability {
     STRENGTH,

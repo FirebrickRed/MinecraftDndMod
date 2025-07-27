@@ -1,10 +1,12 @@
 package io.papermc.jkvttplugin.character;
 
+import io.papermc.jkvttplugin.data.loader.RaceLoader;
 import io.papermc.jkvttplugin.player.Background.DndBackground;
 import io.papermc.jkvttplugin.player.CharacterSheet;
 import io.papermc.jkvttplugin.player.Classes.DndClass;
-import io.papermc.jkvttplugin.player.Races.DndRace;
-import io.papermc.jkvttplugin.util.Ability;
+import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.data.model.DndRace;
+import io.papermc.jkvttplugin.data.model.DndSubRace;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -13,6 +15,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
@@ -33,12 +36,13 @@ public class CharacterSheetUI {
     }
 
     public static Inventory buildRaceInventory() {
-        int inventorySize = Util.getInventorySize(DndRace.DndRaceType.values().length);
+        Collection<DndRace> allRaces = RaceLoader.getAllRaces();
+        int inventorySize = Util.getInventorySize(allRaces.size());
         Inventory inventory = Bukkit.createInventory(null, inventorySize, Component.text("Choose your Race"));
 
         int slot = 0;
-        for (DndRace.DndRaceType raceType : DndRace.DndRaceType.values()) {
-            inventory.setItem(slot, raceType.getDndRace().getRaceIcon());
+        for (DndRace race : allRaces) {
+            inventory.setItem(slot, race.getRaceIcon());
             slot++;
         }
 
@@ -46,11 +50,15 @@ public class CharacterSheetUI {
     }
 
     public static Inventory buildSubRaceInventory(DndRace selectedRace) {
-        int inventorySize = Util.getInventorySize(selectedRace.getSubRaces().size());
+        Collection<DndSubRace> subRaces = selectedRace.getSubraces().values();
+        int totalItems = subRaces.size() + 1;
+        int inventorySize = Util.getInventorySize(totalItems);
+
         Inventory inventory = Bukkit.createInventory(null, inventorySize, Component.text("Choose your Sub Race"));
 
-        for (int i = 0; i < selectedRace.getSubRaces().size(); i++) {
-            inventory.setItem(i, selectedRace.getSubRaces().get(i).getRaceIcon());
+        int i = 0;
+        for (DndSubRace subRace : subRaces) {
+            inventory.setItem(i++, subRace.getRaceIcon());
         }
 
         ItemStack backIcon = Util.createItem(Component.text("Back to Race"), null, "back_arrow_icon", 0);
@@ -66,6 +74,19 @@ public class CharacterSheetUI {
         int slot = 0;
         for (DndClass.DndClassType classType : DndClass.DndClassType.values()) {
             inventory.setItem(slot, classType.getDndClass().getClassIcon());
+            slot++;
+        }
+
+        return inventory;
+    }
+
+    public static Inventory buildBackgroundInventory() {
+        int inventorySize = Util.getInventorySize(DndBackground.DndBackgroundType.values().length);
+        Inventory inventory = Bukkit.createInventory(null, inventorySize, Component.text("Select Background"));
+
+        int slot = 0;
+        for (DndBackground.DndBackgroundType backgroundType : DndBackground.DndBackgroundType.values()) {
+            inventory.setItem(slot, backgroundType.getDndBackground().getBackgroundIcon());
             slot++;
         }
 
@@ -99,7 +120,7 @@ public class CharacterSheetUI {
             ));
 
             inventory.setItem(inventorySize-1, Util.createItem(
-                    Component.text("Confirm Ability Scores"),
+                    Component.text("Confirm"),
                     null,
                     "confirm_icon",
                     0
@@ -120,18 +141,5 @@ public class CharacterSheetUI {
                 ability.name().toLowerCase().substring(0, 3) + "_icon",
                 Math.max(1, score)
         );
-    }
-
-    public static Inventory buildBackgroundInventory() {
-        int inventorySize = Util.getInventorySize(DndBackground.DndBackgroundType.values().length);
-        Inventory inventory = Bukkit.createInventory(null, inventorySize, Component.text("Select Background"));
-
-        int slot = 0;
-        for (DndBackground.DndBackgroundType backgroundType : DndBackground.DndBackgroundType.values()) {
-            inventory.setItem(slot, backgroundType.getDndBackground().getBackgroundIcon());
-            slot++;
-        }
-
-        return inventory;
     }
 }

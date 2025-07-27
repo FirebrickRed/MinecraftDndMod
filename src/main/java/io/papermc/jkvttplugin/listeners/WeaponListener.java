@@ -2,7 +2,7 @@ package io.papermc.jkvttplugin.listeners;
 
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.player.CharacterSheet;
-import io.papermc.jkvttplugin.util.Ability;
+import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.DndWeapon;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;

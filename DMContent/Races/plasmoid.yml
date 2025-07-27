@@ -1,0 +1,23 @@
+name: Plasmoid
+creature_type: Ooze
+description: Plasmoids are amorphous oozelike beings with the ability to change their shape and appearance at will. They can compress and squeeze through small spaces, and communicate via pseudopods and imitation.
+ability_scores:
+  choices:
+    choose: 2
+    increment: 1
+    unique: true
+size:
+  players_choice:
+    options: [Small, Medium]
+speed: 30
+languages:
+  - Common
+  - players_choice:
+      choose: 1
+      options: []
+traits:
+  - Amorphous
+  - Darkvision
+  - Hold Breath
+  - Natural Resilience
+  - Shape Self
