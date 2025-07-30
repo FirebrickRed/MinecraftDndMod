@@ -1,0 +1,123 @@
+name: Rogue
+hit_die: 8
+proficiency:
+  - 2
+  - 2
+  - 2
+  - 2
+  - 3
+  - 3
+  - 3
+  - 3
+  - 4
+  - 4
+  - 4
+  - 4
+  - 5
+  - 5
+  - 5
+  - 5
+  - 6
+  - 6
+  - 6
+  - 6
+primary_abilities:
+  - Strength
+  - Constitution
+saving_throws:
+  - Dexterity
+  - Intelligence
+skill_options:
+  choose: 4
+  options:
+    - Acrobatics
+    - Athletics
+    - Deception
+    - Insight
+    - Intimidation
+    - Investigation
+    - Perception
+    - Performance
+    - Persuasion
+    - Sleight of Hand
+    - Stealth
+armor_proficiencies:
+  - Light armor
+weapon_proficiencies:
+  - Simple weapons
+  - hand crossbows
+  - longswords
+  - rapiers
+  - shortswords
+tool_proficiencies:
+  - Thieves' tools
+features_by_level:
+  1:
+    - name: Expertise
+      type: passive
+      description: Choose two skills you're proficient in, or one skill and thieves'
+        tools. Your proficiency bonus is doubled.
+    - name: Sneak Attack
+      type: scaling
+      damage: 1d6
+      description: Once per turn, deal extra damage to one creature you hit with an
+        attack if you have advantage or an ally is near it.
+    - name: Thieves' Cant
+      type: language
+      description: You know the secret rogue language and understand hidden messages
+        in speech or writing.
+  2:
+    - name: Cunning Action
+      type: action
+      description: You can take a bonus action on each of your turns in combat to Dash,
+        Disengage, or Hide.
+  3:
+    - name: Roguish Archetype
+      type: subclass
+      description: Choose a Roguish Archetype that grants features at 3rd, 9th, 13th,
+        and 17th level.
+    - name: Sneak Attack
+      update: true
+      damage: 2d6
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two by 1 each. Alternatively,
+        choose a feat.
+starting_equipment:
+  - item: leather_armor
+  - item: daggers
+    quantity: 2
+  - item: thieves_tools
+  - choose: 1
+    options:
+      - - item: rapier
+      - - item: shortsword
+  - choose: 1
+    options:
+      - - item: shortbow
+        - item: arrows
+          quantity: 20
+      - - item: shortsword
+  - choose: 1
+    options:
+      - - item: burglars_pack
+      - - item: dungeoneers_pack
+      - - item: explorers_pack
+icon: rogue
+multiclass_requirements:
+  Dexterity: 13
+subclass_level: 3
+subclasses:
+  - Thief
+  - Assassin
+  - Arcane Trickster
+  - Inquisitive
+  - Mastermind
+  - Scout
+  - Swashbuckler
+  - Phantom
+  - Soulknife

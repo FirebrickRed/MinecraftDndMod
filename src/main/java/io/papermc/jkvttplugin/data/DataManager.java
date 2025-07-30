@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.data;
 
+import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -18,7 +19,9 @@ public class DataManager {
 
     public void loadAllData() {
         File racesFolder = new File(dmContentFolder, "Races");
+        File classFolder = new File(dmContentFolder, "Classes");
         RaceLoader.loadAllRaces(racesFolder);
+        ClassLoader.loadAllClasses(classFolder);
     }
 
 //    private static Map<String, DndRace> allRaces = Map.of();

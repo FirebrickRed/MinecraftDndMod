@@ -40,6 +40,6 @@ public class Util {
     }
 
     public static String normalize(String name) {
-        return name.trim().toLowerCase();
+        return name.trim().toLowerCase().replace(" ", "_");
     }
 }

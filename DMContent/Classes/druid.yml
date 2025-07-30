@@ -1,0 +1,146 @@
+name: Druid
+hit_die: 8
+proficiency:
+  - 2
+  - 2
+  - 2
+  - 2
+  - 3
+  - 3
+  - 3
+  - 3
+  - 4
+  - 4
+  - 4
+  - 4
+  - 5
+  - 5
+  - 5
+  - 5
+  - 6
+  - 6
+  - 6
+  - 6
+primary_abilities:
+  - Strength
+  - Constitution
+saving_throws:
+  - Intelligence
+  - Wisdom
+skill_options:
+  choose: 2
+  options:
+    - Arcana
+    - AnimalHandling
+    - Insight
+    - Medicine
+    - Nature
+    - Perception
+    - Religion
+    - Survival
+armor_proficiencies:
+  - Light armor
+  - Medium armor
+  - Shields
+weapon_proficiencies:
+  - Clubs
+  - Daggers
+  - Darts
+  - Javelins
+  - Maces
+  - Quarterstaffs
+  - Scimitars
+  - Sickles
+  - Slings
+  - Spears
+tool_proficiencies:
+  - Herbalism Kit
+features_by_level:
+  1:
+    - name: Druidic
+      type: language
+      description: You know Druidic, the secret language of druids.
+    - name: Spellcasting
+      type: spellcasting
+      casting_ability: Wisdom
+      progression: full
+      description: You can cast prepared spells using Wisdom as your spellcasting ability.
+  2:
+    - name: Wild Shape
+      type: resource
+      description: You can use your action to magically assume the shape of a beast
+        you have seen before.
+      uses: 2 per short rest
+    - name: Druid Circle
+      type: subclass
+      description: You choose a circle that shapes your druidic path. Grants features
+        at levels 2, 6, 10, and 14.
+    - name: Wild Companion
+      type: optional
+      description: You can expend a use of Wild Shape to cast Find Familiar, summoning
+        a fey spirit.
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively,
+        choose a feat.
+  8:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively,
+        choose a feat.
+  12:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively,
+        choose a feat.
+  16:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively,
+        choose a feat.
+  19:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively,
+        choose a feat.
+starting_equipment:
+  - item: leather_armor
+  - item: explorers_pack
+  - item: druidic_focus
+  - choose: 1
+    options:
+      - - item: wooden_shield
+      - - tag: simple_weapon
+  - choose: 1
+    options:
+      - - item: scimitar
+      - - tag: simple_weapon
+icon: druid
+multiclass_requirements:
+  Wisdom: 13
+subclass_level: 2
+subclasses:
+  - Circle of the Land
+  - Circle of the Moon
+  - Circle of Dreams
+  - Circle of Spores
+  - Circle of Stars
+  - Circle of Wildfire
+  - Circle of the Shepherd
+  - Circle of the Sea

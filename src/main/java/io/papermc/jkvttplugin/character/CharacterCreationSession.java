@@ -1,10 +1,11 @@
 package io.papermc.jkvttplugin.character;
 
+import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
+import io.papermc.jkvttplugin.data.model.DndClass;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.DndSubRace;
 import io.papermc.jkvttplugin.player.Background.DndBackground;
-import io.papermc.jkvttplugin.player.Classes.DndClass;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -89,10 +90,12 @@ public class CharacterCreationSession {
         if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
 
         String className = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
-        DndClass.DndClassType selectedClassType = DndClass.DndClassType.fromString(className);
+        String normalizedClassName = Util.normalize(className);
 
-        if (selectedClassType != null) {
-            this.selectedClass = selectedClassType.getDndClass();
+        DndClass selectedClass = ClassLoader.getClass(normalizedClassName);
+
+        if (selectedClass != null) {
+            this.selectedClass = selectedClass;
             player.sendMessage("You have selected " + className + " as your class!");
             player.openInventory(buildBackgroundInventory());
         } else {

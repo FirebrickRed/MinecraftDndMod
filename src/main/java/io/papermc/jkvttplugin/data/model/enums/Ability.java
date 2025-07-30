@@ -6,5 +6,13 @@ public enum Ability {
     CONSTITUTION,
     INTELLIGENCE,
     WISDOM,
-    CHARISMA
+    CHARISMA;
+
+    public static Ability fromString(String name) {
+        try {
+            return Ability.valueOf(name.toUpperCase());
+        } catch (IllegalArgumentException | NullPointerException e) {
+            return null; // Optionally log this
+        }
+    }
 }

@@ -1,9 +1,10 @@
 package io.papermc.jkvttplugin.character;
 
+import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
+import io.papermc.jkvttplugin.data.model.DndClass;
 import io.papermc.jkvttplugin.player.Background.DndBackground;
 import io.papermc.jkvttplugin.player.CharacterSheet;
-import io.papermc.jkvttplugin.player.Classes.DndClass;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.DndSubRace;
@@ -68,12 +69,13 @@ public class CharacterSheetUI {
     }
 
     public static Inventory buildClassInventory() {
-        int inventorySize = Util.getInventorySize(DndClass.DndClassType.values().length - 1);
+        Collection<DndClass> allClasses = ClassLoader.getAllClasses();
+        int inventorySize = Util.getInventorySize(allClasses.size() - 1);
         Inventory inventory = Bukkit.createInventory(null, inventorySize, Component.text("Choose your Class"));
 
         int slot = 0;
-        for (DndClass.DndClassType classType : DndClass.DndClassType.values()) {
-            inventory.setItem(slot, classType.getDndClass().getClassIcon());
+        for (DndClass dndClass : allClasses) {
+            inventory.setItem(slot, dndClass.getClassIcon());
             slot++;
         }
 

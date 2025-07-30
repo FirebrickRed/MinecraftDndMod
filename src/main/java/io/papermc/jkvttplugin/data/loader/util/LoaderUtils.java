@@ -31,6 +31,22 @@ public class LoaderUtils {
         return result;
     }
 
+    public static List<Ability> parseAbilityList(Object input) {
+        if (!(input instanceof List<?> inputList)) return List.of();
+
+        List<Ability> abilities = new ArrayList<>();
+        for (Object obj : inputList) {
+            if (obj instanceof String str) {
+                try {
+                    abilities.add(Ability.valueOf(str.toUpperCase()));
+                } catch (IllegalArgumentException e) {
+                    // Optionally log the invalid entry
+                }
+            }
+        }
+        return abilities;
+    }
+
     public static PlayersChoice<Ability> parseAbilityPlayersChoice(Object input) {
         if (!(input instanceof Map<?, ?> choiceMap)) return null;
 
@@ -54,7 +70,7 @@ public class LoaderUtils {
             }
         }
 
-        return new PlayersChoice<>(choose, options);
+        return new PlayersChoice<>(choose, options, PlayersChoice.ChoiceType.ABILITY_SCORE);
     }
 
     public static List<String> parseLanguages(Object input) {
@@ -94,7 +110,7 @@ public class LoaderUtils {
             }
         }
 
-        return new PlayersChoice<>(choose, options);
+        return new PlayersChoice<>(choose, options, PlayersChoice.ChoiceType.LANGUAGE);
     }
 
     public static List<String> parseTraits(Object input) {
@@ -107,6 +123,34 @@ public class LoaderUtils {
             }
         }
         return traits;
+    }
+
+    public static List<String> normalizeStringList(Object raw) {
+        if (!(raw instanceof List<?> rawList)) return List.of();
+
+        List<String> result = new ArrayList<>();
+        for (Object item : rawList) {
+            if (item instanceof String str && !str.isBlank()) {
+                result.add(str.trim().toLowerCase());
+            }
+        }
+
+        return result;
+    }
+
+    public static Map<Integer, List<String>> parseLevelStringListMap(Object raw) {
+        Map<Integer, List<String>> result = new HashMap<>();
+        if (!(raw instanceof Map<?, ?> rawMap)) return result;
+
+        for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+            try {
+                int level = Integer.parseInt(entry.getKey().toString().trim());
+                List<String> list = normalizeStringList(entry.getValue());
+                result.put(level, list);
+            } catch (NumberFormatException ignored) {}
+        }
+
+        return result;
     }
 
     public static Map<String, DndSubRace> parseSubraces(Object rawData) {
@@ -147,4 +191,51 @@ public class LoaderUtils {
 
         return new DndSubRace(id, name, description, fixedAbilityScores, abilityScoreChoices, traits, languages, languageChoices, iconName);
     }
+
+    public static PlayersChoice<String> parseSkillChoice(Object obj) {
+        if (obj instanceof Map<?, ?> map) {
+            return PlayersChoice.fromMap(map, String.class, PlayersChoice.ChoiceType.SKILL);
+        }
+        return null;
+    }
+
+    public static List<PlayersChoice<String>> parseEquipmentChoicesList(Object obj) {
+        if (obj instanceof List<?> list) {
+            List<PlayersChoice<String>> result = new ArrayList<>();
+            for (Object item : list) {
+                if (item instanceof Map<?, ?> map) {
+                    result.add(PlayersChoice.fromMap(map, String.class, PlayersChoice.ChoiceType.EQUIPMENT));
+                }
+            }
+            return result;
+        }
+        return List.of();
+    }
+
+    public static <T> List<T> castList(Object obj, Class<T> clazz) {
+        if (obj instanceof List<?> list) {
+            List<T> result = new ArrayList<>();
+            for (Object item : list) {
+                if (clazz.isInstance(item)) {
+                    result.add(clazz.cast(item));
+                }
+            }
+            return result;
+        }
+        return List.of();
+    }
+
+    public static <K, V> Map<K, V> castMap(Object obj, Class<K> keyClass, Class<V> valueClass) {
+        if (obj instanceof Map<?, ?> map) {
+            Map<K, V> result = new HashMap<>();
+            for (Map.Entry<?, ?> entry : map.entrySet()) {
+                if (keyClass.isInstance(entry.getKey()) && valueClass.isInstance(entry.getValue())) {
+                    result.put(keyClass.cast(entry.getKey()), valueClass.cast(entry.getValue()));
+                }
+            }
+            return result;
+        }
+        return Map.of();
+    }
+
 }

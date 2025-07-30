@@ -1,0 +1,171 @@
+name: Barbarian
+hit_die: 12
+proficiency: [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6] # not sure if this is the best way to do this or if this should be done somewhere else because its the same for every class
+primary_abilities:
+  - Strength
+  - Constitution
+saving_throws:
+  - Strength
+  - Constitution
+skill_options:
+  choose: 2
+  options:
+    - AnimalHandling
+    - Athletics
+    - Intimidation
+    - Nature
+    - Perception
+    - Survival
+armor_proficiencies:
+  - Light armor
+  - Medium armor
+  - Shields
+weapon_proficiencies:
+  - Simple Weapons
+  - Martial Weapons
+tool_proficiencies: []
+features_by_level:
+  1:
+    - name: Rage
+      type: resource
+      uses: 2
+      damage: 2
+      description: Enter a rage as a bonus action. You gain advantage on Strength checks and saving throws, bonus damage on melee attacks using Strength, and resistance to bludgeoning, piercing, and slashing damage.
+    - name: Unarmored Defense
+      type: passive
+      description: While not wearing armor, your AC equals 10 + your Dexterity modifier + your Constitution modifier.
+  2:
+    - name: Reckless Attack
+      type: action
+      description: When you make your first attack on your turn, you can gain advantage on melee attacks using Strength, but attack rolls against you have advantage until your next turn.
+    - name: Danger Sense
+      type: passive
+      description: You have advantage on Dexterity saving throws against effects you can see, such as traps and spells.
+  3:
+    - name: Rage
+      update: true
+      uses: 3
+      damage: 2
+    - name: Primal Path
+      type: subclass
+      description: Choose a path that shapes the nature of your rage. Grants subclass features at 3, 6, 10, and 14.
+    - name: Primal Knowledge
+      type: optional
+      description: Gain proficiency in one skill of your choice from the Barbarian skill list.
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  5:
+    - name: Extra Attack
+      type: passive
+      description: You can attack twice instead of once whenever you take the Attack action.
+    - name: Fast Movement
+      type: passive
+      description: Your speed increases by 10 feet while not wearing heavy armor.
+  6:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Primal Path.
+  7:
+    - name: Feral Instinct
+      type: passive
+      description: You have advantage on initiative rolls. If surprised, you can act normally on your first turn if you rage immediately.
+    - name: Instinctive Pounce
+      type: optional
+      description: When you rage, you can move up to half your speed as part of the same bonus action.
+  8:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  9:
+    - name: Brutal Critical
+      type: scaling
+      dice: 1
+      description: Roll one extra weapon damage die when scoring a critical hit with a melee weapon.
+  10:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Primal Path.
+    - name: Primal Knowledge
+      type: optional
+      description: Gain proficiency in one skill of your choice from the Barbarian skill list.
+  11:
+    - name: Relentless Rage
+      type: resource
+      description: While raging, drop to 1 HP instead of 0 on a successful Constitution saving throw (DC increases on repeat uses).
+  12:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  13:
+    - name: Brutal Critical
+      update: true
+      dice: 2
+      description: Brutal Critical now rolls two extra dice on a critical hit.
+  14:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Primal Path.
+  15:
+    - name: Persistent Rage
+      type: passive
+      description: Your rage only ends early if you fall unconscious or choose to end it.
+  16:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  17:
+    - name: Brutal Critical
+      update: true
+      dice: 3
+      description: Brutal Critical now rolls three extra dice on a critical hit.
+  18:
+    - name: Indomitable Might
+      type: passive
+      description: If your Strength check is lower than your Strength score, you can use your score instead.
+  19:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  20:
+    - name: Primal Champion
+      type: passive
+      description: Your Strength and Constitution scores increase by 4. Their maximums increase to 24.
+starting_equipment:
+  - item: explorers_pack
+  - item: javelin
+    quantity: 4
+  - choose: 1
+    options:
+      - item: greataxe
+      - tag: martial_melee_weapon
+  - choose: 1
+    options:
+      - item: handaxe
+        quantity: 2
+      - tag: simple_weapon
+icon: barbarian
+multiclass_requirements:
+  Strength: 13
+subclass_level: 3
+subclasses:
+  - Berserker
+  - Totem Warrior
+  - Zealot
+  - Beast

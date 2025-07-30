@@ -1,0 +1,106 @@
+name: Warlock
+hit_die: 8
+proficiency:
+  - 2
+  - 2
+  - 2
+  - 2
+  - 3
+  - 3
+  - 3
+  - 3
+  - 4
+  - 4
+  - 4
+  - 4
+  - 5
+  - 5
+  - 5
+  - 5
+  - 6
+  - 6
+  - 6
+  - 6
+primary_abilities:
+  - Strength
+  - Constitution
+saving_throws:
+  - Wisdom
+  - Charisma
+skill_options:
+  choose: 2
+  options:
+    - Arcana
+    - Deception
+    - History
+    - Intimidation
+    - Investigation
+    - Nature
+    - Religion
+armor_proficiencies:
+  - Light armor
+weapon_proficiencies:
+  - Simple weapons
+tool_proficiencies: []
+features_by_level:
+  1:
+    - name: Otherworldly Patron
+      type: subclass
+      description: Choose a patron to form a pact with. This grants subclass features
+        at 1st, 6th, 10th, and 14th level.
+    - name: Pact Magic
+      type: spellcasting
+      casting_ability: Charisma
+      progression: pact
+      description: You can cast spells through a pact with your patron. You have limited
+        spell slots that recharge on a short rest.
+  2:
+    - name: Eldritch Invocations
+      type: choice
+      description: You learn two eldritch invocations of your choice. You gain more
+        as you level up.
+  3:
+    - name: Pact Boon
+      type: choice
+      description: 'You gain a boon from your patron: Pact of the Chain, Blade, Tome,
+      or Talisman.'
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two by 1 each. Alternatively,
+        choose a feat.
+starting_equipment:
+  - item: leather_armor
+  - item: dagger
+    quantity: 2
+  - tag: simple_weapon
+  - choose: 1
+    options:
+      - - item: light_crossbow
+        - item: bolt
+          quantity: 20
+      - - tag: simple_weapon
+  - choose: 1
+    options:
+      - - item: component_pouch
+      - - item: arcane_focus
+  - choose: 1
+    options:
+      - - item: scholars_pack
+      - - item: dungeoneers_pack
+icon: warlock
+multiclass_requirements:
+  Charisma: 13
+subclass_level: 1
+subclasses:
+  - The Archfey
+  - The Fiend
+  - The Great Old One
+  - The Celestial
+  - The Hexblade
+  - The Fathomless
+  - The Genie
+  - The Undead
