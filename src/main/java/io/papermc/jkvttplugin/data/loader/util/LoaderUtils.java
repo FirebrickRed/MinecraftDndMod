@@ -199,6 +199,28 @@ public class LoaderUtils {
         return null;
     }
 
+    public static List<String> parseEquipment(List<?> equipmentList) {
+        List<String> result = new ArrayList<>();
+        if (equipmentList == null) return result;
+
+        for (Object entry : equipmentList) {
+            if (entry instanceof String) {
+                result.add((String) entry);
+            } else if (entry instanceof Map<?, ?>) {
+                Map<?, ?> map = (Map<?, ?>) entry;
+                Object itemObj = map.get("item");
+                if (itemObj instanceof String) {
+                    result.add((String) itemObj);
+                } else {
+                    System.out.println("[Warning] Equipment entry object missing valid 'item' key: " + entry);
+                }
+            } else {
+                System.out.println("[Warning] Unexpected equipment entry type: " + entry);
+            }
+        }
+        return result;
+    }
+
     public static List<PlayersChoice<String>> parseEquipmentChoicesList(Object obj) {
         if (obj instanceof List<?> list) {
             List<PlayersChoice<String>> result = new ArrayList<>();

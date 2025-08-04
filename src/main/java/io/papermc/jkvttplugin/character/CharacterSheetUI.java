@@ -1,9 +1,10 @@
 package io.papermc.jkvttplugin.character;
 
+import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
+import io.papermc.jkvttplugin.data.model.DndBackground;
 import io.papermc.jkvttplugin.data.model.DndClass;
-import io.papermc.jkvttplugin.player.Background.DndBackground;
 import io.papermc.jkvttplugin.player.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.DndRace;
@@ -83,12 +84,13 @@ public class CharacterSheetUI {
     }
 
     public static Inventory buildBackgroundInventory() {
-        int inventorySize = Util.getInventorySize(DndBackground.DndBackgroundType.values().length);
+        Collection<DndBackground> allBackgrounds = BackgroundLoader.getAllBackgrounds();
+        int inventorySize = Util.getInventorySize(allBackgrounds.size() - 1);
         Inventory inventory = Bukkit.createInventory(null, inventorySize, Component.text("Select Background"));
 
         int slot = 0;
-        for (DndBackground.DndBackgroundType backgroundType : DndBackground.DndBackgroundType.values()) {
-            inventory.setItem(slot, backgroundType.getDndBackground().getBackgroundIcon());
+        for (DndBackground dndBackground : allBackgrounds) {
+            inventory.setItem(slot, dndBackground.getBackgroundIcon());
             slot++;
         }
 

@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.player;
 
-import io.papermc.jkvttplugin.player.Background.DndBackground;
+import io.papermc.jkvttplugin.data.model.DndBackground;
 import io.papermc.jkvttplugin.player.Classes.DndClass;
 import io.papermc.jkvttplugin.player.Races.DndRace;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
@@ -121,7 +121,7 @@ public class CharacterSheet {
         }
 
         if (background != null) {
-            choices.putAll(background.getGearChoices());
+//            choices.putAll(background.getGearChoices());
         }
 
         return choices;
@@ -143,16 +143,16 @@ public class CharacterSheet {
         }
 
         if (background != null) {
-            equipment.addAll(background.getStartingEquipment());
-
-            for (Map.Entry<String, String> choice : selectedChoices.entrySet()) {
-                if (background.getGearChoices().containsKey(choice.getKey())) {
-                    List<ItemStack> chosenItems = background.getGearChoices().get(choice.getValue());
-                    if (chosenItems != null) {
-                        equipment.addAll(chosenItems);
-                    }
-                }
-            }
+//            equipment.addAll(background.getStartingEquipment());
+//
+//            for (Map.Entry<String, String> choice : selectedChoices.entrySet()) {
+//                if (background.getGearChoices().containsKey(choice.getKey())) {
+//                    List<ItemStack> chosenItems = background.getGearChoices().get(choice.getValue());
+//                    if (chosenItems != null) {
+//                        equipment.addAll(chosenItems);
+//                    }
+//                }
+//            }
         }
 
         return equipment;

@@ -1,0 +1,26 @@
+sailor:
+  name: Sailor
+  description: "You’ve spent your life on the sea. In that time, you’ve faced down mighty storms, monsters, and pirates."
+  skills:
+    - Athletics
+    - Perception
+  languages: []
+  tools:
+    - navigators_tools
+    - vehicles_water
+  starting_equipment:
+    - belaying_pin
+    - silk_rope
+    - lucky_charm
+    - common_clothes
+    - item: money_pouch
+      contents:
+        - id: minecraft:gold_nugget
+          amount: 10
+  feature: "Ship's Passage"
+#    name: Ship's Passage
+#    description: "You can secure free passage on a sailing ship for yourself and your companions."
+  traits: [sailor]
+  links:
+    - "https://www.dndbeyond.com/backgrounds/sailor"
+  icon_name: sailor

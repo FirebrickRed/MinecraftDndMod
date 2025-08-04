@@ -48,6 +48,7 @@ public class DndRace {
             Map<String, DndSubRace> subraces,
             String iconName
     ) {
+        // ToDo: double check if null checks are needed here, should be handled by the loader
         this.name = Objects.requireNonNull(name, "name cannot be null");
         this.sourceUrl = sourceUrl != null ? sourceUrl : "";
         this.description = description != null ? description : "";

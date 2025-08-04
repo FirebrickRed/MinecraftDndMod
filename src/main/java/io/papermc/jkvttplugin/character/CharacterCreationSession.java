@@ -2,10 +2,11 @@ package io.papermc.jkvttplugin.character;
 
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
+import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.model.DndClass;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.DndSubRace;
-import io.papermc.jkvttplugin.player.Background.DndBackground;
+import io.papermc.jkvttplugin.data.model.DndBackground;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -110,10 +111,13 @@ public class CharacterCreationSession {
         if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
 
         String backgroundName = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
-        DndBackground.DndBackgroundType selectedBackgroundType = DndBackground.DndBackgroundType.fromString(backgroundName);
+        // ToDo: check where normalization should happen because it may already get normalized in the loader
+        String normalizedBackgroundName = Util.normalize(backgroundName);
 
-        if (selectedBackgroundType != null) {
-            selectedBackground = selectedBackgroundType.getDndBackground();
+        DndBackground selectedBackground = BackgroundLoader.getBackground(normalizedBackgroundName);
+
+        if (selectedBackground != null) {
+            this.selectedBackground = selectedBackground;
             player.sendMessage("You have selected " + backgroundName + " as your background!");
             player.openInventory(buildAbilityScoreInventory(abilityScores));
         }

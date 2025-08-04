@@ -1,0 +1,32 @@
+urchin:
+  name: Urchin
+  description: "You grew up on the streets alone, orphaned, and poor, surviving on wits and the kindness of strangers."
+  skills:
+    - Sleight_of_Hand
+    - Stealth
+  languages: []
+  tools:
+    - disguise_kit
+    - thieves_tools
+  starting_equipment:
+    - small_knife
+    - item: city_map
+      city: starting_city
+    - item: pet_mouse
+    - item: keepsake_token
+      from: "parents"
+    - common_clothes
+    - item: money_pouch
+      contents:
+        - id: minecraft:gold_nugget
+          amount: 10
+        - id: dndmod:trinket
+          display: "Tiny seashell"
+          lore: "A small memento from your childhood"
+  feature: "City Secrets"
+#    name: City Secrets
+#    description: "You know the secret patterns and flow to cities and can find passages others would miss."
+  traits: [urchin]
+  links:
+    - "https://www.dndbeyond.com/backgrounds/urchin"
+  icon_name: urchin

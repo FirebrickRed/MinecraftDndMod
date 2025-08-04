@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.character;
 
-import io.papermc.jkvttplugin.player.Background.DndBackground;
+import io.papermc.jkvttplugin.data.model.DndBackground;
 import io.papermc.jkvttplugin.player.CharacterSheet;
 import io.papermc.jkvttplugin.player.Classes.DndClass;
 import io.papermc.jkvttplugin.player.Races.DndRace;

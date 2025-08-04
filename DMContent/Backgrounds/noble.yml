@@ -1,0 +1,28 @@
+noble:
+  name: Noble
+  description: "You understand wealth, power, and privilege. You carry a noble title, and your family owns land."
+  skill_proficiencies:
+    - History
+    - Persuasion
+  languages:
+    - players_choice:
+        choose: 1
+        options: []
+  tool_proficiencies:
+    - tag: gaming_set
+  starting_equipment:
+    - signet_ring
+    - fine_clothes
+    - scroll_of_pedigree
+    - item: money_pouch
+      contents:
+        - id: minecraft:gold_nugget
+          amount: 25
+  feature: "Position of Privilege"
+#    name: Position of Privilege
+#    description: "People are inclined to think the best of you. You are welcome in high society, and people assume you have the right to be wherever you are."
+  traits:
+    - noble
+  links:
+    - "https://www.dndbeyond.com/backgrounds/noble"
+  icon_name: noble

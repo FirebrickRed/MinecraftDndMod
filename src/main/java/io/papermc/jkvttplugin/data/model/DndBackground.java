@@ -1,4 +1,105 @@
 package io.papermc.jkvttplugin.data.model;
 
+import io.papermc.jkvttplugin.util.Util;
+import net.kyori.adventure.text.Component;
+import org.bukkit.inventory.ItemStack;
+
+import java.util.List;
+
 public class DndBackground {
+    private final String id;
+    private final String name;
+    private final String description;
+    private final List<String> skills;
+
+    private final List<String> languages;
+    private final PlayersChoice<String> languageChoices;
+
+    private final List<String> tools;
+
+    private final List<String> equipment;
+    private final String feature;
+    // ToDo: Update EquipmentEntry and Feature to not be strings
+//    private final List<EquipmentEntry> equipment;
+//    private final Feature feature;
+    private final List<String> traits;
+    private final List<String> links;
+    private final String iconName;
+
+    public DndBackground(
+            String key,
+            String name,
+            String description,
+            List<String> skills,
+            List<String> languages,
+            PlayersChoice<String> languageChoices,
+            List<String> tools,
+            List<String> equipment,
+            String feature,
+            List<String> traits,
+            List<String> links,
+            String iconName
+    ) {
+        this.id = key;
+        this.name = name;
+        this.description = description;
+        this.skills = skills;
+        this.languages = languages;
+        this.languageChoices = languageChoices;
+        this.tools = tools;
+        this.equipment = equipment;
+        this.feature = feature;
+        this.traits = traits;
+        this.links = links;
+        this.iconName = iconName;
+    }
+
+    // ToDo: update code to utilize id instead of name for identification
+    public String getId() {
+        return id;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public List<String> getSkills() {
+        return skills;
+    }
+
+    public List<String> getLanguages() {
+        return languages;
+    }
+
+    public PlayersChoice<String> getLanguageChoices() {
+        return languageChoices;
+    }
+
+    public List<String> getTools() {
+        return tools;
+    }
+
+    public List<String> getEquipment() {
+        return equipment;
+    }
+
+    public String getFeature() {
+        return feature;
+    }
+
+    public List<String> getTraits() {
+        return traits;
+    }
+
+    public List<String> getLinks() {
+        return links;
+    }
+
+    public ItemStack getBackgroundIcon() {
+        return Util.createItem(Component.text(getName()), null, iconName, 0);
+    }
 }
