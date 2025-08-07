@@ -3,12 +3,9 @@ package io.papermc.jkvttplugin.character;
 import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
-import io.papermc.jkvttplugin.data.model.DndBackground;
-import io.papermc.jkvttplugin.data.model.DndClass;
+import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.player.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
-import io.papermc.jkvttplugin.data.model.DndRace;
-import io.papermc.jkvttplugin.data.model.DndSubRace;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -17,9 +14,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class CharacterSheetUI {
     // Need to rename to CharacterSheetInventoryBuilder or similar
@@ -93,6 +88,45 @@ public class CharacterSheetUI {
             inventory.setItem(slot, dndBackground.getBackgroundIcon());
             slot++;
         }
+
+        return inventory;
+    }
+
+    public static Inventory buildChoicesInventory() {
+        int size = pendingChoices.size() + 1; // +1 for confirm button
+        Inventory inventory = Bukkit.createInventory(null, 9, Component.text("Select Choices"));
+//
+//        List<String> alreadyOwned = session.getOwnedChoices();
+//        for (int i = 0; i < alreadyOwned.size(); i++) {
+//            inventory.setItem(i, Util.createItem(
+//                    Component.text(alreadyOwned.get(i)),
+//                    null,
+//                    "choice_icon",
+//                    0
+//            ));
+//        }
+//
+//        int row = 1;
+//        int choicesPerRow = 9;
+//        for (PendingChoice<String> pending : session.getPendingChoices()) {
+//            Set<String> currentOwned = new LinkedHashSet<>(alreadyOwned);
+//            // Exclude own selections for this choice so player can deselect
+//            currentOwned.removeAll(pending.getChosen());
+//            List<String> options = pending.getAvailableOptions(currentOwned);
+//            int baseSlot = row * choicesPerRow;
+//            for (int i = 0; i < options.size() && i < choicesPerRow; i++) {
+//                String option = options.get(i);
+//                boolean isSelected = pending.getChosen().contains(option);
+//                ItemStack item = Util.createItem(
+//                        Component.text(option + (isSelected ? " (Selected)" : "")),
+//                        Component.text("Click to select/deselect"),
+//                        isSelected ? "emerald" : "paper",
+//                        0
+//                );
+//                inventory.setItem(baseSlot + i, item);
+//            }
+//            row++;
+//        }
 
         return inventory;
     }

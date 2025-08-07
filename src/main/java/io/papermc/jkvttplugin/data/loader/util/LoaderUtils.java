@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.data.model.DndSubRace;
 import io.papermc.jkvttplugin.data.model.PlayersChoice;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
+import io.papermc.jkvttplugin.data.model.enums.Size;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -11,6 +12,25 @@ import java.util.List;
 import java.util.Map;
 
 public class LoaderUtils {
+
+    public static class LanguageParseResults {
+        public final List<String> languages;
+        public final PlayersChoice<String> playersChoice;
+
+        public LanguageParseResults(List<String> languages, PlayersChoice<String> playersChoice) {
+            this.languages = languages;
+            this.playersChoice = playersChoice;
+        }
+    }
+
+    public static class SizeParseResult {
+        public final Size size;
+        public final PlayersChoice<String> sizeChoice;
+        public SizeParseResult(Size size, PlayersChoice<String> sizeChoice) {
+            this.size = size;
+            this.sizeChoice = sizeChoice;
+        }
+    }
 
     public static Map<Ability, Integer> parseAbilityScoreMap(Object rawObject) {
         Map<Ability, Integer> result = new HashMap<>();
@@ -73,6 +93,29 @@ public class LoaderUtils {
         return new PlayersChoice<>(choose, options, PlayersChoice.ChoiceType.ABILITY_SCORE);
     }
 
+    public static LanguageParseResults parseLanguagesAndChoices(Object input) {
+        List<String> langs = new ArrayList<>();
+        PlayersChoice<String> playersChoice = null;
+
+        if (input instanceof List<?> inputList) {
+            for (Object lang : inputList) {
+                if (lang instanceof String str) {
+                    if (!LanguageRegistry.isRegistered(str)) {
+                        throw new IllegalArgumentException("Invalid language: " + str);
+                    }
+                    System.out.println("Adding language: " + str);
+                    langs.add(str);
+                } else if (lang instanceof Map<?, ?> choiceMap && choiceMap.containsKey("players_choice")) {
+                    Object pcObj = choiceMap.get("players_choice");
+                    System.out.println("Found players choice for languages: " + pcObj);
+                    playersChoice = parseLanguagePlayersChoice(pcObj);
+                }
+            }
+        }
+
+        return new LanguageParseResults(langs, playersChoice);
+    }
+
     public static List<String> parseLanguages(Object input) {
         if (!(input instanceof List<?> inputList)) return List.of();
 
@@ -94,23 +137,47 @@ public class LoaderUtils {
         Object chooseObj = choiceMap.get("choose");
         Object optionsObj = choiceMap.get("options");
 
-        if (!(chooseObj instanceof Number chooseNum) || !(optionsObj instanceof List<?> optionList)) {
-            return null;
+        int choose;
+        if (chooseObj instanceof Number n) {
+            choose = n.intValue();
+        } else if (chooseObj instanceof String s) {
+            try {
+                choose = Integer.parseInt(s.trim());
+            } catch (NumberFormatException e) {
+                choose = 1;
+            }
+        } else {
+            choose = 1;
         }
 
-        int choose = chooseNum.intValue();
         List<String> options = new ArrayList<>();
 
-        for (Object option : optionList) {
-            if (option instanceof String str) {
-                if (!LanguageRegistry.isRegistered(str)) {
-                    throw new IllegalArgumentException("Invalid language option: " + str);
+        if (optionsObj instanceof List<?> optionList) {
+            if (optionList.isEmpty()) {
+                options.addAll(LanguageRegistry.getAllLanguages());
+            } else {
+                for (Object option : optionList) {
+                    if (option instanceof String str) {
+                        if (!LanguageRegistry.isRegistered(str)) {
+                            throw new IllegalArgumentException("Invalid language option: " + str);
+                        }
+                        options.add(str);
+                    }
                 }
-                options.add(str);
             }
         }
 
         return new PlayersChoice<>(choose, options, PlayersChoice.ChoiceType.LANGUAGE);
+    }
+
+    public static SizeParseResult parseSize(Object sizeObj) {
+        if (sizeObj instanceof String s) {
+            return new SizeParseResult(Size.fromString(s), null);
+        } else if (sizeObj instanceof Map<?, ?> sizeMap && sizeMap.containsKey("players_choice")) {
+            PlayersChoice<String> sizeChoice = PlayersChoice.fromMap((Map<String, Object>)sizeMap.get("players_choice"), String.class, PlayersChoice.ChoiceType.CUSTOM);
+            return new SizeParseResult(null, sizeChoice);
+        }
+        return new SizeParseResult(Size.MEDIUM, null); // Default to medium if no valid size found
     }
 
     public static List<String> parseTraits(Object input) {

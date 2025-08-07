@@ -1,19 +1,19 @@
 package io.papermc.jkvttplugin.data.model.enums;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import org.yaml.snakeyaml.Yaml;
+
+import java.io.File;
+import java.io.FileReader;
+import java.util.*;
 
 public class LanguageRegistry {
-    private static final Set<String> registeredLanguages = new HashSet<>();
+    private static final List<String> DEFAULT_LANGUAGES = List.of(
+            "Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",
+            "Orc", "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal",
+            "Primordial", "Sylvan", "Undercommon"
+    );
 
-    static {
-        // Default D&D languages
-        Collections.addAll(registeredLanguages,
-                "Common", "Elvish", "Dwarvish", "Draconic", "Halfling", "Orc",
-                "Gnomish", "Goblin", "Sylvan", "Celestial", "Infernal", "Abyssal"
-        );
-    }
+    private static final Set<String> registeredLanguages = new LinkedHashSet<>(DEFAULT_LANGUAGES);
 
     public static void register(String language) {
         if (language != null && !language.isBlank()) {
@@ -31,11 +31,34 @@ public class LanguageRegistry {
         return language != null && registeredLanguages.contains(language.trim());
     }
 
-    public static Set<String> getAll() {
-        return Collections.unmodifiableSet(registeredLanguages);
+    public static List<String> getAllLanguages() {
+        return new ArrayList<>(registeredLanguages);
     }
 
     public static void clear() {
         registeredLanguages.clear();
+    }
+
+    public static void resetToDefault() {
+        registeredLanguages.clear();
+        registeredLanguages.addAll(DEFAULT_LANGUAGES);
+    }
+
+    public static void loadLangagesFromYaml(File yamlFile) {
+        try (FileReader reader = new FileReader(yamlFile)) {
+            Yaml yaml = new Yaml();
+            Object loaded = yaml.load(reader);
+            if (loaded instanceof List<?> langList) {
+                clear();
+                for (Object obj : langList) {
+                    if (obj instanceof String lang) {
+                        register(lang);
+                    }
+                }
+            }
+        } catch (Exception e) {
+            System.out.println("[LanguageRegistry] Failed to load languages from YAML: " + e.getMessage() + ". Using default languages.");
+            resetToDefault();
+        }
     }
 }

@@ -18,6 +18,7 @@ public class DndRace {
 
     private final CreatureType creatureType;
     private final Size size;
+    private final PlayersChoice<String> sizeChoice;
     // ToDo: update speed to use all different movements examples I've found:
     // flying, swimming, climbing
     private final int speed;
@@ -39,6 +40,7 @@ public class DndRace {
             String description,
             CreatureType creatureType,
             Size size,
+            PlayersChoice<String> sizeChoice,
             int speed,
             Map<Ability, Integer> fixedAbilityScores,
             PlayersChoice<Ability> abilityScoreChoices,
@@ -54,6 +56,7 @@ public class DndRace {
         this.description = description != null ? description : "";
         this.creatureType = creatureType != null ? creatureType : CreatureType.UNKNOWN;
         this.size = size != null ? size : Size.MEDIUM;
+        this.sizeChoice = sizeChoice;
         this.speed = speed;
 
         this.fixedAbilityScores = fixedAbilityScores != null ? Map.copyOf(fixedAbilityScores) : Map.of();
@@ -85,6 +88,10 @@ public class DndRace {
 
     public Size getSize() {
         return size;
+    }
+
+    public PlayersChoice<String> getSizeChoice() {
+        return sizeChoice;
     }
 
     public int getSpeed() {

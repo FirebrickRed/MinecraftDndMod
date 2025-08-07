@@ -37,7 +37,7 @@ subraces:
     languages:
       - players_choice:
           choose: 1
-          options: [] # leave blank for all languages
+          options: [Elvish, Dwarvish, Draconic, Infernal]
   wood_elf:
     name: Wood Elf
     ability_scores:
@@ -72,4 +72,4 @@ subraces:
     languages:
       - players_choice:
           choose: 1
-          options: []
+          options: [Elvish, Dwarvish, Draconic, Infernal]

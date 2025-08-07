@@ -12,7 +12,7 @@ languages:
   - Common
   - players_choice:
       choose: 1
-      options: []
+      options: [Elvish, Dwarvish, Draconic, Infernal]
 traits:
   - Damage Dealer
   - Firearm Mastery

@@ -58,6 +58,7 @@ public class ClassLoader {
                 .featuresByLevel(LoaderUtils.parseLevelStringListMap(data.get("features_by_level")))
                 .subclasses(LoaderUtils.castList(data.getOrDefault("subclasses", List.of()), String.class))
                 .multiclassRequirements(LoaderUtils.castMap(data.get("multiclass_requirements"), String.class, Integer.class))
+//                .classResources()
 
                 .allowFeats((boolean) data.getOrDefault("allow_feats", true))
                 .icon((String) data.get("icon"));

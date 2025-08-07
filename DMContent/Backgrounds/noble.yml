@@ -19,8 +19,6 @@ noble:
         - id: minecraft:gold_nugget
           amount: 25
   feature: "Position of Privilege"
-#    name: Position of Privilege
-#    description: "People are inclined to think the best of you. You are welcome in high society, and people assume you have the right to be wherever you are."
   traits:
     - noble
   links:
