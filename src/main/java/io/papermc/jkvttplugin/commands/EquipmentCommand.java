@@ -2,7 +2,7 @@ package io.papermc.jkvttplugin.commands;
 
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.player.CharacterSheet;
-import io.papermc.jkvttplugin.player.Classes.DndClass;
+//import io.papermc.jkvttplugin.player.Classes.DndClass;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
@@ -33,11 +33,11 @@ public class EquipmentCommand implements CommandExecutor {
             return true;
         }
 
-        DndClass playerClass = sheet.getMainDndClass();
-        if (playerClass == null) {
-            player.sendMessage("Your class could not be determined.");
-            return true;
-        }
+//        DndClass playerClass = sheet.getMainDndClass();
+//        if (playerClass == null) {
+//            player.sendMessage("Your class could not be determined.");
+//            return true;
+//        }
 
         if (label.equalsIgnoreCase("takeequipment")) {
             handleTakeEquipment(player, sheet);

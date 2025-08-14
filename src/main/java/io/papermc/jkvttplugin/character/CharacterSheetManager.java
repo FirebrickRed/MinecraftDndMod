@@ -1,9 +1,9 @@
 package io.papermc.jkvttplugin.character;
 
 import io.papermc.jkvttplugin.data.model.DndBackground;
+import io.papermc.jkvttplugin.data.model.DndClass;
+import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.player.CharacterSheet;
-import io.papermc.jkvttplugin.player.Classes.DndClass;
-import io.papermc.jkvttplugin.player.Races.DndRace;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import org.bukkit.entity.Player;
 
@@ -24,8 +24,8 @@ public class CharacterSheetManager {
     }
 
     public static void createCharacterSheet(Player player, DndRace race, DndClass dndClass, Map<Ability, Integer> abilityScores, DndBackground background) {
-        CharacterSheet sheet = new CharacterSheet(player, race, dndClass, abilityScores, background);
-        characterSheets.put(player.getUniqueId(), sheet);
+//        CharacterSheet sheet = new CharacterSheet(player, race, dndClass, abilityScores, background);
+//        characterSheets.put(player.getUniqueId(), sheet);
     }
 
     public static void saveCharacterSheet(Player player) {

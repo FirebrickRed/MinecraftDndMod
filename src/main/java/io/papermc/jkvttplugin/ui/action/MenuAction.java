@@ -1,0 +1,14 @@
+package io.papermc.jkvttplugin.ui.action;
+
+public enum MenuAction {
+    OPEN_RACE_SELECTION,
+    CHOOSE_RACE,
+    CHOOSE_SUBRACE,
+    CHOOSE_CLASS,
+    CHOOSE_BACKGROUND,
+    CHOOSE_OPTION,
+    CONFIRM_CHOICES,
+    CONFIRM_CHARACTER,
+    INCREASE_ABILITY,
+    DECREASE_ABILITY,
+}

@@ -29,30 +29,30 @@ public class CharacterSheetListener implements Listener {
     @EventHandler
     public void onInventoryClick(InventoryClickEvent event) {
         Player player = (Player) event.getWhoClicked();
-        CharacterCreationSession session = creationSessions.computeIfAbsent(player, CharacterCreationSession::new);
+//        CharacterCreationSession session = creationSessions.computeIfAbsent(player, CharacterCreationSession::new);
 
         // ToDo:
         // sub race clicks do not work
 
-        if(isTitle(event.getView(), "Choose your Race")) {
-            event.setCancelled(true);
-            session.handleRaceSelection(event);
-        }
-        else if(isTitle(event.getView(), "Choose your Sub Race")) {
-            event.setCancelled(true);
-            session.handleSubRaceSelection(event);
-        }
-        else if(isTitle(event.getView(), "Choose your Class")) {
-            event.setCancelled(true);
-            session.handleClassSelection(event);
-        }
-        else if(isTitle(event.getView(), "Choose your Ability Scores")) {
-            event.setCancelled(true);
-            session.handleAbilityScoreSelection(event);
-        }
-        else if(isTitle(event.getView(), "Choose your Background")) {
-            event.setCancelled(true);
-            session.handleBackgroundSelection(event);
+//        if(isTitle(event.getView(), "Choose your Race")) {
+//            event.setCancelled(true);
+//            session.handleRaceSelection(event);
+//        }
+//        else if(isTitle(event.getView(), "Choose your Sub Race")) {
+//            event.setCancelled(true);
+//            session.handleSubRaceSelection(event);
+//        }
+//        else if(isTitle(event.getView(), "Choose your Class")) {
+//            event.setCancelled(true);
+//            session.handleClassSelection(event);
+//        }
+//        else if(isTitle(event.getView(), "Choose your Ability Scores")) {
+//            event.setCancelled(true);
+//            session.handleAbilityScoreSelection(event);
+//        }
+//        else if(isTitle(event.getView(), "Choose your Background")) {
+//            event.setCancelled(true);
+//            session.handleBackgroundSelection(event);
 //        }
 //        else if(isTitle(event.getView(), "Choose your Spells")) {
 //            event.setCancelled(true);
@@ -62,9 +62,9 @@ public class CharacterSheetListener implements Listener {
 //            event.setCancelled(true);
 //            session.confirmCharacterCreation(event);
 //        }
-        } else {
-            CharacterSheetUI.handleSheetInventoryClick(player, event);
-        }
+//        } else {
+//            CharacterSheetUI.handleSheetInventoryClick(player, event);
+//        }
     }
 
     @EventHandler
@@ -81,8 +81,8 @@ public class CharacterSheetListener implements Listener {
             event.setCancelled(true);
             CharacterCreationSession session = creationSessions.get(player);
             if (session != null) {
-                session.setCharacterName(name);
-                session.finishCreation();
+//                session.setCharacterName(name);
+//                session.finishCreation();
                 awaitingNameInput.put(player, false);
             }
         }

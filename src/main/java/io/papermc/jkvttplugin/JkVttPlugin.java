@@ -7,6 +7,8 @@ import io.papermc.jkvttplugin.data.DataManager;
 import io.papermc.jkvttplugin.listeners.NpcListener;
 import io.papermc.jkvttplugin.listeners.PlanetListener;
 import io.papermc.jkvttplugin.listeners.WeaponListener;
+import io.papermc.jkvttplugin.ui.listener.MenuClickListener;
+import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
@@ -22,10 +24,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         instance = this;
         getLogger().info("D&D Plugin has been enabled!");
 
-//        saveResource("weapons.yml", false);
-//
-//        NpcManager.loadNpcs();
-//        DndWeapon.loadWeapons();
+        ItemUtil.initialize(this);
 
         // Load Data
         DataManager dataManager = new DataManager(this);
@@ -38,6 +37,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new NpcListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlanetListener(), this);
         Bukkit.getPluginManager().registerEvents(new WeaponListener(), this);
+        Bukkit.getPluginManager().registerEvents(new MenuClickListener(), this);
 
         // Commands
         EquipmentCommand equipmentCommand = new EquipmentCommand();
@@ -46,6 +46,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         this.getCommand("rolldice").setExecutor(new RollDiceCommand());
         this.getCommand("takeequipment").setExecutor(equipmentCommand);
         this.getCommand("choosegear").setExecutor(equipmentCommand);
+        this.getCommand("createcharacter").setExecutor(new CreateCharacterCommand());
 
     }
 

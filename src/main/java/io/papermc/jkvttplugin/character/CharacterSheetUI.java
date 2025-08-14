@@ -93,7 +93,7 @@ public class CharacterSheetUI {
     }
 
     public static Inventory buildChoicesInventory() {
-        int size = pendingChoices.size() + 1; // +1 for confirm button
+//        int size = pendingChoices.size() + 1; // +1 for confirm button
         Inventory inventory = Bukkit.createInventory(null, 9, Component.text("Select Choices"));
 //
 //        List<String> alreadyOwned = session.getOwnedChoices();

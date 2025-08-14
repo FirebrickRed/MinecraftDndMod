@@ -2,8 +2,8 @@ package io.papermc.jkvttplugin.listeners;
 
 import io.papermc.jkvttplugin.JkVttPlugin;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
+import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.player.CharacterSheet;
-import io.papermc.jkvttplugin.player.Races.DndRace;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -25,17 +25,17 @@ public class PlanetListener implements Listener {
     private final Map<UUID, Integer> playerBreath = new HashMap<>();
 
     public PlanetListener() {
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                for (Player player : Bukkit.getOnlinePlayers()) {
-                    if (player.getWorld().getName().equals(CUSTOM_DIMENSION_KEY)) {
-                        handleAirDepletion(player);
-                        updatePlayerAir(player);
-                    }
-                }
-            }
-        }.runTaskTimer(JkVttPlugin.getInstance(), 0L, 1L);
+//        new BukkitRunnable() {
+//            @Override
+//            public void run() {
+//                for (Player player : Bukkit.getOnlinePlayers()) {
+//                    if (player.getWorld().getName().equals(CUSTOM_DIMENSION_KEY)) {
+//                        handleAirDepletion(player);
+//                        updatePlayerAir(player);
+//                    }
+//                }
+//            }
+//        }.runTaskTimer(JkVttPlugin.getInstance(), 0L, 1L);
     }
 
     private void updatePlayerAir(Player player) {
@@ -49,14 +49,14 @@ public class PlanetListener implements Listener {
         int remainingAir = playerBreath.get(playerId);
         CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
         if (sheet == null) return;
-        DndRace race = sheet.getRaceForPlayer();
-        if (race == null) return;
+//        DndRace race = sheet.getRaceForPlayer();
+//        if (race == null) return;
 
-        int maxBreath = race.getBreathDuration();
-        int visualAir = (int) (((double) remainingAir / maxBreath) * player.getMaximumAir());
+//        int maxBreath = race.getBreathDuration();
+//        int visualAir = (int) (((double) remainingAir / maxBreath) * player.getMaximumAir());
 
         player.setMaximumAir(player.getMaximumAir());
-        player.setRemainingAir(visualAir);
+//        player.setRemainingAir(visualAir);
     }
 
     @EventHandler
@@ -67,35 +67,35 @@ public class PlanetListener implements Listener {
         }
     }
 
-    private void handleAirDepletion(Player player) {
-        UUID playerId = player.getUniqueId();
-        CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
-        if (sheet == null) return;
-        DndRace race = sheet.getRaceForPlayer();
-        if (race == null) return;
-
-        if (!playerBreath.containsKey(playerId)) {
-            playerBreath.put(playerId, race.getBreathDuration());
-        }
-
-        int remainingAir = playerBreath.get(playerId);
-        boolean isSafe = isUnderSafeBlock(player.getLocation());
-
-        if (isSafe) {
-            playerBreath.put(playerId, race.getBreathDuration());
-            // player.setRemainingAir(race.getBreathDuration());
-            player.removePotionEffect(PotionEffectType.POISON);
-        } else {
-            remainingAir--;
-            if (remainingAir <= 0) {
-                player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 100, 0, true, true));
-                remainingAir = 0;
-            }
-            playerBreath.put(playerId, remainingAir);
-        }
-
-        // player.setRemainingAir(playerBreath.get(playerId));
-    }
+//    private void handleAirDepletion(Player player) {
+//        UUID playerId = player.getUniqueId();
+//        CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
+//        if (sheet == null) return;
+//        DndRace race = sheet.getRaceForPlayer();
+//        if (race == null) return;
+//
+//        if (!playerBreath.containsKey(playerId)) {
+//            playerBreath.put(playerId, race.getBreathDuration());
+//        }
+//
+//        int remainingAir = playerBreath.get(playerId);
+//        boolean isSafe = isUnderSafeBlock(player.getLocation());
+//
+//        if (isSafe) {
+//            playerBreath.put(playerId, race.getBreathDuration());
+//            // player.setRemainingAir(race.getBreathDuration());
+//            player.removePotionEffect(PotionEffectType.POISON);
+//        } else {
+//            remainingAir--;
+//            if (remainingAir <= 0) {
+//                player.addPotionEffect(new PotionEffect(PotionEffectType.POISON, 100, 0, true, true));
+//                remainingAir = 0;
+//            }
+//            playerBreath.put(playerId, remainingAir);
+//        }
+//
+//        // player.setRemainingAir(playerBreath.get(playerId));
+//    }
 
     private boolean isUnderSafeBlock(Location location) {
         for (int y = location.getBlockY() + 1; y <= location.getBlockY() + 5; y++) {

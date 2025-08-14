@@ -37,16 +37,16 @@ public class WeaponListener implements Listener {
 
         String abilityUsed = "Dexterity";
         int abilityMod = characterSheet.getModifier(Ability.DEXTERITY);
-        int proficiencyBonus = characterSheet.getProficiencyBonus();
-        int totalAttackBonus = abilityMod + proficiencyBonus;
+//        int proficiencyBonus = characterSheet.getProficiencyBonus();
+//        int totalAttackBonus = abilityMod + proficiencyBonus;
 
         Component toHitMessage = Component.text()
                 .append(Component.text("You attack with your ", NamedTextColor.YELLOW))
                 .append(Component.text(weapon.getName(), NamedTextColor.GOLD))
                 .append(Component.text("! Roll d20 ", NamedTextColor.YELLOW))
                 .append(Component.text(abilityUsed + " (" + abilityMod + ")", NamedTextColor.GREEN))
-                .append(Component.text(" + IF Proficient: Proficiency Bonus (" + proficiencyBonus + ")", NamedTextColor.AQUA))
-                .append(Component.text(" = +" + totalAttackBonus, NamedTextColor.YELLOW))
+//                .append(Component.text(" + IF Proficient: Proficiency Bonus (" + proficiencyBonus + ")", NamedTextColor.AQUA))
+//                .append(Component.text(" = +" + totalAttackBonus, NamedTextColor.YELLOW))
                 .build();
 
         Component damageMessage = Component.text()

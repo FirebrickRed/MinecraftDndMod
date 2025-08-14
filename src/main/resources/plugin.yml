@@ -23,3 +23,7 @@ commands:
     usage: /reloadyaml
     permission: jkvttplugin.reloadyaml
     permission-message: You do not have permission to use this command.
+  createcharacter:
+    description: Start character creation.
+    usage: /createcharacter
+#    permission: jkvttplugin.createcharacter
