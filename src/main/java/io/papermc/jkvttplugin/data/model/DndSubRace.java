@@ -1,6 +1,7 @@
 package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
@@ -76,5 +77,18 @@ public class DndSubRace {
 
     public ItemStack getRaceIcon() {
         return Util.createItem(Component.text(getName()), null, iconName, 0);
+    }
+
+    // ToDo update to new player_choices
+    public void contributeChoices(List<PendingChoice<?>> out) {
+        if (languageChoices != null) {
+            PlayersChoice<String> langPc = languageChoices;
+
+            boolean emptyOptions = (langPc.getOptions() == null || langPc.getOptions().isEmpty());
+            if (emptyOptions) {
+                List<String> allLangs = LanguageRegistry.getAllLanguages();
+                langPc = new PlayersChoice<>(langPc.getChoose(), allLangs, PlayersChoice.ChoiceType.LANGUAGE);
+            }
+        }
     }
 }

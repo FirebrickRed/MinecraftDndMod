@@ -48,10 +48,7 @@ public class ClassLoader {
                 .toolProficiencies(LoaderUtils.normalizeStringList(data.get("tool_proficiencies")))
 
                 .skills(LoaderUtils.normalizeStringList(data.get("skills")))
-                .skillChoices(LoaderUtils.parseSkillChoice(data.get("skill_choices")))
-
                 .startingEquipment(LoaderUtils.normalizeStringList(data.get("starting_equipment")))
-                .equipmentChoices(LoaderUtils.parseEquipmentChoicesList(data.get("equipment_choices")))
 
                 .asiLevels(LoaderUtils.castList(data.get("asi_levels"), Integer.class))
                 .spellcastingAbility(Ability.fromString((String) data.get("spellcasting_ability")))
@@ -63,7 +60,11 @@ public class ClassLoader {
                 .allowFeats((boolean) data.getOrDefault("allow_feats", true))
                 .icon((String) data.get("icon"));
 
-        return builder.build();
+        DndClass dndClass = builder.build();
+        var pcs = LoaderUtils.parsePlayerChoicesForClass(data.get("player_choices"));
+        dndClass.setPlayerChoices(pcs);
+
+        return dndClass;
     }
 
     public static DndClass getClass(String name) {

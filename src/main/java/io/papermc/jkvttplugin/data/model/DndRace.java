@@ -2,7 +2,9 @@ package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.CreatureType;
+import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.data.model.enums.Size;
+import io.papermc.jkvttplugin.util.ChoiceUtil;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import org.bukkit.inventory.ItemStack;
@@ -132,5 +134,27 @@ public class DndRace {
 
     public ItemStack getRaceIcon() {
         return Util.createItem(Component.text(getName()), null, iconName, 0);
+    }
+
+    public void contributeChoices(List<PendingChoice<?>> out) {
+        if (ChoiceUtil.usable(sizeChoice)) {
+            ChoiceUtil.addIfUsable(out, PendingChoice.ofStrings("race_size", "Size", sizeChoice, "race))"));
+        }
+
+        // ToDo: fix empty  language choice array
+        // ToDo update to new player_choices
+        if (languageChoices != null) {
+            PlayersChoice<String> langPc = languageChoices;
+
+            boolean emptyOptions = (langPc.getOptions() == null || langPc.getOptions().isEmpty());
+            if (emptyOptions) {
+                List<String> allLangs = LanguageRegistry.getAllLanguages();
+                langPc = new PlayersChoice<>(langPc.getChoose(), allLangs, PlayersChoice.ChoiceType.LANGUAGE);
+            }
+
+            if (ChoiceUtil.usable(langPc)) {
+                ChoiceUtil.addIfUsable(out, PendingChoice.ofStrings("race_languages", "Languagse", langPc, "race"));
+            }
+        }
     }
 }

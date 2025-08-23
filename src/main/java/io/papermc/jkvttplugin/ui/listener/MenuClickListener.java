@@ -7,10 +7,7 @@ import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
-import io.papermc.jkvttplugin.ui.menu.BackgroundSelectionMenu;
-import io.papermc.jkvttplugin.ui.menu.ClassSelectionMenu;
-import io.papermc.jkvttplugin.ui.menu.MenuHolder;
-import io.papermc.jkvttplugin.ui.menu.SubraceSelectionMenu;
+import io.papermc.jkvttplugin.ui.menu.*;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -36,11 +33,14 @@ public class MenuClickListener implements Listener {
 
         Player player = (Player) event.getWhoClicked();
 
+        // ToDo: Double check parameters when flow is all finished
         switch (holder.getType()) {
             case CHARACTER_SHEET -> handleCharacterSheetClick(event, holder);
             case RACE_SELECTION -> handleRaceSelectionClick(player, event, holder, clickedItem, action, payload);
             case SUBRACE_SELECTION -> handleSubraceSelectionClick(player, event, holder, clickedItem, action, payload);
             case CLASS_SELECTION -> handleClassSelectionClick(player, event, holder, clickedItem, action, payload);
+            case BACKGROUND_SELECTION -> handleBackgroundSelectionClick(player, event, holder, clickedItem, action, payload);
+            case PLAYERS_CHOICES -> handlePlayersChoiceClick(player, event, holder, clickedItem, action, payload);
             case ABILITY_ALLOCATION -> handleAbilityAllocationClick(event, holder);
         }
     }
@@ -65,7 +65,6 @@ public class MenuClickListener implements Listener {
             return;
         }
 
-        System.out.println("Does Race have subraces: " + race.hasSubraces());
         if (race.hasSubraces()) {
             SubraceSelectionMenu.open(player, race.getSubraces(), holder.getSessionId());
         } else {
@@ -105,7 +104,29 @@ public class MenuClickListener implements Listener {
         player.sendMessage("You have selected " + payload + " as your class!");
     }
 
-    private void handleBackgroundSelectionClick(InventoryClickEvent event, MenuHolder holder) {
+    private void handleBackgroundSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
+        if (action != MenuAction.CHOOSE_BACKGROUND || payload == null || payload.isEmpty()) return;
+
+        CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
+        if (session == null) {
+            player.closeInventory();
+            player.sendMessage("No Character creation session found.");
+            return;
+        }
+
+        session.setSelectedBackground(payload);
+        player.sendMessage("You have selected " + payload + " as your background!");
+
+        var pending = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
+        if (pending.isEmpty()) {
+            System.out.println("in pending is Empty()");
+            // ToDo: go to ability allocation menu
+        } else {
+            PlayersChoiceMenu.open(player, pending, holder.getSessionId());
+        }
+    }
+
+    private void handlePlayersChoiceClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
 
     }
 

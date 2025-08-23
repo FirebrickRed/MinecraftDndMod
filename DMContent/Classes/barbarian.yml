@@ -1,28 +1,19 @@
 name: Barbarian
 hit_die: 12
 proficiency: [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6] # not sure if this is the best way to do this or if this should be done somewhere else because its the same for every class
-primary_abilities:
+primary_abilities: #ToDo: update for all classes and incourporate if wanted
   - Strength
   - Constitution
 saving_throws:
   - Strength
   - Constitution
-skill_options:
-  choose: 2
-  options:
-    - AnimalHandling
-    - Athletics
-    - Intimidation
-    - Nature
-    - Perception
-    - Survival
 armor_proficiencies:
-  - Light armor
-  - Medium armor
-  - Shields
+  - light_armor
+  - medium_armor
+  - shields
 weapon_proficiencies:
-  - Simple Weapons
-  - Martial Weapons
+  - simple_weapons
+  - martial_weapons
 tool_proficiencies: []
 features_by_level:
   1:
@@ -148,18 +139,32 @@ features_by_level:
       type: passive
       description: Your Strength and Constitution scores increase by 4. Their maximums increase to 24.
 starting_equipment:
-  - item: explorers_pack
-  - item: javelin
-    quantity: 4
-  - choose: 1
+  - explorers_pack
+  - javelin
+  - javelin
+  - javelin
+  - javelin
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 2
+    options: [animal_handling, athletics, intimidation, nature, perception, survival]
+  - id: class_equipment_1
+    title: Starting Equipment 1
+    type: equipment
+    choose: 1
     options:
-      - item: greataxe
-      - tag: martial_melee_weapon
-  - choose: 1
+      - - item: greataxe
+      - - tag: martial_melee_weapon
+  - id: class_equipment_2
+    title: Starting Equipment 2
+    type: equipment
+    choose: 1
     options:
-      - item: handaxe
-        quantity: 2
-      - tag: simple_weapon
+      - - item: handaxe
+          quantity: 2
+      - - tag: simple_weapon
 icon: barbarian
 multiclass_requirements:
   Strength: 13

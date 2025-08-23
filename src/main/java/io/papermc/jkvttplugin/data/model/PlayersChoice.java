@@ -90,6 +90,7 @@ public class PlayersChoice<T> {
                 }
             }
         }
+
         return new PlayersChoice<>(choose, options, choiceType);
     }
 

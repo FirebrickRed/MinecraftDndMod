@@ -19,10 +19,8 @@ public class DndClass {
     private List<String> toolProficiencies;
 
     private List<String> skills;
-    private PlayersChoice<String> skillChoices;
 
     private List<String> startingEquipment;
-    private List<PlayersChoice<String>> equipmentChoices;
 
     private List<Integer> asiLevels;
     private Ability spellcastingAbility; // null if non-spellcaster
@@ -33,6 +31,10 @@ public class DndClass {
 
     private boolean allowFeats;
     private Map<String, Integer> classResources; // Think Rage, Bardic Inspiration
+
+    private List<ChoiceEntry> playerChoices = List.of();
+    public List<ChoiceEntry> getPlayerChoices() { return playerChoices; }
+    public void setPlayerChoices(List<ChoiceEntry> pcs) { this.playerChoices = (pcs == null) ? List.of() : List.copyOf(pcs); }
 
     private String icon;
 
@@ -126,28 +128,12 @@ public class DndClass {
         this.skills = skills;
     }
 
-    public PlayersChoice<String> getSkillChoices() {
-        return skillChoices;
-    }
-
-    public void setSkillChoices(PlayersChoice<String> skillChoices) {
-        this.skillChoices = skillChoices;
-    }
-
     public List<String> getStartingEquipment() {
         return startingEquipment;
     }
 
     public void setStartingEquipment(List<String> startingEquipment) {
         this.startingEquipment = startingEquipment;
-    }
-
-    public List<PlayersChoice<String>> getEquipmentChoices() {
-        return equipmentChoices;
-    }
-
-    public void setEquipmentChoices(List<PlayersChoice<String>> equipmentChoices) {
-        this.equipmentChoices = equipmentChoices;
     }
 
     public List<Integer> getAsiLevels() {
@@ -210,67 +196,68 @@ public class DndClass {
         return Util.createItem(Component.text(getName()), null, getIcon(), 0);
     }
 
+    public void contributeChoices(List<PendingChoice<?>> out) {
+        for (ChoiceEntry e : playerChoices) {
+            switch (e.type()) {
+                case SKILL, LANGUAGE, CUSTOM -> {
+                    PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
+                    out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "class"));
+                }
+                case EQUIPMENT -> {
+                    PlayersChoice<EquipmentOption> pc = (PlayersChoice<EquipmentOption>) e.pc();
+                    out.add(PendingChoice.ofGeneric(
+                            e.id(), e.title(), pc, "class",
+                            opt -> Integer.toString(pc.getOptions().indexOf(opt)),
+                            key -> pc.getOptions().get(Integer.parseInt(key)),
+                            EquipmentOption::prettyLabel
+                    ));
+                }
+                default -> {}
+            }
+        }
+    }
+
     // Builder
     public static class Builder {
         private final DndClass instance = new DndClass();
 
         public Builder name(String name) {
             instance.setName(name);
-            System.out.println("Setting class name: " + name);
             return this;
         }
 
         public Builder hitDie(int hitDie) {
             instance.setHitDie(hitDie);
-            System.out.println("Setting hit die: " + hitDie);
             return this;
         }
 
         public Builder savingThrows(List<Ability> savingThrows) {
             instance.setSavingThrows(savingThrows);
-            System.out.println("Setting saving throws: " + savingThrows);
             return this;
         }
 
         public Builder armorProficiencies(List<String> armorProficiencies) {
             instance.setArmorProficiencies(armorProficiencies);
-            System.out.println("Setting armor proficiencies: " + armorProficiencies);
             return this;
         }
 
         public Builder weaponProficiencies(List<String> weaponProficiencies) {
             instance.setWeaponProficiencies(weaponProficiencies);
-            System.out.println("Setting weapon proficiencies: " + weaponProficiencies);
             return this;
         }
 
         public Builder toolProficiencies(List<String> toolProficiencies) {
             instance.setToolProficiencies(toolProficiencies);
-            System.out.println("Setting tool proficiencies: " + toolProficiencies);
             return this;
         }
 
         public Builder skills(List<String> skills) {
             instance.setSkills(skills);
-            System.out.println("Setting skills: " + skills);
-            return this;
-        }
-
-        public Builder skillChoices(PlayersChoice<String> skillChoices) {
-            instance.setSkillChoices(skillChoices);
-            System.out.println("Setting skill choices: " + skillChoices);
             return this;
         }
 
         public Builder startingEquipment(List<String> startingEquipment) {
             instance.setStartingEquipment(startingEquipment);
-            System.out.println("Setting starting equipment: " + startingEquipment);
-            return this;
-        }
-
-        public Builder equipmentChoices(List<PlayersChoice<String>> equipmentChoices) {
-            instance.setEquipmentChoices(equipmentChoices);
-            System.out.println("Setting equipment choices: " + equipmentChoices);
             return this;
         }
 
@@ -282,43 +269,37 @@ public class DndClass {
 
         public Builder spellcastingAbility(Ability spellcastingAbility) {
             instance.setSpellcastingAbility(spellcastingAbility);
-            System.out.println("Setting spellcasting ability: " + spellcastingAbility);
             return this;
         }
 
         public Builder featuresByLevel(Map<Integer, List<String>> featuresByLevel) {
             instance.setFeaturesByLevel(featuresByLevel);
-//            System.out.println("Setting features by level: " + featuresByLevel);
             return this;
         }
 
         public Builder subclasses(List<String> subclasses) {
             instance.setSubclasses(subclasses);
-            System.out.println("Setting subclasses: " + subclasses);
             return this;
         }
 
         public Builder multiclassRequirements(Map<String, Integer> requirements) {
             instance.setMulticlassRequirements(requirements);
-            System.out.println("Setting multiclass requirements: " + requirements);
             return this;
         }
 
         public Builder allowFeats(boolean allowFeats) {
             instance.setAllowFeats(allowFeats);
-            System.out.println("Setting allow feats: " + allowFeats);
             return this;
         }
 
+        // ToDo: implement Class Resources like Rage and Sneakattack
         public Builder classResources(Map<String, Integer> classResources) {
             instance.setClassResources(classResources);
-            System.out.println("Setting class resources: " + classResources);
             return this;
         }
 
         public Builder icon(String icon) {
             instance.setIcon(icon);
-            System.out.println("Setting class icon: " + icon);
             return this;
         }
 

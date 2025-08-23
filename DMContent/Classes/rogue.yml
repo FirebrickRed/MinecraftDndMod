@@ -21,36 +21,22 @@ proficiency:
   - 6
   - 6
   - 6
-primary_abilities:
+primary_abilities: #ToDo: update for all classes and incourporate if wanted
   - Strength
   - Constitution
 saving_throws:
   - Dexterity
   - Intelligence
-skill_options:
-  choose: 4
-  options:
-    - Acrobatics
-    - Athletics
-    - Deception
-    - Insight
-    - Intimidation
-    - Investigation
-    - Perception
-    - Performance
-    - Persuasion
-    - Sleight of Hand
-    - Stealth
 armor_proficiencies:
-  - Light armor
+  - light_armor
 weapon_proficiencies:
-  - Simple weapons
-  - hand crossbows
+  - simple_weapons
+  - hand_crossbows
   - longswords
   - rapiers
   - shortswords
 tool_proficiencies:
-  - Thieves' tools
+  - thieves_tools
 features_by_level:
   1:
     - name: Expertise
@@ -88,21 +74,36 @@ features_by_level:
       description: Increase one ability score by 2, or two by 1 each. Alternatively,
         choose a feat.
 starting_equipment:
-  - item: leather_armor
-  - item: daggers
-    quantity: 2
-  - item: thieves_tools
-  - choose: 1
+  - leather_armor
+  - daggers
+  - daggers
+  - thieves_tools
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 4
+    options: [acrobatics, athletics, deception, insight, intimidation, investigation, perception, performance, persuasion, slight_of_hand, stealth]
+  - id: class_equipment_1
+    title: Class Equipment 1
+    type: equipment
+    choose: 1
     options:
       - - item: rapier
       - - item: shortsword
-  - choose: 1
+  - id: class_equipment_2
+    title: Class Equipment 2
+    type: equipment
+    choose: 1
     options:
       - - item: shortbow
         - item: arrows
           quantity: 20
       - - item: shortsword
-  - choose: 1
+  - id: class_equipment_3
+    title: Class Equipment 3
+    type: equipment
+    choose: 1
     options:
       - - item: burglars_pack
       - - item: dungeoneers_pack

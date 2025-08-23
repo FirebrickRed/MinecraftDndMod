@@ -13,7 +13,6 @@ public class DndBackground {
     private final List<String> skills;
 
     private final List<String> languages;
-    private final PlayersChoice<String> languageChoices;
 
     private final List<String> tools;
 
@@ -26,17 +25,21 @@ public class DndBackground {
     private final List<String> links;
     private final String iconName;
 
+    private List<ChoiceEntry> playerChoices = List.of();
+    public List<ChoiceEntry> getPlayerChoices() { return playerChoices; }
+    public void setPlayerChoices(List<ChoiceEntry> pcs) { this.playerChoices = (pcs == null) ? List.of() : List.copyOf(pcs); }
+
     public DndBackground(
             String key,
             String name,
             String description,
             List<String> skills,
             List<String> languages,
-            PlayersChoice<String> languageChoices,
             List<String> tools,
             List<String> equipment,
             String feature,
             List<String> traits,
+            List<ChoiceEntry> pcs,
             List<String> links,
             String iconName
     ) {
@@ -45,11 +48,11 @@ public class DndBackground {
         this.description = description;
         this.skills = skills;
         this.languages = languages;
-        this.languageChoices = languageChoices;
         this.tools = tools;
         this.equipment = equipment;
         this.feature = feature;
         this.traits = traits;
+        this.playerChoices = pcs;
         this.links = links;
         this.iconName = iconName;
     }
@@ -75,10 +78,6 @@ public class DndBackground {
         return languages;
     }
 
-    public PlayersChoice<String> getLanguageChoices() {
-        return languageChoices;
-    }
-
     public List<String> getTools() {
         return tools;
     }
@@ -101,5 +100,26 @@ public class DndBackground {
 
     public ItemStack getBackgroundIcon() {
         return Util.createItem(Component.text(getName()), null, iconName, 0);
+    }
+
+    public void contributeChoices(List<PendingChoice<?>> out) {
+        for (ChoiceEntry e : playerChoices) {
+            switch (e.type()) {
+                case SKILL, LANGUAGE, CUSTOM -> {
+                    PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
+                    out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "background"));
+                }
+                case EQUIPMENT -> {
+                    PlayersChoice<EquipmentOption> pc = (PlayersChoice<EquipmentOption>) e.pc();
+                    out.add(PendingChoice.ofGeneric(
+                            e.id(), e.title(), pc, "background",
+                            opt -> Integer.toString(pc.getOptions().indexOf(opt)),
+                            key -> pc.getOptions().get(Integer.parseInt(key)),
+                            EquipmentOption::prettyLabel
+                    ));
+                }
+                default -> {}
+            }
+        }
     }
 }

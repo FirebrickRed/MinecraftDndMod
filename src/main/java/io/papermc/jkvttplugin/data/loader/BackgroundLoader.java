@@ -46,43 +46,34 @@ public class BackgroundLoader {
         String name = (String) data.getOrDefault("name", key);
         System.out.println("Name: " + name);
         String description = (String) data.getOrDefault("description", "");
-        System.out.println("Description: " + description);
 
         // Skills
         List<String> skills = LoaderUtils.normalizeStringList(data.get("skill_proficiencies"));
-        System.out.println("Skills: " + skills);
 
         // languages
         List<String> languages = LoaderUtils.parseLanguages(data.get("languages"));
-        System.out.println("Languages: " + languages);
-        PlayersChoice<String> languageChoices = LoaderUtils.parseLanguagePlayersChoice(data.get("players_choice_languages"));
-        System.out.println("Language Choices: " + languageChoices);
 
         // tools
         List<String> tools = LoaderUtils.normalizeStringList(data.get("tool_proficiencies"));
-        System.out.println("Tools: " + tools);
 
         // equipment
         List<String> equipment = LoaderUtils.parseEquipment((List<Object>) data.get("starting_equipment"));
-        System.out.println("Equipment: " + equipment);
 
         // feature
         String feature = (String) data.getOrDefault("feature", "");
-        System.out.println("Feature: " + feature);
 
         // Traits
         List<String> traits = LoaderUtils.parseTraits(data.get("traits"));
-        System.out.println("Traits: " + traits);
+
+        var pcs = LoaderUtils.parsePlayerChoicesForClass(data.get("player_choices"));
 
         // links
         List<String> links = LoaderUtils.normalizeStringList(data.get("links"));
-        System.out.println("Links: " + links);
 
         // Icon name
         String iconName = (String) data.getOrDefault("icon_name", null);
-        System.out.println("Icon Name: " + iconName);
 
-        return new DndBackground(key, name, description, skills, languages, languageChoices, tools, equipment, feature, traits, links, iconName);
+        return new DndBackground(key, name, description, skills, languages, tools, equipment, feature, traits, pcs, links, iconName);
     }
 
     public static DndBackground getBackground(String name) {

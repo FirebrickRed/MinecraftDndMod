@@ -4,7 +4,6 @@ urchin:
   skills:
     - Sleight_of_Hand
     - Stealth
-  languages: []
   tools:
     - disguise_kit
     - thieves_tools
@@ -12,7 +11,7 @@ urchin:
     - small_knife
     - item: city_map
       city: starting_city
-    - item: pet_mouse
+    - pet_mouse
     - item: keepsake_token
       from: "parents"
     - common_clothes

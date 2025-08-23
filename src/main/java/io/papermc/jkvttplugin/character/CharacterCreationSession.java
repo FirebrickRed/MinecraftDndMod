@@ -1,25 +1,23 @@
 package io.papermc.jkvttplugin.character;
 
-import io.papermc.jkvttplugin.data.loader.ClassLoader;
-import io.papermc.jkvttplugin.data.loader.RaceLoader;
-import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
-import io.papermc.jkvttplugin.data.model.DndClass;
-import io.papermc.jkvttplugin.data.model.DndRace;
-import io.papermc.jkvttplugin.data.model.DndSubRace;
-import io.papermc.jkvttplugin.data.model.DndBackground;
+import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 
-import java.util.EnumMap;
-import java.util.UUID;
+import java.util.*;
 
 public class CharacterCreationSession {
     private final UUID playerId;
     private final UUID sessionId = UUID.randomUUID();
+
     private String selectedRace;
     private String selectedSubRace;
     private String selectedClass;
     private String selectedBackground;
+
+    private List<PendingChoice<?>> pendingChoices = Collections.emptyList();
+
     private final EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
+
     private String characterName;
 
     public CharacterCreationSession(UUID playerId) {
@@ -50,90 +48,40 @@ public class CharacterCreationSession {
         this.selectedSubRace = selectedSubRace;
     }
 
-    public DndClass getSelectedClass() {
-        return ClassLoader.getClass(selectedClass);
+    public String getSelectedClass() {
+        return selectedClass;
     }
 
     public void setSelectedClass(String selectedClass) {
         this.selectedClass = selectedClass;
     }
 
-    public DndBackground getSelectedBackground() {
-        return BackgroundLoader.getBackground(selectedBackground);
+    public String getSelectedBackground() {
+        return selectedBackground;
     }
 
     public void setSelectedBackground(String selectedBackground) {
         this.selectedBackground = selectedBackground;
     }
 
-//    public void handleRaceSelection(InventoryClickEvent event) {
-//        ItemStack clickedItem = event.getCurrentItem();
-//
-//        // ToDo: check item clicked needs to be updated can totally be made its own function
-//        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-//        if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
-//
-//        String raceName = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
-//        String normalizedRaceName = Util.normalize(raceName);
-//
-//        DndRace selectedRace = RaceLoader.getRace(normalizedRaceName);
-//        if (selectedRace == null) {
-//            player.sendMessage("That race is not available.");
-//            return;
-//        }
-//
-//        this.selectedRace = selectedRace;
-//
-//        if (selectedRace.hasSubraces()) {
-//            player.openInventory(buildSubRaceInventory(selectedRace));
-//        } else {
-//            player.sendMessage("You have selected " + raceName + " as your race!");
-//            player.openInventory(buildClassInventory());
-//        }
-//    }
-//
-//    public void handleSubRaceSelection(InventoryClickEvent event) {
-//        ItemStack clickedItem = event.getCurrentItem();
-//
-//        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-//        if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
-//
-//        String selectedItem = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
-//
-//        if ("Back to Race".equals(selectedItem)) {
-//            player.openInventory(buildRaceInventory());
-//            return;
-//        }
-//
-//        DndSubRace subRace = selectedRace.getSubRaceByName(selectedItem);
-//
-//        if (subRace != null) {
-//            this.selectedSubRace = subRace;
-//            player.sendMessage("You have selected " + selectedItem + " as your subrace!");
-//            player.openInventory(buildClassInventory());
-//        }
-//    }
-//
-//    public void handleClassSelection(InventoryClickEvent event) {
-//        ItemStack clickedItem = event.getCurrentItem();
-//
-//        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-//        if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
-//
-//        String className = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
-//        String normalizedClassName = Util.normalize(className);
-//
-//        DndClass selectedClass = ClassLoader.getClass(normalizedClassName);
-//
-//        if (selectedClass != null) {
-//            this.selectedClass = selectedClass;
-//            player.sendMessage("You have selected " + className + " as your class!");
-//            player.openInventory(buildBackgroundInventory());
-//        } else {
-//            player.sendMessage("Invalid class selection: " + className);
-//        }
-//    }
-//
+    public List<PendingChoice<?>> getPendingChoices() {
+        return Collections.unmodifiableList(pendingChoices);
+    }
+    public void setPendingChoices(List<PendingChoice<?>> list) {
+        this.pendingChoices = (list == null) ? new ArrayList<>() : new ArrayList<>(list);
+    }
+    public void clearPendingChoices() {
+        this.pendingChoices = new ArrayList<>();
+    }
+    public PendingChoice<?> findPendingChoice(String id) {
+        if (id == null) return null;
+        for (var pc : pendingChoices) {
+            if (id.equals(pc.getId())) return pc;
+        }
+        return null;
+    }
+
+
 //    public void handleBackgroundSelection(InventoryClickEvent event) {
 //        ItemStack clickedItem = event.getCurrentItem();
 //

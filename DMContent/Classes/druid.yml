@@ -21,40 +21,29 @@ proficiency:
   - 6
   - 6
   - 6
-primary_abilities:
+primary_abilities: #ToDo: update for all classes and incourporate if wanted
   - Strength
   - Constitution
 saving_throws:
   - Intelligence
   - Wisdom
-skill_options:
-  choose: 2
-  options:
-    - Arcana
-    - AnimalHandling
-    - Insight
-    - Medicine
-    - Nature
-    - Perception
-    - Religion
-    - Survival
 armor_proficiencies:
-  - Light armor
-  - Medium armor
-  - Shields
+  - light_armor
+  - medium_armor
+  - shields
 weapon_proficiencies:
-  - Clubs
-  - Daggers
-  - Darts
-  - Javelins
-  - Maces
-  - Quarterstaffs
-  - Scimitars
-  - Sickles
-  - Slings
-  - Spears
+  - clubs
+  - daggers
+  - darts
+  - javelins
+  - maces
+  - quarterstaffs
+  - scimitars
+  - sickles
+  - slings
+  - spears
 tool_proficiencies:
-  - Herbalism Kit
+  - herbalism_kit
 features_by_level:
   1:
     - name: Druidic
@@ -120,14 +109,26 @@ features_by_level:
       description: Increase one ability score by 2, or two scores by 1 each. Alternatively,
         choose a feat.
 starting_equipment:
-  - item: leather_armor
-  - item: explorers_pack
-  - item: druidic_focus
-  - choose: 1
+  - leather_armor
+  - explorers_pack
+  - druidic_focus
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 2
+    options: [arcana, animal_handling, insight, medicine, nature, perception, religion, survival]
+  - id: class_equipment_1
+    title: Class Equipment 1
+    type: equipment
+    choose: 1
     options:
       - - item: wooden_shield
       - - tag: simple_weapon
-  - choose: 1
+  - id: class_equipment_2
+    title: Class Equipment 2
+    type: equipment
+    choose: 1
     options:
       - - item: scimitar
       - - tag: simple_weapon

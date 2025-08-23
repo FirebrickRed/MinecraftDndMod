@@ -39,6 +39,20 @@ public class Util {
         return display.equalsIgnoreCase(name);
     }
 
+    // ToDo: see if there is a better way than this
+    public static String prettify(String s) {
+        if (s == null || s.isBlank()) return "";
+        s = s.replace('_', ' ').replace('-', ' ').trim().toLowerCase(java.util.Locale.ROOT);
+        StringBuilder out = new StringBuilder(s.length());
+        boolean cap = true;
+        for (int i = 0; i < s.length(); i++) {
+            char c = s.charAt(i);
+            out.append(cap ? Character.toTitleCase(c) : c);
+            cap = (c == ' ');
+        }
+        return out.toString();
+    }
+
     public static String normalize(String name) {
         return name.trim().toLowerCase().replace(" ", "_");
     }

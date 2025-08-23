@@ -1,7 +1,7 @@
 name: Giff
 description: Giff are bipedal hippopotamus-like folk with a passion for explosives, military structure, and strength. They are known for their brute power and discipline, often serving in astral navies.
 ability_scores:
-  choices:
+  players_choice:
     choose: 2
     increment: 1
     unique: true

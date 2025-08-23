@@ -1,13 +1,14 @@
 wildspacer:
-  name: Wildspacer
-  description: "You’ve lived much of your life in wildspace, seeing wonders and terrors among the stars."
+  display_name: Wildspacer
+  description: "You’ve lived much of your life in wildspace..."
   skills:
     - Athletics
     - Survival
-  languages: []
   tools:
+    - navigators_tools
     - vehicles_space
-  starting_equipment:
+  equipment:
+    - belaying_pin
     - grappling_hook
     - travelers_clothes
     - item: rations
@@ -18,8 +19,7 @@ wildspacer:
           amount: 10
   feature: "Wildspace Adaptation"
 #    name: Wildspace Adaptation
-#    description: "You have advantage on saving throws to avoid being stunned, disoriented, or otherwise affected by zero gravity."
+#    description: "You have advantage on saving throws to avoid being stunned or disoriented in zero gravity."
   traits: [wildspacer]
   links:
-    - "https://www.dndbeyond.com/backgrounds/wildspacer"
-  icon_name: wildspacer
+    - "https://dnd5e.wikidot.com/background:wildspacer"

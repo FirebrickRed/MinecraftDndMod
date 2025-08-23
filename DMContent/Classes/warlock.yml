@@ -21,26 +21,16 @@ proficiency:
   - 6
   - 6
   - 6
-primary_abilities:
+primary_abilities: #ToDo: update for all classes and incourporate if wanted
   - Strength
   - Constitution
 saving_throws:
   - Wisdom
   - Charisma
-skill_options:
-  choose: 2
-  options:
-    - Arcana
-    - Deception
-    - History
-    - Intimidation
-    - Investigation
-    - Nature
-    - Religion
 armor_proficiencies:
-  - Light armor
+  - light_armor
 weapon_proficiencies:
-  - Simple weapons
+  - simple_weapons
 tool_proficiencies: []
 features_by_level:
   1:
@@ -73,24 +63,44 @@ features_by_level:
       description: Increase one ability score by 2, or two by 1 each. Alternatively,
         choose a feat.
 starting_equipment:
-  - item: leather_armor
-  - item: dagger
-    quantity: 2
-  - tag: simple_weapon
-  - choose: 1
+  - leather_armor
+  - dagger
+  - dagger
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 2
+    options: [arcana, deception, history, intimidation, investigation, nature, religion]
+  - id: class_equipment_1
+    title: Class Equipment 1
+    type: equipment
+    choose: 1
     options:
       - - item: light_crossbow
         - item: bolt
           quantity: 20
       - - tag: simple_weapon
-  - choose: 1
+  - id: class_equipment_2
+    title: Class Equipment 2
+    type: equipment
+    choose: 1
     options:
       - - item: component_pouch
       - - item: arcane_focus
-  - choose: 1
+  - id: class_equipment_3
+    title: Class Equipment 3
+    type: equipment
+    choose: 1
     options:
       - - item: scholars_pack
       - - item: dungeoneers_pack
+  - id: class_equipment_4
+    title: Class Equipment 4
+    type: equipment
+    choose: 1
+    options:
+      - - tag: simple_weapon
 icon: warlock
 multiclass_requirements:
   Charisma: 13

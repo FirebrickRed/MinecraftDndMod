@@ -1,10 +1,14 @@
 package io.papermc.jkvttplugin.data.loader.util;
 
+import io.papermc.jkvttplugin.data.model.ChoiceEntry;
 import io.papermc.jkvttplugin.data.model.DndSubRace;
+import io.papermc.jkvttplugin.data.model.EquipmentOption;
 import io.papermc.jkvttplugin.data.model.PlayersChoice;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.data.model.enums.Size;
+import io.papermc.jkvttplugin.util.TagRegistry;
+import io.papermc.jkvttplugin.util.Util;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -259,10 +263,21 @@ public class LoaderUtils {
         return new DndSubRace(id, name, description, fixedAbilityScores, abilityScoreChoices, traits, languages, languageChoices, iconName);
     }
 
-    public static PlayersChoice<String> parseSkillChoice(Object obj) {
-        if (obj instanceof Map<?, ?> map) {
-            return PlayersChoice.fromMap(map, String.class, PlayersChoice.ChoiceType.SKILL);
+    public static PlayersChoice<String> parseSkillChoice(Object node) {
+        if (!(node instanceof List<?> blocks)) return null;
+
+        for (Object block : blocks) {
+            if (!(block instanceof Map<?, ?> m)) continue;
+            Object pcNode = m.get("players_choice");
+            if (pcNode instanceof Map<?, ?> pm) {
+                int choose = asInt(pm.get("choose"), 0);
+                List<String> options = normalizeStringList(pm.get("options"));
+                if (choose > 0 && !options.isEmpty()) {
+                    return new PlayersChoice<>(choose, options, PlayersChoice.ChoiceType.SKILL);
+                }
+            }
         }
+
         return null;
     }
 
@@ -299,6 +314,120 @@ public class LoaderUtils {
             return result;
         }
         return List.of();
+    }
+
+    public static List<EquipmentOption> parseEquipmentOptions(Object node) {
+        List<EquipmentOption> out = new ArrayList<>();
+        if (!(node instanceof List<?> raw)) return out;
+
+        for (Object opt : raw) {
+            if (opt instanceof List<?> bundle) {
+                List<EquipmentOption> parts = new ArrayList<>();
+                for (Object part : bundle) {
+                    EquipmentOption p = parseEquipmentElement(part);
+                    if (p != null) {
+                        parts.add(p);
+                    }
+                }
+                if (!parts.isEmpty()) {
+                    out.add(EquipmentOption.bundle(parts));
+                }
+                continue;
+            }
+            EquipmentOption single = parseEquipmentElement(opt);
+            if (single != null) out.add(single);
+        }
+        return out;
+    }
+
+    private static EquipmentOption parseEquipmentElement(Object node) {
+        if (node instanceof Map<?, ?> m) {
+            if (m.containsKey("item")) {
+                String id = Util.normalize(asString(m.get("item"), ""));
+                int qty = asInt(m.get("quantity"), 1);
+                System.out.println("id: " + id + " quantity: " + qty);
+                if (!id.isBlank()) {
+                    return EquipmentOption.item(id, qty);
+                }
+            }
+            if (m.containsKey("tag")) {
+                String tag = Util.normalize(asString(m.get("tag"), ""));
+                if (!tag.isBlank()) {
+                    return EquipmentOption.tag(tag);
+                }
+            }
+        } else if (node instanceof String s) {
+            String id = Util.normalize(s);
+            if (!id.isBlank()) {
+                return EquipmentOption.item(id, 1);
+            }
+        }
+        return null;
+    }
+
+    private static List<EquipmentOption> expandTagsForChoices(List<EquipmentOption> options) {
+        List<EquipmentOption> out = new ArrayList<>();
+        for (var opt : options) {
+            if (opt.getKind() == EquipmentOption.Kind.TAG) {
+                for (String id : TagRegistry.itemsFor(opt.getIdOrTag())) {
+                    out.add(EquipmentOption.item(id));
+                }
+            } else {
+                out.add(opt);
+            }
+        }
+        return out;
+    }
+
+    public static List<ChoiceEntry> parsePlayerChoicesForClass(Object node) {
+        if (!(node instanceof List<?> arr)) return List.of();
+        List<ChoiceEntry> out = new ArrayList<>();
+
+        for (Object raw : arr) {
+            if (!(raw instanceof Map<?, ?> m)) continue;
+
+            String id = asString(m.get("id"), "");
+            String title = asString(m.get("title"), id);
+            String typeString = asString(m.get("type"), "").toUpperCase();
+            int choose = asInt(m.get("choose"), 0);
+
+            PlayersChoice<?> pc = null;
+            PlayersChoice.ChoiceType type;
+
+            switch(typeString) {
+                case "SKILL" -> {
+                    type = PlayersChoice.ChoiceType.SKILL;
+                    var opts = normalizeStringList(m.get("options"));
+                    pc = new PlayersChoice<>(choose, opts, type);
+                }
+                case "EQUIPMENT" -> {
+                    type = PlayersChoice.ChoiceType.EQUIPMENT;
+                    var opts = parseEquipmentOptions(m.get("options"));
+                    opts = expandTagsForChoices(opts);
+                    pc = new PlayersChoice<>(choose, opts, type);
+                }
+                default -> { continue; }
+            }
+
+            if (choose > 0 && pc.getOptions() != null && !pc.getOptions().isEmpty()) {
+                out.add(new ChoiceEntry(id, title, pc.getType(), pc));
+            }
+        }
+        return out;
+    }
+
+    public static String asString(Object o, String def) {
+        return (o instanceof String s) ? s : def;
+    }
+
+    public static int asInt(Object o, int def) {
+        if (o instanceof Number n) return n.intValue();
+        if (o instanceof String s) {
+            try {
+                return Integer.parseInt(s);
+            } catch (NumberFormatException ignored) {}
+        }
+        return def;
     }
 
     public static <T> List<T> castList(Object obj, Class<T> clazz) {
