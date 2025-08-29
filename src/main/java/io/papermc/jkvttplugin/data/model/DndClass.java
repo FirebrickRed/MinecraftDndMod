@@ -7,6 +7,7 @@ import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 public class DndClass {
     private String name;
@@ -205,15 +206,57 @@ public class DndClass {
                 }
                 case EQUIPMENT -> {
                     PlayersChoice<EquipmentOption> pc = (PlayersChoice<EquipmentOption>) e.pc();
+                    Function<EquipmentOption, String> toKey = eo ->
+                            switch (eo.getKind()) {
+                                case ITEM -> "item:" + eo.getIdOrTag() + (eo.getQuantity() > 1 ? "@" + eo.getQuantity() : "");
+                                case TAG -> "tag:" + eo.getIdOrTag();
+                                case BUNDLE -> "bundle:" + eo.getParts().stream().map(p ->
+                                        (p.getKind() == EquipmentOption.Kind.ITEM)
+                                            ? "item:" + p.getIdOrTag() + (p.getQuantity() > 1 ? "@" + p.getQuantity() : "")
+                                            : (p.getKind() == EquipmentOption.Kind.TAG)
+                                                ? "tag:" + p.getIdOrTag()
+                                                : "bundle:...")
+                                        .reduce((a, b) -> a + "+" + b).orElse("empty");
+                            };
+
+                    Function<String, EquipmentOption> fromKey = key -> {
+                        if (key == null) return null;
+                        if (key.startsWith("item")) {
+                            String rest = key.substring(5);
+                            int at = rest.indexOf('@');
+                            String id = (at >= 0) ? rest.substring(0, at) : rest;
+                            int qty = (at >= 0) ? safeInt(rest.substring(at + 1), 1) : 1;
+                            return EquipmentOption.item(id, qty);
+                        }
+                        if (key.startsWith("tag:")) {
+                            return EquipmentOption.tag(key.substring(4));
+                        }
+                        if (key.startsWith("bundle:")) {
+                            String k = key;
+                            return pc.getOptions().stream()
+                                    .filter(o -> toKey.apply(o).equals(k))
+                                    .findFirst().orElse(null);
+                        }
+                        return null;
+                    };
+
+                    Function<EquipmentOption, String> toLabel = EquipmentOption::prettyLabel;
+
                     out.add(PendingChoice.ofGeneric(
                             e.id(), e.title(), pc, "class",
-                            opt -> Integer.toString(pc.getOptions().indexOf(opt)),
-                            key -> pc.getOptions().get(Integer.parseInt(key)),
-                            EquipmentOption::prettyLabel
+                            toKey, fromKey, toLabel
                     ));
                 }
                 default -> {}
             }
+        }
+    }
+
+    private static int safeInt(String s, int def) {
+        try {
+            return Integer.parseInt(s.trim());
+        } catch (Exception e) {
+            return def;
         }
     }
 

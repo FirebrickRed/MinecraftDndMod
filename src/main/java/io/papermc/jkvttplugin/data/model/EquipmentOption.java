@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.data.model;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import static io.papermc.jkvttplugin.util.Util.prettify;
 
@@ -33,6 +34,21 @@ public class EquipmentOption {
     @Override
     public String toString() {
         return prettyLabel();   // e.g., "Light Crossbow + Bolt ×20" / "Any Simple Weapon"
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof EquipmentOption other)) return false;
+        return kind == other.kind
+                && quantity == other.quantity
+                && Objects.equals(idOrTag, other.idOrTag)
+                && Objects.equals(parts, other.parts);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(kind, idOrTag, quantity, parts);
     }
 
     public String prettyLabel() {

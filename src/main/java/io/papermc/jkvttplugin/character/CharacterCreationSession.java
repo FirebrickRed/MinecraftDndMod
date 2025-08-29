@@ -73,12 +73,31 @@ public class CharacterCreationSession {
     public void clearPendingChoices() {
         this.pendingChoices = new ArrayList<>();
     }
+
     public PendingChoice<?> findPendingChoice(String id) {
         if (id == null) return null;
         for (var pc : pendingChoices) {
             if (id.equals(pc.getId())) return pc;
         }
         return null;
+    }
+
+    public boolean toggleChoiceByKey(String choiceId, String optionKey) {
+        PendingChoice<?> pc = findPendingChoice(choiceId);
+        if (pc == null) return false;
+        return pc.toggleKey(optionKey, Collections.emptySet());
+    }
+
+    public boolean isChoiceSatisfied(PendingChoice<?> pc) {
+        return pc != null && pc.isComplete();
+    }
+
+    public boolean allChoicesSatisfied() {
+        if (pendingChoices == null || pendingChoices.isEmpty()) return true;
+        for (PendingChoice<?> pc : pendingChoices) {
+            if (!pc.isComplete()) return false;
+        }
+        return true;
     }
 
 

@@ -39,6 +39,7 @@ public final class TagRegistry {
                 "longsword","maul","morningstar","pike","rapier","scimitar","shortsword",
                 "trident","war_pick","warhammer","whip"
         ));
+        m.put("gaming_set", List.of("dice_set", "playing_card_set"));
         return copyUnmodifiable(m);
     }
 

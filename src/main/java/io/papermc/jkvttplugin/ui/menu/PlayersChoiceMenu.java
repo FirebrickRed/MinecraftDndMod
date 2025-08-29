@@ -1,17 +1,21 @@
 package io.papermc.jkvttplugin.ui.menu;
 
+import io.papermc.jkvttplugin.data.model.EquipmentOption;
 import io.papermc.jkvttplugin.data.model.PendingChoice;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 import static io.papermc.jkvttplugin.util.Util.prettify;
 
@@ -45,14 +49,22 @@ public final class PlayersChoiceMenu {
                 String label = pending.displayFor(key);
                 boolean selected = pending.isSelectedKey(key);
 
-                ItemStack item = new ItemStack(selected ? Material.NAME_TAG : Material.PAPER);
-                item.editMeta(m -> m.displayName(Component.text(label)));
-
-                // optional: show selection count or hint as lore
-                item.lore(List.of(Component.text(selected ? "Selected" : "Click to select")));
+                ItemStack item = new ItemStack(Material.PAPER);
+                item.editMeta(m -> {
+                            m.displayName(Component.text(label));
+                            if (selected) {
+                                m.addEnchant(Enchantment.UNBREAKING, 1, true);
+                                m.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+                                m.lore(List.of(Component.text("✓ selected")));
+                            } else {
+                                m.lore(List.of(Component.text("Click to select")));
+                            }
+                        });
 
                 String payload = pending.getId() + "|" + key;
-                item = ItemUtil.tagAction(item, MenuAction.CHOOSE_OPTION, payload);
+                item = ItemUtil.tagAction(item,
+                        isWildcardKey(pending, key) ? MenuAction.DRILLDOWN_OPEN : MenuAction.CHOOSE_OPTION,
+                        payload);
 
                 inventory.setItem(slot++, item);
             }
@@ -66,21 +78,48 @@ public final class PlayersChoiceMenu {
         return inventory;
     }
 
+    public static void openDrilldown(Player player, UUID sessionId, String choiceId, String wildcardKey, String title, List<String> subOptionKeys, Function<String, String> display) {
+        int size = 54;
+        Inventory inventory = Bukkit.createInventory(
+                new MenuHolder(MenuType.PLAYERS_CHOICES, sessionId),
+                size,
+                Component.text(title)
+        );
+
+        int slot = 0;
+        for (String sub : subOptionKeys) {
+            ItemStack it = new ItemStack(Material.PAPER);
+            it.editMeta(m -> m.displayName(Component.text(display.apply(sub))));
+            String payload = choiceId + "|" + wildcardKey + "|" + sub;
+            it = ItemUtil.tagAction(it, MenuAction.DRILLDOWN_PICK, payload);
+            inventory.setItem(slot++, it);
+            if (slot >= size - 9) break;
+        }
+
+        ItemStack back = new ItemStack(Material.ARROW);
+        back.editMeta(m -> m.displayName(Component.text("Back")));
+        back = ItemUtil.tagAction(back, MenuAction.DRILLDOWN_BACK, choiceId + "|" + wildcardKey);
+        inventory.setItem(size - 9, back);
+
+        player.openInventory(inventory);
+    }
+
+    private static boolean isWildcardKey(PendingChoice<?> pending, String key) {
+        Object opt = pending.optionForKey(key);
+        if (opt instanceof EquipmentOption eo) {
+            if (eo.getKind() == EquipmentOption.Kind.TAG) return true;
+            if (eo.getKind() == EquipmentOption.Kind.BUNDLE) {
+                for (EquipmentOption part : eo.getParts()) {
+                    if (part.getKind() == EquipmentOption.Kind.TAG) return true;
+                }
+            }
+        }
+        return key != null && key.startsWith("tag:");
+    }
+
     private static String headerText(PendingChoice<?> p) {
         String prettySource = prettify(p.getSource());
         int choose = p.getPlayersChoice().getChoose();
         return prettySource + " (pick " + choose + ")";
-    }
-
-    private static String keyOf(Object o) {
-        if (o instanceof String s) return s;
-        if (o instanceof Enum<?> e) return e.name();
-        return String.valueOf(o);
-    }
-
-    private static String labelOf(Object o) {
-        if (o instanceof String s) return s;
-        if (o instanceof Enum<?> e) return prettify(e.name());
-        return String.valueOf(o);
     }
 }

@@ -83,7 +83,7 @@ player_choices:
     title: Class Skills
     type: skill
     choose: 4
-    options: [acrobatics, athletics, deception, insight, intimidation, investigation, perception, performance, persuasion, slight_of_hand, stealth]
+    options: [acrobatics, athletics, deception, insight, intimidation, investigation, perception, performance, persuasion, sleight_of_hand, stealth]
   - id: class_equipment_1
     title: Class Equipment 1
     type: equipment

@@ -79,10 +79,29 @@ public class PendingChoice<T> {
         return (t == null) ? key : toLabel.apply(t);
     }
 
-    public boolean isSelectedKey(String key) { return chosen.contains(fromKey.apply(key)); }
-    public void selectKey(String key) { chosen.add(fromKey.apply(key)); }
-    public void unselectKey(String key) { chosen.remove(fromKey.apply(key)); }
+    public boolean isSelectedKey(String key) {
+        T opt = fromKey.apply(key);
+        return opt != null && chosen.contains(opt);
+    }
+    public void selectKey(String key) {
+        T opt = fromKey.apply(key);
+        if (opt != null && !chosen.contains(opt)) {
+            chosen.add(opt);
+        }
+//        chosen.add(fromKey.apply(key));
+    }
+    public void deselectKey(String key) {
+        T opt = fromKey.apply(key);
+        if (opt != null) {
+            chosen.remove(opt);
+        }
+//        chosen.remove(fromKey.apply(key));
+    }
     public int selectedCount() { return chosen.size(); }
+
+    public T optionForKey(String key) {
+        return fromKey.apply(key);
+    }
 
     public boolean toggleOption(T option, Set<T> alreadyOwned) {
         if (chosen.contains(option)) {

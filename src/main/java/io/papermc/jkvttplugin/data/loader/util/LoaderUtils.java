@@ -403,7 +403,7 @@ public class LoaderUtils {
                 case "EQUIPMENT" -> {
                     type = PlayersChoice.ChoiceType.EQUIPMENT;
                     var opts = parseEquipmentOptions(m.get("options"));
-                    opts = expandTagsForChoices(opts);
+//                    opts = expandTagsForChoices(opts);
                     pc = new PlayersChoice<>(choose, opts, type);
                 }
                 default -> { continue; }
