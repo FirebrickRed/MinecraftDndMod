@@ -101,40 +101,6 @@ public class CharacterCreationSession {
     }
 
 
-//    public void handleBackgroundSelection(InventoryClickEvent event) {
-//        ItemStack clickedItem = event.getCurrentItem();
-//
-//        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-//        if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
-//
-//        String backgroundName = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
-//        // ToDo: check where normalization should happen because it may already get normalized in the loader
-//        String normalizedBackgroundName = Util.normalize(backgroundName);
-//
-//        DndBackground selectedBackground = BackgroundLoader.getBackground(normalizedBackgroundName);
-//
-//        if (selectedBackground != null) {
-//            this.selectedBackground = selectedBackground;
-//            player.sendMessage("You have selected " + backgroundName + " as your background!");
-//            player.openInventory(buildAbilityScoreInventory(abilityScores));
-//        }
-//
-////        if (selectedBackgroundType != null) {
-////            selectedBackground = selectedBackgroundType.getDndBackground();
-////            player.sendMessage("You have selected " + backgroundName + " as your background!");
-////            player.closeInventory();
-////
-////            // Create the character sheet
-////            createCharacterSheet(
-////                    player,
-////                    selectedRace,
-////                    selectedClass,
-////                    abilityScores,
-////                    selectedBackground
-////            );
-////
-////        }
-//    }
 //
 //    public void handleAbilityScoreSelection(InventoryClickEvent event) {
 //        ItemStack clickedItem = event.getCurrentItem();

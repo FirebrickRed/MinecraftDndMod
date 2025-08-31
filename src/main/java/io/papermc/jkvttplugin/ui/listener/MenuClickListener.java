@@ -34,7 +34,6 @@ public class MenuClickListener implements Listener {
         if (event.getClickedInventory() == null) return;
         ItemStack clickedItem = event.getCurrentItem();
         if (clickedItem == null || clickedItem.getType().isAir()) return;
-        System.out.println("clicked item: " + clickedItem);
 
         MenuAction action = ItemUtil.getAction(clickedItem);
         String payload = ItemUtil.getPayload(clickedItem);
@@ -128,15 +127,13 @@ public class MenuClickListener implements Listener {
 
         var pending = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
         if (pending.isEmpty()) {
-            System.out.println("in pending is Empty()");
-            // ToDo: go to ability allocation menu
+            AbilityAllocationMenu.open(player, session.getSelectedRace(), holder.getSessionId());
         } else {
             PlayersChoiceMenu.open(player, pending, holder.getSessionId());
         }
     }
 
     private void handlePlayersChoiceClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
-        System.out.println("Action: " + action);
         if (action == MenuAction.CHOOSE_OPTION) {
             String[] parts = splitChoicePayload(payload);
             if (parts == null) return;
@@ -261,7 +258,7 @@ public class MenuClickListener implements Listener {
             session.clearPendingChoices();
             player.closeInventory();
             player.sendMessage("Choices saved!");
-//            AbilityAllocationMenu.open(player, holder.getSessionId());
+            AbilityAllocationMenu.open(player, session.getSelectedRace(), holder.getSessionId());
         }
     }
 
