@@ -16,7 +16,7 @@ public class CharacterCreationSession {
 
     private List<PendingChoice<?>> pendingChoices = Collections.emptyList();
 
-    private final EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
+    private EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
 
     private String characterName;
 
@@ -100,41 +100,23 @@ public class CharacterCreationSession {
         return true;
     }
 
+    public EnumMap<Ability, Integer> getAbilityScores() {
+        if (abilityScores == null || abilityScores.isEmpty()) {
+            EnumMap<Ability, Integer> buildingScore = new EnumMap<>(Ability.class);
+            for (Ability ability : Ability.values()) {
+                buildingScore.put(ability, 10);
+            }
+            this.abilityScores = buildingScore;
+            return abilityScores;
+        }
+        return abilityScores;
+    }
 
-//    public void handleBackgroundSelection(InventoryClickEvent event) {
-//        ItemStack clickedItem = event.getCurrentItem();
-//
-//        if (clickedItem == null || clickedItem.getType() == Material.AIR) return;
-//        if (!clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasDisplayName()) return;
-//
-//        String backgroundName = PlainTextComponentSerializer.plainText().serialize(clickedItem.getItemMeta().displayName());
-//        // ToDo: check where normalization should happen because it may already get normalized in the loader
-//        String normalizedBackgroundName = Util.normalize(backgroundName);
-//
-//        DndBackground selectedBackground = BackgroundLoader.getBackground(normalizedBackgroundName);
-//
-//        if (selectedBackground != null) {
-//            this.selectedBackground = selectedBackground;
-//            player.sendMessage("You have selected " + backgroundName + " as your background!");
-//            player.openInventory(buildAbilityScoreInventory(abilityScores));
-//        }
-//
-////        if (selectedBackgroundType != null) {
-////            selectedBackground = selectedBackgroundType.getDndBackground();
-////            player.sendMessage("You have selected " + backgroundName + " as your background!");
-////            player.closeInventory();
-////
-////            // Create the character sheet
-////            createCharacterSheet(
-////                    player,
-////                    selectedRace,
-////                    selectedClass,
-////                    abilityScores,
-////                    selectedBackground
-////            );
-////
-////        }
-//    }
+    public void setAbilityScores(EnumMap<Ability, Integer> abilities) {
+        this.abilityScores = abilities;
+    }
+
+
 //
 //    public void handleAbilityScoreSelection(InventoryClickEvent event) {
 //        ItemStack clickedItem = event.getCurrentItem();

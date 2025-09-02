@@ -8,6 +8,7 @@ import io.papermc.jkvttplugin.data.loader.RaceLoader;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.EquipmentOption;
 import io.papermc.jkvttplugin.data.model.PendingChoice;
+import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.menu.*;
 import io.papermc.jkvttplugin.util.ItemUtil;
@@ -18,9 +19,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 
 public class MenuClickListener implements Listener {
@@ -34,7 +33,6 @@ public class MenuClickListener implements Listener {
         if (event.getClickedInventory() == null) return;
         ItemStack clickedItem = event.getCurrentItem();
         if (clickedItem == null || clickedItem.getType().isAir()) return;
-        System.out.println("clicked item: " + clickedItem);
 
         MenuAction action = ItemUtil.getAction(clickedItem);
         String payload = ItemUtil.getPayload(clickedItem);
@@ -50,7 +48,7 @@ public class MenuClickListener implements Listener {
             case CLASS_SELECTION -> handleClassSelectionClick(player, event, holder, clickedItem, action, payload);
             case BACKGROUND_SELECTION -> handleBackgroundSelectionClick(player, event, holder, clickedItem, action, payload);
             case PLAYERS_CHOICES -> handlePlayersChoiceClick(player, event, holder, clickedItem, action, payload);
-            case ABILITY_ALLOCATION -> handleAbilityAllocationClick(event, holder);
+            case ABILITY_ALLOCATION -> handleAbilityAllocationClick(player, event, holder, clickedItem, action, payload);
         }
     }
 
@@ -128,15 +126,13 @@ public class MenuClickListener implements Listener {
 
         var pending = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
         if (pending.isEmpty()) {
-            System.out.println("in pending is Empty()");
-            // ToDo: go to ability allocation menu
+            AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
         } else {
             PlayersChoiceMenu.open(player, pending, holder.getSessionId());
         }
     }
 
     private void handlePlayersChoiceClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
-        System.out.println("Action: " + action);
         if (action == MenuAction.CHOOSE_OPTION) {
             String[] parts = splitChoicePayload(payload);
             if (parts == null) return;
@@ -261,7 +257,7 @@ public class MenuClickListener implements Listener {
             session.clearPendingChoices();
             player.closeInventory();
             player.sendMessage("Choices saved!");
-//            AbilityAllocationMenu.open(player, holder.getSessionId());
+            AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
         }
     }
 
@@ -301,8 +297,45 @@ public class MenuClickListener implements Listener {
         return new String[] { payload.substring(0, i), payload.substring(i + 1) };
     }
 
-    private void handleAbilityAllocationClick(InventoryClickEvent event, MenuHolder holder) {
+    private void handleAbilityAllocationClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
+        if (action == MenuAction.CONFIRM_CHARACTER) {
+            player.closeInventory();
+            // ToDo: Next screen (maybe select spells?)
+        }
 
+        if (action != MenuAction.INCREASE_ABILITY && action != MenuAction.DECREASE_ABILITY) return;
+
+        System.out.println("Payload: " + payload);
+        Ability ability = Ability.fromString(payload);
+        System.out.println("Ability: " + ability);
+
+        var session = CharacterCreationService.getSession(player.getUniqueId());
+
+        EnumMap<Ability, Integer> base = session.getAbilityScores();
+        System.out.println("Base: " + base);
+//        if (base == null || base.isEmpty()) {
+//            System.out.println("in if");
+//            base = new EnumMap<>(Ability.class);
+//            for (var a : Ability.values()) {
+//                base.put(a, 10);
+//            }
+//
+//        }
+
+        int current = base.getOrDefault(ability, 10);
+        System.out.println("Current: " + current);
+        if (action == MenuAction.INCREASE_ABILITY) {
+            if (current < 20) {
+                current++;
+            }
+        } else {
+            if (current > 0) {
+                current--;
+            }
+        }
+        base.put(ability, current);
+        session.setAbilityScores(base);
+        AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
     }
 
 }
