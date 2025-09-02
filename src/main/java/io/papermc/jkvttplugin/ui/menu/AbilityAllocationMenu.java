@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.ui.menu;
 
+import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
@@ -20,15 +21,12 @@ public class AbilityAllocationMenu {
 
     private AbilityAllocationMenu() {}
 
-    public static void open(Player player, String race, UUID sessionId) {
-        player.openInventory(build(race, sessionId));
+    public static void open(Player player, String race, EnumMap<Ability, Integer> abilites, UUID sessionId) {
+        player.openInventory(build(race, abilites, sessionId));
     }
 
-    public static Inventory build(String race, UUID sessionId) {
+    public static Inventory build(String race, EnumMap<Ability, Integer> abilites, UUID sessionId) {
         int inventorySize = 54;
-
-        Map<Ability, Integer> base = new EnumMap<>(Ability.class);
-        for (Ability a : Ability.values()) base.put(a, 10);
 
         Inventory inventory = Bukkit.createInventory(
                 new MenuHolder(MenuType.ABILITY_ALLOCATION, sessionId),
@@ -42,10 +40,7 @@ public class AbilityAllocationMenu {
 
         int col = 0;
         for (Ability ability : Ability.values()) {
-            int baseVal = clampBase(base.getOrDefault(ability, 0));
-            if (baseVal != base.getOrDefault(ability, 0)) {
-                base.put(ability, baseVal);
-            }
+            int baseVal = abilites.get(ability);
 
             boolean canIncrease = baseVal < 20;
             ItemStack up = new ItemStack(canIncrease ? Material.LIME_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE);

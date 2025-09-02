@@ -16,7 +16,7 @@ public class CharacterCreationSession {
 
     private List<PendingChoice<?>> pendingChoices = Collections.emptyList();
 
-    private final EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
+    private EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
 
     private String characterName;
 
@@ -98,6 +98,22 @@ public class CharacterCreationSession {
             if (!pc.isComplete()) return false;
         }
         return true;
+    }
+
+    public EnumMap<Ability, Integer> getAbilityScores() {
+        if (abilityScores == null || abilityScores.isEmpty()) {
+            EnumMap<Ability, Integer> buildingScore = new EnumMap<>(Ability.class);
+            for (Ability ability : Ability.values()) {
+                buildingScore.put(ability, 10);
+            }
+            this.abilityScores = buildingScore;
+            return abilityScores;
+        }
+        return abilityScores;
+    }
+
+    public void setAbilityScores(EnumMap<Ability, Integer> abilities) {
+        this.abilityScores = abilities;
     }
 
 
