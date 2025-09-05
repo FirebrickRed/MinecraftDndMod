@@ -2,7 +2,6 @@ package io.papermc.jkvttplugin;
 
 import io.papermc.jkvttplugin.character.CharacterSheetItemListener;
 import io.papermc.jkvttplugin.commands.*;
-import io.papermc.jkvttplugin.character.CharacterSheetListener;
 import io.papermc.jkvttplugin.data.DataManager;
 import io.papermc.jkvttplugin.listeners.NpcListener;
 import io.papermc.jkvttplugin.listeners.PlanetListener;
@@ -32,7 +31,6 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
 
         // Listeners
         Bukkit.getPluginManager().registerEvents(this, this);
-        Bukkit.getPluginManager().registerEvents(new CharacterSheetListener(), this);
         Bukkit.getPluginManager().registerEvents(new CharacterSheetItemListener(), this);
         Bukkit.getPluginManager().registerEvents(new NpcListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlanetListener(), this);

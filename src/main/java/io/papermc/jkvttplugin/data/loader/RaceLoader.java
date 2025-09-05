@@ -43,49 +43,35 @@ public class RaceLoader {
 
     private static DndRace parseRace(Map<String, Object> data) {
         String name = (String) data.getOrDefault("name", "Unknown");
-        System.out.println("Name: " + name);
         String description = (String) data.getOrDefault("description", "");
-        System.out.println("Description: " + description);
         String sourceUrl = (String) data.getOrDefault("source_url", "");
-        System.out.println("Source URL: " + sourceUrl);
         CreatureType creatureType = CreatureType.fromString((String) data.getOrDefault("creature_type", "Humanoid"));
-        System.out.println("Creature Type: " + creatureType);
 
         LoaderUtils.SizeParseResult sizeResult = LoaderUtils.parseSize(data.get("size"));
         Size size = sizeResult.size;
         PlayersChoice<String> sizeChoice = sizeResult.sizeChoice;
-        System.out.println("Size: " + size);
-        System.out.println("Size Choice: " + sizeChoice);
 
         int speed = (int) data.getOrDefault("speed", 30);
-        System.out.println("Speed: " + speed);
 
         // Languages
         LoaderUtils.LanguageParseResults langResult = LoaderUtils.parseLanguagesAndChoices(data.get("languages"));
         List<String> languages = langResult.languages;
         PlayersChoice<String> languageChoices = langResult.playersChoice;
-        System.out.println("Languages: " + languages);
-        System.out.println("Language Choices: " + languageChoices);
 
         // Fixed ability scores
         Map<Ability, Integer> fixedAbilityScores = LoaderUtils.parseAbilityScoreMap(data.get("ability_scores"));
-        System.out.println("Fixed Ability Scores: " + fixedAbilityScores);
 
         // Ability score choices
         PlayersChoice<Ability> abilityScoreChoices = LoaderUtils.parseAbilityPlayersChoice(data.get("players_choice_ability_scores"));
-        System.out.println("Ability Score Choices: " + abilityScoreChoices);
 
         // Traits
         List<String> traits = LoaderUtils.parseTraits(data.get("traits"));
-        System.out.println("Traits: " + traits);
 
         // Subraces (supporting map of subrace name -> subrace data)
         Map<String, DndSubRace> subraces = LoaderUtils.parseSubraces(data.get("subraces"));
-        System.out.println("Subraces: " + subraces.keySet());
 
         // Icon Name
         String iconName = (String) data.getOrDefault("icon_name", null);
-        System.out.println("Icon Name: " + iconName);
 
         return new DndRace(name, sourceUrl, description, creatureType, size, sizeChoice, speed, fixedAbilityScores, abilityScoreChoices, traits, languages, languageChoices, subraces, iconName);
     }
