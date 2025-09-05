@@ -8,7 +8,7 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 
-import static io.papermc.jkvttplugin.character.CharacterSheetUI.buildRaceInventory;
+//import static io.papermc.jkvttplugin.character.CharacterSheetUI.buildRaceInventory;
 
 public class CharacterSheetItemListener implements Listener {
 
@@ -32,7 +32,7 @@ public class CharacterSheetItemListener implements Listener {
         if (CharacterSheetManager.hasCharacterSheet(player)) {
 //            CharacterSheetUI.openCharacterSheetInventory(player, CharacterSheetManager.getCharacterSheet(player));
         } else {
-            player.openInventory(buildRaceInventory());
+//            player.openInventory(buildRaceInventory());
         }
     }
 }

@@ -42,7 +42,7 @@ public class MenuClickListener implements Listener {
 
         // ToDo: Double check parameters when flow is all finished
         switch (holder.getType()) {
-            case CHARACTER_SHEET -> handleCharacterSheetClick(event, holder);
+            case CHARACTER_SHEET -> handleCharacterSheetClick(player, event, holder, clickedItem, action, payload);
             case RACE_SELECTION -> handleRaceSelectionClick(player, event, holder, clickedItem, action, payload);
             case SUBRACE_SELECTION -> handleSubraceSelectionClick(player, event, holder, clickedItem, action, payload);
             case CLASS_SELECTION -> handleClassSelectionClick(player, event, holder, clickedItem, action, payload);
@@ -52,8 +52,49 @@ public class MenuClickListener implements Listener {
         }
     }
 
-    private void handleCharacterSheetClick(InventoryClickEvent event, MenuHolder holder) {
+    private void handleCharacterSheetClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
+        CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
+        if (session == null) {
+            session = CharacterCreationService.start(player.getUniqueId());
+        }
 
+        switch (action) {
+            case OPEN_RACE_SELECTION -> {
+                RaceSelectionMenu.open(player, RaceLoader.getAllRaces(), holder.getSessionId());
+            }
+            case OPEN_SUBRACE_SELECTION -> {
+                if (session.getSelectedRace() != null) {
+                    DndRace race = RaceLoader.getRace(session.getSelectedRace());
+                    if (race != null && race.hasSubraces()) {
+                        SubraceSelectionMenu.open(player, race.getSubraces(), holder.getSessionId());
+                    }
+                }
+            }
+            case OPEN_CLASS_SELECTION -> {
+                ClassSelectionMenu.open(player, ClassLoader.getAllClasses(), holder.getSessionId());
+            }
+            case OPEN_BACKGROUND_SELECTION -> {
+                BackgroundSelectionMenu.open(player, BackgroundLoader.getAllBackgrounds(), holder.getSessionId());
+            }
+            // ToDo: add player choices
+            case OPEN_PLAYER_OPTION_SELECTION -> {
+                var pending = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
+                if (!pending.isEmpty()) {
+                    PlayersChoiceMenu.open(player, pending, holder.getSessionId());
+                }
+            }
+            // ToDo: add ability allocation
+            case OPEN_ABILITY_ALLOCATION -> {
+                AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
+            }
+            case CONFIRM_CHARACTER -> {
+//                if (isCharacterComplete(session)) {
+                    player.closeInventory();;
+                    player.sendMessage("Character created successfully!");
+                    CharacterCreationService.removeSession(player.getUniqueId());
+//                }
+            }
+        }
     }
 
     private void handleRaceSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
@@ -72,11 +113,7 @@ public class MenuClickListener implements Listener {
             return;
         }
 
-        if (race.hasSubraces()) {
-            SubraceSelectionMenu.open(player, race.getSubraces(), holder.getSessionId());
-        } else {
-            ClassSelectionMenu.open(player, ClassLoader.getAllClasses(), holder.getSessionId());
-        }
+        CharacterSheetMenu.open(player, holder.getSessionId());
     }
 
     private void handleSubraceSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
@@ -90,9 +127,8 @@ public class MenuClickListener implements Listener {
         }
 
         session.setSelectedSubrace(payload);
-
-        ClassSelectionMenu.open(player, ClassLoader.getAllClasses(), holder.getSessionId());
         player.sendMessage("You have selected " + payload + " as your subrace!");
+        CharacterSheetMenu.open(player, holder.getSessionId());
     }
 
     private void handleClassSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
@@ -106,9 +142,8 @@ public class MenuClickListener implements Listener {
         }
 
         session.setSelectedClass(payload);
-
-        BackgroundSelectionMenu.open(player, BackgroundLoader.getAllBackgrounds(), holder.getSessionId());
         player.sendMessage("You have selected " + payload + " as your class!");
+        CharacterSheetMenu.open(player, holder.getSessionId());
     }
 
     private void handleBackgroundSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
@@ -123,13 +158,7 @@ public class MenuClickListener implements Listener {
 
         session.setSelectedBackground(payload);
         player.sendMessage("You have selected " + payload + " as your background!");
-
-        var pending = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
-        if (pending.isEmpty()) {
-            AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
-        } else {
-            PlayersChoiceMenu.open(player, pending, holder.getSessionId());
-        }
+        CharacterSheetMenu.open(player, holder.getSessionId());
     }
 
     private void handlePlayersChoiceClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
@@ -257,7 +286,7 @@ public class MenuClickListener implements Listener {
             session.clearPendingChoices();
             player.closeInventory();
             player.sendMessage("Choices saved!");
-            AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
+            CharacterSheetMenu.open(player, holder.getSessionId());
         }
     }
 
@@ -300,30 +329,17 @@ public class MenuClickListener implements Listener {
     private void handleAbilityAllocationClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
         if (action == MenuAction.CONFIRM_CHARACTER) {
             player.closeInventory();
-            // ToDo: Next screen (maybe select spells?)
+            CharacterSheetMenu.open(player, holder.getSessionId());
         }
 
         if (action != MenuAction.INCREASE_ABILITY && action != MenuAction.DECREASE_ABILITY) return;
 
-        System.out.println("Payload: " + payload);
         Ability ability = Ability.fromString(payload);
-        System.out.println("Ability: " + ability);
-
         var session = CharacterCreationService.getSession(player.getUniqueId());
 
         EnumMap<Ability, Integer> base = session.getAbilityScores();
-        System.out.println("Base: " + base);
-//        if (base == null || base.isEmpty()) {
-//            System.out.println("in if");
-//            base = new EnumMap<>(Ability.class);
-//            for (var a : Ability.values()) {
-//                base.put(a, 10);
-//            }
-//
-//        }
 
         int current = base.getOrDefault(ability, 10);
-        System.out.println("Current: " + current);
         if (action == MenuAction.INCREASE_ABILITY) {
             if (current < 20) {
                 current++;

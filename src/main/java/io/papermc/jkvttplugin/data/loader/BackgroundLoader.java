@@ -44,7 +44,6 @@ public class BackgroundLoader {
 
     private static DndBackground parseBackground(String key, Map<String, Object> data) {
         String name = (String) data.getOrDefault("name", key);
-        System.out.println("Name: " + name);
         String description = (String) data.getOrDefault("description", "");
 
         // Skills

@@ -90,12 +90,6 @@ public class AbilityAllocationMenu {
         return row * 9 + col;
     }
 
-    private static int clampBase(int base) {
-        if (base < 0) return 0;
-        if (base > 20) return 20;
-        return base;
-    }
-
     // ToDo: move this to ability
     private static int abilityMod(int score) {
         return Math.floorDiv(score - 10, 2);

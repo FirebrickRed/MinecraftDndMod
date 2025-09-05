@@ -1,0 +1,40 @@
+spells:
+  fire_bolt:
+    name: "Fire Bolt"
+    level: 0
+    school: "evocation"
+    classes: ["wizard", "sorcerer", "eldritch_knight", "arcane_trickster"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You hurl a mote of fire at a creature or object within range..."
+    concentration: false
+    ritual: false
+    icon: "FIRE_CHARGE"
+  mage_hand:
+    name: "Mage Hand"
+    level: 0
+    school: "conjuration"
+    classes: ["wizard", "sorcerer", "bard", "warlock", "eldritch_knight", "arcane_trickster"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S"
+    duration: "1 minute"
+    description: "A spectral, floating hand appears at a point you choose..."
+    concentration: false
+    ritual: false
+    icon: "GHAST_SPAWN_EGG"
+  frostbite:
+    name: "Frostbite"
+    level: 0
+    school: "Evocation"
+    classes: ["druid", "sorcerer", "warlock", "wizard", "artificer"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You cause numbing frost to form on one creature..."
+    concentration: false
+    ritual: false
+    icon: "WIND_CHARGE"
