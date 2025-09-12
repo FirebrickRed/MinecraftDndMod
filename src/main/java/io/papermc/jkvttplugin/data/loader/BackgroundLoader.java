@@ -2,7 +2,6 @@ package io.papermc.jkvttplugin.data.loader;
 
 import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
 import io.papermc.jkvttplugin.data.model.DndBackground;
-import io.papermc.jkvttplugin.data.model.PlayersChoice;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;

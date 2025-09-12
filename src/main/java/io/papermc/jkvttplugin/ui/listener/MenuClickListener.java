@@ -5,9 +5,8 @@ import io.papermc.jkvttplugin.character.CharacterCreationSession;
 import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
-import io.papermc.jkvttplugin.data.model.DndRace;
-import io.papermc.jkvttplugin.data.model.EquipmentOption;
-import io.papermc.jkvttplugin.data.model.PendingChoice;
+import io.papermc.jkvttplugin.data.loader.SpellLoader;
+import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.menu.*;
@@ -49,6 +48,7 @@ public class MenuClickListener implements Listener {
             case BACKGROUND_SELECTION -> handleBackgroundSelectionClick(player, event, holder, clickedItem, action, payload);
             case PLAYERS_CHOICES -> handlePlayersChoiceClick(player, event, holder, clickedItem, action, payload);
             case ABILITY_ALLOCATION -> handleAbilityAllocationClick(player, event, holder, clickedItem, action, payload);
+            case SPELL_SELECTION -> handleSpellSelectionClick(player, event, holder, clickedItem, action, payload);
         }
     }
 
@@ -86,6 +86,15 @@ public class MenuClickListener implements Listener {
             // ToDo: add ability allocation
             case OPEN_ABILITY_ALLOCATION -> {
                 AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
+            }
+            case OPEN_SPELL_SELECTION -> {
+                if (session.getSelectedClass() != null) {
+                    DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
+                    SpellSelectionMenu.open(player, SpellLoader.getSpellsForClass(session.getSelectedClass()), holder.getSessionId());
+//                    if (dndClass != null && dndClass.getSpellcastingAbility() != null) {
+////                        SpellSelectionMenu.open(player, session.getSelectedClass(), session, holder.getSessionId());
+//                    }
+                }
             }
             case CONFIRM_CHARACTER -> {
 //                if (isCharacterComplete(session)) {
@@ -354,4 +363,43 @@ public class MenuClickListener implements Listener {
         AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
     }
 
+    private void handleSpellSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
+//        CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
+//        if (session == null) {
+//            player.closeInventory();
+//            player.sendMessage("No character creation session found");
+//            return;
+//        }
+//
+//        switch (action) {
+//            case CHOOSE_SPELL -> {
+//                String[] parts = payload.split(":");
+//                if (parts.length != 2) return;
+//
+//                String spellKey = parts[0];
+//                int level;
+//                try {
+//                    level = Integer.parseInt(parts[1]);
+//                } catch (NumberFormatException e) {
+//                    return;
+//                }
+//
+//                DndSpell spell = SpellLoader.getSpell(spellKey);
+//                if (spell == null) {
+//                    player.sendMessage("Spell not found: " + spellKey);
+//                    return;
+//                }
+//
+//                if (session.hasSpell(spellKey, level)) {
+//                    session.removeSpell(spellKey, level);
+//                } else {
+//                    if (canLearMoreSpells(session, level)) {
+//                        session.selectSpell(spellKey, level);
+//                    }
+//                }
+//
+//                SpellSelectionMenu.open(player, session.getSelectedClass(), session, holder.getSessionId(), level);
+//            }
+//        }
+    }
 }

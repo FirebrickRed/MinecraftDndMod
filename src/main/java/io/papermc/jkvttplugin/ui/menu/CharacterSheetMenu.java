@@ -87,6 +87,10 @@ public class CharacterSheetMenu {
             }
         }
 
+        ItemStack spellItem = createSelectionItem(Material.WRITABLE_BOOK, "Spells", null, "Click to select your spells");
+        spellItem = ItemUtil.tagAction(spellItem, MenuAction.OPEN_SPELL_SELECTION, "spell");
+        inventory.setItem(32, spellItem);
+
         ItemStack confirmItem = createConfirmButton(player, session);
         inventory.setItem(49, confirmItem);
 

@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.data;
 import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
+import io.papermc.jkvttplugin.data.loader.SpellLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -22,9 +23,11 @@ public class DataManager {
         File racesFolder = new File(dmContentFolder, "Races");
         File classFolder = new File(dmContentFolder, "Classes");
         File backgroundsFolder = new File(dmContentFolder, "Backgrounds");
+        File spellFolder = new File(dmContentFolder, "Spells");
         RaceLoader.loadAllRaces(racesFolder);
         ClassLoader.loadAllClasses(classFolder);
         BackgroundLoader.loadAllBackgrounds(backgroundsFolder);
+        SpellLoader.loadAllSpells(spellFolder);
     }
 
 //    private static Map<String, DndRace> allRaces = Map.of();

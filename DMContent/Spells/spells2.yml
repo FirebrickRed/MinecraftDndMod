@@ -1,0 +1,85 @@
+spells:
+  fire_bolt:
+    name: "Fire Bolt"
+    level: 0
+    school: "evocation"
+    classes: ["wizard", "sorcerer", "eldritch_knight", "arcane_trickster"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S"  # Simple string format
+    duration: "Instantaneous"
+    description: "You hurl a mote of fire at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 fire damage. A flammable object hit by this spell ignites if it isn't being worn or carried."
+    concentration: false
+    ritual: false
+    icon: "FIRE_CHARGE"
+    attack_type: "ranged_spell_attack"
+    damage_type: "fire"
+    higher_levels: "This spell's damage increases by 1d10 when you reach 5th level (2d10), 11th level (3d10), and 17th level (4d10)."
+
+  mage_hand:
+    name: "Mage Hand"
+    level: 0
+    school: "conjuration"
+    classes: ["wizard", "sorcerer", "bard", "warlock", "eldritch_knight", "arcane_trickster"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S"
+    duration: "1 minute"
+    description: "A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action. The hand vanishes if it is ever more than 30 feet away from you or if you cast this spell again."
+    concentration: false
+    ritual: false
+    icon: "GHAST_SPAWN_EGG"
+
+  fireball:
+    name: "Fireball"
+    level: 3
+    school: "evocation"
+    classes: ["wizard", "sorcerer"]
+    casting_time: "1 action"
+    range: "150 feet"
+    # Advanced component format for complex materials
+    components:
+      verbal: true
+      somatic: true
+      material: true
+      material_description: "a tiny ball of bat guano and sulfur"
+      material_consumed: false
+      material_cost: null
+    duration: "Instantaneous"
+    description: "A bright streak flashes from your pointing finger to a point you choose within range and then blossoms with a low roar into an explosion of flame..."
+    concentration: false
+    ritual: false
+    icon: "FIRE_CHARGE"
+    save_type: "DEX"
+    damage_type: "fire"
+    higher_levels: "When you cast this spell using a spell slot of 4th level or higher, the damage increases by 1d6 for each slot level above 3rd."
+
+  cure_wounds:
+    name: "Cure Wounds"
+    level: 1
+    school: "evocation"
+    classes: ["bard", "cleric", "druid", "paladin", "ranger"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier."
+    concentration: false
+    ritual: false
+    icon: "POTION"
+    attack_type: "touch"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d8 for each slot level above 1st."
+
+  detect_magic:
+    name: "Detect Magic"
+    level: 1
+    school: "divination"
+    classes: ["bard", "cleric", "druid", "paladin", "ranger", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "V, S"
+    duration: "10 minutes"
+    description: "For the duration, you sense the presence of magic within 30 feet of you..."
+    concentration: true
+    ritual: true
+    icon: "ENDER_EYE"
