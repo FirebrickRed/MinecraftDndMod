@@ -1,32 +1,10 @@
 name: Druid
 hit_die: 8
-proficiency:
-  - 2
-  - 2
-  - 2
-  - 2
-  - 3
-  - 3
-  - 3
-  - 3
-  - 4
-  - 4
-  - 4
-  - 4
-  - 5
-  - 5
-  - 5
-  - 5
-  - 6
-  - 6
-  - 6
-  - 6
+proficiency: [2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6]
 primary_abilities: #ToDo: update for all classes and incourporate if wanted
   - Strength
   - Constitution
-saving_throws:
-  - Intelligence
-  - Wisdom
+saving_throws: [Intelligence, Wisdom]
 armor_proficiencies:
   - light_armor
   - medium_armor
@@ -42,8 +20,30 @@ weapon_proficiencies:
   - sickles
   - slings
   - spears
-tool_proficiencies:
-  - herbalism_kit
+tool_proficiencies: [herbalism_kit]
+spellcasting:
+  casting_ability: Wisdom
+  preparation_type: prepared
+  ritual_casting: true
+  spellcasting_focus: druidic_focus
+  spellcasting_level: 1
+  cantrips_known_by_level: [2,2,2,2,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4]
+  spells_prepared_formula:
+    type: ability_plus_level
+    ability: Wisdom
+    level_type: full
+    minimum: 1
+  spell_slots_by_level:
+    1: [2,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4]
+    2: [0,0,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+    3: [0,0,0,0,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+    4: [0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3,3,3]
+    5: [0,0,0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3]
+    6: [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1]
+    7: [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1]
+    8: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1]
+    9: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1]
+  slot_recovery: long_rest
 features_by_level:
   1:
     - name: Druidic
@@ -51,8 +51,6 @@ features_by_level:
       description: You know Druidic, the secret language of druids.
     - name: Spellcasting
       type: spellcasting
-      casting_ability: Wisdom
-      progression: full
       description: You can cast prepared spells using Wisdom as your spellcasting ability.
   2:
     - name: Wild Shape

@@ -19,12 +19,14 @@ public class DndClass {
     private List<String> weaponProficiencies;
     private List<String> toolProficiencies;
 
+    private List<String> languages;
     private List<String> skills;
 
     private List<String> startingEquipment;
 
     private List<Integer> asiLevels;
     private Ability spellcastingAbility; // null if non-spellcaster
+    private SpellcastingInfo spellcasting;
 
     private Map<Integer, List<String>> featuresByLevel;
     private List<String> subclasses; // optional, for future use
@@ -68,7 +70,6 @@ public class DndClass {
     public String getName() {
         return name;
     }
-
     public void setName(String name) {
         this.name = name;
     }
@@ -76,7 +77,6 @@ public class DndClass {
     public String getIcon() {
         return icon;
     }
-
     public void setIcon(String icon) {
         this.icon = icon;
     }
@@ -84,7 +84,6 @@ public class DndClass {
     public int getHitDie() {
         return hitDie;
     }
-
     public void setHitDie(int hitDie) {
         this.hitDie = hitDie;
     }
@@ -92,7 +91,6 @@ public class DndClass {
     public List<Ability> getSavingThrows() {
         return savingThrows;
     }
-
     public void setSavingThrows(List<Ability> savingThrows) {
         this.savingThrows = savingThrows;
     }
@@ -100,7 +98,6 @@ public class DndClass {
     public List<String> getArmorProficiencies() {
         return armorProficiencies;
     }
-
     public void setArmorProficiencies(List<String> armorProficiencies) {
         this.armorProficiencies = armorProficiencies;
     }
@@ -108,7 +105,6 @@ public class DndClass {
     public List<String> getWeaponProficiencies() {
         return weaponProficiencies;
     }
-
     public void setWeaponProficiencies(List<String> weaponProficiencies) {
         this.weaponProficiencies = weaponProficiencies;
     }
@@ -116,15 +112,20 @@ public class DndClass {
     public List<String> getToolProficiencies() {
         return toolProficiencies;
     }
-
     public void setToolProficiencies(List<String> toolProficiencies) {
         this.toolProficiencies = toolProficiencies;
+    }
+
+    public List<String> getLanguages() {
+        return this.languages;
+    }
+    public void setLanugages(List<String> languages) {
+        this.languages = languages;
     }
 
     public List<String> getSkills() {
         return skills;
     }
-
     public void setSkills(List<String> skills) {
         this.skills = skills;
     }
@@ -132,7 +133,6 @@ public class DndClass {
     public List<String> getStartingEquipment() {
         return startingEquipment;
     }
-
     public void setStartingEquipment(List<String> startingEquipment) {
         this.startingEquipment = startingEquipment;
     }
@@ -140,7 +140,6 @@ public class DndClass {
     public List<Integer> getAsiLevels() {
         return asiLevels;
     }
-
     public void setAsiLevels(List<Integer> asiLevels) {
         this.asiLevels = asiLevels;
     }
@@ -148,15 +147,20 @@ public class DndClass {
     public Ability getSpellcastingAbility() {
         return spellcastingAbility;
     }
-
     public void setSpellcastingAbility(Ability spellcastingAbility) {
         this.spellcastingAbility = spellcastingAbility;
+    }
+
+    public SpellcastingInfo getSpellcasting() {
+        return spellcasting;
+    }
+    public void setSpellcasting(SpellcastingInfo spellcasting) {
+        this.spellcasting = spellcasting;
     }
 
     public Map<Integer, List<String>> getFeaturesByLevel() {
         return featuresByLevel;
     }
-
     public void setFeaturesByLevel(Map<Integer, List<String>> featuresByLevel) {
         this.featuresByLevel = featuresByLevel;
     }
@@ -164,7 +168,6 @@ public class DndClass {
     public List<String> getSubclasses() {
         return subclasses;
     }
-
     public void setSubclasses(List<String> subclasses) {
         this.subclasses = subclasses;
     }
@@ -172,7 +175,6 @@ public class DndClass {
     public Map<String, Integer> getMulticlassRequirements() {
         return multiclassRequirements;
     }
-
     public void setMulticlassRequirements(Map<String, Integer> multiclassRequirements) {
         this.multiclassRequirements = multiclassRequirements;
     }
@@ -180,7 +182,6 @@ public class DndClass {
     public boolean isAllowFeats() {
         return allowFeats;
     }
-
     public void setAllowFeats(boolean allowFeats) {
         this.allowFeats = allowFeats;
     }
@@ -188,7 +189,6 @@ public class DndClass {
     public Map<String, Integer> getClassResources() {
         return classResources;
     }
-
     public void setClassResources(Map<String, Integer> classResources) {
         this.classResources = classResources;
     }
@@ -294,6 +294,11 @@ public class DndClass {
             return this;
         }
 
+        public Builder languages(List<String> languages) {
+            instance.setLanugages(languages);
+            return this;
+        }
+
         public Builder skills(List<String> skills) {
             instance.setSkills(skills);
             return this;
@@ -312,6 +317,11 @@ public class DndClass {
 
         public Builder spellcastingAbility(Ability spellcastingAbility) {
             instance.setSpellcastingAbility(spellcastingAbility);
+            return this;
+        }
+
+        public Builder spellcasting(SpellcastingInfo spellcasting) {
+            instance.setSpellcasting(spellcasting);
             return this;
         }
 

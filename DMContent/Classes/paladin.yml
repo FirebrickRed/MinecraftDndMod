@@ -1,0 +1,76 @@
+name: Paladin
+hit_die: 10
+proficiency: [2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6]
+saving_throws: [Wisdom, Charisma]
+armor_proficiencies: [shields]
+weapon_proficiencies: [simple_weapons, martial_weapons]
+tool_proficiencies: []
+spellcasting:
+  type: half_casting
+  casting_ability: Charisma
+  preparation_type: prepared
+  ritual_casting: false
+  spellcasting_focus: holy_symbol
+  spell_list: paladin
+  spellcasting_level: 2
+  spells_prepared_formula:
+    type: ability_plus_level
+    ability: Charisma
+    level_type: half
+    minimum: 1
+  spell_slots_by_level:
+    1: [0,2,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4]
+    2: [0,0,0,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+    3: [0,0,0,0,0,0,0,0,0,2,3,3,3,3,3,3,3,3,3,3]
+    4: [0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,2,3,3,3,3]
+    5: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,2]
+  slot_recovery: long_rest
+features_by_level:
+  1:
+    - name: Divine Sense
+      type: resource
+      uses: 1 + your charisma modifier per long rest
+      description: Sensing evil or good
+    - name: Lay on Hands
+      type: resource
+      uses: paladin level * 5 per long rest
+      description: healing stuff
+starting_equipment: [chain_mail, holy_symbol]
+player_choices:
+  - id: class_equipment_1
+    title: Class Equipment 1
+    choose: 1
+    options:
+      - - tag: martial_weapon
+        - tag: shield
+      - - tag: martial_weapon
+        - tag: martial_weapon
+  - id: class_equipment_2
+    title: Class Equipment 2
+    choose: 1
+    options:
+      - - item: javelin
+          quantity: 5
+      - - tag: simple_melee_weapon
+  - id: class_equipment_3
+    title: Class Equipment 3
+    choose: 1
+    options:
+      - - item: priests_pack
+      - - item: explorers_pack
+icon: paladin
+multiclass_requirements:
+  Charisma: 13
+subclass_level: 3
+subclasses:
+  - Ancients
+  - Conquest
+  - Crown
+  - Devotion
+  - Glory
+  - Redemption
+  - Vengeance
+  - Watchers
+  - Oathbreaker
+  - Treachery
+  - Heroism

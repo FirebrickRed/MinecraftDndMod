@@ -90,10 +90,16 @@ public class MenuClickListener implements Listener {
             case OPEN_SPELL_SELECTION -> {
                 if (session.getSelectedClass() != null) {
                     DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
-                    SpellSelectionMenu.open(player, SpellLoader.getSpellsForClass(session.getSelectedClass()), holder.getSessionId());
-//                    if (dndClass != null && dndClass.getSpellcastingAbility() != null) {
-////                        SpellSelectionMenu.open(player, session.getSelectedClass(), session, holder.getSessionId());
-//                    }
+                    if (dndClass != null && dndClass.getSpellcasting() != null) {
+                        SpellcastingInfo info = dndClass.getSpellcasting();
+                        int startingLevel = 0;
+                        boolean hasCantrips = info.getCantripsKnownByLevel() != null && !info.getCantripsKnownByLevel().isEmpty() && info.getCantripsKnownByLevel().get(0) > 0;
+                        if (!hasCantrips) {
+                            startingLevel = 1;
+                        }
+
+                        SpellSelectionMenu.open(player, holder.getSessionId(), startingLevel);
+                    }
                 }
             }
             case CONFIRM_CHARACTER -> {
@@ -364,42 +370,104 @@ public class MenuClickListener implements Listener {
     }
 
     private void handleSpellSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
-//        CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
-//        if (session == null) {
-//            player.closeInventory();
-//            player.sendMessage("No character creation session found");
-//            return;
-//        }
-//
-//        switch (action) {
-//            case CHOOSE_SPELL -> {
-//                String[] parts = payload.split(":");
-//                if (parts.length != 2) return;
-//
-//                String spellKey = parts[0];
-//                int level;
-//                try {
-//                    level = Integer.parseInt(parts[1]);
-//                } catch (NumberFormatException e) {
-//                    return;
-//                }
-//
-//                DndSpell spell = SpellLoader.getSpell(spellKey);
-//                if (spell == null) {
-//                    player.sendMessage("Spell not found: " + spellKey);
-//                    return;
-//                }
-//
-//                if (session.hasSpell(spellKey, level)) {
-//                    session.removeSpell(spellKey, level);
-//                } else {
-//                    if (canLearMoreSpells(session, level)) {
-//                        session.selectSpell(spellKey, level);
+        CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
+        if (session == null) {
+            player.closeInventory();
+            player.sendMessage("No character creation session found");
+            return;
+        }
+
+        DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
+        if (dndClass == null || dndClass.getSpellcasting() == null) {
+            return;
+        }
+
+        switch (action) {
+            case CHOOSE_SPELL -> {
+                String[] parts = payload.split(":");
+                if (parts.length != 2) return;
+
+                String spellKey = parts[0];
+                int spellLevel;
+                try {
+                    spellLevel = Integer.parseInt(parts[1]);
+                } catch (NumberFormatException e) {
+                    return;
+                }
+
+                DndSpell spell = SpellLoader.getSpell(spellKey);
+                if (spell == null) {
+                    player.sendMessage("Spell not found: " + spellKey);
+                    return;
+                }
+
+                SpellcastingInfo info = dndClass.getSpellcasting();
+                int maxSelectable = calculateMaxSelectableSpells(info, spellLevel, 1);
+                int currentSelected = session.getSpellCount(spellLevel);
+
+//                session.selectSpell(spellKey, spellLevel, maxSelectable);
+                SpellSelectionMenu.open(player, holder.getSessionId(), spellLevel);
+                if (session.hasSpell(spellKey)) {
+                    session.removeSpell(spellKey, spellLevel);
+                } else {
+//                    if (currentSelected >= maxSelectable) {
+//                        player.sendMessage("You cannot select more ");
 //                    }
-//                }
-//
-//                SpellSelectionMenu.open(player, session.getSelectedClass(), session, holder.getSessionId(), level);
-//            }
-//        }
+                    session.selectSpell(spellKey, spellLevel, maxSelectable);
+
+                }
+            }
+            case CHANGE_SPELL_LEVEL -> {
+                try {
+                    int newLevel = Integer.parseInt(payload);
+                    SpellSelectionMenu.open(player, holder.getSessionId(), newLevel);
+                } catch (NumberFormatException e) {
+                    player.sendMessage("Invalid spell level: " + payload);
+                }
+            }
+            case CONFIRM_SPELL_SELECTION -> {
+                if (validateAllSpellSelections(session, dndClass)) {
+                    player.closeInventory();
+                    CharacterSheetMenu.open(player, holder.getSessionId());
+                }
+            }
+            case BACK_TO_CHARACTER_SHEET -> {
+                player.closeInventory();
+                CharacterSheetMenu.open(player, holder.getSessionId());
+            }
+        }
+    }
+
+    private int calculateMaxSelectableSpells(SpellcastingInfo info, int spellLevel, int characterLevel) {
+        if (spellLevel == 0 && info.getCantripsKnownByLevel() != null) {
+            List<Integer> cantrips = info.getCantripsKnownByLevel();
+            return characterLevel <= cantrips.size() ? cantrips.get(characterLevel - 1) : 0;
+        } else if ("known".equals(info.getPreparationType()) && info.getSpellsKnownByLevel() != null) {
+            List<Integer> known = info.getSpellsKnownByLevel();
+            return characterLevel <= known.size() ? known.get(characterLevel - 1) : 0;
+        } else if ("prepared".equals(info.getPreparationType())) {
+            // Prepared spells - calculate based on ability modifier + level
+            // This is a placeholder - you'd need to implement proper calculation
+            return 10;
+        }
+        return 0;
+    }
+
+    private boolean validateAllSpellSelections(CharacterCreationSession session, DndClass dndClass) {
+        SpellcastingInfo info = dndClass.getSpellcasting();
+
+        if (info.getCantripsKnownByLevel() != null && !info.getCantripsKnownByLevel().isEmpty()) {
+            int maxCantrips = info.getCantripsKnownByLevel().get(0);
+            if (session.getSpellCount(0) != maxCantrips) return false;
+        }
+
+        if ("known".equals(info.getPreparationType())) {
+            if (info.getSpellsKnownByLevel() != null && !info.getSpellsKnownByLevel().isEmpty()) {
+                int maxSpells = info.getSpellsKnownByLevel().get(0);
+                int totalSelected = session.getSelectedSpells().size();
+                return totalSelected == maxSpells;
+            }
+        }
+        return true;
     }
 }

@@ -1,34 +1,25 @@
 spells:
-  fire_bolt:
-    name: "Fire Bolt"
-    level: 0
-    school: "evocation"
-    classes: ["wizard", "sorcerer", "eldritch_knight", "arcane_trickster"]
+  ice_knife:
+    name: "Ice Knife"
+    level: 1
+    school: "Conjuration"
+    classes: ["druid", "sorcerer", "wizard"]
     casting_time: "1 action"
-    range: "120 feet"
-    components: "V, S"  # Simple string format
+    range: "60 feet"
+    components:
+      verbal: false
+      somatic: true
+      material: true
+      material_description: "a drop of water or piece of ice"
+      material_consumed: false
+      material_cost: null
     duration: "Instantaneous"
-    description: "You hurl a mote of fire at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 fire damage. A flammable object hit by this spell ignites if it isn't being worn or carried."
+    description: ""
     concentration: false
     ritual: false
-    icon: "FIRE_CHARGE"
-    attack_type: "ranged_spell_attack"
-    damage_type: "fire"
-    higher_levels: "This spell's damage increases by 1d10 when you reach 5th level (2d10), 11th level (3d10), and 17th level (4d10)."
-
-  mage_hand:
-    name: "Mage Hand"
-    level: 0
-    school: "conjuration"
-    classes: ["wizard", "sorcerer", "bard", "warlock", "eldritch_knight", "arcane_trickster"]
-    casting_time: "1 action"
-    range: "30 feet"
-    components: "V, S"
-    duration: "1 minute"
-    description: "A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action. The hand vanishes if it is ever more than 30 feet away from you or if you cast this spell again."
-    concentration: false
-    ritual: false
-    icon: "GHAST_SPAWN_EGG"
+    icon: "WIND_CHARGE"
+    save_type: Dexterity
+    damage_type: "cold"
 
   fireball:
     name: "Fireball"

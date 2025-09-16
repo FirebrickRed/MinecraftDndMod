@@ -13,6 +13,9 @@ public class CharacterCreationSession {
     private String selectedSubRace;
     private String selectedClass;
     private String selectedBackground;
+    private LinkedHashSet<String> selectedCantrips = new LinkedHashSet<>();
+    private LinkedHashSet<String> selectedSpells = new LinkedHashSet<>();
+    private Map<Integer, LinkedHashSet<String>> spellsByLevel = new HashMap<>();
 
     private List<PendingChoice<?>> pendingChoices = Collections.emptyList();
 
@@ -35,7 +38,6 @@ public class CharacterCreationSession {
     public String getSelectedRace() {
         return selectedRace;
     }
-
     public void setSelectedRace(String selectedRace) {
         this.selectedRace = selectedRace;
     }
@@ -43,7 +45,6 @@ public class CharacterCreationSession {
     public String getSelectedSubRace() {
         return selectedSubRace;
     }
-
     public void setSelectedSubrace(String selectedSubRace) {
         this.selectedSubRace = selectedSubRace;
     }
@@ -51,7 +52,6 @@ public class CharacterCreationSession {
     public String getSelectedClass() {
         return selectedClass;
     }
-
     public void setSelectedClass(String selectedClass) {
         this.selectedClass = selectedClass;
     }
@@ -59,9 +59,32 @@ public class CharacterCreationSession {
     public String getSelectedBackground() {
         return selectedBackground;
     }
-
     public void setSelectedBackground(String selectedBackground) {
         this.selectedBackground = selectedBackground;
+    }
+
+    public Set<String> getSelectedCantrips() {
+        return new LinkedHashSet<>(selectedCantrips);
+    }
+    public void setSelectedCantrips(Set<String> cantrips) {
+        this.selectedCantrips = new LinkedHashSet<>(cantrips);
+    }
+
+    public Set<String> getSelectedSpells() {
+        return new LinkedHashSet<>(selectedSpells);
+    }
+    public void setSelectedSpells(Set<String> spells) {
+        this.selectedSpells = new LinkedHashSet<>(spells);
+    }
+
+    public Map<Integer, Set<String>> getSpellsByLevel() {
+        Map<Integer, Set<String>> result = new HashMap<>();
+        spellsByLevel.forEach((k, v) -> result.put(k, new LinkedHashSet<>(v)));
+        return result;
+    }
+    public void setSpellsByLevel(Map<Integer, Set<String>> spells) {
+        this.spellsByLevel = new HashMap<>();
+        spells.forEach((k, v) -> this.spellsByLevel.put(k, new LinkedHashSet<>(v)));
     }
 
     public List<PendingChoice<?>> getPendingChoices() {
@@ -114,5 +137,70 @@ public class CharacterCreationSession {
 
     public void setAbilityScores(EnumMap<Ability, Integer> abilities) {
         this.abilityScores = abilities;
+    }
+
+    public boolean hasSpell(String spellName) {
+        return selectedSpells.contains(spellName) || selectedCantrips.contains(spellName);
+    }
+
+    public void selectSpell(String spellName, int level, int maxAllowed) {
+        if (level == 0) {
+            if (selectedCantrips.contains(spellName)) {
+                return;
+            }
+
+            if (selectedCantrips.size() >= maxAllowed && maxAllowed > 0) {
+                Iterator<String> iterator = selectedCantrips.iterator();
+                if (iterator.hasNext()) {
+                    iterator.next();
+                    iterator.remove();
+                }
+            }
+            selectedCantrips.add(spellName);
+        } else {
+            if (selectedSpells.contains(spellName)) {
+                return;
+            }
+
+            LinkedHashSet<String> levelSpells = spellsByLevel.computeIfAbsent(level, k -> new LinkedHashSet<>());
+
+            if (levelSpells.size() >= maxAllowed && maxAllowed > 0) {
+                Iterator<String> iterator = levelSpells.iterator();
+                if (iterator.hasNext()) {
+                    String oldestSpell = iterator.next();
+                    iterator.remove();
+                    selectedSpells.remove(oldestSpell);
+                }
+            }
+            levelSpells.add(spellName);
+            selectedSpells.add(spellName);
+        }
+    }
+
+    public boolean removeSpell(String spellName, int level) {
+        if (level == 0) {
+            return selectedCantrips.remove(spellName);
+        } else {
+            Set<String> levelSpells = spellsByLevel.get(level);
+            if (levelSpells != null) {
+                levelSpells.remove(spellName);
+                if (levelSpells.isEmpty()) {
+                    spellsByLevel.remove(level);
+                }
+            }
+            return selectedSpells.remove(spellName);
+        }
+    }
+
+    public int getSpellCount(int level) {
+        if (level == 0) {
+            return selectedCantrips.size();
+        }
+        LinkedHashSet<String> levelSpells = spellsByLevel.get(level);
+        return levelSpells != null ? levelSpells.size() : 0;
+    }
+
+    public int getTotalSpellsSelected() {
+        return selectedSpells.size();
     }
 }

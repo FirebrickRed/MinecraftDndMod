@@ -1,37 +1,30 @@
 name: Warlock
 hit_die: 8
-proficiency:
-  - 2
-  - 2
-  - 2
-  - 2
-  - 3
-  - 3
-  - 3
-  - 3
-  - 4
-  - 4
-  - 4
-  - 4
-  - 5
-  - 5
-  - 5
-  - 5
-  - 6
-  - 6
-  - 6
-  - 6
+proficiency: [2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6]
 primary_abilities: #ToDo: update for all classes and incourporate if wanted
   - Strength
   - Constitution
-saving_throws:
-  - Wisdom
-  - Charisma
-armor_proficiencies:
-  - light_armor
-weapon_proficiencies:
-  - simple_weapons
+saving_throws: [Wisdom, Charisma]
+armor_proficiencies: [light_armor]
+weapon_proficiencies: [simple_weapons]
 tool_proficiencies: []
+spellcasting:
+  casting_ability: Charisma
+  preparation_type: known
+  ritual_casting: false
+  spellcasting_focus: true
+  spell_list: warlock
+  spellcasting_level: 1
+  cantrips_known_by_level: [2,2,2,2,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4]
+  spells_known_by_level: [2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11]
+  spell_slots_by_level:
+    1: [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+    2: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    3: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    4: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+    5: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
+  pact_slot_level_by_level: [1,1,2,2,3,3,3,3,4,4,4,4,5,5,5,5,5,5,5,5]
+  slot_recovery: short_rest
 features_by_level:
   1:
     - name: Otherworldly Patron
