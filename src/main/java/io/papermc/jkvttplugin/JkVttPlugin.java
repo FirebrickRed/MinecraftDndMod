@@ -1,8 +1,10 @@
 package io.papermc.jkvttplugin;
 
 import io.papermc.jkvttplugin.character.CharacterSheetItemListener;
+import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.commands.*;
 import io.papermc.jkvttplugin.data.DataManager;
+import io.papermc.jkvttplugin.listeners.CharacterNameListener;
 import io.papermc.jkvttplugin.listeners.NpcListener;
 import io.papermc.jkvttplugin.listeners.PlanetListener;
 import io.papermc.jkvttplugin.listeners.WeaponListener;
@@ -29,6 +31,8 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         DataManager dataManager = new DataManager(this);
         dataManager.loadAllData();
 
+        CharacterSheetManager.initialize(this);
+
         // Listeners
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(new CharacterSheetItemListener(), this);
@@ -36,6 +40,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new PlanetListener(), this);
         Bukkit.getPluginManager().registerEvents(new WeaponListener(), this);
         Bukkit.getPluginManager().registerEvents(new MenuClickListener(), this);
+        Bukkit.getPluginManager().registerEvents(new CharacterNameListener(), this);
 
         // Commands
         EquipmentCommand equipmentCommand = new EquipmentCommand();

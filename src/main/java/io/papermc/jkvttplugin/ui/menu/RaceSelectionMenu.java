@@ -2,6 +2,8 @@ package io.papermc.jkvttplugin.ui.menu;
 
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
+import io.papermc.jkvttplugin.ui.core.MenuHolder;
+import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;

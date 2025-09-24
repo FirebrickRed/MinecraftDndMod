@@ -1,0 +1,116 @@
+# Simple Weapons
+club:
+  name: "Club"
+  category: "simple"
+  type: "melee"
+  damage: "1d4"
+  damage_type: "bludgeoning"
+  properties: ["light"]
+  weight: "2 lb"
+  cost: "1 sp"
+  description: "A powerful ranged weapon requiring great strength to draw."
+  icon: "longbow"A simple wooden club."
+  icon: "club"
+
+dagger:
+  name: "Dagger"
+  category: "simple"
+  type: "melee"
+  damage: "1d4"
+  damage_type: "piercing"
+  properties: ["finesse", "light", "thrown"]
+  range: "20/60"
+  weight: "1 lb"
+  cost: "2 gp"
+  description: "A simple blade."
+  icon: "dagger"
+
+javelin:
+  name: "Javelin"
+  category: "simple"
+  type: "melee"
+  damage: "1d6"
+  damage_type: "piercing"
+  properties: ["thrown"]
+  range: "30/120"
+  weight: "2 lb"
+  cost: "5 sp"
+  description: "A light throwing spear."
+  icon: "javelin"
+
+light_crossbow:
+  name: "Light Crossbow"
+  category: "simple"
+  type: "ranged"
+  damage: "1d8"
+  damage_type: "piercing"
+  properties: ["ammunition", "loading", "two-handed"]
+  range:
+    normal: 80
+    long: 320
+  weight: "5 lb"
+  cost: "25 gp"
+  description: "A simple crossbow."
+  icon: "light_crossbow"
+
+shortbow:
+  name: "Shortbow"
+  category: "simple"
+  type: "ranged"
+  damage: "1d6"
+  damage_type: "piercing"
+  properties: ["ammunition", "two-handed"]
+  range: "80/320"
+  weight: "2 lb"
+  cost: "25 gp"
+  description: "A simple bow."
+  icon: "shortbow"
+
+# Martial Weapons
+longsword:
+  name: "Longsword"
+  category: "martial"
+  type: "melee"
+  damage: "1d8"
+  damage_type: "slashing"
+  properties: ["versatile"]
+  weight: "3 lb"
+  cost: "15 gp"
+  description: "A classic knightly blade. Can be wielded with two hands for 1d10 damage."
+  icon: "longsword"
+
+greatsword:
+  name: "Greatsword"
+  category: "martial"
+  type: "melee"
+  damage: "2d6"
+  damage_type: "slashing"
+  properties: ["heavy", "two-handed"]
+  weight: "6 lb"
+  cost: "50 gp"
+  description: "A massive two-handed sword."
+  icon: "greatsword"
+
+rapier:
+  name: "Rapier"
+  category: "martial"
+  type: "melee"
+  damage: "1d8"
+  damage_type: "piercing"
+  properties: ["finesse"]
+  weight: "2 lb"
+  cost: "25 gp"
+  description: "A light, precise thrusting blade."
+  icon: "rapier"
+
+longbow:
+  name: "Longbow"
+  category: "martial"
+  type: "ranged"
+  damage: "1d8"
+  damage_type: "piercing"
+  properties: ["ammunition", "heavy", "two-handed"]
+  range: "150/600"
+  weight: "2 lb"
+  cost: "50 gp"
+  description: "

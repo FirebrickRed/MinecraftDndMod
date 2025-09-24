@@ -1,7 +1,7 @@
 package io.papermc.jkvttplugin.listeners;
 
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
-import io.papermc.jkvttplugin.player.CharacterSheet;
+import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.DndWeapon;
 import net.kyori.adventure.text.Component;
@@ -29,14 +29,14 @@ public class WeaponListener implements Listener {
         DndWeapon weapon = DndWeapon.getWeapon(itemName);
         if (weapon == null) return;
 
-        CharacterSheet characterSheet = CharacterSheetManager.getCharacterSheet(player);
-        if (characterSheet == null) {
-            player.sendMessage(Component.text("You do not have a character sheet!"));
-            return;
-        }
+//        CharacterSheet characterSheet = CharacterSheetManager.getCharacterSheet(player);
+//        if (characterSheet == null) {
+//            player.sendMessage(Component.text("You do not have a character sheet!"));
+//            return;
+//        }
 
         String abilityUsed = "Dexterity";
-        int abilityMod = characterSheet.getModifier(Ability.DEXTERITY);
+//        int abilityMod = characterSheet.getModifier(Ability.DEXTERITY);
 //        int proficiencyBonus = characterSheet.getProficiencyBonus();
 //        int totalAttackBonus = abilityMod + proficiencyBonus;
 
@@ -44,7 +44,7 @@ public class WeaponListener implements Listener {
                 .append(Component.text("You attack with your ", NamedTextColor.YELLOW))
                 .append(Component.text(weapon.getName(), NamedTextColor.GOLD))
                 .append(Component.text("! Roll d20 ", NamedTextColor.YELLOW))
-                .append(Component.text(abilityUsed + " (" + abilityMod + ")", NamedTextColor.GREEN))
+//                .append(Component.text(abilityUsed + " (" + abilityMod + ")", NamedTextColor.GREEN))
 //                .append(Component.text(" + IF Proficient: Proficiency Bonus (" + proficiencyBonus + ")", NamedTextColor.AQUA))
 //                .append(Component.text(" = +" + totalAttackBonus, NamedTextColor.YELLOW))
                 .build();
@@ -55,7 +55,7 @@ public class WeaponListener implements Listener {
                 .append(Component.text(" ", NamedTextColor.YELLOW))
                 .append(Component.text(weapon.getDamageType(), NamedTextColor.RED))
                 .append(Component.text(" + ", NamedTextColor.YELLOW))
-                .append(Component.text(abilityMod, NamedTextColor.RED))
+//                .append(Component.text(abilityMod, NamedTextColor.RED))
                 .append(Component.text(" damage.", NamedTextColor.YELLOW))
                 .build();
 

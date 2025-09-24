@@ -1,7 +1,8 @@
-package io.papermc.jkvttplugin.ui.menu;
+package io.papermc.jkvttplugin.ui.core;
 
 public enum MenuType {
-    CHARACTER_SHEET,
+    VIEW_CHARACTER_SHEET,
+    CHARACTER_CREATION_SHEET,
     RACE_SELECTION,
     SUBRACE_SELECTION,
     CLASS_SELECTION,

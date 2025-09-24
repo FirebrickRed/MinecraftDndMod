@@ -2,13 +2,17 @@ package io.papermc.jkvttplugin.ui.listener;
 
 import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
+import io.papermc.jkvttplugin.character.CharacterSheet;
+import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
 import io.papermc.jkvttplugin.data.loader.SpellLoader;
 import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.listeners.CharacterNameListener;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
+import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.menu.*;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.TagRegistry;
@@ -41,7 +45,7 @@ public class MenuClickListener implements Listener {
 
         // ToDo: Double check parameters when flow is all finished
         switch (holder.getType()) {
-            case CHARACTER_SHEET -> handleCharacterSheetClick(player, event, holder, clickedItem, action, payload);
+            case CHARACTER_CREATION_SHEET -> handleCharacterSheetClick(player, event, holder, clickedItem, action, payload);
             case RACE_SELECTION -> handleRaceSelectionClick(player, event, holder, clickedItem, action, payload);
             case SUBRACE_SELECTION -> handleSubraceSelectionClick(player, event, holder, clickedItem, action, payload);
             case CLASS_SELECTION -> handleClassSelectionClick(player, event, holder, clickedItem, action, payload);
@@ -76,14 +80,15 @@ public class MenuClickListener implements Listener {
             case OPEN_BACKGROUND_SELECTION -> {
                 BackgroundSelectionMenu.open(player, BackgroundLoader.getAllBackgrounds(), holder.getSessionId());
             }
-            // ToDo: add player choices
             case OPEN_PLAYER_OPTION_SELECTION -> {
-                var pending = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
+                List<PendingChoice<?>> pending = session.getPendingChoices();
+                if (pending.isEmpty()) {
+                    pending = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
+                }
                 if (!pending.isEmpty()) {
                     PlayersChoiceMenu.open(player, pending, holder.getSessionId());
                 }
             }
-            // ToDo: add ability allocation
             case OPEN_ABILITY_ALLOCATION -> {
                 AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
             }
@@ -103,11 +108,7 @@ public class MenuClickListener implements Listener {
                 }
             }
             case CONFIRM_CHARACTER -> {
-//                if (isCharacterComplete(session)) {
-                    player.closeInventory();;
-                    player.sendMessage("Character created successfully!");
-                    CharacterCreationService.removeSession(player.getUniqueId());
-//                }
+                handleCharacterConfirmation(player, session, holder);
             }
         }
     }
@@ -128,7 +129,7 @@ public class MenuClickListener implements Listener {
             return;
         }
 
-        CharacterSheetMenu.open(player, holder.getSessionId());
+        CharacterCreationSheetMenu.open(player, holder.getSessionId());
     }
 
     private void handleSubraceSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
@@ -143,7 +144,7 @@ public class MenuClickListener implements Listener {
 
         session.setSelectedSubrace(payload);
         player.sendMessage("You have selected " + payload + " as your subrace!");
-        CharacterSheetMenu.open(player, holder.getSessionId());
+        CharacterCreationSheetMenu.open(player, holder.getSessionId());
     }
 
     private void handleClassSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
@@ -158,7 +159,7 @@ public class MenuClickListener implements Listener {
 
         session.setSelectedClass(payload);
         player.sendMessage("You have selected " + payload + " as your class!");
-        CharacterSheetMenu.open(player, holder.getSessionId());
+        CharacterCreationSheetMenu.open(player, holder.getSessionId());
     }
 
     private void handleBackgroundSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
@@ -173,7 +174,7 @@ public class MenuClickListener implements Listener {
 
         session.setSelectedBackground(payload);
         player.sendMessage("You have selected " + payload + " as your background!");
-        CharacterSheetMenu.open(player, holder.getSessionId());
+        CharacterCreationSheetMenu.open(player, holder.getSessionId());
     }
 
     private void handlePlayersChoiceClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
@@ -298,10 +299,10 @@ public class MenuClickListener implements Listener {
             // ToDo: Apply chosen options to the character sheet here:
             // - languages/tools/equipment, etc., based on each pendingChoice
             // Then clear and advance to next step Ability Allocation
-            session.clearPendingChoices();
+//            session.clearPendingChoices();
             player.closeInventory();
             player.sendMessage("Choices saved!");
-            CharacterSheetMenu.open(player, holder.getSessionId());
+            CharacterCreationSheetMenu.open(player, holder.getSessionId());
         }
     }
 
@@ -344,7 +345,7 @@ public class MenuClickListener implements Listener {
     private void handleAbilityAllocationClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
         if (action == MenuAction.CONFIRM_CHARACTER) {
             player.closeInventory();
-            CharacterSheetMenu.open(player, holder.getSessionId());
+            CharacterCreationSheetMenu.open(player, holder.getSessionId());
         }
 
         if (action != MenuAction.INCREASE_ABILITY && action != MenuAction.DECREASE_ABILITY) return;
@@ -406,7 +407,6 @@ public class MenuClickListener implements Listener {
                 int currentSelected = session.getSpellCount(spellLevel);
 
 //                session.selectSpell(spellKey, spellLevel, maxSelectable);
-                SpellSelectionMenu.open(player, holder.getSessionId(), spellLevel);
                 if (session.hasSpell(spellKey)) {
                     session.removeSpell(spellKey, spellLevel);
                 } else {
@@ -416,6 +416,7 @@ public class MenuClickListener implements Listener {
                     session.selectSpell(spellKey, spellLevel, maxSelectable);
 
                 }
+                SpellSelectionMenu.open(player, holder.getSessionId(), spellLevel);
             }
             case CHANGE_SPELL_LEVEL -> {
                 try {
@@ -428,12 +429,12 @@ public class MenuClickListener implements Listener {
             case CONFIRM_SPELL_SELECTION -> {
                 if (validateAllSpellSelections(session, dndClass)) {
                     player.closeInventory();
-                    CharacterSheetMenu.open(player, holder.getSessionId());
+                    CharacterCreationSheetMenu.open(player, holder.getSessionId());
                 }
             }
             case BACK_TO_CHARACTER_SHEET -> {
                 player.closeInventory();
-                CharacterSheetMenu.open(player, holder.getSessionId());
+                CharacterCreationSheetMenu.open(player, holder.getSessionId());
             }
         }
     }
@@ -468,6 +469,58 @@ public class MenuClickListener implements Listener {
                 return totalSelected == maxSpells;
             }
         }
+        return true;
+    }
+
+    private void handleCharacterConfirmation(Player player, CharacterCreationSession session, MenuHolder holder) {
+        if (!isCharacterComplete(session)) {
+            player.sendMessage("Please complete all character creation steps before confirming.");
+            return;
+        }
+
+        player.closeInventory();
+
+        if (session.getCharacterName() == null || session.getCharacterName().trim().isEmpty()) {
+            CharacterNameListener.requestCharacterName(player);
+        } else {
+            completeCharacterCreation(player, session);
+        }
+    }
+
+    private void completeCharacterCreation(Player player, CharacterCreationSession session) {
+        try {
+            CharacterSheet characterSheet = CharacterSheetManager.createCharacterFromSession(player, session);
+
+            // save to yaml
+//            CharacterSheetManager.saveCharacterSheet(player);
+
+            ItemStack characterSheetItem = CharacterSheetManager.createCharacterSheetItem(characterSheet);
+            player.getInventory().addItem(characterSheetItem);
+
+            CharacterCreationService.removeSession(player.getUniqueId());
+
+            player.sendMessage("Character created successfully! You've received your character sheet.");
+            player.sendMessage("Right-click the character sheet item to view your character details.");
+        } catch (Exception e) {
+            player.sendMessage("An error occurred while creating your character. Please try again.");
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isCharacterComplete(CharacterCreationSession session) {
+        if (session.getSelectedRace() == null) return false;
+        if (session.getSelectedClass() == null) return false;
+        if (session.getSelectedBackground() == null) return false;
+        if (!session.allChoicesSatisfied()) return false;
+
+        EnumMap<Ability, Integer> abilities = session.getAbilityScores();
+        if (abilities == null || abilities.isEmpty()) return false;
+
+        DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
+        if (dndClass != null && dndClass.getSpellcasting() != null) {
+            if (!validateAllSpellSelections(session, dndClass)) return false;
+        }
+
         return true;
     }
 }

@@ -1,19 +1,13 @@
 package io.papermc.jkvttplugin.listeners;
 
-import io.papermc.jkvttplugin.JkVttPlugin;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
-import io.papermc.jkvttplugin.data.model.DndRace;
-import io.papermc.jkvttplugin.player.CharacterSheet;
-import org.bukkit.Bukkit;
+import io.papermc.jkvttplugin.character.CharacterSheet;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
-import org.bukkit.potion.PotionEffect;
-import org.bukkit.potion.PotionEffectType;
-import org.bukkit.scheduler.BukkitRunnable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -47,8 +41,8 @@ public class PlanetListener implements Listener {
         }
 
         int remainingAir = playerBreath.get(playerId);
-        CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
-        if (sheet == null) return;
+//        CharacterSheet sheet = CharacterSheetManager.getCharacterSheet(player);
+//        if (sheet == null) return;
 //        DndRace race = sheet.getRaceForPlayer();
 //        if (race == null) return;
 

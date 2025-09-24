@@ -4,8 +4,9 @@ import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
 import io.papermc.jkvttplugin.data.model.DndRace;
-import io.papermc.jkvttplugin.player.CharacterSheet;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
+import io.papermc.jkvttplugin.ui.core.MenuHolder;
+import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -19,7 +20,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-public class CharacterSheetMenu {
+public class CharacterCreationSheetMenu {
 
     public static void open(Player player, UUID sessionId) {
         player.openInventory(build(player, sessionId));
@@ -27,7 +28,7 @@ public class CharacterSheetMenu {
 
     public static Inventory build(Player player, UUID sessionId) {
         Inventory inventory = Bukkit.createInventory(
-                new MenuHolder(MenuType.CHARACTER_SHEET, sessionId),
+                new MenuHolder(MenuType.CHARACTER_CREATION_SHEET, sessionId),
                 54,
                 Component.text("Character Sheet")
         );
@@ -72,7 +73,14 @@ public class CharacterSheetMenu {
         inventory.setItem(21, abilityItem);
 
         if (session != null && isBasicSelectionComplete(session)) {
-            var pendingChoices = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
+            if (session.getPendingChoices().isEmpty()) {
+                var rebuilt = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
+                for (var choice : rebuilt) {
+                    System.out.println("  - Choice: " + choice.getId() + " (" + choice.getTitle() + ")");
+                }
+            }
+            var pendingChoices = session.getPendingChoices();
+
             if (!pendingChoices.isEmpty()) {
                 ItemStack choicesItem = new ItemStack(Material.CHEST);
                 choicesItem.editMeta(m -> {
@@ -150,7 +158,8 @@ public class CharacterSheetMenu {
                         }
                     }
 
-                    var pendingChoices = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
+//                    var pendingChoices = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
+                    var pendingChoices = session.getPendingChoices();
                     if (!pendingChoices.isEmpty() && !session.allChoicesSatisfied()) {
                         lore.add(Component.text("• Complete equipment choices").color(NamedTextColor.RED));
                     }

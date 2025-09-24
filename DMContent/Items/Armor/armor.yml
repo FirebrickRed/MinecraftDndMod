@@ -1,0 +1,149 @@
+# Light Armor
+padded:
+  name: "Padded Armor"
+  category: "light"
+  ac: 11
+  strength_requirement: 0
+  stealth_disadvantage: true
+  weight: "8 lb"
+  cost: "5 gp"
+  description: "Quilted layers of cloth and batting."
+  icon: "padded_armor"
+
+leather:
+  name: "Leather Armor"
+  category: "light"
+  ac: 11
+  strength_requirement: 0
+  stealth_disadvantage: false
+  weight: "10 lb"
+  cost: "10 gp"
+  description: "Boiled leather chest piece."
+  icon: "leather_armor"
+
+studded_leather:
+  name: "Studded Leather Armor"
+  category: "light"
+  ac: 12
+  strength_requirement: 0
+  stealth_disadvantage: false
+  weight: "13 lb"
+  cost: "45 gp"
+  description: "Leather reinforced with close-set rivets or spikes."
+  icon: "studded_leather"
+
+# Medium Armor
+hide:
+  name: "Hide Armor"
+  category: "medium"
+  ac:
+    base: 12
+    adds_dex: true
+    max_dex: 2
+  strength_requirement: 0
+  stealth_disadvantage: false
+  weight: "12 lb"
+  cost: "10 gp"
+  description: "Crude armor made from thick furs and pelts."
+  icon: "hide_armor"
+
+chain_shirt:
+  name: "Chain Shirt"
+  category: "medium"
+  ac: "13 + Dex (max 2)"
+  strength_requirement: 0
+  stealth_disadvantage: false
+  weight: "20 lb"
+  cost: "50 gp"
+  description: "A shirt of interlocking metal rings."
+  icon: "chain_shirt"
+
+scale_mail:
+  name: "Scale Mail"
+  category: "medium"
+  ac: "14 + Dex (max 2)"
+  strength_requirement: 0
+  stealth_disadvantage: true
+  weight: "45 lb"
+  cost: "50 gp"
+  description: "Coat and leggings of leather covered with overlapping pieces of metal."
+  icon: "scale_mail"
+
+breastplate:
+  name: "Breastplate"
+  category: "medium"
+  ac: "14 + Dex (max 2)"
+  strength_requirement: 0
+  stealth_disadvantage: false
+  weight: "20 lb"
+  cost: "400 gp"
+  description: "Fitted metal chest piece with supple leather."
+  icon: "breastplate"
+
+half_plate:
+  name: "Half Plate"
+  category: "medium"
+  ac: "15 + Dex (max 2)"
+  strength_requirement: 0
+  stealth_disadvantage: true
+  weight: "40 lb"
+  cost: "750 gp"
+  description: "Plate armor covering most of the body."
+  icon: "half_plate"
+
+# Heavy Armor
+ring_mail:
+  name: "Ring Mail"
+  category: "heavy"
+  ac: 14
+  strength_requirement: 0
+  stealth_disadvantage: true
+  weight: "40 lb"
+  cost: "30 gp"
+  description: "Leather armor with heavy rings sewn into it."
+  icon: "ring_mail"
+
+chain_mail:
+  name: "Chain Mail"
+  category: "heavy"
+  ac: 16
+  strength_requirement: 13
+  stealth_disadvantage: true
+  weight: "55 lb"
+  cost: "75 gp"
+  description: "Interlocking metal rings covering the entire body."
+  icon: "chain_mail"
+
+splint:
+  name: "Splint Armor"
+  category: "heavy"
+  ac: 17
+  strength_requirement: 15
+  stealth_disadvantage: true
+  weight: "60 lb"
+  cost: "200 gp"
+  description: "Narrow vertical strips of metal riveted to a leather backing."
+  icon: "splint_armor"
+
+plate:
+  name: "Plate Armor"
+  category: "heavy"
+  ac: 18
+  strength_requirement: 15
+  stealth_disadvantage: true
+  weight: "65 lb"
+  cost: "1,500 gp"
+  description: "Interlocking metal plates covering the entire body."
+  icon: "plate_armor"
+
+# Shields
+shield:
+  name: "Shield"
+  category: "shield"
+  ac: 2
+  strength_requirement: 0
+  stealth_disadvantage: false
+  weight: "6 lb"
+  cost: "10 gp"
+  description: "Increases AC by 2. Must be strapped to the arm."
+  icon: "shield"

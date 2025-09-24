@@ -1,4 +1,4 @@
-package io.papermc.jkvttplugin.ui.menu;
+package io.papermc.jkvttplugin.ui.core;
 
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;

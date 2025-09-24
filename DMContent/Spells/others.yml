@@ -1,0 +1,121 @@
+spells:
+  # 3RD LEVEL SPELLS
+  fireball:
+    name: "Fireball"
+    level: 3
+    school: "evocation"
+    classes: [ "wizard", "sorcerer" ]
+    casting_time: "1 action"
+    range: "150 feet"
+    components:
+      verbal: true
+      somatic: true
+      material: true
+      material_description: "a tiny ball of bat guano and sulfur"
+      material_consumed: false
+      material_cost: null
+    duration: "Instantaneous"
+    description: "A bright streak flashes from your pointing finger to a point you choose within range and then blossoms with a low roar into an explosion of flame. Each creature in a 20-foot-radius sphere centered on that point must make a Dexterity saving throw."
+    concentration: false
+    ritual: false
+    icon: "FIRE_CHARGE"
+    save_type: "Dexterity"
+    damage_type: "fire"
+    higher_levels: "When you cast this spell using a spell slot of 4th level or higher, the damage increases by 1d6 for each slot level above 3rd."
+
+  lightning_bolt:
+    name: "Lightning Bolt"
+    level: 3
+    school: "evocation"
+    classes: [ "sorcerer", "wizard" ]
+    casting_time: "1 action"
+    range: "Self (100-foot line)"
+    components: "V, S, M"
+    duration: "Instantaneous"
+    description: "A stroke of lightning forming a line 100 feet long and 5 feet wide blasts out from you in a direction you choose. Each creature in the line must make a Dexterity saving throw. A creature takes 8d6 lightning damage on a failed save, or half as much damage on a successful one."
+    concentration: false
+    ritual: false
+    icon: "LIGHTNING_ROD"
+    save_type: "Dexterity"
+    damage_type: "lightning"
+    higher_levels: "When you cast this spell using a spell slot of 4th level or higher, the damage increases by 1d6 for each slot level above 3rd."
+
+  counterspell:
+    name: "Counterspell"
+    level: 3
+    school: "abjuration"
+    classes: [ "sorcerer", "warlock", "wizard" ]
+    casting_time: "1 reaction"
+    range: "60 feet"
+    components: "S"
+    duration: "Instantaneous"
+    description: "You attempt to interrupt a creature in the process of casting a spell. If the creature is casting a spell of 3rd level or lower, its spell fails and has no effect. If it is casting a spell of 4th level or higher, make an ability check using your spellcasting ability."
+    concentration: false
+    ritual: false
+    icon: "BARRIER"
+    higher_levels: "When you cast this spell using a spell slot of 4th level or higher, the interrupted spell has no effect if its level is less than or equal to the level of the spell slot you used."
+
+  fly:
+    name: "Fly"
+    level: 3
+    school: "transmutation"
+    classes: [ "sorcerer", "warlock", "wizard" ]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S, M"
+    duration: "10 minutes"
+    description: "You touch a willing creature. The target gains a flying speed of 60 feet for the duration. When the spell ends, the target falls if it is still aloft, unless it can stop the fall."
+    concentration: true
+    ritual: false
+    icon: "ELYTRA"
+    attack_type: "touch"
+    higher_levels: "When you cast this spell using a spell slot of 4th level or higher, you can target one additional creature for each slot level above 3rd."
+
+  mental_prison:
+    name: "Mental Prison"
+    level: 6
+    school: "illusion"
+    classes: [ "sorcerer", "warlock", "wizard" ]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "S"
+    duration: "1 minute"
+    description: "You attempt to bind a creature within an illusory cell that only it perceives. One creature you can see within range must make an Intelligence saving throw. The target succeeds automatically if it is immune to being charmed. On a successful save, the target takes 5d10 psychic damage, and the spell ends. On a failed save, the target takes 5d10 psychic damage, and you make the area immediately around the target's space appear dangerous to it in some way."
+    concentration: true
+    ritual: false
+    icon: "IRON_BARS"
+    save_type: "Intelligence"
+    damage_type: "psychic"
+
+    # Additional Warlock-specific spells
+  hunger_of_hadar:
+    name: "Hunger of Hadar"
+    level: 3
+    school: "conjuration"
+    classes: [ "warlock" ]
+    casting_time: "1 action"
+    range: "150 feet"
+    components: "V, S, M"
+    duration: "1 minute"
+    description: "You open a gateway to the dark between the stars, a region infested with unknown horrors. A 20-foot-radius sphere of blackness and bitter cold appears, centered on a point within range and lasting for the duration. This void is filled with a cacophony of soft whispers and slurping noises that can be heard up to 30 feet away."
+    concentration: true
+    ritual: false
+    icon: "END_PORTAL"
+    save_type: "Dexterity"
+    damage_type: "cold"
+
+  synaptic_static:
+    name: "Synaptic Static"
+    level: 5
+    school: "enchantment"
+    classes: [ "bard", "sorcerer", "warlock", "wizard" ]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You choose a point within range and cause psychic energy to explode there. Each creature in a 20-foot-radius sphere centered on that point must make an Intelligence saving throw. A creature with an Intelligence score of 2 or lower can't be affected by this spell."
+    concentration: false
+    ritual: false
+    icon: "LIGHTNING_ROD"
+    save_type: "Intelligence"
+    damage_type: "psychic"

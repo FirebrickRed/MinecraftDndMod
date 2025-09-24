@@ -311,7 +311,6 @@ public class DndClass {
 
         public Builder asiLevels(List<Integer> asiLevels) {
             instance.setAsiLevels(asiLevels);
-//            System.out.println("Setting ASI levels: " + asiLevels);
             return this;
         }
 

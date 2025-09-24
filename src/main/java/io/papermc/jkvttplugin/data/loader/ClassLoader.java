@@ -80,8 +80,6 @@ public class ClassLoader {
     }
 
     private static SpellcastingInfo parseSpellcasting(Object spellcastingData) {
-        System.out.println("In Parse Spellcasting");
-        System.out.println(spellcastingData);
         if (!(spellcastingData instanceof Map<?,?> map)) return null;
 
         SpellcastingInfo spellcasting = new SpellcastingInfo();

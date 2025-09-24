@@ -1,10 +1,9 @@
 package io.papermc.jkvttplugin.ui.menu;
 
-import io.papermc.jkvttplugin.character.CharacterCreationService;
-import io.papermc.jkvttplugin.data.loader.RaceLoader;
-import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
+import io.papermc.jkvttplugin.ui.core.MenuHolder;
+import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;

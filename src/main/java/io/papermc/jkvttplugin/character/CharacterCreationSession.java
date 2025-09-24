@@ -9,6 +9,7 @@ public class CharacterCreationSession {
     private final UUID playerId;
     private final UUID sessionId = UUID.randomUUID();
 
+    private String characterName;
     private String selectedRace;
     private String selectedSubRace;
     private String selectedClass;
@@ -21,8 +22,6 @@ public class CharacterCreationSession {
 
     private EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
 
-    private String characterName;
-
     public CharacterCreationSession(UUID playerId) {
         this.playerId = playerId;
     }
@@ -30,9 +29,15 @@ public class CharacterCreationSession {
     public UUID getPlayerId() {
         return playerId;
     }
-
     public UUID getSessionId() {
         return sessionId;
+    }
+
+    public String getCharacterName() {
+        return characterName;
+    }
+    public void setCharacterName(String characterName) {
+        this.characterName = characterName;
     }
 
     public String getSelectedRace() {
@@ -177,9 +182,9 @@ public class CharacterCreationSession {
         }
     }
 
-    public boolean removeSpell(String spellName, int level) {
+    public void removeSpell(String spellName, int level) {
         if (level == 0) {
-            return selectedCantrips.remove(spellName);
+            selectedCantrips.remove(spellName);
         } else {
             Set<String> levelSpells = spellsByLevel.get(level);
             if (levelSpells != null) {
@@ -188,7 +193,7 @@ public class CharacterCreationSession {
                     spellsByLevel.remove(level);
                 }
             }
-            return selectedSpells.remove(spellName);
+            selectedSpells.remove(spellName);
         }
     }
 

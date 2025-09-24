@@ -9,6 +9,8 @@ import io.papermc.jkvttplugin.data.model.DndSpell;
 import io.papermc.jkvttplugin.data.model.SpellcastingInfo;
 import io.papermc.jkvttplugin.data.model.SpellsPreparedFormula;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
+import io.papermc.jkvttplugin.ui.core.MenuHolder;
+import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;

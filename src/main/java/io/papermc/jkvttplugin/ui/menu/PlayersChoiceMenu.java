@@ -3,6 +3,8 @@ package io.papermc.jkvttplugin.ui.menu;
 import io.papermc.jkvttplugin.data.model.EquipmentOption;
 import io.papermc.jkvttplugin.data.model.PendingChoice;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
+import io.papermc.jkvttplugin.ui.core.MenuHolder;
+import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;

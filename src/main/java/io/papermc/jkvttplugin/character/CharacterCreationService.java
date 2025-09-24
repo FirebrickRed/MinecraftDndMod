@@ -42,10 +42,29 @@ public class CharacterCreationService {
 
         List<PendingChoice<?>> pending = new ArrayList<>();
 
-        if (race != null) race.contributeChoices(pending);
-        if (subrace != null) subrace.contributeChoices(pending);
-        if (dndClass != null) dndClass.contributeChoices(pending);
-        if (background != null) background.contributeChoices(pending);
+        // ToDo: add player choices to Race
+        if (race != null) {
+            // I guess there is not getPlayerChoices here... need to update this later
+//            System.out.println("Race player choices: " + race.getPlayerChoices().size());
+            race.contributeChoices(pending);
+            System.out.println("After race contribution: " + pending.size());
+        }
+        // ToDo: add player choices to Subrace
+        if (subrace != null) {
+//            System.out.println("Subrace player choices: " + subrace.getPlayerChoices().size());
+            subrace.contributeChoices(pending);
+            System.out.println("After subrace contribution: " + pending.size());
+        }
+        if (dndClass != null) {
+            System.out.println("Class player choices: " + dndClass.getPlayerChoices().size());
+            dndClass.contributeChoices(pending);
+            System.out.println("After class contribution: " + pending.size());
+        }
+        if (background != null) {
+            System.out.println("Background player choices: " + background.getPlayerChoices().size());
+            background.contributeChoices(pending);
+            System.out.println("After background contribution: " + pending.size());
+        }
 
         session.setPendingChoices(pending);
         return pending;

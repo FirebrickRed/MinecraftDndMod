@@ -2,7 +2,7 @@ package io.papermc.jkvttplugin.commands;
 
 import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
-import io.papermc.jkvttplugin.ui.menu.CharacterSheetMenu;
+import io.papermc.jkvttplugin.ui.menu.CharacterCreationSheetMenu;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -17,7 +17,7 @@ public class CreateCharacterCommand implements CommandExecutor {
         }
 
         CharacterCreationSession session = CharacterCreationService.start(player.getUniqueId());
-        CharacterSheetMenu.open(player, session.getSessionId());
+        CharacterCreationSheetMenu.open(player, session.getSessionId());
         return true;
     }
 }
