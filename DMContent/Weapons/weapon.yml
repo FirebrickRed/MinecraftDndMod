@@ -8,8 +8,7 @@ club:
   properties: ["light"]
   weight: "2 lb"
   cost: "1 sp"
-  description: "A powerful ranged weapon requiring great strength to draw."
-  icon: "longbow"A simple wooden club."
+  description: "A simple wooden club."
   icon: "club"
 
 dagger:
@@ -113,4 +112,5 @@ longbow:
   range: "150/600"
   weight: "2 lb"
   cost: "50 gp"
-  description: "
+  description: "A powerful ranged weapon requiring great strength to draw."
+  icon: "longbow"

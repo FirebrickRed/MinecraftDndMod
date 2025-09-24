@@ -1,9 +1,7 @@
 package io.papermc.jkvttplugin.data;
 
-import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
+import io.papermc.jkvttplugin.data.loader.*;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
-import io.papermc.jkvttplugin.data.loader.RaceLoader;
-import io.papermc.jkvttplugin.data.loader.SpellLoader;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -24,10 +22,14 @@ public class DataManager {
         File classFolder = new File(dmContentFolder, "Classes");
         File backgroundsFolder = new File(dmContentFolder, "Backgrounds");
         File spellFolder = new File(dmContentFolder, "Spells");
+        File weaponFolder = new File(dmContentFolder, "Weapons");
+        File armorFolder = new File(dmContentFolder, "Armor");
         RaceLoader.loadAllRaces(racesFolder);
         ClassLoader.loadAllClasses(classFolder);
         BackgroundLoader.loadAllBackgrounds(backgroundsFolder);
         SpellLoader.loadAllSpells(spellFolder);
+        WeaponLoader.loadAllWeapons(weaponFolder);
+        ArmorLoader.loadAllArmors(armorFolder);
     }
 
 //    private static Map<String, DndRace> allRaces = Map.of();
