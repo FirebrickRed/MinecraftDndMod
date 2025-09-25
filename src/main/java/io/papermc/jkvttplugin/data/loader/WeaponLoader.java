@@ -53,7 +53,7 @@ public class WeaponLoader {
 //        weapon.setCategory((String) data.getOrDefault("category", "simple"));
 //        weapon.setType((String) data.getOrDefault("type", "melee"));
 //        weapon.setDamage((String) data.getOrDefault("damage", "1d4"));
-        weapon.setDamageType((String) data.get("damage_type"));
+        weapon.setName((String) data.get("name"));
         weapon.setCategory((String) data.get("category"));
         weapon.setType((String) data.get("type"));
         weapon.setDamage((String) data.get("damage"));
