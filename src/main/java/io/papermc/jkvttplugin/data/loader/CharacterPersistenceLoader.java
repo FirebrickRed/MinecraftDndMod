@@ -1,6 +1,5 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import io.papermc.jkvttplugin.character.CharacterSheetBuilder;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import org.bukkit.plugin.Plugin;
@@ -27,8 +26,11 @@ public class CharacterPersistenceLoader {
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
+        loadAllCharacters();
     }
 
+    // Claude TODO: Remove debug System.out.println statements
+    // Use LOGGER.info() or LOGGER.fine() instead (see issue #13: Implement Proper Error Handling)
     // ToDo: fix saving character to yaml file
     public static void saveCharacter(CharacterSheet sheet) {
         // ToDo remove println
@@ -44,6 +46,7 @@ public class CharacterPersistenceLoader {
             Yaml yaml = new Yaml(options);
 
             try (FileWriter writer = new FileWriter(characterFile)) {
+                // Claude TODO: Remove this debug println (issue #13)
                 // ToDo remove println
                 System.out.println("in second try catch" + writer);
                 yaml.dump(data, writer);
@@ -53,6 +56,7 @@ public class CharacterPersistenceLoader {
         }
     }
 
+    // ToDo: actually load saved characters somewhere smh
     public static void loadAllCharacters() {
         File[] files = dataFolder.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null || files.length == 0) {
@@ -86,6 +90,7 @@ public class CharacterPersistenceLoader {
     }
 
     public static void storeCharacterInMemory(CharacterSheet sheet) {
+        // Claude TODO: Remove debug println (issue #13)
         // ToDo: remove println
         System.out.println("in storeCharacterInMemory" + sheet.getCharacterName());
         playerCharacters.computeIfAbsent(sheet.getPlayerId(), k -> new ConcurrentHashMap<>()).put(sheet.getCharacterId(), sheet);

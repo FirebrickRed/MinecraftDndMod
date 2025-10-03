@@ -1,11 +1,13 @@
 package io.papermc.jkvttplugin.character;
 
-import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
+import io.papermc.jkvttplugin.data.loader.*;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
-import io.papermc.jkvttplugin.data.loader.RaceLoader;
-import io.papermc.jkvttplugin.data.loader.SpellLoader;
 import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.util.Util;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.*;
@@ -31,6 +33,8 @@ public class CharacterSheet {
     private int armorClass;
 
     private List<ItemStack> equipment = new ArrayList<>();
+    private DndArmor equippedArmor;
+    private DndArmor equippedShield;
 
     private CharacterSheet(UUID characterId, UUID playerId, String characterName) {
         this.characterId = characterId;
@@ -38,37 +42,44 @@ public class CharacterSheet {
         this.characterName = characterName;
     }
 
-    public static CharacterSheet createFromSession(UUID characterId, UUID playerId, String characterName, String raceName, String subraceName, String className, String backgroundName, EnumMap<Ability, Integer> abilityScores, Set<String> spellNames, Set<String> cantripNames) {
-        CharacterSheet sheet = new CharacterSheet(characterId, playerId, characterName);
+    public static CharacterSheet createFromSession(UUID characterId, UUID playerId, CharacterCreationSession session) {
+        CharacterSheet sheet = new CharacterSheet(characterId, playerId, session.getCharacterName());
 
-        sheet.race = RaceLoader.getRace(raceName);
+        sheet.race = RaceLoader.getRace(session.getSelectedRace());
         if (sheet.race == null) {
-            throw new IllegalArgumentException("Race not found: " + raceName);
+            throw new IllegalArgumentException("Race not found: " + session.getSelectedRace());
         }
 
-        if (subraceName != null && sheet.race.hasSubraces()) {
-            sheet.subrace = sheet.race.getSubRaceByName(subraceName);
+        if (session.getSelectedSubRace() != null && sheet.race.hasSubraces()) {
+            sheet.subrace = sheet.race.getSubRaceByName(session.getSelectedSubRace());
         }
 
-        sheet.dndClass = ClassLoader.getClass(className);
+        sheet.dndClass = ClassLoader.getClass(session.getSelectedClass());
         if (sheet.dndClass == null) {
-            throw new IllegalArgumentException("Class not found: " + className);
+            throw new IllegalArgumentException("Class not found: " + session.getSelectedClass());
         }
 
-        sheet.background = BackgroundLoader.getBackground(backgroundName);
+        sheet.background = BackgroundLoader.getBackground(session.getSelectedBackground());
         if (sheet.background == null) {
-            throw new IllegalArgumentException("Background not found: " + backgroundName);
+            throw new IllegalArgumentException("Background not found: " + session.getSelectedBackground());
         }
 
-        sheet.abilityScores = new EnumMap<>(abilityScores);
-        //ToDo: figure out racial bonuses
+        sheet.abilityScores = new EnumMap<>(session.getAbilityScores());
+        // Claude TODO: MISSING FEATURE - Apply racial ability score bonuses
+        // DndRace and DndSubRace have abilityScoreIncreases maps that should be applied here
+        // Need to handle:
+        // 1. Fixed bonuses (e.g., Dwarf +2 CON)
+        // 2. Choice bonuses (e.g., Half-Elf +1 to two abilities of choice)
+        // 3. Subrace bonuses (e.g., Mountain Dwarf +2 STR)
+        // See: DndRace.getAbilityScoreIncreases() and DndSubRace.getAbilityScoreIncreases()
+        // ToDo: figure out racial bonuses
 
-        sheet.loadSpells(spellNames, cantripNames);
-
+        sheet.loadSpells(session.getSelectedSpells(), session.getSelectedCantrips());
         sheet.calculateHealth();
-        sheet.calculateArmorClass();
-        sheet.grantStartingEquipment();
 
+        sheet.grantStartingEquipment(session);
+
+        sheet.calculateArmorClass();
         return sheet;
     }
 
@@ -123,13 +134,218 @@ public class CharacterSheet {
 
     private void calculateArmorClass() {
         int baseAC = 10 + getModifier(Ability.DEXTERITY);
-        // ToDo: add armor bonuses from equipment
+
+        if (equippedArmor != null) {
+            int armorAC = equippedArmor.calculateAC(getModifier(Ability.DEXTERITY), getAbility(Ability.STRENGTH));
+
+            if (armorAC > 0) {
+                baseAC = armorAC;
+            }
+        }
+
+        if (equippedShield != null && equippedShield.isShield()) {
+            baseAC += equippedShield.getBaseAC();
+        }
+
         armorClass = baseAC;
     }
 
-    private void grantStartingEquipment() {
-        // ToDo: Implement starting quipment based on class and background
-        // this would create item stack objects from the equipmentlists
+    private void grantStartingEquipment(CharacterCreationSession session) {
+        List<ItemStack> startingItems = new ArrayList<>();
+
+        if (dndClass != null && dndClass.getStartingEquipment() != null) {
+            for (String itemId : dndClass.getStartingEquipment()) {
+                ItemStack item = createItemFromId(itemId);
+                if (item != null) {
+                    startingItems.add(item);
+                    tryAutoEquip(item, itemId);
+                }
+            }
+        }
+
+        if (dndClass != null && session != null) {
+            List<ItemStack> choiceItems = resolveEquipmentFromChoices(session.getPendingChoices(), "class");
+            startingItems.addAll(choiceItems);
+            for (ItemStack item : choiceItems) {
+                tryAutoEquipFromItem(item);
+            }
+        }
+
+        if (background != null) {
+            List<String> bgEquipment = background.getStartingEquipment();
+            if (bgEquipment != null) {
+                for (String itemId : bgEquipment) {
+                    ItemStack item = createItemFromId(itemId);
+                    if (item != null) {
+                        startingItems.add(item);
+                        tryAutoEquip(item, itemId);
+                    }
+                }
+            }
+        }
+
+        if (background != null && session != null) {
+            List<ItemStack> choiceItems = resolveEquipmentFromChoices(session.getPendingChoices(), "background");
+            startingItems.addAll(choiceItems);
+            for (ItemStack item : choiceItems) {
+                tryAutoEquipFromItem(item);
+            }
+        }
+
+//        if (dndClass != null && dndClass.getSpellcastingAbility() != null) {
+//            String focusType = dndClass.getSpellFocus();
+//        }
+
+        equipment.addAll(startingItems);
+    }
+
+    private List<ItemStack> resolveEquipmentFromChoices(List<PendingChoice<?>> pendingChoices, String source) {
+        List<ItemStack> items = new ArrayList<>();
+
+        if (pendingChoices == null) return items;
+
+        for (PendingChoice<?> pc : pendingChoices) {
+            if (!source.equals(pc.getSource())) continue;
+
+            if (pc.getPlayersChoice().getType() != PlayersChoice.ChoiceType.EQUIPMENT) continue;
+
+            Set<?> chosen = pc.getChosen();
+
+            for (Object obj : chosen) {
+                if (obj instanceof EquipmentOption equipmentOption) {
+                    List<ItemStack> optionItems = createItemsFromEquipmentOption(equipmentOption);
+                    items.addAll(optionItems);
+                }
+            }
+        }
+
+        return items;
+    }
+
+    private List<ItemStack> createItemsFromEquipmentOption(EquipmentOption option) {
+        List<ItemStack> items = new ArrayList<>();
+
+        switch (option.getKind()) {
+            case ITEM -> {
+                String itemId = option.getIdOrTag();
+                int quantity = option.getQuantity();
+
+                ItemStack item = createItemFromId(itemId);
+                if (item != null) {
+                    item.setAmount(quantity);
+                    items.add(item);
+                }
+            }
+            case TAG -> {
+                String itemId = option.getIdOrTag();
+                ItemStack item = createItemFromId(itemId);
+                if (item != null) {
+                    items.add(item);
+                }
+            }
+            case BUNDLE -> {
+                for (EquipmentOption part : option.getParts()) {
+                    items.addAll(createItemsFromEquipmentOption(part));
+                }
+            }
+        }
+
+        return items;
+    }
+
+    private ItemStack createItemFromId(String itemId) {
+        if (itemId == null || itemId.isEmpty()) return null;
+
+        DndWeapon weapon = WeaponLoader.getWeapon(itemId);
+        if (weapon != null) {
+            return weapon.createItemStack();
+        }
+
+        DndArmor armor = ArmorLoader.getArmor(itemId);
+        if (armor != null) {
+            return armor.createItemStack();
+        }
+
+        DndItem item = ItemLoader.getItem(itemId);
+        if (item != null) {
+            return item.createItemStack();
+        }
+
+        return Util.createItem(
+                Component.text(Util.prettify(itemId), NamedTextColor.WHITE),
+                List.of(Component.text("Unknown item", NamedTextColor.GRAY)),
+                "unknown_item",
+                1
+        );
+    }
+
+    private void tryAutoEquip(ItemStack item, String itemId) {
+        DndArmor armor = ArmorLoader.getArmor(itemId);
+        if (armor != null) {
+            Set<String> armorProfs = getArmorProficiencies();
+            if (armor.canWear(getAbility(Ability.STRENGTH), armorProfs)) {
+                if (armor.isShield() && equippedShield == null) {
+                    equippedShield = armor;
+                } else if (!armor.isShield() && equippedArmor == null) {
+                    equippedArmor = armor;
+                }
+            }
+        }
+    }
+
+    private void tryAutoEquipFromItem(ItemStack item) {
+        String itemName = getItemName(item);
+        if (itemName == null) return;
+
+        DndArmor armor = findArmorByName(itemName);
+        if (armor != null) {
+            Set<String> armorProfs = getArmorProficiencies();
+            if (armor.canWear(getAbility(Ability.STRENGTH), armorProfs)) {
+                if (armor.isShield() && equippedShield == null) {
+                    equippedShield = armor;
+                } else if (!armor.isShield() && equippedArmor == null) {
+                    equippedArmor = armor;
+                }
+            }
+        }
+    }
+
+    private String getItemName(ItemStack item) {
+        if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) {
+            return null;
+        }
+        return PlainTextComponentSerializer.plainText().serialize(item.getItemMeta().displayName());
+    }
+
+    private DndArmor findArmorByName(String displayName) {
+        for (DndArmor armor : ArmorLoader.getAllArmors()) {
+            if (armor.getName().equals(displayName)) {
+                return armor;
+            }
+        }
+        return null;
+    }
+
+    private Set<String> getArmorProficiencies() {
+        Set<String> proficiencies = new HashSet<>();
+
+        if (dndClass != null && dndClass.getArmorProficiencies() != null) {
+            proficiencies.addAll(dndClass.getArmorProficiencies());
+        }
+
+        return proficiencies;
+    }
+
+    public List<ItemStack> getEquipment() {
+        return new ArrayList<>(equipment);
+    }
+
+    public DndArmor getEquippedArmor() {
+        return equippedArmor;
+    }
+
+    public DndArmor getEquippedShield() {
+        return equippedShield;
     }
 
 
@@ -248,46 +464,4 @@ public class CharacterSheet {
 
         return choices;
     }
-
-    public List<ItemStack> giveStartingEquipment(Map<String, String> selectedChoices) {
-        List<ItemStack> equipment = new ArrayList<>();
-//        DndClass mainClass = getMainDndClass();
-
-//        if (mainClass != null) {
-//            equipment.addAll(mainClass.getBaseEquipment());
-//
-//            for (Map.Entry<String, String> choice : selectedChoices.entrySet()) {
-//                List<ItemStack> chosenItems = mainClass.getGearChoices().get(choice.getValue());
-//                if (chosenItems != null) {
-//                    equipment.addAll(chosenItems);
-//                }
-//            }
-//        }
-
-//        if (background != null) {
-//            equipment.addAll(background.getStartingEquipment());
-//
-//            for (Map.Entry<String, String> choice : selectedChoices.entrySet()) {
-//                if (background.getGearChoices().containsKey(choice.getKey())) {
-//                    List<ItemStack> chosenItems = background.getGearChoices().get(choice.getValue());
-//                    if (chosenItems != null) {
-//                        equipment.addAll(chosenItems);
-//                    }
-//                }
-//            }
-//        }
-
-        return equipment;
-    }
-
-//    public void addClassLevel(DndClass dndClass) {
-//        int currentLevel = classLevels.getOrDefault(dndClass, 0);
-//        classLevels.put(dndClass, currentLevel + 1);
-//
-//        int constitionModifier = getModifier(Ability.CONSTITUTION);
-//        int rolledHP = dndClass.rollHitPoints(constitionModifier);
-//        totalHealth += rolledHP;
-//        currentHealth += rolledHP;
-//        System.out.println("You rolled " + rolledHP + " plus your constition modifier of " + constitionModifier + " gives you a total health of " + totalHealth);
-//    }
 }

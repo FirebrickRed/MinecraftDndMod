@@ -60,7 +60,7 @@ public class ArmorLoader {
         Object acObj = data.get("ac");
         if (acObj instanceof Integer) {
             armor.setBaseAC((Integer) acObj);
-            armor.setAddsDexModifier(!"heavy".equalsIgnoreCase(armor.getCategory()));
+            armor.setAddsDexModifier(!("heavy".equalsIgnoreCase(armor.getCategory()) || "shield".equalsIgnoreCase(armor.getCategory())));
 
             if ("medium".equalsIgnoreCase(armor.getCategory())) {
                 armor.setMaxDexModifier(2);

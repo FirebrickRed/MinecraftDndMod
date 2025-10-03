@@ -15,7 +15,7 @@ public class DndArmor {
     private String name;
     private String category;
     private int baseAC;
-    private boolean addsDexModifier = true;
+    private boolean addsDexModifier = false;
     private int maxDexModifier = -1;
     private int strengthRequirement = 0;
     private boolean stealthDisadvantage = false;

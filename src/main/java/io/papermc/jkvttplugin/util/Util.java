@@ -10,6 +10,15 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.List;
 
+// Claude TODO: CONFUSING CLASS NAMES - Util vs ItemUtil
+// You have two "utility" classes with overlapping purposes:
+// - Util: creates items, checks display names, prettifies/normalizes strings, calculates inventory size
+// - ItemUtil: tags items with NBT data for menu actions
+//
+// These should be better organized:
+// Option 1: Merge ItemUtil into Util since it's all item-related
+// Option 2: Rename to be more specific: StringUtil, InventoryUtil, MenuItemUtil
+// Option 3: Split Util into ItemFactory, StringNormalizer, and InventoryHelper
 public class Util {
     public static ItemStack createItem(Component displayName, List<Component> lore, String itemModelName, int quantity) {
         ItemStack item = quantity <= 0 ? new ItemStack(Material.PAPER) : new ItemStack(Material.PAPER, quantity);
@@ -53,6 +62,14 @@ public class Util {
         return out.toString();
     }
 
+    // Claude TODO: INCONSISTENT NORMALIZATION - Consolidate with NameNormalizer.toSnakeCase()
+    // You have THREE different normalization methods in your codebase:
+    // 1. Util.normalize() - simple version (this one)
+    // 2. NameNormalizer.toSnakeCase() - more robust with Unicode handling
+    // 3. Manual .toLowerCase().replace(' ', '_') scattered in 6+ files
+    //
+    // Pick ONE standard (recommend NameNormalizer.toSnakeCase since it handles edge cases)
+    // Then replace all usages with that one method. See issue #3 (Fix Identifier Consistency)
     public static String normalize(String name) {
         return name.trim().toLowerCase().replace(" ", "_");
     }

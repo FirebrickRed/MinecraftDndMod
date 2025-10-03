@@ -1,3 +1,11 @@
+// Claude TODO: OLD/DEPRECATED FILE - Should be migrated to data.model.NpcData
+// This is the old NPC system. The proper location is data/model/NpcData.java
+// Steps to fix:
+// 1. Move all the fields and logic from this class to data/model/NpcData.java
+// 2. Update NpcLoader to populate the new model structure
+// 3. Update any code that imports CustomNPCs.NpcData to use data.model.NpcData
+// 4. Delete this file once migration is complete
+
 package io.papermc.jkvttplugin.CustomNPCs;
 
 import java.util.List;

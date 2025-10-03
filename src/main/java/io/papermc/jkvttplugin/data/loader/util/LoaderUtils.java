@@ -1,3 +1,19 @@
+// Claude TODO: MASSIVE UTILITY CLASS - 390 LINES doing too much!
+// See issue #12 (Refactor LoaderUtils)
+//
+// This class is a grab-bag of parsing methods for YAML loading. Problems:
+// 1. Handles abilities, languages, equipment, sizes, subraces, features, choices - too many responsibilities
+// 2. All static methods make testing harder
+// 3. No consistent error handling (some log, some silently fail)
+// 4. Hard to find the right method when there are 20+ utility methods
+//
+// Solution: Split into focused parser classes:
+// - AbilityParser: parseAbilityScoreMap, parseAbilityIncreases, parseAbilityChoice
+// - LanguageParser: parseLanguages, parseLanguageChoice
+// - EquipmentParser: parseEquipmentOptions, parseStartingEquipment
+// - FeatureParser: parseFeatures, parseFeaturesByLevel
+// Each class can have instance methods, proper logging, and be unit tested independently
+
 package io.papermc.jkvttplugin.data.loader.util;
 
 import io.papermc.jkvttplugin.data.model.ChoiceEntry;

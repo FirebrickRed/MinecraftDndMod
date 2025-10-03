@@ -25,7 +25,7 @@ spellcasting:
   casting_ability: Wisdom
   preparation_type: prepared
   ritual_casting: true
-  spellcasting_focus: druidic_focus
+  spellcasting_focus_type: druidic_focus
   spellcasting_level: 1
   cantrips_known_by_level: [2,2,2,2,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4]
   spells_prepared_formula:

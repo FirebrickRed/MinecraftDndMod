@@ -88,7 +88,7 @@ public class ClassLoader {
         spellcasting.setCastingAbility((String) map.get("casting_ability"));
         spellcasting.setPreparationType((String) map.get("preparation_type"));
         spellcasting.setRitualCasting((boolean) map.get("ritual_casting"));
-//        spellcasting.setSpellcastingFocus((boolean) map.get("spellcasting_focus"));
+        spellcasting.setSpellcastingFocusType((String) map.get("spellcasting_focus_type"));
 //        spellcasting.setSpellList((String) map.get("spell_list"));
         spellcasting.setSpellcastingLevel((Integer) map.get("spellcasting_level"));
         spellcasting.setCantripsKnownByLevel(LoaderUtils.castList(map.get("cantrips_known_by_level"), Integer.class));

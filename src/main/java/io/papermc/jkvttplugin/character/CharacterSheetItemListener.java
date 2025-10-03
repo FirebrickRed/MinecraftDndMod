@@ -27,6 +27,7 @@ public class CharacterSheetItemListener implements Listener {
         if (CharacterSheetManager.isBlankCharacterSheet(item)) {
             handleCharacterCreation(player);
         } else {
+            ActiveCharacterTracker.setActiveCharacter(player, CharacterSheetManager.getCharacterIdFromItem(item));
             handleCharacterSheetView(player, item);
         }
     }

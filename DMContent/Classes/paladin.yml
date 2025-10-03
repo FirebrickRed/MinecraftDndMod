@@ -10,7 +10,7 @@ spellcasting:
   casting_ability: Charisma
   preparation_type: prepared
   ritual_casting: false
-  spellcasting_focus: holy_symbol
+  spellcasting_focus_type: holy_symbol
   spell_list: paladin
   spellcasting_level: 2
   spells_prepared_formula:

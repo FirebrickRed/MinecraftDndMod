@@ -1,3 +1,6 @@
+// Claude TODO: CODE DUPLICATION - Same pattern as the other 4 selection menus
+// See issue #7 (Refactor Menu Code Duplication)
+
 package io.papermc.jkvttplugin.ui.menu;
 
 import io.papermc.jkvttplugin.data.model.DndSubRace;
@@ -48,6 +51,7 @@ public class SubraceSelectionMenu {
             meta.lore(lore);
             subraceItem.setItemMeta(meta);
 
+            // Claude TODO: MANUAL NORMALIZATION - Use Util.normalize() instead (issue #3)
             String subraceId = subraceValue.getName().toLowerCase().replace(' ', '_');
             subraceItem = ItemUtil.tagAction(subraceItem, MenuAction.CHOOSE_SUBRACE, subraceId);
 

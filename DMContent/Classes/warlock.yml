@@ -12,7 +12,7 @@ spellcasting:
   casting_ability: Charisma
   preparation_type: known
   ritual_casting: false
-  spellcasting_focus: true
+  spellcasting_focus_type: arcane_focus
   spell_list: warlock
   spellcasting_level: 1
   cantrips_known_by_level: [2,2,2,2,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4]
@@ -75,7 +75,7 @@ player_choices:
           quantity: 20
       - - tag: simple_weapon
   - id: class_equipment_2
-    title: Class Equipment 2
+    title: Spell Focus Choice
     type: equipment
     choose: 1
     options:

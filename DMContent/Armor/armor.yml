@@ -1,8 +1,11 @@
 # Light Armor
-padded:
+padded_armor:
   name: "Padded Armor"
   category: "light"
-  ac: 11
+  ac:
+    base: 11
+    adds_dex: true
+    max_dex: 5
   strength_requirement: 0
   stealth_disadvantage: true
   weight: "8 lb"
@@ -10,10 +13,13 @@ padded:
   description: "Quilted layers of cloth and batting."
   icon: "padded_armor"
 
-leather:
+leather_armor:
   name: "Leather Armor"
   category: "light"
-  ac: 11
+  ac:
+    base: 11
+    adds_dex: true
+    max_dex: 5
   strength_requirement: 0
   stealth_disadvantage: false
   weight: "10 lb"
@@ -21,10 +27,13 @@ leather:
   description: "Boiled leather chest piece."
   icon: "leather_armor"
 
-studded_leather:
+studded_leather_armor:
   name: "Studded Leather Armor"
   category: "light"
-  ac: 12
+  ac:
+    base: 12
+    adds_dex: true
+    max_dex: 5
   strength_requirement: 0
   stealth_disadvantage: false
   weight: "13 lb"
@@ -33,7 +42,7 @@ studded_leather:
   icon: "studded_leather"
 
 # Medium Armor
-hide:
+hide_armor:
   name: "Hide Armor"
   category: "medium"
   ac:
@@ -139,6 +148,17 @@ plate:
 # Shields
 shield:
   name: "Shield"
+  category: "shield"
+  ac: 2
+  strength_requirement: 0
+  stealth_disadvantage: false
+  weight: "6 lb"
+  cost: "10 gp"
+  description: "Increases AC by 2. Must be strapped to the arm."
+  icon: "shield"
+
+wooden_shield:
+  name: "Wooden Shield"
   category: "shield"
   ac: 2
   strength_requirement: 0

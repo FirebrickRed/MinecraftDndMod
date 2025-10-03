@@ -6,6 +6,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 
+// ToDO: Look up Records to see about Intellij's suggestion of turning this into a record class
 public class DataManager {
     private final File dmContentFolder;
 
@@ -24,33 +25,13 @@ public class DataManager {
         File spellFolder = new File(dmContentFolder, "Spells");
         File weaponFolder = new File(dmContentFolder, "Weapons");
         File armorFolder = new File(dmContentFolder, "Armor");
+        File itemFolder = new File(dmContentFolder, "Items");
         RaceLoader.loadAllRaces(racesFolder);
         ClassLoader.loadAllClasses(classFolder);
         BackgroundLoader.loadAllBackgrounds(backgroundsFolder);
         SpellLoader.loadAllSpells(spellFolder);
         WeaponLoader.loadAllWeapons(weaponFolder);
         ArmorLoader.loadAllArmors(armorFolder);
+        ItemLoader.loadAllItems(itemFolder);
     }
-
-//    private static Map<String, DndRace> allRaces = Map.of();
-//
-//    public static void loadAll(File pluginFolder, Logger logger) {
-////        allRaces = RaceLoader.loadAllRaces(pluginFolder, "races");
-//        File racesFolder = new File(pluginFolder, "races");
-//        if (!racesFolder.exists()) {
-//            logger.warning("Races folder not found. Creating a new one at: " + racesFolder.getPath());
-//            racesFolder.mkdirs();
-//        }
-//
-//        RaceLoader.loadAllRaces(racesFolder);
-//        allRaces = RaceLoader.getAllRaces().
-//    }
-//
-//    public static Map<String, DndRace> getAllRaces() {
-//        return Collections.unmodifiableMap(allRaces);
-//    }
-//
-//    public static DndRace getRace(String name) {
-//        return allRaces.get(name.toLowerCase());
-//    }
 }

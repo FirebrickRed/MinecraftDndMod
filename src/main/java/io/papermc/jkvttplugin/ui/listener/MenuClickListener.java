@@ -1,9 +1,20 @@
+// Claude TODO: GOD CLASS - 441 LINES! This class does WAY too much
+// See issue #10 (Refactor MenuClickListener)
+//
+// Problem: This single class handles clicks for 10+ different menu types
+// Every menu type has its own handler method, making this file massive and hard to maintain
+//
+// Solution: Use the Strategy/Handler pattern:
+// 1. Create interface MenuClickHandler with handleClick(player, event, holder, item, action, payload)
+// 2. Create separate handler classes: RaceSelectionHandler, ClassSelectionHandler, etc.
+// 3. Register handlers in a Map<MenuType, MenuClickHandler>
+// 4. MenuClickListener becomes a 20-line delegator that looks up the right handler
+//
+// Benefits: Each handler is 30-50 lines, testable in isolation, and easy to understand
+
 package io.papermc.jkvttplugin.ui.listener;
 
-import io.papermc.jkvttplugin.character.CharacterCreationService;
-import io.papermc.jkvttplugin.character.CharacterCreationSession;
-import io.papermc.jkvttplugin.character.CharacterSheet;
-import io.papermc.jkvttplugin.character.CharacterSheetManager;
+import io.papermc.jkvttplugin.character.*;
 import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
@@ -491,8 +502,7 @@ public class MenuClickListener implements Listener {
         try {
             CharacterSheet characterSheet = CharacterSheetManager.createCharacterFromSession(player, session);
 
-            // save to yaml
-//            CharacterSheetManager.saveCharacterSheet(player);
+            ActiveCharacterTracker.setActiveCharacter(player, characterSheet.getCharacterId());
 
             ItemStack characterSheetItem = CharacterSheetManager.createCharacterSheetItem(characterSheet);
             player.getInventory().addItem(characterSheetItem);

@@ -1,3 +1,11 @@
+// Claude TODO: DUPLICATE FILE - This entire file should be DELETED!
+// The proper DndSpell class is in data/model/DndSpell.java
+// This is an old version that uses a different structure. Before deleting:
+// 1. Check if anything still imports from util.DndSpell
+// 2. Update those imports to use data.model.DndSpell
+// 3. Delete this file entirely
+// The new version has: Builder pattern, SpellSchool enum, SpellComponents, concentration/ritual flags
+
 package io.papermc.jkvttplugin.util;
 
 import io.papermc.jkvttplugin.JkVttPlugin;

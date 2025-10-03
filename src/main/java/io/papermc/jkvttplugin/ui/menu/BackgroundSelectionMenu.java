@@ -1,3 +1,22 @@
+// Claude TODO: MASSIVE CODE DUPLICATION - This menu is 95% identical to RaceSelectionMenu and ClassSelectionMenu
+// See issue #7 (Refactor Menu Code Duplication)
+//
+// All three menus follow the exact same pattern:
+// 1. Calculate inventory size
+// 2. Create inventory with MenuHolder
+// 3. Loop through items, create PAPER ItemStack
+// 4. Set display name from item.getName()
+// 5. Create empty lore list
+// 6. Manual normalization: .toLowerCase().replace(' ', '_')
+// 7. Tag with ItemUtil.tagAction()
+//
+// Solution: Create a BaseSelectionMenu<T> class that takes:
+// - Collection<T> items
+// - Function<T, String> nameExtractor (e.g., DndBackground::getName)
+// - MenuType type
+// - MenuAction action
+// This would reduce these 3 files from ~60 lines each to ~10 lines each
+
 package io.papermc.jkvttplugin.ui.menu;
 
 import io.papermc.jkvttplugin.data.model.DndBackground;
@@ -48,6 +67,7 @@ public class BackgroundSelectionMenu {
             meta.lore(lore);
             backgroundItem.setItemMeta(meta);
 
+            // Claude TODO: MANUAL NORMALIZATION - Use Util.normalize() instead (issue #3)
             String backgroundId = background.getName().toLowerCase().replace(' ', '_');
             backgroundItem = ItemUtil.tagAction(backgroundItem, MenuAction.CHOOSE_BACKGROUND, backgroundId);
 

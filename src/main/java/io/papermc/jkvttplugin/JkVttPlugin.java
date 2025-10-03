@@ -4,10 +4,7 @@ import io.papermc.jkvttplugin.character.CharacterSheetItemListener;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.commands.*;
 import io.papermc.jkvttplugin.data.DataManager;
-import io.papermc.jkvttplugin.listeners.CharacterNameListener;
-import io.papermc.jkvttplugin.listeners.NpcListener;
-import io.papermc.jkvttplugin.listeners.PlanetListener;
-import io.papermc.jkvttplugin.listeners.WeaponListener;
+import io.papermc.jkvttplugin.listeners.*;
 import io.papermc.jkvttplugin.ui.listener.MenuClickListener;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
@@ -41,6 +38,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new WeaponListener(), this);
         Bukkit.getPluginManager().registerEvents(new MenuClickListener(), this);
         Bukkit.getPluginManager().registerEvents(new CharacterNameListener(), this);
+        Bukkit.getPluginManager().registerEvents(new SpellFocusListener(this), this);
 
         // Commands
         EquipmentCommand equipmentCommand = new EquipmentCommand();

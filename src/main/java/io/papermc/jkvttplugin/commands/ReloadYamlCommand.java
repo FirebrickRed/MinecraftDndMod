@@ -3,7 +3,6 @@ package io.papermc.jkvttplugin.commands;
 import io.papermc.jkvttplugin.CustomNPCs.NpcManager;
 import io.papermc.jkvttplugin.JkVttPlugin;
 import io.papermc.jkvttplugin.util.DndSpell;
-import io.papermc.jkvttplugin.util.DndWeapon;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -24,7 +23,7 @@ public class ReloadYamlCommand implements CommandExecutor {
         JkVttPlugin.getInstance().saveResource("weapons.yml", true);
         sender.sendMessage("Saved latest weapons.yml!");
 
-        DndWeapon.loadWeapons();
+//        DndWeapon.loadWeapons();
         sender.sendMessage("Weapons reloaded!");
 
         File spellsFile = new File(JkVttPlugin.getInstance().getDataFolder(), "spells.yml");

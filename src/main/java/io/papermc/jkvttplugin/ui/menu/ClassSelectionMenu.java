@@ -46,6 +46,8 @@ public class ClassSelectionMenu {
             meta.lore(lore);
             classItem.setItemMeta(meta);
 
+            // Claude TODO: MANUAL NORMALIZATION - Use Util.normalize() instead
+            // Same issue as RaceSelectionMenu - see issue #3
             String classId = dndClass.getName().toLowerCase().replace(' ', '_');
             classItem = ItemUtil.tagAction(classItem, MenuAction.CHOOSE_CLASS, classId);
 

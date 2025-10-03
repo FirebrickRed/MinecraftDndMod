@@ -63,6 +63,8 @@ public class SpellSelectionMenu {
         for (DndSpell spell : availableSpells) {
             if (slot >= 45) break;
 
+            // Claude TODO: MANUAL NORMALIZATION (TWO TIMES!) - Use Util.normalize() instead (issue #3)
+            // This normalization is done TWICE in 3 lines - very wasteful
             boolean isSelected = session.hasSpell(spell.getName().toLowerCase().replace(' ', '_'));
             ItemStack spellItem = createSpellItem(spell, isSelected, spellLevel);
 

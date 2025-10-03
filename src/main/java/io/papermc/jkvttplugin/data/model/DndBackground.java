@@ -83,7 +83,7 @@ public class DndBackground {
         return tools;
     }
 
-    public List<String> getEquipment() {
+    public List<String> getStartingEquipment() {
         return equipment;
     }
 

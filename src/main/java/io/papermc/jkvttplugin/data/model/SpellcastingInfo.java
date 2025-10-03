@@ -8,7 +8,7 @@ public class SpellcastingInfo {
     private String castingAbility;
     private String preparationType;
     private boolean ritualCasting;
-    private boolean spellcastingFocus;
+    private String spellcastingFocusType;
     private String spellList;
     private int spellcastingLevel = 1;
     private List<Integer> cantripsKnownByLevel;
@@ -31,8 +31,8 @@ public class SpellcastingInfo {
     public boolean isRitualCasting() { return ritualCasting; }
     public void setRitualCasting(boolean ritualCasting) { this.ritualCasting = ritualCasting; }
 
-    public boolean isSpellcastingFocus() { return spellcastingFocus; }
-    public void setSpellcastingFocus(boolean spellcastingFocus) { this.spellcastingFocus = spellcastingFocus; }
+    public String getSpellcastingFocusType() { return spellcastingFocusType; }
+    public void setSpellcastingFocusType(String spellcastingFocusType) { this.spellcastingFocusType = spellcastingFocusType; }
 
     public String getSpellList() { return spellList; }
     public void setSpellList(String spellList) { this.spellList = spellList; }

@@ -57,10 +57,10 @@ public class EquipmentCommand implements CommandExecutor {
             promptGearChoices(player, sheet);
         } else {
             player.sendMessage("No choices needed. Giving default equipment.");
-            List<ItemStack> equipment = sheet.giveStartingEquipment(new HashMap<>());
-            for (ItemStack item : equipment) {
-                player.getInventory().addItem(item);
-            }
+//            List<ItemStack> equipment = sheet.giveStartingEquipment(new HashMap<>());
+//            for (ItemStack item : equipment) {
+//                player.getInventory().addItem(item);
+//            }
         }
     }
 

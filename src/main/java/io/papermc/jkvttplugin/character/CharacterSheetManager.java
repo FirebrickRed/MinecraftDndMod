@@ -29,21 +29,77 @@ public class CharacterSheetManager {
     public static CharacterSheet createCharacterFromSession(Player player, CharacterCreationSession session) {
         UUID characterId = UUID.randomUUID();
 
-        CharacterSheet characterSheet = CharacterSheetBuilder.create(player)
-                .withCharacterId(characterId)
-                .withName(session.getCharacterName())
-                .withRace(session.getSelectedRace())
-                .withSubrace(session.getSelectedSubRace())
-                .withClass(session.getSelectedClass())
-                .withBackground(session.getSelectedBackground())
-                .withAbilityScores(session.getAbilityScores())
-                .withSpells(session.getSelectedSpells(), session.getSelectedCantrips())
-                .build();
+        CharacterSheet characterSheet = CharacterSheet.createFromSession(characterId, player.getUniqueId(), session);
 
         CharacterPersistenceLoader.storeCharacterInMemory(characterSheet);
         CharacterPersistenceLoader.saveCharacter(characterSheet);
 
+        grantStartingEquipmentToPlayer(player, characterSheet);
+
         return characterSheet;
+    }
+
+    public static void grantStartingEquipmentToPlayer(Player player, CharacterSheet characterSheet) {
+        List<ItemStack> equipment = characterSheet.getEquipment();
+
+        if (equipment.isEmpty()) {
+            player.sendMessage(Component.text("No starting equipment to grant.", NamedTextColor.YELLOW));
+            return;
+        }
+
+        int itemsGranted = 0;
+        List<ItemStack> overflow = new ArrayList<>();
+
+        for (ItemStack item : equipment) {
+            if (item == null) continue;
+
+            HashMap<Integer, ItemStack> notAdded = player.getInventory().addItem(item);
+
+            if (notAdded.isEmpty()) {
+                itemsGranted++;
+            } else {
+                overflow.addAll(notAdded.values());
+            }
+        }
+
+        // Send feedback to player
+        player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
+        player.sendMessage(Component.text("Starting Equipment Granted", NamedTextColor.GOLD));
+        player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
+
+        if (itemsGranted > 0) {
+            player.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
+                    .append(Component.text(itemsGranted + " items added to your inventory", NamedTextColor.WHITE)));
+        }
+
+        if (!overflow.isEmpty()) {
+            player.sendMessage(Component.text("⚠ ", NamedTextColor.YELLOW)
+                    .append(Component.text(overflow.size() + " items dropped (inventory full)", NamedTextColor.YELLOW)));
+
+            for (ItemStack overflowItem : overflow) {
+                player.getWorld().dropItem(player.getLocation(), overflowItem);
+            }
+        }
+
+        // Show armor info if equipped
+        if (characterSheet.getEquippedArmor() != null) {
+            player.sendMessage(Component.text(""));
+            player.sendMessage(Component.text("⚔ ", NamedTextColor.AQUA)
+                    .append(Component.text("Armor Equipped: ", NamedTextColor.GRAY))
+                    .append(Component.text(characterSheet.getEquippedArmor().getName(), NamedTextColor.WHITE)));
+        }
+
+        if (characterSheet.getEquippedShield() != null) {
+            player.sendMessage(Component.text("🛡 ", NamedTextColor.AQUA)
+                    .append(Component.text("Shield Equipped: ", NamedTextColor.GRAY))
+                    .append(Component.text(characterSheet.getEquippedShield().getName(), NamedTextColor.WHITE)));
+        }
+
+        player.sendMessage(Component.text(""));
+        player.sendMessage(Component.text("Your Armor Class: ", NamedTextColor.GRAY)
+                .append(Component.text(characterSheet.getArmorClass(), NamedTextColor.GREEN)));
+
+        player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
     }
 
 
