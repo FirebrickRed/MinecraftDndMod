@@ -12,6 +12,7 @@ padded_armor:
   cost: "5 gp"
   description: "Quilted layers of cloth and batting."
   icon: "padded_armor"
+  material: LEATHER_CHESTPLATE
 
 leather_armor:
   name: "Leather Armor"
@@ -26,6 +27,7 @@ leather_armor:
   cost: "10 gp"
   description: "Boiled leather chest piece."
   icon: "leather_armor"
+  material: LEATHER_CHESTPLATE
 
 studded_leather_armor:
   name: "Studded Leather Armor"
@@ -40,6 +42,7 @@ studded_leather_armor:
   cost: "45 gp"
   description: "Leather reinforced with close-set rivets or spikes."
   icon: "studded_leather"
+  material: LEATHER_CHESTPLATE
 
 # Medium Armor
 hide_armor:
@@ -55,6 +58,7 @@ hide_armor:
   cost: "10 gp"
   description: "Crude armor made from thick furs and pelts."
   icon: "hide_armor"
+  material: CHAINMAIL_CHESTPLATE
 
 chain_shirt:
   name: "Chain Shirt"
@@ -66,6 +70,7 @@ chain_shirt:
   cost: "50 gp"
   description: "A shirt of interlocking metal rings."
   icon: "chain_shirt"
+  material: CHAINMAIL_CHESTPLATE
 
 scale_mail:
   name: "Scale Mail"
@@ -77,6 +82,7 @@ scale_mail:
   cost: "50 gp"
   description: "Coat and leggings of leather covered with overlapping pieces of metal."
   icon: "scale_mail"
+  material: CHAINMAIL_CHESTPLATE
 
 breastplate:
   name: "Breastplate"
@@ -88,6 +94,7 @@ breastplate:
   cost: "400 gp"
   description: "Fitted metal chest piece with supple leather."
   icon: "breastplate"
+  material: CHAINMAIL_CHESTPLATE
 
 half_plate:
   name: "Half Plate"
@@ -99,6 +106,7 @@ half_plate:
   cost: "750 gp"
   description: "Plate armor covering most of the body."
   icon: "half_plate"
+  material: CHAINMAIL_CHESTPLATE
 
 # Heavy Armor
 ring_mail:
@@ -111,6 +119,7 @@ ring_mail:
   cost: "30 gp"
   description: "Leather armor with heavy rings sewn into it."
   icon: "ring_mail"
+  material: IRON_CHESTPLATE
 
 chain_mail:
   name: "Chain Mail"
@@ -122,6 +131,7 @@ chain_mail:
   cost: "75 gp"
   description: "Interlocking metal rings covering the entire body."
   icon: "chain_mail"
+  material: IRON_CHESTPLATE
 
 splint:
   name: "Splint Armor"
@@ -133,6 +143,7 @@ splint:
   cost: "200 gp"
   description: "Narrow vertical strips of metal riveted to a leather backing."
   icon: "splint_armor"
+  material: IRON_CHESTPLATE
 
 plate:
   name: "Plate Armor"
@@ -144,6 +155,7 @@ plate:
   cost: "1,500 gp"
   description: "Interlocking metal plates covering the entire body."
   icon: "plate_armor"
+  material: IRON_CHESTPLATE
 
 # Shields
 shield:
@@ -156,6 +168,7 @@ shield:
   cost: "10 gp"
   description: "Increases AC by 2. Must be strapped to the arm."
   icon: "shield"
+  material: SHIELD
 
 wooden_shield:
   name: "Wooden Shield"
@@ -167,3 +180,4 @@ wooden_shield:
   cost: "10 gp"
   description: "Increases AC by 2. Must be strapped to the arm."
   icon: "shield"
+  material: SHIELD

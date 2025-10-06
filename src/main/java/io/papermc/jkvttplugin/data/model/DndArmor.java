@@ -3,9 +3,12 @@ package io.papermc.jkvttplugin.data.model;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 
-import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -23,6 +26,7 @@ public class DndArmor {
     private String cost;
     private String description;
     private String icon;
+    private Material material;
 
     public DndArmor() {}
 
@@ -112,12 +116,23 @@ public class DndArmor {
             lore.add(Component.text(description, NamedTextColor.YELLOW));
         }
 
-        return Util.createItem(
+        ItemStack item = Util.createItem(
                 Component.text(name, NamedTextColor.WHITE),
                 lore,
                 icon != null ? icon : "armor_" + Util.normalize(name),
-                1
+                1,
+                getMaterial()
         );
+
+        ItemMeta meta = item.getItemMeta();
+        meta.getPersistentDataContainer().set(
+                new NamespacedKey("jkvtt", "armor_id"),
+                PersistentDataType.STRING,
+                id
+        );
+        item.setItemMeta(meta);
+
+        return item;
     }
 
     public String getId() {
@@ -167,4 +182,11 @@ public class DndArmor {
 
     public String getIcon() { return icon; }
     public void setIcon(String icon) { this.icon = icon; }
+
+    public Material getMaterial() {
+        return material != null ? material : isShield() ? Material.SHIELD : Material.LEATHER_CHESTPLATE;
+    }
+    public void setMaterial(Material material) {
+        this.material = material;
+    }
 }

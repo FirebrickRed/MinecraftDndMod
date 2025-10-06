@@ -57,6 +57,16 @@ public class ArmorLoader {
         armor.setDescription((String) data.get("description"));
         armor.setIcon((String) data.get("icon"));
 
+        // Parse material
+        Object materialObj = data.get("material");
+        if (materialObj instanceof String materialStr) {
+            try {
+                armor.setMaterial(org.bukkit.Material.valueOf(materialStr));
+            } catch (IllegalArgumentException e) {
+                LOGGER.warning("Invalid material '" + materialStr + "' for armor " + id + ", defaulting to LEATHER_CHESTPLATE");
+            }
+        }
+
         Object acObj = data.get("ac");
         if (acObj instanceof Integer) {
             armor.setBaseAC((Integer) acObj);

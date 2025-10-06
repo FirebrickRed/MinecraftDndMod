@@ -39,6 +39,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new MenuClickListener(), this);
         Bukkit.getPluginManager().registerEvents(new CharacterNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new SpellFocusListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new ArmorEquipListener(this), this);
 
         // Commands
         EquipmentCommand equipmentCommand = new EquipmentCommand();

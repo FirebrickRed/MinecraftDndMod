@@ -132,9 +132,6 @@ public class CharacterSheet {
         }
     }
 
-    // ToDo: AC doesn't update when armor/shield is equipped after character creation
-    // Need to add listener to detect armor changes in inventory and recalculate AC
-    // Also need to make leather armor equipable in chest slot
     private void calculateArmorClass() {
         int baseAC = 10 + getModifier(Ability.DEXTERITY);
 
@@ -161,7 +158,6 @@ public class CharacterSheet {
                 ItemStack item = createItemFromId(itemId);
                 if (item != null) {
                     startingItems.add(item);
-                    tryAutoEquip(item, itemId);
                 }
             }
         }
@@ -169,9 +165,6 @@ public class CharacterSheet {
         if (dndClass != null && session != null) {
             List<ItemStack> choiceItems = resolveEquipmentFromChoices(session.getPendingChoices(), "class");
             startingItems.addAll(choiceItems);
-            for (ItemStack item : choiceItems) {
-                tryAutoEquipFromItem(item);
-            }
         }
 
         if (background != null) {
@@ -181,7 +174,6 @@ public class CharacterSheet {
                     ItemStack item = createItemFromId(itemId);
                     if (item != null) {
                         startingItems.add(item);
-                        tryAutoEquip(item, itemId);
                     }
                 }
             }
@@ -190,9 +182,6 @@ public class CharacterSheet {
         if (background != null && session != null) {
             List<ItemStack> choiceItems = resolveEquipmentFromChoices(session.getPendingChoices(), "background");
             startingItems.addAll(choiceItems);
-            for (ItemStack item : choiceItems) {
-                tryAutoEquipFromItem(item);
-            }
         }
 
 //        if (dndClass != null && dndClass.getSpellcastingAbility() != null) {
@@ -282,37 +271,6 @@ public class CharacterSheet {
         );
     }
 
-    private void tryAutoEquip(ItemStack item, String itemId) {
-        DndArmor armor = ArmorLoader.getArmor(itemId);
-        if (armor != null) {
-            Set<String> armorProfs = getArmorProficiencies();
-            if (armor.canWear(getAbility(Ability.STRENGTH), armorProfs)) {
-                if (armor.isShield() && equippedShield == null) {
-                    equippedShield = armor;
-                } else if (!armor.isShield() && equippedArmor == null) {
-                    equippedArmor = armor;
-                }
-            }
-        }
-    }
-
-    private void tryAutoEquipFromItem(ItemStack item) {
-        String itemName = getItemName(item);
-        if (itemName == null) return;
-
-        DndArmor armor = findArmorByName(itemName);
-        if (armor != null) {
-            Set<String> armorProfs = getArmorProficiencies();
-            if (armor.canWear(getAbility(Ability.STRENGTH), armorProfs)) {
-                if (armor.isShield() && equippedShield == null) {
-                    equippedShield = armor;
-                } else if (!armor.isShield() && equippedArmor == null) {
-                    equippedArmor = armor;
-                }
-            }
-        }
-    }
-
     private String getItemName(ItemStack item) {
         if (item == null || !item.hasItemMeta() || !item.getItemMeta().hasDisplayName()) {
             return null;
@@ -345,6 +303,14 @@ public class CharacterSheet {
 
     public DndArmor getEquippedArmor() {
         return equippedArmor;
+    }
+    public void equipArmor(DndArmor armor) {
+        this.equippedArmor = armor;
+        calculateArmorClass();
+    }
+    public void unequipArmor() {
+        this.equippedArmor = null;
+        calculateArmorClass();
     }
 
     public DndArmor getEquippedShield() {
@@ -451,6 +417,7 @@ public class CharacterSheet {
         return knownSpells;
     }
 
+    // ToDo: do we need this anymore because I don't think so
     public Map<String, List<ItemStack>> getEquipmentChoicesList() {
         Map<String, List<ItemStack>> choices = new HashMap<>();
 //        DndClass mainClass = getMainDndClass();

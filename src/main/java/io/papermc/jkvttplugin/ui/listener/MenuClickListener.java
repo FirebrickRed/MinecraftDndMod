@@ -27,6 +27,7 @@ import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.menu.*;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.TagRegistry;
+import io.papermc.jkvttplugin.util.Util;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -75,23 +76,21 @@ public class MenuClickListener implements Listener {
 
         switch (action) {
             case OPEN_RACE_SELECTION -> {
-                RaceSelectionMenu.open(player, RaceLoader.getAllRaces(), holder.getSessionId());
+                RaceSelectionMenu.open(player, Util.sortByName(RaceLoader.getAllRaces(), DndRace::getName), holder.getSessionId());
             }
             case OPEN_SUBRACE_SELECTION -> {
-                // ToDo: Menu items appear in random order - need to sort collection before passing to menu
-                // This applies to race, class, background, and subrace selection menus
                 if (session.getSelectedRace() != null) {
                     DndRace race = RaceLoader.getRace(session.getSelectedRace());
                     if (race != null && race.hasSubraces()) {
-                        SubraceSelectionMenu.open(player, race.getSubraces().values(), holder.getSessionId());
+                        SubraceSelectionMenu.open(player, Util.sortByName(race.getSubraces().values(), DndSubRace::getName), holder.getSessionId());
                     }
                 }
             }
             case OPEN_CLASS_SELECTION -> {
-                ClassSelectionMenu.open(player, ClassLoader.getAllClasses(), holder.getSessionId());
+                ClassSelectionMenu.open(player, Util.sortByName(ClassLoader.getAllClasses(), DndClass::getName), holder.getSessionId());
             }
             case OPEN_BACKGROUND_SELECTION -> {
-                BackgroundSelectionMenu.open(player, BackgroundLoader.getAllBackgrounds(), holder.getSessionId());
+                BackgroundSelectionMenu.open(player, Util.sortByName(BackgroundLoader.getAllBackgrounds(), DndBackground::getName), holder.getSessionId());
             }
             case OPEN_PLAYER_OPTION_SELECTION -> {
                 List<PendingChoice<?>> pending = session.getPendingChoices();

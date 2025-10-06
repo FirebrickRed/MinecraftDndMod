@@ -8,7 +8,10 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.function.Function;
 
 // Claude TODO: CONFUSING CLASS NAMES - Util vs ItemUtil
 // You have two "utility" classes with overlapping purposes:
@@ -22,6 +25,21 @@ import java.util.List;
 public class Util {
     public static ItemStack createItem(Component displayName, List<Component> lore, String itemModelName, int quantity) {
         ItemStack item = quantity <= 0 ? new ItemStack(Material.PAPER) : new ItemStack(Material.PAPER, quantity);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.displayName(displayName);
+        meta.lore(lore);
+        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
+        meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
+
+        meta.setItemModel(new NamespacedKey("jkvttresourcepack", itemModelName));
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    public static ItemStack createItem(Component displayName, List<Component> lore, String itemModelName, int quantity, Material material) {
+        ItemStack item = quantity <= 0 ? new ItemStack(material) : new ItemStack(material, quantity);
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(displayName);
@@ -83,5 +101,18 @@ public class Util {
                 .toLowerCase()
                 .replace(' ', '_')
                 .replace('-', '_');
+    }
+
+    /**
+     * Sorts a collection alphabetically by name using a provided name extractor function.
+     * Returns a new sorted list without modifying the original collection.
+     *
+     * @param <T> the type of elements in the collection
+     * @param items the collection to sort
+     * @param nameExtractor function to extract the name string from each item
+     * @return a new list containing all items sorted alphabetically by name
+     */
+    public static <T> List<T> sortByName(Collection<T> items, Function<T, String> nameExtractor) {
+        return items.stream().sorted(Comparator.comparing(nameExtractor)).toList();
     }
 }
