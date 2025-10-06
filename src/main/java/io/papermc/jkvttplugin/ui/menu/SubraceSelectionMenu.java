@@ -51,8 +51,7 @@ public class SubraceSelectionMenu {
             meta.lore(lore);
             subraceItem.setItemMeta(meta);
 
-            // Claude TODO: MANUAL NORMALIZATION - Use Util.normalize() instead (issue #3)
-            String subraceId = subraceValue.getName().toLowerCase().replace(' ', '_');
+            String subraceId = Util.normalize(subraceValue.getName());
             subraceItem = ItemUtil.tagAction(subraceItem, MenuAction.CHOOSE_SUBRACE, subraceId);
 
             inventory.setItem(slot++, subraceItem);

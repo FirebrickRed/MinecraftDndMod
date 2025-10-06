@@ -62,15 +62,26 @@ public class Util {
         return out.toString();
     }
 
-    // Claude TODO: INCONSISTENT NORMALIZATION - Consolidate with NameNormalizer.toSnakeCase()
-    // You have THREE different normalization methods in your codebase:
-    // 1. Util.normalize() - simple version (this one)
-    // 2. NameNormalizer.toSnakeCase() - more robust with Unicode handling
-    // 3. Manual .toLowerCase().replace(' ', '_') scattered in 6+ files
-    //
-    // Pick ONE standard (recommend NameNormalizer.toSnakeCase since it handles edge cases)
-    // Then replace all usages with that one method. See issue #3 (Fix Identifier Consistency)
+    /**
+     * Normalizes a display name to a consistent snake_case identifier.
+     * Handles spaces, hyphens, and trims whitespace.
+     * This is the SINGLE source of truth for name normalization in the plugin.
+     *
+     * Examples:
+     * - "Half-Elf" -> "half_elf"
+     * - "Mountain Dwarf" -> "mountain_dwarf"
+     * - "  Fire Bolt  " -> "fire_bolt"
+     *
+     * @param name The display name to normalize
+     * @return The normalized snake_case identifier
+     */
     public static String normalize(String name) {
-        return name.trim().toLowerCase().replace(" ", "_");
+        if (name == null || name.isBlank()) {
+            return "";
+        }
+        return name.trim()
+                .toLowerCase()
+                .replace(' ', '_')
+                .replace('-', '_');
     }
 }
