@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.data.model;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
@@ -74,8 +75,9 @@ public class DndClass {
         this.name = name;
     }
 
-    public String getIcon() {
-        return icon;
+    public Material getIconMaterial() {
+        // ToDo: update to use custom icons
+        return Material.PAPER;
     }
     public void setIcon(String icon) {
         this.icon = icon;
@@ -194,7 +196,7 @@ public class DndClass {
     }
 
     public ItemStack getClassIcon() {
-        return Util.createItem(Component.text(getName()), null, getIcon(), 0);
+        return Util.createItem(Component.text(getName()), null, this.icon, 0);
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {

@@ -81,7 +81,7 @@ public class MenuClickListener implements Listener {
                 if (session.getSelectedRace() != null) {
                     DndRace race = RaceLoader.getRace(session.getSelectedRace());
                     if (race != null && race.hasSubraces()) {
-                        SubraceSelectionMenu.open(player, race.getSubraces(), holder.getSessionId());
+                        SubraceSelectionMenu.open(player, race.getSubraces().values(), holder.getSessionId());
                     }
                 }
             }

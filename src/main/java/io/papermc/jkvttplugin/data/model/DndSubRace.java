@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
@@ -21,7 +22,7 @@ public class DndSubRace {
     private final List<String> traits;
     private final List<String> languages;
     private final PlayersChoice<String> languageChoices;
-    private final String iconName;
+    private final String icon;
 
     public DndSubRace(
             String id,
@@ -32,7 +33,7 @@ public class DndSubRace {
             List<String> traits,
             List<String> languages,
             PlayersChoice<String> languageChoices,
-            String iconName
+            String icon
     ) {
         this.id = Objects.requireNonNull(id, "Subrace id cannot be null");
         this.name = Objects.requireNonNull(name, "Subrace name cannot be null");
@@ -44,7 +45,7 @@ public class DndSubRace {
         this.traits = traits != null ? List.copyOf(traits) : List.of();
         this.languages = languages != null ? List.copyOf(languages) : List.of();
         this.languageChoices = languageChoices;
-        this.iconName = iconName;
+        this.icon = icon;
     }
 
     public String getName() {
@@ -75,8 +76,13 @@ public class DndSubRace {
         return languageChoices;
     }
 
+    public Material getIconMaterial() {
+        // ToDo: update to use custom icons
+        return Material.PAPER;
+    }
+
     public ItemStack getRaceIcon() {
-        return Util.createItem(Component.text(getName()), null, iconName, 0);
+        return Util.createItem(Component.text(getName()), null, icon, 0);
     }
 
     // ToDo update to new player_choices

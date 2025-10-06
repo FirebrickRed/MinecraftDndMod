@@ -7,6 +7,7 @@ import io.papermc.jkvttplugin.data.model.enums.Size;
 import io.papermc.jkvttplugin.util.ChoiceUtil;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
@@ -34,7 +35,7 @@ public class DndRace {
     private final PlayersChoice<String> languageChoices;
 
     private final Map<String, DndSubRace> subraces;
-    private final String iconName;
+    private final String icon;
 
     public DndRace(
             String name,
@@ -50,7 +51,7 @@ public class DndRace {
             List<String> languages,
             PlayersChoice<String> languageChoices,
             Map<String, DndSubRace> subraces,
-            String iconName
+            String icon
     ) {
         // ToDo: double check if null checks are needed here, should be handled by the loader
         this.name = Objects.requireNonNull(name, "name cannot be null");
@@ -69,7 +70,7 @@ public class DndRace {
         this.languageChoices = languageChoices;
 
         this.subraces = subraces != null ? Map.copyOf(subraces) : Map.of();
-        this.iconName = iconName != null ? iconName : "elf_icon";
+        this.icon = icon != null ? icon : "elf_icon";
     }
 
     public String getName() {
@@ -132,8 +133,13 @@ public class DndRace {
         return !subraces.isEmpty();
     }
 
+    public Material getIconMaterial() {
+        // ToDo: update to use custom icons
+        return Material.PAPER;
+    }
+
     public ItemStack getRaceIcon() {
-        return Util.createItem(Component.text(getName()), null, iconName, 0);
+        return Util.createItem(Component.text(getName()), null, icon, 0);
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
