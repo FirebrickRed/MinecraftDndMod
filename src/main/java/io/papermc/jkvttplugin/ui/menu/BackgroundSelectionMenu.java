@@ -67,8 +67,7 @@ public class BackgroundSelectionMenu {
             meta.lore(lore);
             backgroundItem.setItemMeta(meta);
 
-            // Claude TODO: MANUAL NORMALIZATION - Use Util.normalize() instead (issue #3)
-            String backgroundId = background.getName().toLowerCase().replace(' ', '_');
+            String backgroundId = Util.normalize(background.getName());
             backgroundItem = ItemUtil.tagAction(backgroundItem, MenuAction.CHOOSE_BACKGROUND, backgroundId);
 
             inventory.setItem(slot++, backgroundItem);

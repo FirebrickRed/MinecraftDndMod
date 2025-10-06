@@ -12,6 +12,7 @@ import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.ItemUtil;
+import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -63,12 +64,10 @@ public class SpellSelectionMenu {
         for (DndSpell spell : availableSpells) {
             if (slot >= 45) break;
 
-            // Claude TODO: MANUAL NORMALIZATION (TWO TIMES!) - Use Util.normalize() instead (issue #3)
-            // This normalization is done TWICE in 3 lines - very wasteful
-            boolean isSelected = session.hasSpell(spell.getName().toLowerCase().replace(' ', '_'));
+            boolean isSelected = session.hasSpell(Util.normalize(spell.getName()));
             ItemStack spellItem = createSpellItem(spell, isSelected, spellLevel);
 
-            String payload = spell.getName().toLowerCase().replace(' ', '_') + ":" + spellLevel;
+            String payload = Util.normalize(spell.getName()) + ":" + spellLevel;
             spellItem = ItemUtil.tagAction(spellItem, MenuAction.CHOOSE_SPELL, payload);
 
             inventory.setItem(slot++, spellItem);

@@ -42,12 +42,7 @@ public class RaceSelectionMenu {
             meta.lore(lore);
             raceItem.setItemMeta(meta);
 
-            // Claude TODO: MANUAL NORMALIZATION - Use Util.normalize() or NameNormalizer.toSnakeCase()
-            // Don't manually do .toLowerCase().replace(' ', '_') - use a standard method
-            // This appears in 6+ files (RaceSelectionMenu, ClassSelectionMenu, BackgroundSelectionMenu, etc.)
-            // See issue #3 (Fix Identifier Consistency)
-//            String raceId = race.getId() != null ? race.getId() : slug(race.getName());
-            String raceId = race.getName().toLowerCase().replace(' ', '_');
+            String raceId = Util.normalize(race.getName());
             raceItem = ItemUtil.tagAction(raceItem, MenuAction.CHOOSE_RACE, raceId);
 
             inventory.setItem(slot++, raceItem);
