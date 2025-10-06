@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.data.loader;
 
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.character.CharacterSheet;
+import io.papermc.jkvttplugin.util.Util;
 import org.bukkit.plugin.Plugin;
 import org.yaml.snakeyaml.DumperOptions;
 import org.yaml.snakeyaml.Yaml;
@@ -29,12 +30,8 @@ public class CharacterPersistenceLoader {
         loadAllCharacters();
     }
 
-    // Claude TODO: Remove debug System.out.println statements
-    // Use LOGGER.info() or LOGGER.fine() instead (see issue #13: Implement Proper Error Handling)
     // ToDo: fix saving character to yaml file
     public static void saveCharacter(CharacterSheet sheet) {
-        // ToDo remove println
-        System.out.println("In save Character: " + sheet.getCharacterName());
         File characterFile = new File(dataFolder, sheet.getCharacterId().toString() + ".yml");
 
         try {
@@ -46,9 +43,6 @@ public class CharacterPersistenceLoader {
             Yaml yaml = new Yaml(options);
 
             try (FileWriter writer = new FileWriter(characterFile)) {
-                // Claude TODO: Remove this debug println (issue #13)
-                // ToDo remove println
-                System.out.println("in second try catch" + writer);
                 yaml.dump(data, writer);
             }
         } catch(IOException e) {
@@ -90,9 +84,6 @@ public class CharacterPersistenceLoader {
     }
 
     public static void storeCharacterInMemory(CharacterSheet sheet) {
-        // Claude TODO: Remove debug println (issue #13)
-        // ToDo: remove println
-        System.out.println("in storeCharacterInMemory" + sheet.getCharacterName());
         playerCharacters.computeIfAbsent(sheet.getPlayerId(), k -> new ConcurrentHashMap<>()).put(sheet.getCharacterId(), sheet);
     }
 
@@ -167,10 +158,10 @@ public class CharacterPersistenceLoader {
         data.put("characterId", sheet.getCharacterId().toString());
         data.put("playerId", sheet.getPlayerId().toString());
         data.put("characterName", sheet.getCharacterName());
-        data.put("raceName", sheet.getRaceName());
-        data.put("subraceName", sheet.getSubraceName());
-        data.put("className", sheet.getMainClassName());
-        data.put("backgroundName", sheet.getBackgroundName());
+        data.put("raceName", sheet.getRace() != null ? Util.normalize(sheet.getRace().getName()) : null);
+        data.put("subraceName", sheet.getSubrace() != null ? Util.normalize(sheet.getSubrace().getName()) : null);
+        data.put("className", sheet.getMainClass() != null ? Util.normalize(sheet.getMainClass().getName()) : null);
+        data.put("backgroundName", sheet.getBackground() != null ? sheet.getBackground().getId() : null);
         data.put("currentHealth", sheet.getCurrentHealth());
         data.put("maxHealth", sheet.getMaxHealth());
         data.put("armorClass", sheet.getArmorClass());

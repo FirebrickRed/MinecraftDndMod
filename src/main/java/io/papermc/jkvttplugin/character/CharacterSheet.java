@@ -132,6 +132,9 @@ public class CharacterSheet {
         }
     }
 
+    // ToDo: AC doesn't update when armor/shield is equipped after character creation
+    // Need to add listener to detect armor changes in inventory and recalculate AC
+    // Also need to make leather armor equipable in chest slot
     private void calculateArmorClass() {
         int baseAC = 10 + getModifier(Ability.DEXTERITY);
 
@@ -361,29 +364,27 @@ public class CharacterSheet {
         return characterName;
     }
 
-    public String getRaceName() {
-        return race != null ? race.getName() : "Unknown";
+    public DndRace getRace() {
+        return race;
     }
 
     public boolean hasSubrace() {
         return race.hasSubraces();
     }
 
-    public String getSubraceName() {
-        return subrace != null ? subrace.getName() : null;
+    public DndSubRace getSubrace() {
+        return subrace;
     }
 
-    public String getMainClassName() {
-        return dndClass != null ? dndClass.getName() : "Unknown";
-    }
+    public DndClass getMainClass() { return dndClass; }
 
     // ToDo: update this logic to not be hardcoded when level up gets implemented
     public int getTotalLevel() {
         return 1;
     }
 
-    public String getBackgroundName() {
-        return background != null ? background.getName() : "Unknown";
+    public DndBackground getBackground() {
+        return background;
     }
 
     public boolean hasSpells() {

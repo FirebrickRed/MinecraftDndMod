@@ -1,7 +1,7 @@
 arcane_focus:
   name: "Arcane Focus"
   type: "spellcasting_focus"
-  focus_type: "arcane"
+  focus_type: "arcane_focus"
   description: "A crystal orb used to channel arcane magic"
   icon: "arcane_focus"
   cost: "10 gp"
@@ -17,7 +17,7 @@ component_pouch:
 holy_symbol:
   name: "Holy Symbol"
   type: "spellcasting_focus"
-  focus_type: "divine"
+  focus_type: "divine_focus"
   description: "A sacred symbol of your deity"
   icon: "holy_symbol"
   cost: "5 gp"
@@ -25,7 +25,7 @@ holy_symbol:
 druidic_focus:
   name: "Druidic Focus"
   type: "spellcasting_focus"
-  focus_type: "druidic"
+  focus_type: "druidic_focus"
   description: "A wooden staff or totem imbued with nature's power"
   icon: "druidic_focus"
   cost: "10 gp"

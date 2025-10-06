@@ -25,28 +25,21 @@ public class SpellFocusListener implements Listener {
     public void onRightClick(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
 
-        // ToDo: remove sysout
         ItemStack item = event.getItem();
-        System.out.println("In Right Click: " + !isSpellFocus(item));
         if (!isSpellFocus(item)) return;
 
         event.setCancelled(true);
         Player player = event.getPlayer();
 
-        // ToDo: remove sysout
-        System.out.println("after is spell focus");
-
         CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(player);
-        // ToDo: remove sysout
-//        System.out.println("does have sheet? " + sheet.toString());
         if (sheet == null || !sheet.hasSpells()) {
             player.sendMessage("You don't know any spells!");
             return;
         }
 
         String focusType = getFocusType(item);
-        if (sheet.getMainClassName() != null && ClassLoader.getClass(sheet.getMainClassName()).getSpellcasting() != null) {
-            String classRequirement = ClassLoader.getClass(sheet.getMainClassName()).getSpellcasting().getSpellcastingFocusType();
+        if (sheet.getMainClass() != null && sheet.getMainClass().getSpellcasting() != null) {
+            String classRequirement = sheet.getMainClass().getSpellcasting().getSpellcastingFocusType();
 
             if (!canUseThisFocus(focusType, classRequirement)) {
                 player.sendMessage("You cannot use this type of focus!");
@@ -54,7 +47,6 @@ public class SpellFocusListener implements Listener {
             }
         }
 
-        System.out.println("Should be opening");
         SpellCastingMenu.open(player, sheet);
     }
 

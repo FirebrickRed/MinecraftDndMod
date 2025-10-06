@@ -78,6 +78,8 @@ public class MenuClickListener implements Listener {
                 RaceSelectionMenu.open(player, RaceLoader.getAllRaces(), holder.getSessionId());
             }
             case OPEN_SUBRACE_SELECTION -> {
+                // ToDo: Menu items appear in random order - need to sort collection before passing to menu
+                // This applies to race, class, background, and subrace selection menus
                 if (session.getSelectedRace() != null) {
                     DndRace race = RaceLoader.getRace(session.getSelectedRace());
                     if (race != null && race.hasSubraces()) {
