@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public class DndBackground {
 //    private final Feature feature;
     private final List<String> traits;
     private final List<String> links;
-    private final String iconName;
+    private final String icon;
 
     private List<ChoiceEntry> playerChoices = List.of();
     public List<ChoiceEntry> getPlayerChoices() { return playerChoices; }
@@ -42,7 +43,7 @@ public class DndBackground {
             List<String> traits,
             List<ChoiceEntry> pcs,
             List<String> links,
-            String iconName
+            String icon
     ) {
         this.id = key;
         this.name = name;
@@ -55,7 +56,7 @@ public class DndBackground {
         this.traits = traits;
         this.playerChoices = pcs;
         this.links = links;
-        this.iconName = iconName;
+        this.icon = icon;
     }
 
     // ToDo: update code to utilize id instead of name for identification
@@ -99,8 +100,13 @@ public class DndBackground {
         return links;
     }
 
+    public Material getIconMaterial() {
+        // ToDo: update to use custom icons
+        return Material.PAPER;
+    }
+
     public ItemStack getBackgroundIcon() {
-        return Util.createItem(Component.text(getName()), null, iconName, 0);
+        return Util.createItem(Component.text(getName()), null, icon, 0);
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
