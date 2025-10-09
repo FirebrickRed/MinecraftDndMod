@@ -40,7 +40,7 @@ public class SpellSelectionMenu {
         CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
 
         DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
-        SpellcastingInfo spellInfo = dndClass.getSpellcasting();
+        SpellcastingInfo spellInfo = dndClass.getSpellcastingInfo();
         String title = spellLevel == 0 ? "Select Cantrips" : "Select Level " + spellLevel + " Spells";
 
         Inventory inventory = Bukkit.createInventory(
@@ -53,7 +53,14 @@ public class SpellSelectionMenu {
 
         SpellSelectionLimits limits = calculateSelectionLimits(dndClass, spellLevel, 1, session);
         int maxSelectable = limits.maxSelectable;
-        int currentSelected = session.getSpellCount(spellLevel);
+        // For "known" and "prepared" casters, show total spells selected (not per-level)
+        // Cantrips are always per-level
+        int currentSelected;
+        if (spellLevel > 0) {
+            currentSelected = session.getTotalSpellsSelected();
+        } else {
+            currentSelected = session.getSpellCount(spellLevel);
+        }
 
         addNavigationButtons(inventory, dndClass, spellLevel, sessionId);
 
@@ -82,11 +89,12 @@ public class SpellSelectionMenu {
     private static Collection<DndSpell> getAvailableSpells(String className, int spellLevel) {
         return SpellLoader.getSpellsForClass(className).stream()
                 .filter(spell -> spell.getLevel() == spellLevel)
+                .sorted(Comparator.comparing(DndSpell::getName)) // Alphabetical order
                 .collect(Collectors.toList());
     }
 
     private static void addNavigationButtons(Inventory inventory, DndClass dndClass, int currentLevel, UUID sessionId) {
-        SpellcastingInfo info = dndClass.getSpellcasting();
+        SpellcastingInfo info = dndClass.getSpellcastingInfo();
 
         ItemStack backButton = new ItemStack(Material.ARROW);
         backButton.editMeta(m -> {
@@ -243,7 +251,7 @@ public class SpellSelectionMenu {
     }
 
     private static SpellSelectionLimits calculateSelectionLimits(DndClass dndClass, int spellLevel, int characterLevel, CharacterCreationSession session) {
-        SpellcastingInfo info = dndClass.getSpellcasting();
+        SpellcastingInfo info = dndClass.getSpellcastingInfo();
         SpellSelectionLimits limits = new SpellSelectionLimits();
 
         limits.preparationType = info.getPreparationType();

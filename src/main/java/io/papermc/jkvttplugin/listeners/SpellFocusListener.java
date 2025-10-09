@@ -2,7 +2,6 @@ package io.papermc.jkvttplugin.listeners;
 
 import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
 import io.papermc.jkvttplugin.character.CharacterSheet;
-import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.ui.menu.SpellCastingMenu;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -38,8 +37,8 @@ public class SpellFocusListener implements Listener {
         }
 
         String focusType = getFocusType(item);
-        if (sheet.getMainClass() != null && sheet.getMainClass().getSpellcasting() != null) {
-            String classRequirement = sheet.getMainClass().getSpellcasting().getSpellcastingFocusType();
+        if (sheet.getMainClass() != null && sheet.getMainClass().getSpellcastingInfo() != null) {
+            String classRequirement = sheet.getMainClass().getSpellcastingInfo().getSpellcastingFocusType();
 
             if (!canUseThisFocus(focusType, classRequirement)) {
                 player.sendMessage("You cannot use this type of focus!");

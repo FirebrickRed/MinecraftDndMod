@@ -102,13 +102,14 @@ public class MenuClickListener implements Listener {
                 }
             }
             case OPEN_ABILITY_ALLOCATION -> {
+                session.markAbilityAllocationVisited();
                 AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
             }
             case OPEN_SPELL_SELECTION -> {
                 if (session.getSelectedClass() != null) {
                     DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
-                    if (dndClass != null && dndClass.getSpellcasting() != null) {
-                        SpellcastingInfo info = dndClass.getSpellcasting();
+                    if (dndClass != null && dndClass.getSpellcastingInfo() != null) {
+                        SpellcastingInfo info = dndClass.getSpellcastingInfo();
                         int startingLevel = 0;
                         boolean hasCantrips = info.getCantripsKnownByLevel() != null && !info.getCantripsKnownByLevel().isEmpty() && info.getCantripsKnownByLevel().get(0) > 0;
                         if (!hasCantrips) {
@@ -169,8 +170,22 @@ public class MenuClickListener implements Listener {
             return;
         }
 
+        // If changing class, clear class-specific selections
+        String previousClass = session.getSelectedClass();
+        boolean classChanged = previousClass != null && !previousClass.equals(payload);
+
         session.setSelectedClass(payload);
-        player.sendMessage("You have selected " + payload + " as your class!");
+
+        if (classChanged) {
+            // Clear spells (class-specific spell lists)
+            session.clearAllSpells();
+            // Clear pending choices (class-specific equipment)
+            session.clearPendingChoices();
+            player.sendMessage("Class changed! Your spell and equipment selections have been reset.");
+        } else {
+            player.sendMessage("You have selected " + payload + " as your class!");
+        }
+
         CharacterCreationSheetMenu.open(player, holder.getSessionId());
     }
 
@@ -184,8 +199,20 @@ public class MenuClickListener implements Listener {
             return;
         }
 
+        // If changing background, clear background-specific selections
+        String previousBackground = session.getSelectedBackground();
+        boolean backgroundChanged = previousBackground != null && !previousBackground.equals(payload);
+
         session.setSelectedBackground(payload);
-        player.sendMessage("You have selected " + payload + " as your background!");
+
+        if (backgroundChanged) {
+            // Clear pending choices (background-specific equipment)
+            session.clearPendingChoices();
+            player.sendMessage("Background changed! Your equipment selections have been reset.");
+        } else {
+            player.sendMessage("You have selected " + payload + " as your background!");
+        }
+
         CharacterCreationSheetMenu.open(player, holder.getSessionId());
     }
 
@@ -391,7 +418,7 @@ public class MenuClickListener implements Listener {
         }
 
         DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
-        if (dndClass == null || dndClass.getSpellcasting() == null) {
+        if (dndClass == null || dndClass.getSpellcastingInfo() == null) {
             return;
         }
 
@@ -414,19 +441,13 @@ public class MenuClickListener implements Listener {
                     return;
                 }
 
-                SpellcastingInfo info = dndClass.getSpellcasting();
-                int maxSelectable = calculateMaxSelectableSpells(info, spellLevel, 1);
-                int currentSelected = session.getSpellCount(spellLevel);
+                SpellcastingInfo info = dndClass.getSpellcastingInfo();
+                int maxSelectable = calculateMaxSelectableSpells(info, spellLevel, 1, session);
 
-//                session.selectSpell(spellKey, spellLevel, maxSelectable);
                 if (session.hasSpell(spellKey)) {
                     session.removeSpell(spellKey, spellLevel);
                 } else {
-//                    if (currentSelected >= maxSelectable) {
-//                        player.sendMessage("You cannot select more ");
-//                    }
                     session.selectSpell(spellKey, spellLevel, maxSelectable);
-
                 }
                 SpellSelectionMenu.open(player, holder.getSessionId(), spellLevel);
             }
@@ -451,7 +472,7 @@ public class MenuClickListener implements Listener {
         }
     }
 
-    private int calculateMaxSelectableSpells(SpellcastingInfo info, int spellLevel, int characterLevel) {
+    private int calculateMaxSelectableSpells(SpellcastingInfo info, int spellLevel, int characterLevel, CharacterCreationSession session) {
         if (spellLevel == 0 && info.getCantripsKnownByLevel() != null) {
             List<Integer> cantrips = info.getCantripsKnownByLevel();
             return characterLevel <= cantrips.size() ? cantrips.get(characterLevel - 1) : 0;
@@ -460,14 +481,17 @@ public class MenuClickListener implements Listener {
             return characterLevel <= known.size() ? known.get(characterLevel - 1) : 0;
         } else if ("prepared".equals(info.getPreparationType())) {
             // Prepared spells - calculate based on ability modifier + level
-            // This is a placeholder - you'd need to implement proper calculation
-            return 10;
+            SpellsPreparedFormula formula = info.getSpellsPreparedFormula();
+            if (formula != null && session != null) {
+                return formula.calculate(session.getAbilityScores(), characterLevel);
+            }
+            return 1; // Minimum 1 spell if formula not found
         }
         return 0;
     }
 
     private boolean validateAllSpellSelections(CharacterCreationSession session, DndClass dndClass) {
-        SpellcastingInfo info = dndClass.getSpellcasting();
+        SpellcastingInfo info = dndClass.getSpellcastingInfo();
 
         if (info.getCantripsKnownByLevel() != null && !info.getCantripsKnownByLevel().isEmpty()) {
             int maxCantrips = info.getCantripsKnownByLevel().get(0);
@@ -528,7 +552,7 @@ public class MenuClickListener implements Listener {
         if (abilities == null || abilities.isEmpty()) return false;
 
         DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
-        if (dndClass != null && dndClass.getSpellcasting() != null) {
+        if (dndClass != null && dndClass.getSpellcastingInfo() != null) {
             if (!validateAllSpellSelections(session, dndClass)) return false;
         }
 

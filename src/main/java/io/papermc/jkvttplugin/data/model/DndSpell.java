@@ -1,8 +1,13 @@
 package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.data.model.enums.SpellSchool;
+import io.papermc.jkvttplugin.util.Util;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
+import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class DndSpell {
@@ -180,6 +185,86 @@ public class DndSpell {
 
     public String getComponentsDisplay() {
         return components != null ? components.toDisplayString() : "";
+    }
+
+    public ItemStack createItemStack() {
+        List<Component> lore = new ArrayList<>();
+
+        // Spell level and school
+        String levelText = isCantrip() ? "Cantrip" : Util.getOrdinal(level) + " Level";
+        lore.add(Component.text(levelText + " " + (school != null ? school.getDisplayName() : ""), NamedTextColor.GOLD));
+
+        // Casting Details
+        if (castingTime != null) {
+            lore.add(Component.text("Casting Time: " + castingTime, NamedTextColor.GRAY));
+        }
+        if (range != null) {
+            lore.add(Component.text("Range: " + range, NamedTextColor.GRAY));
+        }
+        if (components != null) {
+            lore.add(Component.text("Components: " + components.toDisplayString(), NamedTextColor.GRAY));
+        }
+        if (duration != null) {
+            lore.add(Component.text("Duration: " + duration, NamedTextColor.GRAY));
+        }
+
+        // Tags
+        if (concentration) {
+            lore.add(Component.text("⚠ Concentration", NamedTextColor.YELLOW));
+        }
+        if (ritual) {
+            lore.add(Component.text("📖 Ritual", NamedTextColor.AQUA));
+        }
+
+        // Description (word-wrapped for readability)
+        if (description != null && !description.isEmpty()) {
+            lore.add(Component.text(""));
+            Util.wrapText(description, 50).forEach(line ->
+                lore.add(Component.text(line, NamedTextColor.WHITE))
+            );
+        }
+
+        // Higher levels
+        if (higherLevels != null && !higherLevels.isEmpty()) {
+            lore.add(Component.text(""));
+            lore.add(Component.text("At Higher Levels: " + higherLevels, NamedTextColor.LIGHT_PURPLE));
+        }
+
+        // Determine material based on spell level
+        Material material = getSpellMaterial();
+
+        return Util.createItem(
+                Component.text(name, getSpellLevelColor()),
+                lore,
+                icon != null ? icon.name().toLowerCase() : "spell_" + Util.normalize(name),
+                1,
+                material
+        );
+    }
+
+    private Material getSpellMaterial() {
+        if (isCantrip()) return Material.PAPER;
+        return switch (level) {
+            case 1, 2 -> Material.BOOK;
+            case 3, 4, 5, 6, 7, 8, 9 -> Material.ENCHANTED_BOOK;
+            default -> Material.BOOK;
+        };
+    }
+
+    private NamedTextColor getSpellLevelColor() {
+        if (isCantrip()) return NamedTextColor.GREEN;
+        return switch (level) {
+            case 1 -> NamedTextColor.WHITE;
+            case 2 -> NamedTextColor.YELLOW;
+            case 3 -> NamedTextColor.GOLD;
+            case 4 -> NamedTextColor.RED;
+            case 5 -> NamedTextColor.LIGHT_PURPLE;
+            case 6 -> NamedTextColor.DARK_PURPLE;
+            case 7 -> NamedTextColor.BLUE;
+            case 8 -> NamedTextColor.DARK_BLUE;
+            case 9 -> NamedTextColor.DARK_RED;
+            default -> NamedTextColor.GRAY;
+        };
     }
 
     public static class Builder {

@@ -8,6 +8,7 @@ import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
@@ -32,7 +33,7 @@ public class Util {
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
-        meta.setItemModel(new NamespacedKey("jkvttresourcepack", itemModelName));
+//        meta.setItemModel(new NamespacedKey("jkvttresourcepack", itemModelName));
 
         item.setItemMeta(meta);
         return item;
@@ -47,7 +48,7 @@ public class Util {
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
-        meta.setItemModel(new NamespacedKey("jkvttresourcepack", itemModelName));
+//        meta.setItemModel(new NamespacedKey("jkvttresourcepack", itemModelName));
 
         item.setItemMeta(meta);
         return item;
@@ -114,5 +115,65 @@ public class Util {
      */
     public static <T> List<T> sortByName(Collection<T> items, Function<T, String> nameExtractor) {
         return items.stream().sorted(Comparator.comparing(nameExtractor)).toList();
+    }
+
+    /**
+     * Converts a number to its ordinal form (1st, 2nd, 3rd, etc.)
+     *
+     * @param num the number to convert
+     * @return the ordinal string representation
+     */
+    public static String getOrdinal(int num) {
+        if (num <= 0) return String.valueOf(num);
+
+        int lastDigit = num % 10;
+        int lastTwoDigits = num % 100;
+
+        if (lastTwoDigits >= 11 && lastTwoDigits <= 13) {
+            return num + "th";
+        }
+
+        return switch (lastDigit) {
+            case 1 -> num + "st";
+            case 2 -> num + "nd";
+            case 3 -> num + "rd";
+            default -> num + "th";
+        };
+    }
+
+    /**
+     * Wraps text to fit within a specified line length, breaking on word boundaries.
+     * Useful for wrapping long descriptions in item lore tooltips.
+     *
+     * @param text the text to wrap
+     * @param maxLength maximum characters per line
+     * @return list of wrapped lines
+     */
+    public static List<String> wrapText(String text, int maxLength) {
+        List<String> lines = new ArrayList<>();
+        if (text == null || text.isEmpty()) return lines;
+
+        String[] words = text.split("\\s+");
+        StringBuilder currentLine = new StringBuilder();
+
+        for (String word : words) {
+            if (currentLine.length() + word.length() + 1 > maxLength) {
+                if (currentLine.length() > 0) {
+                    lines.add(currentLine.toString());
+                    currentLine = new StringBuilder();
+                }
+            }
+
+            if (currentLine.length() > 0) {
+                currentLine.append(" ");
+            }
+            currentLine.append(word);
+        }
+
+        if (currentLine.length() > 0) {
+            lines.add(currentLine.toString());
+        }
+
+        return lines;
     }
 }

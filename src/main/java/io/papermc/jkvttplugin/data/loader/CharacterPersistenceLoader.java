@@ -173,14 +173,28 @@ public class CharacterPersistenceLoader {
         }
         data.put("abilities", abilities);
 
-        // Serialize spells
+        // Serialize spells and cantrips (save normalized keys, not display names)
         if (sheet.hasSpells()) {
-            List<String> spellNames = new ArrayList<>();
+            List<String> spellKeys = new ArrayList<>();
             for (var spell : sheet.getKnownSpells()) {
-                spellNames.add(spell.getName());
+                spellKeys.add(Util.normalize(spell.getName()));
             }
-            data.put("knownSpells", spellNames);
+            data.put("knownSpells", spellKeys);
+
+            List<String> cantripKeys = new ArrayList<>();
+            for (var cantrip : sheet.getKnownCantrips()) {
+                cantripKeys.add(Util.normalize(cantrip.getName()));
+            }
+            data.put("knownCantrips", cantripKeys);
         }
+
+        // ToDo: Save spell slot consumption (Issue #31)
+        // Currently spell slots reset to full on every reload
+        // Need to add: data.put("currentSpellSlots", sheet.getCurrentSpellSlots());
+
+        // ToDo: Save equipped armor/shield (Issue #31)
+        // Currently equipped armor is lost on reload, causing wrong AC until re-equipped
+        // Need to add: data.put("equippedArmor", sheet.getEquippedArmor().getId());
 
         return data;
     }

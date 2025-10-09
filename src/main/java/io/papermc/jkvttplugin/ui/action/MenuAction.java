@@ -1,6 +1,7 @@
 package io.papermc.jkvttplugin.ui.action;
 
 public enum MenuAction {
+    // ===== Character Creation Actions =====
     OPEN_RACE_SELECTION,
     CHOOSE_RACE,
     OPEN_SUBRACE_SELECTION,
@@ -24,4 +25,11 @@ public enum MenuAction {
     CONFIRM_SPELL_SELECTION,
     BACK_TO_CHARACTER_SHEET,
     CONFIRM_CHARACTER,
+
+    // ===== Spell Casting Actions =====
+    CAST_CANTRIP,
+    CAST_SPELL,
+    SELECT_SPELL_LEVEL,
+    VIEW_CANTRIPS,
+    BREAK_CONCENTRATION,
 }

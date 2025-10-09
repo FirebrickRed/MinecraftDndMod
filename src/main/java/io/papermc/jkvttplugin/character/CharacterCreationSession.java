@@ -21,6 +21,7 @@ public class CharacterCreationSession {
     private List<PendingChoice<?>> pendingChoices = Collections.emptyList();
 
     private EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
+    private boolean abilityAllocationVisited = false;
 
     public CharacterCreationSession(UUID playerId) {
         this.playerId = playerId;
@@ -167,16 +168,31 @@ public class CharacterCreationSession {
                 return;
             }
 
-            LinkedHashSet<String> levelSpells = spellsByLevel.computeIfAbsent(level, k -> new LinkedHashSet<>());
+            // Check TOTAL spell count (for "known" casters, maxAllowed is total spells)
+            if (selectedSpells.size() >= maxAllowed && maxAllowed > 0) {
+                // Remove the oldest spell from ANY level
+                String oldestSpell = null;
+                int oldestLevel = -1;
 
-            if (levelSpells.size() >= maxAllowed && maxAllowed > 0) {
-                Iterator<String> iterator = levelSpells.iterator();
-                if (iterator.hasNext()) {
-                    String oldestSpell = iterator.next();
-                    iterator.remove();
+                // Find the first spell across all levels
+                for (var entry : spellsByLevel.entrySet()) {
+                    if (!entry.getValue().isEmpty()) {
+                        Iterator<String> iterator = entry.getValue().iterator();
+                        if (iterator.hasNext()) {
+                            oldestSpell = iterator.next();
+                            oldestLevel = entry.getKey();
+                            break;
+                        }
+                    }
+                }
+
+                if (oldestSpell != null) {
+                    spellsByLevel.get(oldestLevel).remove(oldestSpell);
                     selectedSpells.remove(oldestSpell);
                 }
             }
+
+            LinkedHashSet<String> levelSpells = spellsByLevel.computeIfAbsent(level, k -> new LinkedHashSet<>());
             levelSpells.add(spellName);
             selectedSpells.add(spellName);
         }
@@ -207,5 +223,23 @@ public class CharacterCreationSession {
 
     public int getTotalSpellsSelected() {
         return selectedSpells.size();
+    }
+
+    public boolean hasVisitedAbilityAllocation() {
+        return abilityAllocationVisited;
+    }
+
+    public void markAbilityAllocationVisited() {
+        this.abilityAllocationVisited = true;
+    }
+
+    /**
+     * Clears all spell selections and resets spell-related state.
+     * Called when changing class to prevent invalid spell lists.
+     */
+    public void clearAllSpells() {
+        selectedCantrips.clear();
+        selectedSpells.clear();
+        spellsByLevel.clear();
     }
 }

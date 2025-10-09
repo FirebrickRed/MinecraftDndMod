@@ -1,5 +1,5 @@
 noble:
-  display_name: Noble
+  name: Noble
   description: "You understand wealth, power, and privilege..."
   skills:
     - History

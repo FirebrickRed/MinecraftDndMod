@@ -26,6 +26,9 @@ public class CharacterSheet {
 
     private Set<DndSpell> knownSpells = new HashSet<>();
     private Set<DndSpell> knownCantrips = new HashSet<>();
+    private int[] spellSlots = new int[9];
+    private int[] maxSpellSlots = new int[9];
+    private DndSpell concentratingOn = null;
 
     private int totalHealth;
     private int currentHealth;
@@ -80,6 +83,8 @@ public class CharacterSheet {
         sheet.grantStartingEquipment(session);
 
         sheet.calculateArmorClass();
+        sheet.initializeSpellSlots();
+
         return sheet;
     }
 
@@ -99,7 +104,18 @@ public class CharacterSheet {
 
         sheet.currentHealth = currentHealth;
         sheet.totalHealth = maxHealth;
-        sheet.armorClass = armorClass;
+
+        // ToDo: Load spell slots from persistence instead of resetting to max (Issue #31)
+        sheet.initializeSpellSlots();
+
+        // ToDo: Load equipped armor from persistence (Issue #31)
+        // Currently equippedArmor is null on load, so AC will be wrong if player was wearing armor
+        // For now, recalculate AC from base stats (will be correct once armor is re-equipped)
+        // When implementing Issue #31:
+        // 1. Save equippedArmor.getId() and equippedShield.getId() to YAML
+        // 2. Load armor/shield references from ArmorLoader in loadFromData()
+        // 3. Remove armorClass parameter entirely and always calculate from equipped gear
+        sheet.calculateArmorClass();
 
         return sheet;
     }
@@ -148,6 +164,30 @@ public class CharacterSheet {
         }
 
         armorClass = baseAC;
+    }
+
+    private void initializeSpellSlots() {
+        if (dndClass == null || dndClass.getSpellcastingInfo() == null) return;
+
+        SpellcastingInfo spellcasting = dndClass.getSpellcastingInfo();
+        int characterLevel = getTotalLevel();
+
+        Map<Integer, List<Integer>> slotsByLevel = spellcasting.getSpellSlotsByLevel();
+        if (slotsByLevel == null) return;
+
+        // Iterate through spell levels 1-9
+        for (int spellLevel = 1; spellLevel <= 9; spellLevel++) {
+            List<Integer> slotsProgression = slotsByLevel.get(spellLevel);
+            if (slotsProgression == null || slotsProgression.isEmpty()) continue;
+
+            // Get slots for this character level (YAML arrays are 0-indexed, so characterLevel-1)
+            int slotIndex = characterLevel - 1;
+            if (slotIndex >= 0 && slotIndex < slotsProgression.size()) {
+                int slots = slotsProgression.get(slotIndex);
+                maxSpellSlots[spellLevel - 1] = slots;
+                spellSlots[spellLevel - 1] = slots;
+            }
+        }
     }
 
     private void grantStartingEquipment(CharacterCreationSession session) {
@@ -407,6 +447,48 @@ public class CharacterSheet {
 //                .orElse(null);
 //    }
 
+    public Set<DndSpell> getKnownCantrips() {
+        return knownCantrips;
+    }
+
+    public int getSpellSlotsRemaining(int level) {
+        if (level < 1 || level > 9) return 0;
+        return spellSlots[level - 1];
+    }
+
+    public int getMaxSpellSlots(int level) {
+        if (level < 1 || level > 9) return 0;
+        return maxSpellSlots[level - 1];
+    }
+
+    public DndSpell getConcentratingOn() {
+        return concentratingOn;
+    }
+
+    public void setConcentratingOn(DndSpell spell) {
+        this.concentratingOn = spell;
+    }
+
+    public boolean isConcentrating() {
+        return concentratingOn != null;
+    }
+
+    public void breakConcentration() {
+        concentratingOn = null;
+    }
+
+    public boolean hasSpellSlot(int level) {
+        if (level < 1 || level > 9) return false;
+        return spellSlots[level - 1] > 0;
+    }
+
+    public void consumeSpellSlot(int level) {
+        if (level < 1 || level > 9) return;
+        if (spellSlots[level - 1] > 0) {
+            spellSlots[level - 1] -= 1;
+        }
+    }
+
     public void addSpell(DndSpell spell) {
         if (!knownSpells.contains(spell)) {
             knownSpells.add(spell);
@@ -417,19 +499,20 @@ public class CharacterSheet {
         return knownSpells;
     }
 
-    // ToDo: do we need this anymore because I don't think so
-    public Map<String, List<ItemStack>> getEquipmentChoicesList() {
-        Map<String, List<ItemStack>> choices = new HashMap<>();
-//        DndClass mainClass = getMainDndClass();
+    public void longRest() {
+        for (int i = 0; i < 9; i++) {
+            spellSlots[i] = maxSpellSlots[i];
+        }
 
-//        if (mainClass != null) {
-//            choices.putAll(mainClass.getGearChoices());
-//        }
+        breakConcentration();
 
-//        if (background != null) {
-////            choices.putAll(background.getGearChoices());
-//        }
+        currentHealth = totalHealth;
+        tempHealth = 0;
+    }
 
-        return choices;
+    public void shortRest() {
+        // Warlocks recover Pact Magic slots on short rest
+        // ToDo: Implement when Warlock-specific slot recovery is added
+        // For now, short rest does nothing for spell slots
     }
 }

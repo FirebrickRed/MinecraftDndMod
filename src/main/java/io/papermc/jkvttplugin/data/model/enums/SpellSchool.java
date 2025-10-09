@@ -8,7 +8,7 @@ public enum SpellSchool {
     EVOCATION("Evocation"),
     ILLUSION("Illusion"),
     NECROMANCY("Necromancy"),
-    Transmutation("Transmutation");
+    TRANSMUTATION("Transmutation");
 
     private final String displayName;
 

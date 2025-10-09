@@ -95,9 +95,12 @@ public class CharacterCreationSheetMenu {
             }
         }
 
-        ItemStack spellItem = createSelectionItem(Material.WRITABLE_BOOK, "Spells", null, "Click to select your spells");
-        spellItem = ItemUtil.tagAction(spellItem, MenuAction.OPEN_SPELL_SELECTION, "spell");
-        inventory.setItem(32, spellItem);
+        // Only show spell book after ability allocation has been visited
+        if (session != null && session.hasVisitedAbilityAllocation()) {
+            ItemStack spellItem = createSpellBookItem(session, player);
+            spellItem = ItemUtil.tagAction(spellItem, MenuAction.OPEN_SPELL_SELECTION, "spell");
+            inventory.setItem(32, spellItem);
+        }
 
         ItemStack confirmItem = createConfirmButton(player, session);
         inventory.setItem(49, confirmItem);
@@ -194,5 +197,32 @@ public class CharacterCreationSheetMenu {
         return selection.replace('_', ' ')
                 .substring(0, 1).toUpperCase() +
                 selection.replace('_', ' ').substring(1);
+    }
+
+    private static ItemStack createSpellBookItem(CharacterCreationSession session, Player player) {
+        ItemStack item = new ItemStack(Material.WRITABLE_BOOK);
+        item.editMeta(m -> {
+            m.displayName(Component.text("Spells").color(NamedTextColor.GOLD));
+            List<Component> lore = new ArrayList<>();
+
+            int cantripCount = session.getSelectedCantrips().size();
+            int spellCount = session.getTotalSpellsSelected();
+
+            if (cantripCount > 0 || spellCount > 0) {
+                if (cantripCount > 0) {
+                    lore.add(Component.text("Cantrips: " + cantripCount).color(NamedTextColor.GREEN));
+                }
+                if (spellCount > 0) {
+                    lore.add(Component.text("Spells: " + spellCount).color(NamedTextColor.GREEN));
+                }
+                lore.add(Component.text("Click to change").color(NamedTextColor.GRAY));
+            } else {
+                lore.add(Component.text("Not Selected").color(NamedTextColor.RED));
+                lore.add(Component.text("Click to select your spells").color(NamedTextColor.GRAY));
+            }
+
+            m.lore(lore);
+        });
+        return item;
     }
 }

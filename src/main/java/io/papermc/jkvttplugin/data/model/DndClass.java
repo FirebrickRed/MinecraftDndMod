@@ -153,7 +153,7 @@ public class DndClass {
         this.spellcastingAbility = spellcastingAbility;
     }
 
-    public SpellcastingInfo getSpellcasting() {
+    public SpellcastingInfo getSpellcastingInfo() {
         return spellcasting;
     }
     public void setSpellcasting(SpellcastingInfo spellcasting) {

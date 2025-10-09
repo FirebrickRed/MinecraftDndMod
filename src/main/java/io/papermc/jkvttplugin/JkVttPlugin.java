@@ -6,6 +6,7 @@ import io.papermc.jkvttplugin.commands.*;
 import io.papermc.jkvttplugin.data.DataManager;
 import io.papermc.jkvttplugin.listeners.*;
 import io.papermc.jkvttplugin.ui.listener.MenuClickListener;
+import io.papermc.jkvttplugin.ui.listener.SpellCastingMenuListener;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import org.bukkit.Bukkit;
@@ -40,14 +41,12 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new CharacterNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new SpellFocusListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArmorEquipListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new SpellCastingMenuListener(), this);
 
         // Commands
-        EquipmentCommand equipmentCommand = new EquipmentCommand();
         this.getCommand("reloadyaml").setExecutor(new ReloadYamlCommand());
         this.getCommand("spawnhadozee").setExecutor(new NpcCommands(this));
         this.getCommand("rolldice").setExecutor(new RollDiceCommand());
-        this.getCommand("takeequipment").setExecutor(equipmentCommand);
-        this.getCommand("choosegear").setExecutor(equipmentCommand);
         this.getCommand("createcharacter").setExecutor(new CreateCharacterCommand());
 
     }

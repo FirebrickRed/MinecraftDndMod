@@ -10,14 +10,6 @@ commands:
     description: Roll dice using XdY format (e.g., 2d6+3).
     usage: /rolldice <XdY[+Z]>
     permission: dnd.rolldice
-  takeequipment:
-    description: Choose your class's starting equipment.
-    usage: /takeequipment
-    permission: dnd.takeequipment
-  choosegear:
-    description: Select a specific piece of starting equipment.
-    usage: /choosegear <choiceKey> <option>
-    permission: dnd.choosegear
   reloadyaml:
     description: Reloads all YAML files (Weapons & NPCs).
     usage: /reloadyaml

@@ -1,5 +1,5 @@
 wildspacer:
-  display_name: Wildspacer
+  name: Wildspacer
   description: "You’ve lived much of your life in wildspace..."
   skills:
     - Athletics

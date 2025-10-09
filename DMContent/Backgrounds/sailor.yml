@@ -1,5 +1,5 @@
 sailor:
-  display_name: Sailor
+  name: Sailor
   description: "You’ve spent your life on the sea..."
   skills:
     - Athletics
