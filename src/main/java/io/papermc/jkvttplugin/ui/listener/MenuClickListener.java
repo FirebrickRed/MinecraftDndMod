@@ -103,7 +103,7 @@ public class MenuClickListener implements Listener {
             }
             case OPEN_ABILITY_ALLOCATION -> {
                 session.markAbilityAllocationVisited();
-                AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
+                AbilityAllocationMenu.open(player, session);
             }
             case OPEN_SPELL_SELECTION -> {
                 if (session.getSelectedClass() != null) {
@@ -130,6 +130,16 @@ public class MenuClickListener implements Listener {
         if (action != MenuAction.CHOOSE_RACE || payload == null || payload.isEmpty()) return;
 
         CharacterCreationSession session = CharacterCreationService.start(player.getUniqueId());
+
+        // If changing race, clear the subrace selection
+        String previousRace = session.getSelectedRace();
+        if (previousRace != null && !previousRace.equals(payload)) {
+            session.setSelectedSubrace(null);
+            session.setRacialBonusDistribution(null);
+            session.clearAllRacialBonuses();
+            player.sendMessage("Race changed! Your subrace and racial bonus selections have been reset.");
+        }
+
         session.setSelectedRace(payload);
 
         DndRace race = RaceLoader.getRace(payload);
@@ -382,31 +392,105 @@ public class MenuClickListener implements Listener {
     }
 
     private void handleAbilityAllocationClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
-        if (action == MenuAction.CONFIRM_CHARACTER) {
+        CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
+        if (session == null) {
             player.closeInventory();
-            CharacterCreationSheetMenu.open(player, holder.getSessionId());
+            player.sendMessage("No character creation session found.");
+            return;
         }
 
-        if (action != MenuAction.INCREASE_ABILITY && action != MenuAction.DECREASE_ABILITY) return;
-
-        Ability ability = Ability.fromString(payload);
-        var session = CharacterCreationService.getSession(player.getUniqueId());
-
-        EnumMap<Ability, Integer> base = session.getAbilityScores();
-
-        int current = base.getOrDefault(ability, 10);
-        if (action == MenuAction.INCREASE_ABILITY) {
-            if (current < 20) {
-                current++;
+        switch (action) {
+            case CONFIRM_CHARACTER -> {
+                player.closeInventory();
+                CharacterCreationSheetMenu.open(player, holder.getSessionId());
             }
-        } else {
-            if (current > 0) {
-                current--;
+            case SELECT_RACIAL_BONUS_DISTRIBUTION -> {
+                // Payload is the distribution key like "[2, 1]"
+                session.setRacialBonusDistribution(payload);
+                AbilityAllocationMenu.open(player, session);
+            }
+            case APPLY_RACIAL_BONUS -> {
+                // Payload format: "STRENGTH:race" or "DEXTERITY:subrace"
+                String[] parts = payload.split(":");
+                if (parts.length == 2) {
+                    Ability ability = Ability.fromString(parts[0]);
+                    String source = parts[1]; // "race" or "subrace"
+
+                    // Toggle bonus application
+                    int currentBonus = session.getRacialBonus(ability);
+                    if (currentBonus > 0) {
+                        // Remove the bonus
+                        session.clearRacialBonus(ability);
+                    } else {
+                        // Apply a bonus - determine which value based on distribution
+                        String distKey = session.getRacialBonusDistribution();
+                        if (distKey != null) {
+                            List<Integer> bonusValues = parseDistributionKey(distKey);
+                            int bonusToApply = findNextAvailableBonus(session, bonusValues);
+                            if (bonusToApply > 0) {
+                                session.setRacialBonus(ability, bonusToApply);
+                            }
+                        }
+                    }
+                }
+                AbilityAllocationMenu.open(player, session);
+            }
+            case INCREASE_ABILITY -> {
+                Ability ability = Ability.fromString(payload);
+                EnumMap<Ability, Integer> base = session.getAbilityScores();
+                int current = base.getOrDefault(ability, 10);
+                if (current < 20) {
+                    current++;
+                }
+                base.put(ability, current);
+                session.setAbilityScores(base);
+                AbilityAllocationMenu.open(player, session);
+            }
+            case DECREASE_ABILITY -> {
+                Ability ability = Ability.fromString(payload);
+                EnumMap<Ability, Integer> base = session.getAbilityScores();
+                int current = base.getOrDefault(ability, 10);
+                if (current > 0) {
+                    current--;
+                }
+                base.put(ability, current);
+                session.setAbilityScores(base);
+                AbilityAllocationMenu.open(player, session);
             }
         }
-        base.put(ability, current);
-        session.setAbilityScores(base);
-        AbilityAllocationMenu.open(player, session.getSelectedRace(), session.getAbilityScores(), holder.getSessionId());
+    }
+
+    /**
+     * Parse distribution key "[2, 1]" into List<Integer> [2, 1]
+     */
+    private List<Integer> parseDistributionKey(String distKey) {
+        List<Integer> result = new ArrayList<>();
+        String[] parts = distKey.replace("[", "").replace("]", "").split(",");
+        for (String part : parts) {
+            try {
+                result.add(Integer.parseInt(part.trim()));
+            } catch (NumberFormatException ignored) {}
+        }
+        return result;
+    }
+
+    /**
+     * Find the next bonus value to apply based on what's already been used
+     */
+    private int findNextAvailableBonus(CharacterCreationSession session, List<Integer> bonusValues) {
+        // Count how many of each bonus value have been used
+        EnumMap<Ability, Integer> allocations = session.getRacialBonusAllocations();
+        List<Integer> usedBonuses = new ArrayList<>(allocations.values());
+
+        // Find the first bonus from bonusValues that hasn't been fully used
+        for (Integer bonusValue : bonusValues) {
+            if (usedBonuses.contains(bonusValue)) {
+                usedBonuses.remove(bonusValue); // Remove one instance
+            } else {
+                return bonusValue; // This bonus value is still available
+            }
+        }
+        return 0; // No bonuses available
     }
 
     private void handleSpellSelectionClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {

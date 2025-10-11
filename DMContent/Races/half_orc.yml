@@ -1,0 +1,18 @@
+name: Half-Orc
+creature_type: Humanoid
+source_url: "https://dnd5e.fandom.com/wiki/Half-Orc"
+description: Whether united under the leadership of a mighty warlock or having fought to a standstill after years of conflict, orc and human tribes sometimes form alliances, joining forces into a larger horde to the terror of civilized lands nearby. When these alliances are sealed by marriages, half-orcs are born.
+ability_scores:
+  fixed:
+    Strength: 2
+    Constitution: 1
+size: Medium
+speed: 30
+traits:
+  - Darkvision
+  - Menacing
+  - Relentless Endurance
+  - Savage Attacks
+languages:
+  - Common
+  - Orc

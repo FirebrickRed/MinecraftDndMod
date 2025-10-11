@@ -1,0 +1,17 @@
+name: Human
+creature_type: Humanoid
+source_url: "https://dnd5e.fandom.com/wiki/Human"
+description: Humans are the most adaptable and ambitious people among the common races. Whatever drives them, humans are the innovators, the achievers, and the pioneers of the worlds.
+ability_scores:
+  choice:
+    distributions:
+      - [1, 1, 1, 1, 1, 1]  # Standard Human: +1 to all six abilities
+size: Medium
+speed: 30
+traits:
+  - Extra Language
+languages:
+  - Common
+  - players_choice:
+      choose: 1
+      options: []

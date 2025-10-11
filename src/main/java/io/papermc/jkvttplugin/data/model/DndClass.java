@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.function.Function;
 
 public class DndClass {
+    private String id;
     private String name;
     private int hitDie;
 
@@ -68,6 +69,13 @@ public class DndClass {
     }
 
     // Getters and Setters
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
+
     public String getName() {
         return name;
     }
@@ -265,6 +273,11 @@ public class DndClass {
     // Builder
     public static class Builder {
         private final DndClass instance = new DndClass();
+
+        public Builder id(String id) {
+            instance.setId(id);
+            return this;
+        }
 
         public Builder name(String name) {
             instance.setName(name);

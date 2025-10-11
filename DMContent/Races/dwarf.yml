@@ -1,0 +1,46 @@
+name: Dwarf
+creature_type: Humanoid
+source_url: "https://dnd5e.fandom.com/wiki/Dwarf"
+description: Bold and hardy, dwarves are known as skilled warriors, miners, and workers of stone and metal. Though they stand well under 5 feet tall, dwarves are so broad and compact that they can weigh as much as a human standing nearly two feet taller.
+ability_scores:
+  fixed:
+    Constitution: 2
+size: Medium
+speed: 25
+traits:
+  - Darkvision
+  - Dwarven Resilience
+  - Dwarven Combat Training
+  - Tool Proficiency
+  - Stonecunning
+languages:
+  - Common
+  - Dwarvish
+subraces:
+  hill_dwarf:
+    name: Hill Dwarf
+    description: As a hill dwarf, you have keen senses, deep intuition, and remarkable resilience.
+    ability_scores:
+      fixed:
+        Wisdom: 1
+    traits:
+      - Dwarven Toughness
+  mountain_dwarf:
+    name: Mountain Dwarf
+    description: As a mountain dwarf, you're strong and hardy, accustomed to a difficult life in rugged terrain.
+    ability_scores:
+      fixed:
+        Strength: 2
+    traits:
+      - Dwarven Armor Training
+  duergar:
+    name: Duergar (Gray Dwarf)
+    description: Duergar are gray-skinned dwarves that dwell in the Underdark, known for their cruelty and dark magic.
+    ability_scores:
+      fixed:
+        Strength: 1
+    traits:
+      - Superior Darkvision
+      - Duergar Resilience
+      - Duergar Magic
+      - Sunlight Sensitivity

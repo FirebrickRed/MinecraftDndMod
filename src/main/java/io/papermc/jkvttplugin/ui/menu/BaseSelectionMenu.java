@@ -21,7 +21,7 @@ import java.util.function.Function;
 public class BaseSelectionMenu {
     private BaseSelectionMenu() {}
 
-    public static <T>Inventory build(Collection<T> items, UUID sessionId, String menuTitle, MenuType menuType, MenuAction action, Function<T, String> nameExtractor, Function<T, Material> iconExtractor) {
+    public static <T>Inventory build(Collection<T> items, UUID sessionId, String menuTitle, MenuType menuType, MenuAction action, Function<T, String> idExtractor, Function<T, String> nameExtractor, Function<T, Material> iconExtractor) {
         int inventorySize = Util.getInventorySize(items.size());
 
         Inventory inventory = Bukkit.createInventory(
@@ -43,8 +43,8 @@ public class BaseSelectionMenu {
             meta.lore(lore);
             itemStack.setItemMeta(meta);
 
-            String normalizedId = Util.normalize(displayName);
-            itemStack = ItemUtil.tagAction(itemStack, action, normalizedId);
+            String id = idExtractor.apply(item);
+            itemStack = ItemUtil.tagAction(itemStack, action, id);
 
             inventory.setItem(slot++, itemStack);
         }

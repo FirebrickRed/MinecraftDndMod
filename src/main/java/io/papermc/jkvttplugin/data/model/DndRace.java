@@ -15,6 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 
 public class DndRace {
+    private final String id;
     private final String name;
     private final String sourceUrl;
     private final String description;
@@ -27,7 +28,7 @@ public class DndRace {
     private final int speed;
 
     private final Map<Ability, Integer> fixedAbilityScores;
-    private final PlayersChoice<Ability> abilityScoreChoices;
+    private final AbilityScoreChoice abilityScoreChoice;
 
     private final List<String> traits;
 
@@ -38,6 +39,7 @@ public class DndRace {
     private final String icon;
 
     public DndRace(
+            String id,
             String name,
             String sourceUrl,
             String description,
@@ -46,7 +48,7 @@ public class DndRace {
             PlayersChoice<String> sizeChoice,
             int speed,
             Map<Ability, Integer> fixedAbilityScores,
-            PlayersChoice<Ability> abilityScoreChoices,
+            AbilityScoreChoice abilityScoreChoice,
             List<String> traits,
             List<String> languages,
             PlayersChoice<String> languageChoices,
@@ -54,6 +56,7 @@ public class DndRace {
             String icon
     ) {
         // ToDo: double check if null checks are needed here, should be handled by the loader
+        this.id = Objects.requireNonNull(id, "id cannot be null");
         this.name = Objects.requireNonNull(name, "name cannot be null");
         this.sourceUrl = sourceUrl != null ? sourceUrl : "";
         this.description = description != null ? description : "";
@@ -63,7 +66,7 @@ public class DndRace {
         this.speed = speed;
 
         this.fixedAbilityScores = fixedAbilityScores != null ? Map.copyOf(fixedAbilityScores) : Map.of();
-        this.abilityScoreChoices = abilityScoreChoices;
+        this.abilityScoreChoice = abilityScoreChoice;
 
         this.traits = traits != null ? List.copyOf(traits) : List.of();
         this.languages = languages != null ? List.copyOf(languages) : List.of();
@@ -71,6 +74,10 @@ public class DndRace {
 
         this.subraces = subraces != null ? Map.copyOf(subraces) : Map.of();
         this.icon = icon != null ? icon : "elf_icon";
+    }
+
+    public String getId() {
+        return id;
     }
 
     public String getName() {
@@ -105,8 +112,8 @@ public class DndRace {
         return fixedAbilityScores;
     }
 
-    public PlayersChoice<Ability> getAbilityScoreChoices() {
-        return abilityScoreChoices;
+    public AbilityScoreChoice getAbilityScoreChoice() {
+        return abilityScoreChoice;
     }
 
     public List<String> getTraits() {
@@ -123,10 +130,6 @@ public class DndRace {
 
     public Map<String, DndSubRace> getSubraces() {
         return subraces;
-    }
-
-    public DndSubRace getSubRaceByName(String name) {
-        return this.subraces.get(Util.normalize(name));
     }
 
     public boolean hasSubraces() {

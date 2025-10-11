@@ -18,6 +18,6 @@ public class ClassSelectionMenu {
     }
 
     public static Inventory build(Collection<DndClass> classes, UUID sessionId) {
-        return BaseSelectionMenu.build(classes, sessionId, "Choose Your Class", MenuType.CLASS_SELECTION, MenuAction.CHOOSE_CLASS, DndClass::getName, DndClass::getIconMaterial);
+        return BaseSelectionMenu.build(classes, sessionId, "Choose Your Class", MenuType.CLASS_SELECTION, MenuAction.CHOOSE_CLASS, DndClass::getId, DndClass::getName, DndClass::getIconMaterial);
     }
 }

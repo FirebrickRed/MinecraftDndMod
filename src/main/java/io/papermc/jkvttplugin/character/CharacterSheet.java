@@ -54,7 +54,7 @@ public class CharacterSheet {
         }
 
         if (session.getSelectedSubRace() != null && sheet.race.hasSubraces()) {
-            sheet.subrace = sheet.race.getSubRaceByName(session.getSelectedSubRace());
+            sheet.subrace = sheet.race.getSubraces().get(session.getSelectedSubRace());
         }
 
         sheet.dndClass = ClassLoader.getClass(session.getSelectedClass());
@@ -68,14 +68,9 @@ public class CharacterSheet {
         }
 
         sheet.abilityScores = new EnumMap<>(session.getAbilityScores());
-        // Claude TODO: MISSING FEATURE - Apply racial ability score bonuses
-        // DndRace and DndSubRace have abilityScoreIncreases maps that should be applied here
-        // Need to handle:
-        // 1. Fixed bonuses (e.g., Dwarf +2 CON)
-        // 2. Choice bonuses (e.g., Half-Elf +1 to two abilities of choice)
-        // 3. Subrace bonuses (e.g., Mountain Dwarf +2 STR)
-        // See: DndRace.getAbilityScoreIncreases() and DndSubRace.getAbilityScoreIncreases()
-        // ToDo: figure out racial bonuses
+
+        // Apply racial ability score bonuses (both fixed and player-chosen)
+        sheet.applyRacialBonuses(session);
 
         sheet.loadSpells(session.getSelectedSpells(), session.getSelectedCantrips());
         sheet.calculateHealth();
@@ -93,7 +88,7 @@ public class CharacterSheet {
 
         sheet.race = RaceLoader.getRace(raceName);
         if (subraceName != null && sheet.race != null && sheet.race.hasSubraces()) {
-            sheet.subrace = sheet.race.getSubRaceByName(subraceName);
+            sheet.subrace = sheet.race.getSubraces().get(subraceName);
         }
         sheet.dndClass = ClassLoader.getClass(className);
         sheet.background = BackgroundLoader.getBackground(backgroundName);
@@ -118,6 +113,46 @@ public class CharacterSheet {
         sheet.calculateArmorClass();
 
         return sheet;
+    }
+
+    /**
+     * Apply racial ability score bonuses to the character's base ability scores.
+     * This includes:
+     * 1. Fixed bonuses from race (e.g., Elf +2 DEX)
+     * 2. Fixed bonuses from subrace (e.g., High Elf +1 INT)
+     * 3. Player-chosen bonuses from racial distributions (e.g., Giff choose +2/+1)
+     */
+    private void applyRacialBonuses(CharacterCreationSession session) {
+        // Apply fixed race bonuses
+        if (race != null && race.getFixedAbilityScores() != null) {
+            for (Map.Entry<Ability, Integer> entry : race.getFixedAbilityScores().entrySet()) {
+                Ability ability = entry.getKey();
+                int bonus = entry.getValue();
+                int currentScore = abilityScores.getOrDefault(ability, 10);
+                abilityScores.put(ability, currentScore + bonus);
+            }
+        }
+
+        // Apply fixed subrace bonuses
+        if (subrace != null && subrace.getFixedAbilityScores() != null) {
+            for (Map.Entry<Ability, Integer> entry : subrace.getFixedAbilityScores().entrySet()) {
+                Ability ability = entry.getKey();
+                int bonus = entry.getValue();
+                int currentScore = abilityScores.getOrDefault(ability, 10);
+                abilityScores.put(ability, currentScore + bonus);
+            }
+        }
+
+        // Apply player-chosen racial bonuses from session
+        if (session != null && session.getRacialBonusAllocations() != null) {
+            EnumMap<Ability, Integer> chosenBonuses = session.getRacialBonusAllocations();
+            for (Map.Entry<Ability, Integer> entry : chosenBonuses.entrySet()) {
+                Ability ability = entry.getKey();
+                int bonus = entry.getValue();
+                int currentScore = abilityScores.getOrDefault(ability, 10);
+                abilityScores.put(ability, currentScore + bonus);
+            }
+        }
     }
 
     private void loadSpells(Set<String> spellNames, Set<String> cantripNames) {

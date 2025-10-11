@@ -1,0 +1,17 @@
+name: Tiefling
+creature_type: Humanoid
+source_url: "https://dnd5e.fandom.com/wiki/Tiefling"
+description: To be greeted with stares and whispers, to suffer violence and insult on the street, to see mistrust and fear in every eye - this is the lot of the tiefling. Tieflings are derived from human bloodlines, and in the broadest possible sense, they still look human.
+ability_scores:
+  fixed:
+    Charisma: 2
+    Intelligence: 1
+size: Medium
+speed: 30
+traits:
+  - Darkvision
+  - Hellish Resistance
+  - Infernal Legacy
+languages:
+  - Common
+  - Infernal

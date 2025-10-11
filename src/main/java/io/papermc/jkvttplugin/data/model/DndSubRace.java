@@ -17,7 +17,7 @@ public class DndSubRace {
     private final String description;
 
     private final Map<Ability, Integer> fixedAbilityScores;
-    private final PlayersChoice<Ability> abilityScoreChoices;
+    private final AbilityScoreChoice abilityScoreChoice;
 
     private final List<String> traits;
     private final List<String> languages;
@@ -29,7 +29,7 @@ public class DndSubRace {
             String name,
             String description,
             Map<Ability, Integer> fixedAbilityScores,
-            PlayersChoice<Ability> abilityScoreChoices,
+            AbilityScoreChoice abilityScoreChoice,
             List<String> traits,
             List<String> languages,
             PlayersChoice<String> languageChoices,
@@ -40,7 +40,7 @@ public class DndSubRace {
         this.description = description != null ? description : "";
 
         this.fixedAbilityScores = fixedAbilityScores != null ? Map.copyOf(fixedAbilityScores) : Map.of();
-        this.abilityScoreChoices = abilityScoreChoices;
+        this.abilityScoreChoice = abilityScoreChoice;
 
         this.traits = traits != null ? List.copyOf(traits) : List.of();
         this.languages = languages != null ? List.copyOf(languages) : List.of();
@@ -48,6 +48,9 @@ public class DndSubRace {
         this.icon = icon;
     }
 
+    public String getId() {
+        return id;
+    }
     public String getName() {
         return name;
     }
@@ -60,8 +63,8 @@ public class DndSubRace {
         return fixedAbilityScores;
     }
 
-    public PlayersChoice<Ability> getAbilityScoreChoices() {
-        return abilityScoreChoices;
+    public AbilityScoreChoice getAbilityScoreChoice() {
+        return abilityScoreChoice;
     }
 
     public List<String> getTraits() {

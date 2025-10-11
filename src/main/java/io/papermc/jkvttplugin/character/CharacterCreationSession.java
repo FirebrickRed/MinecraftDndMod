@@ -23,6 +23,10 @@ public class CharacterCreationSession {
     private EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
     private boolean abilityAllocationVisited = false;
 
+    // Racial ability score bonus tracking
+    private String racialBonusDistribution = null; // "2-1" or "1-1-1"
+    private EnumMap<Ability, Integer> racialBonusAllocations = new EnumMap<>(Ability.class);
+
     public CharacterCreationSession(UUID playerId) {
         this.playerId = playerId;
     }
@@ -241,5 +245,47 @@ public class CharacterCreationSession {
         selectedCantrips.clear();
         selectedSpells.clear();
         spellsByLevel.clear();
+    }
+
+    // ========== RACIAL BONUS METHODS ==========
+
+    public String getRacialBonusDistribution() {
+        return racialBonusDistribution;
+    }
+
+    public void setRacialBonusDistribution(String distribution) {
+        // Clear allocations when distribution changes
+        if (distribution != null && !distribution.equals(this.racialBonusDistribution)) {
+            racialBonusAllocations.clear();
+        }
+        this.racialBonusDistribution = distribution;
+    }
+
+    public EnumMap<Ability, Integer> getRacialBonusAllocations() {
+        return new EnumMap<>(racialBonusAllocations);
+    }
+
+    public void setRacialBonus(Ability ability, int bonus) {
+        if (bonus > 0) {
+            racialBonusAllocations.put(ability, bonus);
+        } else {
+            racialBonusAllocations.remove(ability);
+        }
+    }
+
+    public void clearRacialBonus(Ability ability) {
+        racialBonusAllocations.remove(ability);
+    }
+
+    public void clearAllRacialBonuses() {
+        racialBonusAllocations.clear();
+    }
+
+    public int getRacialBonus(Ability ability) {
+        return racialBonusAllocations.getOrDefault(ability, 0);
+    }
+
+    public int getTotalRacialBonusesApplied() {
+        return racialBonusAllocations.values().stream().mapToInt(Integer::intValue).sum();
     }
 }

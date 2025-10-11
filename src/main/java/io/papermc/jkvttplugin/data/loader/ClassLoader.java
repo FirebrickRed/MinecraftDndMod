@@ -31,7 +31,7 @@ public class ClassLoader {
             try (FileReader reader = new FileReader(file)) {
                 Map<String, Object> data = yaml.load(reader);
                 DndClass dndClass = parseClass(data);
-                loadedClasses.put(normalize(dndClass.getName()), dndClass);
+                loadedClasses.put(dndClass.getId(), dndClass);
                 LOGGER.info("Loaded class: " + dndClass.getName());
             } catch (Exception e) {
                 System.err.println("Failed to load class from " + file.getName() + ": " + e.getMessage());
@@ -40,8 +40,10 @@ public class ClassLoader {
     }
 
     private static DndClass parseClass(Map<String, Object> data) {
+        String name = (String) data.getOrDefault("name", "Unknown");
         DndClass.Builder builder = DndClass.builder()
-                .name((String) data.getOrDefault("name", "Unknown"))
+                .id(normalize(name))
+                .name(name)
                 .hitDie((int) data.getOrDefault("hit_die", 6))
                 .savingThrows(LoaderUtils.parseAbilityList(data.get("saving_throws")))
 

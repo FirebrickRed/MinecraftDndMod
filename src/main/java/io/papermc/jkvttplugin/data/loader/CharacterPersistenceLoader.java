@@ -158,9 +158,9 @@ public class CharacterPersistenceLoader {
         data.put("characterId", sheet.getCharacterId().toString());
         data.put("playerId", sheet.getPlayerId().toString());
         data.put("characterName", sheet.getCharacterName());
-        data.put("raceName", sheet.getRace() != null ? Util.normalize(sheet.getRace().getName()) : null);
-        data.put("subraceName", sheet.getSubrace() != null ? Util.normalize(sheet.getSubrace().getName()) : null);
-        data.put("className", sheet.getMainClass() != null ? Util.normalize(sheet.getMainClass().getName()) : null);
+        data.put("raceName", sheet.getRace() != null ? sheet.getRace().getId() : null);
+        data.put("subraceName", sheet.getSubrace() != null ? sheet.getSubrace().getId() : null);
+        data.put("className", sheet.getMainClass() != null ? sheet.getMainClass().getId() : null);
         data.put("backgroundName", sheet.getBackground() != null ? sheet.getBackground().getId() : null);
         data.put("currentHealth", sheet.getCurrentHealth());
         data.put("maxHealth", sheet.getMaxHealth());

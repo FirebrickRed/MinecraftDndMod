@@ -1,0 +1,43 @@
+name: Gnome
+creature_type: Humanoid
+source_url: "https://dnd5e.fandom.com/wiki/Gnome"
+description: A gnome's energy and enthusiasm for living shines through every inch of his or her tiny body. Gnomes average slightly over 3 feet tall and weigh 40 to 45 pounds.
+ability_scores:
+  fixed:
+    Intelligence: 2
+size: Small
+speed: 25
+traits:
+  - Darkvision
+  - Gnome Cunning
+languages:
+  - Common
+  - Gnomish
+subraces:
+  forest_gnome:
+    name: Forest Gnome
+    description: As a forest gnome, you have a natural knack for illusion and inherent quickness and stealth.
+    ability_scores:
+      fixed:
+        Dexterity: 1
+    traits:
+      - Natural Illusionist
+      - Speak with Small Beasts
+  rock_gnome:
+    name: Rock Gnome
+    description: As a rock gnome, you have a natural inventiveness and hardiness beyond that of other gnomes.
+    ability_scores:
+      fixed:
+        Constitution: 1
+    traits:
+      - Artificer's Lore
+      - Tinker
+  deep_gnome:
+    name: Deep Gnome (Svirfneblin)
+    description: Forest gnomes and rock gnomes are the gnomes most commonly encountered in the lands of the surface world. There is another subrace of gnomes rarely seen by any surface-dweller - deep gnomes, also known as svirfneblin.
+    ability_scores:
+      fixed:
+        Dexterity: 1
+    traits:
+      - Superior Darkvision
+      - Stone Camouflage

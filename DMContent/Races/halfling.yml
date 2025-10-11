@@ -1,0 +1,41 @@
+name: Halfling
+creature_type: Humanoid
+source_url: "https://dnd5e.fandom.com/wiki/Halfling"
+description: The diminutive halflings survive in a world full of larger creatures by avoiding notice or, barring that, avoiding offense. They are inclined to be stout, weighing between 40 and 45 pounds.
+ability_scores:
+  fixed:
+    Dexterity: 2
+size: Small
+speed: 25
+traits:
+  - Lucky
+  - Brave
+  - Halfling Nimbleness
+languages:
+  - Common
+  - Halfling
+subraces:
+  lightfoot:
+    name: Lightfoot Halfling
+    description: As a lightfoot halfling, you can easily hide from notice, even using other people as cover.
+    ability_scores:
+      fixed:
+        Charisma: 1
+    traits:
+      - Naturally Stealthy
+  stout:
+    name: Stout Halfling
+    description: As a stout halfling, you're hardier than average and have some resistance to poison.
+    ability_scores:
+      fixed:
+        Constitution: 1
+    traits:
+      - Stout Resilience
+  ghostwise:
+    name: Ghostwise Halfling
+    description: Ghostwise halflings trace their ancestry back to a war among halfling tribes that sent their ancestors into flight from their homeland.
+    ability_scores:
+      fixed:
+        Wisdom: 1
+    traits:
+      - Silent Speech

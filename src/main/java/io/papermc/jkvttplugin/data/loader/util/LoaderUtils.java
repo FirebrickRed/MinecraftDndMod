@@ -16,10 +16,7 @@
 
 package io.papermc.jkvttplugin.data.loader.util;
 
-import io.papermc.jkvttplugin.data.model.ChoiceEntry;
-import io.papermc.jkvttplugin.data.model.DndSubRace;
-import io.papermc.jkvttplugin.data.model.EquipmentOption;
-import io.papermc.jkvttplugin.data.model.PlayersChoice;
+import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.data.model.enums.Size;
@@ -52,23 +49,89 @@ public class LoaderUtils {
         }
     }
 
-    public static Map<Ability, Integer> parseAbilityScoreMap(Object rawObject) {
-        Map<Ability, Integer> result = new HashMap<>();
+    /**
+     * Result class for ability score parsing
+     */
+    public static class AbilityScoreParseResult {
+        public final Map<Ability, Integer> fixedBonuses;
+        public final AbilityScoreChoice choiceBonuses;
 
-        if (rawObject instanceof Map<?, ?> rawMap) {
-            for (Map.Entry<?, ?> entry : rawMap.entrySet()) {
+        public AbilityScoreParseResult(Map<Ability, Integer> fixedBonuses, AbilityScoreChoice choiceBonuses) {
+            this.fixedBonuses = fixedBonuses != null ? fixedBonuses : Map.of();
+            this.choiceBonuses = choiceBonuses;
+        }
+    }
+
+    /**
+     * Parses ability_scores YAML block which can contain:
+     * - fixed: { Dexterity: 2, ... }
+     * - choice: { distributions: [[2, 1], [1, 1, 1]] }
+     */
+    public static AbilityScoreParseResult parseAbilityScores(Object rawObject) {
+        if (!(rawObject instanceof Map<?, ?> abilityScoresMap)) {
+            return new AbilityScoreParseResult(null, null);
+        }
+
+        // Parse fixed bonuses
+        Map<Ability, Integer> fixedBonuses = new HashMap<>();
+        Object fixedObj = abilityScoresMap.get("fixed");
+        if (fixedObj instanceof Map<?, ?> fixedMap) {
+            for (Map.Entry<?, ?> entry : fixedMap.entrySet()) {
                 if (entry.getKey() instanceof String keyString && entry.getValue() instanceof Number num) {
                     try {
                         Ability ability = Ability.valueOf(keyString.toUpperCase());
-                        result.put(ability, num.intValue());
+                        fixedBonuses.put(ability, num.intValue());
                     } catch (IllegalArgumentException ignored) {
-                        // Log or skip unknown ability
+                        // Skip unknown ability
                     }
                 }
             }
         }
 
-        return result;
+        // Parse choice bonuses
+        AbilityScoreChoice choiceBonuses = null;
+        Object choiceObj = abilityScoresMap.get("choice");
+        if (choiceObj instanceof Map<?, ?> choiceMap) {
+            choiceBonuses = parseAbilityChoiceDistributions(choiceMap);
+        }
+
+        return new AbilityScoreParseResult(fixedBonuses, choiceBonuses);
+    }
+
+    /**
+     * Parses a choice block: { distributions: [[2, 1], [1, 1, 1]] }
+     */
+    private static io.papermc.jkvttplugin.data.model.AbilityScoreChoice parseAbilityChoiceDistributions(Map<?, ?> choiceMap) {
+        Object distributionsObj = choiceMap.get("distributions");
+        if (!(distributionsObj instanceof List<?> distributionsList)) {
+            return null;
+        }
+
+        List<List<Integer>> distributions = new ArrayList<>();
+        for (Object distObj : distributionsList) {
+            if (distObj instanceof List<?> singleDist) {
+                List<Integer> bonuses = new ArrayList<>();
+                for (Object bonusObj : singleDist) {
+                    if (bonusObj instanceof Number num) {
+                        bonuses.add(num.intValue());
+                    }
+                }
+                if (!bonuses.isEmpty()) {
+                    distributions.add(bonuses);
+                }
+            }
+        }
+
+        return distributions.isEmpty() ? null : new AbilityScoreChoice(distributions);
+    }
+
+    /**
+     * Legacy method - kept for backwards compatibility
+     * Only returns fixed bonuses
+     */
+    public static Map<Ability, Integer> parseAbilityScoreMap(Object rawObject) {
+        AbilityScoreParseResult result = parseAbilityScores(rawObject);
+        return result.fixedBonuses;
     }
 
     public static List<Ability> parseAbilityList(Object input) {
@@ -123,11 +186,9 @@ public class LoaderUtils {
                     if (!LanguageRegistry.isRegistered(str)) {
                         throw new IllegalArgumentException("Invalid language: " + str);
                     }
-                    System.out.println("Adding language: " + str);
                     langs.add(str);
                 } else if (lang instanceof Map<?, ?> choiceMap && choiceMap.containsKey("players_choice")) {
                     Object pcObj = choiceMap.get("players_choice");
-                    System.out.println("Found players choice for languages: " + pcObj);
                     playersChoice = parseLanguagePlayersChoice(pcObj);
                 }
             }
@@ -265,18 +326,17 @@ public class LoaderUtils {
         String description = (String) data.getOrDefault("description", "");
         List<String> traits = LoaderUtils.parseTraits(data.get("traits"));
 
-        // Fixed ability scores
-        Map<Ability, Integer> fixedAbilityScores = LoaderUtils.parseAbilityScoreMap(data.get("ability_scores"));
+        // Ability scores (fixed and choice-based)
+        AbilityScoreParseResult abilityScores = LoaderUtils.parseAbilityScores(data.get("ability_scores"));
 
-        // Ability score choices
-        PlayersChoice<Ability> abilityScoreChoices = LoaderUtils.parseAbilityPlayersChoice(data.get("players_choice_ability_scores"));
-
-        List<String> languages = LoaderUtils.parseLanguages(data.get("languages"));
-        PlayersChoice<String> languageChoices = LoaderUtils.parseLanguagePlayersChoice(data.get("players_choice_languages"));
+        // Languages
+        LanguageParseResults langResult = LoaderUtils.parseLanguagesAndChoices(data.get("languages"));
+        List<String> languages = langResult.languages;
+        PlayersChoice<String> languageChoices = langResult.playersChoice;
 
         String iconName = (String) data.getOrDefault("icon_name", "");
 
-        return new DndSubRace(id, name, description, fixedAbilityScores, abilityScoreChoices, traits, languages, languageChoices, iconName);
+        return new DndSubRace(id, name, description, abilityScores.fixedBonuses, abilityScores.choiceBonuses, traits, languages, languageChoices, iconName);
     }
 
     public static PlayersChoice<String> parseSkillChoice(Object node) {
@@ -361,7 +421,6 @@ public class LoaderUtils {
             if (m.containsKey("item")) {
                 String id = Util.normalize(asString(m.get("item"), ""));
                 int qty = asInt(m.get("quantity"), 1);
-                System.out.println("id: " + id + " quantity: " + qty);
                 if (!id.isBlank()) {
                     return EquipmentOption.item(id, qty);
                 }

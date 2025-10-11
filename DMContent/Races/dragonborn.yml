@@ -1,0 +1,18 @@
+name: Dragonborn
+creature_type: Humanoid
+source_url: "https://dnd5e.fandom.com/wiki/Dragonborn"
+description: Born of dragons, as their name proclaims, the dragonborn walk proudly through a world that greets them with fearful incomprehension. Shaped by draconic gods or the dragons themselves, dragonborn originally hatched from dragon eggs as a unique race.
+ability_scores:
+  choice:
+    distributions:
+      - [2, 1]      # Flexible bonus allocation
+      - [1, 1, 1]   # Or spread across three abilities
+size: Medium
+speed: 30
+traits:
+  - Draconic Ancestry
+  - Breath Weapon
+  - Damage Resistance
+languages:
+  - Common
+  - Draconic

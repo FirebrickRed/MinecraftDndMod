@@ -1,0 +1,22 @@
+name: Half-Elf
+creature_type: Humanoid
+source_url: "https://dnd5e.fandom.com/wiki/Half-Elf"
+description: Walking in two worlds but truly belonging to neither, half-elves combine what some say are the best qualities of their elf and human parents.
+ability_scores:
+  fixed:
+    Charisma: 2
+  choice:
+    distributions:
+      - [1, 1]  # Choose two different abilities for +1 each
+size: Medium
+speed: 30
+traits:
+  - Darkvision
+  - Fey Ancestry
+  - Skill Versatility
+languages:
+  - Common
+  - Elvish
+  - players_choice:
+      choose: 1
+      options: []

@@ -33,7 +33,7 @@ public class RaceLoader {
             try (FileReader reader = new FileReader(file)) {
                 Map<String, Object> data = yaml.load(reader);
                 DndRace race = parseRace(data);
-                loadedRaces.put(normalize(race.getName()), race);
+                loadedRaces.put(race.getId(), race);
                 LOGGER.info("Loaded race: " + race.getName());
             } catch (Exception e) {
                 System.err.println("Failed to load race from " + file.getName() + ": " + e.getMessage());
@@ -43,6 +43,7 @@ public class RaceLoader {
 
     private static DndRace parseRace(Map<String, Object> data) {
         String name = (String) data.getOrDefault("name", "Unknown");
+        String id = normalize(name);
         String description = (String) data.getOrDefault("description", "");
         String sourceUrl = (String) data.getOrDefault("source_url", "");
         CreatureType creatureType = CreatureType.fromString((String) data.getOrDefault("creature_type", "Humanoid"));
@@ -58,11 +59,9 @@ public class RaceLoader {
         List<String> languages = langResult.languages;
         PlayersChoice<String> languageChoices = langResult.playersChoice;
 
-        // Fixed ability scores
-        Map<Ability, Integer> fixedAbilityScores = LoaderUtils.parseAbilityScoreMap(data.get("ability_scores"));
-
-        // Ability score choices
-        PlayersChoice<Ability> abilityScoreChoices = LoaderUtils.parseAbilityPlayersChoice(data.get("players_choice_ability_scores"));
+        // Ability scores (fixed and choice-based)
+        Object abilityScoresRaw = data.get("ability_scores");
+        LoaderUtils.AbilityScoreParseResult abilityScores = LoaderUtils.parseAbilityScores(abilityScoresRaw);
 
         // Traits
         List<String> traits = LoaderUtils.parseTraits(data.get("traits"));
@@ -73,7 +72,7 @@ public class RaceLoader {
         // Icon Name
         String iconName = (String) data.getOrDefault("icon_name", null);
 
-        return new DndRace(name, sourceUrl, description, creatureType, size, sizeChoice, speed, fixedAbilityScores, abilityScoreChoices, traits, languages, languageChoices, subraces, iconName);
+        return new DndRace(id, name, sourceUrl, description, creatureType, size, sizeChoice, speed, abilityScores.fixedBonuses, abilityScores.choiceBonuses, traits, languages, languageChoices, subraces, iconName);
     }
 
 

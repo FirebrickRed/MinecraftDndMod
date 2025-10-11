@@ -19,6 +19,8 @@ public enum MenuAction {
     OPEN_ABILITY_ALLOCATION,
     INCREASE_ABILITY,
     DECREASE_ABILITY,
+    SELECT_RACIAL_BONUS_DISTRIBUTION,  // Choose +2/+1 or +1/+1/+1
+    APPLY_RACIAL_BONUS,                // Apply racial bonus to ability
     OPEN_SPELL_SELECTION,
     CHOOSE_SPELL,
     CHANGE_SPELL_LEVEL,
