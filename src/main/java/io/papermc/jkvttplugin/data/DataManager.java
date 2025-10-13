@@ -19,6 +19,9 @@ public class DataManager {
     }
 
     public void loadAllData() {
+        // Clear existing data before reloading (for /reloadyaml command)
+        clearAllData();
+
         File racesFolder = new File(dmContentFolder, "Races");
         File classFolder = new File(dmContentFolder, "Classes");
         File backgroundsFolder = new File(dmContentFolder, "Backgrounds");
@@ -33,5 +36,19 @@ public class DataManager {
         WeaponLoader.loadAllWeapons(weaponFolder);
         ArmorLoader.loadAllArmors(armorFolder);
         ItemLoader.loadAllItems(itemFolder);
+    }
+
+    /**
+     * Clears all loaded data from static registries.
+     * Called before reloading to ensure deleted content is removed.
+     */
+    private void clearAllData() {
+        RaceLoader.clear();
+        ClassLoader.clear();
+        BackgroundLoader.clear();
+        SpellLoader.clear();
+        WeaponLoader.clear();
+        ArmorLoader.clear();
+        ItemLoader.clear();
     }
 }

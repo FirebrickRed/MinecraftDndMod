@@ -68,4 +68,12 @@ public class BackgroundLoader {
     public static Collection<DndBackground> getAllBackgrounds() {
         return Collections.unmodifiableCollection(loadedBackgrounds.values());
     }
+
+    /**
+     * Clears all loaded backgrounds. Called before reloading data.
+     */
+    public static void clear() {
+        loadedBackgrounds.clear();
+        LOGGER.info("Cleared all loaded backgrounds");
+    }
 }

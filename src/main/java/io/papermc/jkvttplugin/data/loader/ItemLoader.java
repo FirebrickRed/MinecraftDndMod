@@ -58,4 +58,12 @@ public class ItemLoader {
     public static DndItem getItem(String id) {
         return loadedItems.get(normalize(id));
     }
+
+    /**
+     * Clears all loaded items. Called before reloading data.
+     */
+    public static void clear() {
+        loadedItems.clear();
+        LOGGER.info("Cleared all loaded items");
+    }
 }

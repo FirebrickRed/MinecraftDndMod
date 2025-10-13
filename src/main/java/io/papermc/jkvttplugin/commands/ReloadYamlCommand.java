@@ -2,56 +2,39 @@ package io.papermc.jkvttplugin.commands;
 
 import io.papermc.jkvttplugin.CustomNPCs.NpcManager;
 import io.papermc.jkvttplugin.JkVttPlugin;
+import io.papermc.jkvttplugin.data.DataManager;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 
-import java.io.File;
-
 public class ReloadYamlCommand implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
-        sender.sendMessage("Reloading YAML files...");
+        sender.sendMessage("Reloading YAML data from DMContent/...");
 
-        File weaponsFile = new File(JkVttPlugin.getInstance().getDataFolder(), "weapons.yml");
-        if (weaponsFile.exists()) {
-            sender.sendMessage("Deleting old weapons.yml...");
-            weaponsFile.delete();
+        try {
+            // Reload all D&D content from DMContent/ folder
+            DataManager dataManager = new DataManager(JkVttPlugin.getInstance());
+            dataManager.loadAllData();
+
+            sender.sendMessage("✓ Races reloaded");
+            sender.sendMessage("✓ Classes reloaded");
+            sender.sendMessage("✓ Backgrounds reloaded");
+            sender.sendMessage("✓ Spells reloaded");
+            sender.sendMessage("✓ Weapons reloaded");
+            sender.sendMessage("✓ Armor reloaded");
+            sender.sendMessage("✓ Items reloaded");
+
+            // Reload NPCs (separate system)
+            NpcManager.loadNpcs();
+            sender.sendMessage("✓ NPCs reloaded");
+
+            sender.sendMessage("All YAML files successfully reloaded!");
+        } catch (Exception e) {
+            sender.sendMessage("Error reloading YAML files: " + e.getMessage());
+            e.printStackTrace();
+            return false;
         }
-
-        JkVttPlugin.getInstance().saveResource("weapons.yml", true);
-        sender.sendMessage("Saved latest weapons.yml!");
-
-//        DndWeapon.loadWeapons();
-        sender.sendMessage("Weapons reloaded!");
-
-        File spellsFile = new File(JkVttPlugin.getInstance().getDataFolder(), "spells.yml");
-        if (spellsFile.exists()) {
-            sender.sendMessage("Deleting old spells.yml...");
-            spellsFile.delete();
-        }
-
-        JkVttPlugin.getInstance().saveResource("spells.yml", true);
-        sender.sendMessage("Saved latest spells.yml!");
-
-//        DndSpell.loadSpells();
-        sender.sendMessage("Spells reloaded!");
-
-
-        // Broken for now
-        File npcFile = new File(JkVttPlugin.getInstance().getDataFolder(), "npcs.yml");
-        if (npcFile.exists()) {
-            sender.sendMessage("Deleting old npcs.yml...");
-            npcFile.delete();
-        }
-
-        JkVttPlugin.getInstance().saveResource("npcs.yml", true);
-        sender.sendMessage("Saved latest npcs.yml!");
-
-        NpcManager.loadNpcs();
-        sender.sendMessage("NPCs reloaded!");
-
-        sender.sendMessage("YAML files successfully reloaded!");
 
         return true;
     }

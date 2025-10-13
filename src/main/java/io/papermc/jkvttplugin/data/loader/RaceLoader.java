@@ -2,11 +2,7 @@ package io.papermc.jkvttplugin.data.loader;
 
 import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
 import io.papermc.jkvttplugin.data.model.DndRace;
-import io.papermc.jkvttplugin.data.model.DndSubRace;
-import io.papermc.jkvttplugin.data.model.PlayersChoice;
-import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.CreatureType;
-import io.papermc.jkvttplugin.data.model.enums.Size;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -75,5 +71,13 @@ public class RaceLoader {
 
     public static Collection<DndRace> getAllRaces() {
         return Collections.unmodifiableCollection(loadedRaces.values());
+    }
+
+    /**
+     * Clears all loaded races. Called before reloading data.
+     */
+    public static void clear() {
+        loadedRaces.clear();
+        LOGGER.info("Cleared all loaded races");
     }
 }

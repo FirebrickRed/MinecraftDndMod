@@ -78,6 +78,14 @@ public class ClassLoader {
         return Collections.unmodifiableCollection(loadedClasses.values());
     }
 
+    /**
+     * Clears all loaded classes. Called before reloading data.
+     */
+    public static void clear() {
+        loadedClasses.clear();
+        LOGGER.info("Cleared all loaded classes");
+    }
+
     private static SpellcastingInfo parseSpellcasting(Object spellcastingData) {
         if (!(spellcastingData instanceof Map<?,?> map)) return null;
 

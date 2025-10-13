@@ -170,7 +170,11 @@ public class ArmorLoader {
         return getArmorsByCategory("shield");
     }
 
-    public static void clearAll() {
+    /**
+     * Clears all loaded armors. Called before reloading data.
+     */
+    public static void clear() {
         loadedArmors.clear();
+        LOGGER.info("Cleared all loaded armors");
     }
 }

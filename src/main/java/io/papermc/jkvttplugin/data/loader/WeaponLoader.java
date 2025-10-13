@@ -128,7 +128,11 @@ public class WeaponLoader {
         return getWeaponsByCategory("martial");
     }
 
-    public static void clearAll() {
+    /**
+     * Clears all loaded weapons. Called before reloading data.
+     */
+    public static void clear() {
         loadedWeapons.clear();
+        LOGGER.info("Cleared all loaded weapons");
     }
 }

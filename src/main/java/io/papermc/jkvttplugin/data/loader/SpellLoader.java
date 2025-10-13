@@ -1,12 +1,10 @@
 package io.papermc.jkvttplugin.data.loader;
 
+import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
 import io.papermc.jkvttplugin.data.model.DndSpell;
 import io.papermc.jkvttplugin.data.model.SpellComponents;
 import io.papermc.jkvttplugin.data.model.enums.SpellSchool;
 import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -17,12 +15,9 @@ import java.util.stream.Collectors;
 
 public class SpellLoader {
     private static final Map<String, DndSpell> spells = new HashMap<>();
-    private static boolean loaded = false;
     private static final Logger LOGGER = Logger.getLogger("SpellLoader");
 
     public static void loadAllSpells(File folder) {
-        if (loaded) return;
-
         File[] files = folder.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null || files.length == 0) {
             LOGGER.warning("No spell files found in " + folder.getPath());
@@ -32,97 +27,97 @@ public class SpellLoader {
         Yaml yaml = new Yaml();
 
         for (File file : files) {
-            try {
-                FileConfiguration config = YamlConfiguration.loadConfiguration(file);
-                ConfigurationSection spellsSection = config.getConfigurationSection("spells");
+            try (FileReader reader = new FileReader(file)) {
+                Map<String, Object> fileData = yaml.load(reader);
+                if (fileData == null) continue;
 
-                if (spellsSection == null) {
+                // Spell files have a top-level "spells:" section
+                Object spellsSection = fileData.get("spells");
+                if (!(spellsSection instanceof Map<?, ?> spellsMap)) {
                     LOGGER.warning("No 'spells' section found in: " + file.getName());
                     continue;
                 }
 
-                for (String spellKey : spellsSection.getKeys(false)) {
-                    ConfigurationSection spellSection = spellsSection.getConfigurationSection(spellKey);
-                    if (spellSection == null) continue;
+                for (Map.Entry<?, ?> entry : spellsMap.entrySet()) {
+                    if (!(entry.getKey() instanceof String spellKey)) continue;
+                    if (!(entry.getValue() instanceof Map<?, ?> spellData)) continue;
 
                     try {
-                        DndSpell spell = parseSpell(spellKey, spellSection);
+                        DndSpell spell = parseSpell(spellKey, spellData);
                         spells.put(spellKey.toLowerCase(), spell);
+                        LOGGER.info("Loaded spell: " + spell.getName());
                     } catch (Exception e) {
-                        LOGGER.severe("Failed to load spell: " + spellKey + " from " + file.getName());
+                        LOGGER.severe("Failed to load spell: " + spellKey + " from " + file.getName() + ": " + e.getMessage());
                     }
                 }
-
-//                Map<String, Object>  fileMap = yaml.load(reader);
-//                if (fileMap == null) continue;
-//                for (Map.Entry<String, Object> entry : fileMap.entrySet()) {
-//                    String spellKey = entry.getKey();
-//                    Map<String, Object> data = (Map<String, Object>) entry.getValue();
-//                    DndSpell spell = parseSpell(spellKey, data);
-//                    loadedSpells.put(normalize(spell.getName(), spell));
-//                    LOGGER.info("Loaded spell: " + spell.getName());
-//                }
             } catch (Exception e) {
                 LOGGER.severe("Failed to load spell file: " + file.getName());
                 e.printStackTrace();
             }
         }
 
-        loaded = true;
-        LOGGER.info("Loaded spells");
+        LOGGER.info("Loaded " + spells.size() + " spells total");
     }
 
-    private static DndSpell parseSpell(String key, ConfigurationSection section) {
-        SpellComponents components = parseComponents(section);
+    @SuppressWarnings("unchecked")
+    private static DndSpell parseSpell(String key, Map<?, ?> data) {
+        String name = LoaderUtils.asString(data.get("name"), key);
+        int level = LoaderUtils.asInt(data.get("level"), 0);
+        SpellSchool school = SpellSchool.fromString(LoaderUtils.asString(data.get("school"), "evocation"));
 
-        String range = section.getString("range", "Self");
-
-        String castingTime = section.getString("casting_time", "1 action");
-
-        List<String> classes = section.getStringList("classes");
-        if (classes.isEmpty()) {
-            String singleClass = section.getString("classes");
-            if (singleClass != null) {
-                classes = Arrays.asList(singleClass.split(",\\s*"));
-            }
+        // Parse classes list
+        List<String> classes = LoaderUtils.normalizeStringList(data.get("classes"));
+        // Handle legacy comma-separated string format if normalizeStringList returns empty
+        if (classes.isEmpty() && data.get("classes") instanceof String classString) {
+            classes = Arrays.asList(classString.split(",\\s*"));
         }
 
+        String castingTime = LoaderUtils.asString(data.get("casting_time"), "1 action");
+        String range = LoaderUtils.asString(data.get("range"), "Self");
+        SpellComponents components = parseComponents(data.get("components"));
+        String duration = LoaderUtils.asString(data.get("duration"), "Instantaneous");
+        String description = LoaderUtils.asString(data.get("description"), "");
+        boolean concentration = asBoolean(data.get("concentration"), false);
+        boolean ritual = asBoolean(data.get("ritual"), false);
+        Material icon = parseIcon(LoaderUtils.asString(data.get("icon"), "ENCHANTED_BOOK"));
+        String higherLevels = LoaderUtils.asString(data.get("higher_levels"), null);
+        String attackType = LoaderUtils.asString(data.get("attack_type"), null);
+        String saveType = LoaderUtils.asString(data.get("save_type"), null);
+        String damageType = LoaderUtils.asString(data.get("damage_type"), null);
+
         return DndSpell.builder()
-                .name(section.getString("name", key))
-                .level(section.getInt("level", 0))
-                .school(SpellSchool.fromString(section.getString("school")))
+                .name(name)
+                .level(level)
+                .school(school)
                 .classes(classes)
                 .castingTime(castingTime)
                 .range(range)
                 .components(components)
-                .duration(section.getString("duration", "Instantaneous"))
-                .description(section.getString("description", ""))
-                .concentration(section.getBoolean("concentration", false))
-                .ritual(section.getBoolean("ritual", false))
-                .icon(parseIcon(section.getString("icon", "ENCHANGED_BOOK")))
-                .higherLevels(section.getString("high_levels", null))
-                .attackType(section.getString("attack_type", null))
-                .saveType(section.getString("save_type", null))
-                .damageType(section.getString("damage_type", null))
+                .duration(duration)
+                .description(description)
+                .concentration(concentration)
+                .ritual(ritual)
+                .icon(icon)
+                .higherLevels(higherLevels)
+                .attackType(attackType)
+                .saveType(saveType)
+                .damageType(damageType)
                 .build();
     }
 
-    private static SpellComponents parseComponents(ConfigurationSection section) {
-        Object componentsObj = section.get("components");
+    private static SpellComponents parseComponents(Object componentsObj) {
+        if (componentsObj instanceof String componentsStr) {
+            return SpellComponents.fromString(componentsStr);
+        } else if (componentsObj instanceof Map<?, ?> compMap) {
+            boolean verbal = asBoolean(compMap.get("verbal"), false);
+            boolean somatic = asBoolean(compMap.get("somatic"), false);
+            boolean material = asBoolean(compMap.get("material"), false);
+            String materialDescription = LoaderUtils.asString(compMap.get("material_description"), null);
+            boolean materialConsumed = asBoolean(compMap.get("material_consumed"), false);
+            Integer materialCost = LoaderUtils.asInt(compMap.get("material_cost"), 0);
+            if (materialCost == 0) materialCost = null; // Treat 0 as null
 
-        if (componentsObj instanceof String) {
-            return SpellComponents.fromString((String) componentsObj);
-        } else if (componentsObj instanceof Map) {
-            Map<String, Object> compMap = (Map<String, Object>) componentsObj;
-
-            boolean verbal = (Boolean) compMap.getOrDefault("verbal", false);
-            boolean somatic = (Boolean) compMap.getOrDefault("somatic", false);
-            boolean material = (Boolean) compMap.getOrDefault("material", false);
-            String materialDescription = (String) compMap.get("material_description");
-            boolean materialcnsumed = (Boolean) compMap.getOrDefault("material_consumed", false);
-            Integer materialCost = compMap.containsKey("material_cost") ? ((Number) compMap.get("material_cost")).intValue() : null;
-
-            return new SpellComponents(verbal, somatic, material, materialDescription, materialcnsumed, materialCost);
+            return new SpellComponents(verbal, somatic, material, materialDescription, materialConsumed, materialCost);
         }
 
         return SpellComponents.fromString("V, S");
@@ -134,6 +129,18 @@ public class SpellLoader {
         } catch (IllegalArgumentException e) {
             return Material.ENCHANTED_BOOK;
         }
+    }
+
+    /**
+     * Helper method for extracting boolean values from YAML data.
+     * TODO: Consider moving this to LoaderUtils for reuse across all loaders.
+     */
+    private static boolean asBoolean(Object o, boolean def) {
+        if (o instanceof Boolean b) return b;
+        if (o instanceof String s) {
+            return Boolean.parseBoolean(s);
+        }
+        return def;
     }
 
     public static DndSpell getSpell(String spellKey) {
@@ -165,5 +172,13 @@ public class SpellLoader {
     public static Map<Integer, List<DndSpell>> getSpellsByLevelForClass(String className) {
         return getSpellsForClass(className).stream()
                 .collect(Collectors.groupingBy(DndSpell::getLevel));
+    }
+
+    /**
+     * Clears all loaded spells. Called before reloading data.
+     */
+    public static void clear() {
+        spells.clear();
+        LOGGER.info("Cleared all loaded spells");
     }
 }
