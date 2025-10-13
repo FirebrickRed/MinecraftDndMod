@@ -17,6 +17,9 @@ traits:
 languages:
   - Common
   - Elvish
-  - players_choice:
-      choose: 1
-      options: []
+player_choices:
+  - id: race_languages
+    title: Languages
+    type: LANGUAGE
+    choose: 1
+    options: []  # Empty means "choose from all languages"

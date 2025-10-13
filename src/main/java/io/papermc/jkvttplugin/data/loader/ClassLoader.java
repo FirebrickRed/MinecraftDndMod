@@ -64,7 +64,7 @@ public class ClassLoader {
 //                .classResources()
 
                 .allowFeats((boolean) data.getOrDefault("allow_feats", true))
-                .playerChoices(LoaderUtils.parsePlayerChoicesForClass(data.get("player_choices")))
+                .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
                 .icon((String) data.get("icon"));
 
         return builder.build();

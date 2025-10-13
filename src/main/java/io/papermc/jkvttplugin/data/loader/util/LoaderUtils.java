@@ -322,21 +322,23 @@ public class LoaderUtils {
     }
 
     public static DndSubRace parseSubRace(String id, Map<String, Object> data) {
-        String name = (String) data.getOrDefault("name", id);
-        String description = (String) data.getOrDefault("description", "");
-        List<String> traits = LoaderUtils.parseTraits(data.get("traits"));
-
         // Ability scores (fixed and choice-based)
         AbilityScoreParseResult abilityScores = LoaderUtils.parseAbilityScores(data.get("ability_scores"));
 
         // Languages
         LanguageParseResults langResult = LoaderUtils.parseLanguagesAndChoices(data.get("languages"));
-        List<String> languages = langResult.languages;
-        PlayersChoice<String> languageChoices = langResult.playersChoice;
 
-        String iconName = (String) data.getOrDefault("icon_name", "");
-
-        return new DndSubRace(id, name, description, abilityScores.fixedBonuses, abilityScores.choiceBonuses, traits, languages, languageChoices, iconName);
+        return DndSubRace.builder()
+                .id(id)
+                .name((String) data.getOrDefault("name", id))
+                .description((String) data.getOrDefault("description", ""))
+                .fixedAbilityScores(abilityScores.fixedBonuses)
+                .abilityScoreChoice(abilityScores.choiceBonuses)
+                .traits(LoaderUtils.parseTraits(data.get("traits")))
+                .languages(langResult.languages)
+                .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
+                .icon((String) data.getOrDefault("icon_name", ""))
+                .build();
     }
 
     public static PlayersChoice<String> parseSkillChoice(Object node) {
@@ -454,8 +456,10 @@ public class LoaderUtils {
         return out;
     }
 
-    public static List<ChoiceEntry> parsePlayerChoicesForClass(Object node) {
-        if (!(node instanceof List<?> arr)) return List.of();
+    public static List<ChoiceEntry> parsePlayerChoices(Object node) {
+        if (!(node instanceof List<?> arr)) {
+            return List.of();
+        }
         List<ChoiceEntry> out = new ArrayList<>();
 
         for (Object raw : arr) {
@@ -472,6 +476,20 @@ public class LoaderUtils {
             switch(typeString) {
                 case "SKILL" -> {
                     type = PlayersChoice.ChoiceType.SKILL;
+                    var opts = normalizeStringList(m.get("options"));
+                    pc = new PlayersChoice<>(choose, opts, type);
+                }
+                case "LANGUAGE" -> {
+                    type = PlayersChoice.ChoiceType.LANGUAGE;
+                    var opts = normalizeStringList(m.get("options"));
+                    // Empty options means "choose from all languages"
+                    if (opts.isEmpty()) {
+                        opts = LanguageRegistry.getAllLanguages();
+                    }
+                    pc = new PlayersChoice<>(choose, opts, type);
+                }
+                case "CUSTOM" -> {
+                    type = PlayersChoice.ChoiceType.CUSTOM;
                     var opts = normalizeStringList(m.get("options"));
                     pc = new PlayersChoice<>(choose, opts, type);
                 }

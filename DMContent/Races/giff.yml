@@ -10,10 +10,13 @@ speed: 30
 swimming_speed: 30
 languages:
   - Common
-  - players_choice:
-      choose: 1
-      options: [Elvish, Dwarvish, Draconic, Infernal]
 traits:
   - Damage Dealer
   - Firearm Mastery
   - Hippo Build
+player_choices:
+  - id: race_languages
+    title: Languages
+    type: LANGUAGE
+    choose: 1
+    options: []

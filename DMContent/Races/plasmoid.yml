@@ -6,18 +6,24 @@ ability_scores:
     distributions:
       - [2, 1]
       - [1, 1, 1]
-size:
-  players_choice:
-    options: [Small, Medium]
+size: Medium  # Default - will be overridden by player choice
 speed: 30
 languages:
   - Common
-  - players_choice:
-      choose: 1
-      options: [Elvish, Dwarvish, Draconic, Infernal]
 traits:
   - Amorphous
   - Darkvision
   - Hold Breath
   - Natural Resilience
   - Shape Self
+player_choices:
+  - id: race_size
+    title: Size
+    type: CUSTOM
+    choose: 1
+    options: [small, medium]
+  - id: race_languages
+    title: Languages
+    type: LANGUAGE
+    choose: 1
+    options: []

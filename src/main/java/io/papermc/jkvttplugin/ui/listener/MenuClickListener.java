@@ -137,7 +137,8 @@ public class MenuClickListener implements Listener {
             session.setSelectedSubrace(null);
             session.setRacialBonusDistribution(null);
             session.clearAllRacialBonuses();
-            player.sendMessage("Race changed! Your subrace and racial bonus selections have been reset.");
+            session.clearPendingChoices();
+            player.sendMessage("Race changed! Your subrace, racial bonus, and player choice selections have been reset.");
         }
 
         session.setSelectedRace(payload);
@@ -165,8 +166,19 @@ public class MenuClickListener implements Listener {
             return;
         }
 
+        // If changing subrace, clear subrace-specific choices
+        String previousSubrace = session.getSelectedSubRace();
+        boolean subraceChanged = previousSubrace != null && !previousSubrace.equals(payload);
+
         session.setSelectedSubrace(payload);
-        player.sendMessage("You have selected " + payload + " as your subrace!");
+
+        if (subraceChanged) {
+            session.clearPendingChoices();
+            player.sendMessage("Subrace changed! Your player choice selections have been reset.");
+        } else {
+            player.sendMessage("You have selected " + payload + " as your subrace!");
+        }
+
         CharacterCreationSheetMenu.open(player, holder.getSessionId());
     }
 

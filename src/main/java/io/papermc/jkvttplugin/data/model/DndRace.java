@@ -22,7 +22,6 @@ public class DndRace {
 
     private CreatureType creatureType;
     private Size size;
-    private PlayersChoice<String> sizeChoice;
     // ToDo: update speed to use all different movements examples I've found:
     // flying, swimming, climbing
     private int speed;
@@ -33,9 +32,9 @@ public class DndRace {
     private List<String> traits;
 
     private List<String> languages;
-    private PlayersChoice<String> languageChoices;
 
     private Map<String, DndSubRace> subraces;
+    private List<ChoiceEntry> playerChoices = List.of();
     private String icon;
 
     public DndRace() { }
@@ -82,13 +81,6 @@ public class DndRace {
         this.size = size;
     }
 
-    public PlayersChoice<String> getSizeChoice() {
-        return sizeChoice;
-    }
-    public void setSizeChoice(PlayersChoice<String> sizeChoice) {
-        this.sizeChoice = sizeChoice;
-    }
-
     public int getSpeed() {
         return speed;
     }
@@ -124,18 +116,15 @@ public class DndRace {
         this.languages = languages != null ? List.copyOf(languages) : List.of();
     }
 
-    public PlayersChoice<String> getLanguageChoices() {
-        return languageChoices;
-    }
-    public void setLanguageChoices(PlayersChoice<String> languageChoices) {
-        this.languageChoices = languageChoices;
-    }
-
     public Map<String, DndSubRace> getSubraces() {
         return subraces;
     }
     public void setSubraces(Map<String, DndSubRace> subraces) {
         this.subraces = subraces != null ? Map.copyOf(subraces) : Map.of();
+    }
+
+    public void setPlayerChoices(List<ChoiceEntry> playerChoices) {
+        this.playerChoices = playerChoices == null ? List.of() : List.copyOf(playerChoices);
     }
 
     public void setIcon(String icon) {
@@ -156,23 +145,26 @@ public class DndRace {
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
-        if (ChoiceUtil.usable(sizeChoice)) {
-            ChoiceUtil.addIfUsable(out, PendingChoice.ofStrings("race_size", "Size", sizeChoice, "race))"));
-        }
-
-        // ToDo: fix empty  language choice array
-        // ToDo update to new player_choices
-        if (languageChoices != null) {
-            PlayersChoice<String> langPc = languageChoices;
-
-            boolean emptyOptions = (langPc.getOptions() == null || langPc.getOptions().isEmpty());
-            if (emptyOptions) {
-                List<String> allLangs = LanguageRegistry.getAllLanguages();
-                langPc = new PlayersChoice<>(langPc.getChoose(), allLangs, PlayersChoice.ChoiceType.LANGUAGE);
-            }
-
-            if (ChoiceUtil.usable(langPc)) {
-                ChoiceUtil.addIfUsable(out, PendingChoice.ofStrings("race_languages", "Languagse", langPc, "race"));
+        for(ChoiceEntry e : playerChoices) {
+            switch (e.type()) {
+                case LANGUAGE -> {
+                    PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
+                    boolean emptyOptions = (pc.getOptions() == null || pc.getOptions().isEmpty());
+                    if (emptyOptions) {
+                        List<String> allLangs = LanguageRegistry.getAllLanguages();
+                        pc = new PlayersChoice<>(pc.getChoose(), allLangs, PlayersChoice.ChoiceType.LANGUAGE);
+                    }
+                    if (ChoiceUtil.usable(pc)) {
+                        out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "race"));
+                    }
+                }
+                case CUSTOM -> {
+                    PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
+                    if (ChoiceUtil.usable(pc)) {
+                        out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "race"));
+                    }
+                }
+                default -> {}
             }
         }
     }
@@ -210,11 +202,6 @@ public class DndRace {
             return this;
         }
 
-        public Builder sizeChoice(PlayersChoice<String> sizeChoice) {
-            instance.setSizeChoice(sizeChoice);
-            return this;
-        }
-
         public Builder speed(int speed) {
             instance.setSpeed(speed);
             return this;
@@ -240,13 +227,13 @@ public class DndRace {
             return this;
         }
 
-        public Builder languageChoices(PlayersChoice<String> languageChoices) {
-            instance.setLanguageChoices(languageChoices);
+        public Builder subraces(Map<String, DndSubRace> subraces) {
+            instance.setSubraces(subraces);
             return this;
         }
 
-        public Builder subraces(Map<String, DndSubRace> subraces) {
-            instance.setSubraces(subraces);
+        public Builder playerChoices(List<ChoiceEntry> playerChoices) {
+            instance.setPlayerChoices(playerChoices);
             return this;
         }
 

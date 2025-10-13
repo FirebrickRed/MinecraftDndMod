@@ -34,10 +34,12 @@ subraces:
     traits:
     - 'Cantrip: choose from Wizard list'
     - Elf Weapon Training
-    languages:
-      - players_choice:
-          choose: 1
-          options: [Elvish, Dwarvish, Draconic, Infernal]
+    player_choices:
+      - id: subrace_languages
+        title: Extra Language
+        type: LANGUAGE
+        choose: 1
+        options: []
   wood_elf:
     name: Wood Elf
     ability_scores:
@@ -68,7 +70,9 @@ subraces:
       - Keen Senses
       - Starlight Step
       - Astral Trance
-    languages:
-      - players_choice:
-          choose: 1
-          options: [Elvish, Dwarvish, Draconic, Infernal]
+    player_choices:
+      - id: subrace_languages
+        title: Extra Language
+        type: LANGUAGE
+        choose: 1
+        options: []

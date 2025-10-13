@@ -44,7 +44,7 @@ public class BackgroundLoader {
     private static DndBackground parseBackground(String key, Map<String, Object> data) {
 
         DndBackground.Builder builder = DndBackground.builder()
-                .id(normalize((String) data.getOrDefault("name", "Unknown")))
+                .id(key)
                 .name((String) data.getOrDefault("name", "unknown"))
                 .description((String) data.get("description"))
                 .skills(LoaderUtils.normalizeStringList(data.get("skill_proficiencies")))
@@ -54,7 +54,7 @@ public class BackgroundLoader {
                 .feature((String) data.get("feature"))
                 .traits(LoaderUtils.parseTraits(data.get("traits")))
                 .links(LoaderUtils.normalizeStringList(data.get("links")))
-                .playerChoices(LoaderUtils.parsePlayerChoicesForClass(data.get("player_choices")))
+                .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
                 .icon((String) data.get("icon_name"));
 
         DndBackground dndBackground = builder.build();

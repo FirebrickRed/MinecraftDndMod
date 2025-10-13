@@ -54,14 +54,13 @@ public class RaceLoader {
                 .description((String) data.get("description"))
                 .creatureType(CreatureType.fromString((String) data.getOrDefault("creature_type", "Humanoid")))
                 .size(sizeResult.size)
-                .sizeChoice(sizeResult.sizeChoice)
                 .speed((int) data.getOrDefault("speed", 30))
                 .fixedAbilityScores(abilityScores.fixedBonuses)
                 .abilityScoreChoice(abilityScores.choiceBonuses)
                 .traits(LoaderUtils.parseTraits(data.get("traits")))
                 .languages(langResult.languages)
-                .languageChoices(langResult.playersChoice)
                 .subraces(LoaderUtils.parseSubraces(data.get("subraces")))
+                .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
                 .icon((String) data.getOrDefault("icon_name", null));
 
         DndRace dndRace = builder.build();

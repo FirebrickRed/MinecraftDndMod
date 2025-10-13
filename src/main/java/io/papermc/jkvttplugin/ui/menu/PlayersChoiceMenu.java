@@ -120,8 +120,7 @@ public final class PlayersChoiceMenu {
     }
 
     private static String headerText(PendingChoice<?> p) {
-        String prettySource = prettify(p.getSource());
-        int choose = p.getPlayersChoice().getChoose();
-        return prettySource + " (pick " + choose + ")";
+        int choose = p.getChoose();
+        return p.getTitle() + " (pick " + choose + ")";
     }
 }
