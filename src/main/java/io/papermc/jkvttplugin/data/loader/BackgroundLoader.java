@@ -42,36 +42,23 @@ public class BackgroundLoader {
     }
 
     private static DndBackground parseBackground(String key, Map<String, Object> data) {
-        String name = (String) data.getOrDefault("name", key);
-        String description = (String) data.getOrDefault("description", "");
 
-        // Skills
-        List<String> skills = LoaderUtils.normalizeStringList(data.get("skill_proficiencies"));
+        DndBackground.Builder builder = DndBackground.builder()
+                .id(normalize((String) data.getOrDefault("name", "Unknown")))
+                .name((String) data.getOrDefault("name", "unknown"))
+                .description((String) data.get("description"))
+                .skills(LoaderUtils.normalizeStringList(data.get("skill_proficiencies")))
+                .languages(LoaderUtils.parseLanguages(data.get("languages")))
+                .tools(LoaderUtils.normalizeStringList(data.get("tool_proficiencies")))
+                .equipment(LoaderUtils.parseEquipment((List<Object>) data.get("starting_equipment")))
+                .feature((String) data.get("feature"))
+                .traits(LoaderUtils.parseTraits(data.get("traits")))
+                .links(LoaderUtils.normalizeStringList(data.get("links")))
+                .playerChoices(LoaderUtils.parsePlayerChoicesForClass(data.get("player_choices")))
+                .icon((String) data.get("icon_name"));
 
-        // languages
-        List<String> languages = LoaderUtils.parseLanguages(data.get("languages"));
-
-        // tools
-        List<String> tools = LoaderUtils.normalizeStringList(data.get("tool_proficiencies"));
-
-        // equipment
-        List<String> equipment = LoaderUtils.parseEquipment((List<Object>) data.get("starting_equipment"));
-
-        // feature
-        String feature = (String) data.getOrDefault("feature", "");
-
-        // Traits
-        List<String> traits = LoaderUtils.parseTraits(data.get("traits"));
-
-        var pcs = LoaderUtils.parsePlayerChoicesForClass(data.get("player_choices"));
-
-        // links
-        List<String> links = LoaderUtils.normalizeStringList(data.get("links"));
-
-        // Icon name
-        String iconName = (String) data.getOrDefault("icon_name", null);
-
-        return new DndBackground(key, name, description, skills, languages, tools, equipment, feature, traits, pcs, links, iconName);
+        DndBackground dndBackground = builder.build();
+        return dndBackground;
     }
 
     public static DndBackground getBackground(String name) {

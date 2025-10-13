@@ -15,121 +15,131 @@ import java.util.Map;
 import java.util.Objects;
 
 public class DndRace {
-    private final String id;
-    private final String name;
-    private final String sourceUrl;
-    private final String description;
+    private String id;
+    private String name;
+    private String sourceUrl;
+    private String description;
 
-    private final CreatureType creatureType;
-    private final Size size;
-    private final PlayersChoice<String> sizeChoice;
+    private CreatureType creatureType;
+    private Size size;
+    private PlayersChoice<String> sizeChoice;
     // ToDo: update speed to use all different movements examples I've found:
     // flying, swimming, climbing
-    private final int speed;
+    private int speed;
 
-    private final Map<Ability, Integer> fixedAbilityScores;
-    private final AbilityScoreChoice abilityScoreChoice;
+    private Map<Ability, Integer> fixedAbilityScores;
+    private AbilityScoreChoice abilityScoreChoice;
 
-    private final List<String> traits;
+    private List<String> traits;
 
-    private final List<String> languages;
-    private final PlayersChoice<String> languageChoices;
+    private List<String> languages;
+    private PlayersChoice<String> languageChoices;
 
-    private final Map<String, DndSubRace> subraces;
-    private final String icon;
+    private Map<String, DndSubRace> subraces;
+    private String icon;
 
-    public DndRace(
-            String id,
-            String name,
-            String sourceUrl,
-            String description,
-            CreatureType creatureType,
-            Size size,
-            PlayersChoice<String> sizeChoice,
-            int speed,
-            Map<Ability, Integer> fixedAbilityScores,
-            AbilityScoreChoice abilityScoreChoice,
-            List<String> traits,
-            List<String> languages,
-            PlayersChoice<String> languageChoices,
-            Map<String, DndSubRace> subraces,
-            String icon
-    ) {
-        // ToDo: double check if null checks are needed here, should be handled by the loader
-        this.id = Objects.requireNonNull(id, "id cannot be null");
-        this.name = Objects.requireNonNull(name, "name cannot be null");
-        this.sourceUrl = sourceUrl != null ? sourceUrl : "";
-        this.description = description != null ? description : "";
-        this.creatureType = creatureType != null ? creatureType : CreatureType.UNKNOWN;
-        this.size = size != null ? size : Size.MEDIUM;
-        this.sizeChoice = sizeChoice;
-        this.speed = speed;
-
-        this.fixedAbilityScores = fixedAbilityScores != null ? Map.copyOf(fixedAbilityScores) : Map.of();
-        this.abilityScoreChoice = abilityScoreChoice;
-
-        this.traits = traits != null ? List.copyOf(traits) : List.of();
-        this.languages = languages != null ? List.copyOf(languages) : List.of();
-        this.languageChoices = languageChoices;
-
-        this.subraces = subraces != null ? Map.copyOf(subraces) : Map.of();
-        this.icon = icon != null ? icon : "elf_icon";
-    }
+    public DndRace() { }
 
     public String getId() {
         return id;
+    }
+    public void setId(String id) {
+        this.id = id;
     }
 
     public String getName() {
         return name;
     }
+    public void setName(String name) {
+        this.name = name;
+    }
 
     public String getSourceUrl() {
         return sourceUrl;
+    }
+    public void setSourceUrl(String url) {
+        this.sourceUrl = url;
     }
 
     public String getDescription() {
         return description;
     }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public CreatureType getCreatureType() {
         return creatureType;
+    }
+    public void setCreatureType(CreatureType creatureType) {
+        this.creatureType = creatureType;
     }
 
     public Size getSize() {
         return size;
     }
+    public void setSize(Size size) {
+        this.size = size;
+    }
 
     public PlayersChoice<String> getSizeChoice() {
         return sizeChoice;
+    }
+    public void setSizeChoice(PlayersChoice<String> sizeChoice) {
+        this.sizeChoice = sizeChoice;
     }
 
     public int getSpeed() {
         return speed;
     }
+    public void setSpeed(int speed) {
+        this.speed = speed;
+    }
 
     public Map<Ability, Integer> getFixedAbilityScores() {
         return fixedAbilityScores;
+    }
+    public void setFixedAbilityScores(Map<Ability, Integer> fixedAbilityScores) {
+        this.fixedAbilityScores = fixedAbilityScores != null ? Map.copyOf(fixedAbilityScores) : Map.of();
     }
 
     public AbilityScoreChoice getAbilityScoreChoice() {
         return abilityScoreChoice;
     }
+    public void setAbilityScoreChoice(AbilityScoreChoice abilityScoreChoice) {
+        this.abilityScoreChoice = abilityScoreChoice;
+    }
 
     public List<String> getTraits() {
         return traits;
+    }
+    public void setTraits(List<String> traits) {
+        this.traits = traits != null ? List.copyOf(traits) : List.of();
     }
 
     public List<String> getLanguages() {
         return languages;
     }
+    public void setLanguages(List<String> languages) {
+        this.languages = languages != null ? List.copyOf(languages) : List.of();
+    }
 
     public PlayersChoice<String> getLanguageChoices() {
         return languageChoices;
     }
+    public void setLanguageChoices(PlayersChoice<String> languageChoices) {
+        this.languageChoices = languageChoices;
+    }
 
     public Map<String, DndSubRace> getSubraces() {
         return subraces;
+    }
+    public void setSubraces(Map<String, DndSubRace> subraces) {
+        this.subraces = subraces != null ? Map.copyOf(subraces) : Map.of();
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 
     public boolean hasSubraces() {
@@ -165,5 +175,92 @@ public class DndRace {
                 ChoiceUtil.addIfUsable(out, PendingChoice.ofStrings("race_languages", "Languagse", langPc, "race"));
             }
         }
+    }
+
+    public static class Builder {
+        private final DndRace instance = new DndRace();
+
+        public Builder id(String id) {
+            instance.setId(id);
+            return this;
+        }
+
+        public Builder name(String name) {
+            instance.setName(name);
+            return this;
+        }
+
+        public Builder sourceUrl(String sourceUrl) {
+            instance.setSourceUrl(sourceUrl);
+            return this;
+        }
+
+        public Builder description(String description) {
+            instance.setDescription(description);
+            return this;
+        }
+
+        public Builder creatureType(CreatureType creatureType) {
+            instance.setCreatureType(creatureType);
+            return this;
+        }
+
+        public Builder size(Size size) {
+            instance.setSize(size);
+            return this;
+        }
+
+        public Builder sizeChoice(PlayersChoice<String> sizeChoice) {
+            instance.setSizeChoice(sizeChoice);
+            return this;
+        }
+
+        public Builder speed(int speed) {
+            instance.setSpeed(speed);
+            return this;
+        }
+
+        public Builder fixedAbilityScores(Map<Ability, Integer> fixedAbilityScores) {
+            instance.setFixedAbilityScores(fixedAbilityScores);
+            return this;
+        }
+
+        public Builder abilityScoreChoice(AbilityScoreChoice abilityScoreChoice) {
+            instance.setAbilityScoreChoice(abilityScoreChoice);
+            return this;
+        }
+
+        public Builder traits(List<String> traits) {
+            instance.setTraits(traits);
+            return this;
+        }
+
+        public Builder languages(List<String> languages) {
+            instance.setLanguages(languages);
+            return this;
+        }
+
+        public Builder languageChoices(PlayersChoice<String> languageChoices) {
+            instance.setLanguageChoices(languageChoices);
+            return this;
+        }
+
+        public Builder subraces(Map<String, DndSubRace> subraces) {
+            instance.setSubraces(subraces);
+            return this;
+        }
+
+        public Builder icon(String icon) {
+            instance.setIcon(icon);
+            return this;
+        }
+
+        public DndRace build() {
+            return instance;
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 }

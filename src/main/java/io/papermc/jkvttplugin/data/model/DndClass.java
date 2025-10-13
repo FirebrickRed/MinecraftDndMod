@@ -365,6 +365,11 @@ public class DndClass {
             return this;
         }
 
+        public Builder playerChoices(List<ChoiceEntry> playerChoices) {
+            instance.setPlayerChoices(playerChoices);
+            return this;
+        }
+
         public Builder icon(String icon) {
             instance.setIcon(icon);
             return this;

@@ -42,37 +42,30 @@ public class RaceLoader {
     }
 
     private static DndRace parseRace(Map<String, Object> data) {
-        String name = (String) data.getOrDefault("name", "Unknown");
-        String id = normalize(name);
-        String description = (String) data.getOrDefault("description", "");
-        String sourceUrl = (String) data.getOrDefault("source_url", "");
-        CreatureType creatureType = CreatureType.fromString((String) data.getOrDefault("creature_type", "Humanoid"));
-
         LoaderUtils.SizeParseResult sizeResult = LoaderUtils.parseSize(data.get("size"));
-        Size size = sizeResult.size;
-        PlayersChoice<String> sizeChoice = sizeResult.sizeChoice;
-
-        int speed = (int) data.getOrDefault("speed", 30);
-
-        // Languages
         LoaderUtils.LanguageParseResults langResult = LoaderUtils.parseLanguagesAndChoices(data.get("languages"));
-        List<String> languages = langResult.languages;
-        PlayersChoice<String> languageChoices = langResult.playersChoice;
-
-        // Ability scores (fixed and choice-based)
         Object abilityScoresRaw = data.get("ability_scores");
         LoaderUtils.AbilityScoreParseResult abilityScores = LoaderUtils.parseAbilityScores(abilityScoresRaw);
 
-        // Traits
-        List<String> traits = LoaderUtils.parseTraits(data.get("traits"));
+        DndRace.Builder builder = DndRace.builder()
+                .id(normalize((String) data.getOrDefault("name", "Unknown")))
+                .name((String) data.getOrDefault("name", "Unknown"))
+                .sourceUrl((String) data.get("source_url"))
+                .description((String) data.get("description"))
+                .creatureType(CreatureType.fromString((String) data.getOrDefault("creature_type", "Humanoid")))
+                .size(sizeResult.size)
+                .sizeChoice(sizeResult.sizeChoice)
+                .speed((int) data.getOrDefault("speed", 30))
+                .fixedAbilityScores(abilityScores.fixedBonuses)
+                .abilityScoreChoice(abilityScores.choiceBonuses)
+                .traits(LoaderUtils.parseTraits(data.get("traits")))
+                .languages(langResult.languages)
+                .languageChoices(langResult.playersChoice)
+                .subraces(LoaderUtils.parseSubraces(data.get("subraces")))
+                .icon((String) data.getOrDefault("icon_name", null));
 
-        // Subraces (supporting map of subrace name -> subrace data)
-        Map<String, DndSubRace> subraces = LoaderUtils.parseSubraces(data.get("subraces"));
-
-        // Icon Name
-        String iconName = (String) data.getOrDefault("icon_name", null);
-
-        return new DndRace(id, name, sourceUrl, description, creatureType, size, sizeChoice, speed, abilityScores.fixedBonuses, abilityScores.choiceBonuses, traits, languages, languageChoices, subraces, iconName);
+        DndRace dndRace = builder.build();
+        return dndRace;
     }
 
 

@@ -64,13 +64,10 @@ public class ClassLoader {
 //                .classResources()
 
                 .allowFeats((boolean) data.getOrDefault("allow_feats", true))
+                .playerChoices(LoaderUtils.parsePlayerChoicesForClass(data.get("player_choices")))
                 .icon((String) data.get("icon"));
 
-        DndClass dndClass = builder.build();
-        var pcs = LoaderUtils.parsePlayerChoicesForClass(data.get("player_choices"));
-        dndClass.setPlayerChoices(pcs);
-
-        return dndClass;
+        return builder.build();
     }
 
     public static DndClass getClass(String name) {

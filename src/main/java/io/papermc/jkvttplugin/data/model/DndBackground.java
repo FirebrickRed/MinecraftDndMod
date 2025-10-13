@@ -9,100 +9,107 @@ import java.util.List;
 import java.util.function.Function;
 
 public class DndBackground {
-    private final String id;
-    private final String name;
-    private final String description;
-    private final List<String> skills;
+    private String id;
+    private String name;
+    private String description;
+    private List<String> skills;
 
-    private final List<String> languages;
+    private List<String> languages;
 
-    private final List<String> tools;
+    private List<String> tools;
 
-    private final List<String> equipment;
-    private final String feature;
+    private List<String> equipment;
+    private String feature;
     // ToDo: Update EquipmentEntry and Feature to not be strings
-//    private final List<EquipmentEntry> equipment;
-//    private final Feature feature;
-    private final List<String> traits;
-    private final List<String> links;
-    private final String icon;
+//    private List<EquipmentEntry> equipment;
+//    private Feature feature;
+    private List<String> traits;
+    private List<String> links;
+    private String icon;
 
     private List<ChoiceEntry> playerChoices = List.of();
     public List<ChoiceEntry> getPlayerChoices() { return playerChoices; }
     public void setPlayerChoices(List<ChoiceEntry> pcs) { this.playerChoices = (pcs == null) ? List.of() : List.copyOf(pcs); }
 
-    public DndBackground(
-            String key,
-            String name,
-            String description,
-            List<String> skills,
-            List<String> languages,
-            List<String> tools,
-            List<String> equipment,
-            String feature,
-            List<String> traits,
-            List<ChoiceEntry> pcs,
-            List<String> links,
-            String icon
-    ) {
-        this.id = key;
-        this.name = name;
-        this.description = description;
-        this.skills = skills;
-        this.languages = languages;
-        this.tools = tools;
-        this.equipment = equipment;
-        this.feature = feature;
-        this.traits = traits;
-        this.playerChoices = pcs;
-        this.links = links;
-        this.icon = icon;
-    }
+    public DndBackground() {}
 
     // ToDo: update code to utilize id instead of name for identification
     public String getId() {
         return id;
     }
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;
+    }
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getDescription() {
         return description;
     }
+    public void setDescription(String description) {
+        this.description = description;
+    }
 
     public List<String> getSkills() {
         return skills;
+    }
+    public void setSkills(List<String> skills) {
+        this.skills = skills != null ? List.copyOf(skills) : List.of();
     }
 
     public List<String> getLanguages() {
         return languages;
     }
+    public void setLanguages(List<String> languages) {
+        this.languages = languages != null ? List.copyOf(languages) : List.of();
+    }
 
     public List<String> getTools() {
         return tools;
+    }
+    public void setTools(List<String> tools) {
+        this.tools = tools != null ? List.copyOf(tools) : List.of();
     }
 
     public List<String> getStartingEquipment() {
         return equipment;
     }
+    public void setEquipment(List<String> equipment) {
+        this.equipment = equipment != null ? List.copyOf(equipment) : List.of();
+    }
 
     public String getFeature() {
         return feature;
+    }
+    public void setFeature(String feature) {
+        this.feature = feature;
     }
 
     public List<String> getTraits() {
         return traits;
     }
+    public void setTraits(List<String> traits) {
+        this.traits = traits != null ? List.copyOf(traits) : List.of();
+    }
 
     public List<String> getLinks() {
         return links;
+    }
+    public void setLinks(List<String> links) {
+        this.links = links != null ? List.copyOf(links) : List.of();
     }
 
     public Material getIconMaterial() {
         // ToDo: update to use custom icons
         return Material.PAPER;
+    }
+    public void setIcon(String icon) {
+        this.icon = icon;
     }
 
     public ItemStack getBackgroundIcon() {
@@ -177,6 +184,78 @@ public class DndBackground {
         } catch (Exception e) {
             return def;
         }
+    }
+
+    public static class Builder {
+        private final DndBackground instance = new DndBackground();
+
+        public Builder id(String id) {
+            instance.setId(id);
+            return this;
+        }
+
+        public Builder name(String name) {
+            instance.setName(name);
+            return this;
+        }
+
+        public Builder description(String description) {
+            instance.setDescription(description);
+            return this;
+        }
+
+        public Builder skills(List<String> skills) {
+            instance.setSkills(skills);
+            return this;
+        }
+
+        public Builder languages(List<String> languages) {
+            instance.setLanguages(languages);
+            return this;
+        }
+
+        public Builder tools(List<String> tools) {
+            instance.setTools(tools);
+            return this;
+        }
+
+        public Builder equipment(List<String> equipment) {
+            instance.setEquipment(equipment);
+            return this;
+        }
+
+        public Builder feature(String feature) {
+            instance.setFeature(feature);
+            return this;
+        }
+
+        public Builder traits(List<String> traits) {
+            instance.setTraits(traits);
+            return this;
+        }
+
+        public Builder links(List<String> links) {
+            instance.setLinks(links);
+            return this;
+        }
+
+        public Builder icon(String icon) {
+            instance.setIcon(icon);
+            return this;
+        }
+
+        public Builder playerChoices(List<ChoiceEntry> playerChoices) {
+            instance.setPlayerChoices(playerChoices);
+            return this;
+        }
+
+        public DndBackground build() {
+            return instance;
+        }
+    }
+
+    public static Builder builder() {
+        return new Builder();
     }
 }
 
