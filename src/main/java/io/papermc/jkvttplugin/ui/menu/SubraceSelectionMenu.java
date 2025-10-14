@@ -18,6 +18,6 @@ public class SubraceSelectionMenu {
     }
 
     public static Inventory build(Collection<DndSubRace> subRaces, UUID sessionId) {
-        return BaseSelectionMenu.build(subRaces, sessionId, "Choose Your Subrace", MenuType.SUBRACE_SELECTION, MenuAction.CHOOSE_SUBRACE, DndSubRace::getId, DndSubRace::getName, DndSubRace::getIconMaterial);
+        return BaseSelectionMenu.build(subRaces, sessionId, "Choose Your Subrace", MenuType.SUBRACE_SELECTION, MenuAction.CHOOSE_SUBRACE, DndSubRace::getId, DndSubRace::getName, DndSubRace::getIconMaterial, DndSubRace::getSelectionMenuLore);
     }
 }

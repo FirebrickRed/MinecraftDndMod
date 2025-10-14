@@ -1,9 +1,9 @@
 noble:
   name: Noble
   description: "You understand wealth, power, and privilege..."
-  skills:
-    - History
-    - Persuasion
+  skill_proficiencies:
+    - history
+    - persuasion
   equipment:
     - signet_ring
     - fine_clothes
@@ -21,7 +21,7 @@ noble:
       title: Background Language
       type: language
       choose: 1
-      options: [Elvish, Dwarvish, Draconic, Infernal]
+      options: []
     - id: background_tool
       title: Background Tool
       type: equipment

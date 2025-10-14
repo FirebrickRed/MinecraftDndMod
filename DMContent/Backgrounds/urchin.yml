@@ -1,10 +1,10 @@
 urchin:
   name: Urchin
   description: "You grew up on the streets alone, orphaned, and poor, surviving on wits and the kindness of strangers."
-  skills:
-    - Sleight_of_Hand
-    - Stealth
-  tools:
+  skill_proficiencies:
+    - sleight_of_hand
+    - stealth
+  tool_proficiencies:
     - disguise_kit
     - thieves_tools
   starting_equipment:

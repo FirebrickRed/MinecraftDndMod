@@ -549,4 +549,20 @@ public class LoaderUtils {
         return Map.of();
     }
 
+    /**
+     * Extracts the casting ability from the spellcasting object in the YAML data.
+     * @param data The class YAML data map
+     * @return The casting ability, or null if the class is not a spellcaster
+     */
+    public static Ability extractCastingAbility(Map<String, Object> data) {
+        Object spellcasting = data.get("spellcasting");
+        if (spellcasting instanceof Map<?, ?> map) {
+            String castingAbility = (String) map.get("casting_ability");
+            if (castingAbility != null) {
+                return Ability.fromString(castingAbility);
+            }
+        }
+        return null;
+    }
+
 }

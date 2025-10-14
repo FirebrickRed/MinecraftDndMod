@@ -12,7 +12,6 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
@@ -21,7 +20,7 @@ import java.util.function.Function;
 public class BaseSelectionMenu {
     private BaseSelectionMenu() {}
 
-    public static <T>Inventory build(Collection<T> items, UUID sessionId, String menuTitle, MenuType menuType, MenuAction action, Function<T, String> idExtractor, Function<T, String> nameExtractor, Function<T, Material> iconExtractor) {
+    public static <T>Inventory build(Collection<T> items, UUID sessionId, String menuTitle, MenuType menuType, MenuAction action, Function<T, String> idExtractor, Function<T, String> nameExtractor, Function<T, Material> iconExtractor, Function<T, List<Component>> loreExtractor) {
         int inventorySize = Util.getInventorySize(items.size());
 
         Inventory inventory = Bukkit.createInventory(
@@ -39,8 +38,13 @@ public class BaseSelectionMenu {
             String displayName = nameExtractor.apply(item);
             meta.displayName(Component.text(displayName));
 
-            List<Component> lore = new ArrayList<>();
-            meta.lore(lore);
+            if (loreExtractor != null) {
+                List<Component> lore = loreExtractor.apply(item);
+                if (lore != null) {
+                    meta.lore(lore);
+                }
+            }
+
             itemStack.setItemMeta(meta);
 
             String id = idExtractor.apply(item);

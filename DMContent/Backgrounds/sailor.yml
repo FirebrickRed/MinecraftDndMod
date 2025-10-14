@@ -1,10 +1,10 @@
 sailor:
   name: Sailor
   description: "You’ve spent your life on the sea..."
-  skills:
-    - Athletics
-    - Perception
-  tools:
+  skill_proficiencies:
+    - athletics
+    - perception
+  tool_proficiencies:
     - navigators_tools
     - vehicles_water
   equipment:

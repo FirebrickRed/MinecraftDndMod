@@ -18,6 +18,6 @@ public class RaceSelectionMenu {
     }
 
     public static Inventory build(Collection<DndRace> races, UUID sessionId) {
-        return BaseSelectionMenu.build(races, sessionId, "Select your Race", MenuType.RACE_SELECTION, MenuAction.CHOOSE_RACE, DndRace::getId, DndRace::getName, DndRace::getIconMaterial);
+        return BaseSelectionMenu.build(races, sessionId, "Select your Race", MenuType.RACE_SELECTION, MenuAction.CHOOSE_RACE, DndRace::getId, DndRace::getName, DndRace::getIconMaterial, DndRace::getSelectionMenuLore);
     }
 }

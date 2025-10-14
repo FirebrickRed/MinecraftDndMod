@@ -1,12 +1,17 @@
 package io.papermc.jkvttplugin.data.model;
 
+import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class DndBackground {
     private String id;
@@ -145,7 +150,7 @@ public class DndBackground {
                             String rest = key.substring(5);
                             int at = rest.indexOf('@');
                             String id = (at >= 0) ? rest.substring(0, at) : rest;
-                            int qty = (at >= 0) ? safeInt(rest.substring(at + 1), 1) : 1;
+                            int qty = (at >= 0) ? LoaderUtils.asInt(rest.substring(at + 1), 1) : 1;
                             return EquipmentOption.item(id, qty);
                         }
                         if (key.startsWith("tag:")) {
@@ -163,27 +168,71 @@ public class DndBackground {
                     Function<EquipmentOption, String> toLabel = EquipmentOption::prettyLabel;
 
                     out.add(PendingChoice.ofGeneric(e.id(), e.title(), pc, "background", toKey, fromKey, toLabel));
-
-
-
-//                    out.add(PendingChoice.ofGeneric(
-//                            e.id(), e.title(), pc, "background",
-//                            opt -> Integer.toString(pc.getOptions().indexOf(opt)),
-//                            key -> pc.getOptions().get(Integer.parseInt(key)),
-//                            EquipmentOption::prettyLabel
-//                    ));
                 }
                 default -> {}
             }
         }
     }
 
-    private static int safeInt(String s, int def) {
-        try {
-            return Integer.parseInt(s.trim());
-        } catch (Exception e) {
-            return def;
+    public List<Component> getSelectionMenuLore() {
+        List<Component> lore = new ArrayList<>();
+
+        // 1. Skill proficiencies (immediate mechanical benefit)
+        if (skills != null && !skills.isEmpty()) {
+            lore.add(Component.text("Skills:").color(NamedTextColor.GREEN));
+            for (String skill : skills) {
+                lore.add(Component.text("  • " + Util.prettify(skill)).color(NamedTextColor.GREEN));
+            }
         }
+
+        // 2. Tool proficiencies (if any)
+        if (tools != null && !tools.isEmpty()) {
+            lore.add(Component.text(""));
+            lore.add(Component.text("Tools:").color(NamedTextColor.GRAY));
+            for (String tool : tools) {
+                lore.add(Component.text("  • " + Util.prettify(tool)).color(NamedTextColor.GRAY));
+            }
+        }
+
+        // 3. Languages (flavor + utility)
+        if (languages != null && !languages.isEmpty()) {
+            lore.add(Component.text(""));
+            lore.add(Component.text("Languages:").color(NamedTextColor.AQUA));
+            for (String lang : languages) {
+                lore.add(Component.text("  • " + lang).color(NamedTextColor.AQUA));
+            }
+        }
+        for (ChoiceEntry choice : playerChoices) {
+            if (choice.type() == PlayersChoice.ChoiceType.LANGUAGE) {
+                if (languages.isEmpty()) {
+                    lore.add(Component.text(""));
+                    lore.add(Component.text("Languages:").color(NamedTextColor.AQUA));
+                }
+                PlayersChoice<String> pc = (PlayersChoice<String>) choice.pc();
+                lore.add(Component.text("  + Choose " + pc.getChoose() + " language(s)")
+                        .color(NamedTextColor.YELLOW));
+            }
+        }
+
+        // 4. Feature name (unique ability)
+        if (feature != null && !feature.isEmpty()) {
+            lore.add(Component.text(""));
+            lore.add(Component.text("Feature:").color(NamedTextColor.GOLD));
+            lore.add(Component.text("  • " + feature).color(NamedTextColor.GOLD));
+        }
+
+        // 5. Description preview (flavor text - keep short!)
+        if (description != null && !description.isEmpty()) {
+            lore.add(Component.text(""));
+            String shortDesc = description.length() > 60
+                    ? description.substring(0, 57) + "..."
+                    : description;
+            lore.add(Component.text(shortDesc)
+                    .color(NamedTextColor.DARK_GRAY)
+                    .decoration(TextDecoration.ITALIC, true));
+        }
+
+        return lore;
     }
 
     public static class Builder {

@@ -1,10 +1,10 @@
 wildspacer:
   name: Wildspacer
   description: "You’ve lived much of your life in wildspace..."
-  skills:
-    - Athletics
-    - Survival
-  tools:
+  skill_proficiencies:
+    - athletics
+    - survival
+  tool_proficiencies:
     - navigators_tools
     - vehicles_space
   equipment:

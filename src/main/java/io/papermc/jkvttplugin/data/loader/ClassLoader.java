@@ -56,7 +56,7 @@ public class ClassLoader {
                 .startingEquipment(LoaderUtils.normalizeStringList(data.get("starting_equipment")))
 
                 .asiLevels(LoaderUtils.castList(data.get("asi_levels"), Integer.class))
-                .spellcastingAbility(Ability.fromString((String) data.get("spellcasting_ability")))
+                .spellcastingAbility(LoaderUtils.extractCastingAbility(data))
                 .spellcasting(parseSpellcasting(data.get("spellcasting")))
                 .featuresByLevel(LoaderUtils.parseLevelStringListMap(data.get("features_by_level")))
                 .subclasses(LoaderUtils.castList(data.getOrDefault("subclasses", List.of()), String.class))

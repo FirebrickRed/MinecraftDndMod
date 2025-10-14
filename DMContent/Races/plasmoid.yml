@@ -6,7 +6,7 @@ ability_scores:
     distributions:
       - [2, 1]
       - [1, 1, 1]
-size: Medium  # Default - will be overridden by player choice
+#size: Medium  # Default - will be overridden by player choice
 speed: 30
 languages:
   - Common

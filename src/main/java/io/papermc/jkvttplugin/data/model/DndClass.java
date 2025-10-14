@@ -1,14 +1,18 @@
 package io.papermc.jkvttplugin.data.model;
 
+import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 public class DndClass {
     private String id;
@@ -235,7 +239,7 @@ public class DndClass {
                             String rest = key.substring(5);
                             int at = rest.indexOf('@');
                             String id = (at >= 0) ? rest.substring(0, at) : rest;
-                            int qty = (at >= 0) ? safeInt(rest.substring(at + 1), 1) : 1;
+                            int qty = (at >= 0) ? LoaderUtils.asInt(rest.substring(at + 1), 1) : 1;
                             return EquipmentOption.item(id, qty);
                         }
                         if (key.startsWith("tag:")) {
@@ -262,12 +266,50 @@ public class DndClass {
         }
     }
 
-    private static int safeInt(String s, int def) {
-        try {
-            return Integer.parseInt(s.trim());
-        } catch (Exception e) {
-            return def;
+    public List<Component> getSelectionMenuLore() {
+        List<Component> lore = new ArrayList<>();
+
+        // 1. Hit Die (critical for survivability)
+        lore.add(Component.text("Hit Die: d" + hitDie).color(NamedTextColor.RED));
+
+        // 2. Saving Throws
+        if (savingThrows != null && !savingThrows.isEmpty()) {
+            lore.add(Component.text(""));
+            lore.add(Component.text("Saving Throws:").color(NamedTextColor.GOLD));
+            for (Ability ability : savingThrows) {
+                lore.add(Component.text("  • " + ability.toString()).color(NamedTextColor.GOLD));
+            }
         }
+
+        // 3. Spellcasting (if applicable - major class distinction!)
+        if (spellcasting != null || spellcastingAbility != null) {
+            lore.add(Component.text(""));
+            lore.add(Component.text("✦ Spellcaster").color(NamedTextColor.LIGHT_PURPLE));
+            if (spellcastingAbility != null) {
+                lore.add(Component.text("  Casting: " + spellcastingAbility));
+            }
+        }
+
+        // 4. Key proficiencies (armor = survivability)
+        if (armorProficiencies != null && !armorProficiencies.isEmpty()) {
+            lore.add(Component.text(""));
+            lore.add(Component.text("Armor:").color(NamedTextColor.GRAY));
+            for (String armor : armorProficiencies) {
+                lore.add(Component.text("  • " + Util.prettify(armor)).color(NamedTextColor.GRAY));
+            }
+        }
+
+        // 5. Level 1 features preview (unique flavor)
+        // ToDo: Starting Features title is present but doesn't show the text below (currently in progress)
+        if (featuresByLevel != null && featuresByLevel.containsKey(1)) {
+            lore.add(Component.text(""));
+            lore.add(Component.text("Starting Features:").color(NamedTextColor.YELLOW));
+            for (String feature : featuresByLevel.get(1)) {
+                lore.add(Component.text("  • " + feature).color(NamedTextColor.WHITE));
+            }
+        }
+
+        return lore;
     }
 
     // Builder

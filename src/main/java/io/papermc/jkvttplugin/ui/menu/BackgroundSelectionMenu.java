@@ -18,6 +18,6 @@ public class BackgroundSelectionMenu {
     }
 
     public static Inventory build(Collection<DndBackground> backgrounds, UUID sessionId) {
-        return BaseSelectionMenu.build(backgrounds, sessionId, "Select Your Background", MenuType.BACKGROUND_SELECTION, MenuAction.CHOOSE_BACKGROUND, DndBackground::getId, DndBackground::getName, DndBackground::getIconMaterial);
+        return BaseSelectionMenu.build(backgrounds, sessionId, "Select Your Background", MenuType.BACKGROUND_SELECTION, MenuAction.CHOOSE_BACKGROUND, DndBackground::getId, DndBackground::getName, DndBackground::getIconMaterial, DndBackground::getSelectionMenuLore);
     }
 }
