@@ -8,6 +8,7 @@ import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.ItemUtil;
+import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -115,7 +116,7 @@ public class CharacterCreationSheetMenu {
             List<Component> lore = new ArrayList<>();
 
             if (selected != null && !selected.isEmpty()) {
-                lore.add(Component.text("Selected: " + prettifySelection(selected)).color(NamedTextColor.GREEN));
+                lore.add(Component.text("Selected: " + Util.prettify(selected)).color(NamedTextColor.GREEN));
                 lore.add(Component.text("Click to change").color(NamedTextColor.GRAY));
             } else {
                 lore.add(Component.text("Not Selected").color(NamedTextColor.RED));
@@ -190,13 +191,6 @@ public class CharacterCreationSheetMenu {
 
     private static boolean isCharacterComplete(CharacterCreationSession session) {
         return isBasicSelectionComplete(session) && session.allChoicesSatisfied();
-    }
-
-    private static String prettifySelection(String selection) {
-        if (selection == null) return "";
-        return selection.replace('_', ' ')
-                .substring(0, 1).toUpperCase() +
-                selection.replace('_', ' ').substring(1);
     }
 
     private static ItemStack createSpellBookItem(CharacterCreationSession session, Player player) {

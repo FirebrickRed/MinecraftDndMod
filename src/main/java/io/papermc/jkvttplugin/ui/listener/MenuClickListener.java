@@ -25,6 +25,7 @@ import io.papermc.jkvttplugin.listeners.CharacterNameListener;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.menu.*;
+import io.papermc.jkvttplugin.util.EquipmentUtil;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.TagRegistry;
 import io.papermc.jkvttplugin.util.Util;
@@ -62,7 +63,7 @@ public class MenuClickListener implements Listener {
             case SUBRACE_SELECTION -> handleSubraceSelectionClick(player, event, holder, clickedItem, action, payload);
             case CLASS_SELECTION -> handleClassSelectionClick(player, event, holder, clickedItem, action, payload);
             case BACKGROUND_SELECTION -> handleBackgroundSelectionClick(player, event, holder, clickedItem, action, payload);
-            case PLAYERS_CHOICES -> handlePlayersChoiceClick(player, event, holder, clickedItem, action, payload);
+            case TABBED_CHOICES -> handleTabbedChoicesClick(player, event, holder, clickedItem, action, payload);
             case ABILITY_ALLOCATION -> handleAbilityAllocationClick(player, event, holder, clickedItem, action, payload);
             case SPELL_SELECTION -> handleSpellSelectionClick(player, event, holder, clickedItem, action, payload);
         }
@@ -93,13 +94,8 @@ public class MenuClickListener implements Listener {
                 BackgroundSelectionMenu.open(player, Util.sortByName(BackgroundLoader.getAllBackgrounds(), DndBackground::getName), holder.getSessionId());
             }
             case OPEN_PLAYER_OPTION_SELECTION -> {
-                List<PendingChoice<?>> pending = session.getPendingChoices();
-                if (pending.isEmpty()) {
-                    pending = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
-                }
-                if (!pending.isEmpty()) {
-                    PlayersChoiceMenu.open(player, pending, holder.getSessionId());
-                }
+                // Route to the new tabbed choice menu
+                TabbedChoiceMenu.open(player, holder.getSessionId());
             }
             case OPEN_ABILITY_ALLOCATION -> {
                 session.markAbilityAllocationVisited();
@@ -238,163 +234,165 @@ public class MenuClickListener implements Listener {
         CharacterCreationSheetMenu.open(player, holder.getSessionId());
     }
 
-    private void handlePlayersChoiceClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
-        if (action == MenuAction.CHOOSE_OPTION) {
-            String[] parts = splitChoicePayload(payload);
-            if (parts == null) return;
-
-            String choiceId = parts[0];
-            String optionKey = parts[1];
-
-            CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
-            if (session == null) {
-                player.closeInventory();
-                player.sendMessage("No character creation session found.");
-                return;
-            }
-
-            if (session.toggleChoiceByKey(choiceId, optionKey)) {
-                PlayersChoiceMenu.open(player, session.getPendingChoices(), holder.getSessionId());
-            }
-        } else if (action == MenuAction.DRILLDOWN_OPEN) {
-            String[] parts = splitChoicePayload(payload);
-            if (parts == null) return;
-            String choiceId = parts[0];
-            String wildcardKey = parts[1];
-
-            CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
-            if (session == null) {
-                player.closeInventory();
-                player.sendMessage("No character creation session found.");
-            }
-
-            var pc = session.findPendingChoice(choiceId);
-            Object optObj = pc.optionForKey(wildcardKey);
-
-            if (!(optObj instanceof EquipmentOption eo)) return;
-
-            String tag = extractTagFromWildcard(eo);
-            if (tag == null) return;
-
-            var ids = TagRegistry.itemsFor(tag);
-            List<String> subKeys = ids.stream().map(id -> "item:" + id).toList();
-
-            Function<String, String> disp = pc::displayFor;
-            String title = "Choose specific: " + pc.displayFor(wildcardKey);
-
-//            List<String> subKeys = resolveSubOptions(wildcardKey);
-//            Function<String, String> disp = k -> (pc != null ? pc.displayFor(k) : k);
-//            String title = "Choose specific: " + (pc != null ? pc.displayFor(wildcardKey) : wildcardKey);
-//
-            PlayersChoiceMenu.openDrilldown(player, holder.getSessionId(), choiceId, wildcardKey, title, subKeys, disp);
-        } else if (action == MenuAction.DRILLDOWN_PICK) {
-            String[] parts = (payload != null) ? payload.split("\\|", 3) : null;
-            if (parts == null || parts.length < 3) return;
-            String choiceId = parts[0];
-            String wildcardKey = parts[1];
-            String subKey = parts[2];
-
-            CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
-            if (session == null) {
-                player.closeInventory();
-                player.sendMessage("No character creation session found.");
-            }
-
-            var pc = session.findPendingChoice(choiceId);
-            if (pc != null) {
-                pc.deselectKey(wildcardKey);
-                session.toggleChoiceByKey(choiceId, subKey);
-            }
-
-            Object optObj = pc.optionForKey(wildcardKey);
-
-            if (optObj instanceof EquipmentOption eo) {
-                if (eo.getKind() == EquipmentOption.Kind.TAG) {
-                    pc.deselectKey(wildcardKey);
-                    session.toggleChoiceByKey(choiceId, subKey);
-                } else if (eo.getKind() == EquipmentOption.Kind.BUNDLE) {
-                    var chosenItem = itemFromKey(subKey);
-                    if (chosenItem != null) {
-                        List<EquipmentOption> newParts = new ArrayList<>();
-                        for (var p : eo.getParts()) {
-                            if (p.getKind() == EquipmentOption.Kind.TAG) {
-                                newParts.add(chosenItem);
-                            } else {
-                                newParts.add(p);
-                            }
-                        }
-                        var newBundle = EquipmentOption.bundle(newParts);
-
-                        pc.deselectKey(wildcardKey);
-
-                        var rawPc = (PendingChoice) pc;
-                        rawPc.toggleOption(newBundle, Collections.emptySet());
-                    }
-                } else {}
-            } else {
-                pc.deselectKey(wildcardKey);
-                session.toggleChoiceByKey(choiceId, subKey);
-            }
-
-            PlayersChoiceMenu.open(player, session.getPendingChoices(), holder.getSessionId());
-        } else if (action == MenuAction.DRILLDOWN_BACK) {
-            CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
-            if (session == null) {
-                player.closeInventory();
-                player.sendMessage("No character creation session found.");
-            }
-            PlayersChoiceMenu.open(player, session.getPendingChoices(), holder.getSessionId());
-        } else if (action == MenuAction.CONFIRM_PLAYER_CHOICES) {
-            CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
-            if (session == null) {
-                player.closeInventory();
-                player.sendMessage("No character creation session found.");
-                return;
-            }
-
-            if (!session.allChoicesSatisfied()) {
-                player.sendMessage("You still have unpicked options");
-                return;
-            }
-
-            // ToDo: Apply chosen options to the character sheet here:
-            // - languages/tools/equipment, etc., based on each pendingChoice
-            // Then clear and advance to next step Ability Allocation
-//            session.clearPendingChoices();
+    private void handleTabbedChoicesClick(Player player, InventoryClickEvent event, MenuHolder holder, ItemStack item, MenuAction action, String payload) {
+        CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
+        if (session == null) {
             player.closeInventory();
-            player.sendMessage("Choices saved!");
-            CharacterCreationSheetMenu.open(player, holder.getSessionId());
+            player.sendMessage("No character creation session found.");
+            return;
         }
-    }
 
-    private List<String> resolveSubOptions(String wildcardKey) {
-        String tag = wildcardKey.substring("tag:".length());
-        var ids = TagRegistry.itemsFor(tag);
-        return ids.stream().map(id -> "item:" + id).toList();
-    }
-
-    private String extractTagFromWildcard(EquipmentOption opt) {
-        if (opt.getKind() == EquipmentOption.Kind.TAG) return opt.getIdOrTag();
-        if (opt.getKind() == EquipmentOption.Kind.BUNDLE) {
-            for (var p : opt.getParts()) {
-                if (p.getKind() == EquipmentOption.Kind.TAG) {
-                    return p.getIdOrTag();
+        switch (action) {
+            case SWITCH_CHOICE_TAB -> {
+                // Payload is the category name (e.g., "LANGUAGE", "SKILL")
+                try {
+                    ChoiceCategory newTab = ChoiceCategory.valueOf(payload);
+                    TabbedChoiceMenu.open(player, holder.getSessionId(), newTab);
+                } catch (IllegalArgumentException e) {
+                    player.sendMessage("Invalid category: " + payload);
                 }
             }
+            case TOGGLE_CHOICE_OPTION -> {
+                // Payload format: "CATEGORY|choiceId|optionKey"
+                String[] parts = payload.split("\\|", 3);
+                if (parts.length != 3) return;
+
+                try {
+                    ChoiceCategory category = ChoiceCategory.valueOf(parts[0]);
+                    String choiceId = parts[1];
+                    String optionKey = parts[2];
+
+                    // Rebuild and merge choices
+                    List<PendingChoice<?>> allChoices = session.getPendingChoices();
+                    if (allChoices.isEmpty()) {
+                        allChoices = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
+                    }
+
+                    List<MergedChoice> merged = io.papermc.jkvttplugin.util.ChoiceMerger.mergeChoices(allChoices, session);
+
+                    // Find the specific merged choice by matching both category AND choice ID
+                    MergedChoice targetChoice = merged.stream()
+                            .filter(mc -> mc.getCategory() == category && mc.getChoiceId().equals(choiceId))
+                            .findFirst()
+                            .orElse(null);
+
+                    if (targetChoice != null) {
+                        targetChoice.toggleOption(optionKey);
+                        TabbedChoiceMenu.open(player, holder.getSessionId(), category);
+                    }
+                } catch (IllegalArgumentException e) {
+                    player.sendMessage("Invalid choice: " + payload);
+                }
+            }
+            case DRILLDOWN_OPEN -> {
+                // Payload format: "choiceId|wildcardKey"
+                String[] parts = splitChoicePayload(payload);
+                if (parts == null) return;
+                String choiceId = parts[0];
+                String wildcardKey = parts[1];
+
+                var pc = session.findPendingChoice(choiceId);
+                if (pc == null) return;
+
+                Object optObj = pc.optionForKey(wildcardKey);
+                if (!(optObj instanceof EquipmentOption eo)) return;
+
+                String tag = EquipmentUtil.extractTag(eo);
+                if (tag == null) return;
+
+                var ids = TagRegistry.itemsFor(tag);
+                List<String> subKeys = ids.stream().map(id -> "item:" + id).toList();
+
+                Function<String, String> disp = pc::displayFor;
+                String title = "Choose specific: " + pc.displayFor(wildcardKey);
+
+                // Determine which category to return to
+                ChoiceCategory returnCategory = determineCategory(pc);
+
+                TabbedChoiceMenu.openDrilldown(player, holder.getSessionId(), choiceId, wildcardKey, title, subKeys, disp, returnCategory);
+            }
+            case DRILLDOWN_PICK -> {
+                // Payload format: "choiceId|wildcardKey|subKey|categoryName"
+                String[] parts = (payload != null) ? payload.split("\\|", 4) : null;
+                if (parts == null || parts.length < 4) return;
+                String choiceId = parts[0];
+                String wildcardKey = parts[1];
+                String subKey = parts[2];
+                String categoryName = parts[3];
+
+                var pc = session.findPendingChoice(choiceId);
+                if (pc == null) return;
+
+                Object optObj = pc.optionForKey(wildcardKey);
+
+                if (optObj instanceof EquipmentOption eo) {
+                    if (eo.getKind() == EquipmentOption.Kind.TAG) {
+                        pc.deselectKey(wildcardKey);
+                        session.toggleChoiceByKey(choiceId, subKey);
+                    } else if (eo.getKind() == EquipmentOption.Kind.BUNDLE) {
+                        var chosenItem = EquipmentUtil.fromItemKey(subKey);
+                        if (chosenItem != null) {
+                            List<EquipmentOption> newParts = new ArrayList<>();
+                            for (var p : eo.getParts()) {
+                                if (p.getKind() == EquipmentOption.Kind.TAG) {
+                                    newParts.add(chosenItem);
+                                } else {
+                                    newParts.add(p);
+                                }
+                            }
+                            var newBundle = EquipmentOption.bundle(newParts);
+
+                            pc.deselectKey(wildcardKey);
+
+                            var rawPc = (PendingChoice) pc;
+                            rawPc.toggleOption(newBundle, Collections.emptySet());
+                        }
+                    }
+                } else {
+                    pc.deselectKey(wildcardKey);
+                    session.toggleChoiceByKey(choiceId, subKey);
+                }
+
+                // Return to the tabbed choice menu with the appropriate category
+                try {
+                    ChoiceCategory category = ChoiceCategory.valueOf(categoryName);
+                    TabbedChoiceMenu.open(player, holder.getSessionId(), category);
+                } catch (IllegalArgumentException e) {
+                    TabbedChoiceMenu.open(player, holder.getSessionId());
+                }
+            }
+            case DRILLDOWN_BACK -> {
+                // Payload is the category name to return to
+                try {
+                    ChoiceCategory category = ChoiceCategory.valueOf(payload);
+                    TabbedChoiceMenu.open(player, holder.getSessionId(), category);
+                } catch (IllegalArgumentException e) {
+                    TabbedChoiceMenu.open(player, holder.getSessionId());
+                }
+            }
+            case VIEW_CHOICE_INFO -> {
+                // Do nothing - it's just informational
+            }
+            case CONFIRM_PLAYER_CHOICES -> {
+                if (!session.allChoicesSatisfied()) {
+                    player.sendMessage("You still have unpicked options");
+                    return;
+                }
+
+                player.closeInventory();
+                player.sendMessage("Choices saved!");
+                CharacterCreationSheetMenu.open(player, holder.getSessionId());
+            }
         }
-        return null;
     }
 
-    private EquipmentOption itemFromKey(String key) {
-        if (key == null || !key.startsWith("item:")) return null;
-        String rest = key.substring(5);
-        int at = rest.indexOf('@');
-        String id = (at >= 0) ? rest.substring(0, at) : rest;
-        int qty = (at >= 0) ? safeInt(rest.substring(at + 1), 1) : 1;
-        return EquipmentOption.item(id, qty);
+    /**
+     * Determines the category for a PendingChoice to use when returning from drilldown.
+     */
+    private ChoiceCategory determineCategory(PendingChoice<?> pc) {
+        if (pc.getPlayersChoice() == null) return ChoiceCategory.EQUIPMENT;
+        return ChoiceCategory.fromChoiceType(pc.getPlayersChoice().getType(), pc.getId());
     }
-
-    private int safeInt(String s, int def) { try { return Integer.parseInt(s.trim()); } catch (Exception e) { return def; } }
 
     private static String[] splitChoicePayload(String payload) {
         if (payload == null) return null;
@@ -437,7 +435,7 @@ public class MenuClickListener implements Listener {
                         // Apply a bonus - determine which value based on distribution
                         String distKey = session.getRacialBonusDistribution();
                         if (distKey != null) {
-                            List<Integer> bonusValues = parseDistributionKey(distKey);
+                            List<Integer> bonusValues = Util.parseDistribution(distKey);
                             int bonusToApply = findNextAvailableBonus(session, bonusValues);
                             if (bonusToApply > 0) {
                                 session.setRacialBonus(ability, bonusToApply);
@@ -470,20 +468,6 @@ public class MenuClickListener implements Listener {
                 AbilityAllocationMenu.open(player, session);
             }
         }
-    }
-
-    /**
-     * Parse distribution key "[2, 1]" into List<Integer> [2, 1]
-     */
-    private List<Integer> parseDistributionKey(String distKey) {
-        List<Integer> result = new ArrayList<>();
-        String[] parts = distKey.replace("[", "").replace("]", "").split(",");
-        for (String part : parts) {
-            try {
-                result.add(Integer.parseInt(part.trim()));
-            } catch (NumberFormatException ignored) {}
-        }
-        return result;
     }
 
     /**

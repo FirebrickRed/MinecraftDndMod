@@ -176,4 +176,26 @@ public class Util {
 
         return lines;
     }
+
+    /**
+     * Parses a distribution key string (e.g., "[2, 1]" or "[1, 1, 1]") into a list of integers.
+     * Used for ability score distributions and similar numeric arrays stored as strings.
+     *
+     * @param distKey the distribution key string (e.g., "[2, 1]")
+     * @return list of integers, or empty list if parsing fails
+     */
+    public static List<Integer> parseDistribution(String distKey) {
+        List<Integer> result = new ArrayList<>();
+        if (distKey == null || distKey.isBlank()) return result;
+
+        String[] parts = distKey.replace("[", "").replace("]", "").split(",");
+        for (String part : parts) {
+            try {
+                result.add(Integer.parseInt(part.trim()));
+            } catch (NumberFormatException ignored) {
+                // Skip invalid numbers
+            }
+        }
+        return result;
+    }
 }

@@ -15,4 +15,15 @@ public enum Ability {
             return null; // Optionally log this
         }
     }
+
+    /**
+     * Calculates the ability modifier for a given ability score.
+     * Formula: (abilityScore - 10) / 2, rounded down
+     *
+     * @param abilityScore The ability score (typically 1-30)
+     * @return The modifier (e.g., score 16 -> modifier +3)
+     */
+    public static int getModifier(int abilityScore) {
+        return Math.floorDiv(abilityScore - 10, 2);
+    }
 }

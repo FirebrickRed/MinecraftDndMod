@@ -463,7 +463,7 @@ public class CharacterSheet {
 
     public int getModifier(Ability ability) {
         int value = abilityScores.get(ability);
-        return (value - 10) / 2;
+        return Ability.getModifier(value);
     }
 
     public void gainTempHealth(int tempHP) {

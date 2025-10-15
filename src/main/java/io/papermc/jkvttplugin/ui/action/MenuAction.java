@@ -16,6 +16,9 @@ public enum MenuAction {
     DRILLDOWN_PICK,
     DRILLDOWN_BACK,
     CONFIRM_PLAYER_CHOICES,
+    SWITCH_CHOICE_TAB,       // Switch to different category tab in tabbed choices menu
+    TOGGLE_CHOICE_OPTION,    // Toggle option selection in merged choice
+    VIEW_CHOICE_INFO,        // View informational item (no action)
     OPEN_ABILITY_ALLOCATION,
     INCREASE_ABILITY,
     DECREASE_ABILITY,

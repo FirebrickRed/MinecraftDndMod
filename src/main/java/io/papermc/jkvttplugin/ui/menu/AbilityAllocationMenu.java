@@ -10,6 +10,7 @@ import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.ItemUtil;
+import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -204,7 +205,7 @@ public class AbilityAllocationMenu {
             lore.add(Component.text("Racial: +" + racialBonus).color(NamedTextColor.GREEN));
         }
         lore.add(Component.text("Total: " + totalScore).color(NamedTextColor.YELLOW));
-        int mod = abilityMod(totalScore);
+        int mod = Ability.getModifier(totalScore);
         lore.add(Component.text("Modifier: " + formatMod(mod)).color(NamedTextColor.AQUA));
 
         tile.editMeta(m -> {
@@ -224,7 +225,8 @@ public class AbilityAllocationMenu {
     }
 
     /**
-     * Build a racial bonus slot - either a fixed label or a choice button
+     * Build a racial bonus slot - either a fixed label or a choice button.
+     * Uses ItemStack amount to visually show bonus value (e.g., stack of 2 for +2 bonus).
      */
     private static void buildBonusSlot(
             Inventory inv,
@@ -240,8 +242,8 @@ public class AbilityAllocationMenu {
         // Check if this ability has a fixed bonus
         Integer fixedBonus = fixedBonuses.get(ability);
         if (fixedBonus != null && fixedBonus > 0) {
-            // Show a fixed bonus label (only in this column)
-            ItemStack label = new ItemStack(Material.GREEN_STAINED_GLASS_PANE);
+            // Show fixed bonus with stack count matching bonus value
+            ItemStack label = new ItemStack(Material.GREEN_STAINED_GLASS_PANE, fixedBonus);
             label.editMeta(m -> {
                 m.displayName(Component.text("+" + fixedBonus + " " + source).color(NamedTextColor.GREEN));
                 m.lore(List.of(Component.text("Fixed bonus").color(NamedTextColor.DARK_GRAY)));
@@ -259,7 +261,6 @@ public class AbilityAllocationMenu {
             NamedTextColor color;
             String displayText;
 
-            // ToDo: the 2 should apply to the same ability not different ones. right?
             if (currentBonus > 0) {
                 // This ability has a bonus applied - show LIME
                 material = Material.LIME_STAINED_GLASS_PANE;
@@ -269,7 +270,7 @@ public class AbilityAllocationMenu {
                 // Check if there are bonuses left to apply
                 int totalApplied = session.getTotalRacialBonusesApplied();
                 String distKey = session.getRacialBonusDistribution();
-                int totalAllowed = calculateTotalBonusPoints(distKey);
+                int totalAllowed = Util.parseDistribution(distKey).stream().mapToInt(Integer::intValue).sum();
 
                 if (totalApplied < totalAllowed) {
                     // Can still apply bonuses - show GREEN
@@ -284,7 +285,9 @@ public class AbilityAllocationMenu {
                 }
             }
 
-            ItemStack button = new ItemStack(material);
+            // Use stack count to show bonus value visually
+            int stackAmount = currentBonus > 0 ? currentBonus : 1;
+            ItemStack button = new ItemStack(material, stackAmount);
             button.editMeta(m -> {
                 m.displayName(Component.text(displayText).color(color));
                 List<Component> lore = new ArrayList<>();
@@ -303,28 +306,8 @@ public class AbilityAllocationMenu {
         // If no fixed bonus and no choice, leave the slot empty
     }
 
-    /**
-     * Calculate total bonus points from a distribution key like "[2, 1]"
-     */
-    private static int calculateTotalBonusPoints(String distKey) {
-        if (distKey == null) return 0;
-        // Parse the distribution string: "[2, 1]" -> 3, "[1, 1, 1]" -> 3
-        int total = 0;
-        String[] parts = distKey.replace("[", "").replace("]", "").split(",");
-        for (String part : parts) {
-            try {
-                total += Integer.parseInt(part.trim());
-            } catch (NumberFormatException ignored) {}
-        }
-        return total;
-    }
-
     private static int slot(int row, int col) {
         return row * 9 + col;
-    }
-
-    private static int abilityMod(int score) {
-        return Math.floorDiv(score - 10, 2);
     }
 
     private static String formatMod(int mod) {
