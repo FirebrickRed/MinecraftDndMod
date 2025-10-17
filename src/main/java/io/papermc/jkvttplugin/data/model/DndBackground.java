@@ -1,6 +1,7 @@
 package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.util.LoreBuilder;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -175,64 +176,37 @@ public class DndBackground {
     }
 
     public List<Component> getSelectionMenuLore() {
-        List<Component> lore = new ArrayList<>();
+        LoreBuilder builder = LoreBuilder.create();
 
         // 1. Skill proficiencies (immediate mechanical benefit)
         if (skills != null && !skills.isEmpty()) {
-            lore.add(Component.text("Skills:").color(NamedTextColor.GREEN));
-            for (String skill : skills) {
-                lore.add(Component.text("  • " + Util.prettify(skill)).color(NamedTextColor.GREEN));
-            }
+            List<String> prettySkills = skills.stream()
+                    .map(Util::prettify)
+                    .toList();
+            builder.addListSection("Skills:", prettySkills, NamedTextColor.GREEN);
         }
 
         // 2. Tool proficiencies (if any)
         if (tools != null && !tools.isEmpty()) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Tools:").color(NamedTextColor.GRAY));
-            for (String tool : tools) {
-                lore.add(Component.text("  • " + Util.prettify(tool)).color(NamedTextColor.GRAY));
-            }
+            List<String> prettyTools = tools.stream()
+                    .map(Util::prettify)
+                    .toList();
+            builder.addListSection("Tools:", prettyTools, NamedTextColor.GRAY);
         }
 
-        // 3. Languages (flavor + utility)
-        if (languages != null && !languages.isEmpty()) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Languages:").color(NamedTextColor.AQUA));
-            for (String lang : languages) {
-                lore.add(Component.text("  • " + lang).color(NamedTextColor.AQUA));
-            }
-        }
-        for (ChoiceEntry choice : playerChoices) {
-            if (choice.type() == PlayersChoice.ChoiceType.LANGUAGE) {
-                if (languages.isEmpty()) {
-                    lore.add(Component.text(""));
-                    lore.add(Component.text("Languages:").color(NamedTextColor.AQUA));
-                }
-                PlayersChoice<String> pc = (PlayersChoice<String>) choice.pc();
-                lore.add(Component.text("  + Choose " + pc.getChoose() + " language(s)")
-                        .color(NamedTextColor.YELLOW));
-            }
-        }
+        // 3. Languages (fixed + choices)
+        builder.addListSection("Languages:", languages, NamedTextColor.AQUA);
+        builder.addLanguageChoices(languages, playerChoices);
 
         // 4. Feature name (unique ability)
         if (feature != null && !feature.isEmpty()) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Feature:").color(NamedTextColor.GOLD));
-            lore.add(Component.text("  • " + feature).color(NamedTextColor.GOLD));
+            builder.addListSection("Feature:", List.of(feature), NamedTextColor.GOLD);
         }
 
         // 5. Description preview (flavor text - keep short!)
-        if (description != null && !description.isEmpty()) {
-            lore.add(Component.text(""));
-            String shortDesc = description.length() > 60
-                    ? description.substring(0, 57) + "..."
-                    : description;
-            lore.add(Component.text(shortDesc)
-                    .color(NamedTextColor.DARK_GRAY)
-                    .decoration(TextDecoration.ITALIC, true));
-        }
+        builder.addDescription(description, 60);
 
-        return lore;
+        return builder.build();
     }
 
     public static class Builder {

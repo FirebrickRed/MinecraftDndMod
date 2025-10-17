@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.data.model;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.util.ChoiceUtil;
+import io.papermc.jkvttplugin.util.LoreBuilder;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -123,80 +124,45 @@ public class DndSubRace {
     }
 
     public List<Component> getSelectionMenuLore() {
-        List<Component> lore = new ArrayList<>();
+        LoreBuilder builder = LoreBuilder.create();
 
         // 1. Ability score bonuses (main mechanical difference from base race)
         if (fixedAbilityScores != null && !fixedAbilityScores.isEmpty()) {
-            lore.add(Component.text("Ability Bonuses:").color(NamedTextColor.GOLD));
+            List<String> abilityLines = new ArrayList<>();
             for (Map.Entry<Ability, Integer> entry : fixedAbilityScores.entrySet()) {
-                lore.add(Component.text("  +" + entry.getValue() + " " + entry.getKey())
-                        .color(NamedTextColor.YELLOW));
+                abilityLines.add("+" + entry.getValue() + " " + entry.getKey());
             }
+            builder.addListSection("Ability Bonuses:", abilityLines, NamedTextColor.GOLD, NamedTextColor.YELLOW);
         }
 
         // 2. Ability score choice (e.g., Tasha's custom lineage)
         if (abilityScoreChoice != null) {
-            // ToDo: check for fixedAbilityScores so there isn't a weird blank space
-            if (fixedAbilityScores == null) {
-                lore.add(Component.text(""));
-            }
-            lore.add(Component.text("Ability Score Choice:").color(NamedTextColor.GOLD));
+            builder.blankLine()
+                   .addLine("Ability Score Choice:", NamedTextColor.GOLD);
             for (List<Integer> distribution : abilityScoreChoice.getDistributions()) {
                 String distText = distribution.stream()
                         .map(n -> "+" + n)
                         .collect(Collectors.joining("/"));
-                lore.add(Component.text("  Choose: " + distText).color(NamedTextColor.YELLOW));
+                builder.addLine("  Choose: " + distText, NamedTextColor.YELLOW);
             }
         }
-
 
         // 3. Traits (unique features of this subrace)
         if (traits != null && !traits.isEmpty()) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Traits:").color(NamedTextColor.AQUA));
-            for (String trait : traits) {
-                // Truncate long traits
-                String displayTrait = trait.length() > 40
-                        ? trait.substring(0, 37) + "..."
-                        : trait;
-                lore.add(Component.text("  • " + displayTrait)
-                        .color(NamedTextColor.WHITE));
-            }
+            List<String> truncatedTraits = traits.stream()
+                    .map(trait -> trait.length() > 40 ? trait.substring(0, 37) + "..." : trait)
+                    .toList();
+            builder.addListSection("Traits:", truncatedTraits, NamedTextColor.AQUA, NamedTextColor.WHITE);
         }
 
-        // 4. Languages (if subrace grants additional languages)
-        if (languages != null && !languages.isEmpty()) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Languages:").color(NamedTextColor.AQUA));
-            for (String lang : languages) {
-                lore.add(Component.text("  • " + lang).color(NamedTextColor.AQUA));
-            }
-        }
-        // Check for language choices
-        for (ChoiceEntry choice : playerChoices) {
-            if (choice.type() == PlayersChoice.ChoiceType.LANGUAGE) {
-                if (languages.isEmpty()) {
-                    lore.add(Component.text(""));
-                    lore.add(Component.text("Languages:").color(NamedTextColor.AQUA));
-                }
-                PlayersChoice<String> pc = (PlayersChoice<String>) choice.pc();
-                lore.add(Component.text("  + Choose " + pc.getChoose() + " language(s)")
-                        .color(NamedTextColor.YELLOW));
-            }
-        }
+        // 4. Languages (fixed + choices)
+        builder.addListSection("Languages:", languages, NamedTextColor.AQUA);
+        builder.addLanguageChoices(languages, playerChoices);
 
         // 5. Description (flavor - keep brief)
-        if (description != null && !description.isEmpty()) {
-            lore.add(Component.text(""));
-            String shortDesc = description.length() > 50
-                    ? description.substring(0, 47) + "..."
-                    : description;
-            lore.add(Component.text(shortDesc)
-                    .color(NamedTextColor.DARK_GRAY)
-                    .decoration(TextDecoration.ITALIC, true));
-        }
+        builder.addDescription(description, 50);
 
-        return lore;
+        return builder.build();
     }
 
     // Builder

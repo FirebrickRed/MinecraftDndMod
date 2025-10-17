@@ -5,6 +5,7 @@ import io.papermc.jkvttplugin.data.model.enums.CreatureType;
 import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.data.model.enums.Size;
 import io.papermc.jkvttplugin.util.ChoiceUtil;
+import io.papermc.jkvttplugin.util.LoreBuilder;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -173,84 +174,66 @@ public class DndRace {
     }
 
     public List<Component> getSelectionMenuLore() {
-        List<Component> lore = new ArrayList<>();
+        LoreBuilder builder = LoreBuilder.create();
 
         // Basic info - Size
         // Check if there's a size choice in playerChoices first
         boolean hasSizeChoice = false;
+        List<String> sizeOptions = new ArrayList<>();
         for (ChoiceEntry choice : playerChoices) {
             if (choice.id().contains("size")) {
                 hasSizeChoice = true;
                 PlayersChoice<?> pc = choice.pc();
                 if (pc.getOptions() != null && !pc.getOptions().isEmpty()) {
-                    lore.add(Component.text("Size:").color(NamedTextColor.YELLOW));
                     for (Object option : pc.getOptions()) {
-                        lore.add(Component.text("  • " + Util.prettify(option.toString()))
-                                .color(NamedTextColor.YELLOW));
+                        sizeOptions.add(Util.prettify(option.toString()));
                     }
                 }
                 break;
             }
         }
 
-        if (!hasSizeChoice && size != null) {
-            lore.add(Component.text("Size: " + size));
+        if (hasSizeChoice && !sizeOptions.isEmpty()) {
+            builder.addListSection("Size:", sizeOptions, NamedTextColor.YELLOW);
+        } else if (size != null) {
+            builder.addLine("Size: " + size);
         }
 
-        lore.add(Component.text("Speed: " + speed + " ft"));
+        builder.addLine("Speed: " + speed + " ft");
 
         // Ability scores
         if (!fixedAbilityScores.isEmpty()) {
-            lore.add(Component.text("")); // Blank line
-            lore.add(Component.text("Ability Bonuses:").color(NamedTextColor.GOLD));
+            List<String> abilityLines = new ArrayList<>();
             for (Map.Entry<Ability, Integer> entry : fixedAbilityScores.entrySet()) {
-                lore.add(Component.text("  +" + entry.getValue() + " " + entry.getKey()));
+                abilityLines.add("+" + entry.getValue() + " " + entry.getKey());
             }
+            builder.addListSection("Ability Bonuses:", abilityLines, NamedTextColor.GOLD);
         }
+
         if (abilityScoreChoice != null) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Ability Score Choice:").color(NamedTextColor.GOLD));
-            // Show the distributions
+            builder.blankLine()
+                   .addLine("Ability Score Choice:", NamedTextColor.GOLD);
             for (List<Integer> distribution : abilityScoreChoice.getDistributions()) {
                 String distText = distribution.stream()
                         .map(n -> "+" + n)
                         .collect(Collectors.joining("/"));
-                lore.add(Component.text("  Choose: " + distText).color(NamedTextColor.YELLOW));
+                builder.addLine("  Choose: " + distText, NamedTextColor.YELLOW);
             }
         }
 
         // Subraces
         if (hasSubraces()) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Subraces:").color(NamedTextColor.YELLOW));
-            for (DndSubRace subrace : subraces.values()) {
-                lore.add(Component.text("  • " + subrace.getName()).color(NamedTextColor.WHITE));
-            }
+            List<String> subraceNames = subraces.values().stream()
+                    .map(DndSubRace::getName)
+                    .toList();
+            builder.addListSection("Subraces:", subraceNames, NamedTextColor.YELLOW, NamedTextColor.WHITE);
         }
 
-        // Languages
-        if (!languages.isEmpty()) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Languages:").color(NamedTextColor.AQUA));
-            for (String lang : languages) {
-                lore.add(Component.text("  • " + lang).color(NamedTextColor.AQUA));
-            }
-        }
+        // Languages (fixed + choices)
+        builder.addListSection("Languages:", languages, NamedTextColor.AQUA);
+        builder.addLanguageChoices(languages, playerChoices);
 
-        // Check for language choices
-        for (ChoiceEntry choice : playerChoices) {
-            if (choice.type() == PlayersChoice.ChoiceType.LANGUAGE) {
-                if (languages.isEmpty()) {
-                    lore.add(Component.text(""));
-                    lore.add(Component.text("Languages:").color(NamedTextColor.AQUA));
-                }
-                PlayersChoice<String> pc = (PlayersChoice<String>) choice.pc();
-                lore.add(Component.text("  + Choose " + pc.getChoose() + " language(s)")
-                        .color(NamedTextColor.YELLOW));
-            }
-        }
-
-        return lore;
+        return builder.build();
     }
 
 

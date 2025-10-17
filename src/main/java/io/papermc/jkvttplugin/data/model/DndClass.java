@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.util.LoreBuilder;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -267,49 +268,43 @@ public class DndClass {
     }
 
     public List<Component> getSelectionMenuLore() {
-        List<Component> lore = new ArrayList<>();
+        LoreBuilder builder = LoreBuilder.create();
 
         // 1. Hit Die (critical for survivability)
-        lore.add(Component.text("Hit Die: d" + hitDie).color(NamedTextColor.RED));
+        builder.addLine("Hit Die: d" + hitDie, NamedTextColor.RED);
 
         // 2. Saving Throws
         if (savingThrows != null && !savingThrows.isEmpty()) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Saving Throws:").color(NamedTextColor.GOLD));
-            for (Ability ability : savingThrows) {
-                lore.add(Component.text("  • " + ability.toString()).color(NamedTextColor.GOLD));
-            }
+            List<String> abilityNames = savingThrows.stream()
+                    .map(Ability::toString)
+                    .toList();
+            builder.addListSection("Saving Throws:", abilityNames, NamedTextColor.GOLD);
         }
 
         // 3. Spellcasting (if applicable - major class distinction!)
         if (spellcasting != null || spellcastingAbility != null) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("✦ Spellcaster").color(NamedTextColor.LIGHT_PURPLE));
+            builder.blankLine()
+                   .addLine("✦ Spellcaster", NamedTextColor.LIGHT_PURPLE);
             if (spellcastingAbility != null) {
-                lore.add(Component.text("  Casting: " + spellcastingAbility));
+                builder.addLine("  Casting: " + spellcastingAbility);
             }
         }
 
         // 4. Key proficiencies (armor = survivability)
         if (armorProficiencies != null && !armorProficiencies.isEmpty()) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Armor:").color(NamedTextColor.GRAY));
-            for (String armor : armorProficiencies) {
-                lore.add(Component.text("  • " + Util.prettify(armor)).color(NamedTextColor.GRAY));
-            }
+            List<String> prettyArmor = armorProficiencies.stream()
+                    .map(Util::prettify)
+                    .toList();
+            builder.addListSection("Armor:", prettyArmor, NamedTextColor.GRAY);
         }
 
         // 5. Level 1 features preview (unique flavor)
         // ToDo: Starting Features title is present but doesn't show the text below (currently in progress)
         if (featuresByLevel != null && featuresByLevel.containsKey(1)) {
-            lore.add(Component.text(""));
-            lore.add(Component.text("Starting Features:").color(NamedTextColor.YELLOW));
-            for (String feature : featuresByLevel.get(1)) {
-                lore.add(Component.text("  • " + feature).color(NamedTextColor.WHITE));
-            }
+            builder.addListSection("Starting Features:", featuresByLevel.get(1), NamedTextColor.YELLOW, NamedTextColor.WHITE);
         }
 
-        return lore;
+        return builder.build();
     }
 
     // Builder
