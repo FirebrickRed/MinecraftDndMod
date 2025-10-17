@@ -1,0 +1,206 @@
+name: Ranger
+hit_die: 10
+proficiency: [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]
+primary_abilities:
+  - Dexterity
+  - Wisdom
+saving_throws:
+  - Strength
+  - Dexterity
+armor_proficiencies:
+  - light_armor
+  - medium_armor
+  - shields
+weapon_proficiencies:
+  - simple_weapons
+  - martial_weapons
+tool_proficiencies: []
+spellcasting:
+  casting_ability: Wisdom
+  preparation_type: known
+  ritual_casting: false
+  spellcasting_focus_type: druidic_focus
+  spell_list: ranger
+  spellcasting_level: 2
+  cantrips_known_by_level: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+  spells_known_by_level: [0, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11]
+  spell_slots_by_level:
+    1: [0, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    2: [0, 0, 0, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    3: [0, 0, 0, 0, 0, 0, 0, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    4: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 3, 3, 3, 3]
+    5: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2]
+  slot_recovery: long_rest
+features_by_level:
+  1:
+    - name: Favored Enemy
+      type: choice
+      description: You have significant experience studying, tracking, hunting, and even talking to a certain type of enemy. Choose a type of favored enemy.
+    - name: Natural Explorer
+      type: choice
+      description: You are particularly familiar with one type of natural environment and are adept at traveling and surviving in such regions.
+  2:
+    - name: Fighting Style
+      type: choice
+      description: You adopt a particular style of fighting as your specialty. Choose one of the following options.
+    - name: Spellcasting
+      type: spellcasting
+      casting_ability: Wisdom
+      description: You have learned to use the magical essence of nature to cast spells, much as a druid does.
+  3:
+    - name: Ranger Archetype
+      type: subclass
+      description: Choose an archetype that you strive to emulate. Grants subclass features at 3, 7, 11, and 15.
+    - name: Primeval Awareness
+      type: action
+      description: You can use your action and expend one ranger spell slot to focus your awareness on the region around you. You can sense certain types of creatures within 1 mile of you (or within 6 miles if you are in your favored terrain).
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  5:
+    - name: Extra Attack
+      type: passive
+      description: You can attack twice instead of once whenever you take the Attack action.
+  6:
+    - name: Favored Enemy
+      type: choice
+      description: You gain an additional favored enemy and an associated language.
+    - name: Natural Explorer
+      type: choice
+      description: You gain an additional favored terrain.
+  7:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Ranger Archetype.
+  8:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+    - name: Land's Stride
+      type: passive
+      description: Moving through nonmagical difficult terrain costs you no extra movement. You can also pass through nonmagical plants without being slowed by them and without taking damage from them if they have thorns, spines, or a similar hazard.
+  9: []
+  10:
+    - name: Natural Explorer
+      type: choice
+      description: You gain an additional favored terrain.
+    - name: Hide in Plain Sight
+      type: action
+      description: You can spend 1 minute creating camouflage for yourself. You must have access to fresh mud, dirt, plants, soot, and other naturally occurring materials with which to create your camouflage. Once camouflaged, you gain a +10 bonus to Dexterity (Stealth) checks.
+  11:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Ranger Archetype.
+  12:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  13: []
+  14:
+    - name: Favored Enemy
+      type: choice
+      description: You gain an additional favored enemy and an associated language.
+    - name: Vanish
+      type: passive
+      description: You can use the Hide action as a bonus action. You can't be tracked by nonmagical means, unless you choose to leave a trail.
+  15:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Ranger Archetype.
+  16:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  17: []
+  18:
+    - name: Feral Senses
+      type: passive
+      description: You gain preternatural senses that help you fight creatures you can't see. When you attack a creature you can't see, your inability to see it doesn't impose disadvantage on your attack rolls. You are also aware of the location of any invisible creature within 30 feet of you.
+  19:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  20:
+    - name: Foe Slayer
+      type: passive
+      description: You become an unparalleled hunter of your enemies. Once on each of your turns, you can add your Wisdom modifier to the attack roll or the damage roll of an attack you make against one of your favored enemies.
+starting_equipment:
+  - longbow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+  - arrow
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 3
+    options: [animal_handling, athletics, insight, investigation, nature, perception, stealth, survival]
+  - id: class_equipment_1
+    title: Primary Armor
+    type: equipment
+    choose: 1
+    options:
+      - - item: scale_mail
+      - - item: leather_armor
+  - id: class_equipment_2
+    title: Primary Weapon
+    type: equipment
+    choose: 1
+    options:
+      - - item: shortsword
+          quantity: 2
+      - - tag: simple_melee_weapon
+          quantity: 2
+  - id: class_equipment_3
+    title: Adventuring Gear
+    type: equipment
+    choose: 1
+    options:
+      - - item: dungeoneers_pack
+      - - item: explorers_pack
+icon: ranger
+multiclass_requirements:
+  Dexterity: 13
+  Wisdom: 13
+subclass_level: 3
+subclasses:
+  - Hunter
+  - Beast Master
+  - Gloom Stalker
+  - Horizon Walker
+  - Monster Slayer
+  - Fey Wanderer
+  - Swarmkeeper

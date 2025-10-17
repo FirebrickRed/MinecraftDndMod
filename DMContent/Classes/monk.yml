@@ -1,0 +1,180 @@
+name: Monk
+hit_die: 8
+proficiency: [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]
+primary_abilities:
+  - Dexterity
+  - Wisdom
+saving_throws:
+  - Strength
+  - Dexterity
+armor_proficiencies: []
+weapon_proficiencies:
+  - simple_weapons
+  - shortsword
+# TODO: Monks should choose one type of artisan's tools or musical instrument - see issue #38
+tool_proficiencies: []
+features_by_level:
+  1:
+    - name: Unarmored Defense
+      type: passive
+      description: While you are wearing no armor and not wielding a shield, your AC equals 10 + your Dexterity modifier + your Wisdom modifier.
+    - name: Martial Arts
+      type: passive
+      dice: d4
+      description: Your practice of martial arts gives you mastery of combat styles that use unarmed strikes and monk weapons. You gain the following benefits while unarmed or wielding only monk weapons and you aren't wearing armor or wielding a shield.
+  2:
+    - name: Ki
+      type: resource
+      description: Your training allows you to harness the mystic energy of ki. You have 2 ki points, and you gain more as you reach higher levels. You can spend these points to fuel various ki features.
+    - name: Unarmored Movement
+      type: passive
+      bonus: 10
+      description: Your speed increases by 10 feet while you are not wearing armor or wielding a shield.
+  3:
+    - name: Monastic Tradition
+      type: subclass
+      description: You commit yourself to a monastic tradition. Grants subclass features at 3, 6, 11, and 17.
+    - name: Deflect Missiles
+      type: reaction
+      description: You can use your reaction to deflect or catch the missile when you are hit by a ranged weapon attack. When you do so, the damage you take from the attack is reduced by 1d10 + your Dexterity modifier + your monk level.
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+    - name: Slow Fall
+      type: reaction
+      description: You can use your reaction when you fall to reduce any falling damage you take by an amount equal to five times your monk level.
+  5:
+    - name: Extra Attack
+      type: passive
+      description: You can attack twice instead of once whenever you take the Attack action.
+    - name: Stunning Strike
+      type: action
+      description: You can interfere with the flow of ki in an opponent's body. When you hit another creature with a melee weapon attack, you can spend 1 ki point to attempt a stunning strike. The target must succeed on a Constitution saving throw or be stunned until the end of your next turn.
+  6:
+    - name: Ki-Empowered Strikes
+      type: passive
+      description: Your unarmed strikes count as magical for the purpose of overcoming resistance and immunity to nonmagical attacks and damage.
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Monastic Tradition.
+  7:
+    - name: Evasion
+      type: passive
+      description: Your instinctive agility lets you dodge out of the way of certain area effects. When you are subjected to an effect that allows you to make a Dexterity saving throw to take only half damage, you instead take no damage if you succeed, and only half damage if you fail.
+    - name: Stillness of Mind
+      type: action
+      description: You can use your action to end one effect on yourself that is causing you to be charmed or frightened.
+  8:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  9:
+    - name: Unarmored Movement
+      update: true
+      description: You gain the ability to move along vertical surfaces and across liquids on your turn without falling during the move.
+  10:
+    - name: Purity of Body
+      type: passive
+      description: Your mastery of the ki flowing through you makes you immune to disease and poison.
+  11:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Monastic Tradition.
+  12:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  13:
+    - name: Tongue of the Sun and Moon
+      type: passive
+      description: You learn to touch the ki of other minds so that you understand all spoken languages. Moreover, any creature that can understand a language can understand what you say.
+  14:
+    - name: Diamond Soul
+      type: passive
+      description: Your mastery of ki grants you proficiency in all saving throws. Additionally, whenever you make a saving throw and fail, you can spend 1 ki point to reroll it and take the second result.
+  15:
+    - name: Timeless Body
+      type: passive
+      description: Your ki sustains you so that you suffer none of the frailty of old age, and you can't be aged magically. You can still die of old age, however. In addition, you no longer need food or water.
+  16:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  17:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Monastic Tradition.
+  18:
+    - name: Empty Body
+      type: action
+      description: You can use your action to spend 4 ki points to become invisible for 1 minute. During that time, you also have resistance to all damage but force damage. Additionally, you can spend 8 ki points to cast the astral projection spell, without needing material components.
+  19:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  20:
+    - name: Perfect Self
+      type: passive
+      description: When you roll for initiative and have no ki points remaining, you regain 4 ki points.
+starting_equipment:
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 2
+    options: [acrobatics, athletics, history, insight, religion, stealth]
+  - id: class_equipment_1
+    title: Primary Weapon
+    type: equipment
+    choose: 1
+    options:
+      - - item: shortsword
+      - - tag: simple_weapon
+  - id: class_equipment_2
+    title: Adventuring Gear
+    type: equipment
+    choose: 1
+    options:
+      - - item: dungeoneers_pack
+      - - item: explorers_pack
+icon: monk
+multiclass_requirements:
+  Dexterity: 13
+  Wisdom: 13
+subclass_level: 3
+subclasses:
+  - Way of the Open Hand
+  - Way of Shadow
+  - Way of the Four Elements
+  - Way of the Long Death
+  - Way of the Sun Soul
+  - Way of the Drunken Master
+  - Way of the Kensei
+  - Way of Mercy
+  - Way of the Astral Self

@@ -1,0 +1,205 @@
+name: Artificer
+hit_die: 8
+proficiency: [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]
+primary_abilities:
+  - Intelligence
+saving_throws:
+  - Constitution
+  - Intelligence
+armor_proficiencies:
+  - light_armor
+  - medium_armor
+  - shields
+weapon_proficiencies:
+  - simple_weapons
+# TODO: Artificers should choose two types of artisan's tools - see issue #38
+tool_proficiencies:
+  - thieves_tools
+  - tinkers_tools
+spellcasting:
+  casting_ability: Intelligence
+  preparation_type: prepared
+  ritual_casting: true
+  spellcasting_focus_type: thieves_tools
+  spell_list: artificer
+  spellcasting_level: 1
+  cantrips_known_by_level: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4]
+  spell_slots_by_level:
+    1: [2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    2: [0, 0, 0, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    3: [0, 0, 0, 0, 0, 0, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    4: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3]
+    5: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 3, 3]
+  slot_recovery: long_rest
+features_by_level:
+  1:
+    - name: Magical Tinkering
+      type: action
+      description: You learn how to invest a spark of magic into mundane objects. You can touch a Tiny nonmagical object as an action and give it one of several magical properties.
+    - name: Spellcasting
+      type: spellcasting
+      casting_ability: Intelligence
+      description: You have studied the workings of magic and how to channel it through objects. You must use tools or an infused item as a spellcasting focus.
+  2:
+    - name: Infuse Item
+      type: passive
+      infusions_known: 4
+      infused_items: 2
+      description: You gain the ability to imbue mundane items with certain magical infusions. You learn 4 infusions and can have 2 infused items at a time.
+  3:
+    - name: Artificer Specialist
+      type: subclass
+      description: You choose the type of specialist you are. Grants subclass features at 3, 5, 9, and 15.
+    - name: The Right Tool for the Job
+      type: action
+      description: You learn how to produce exactly the tool you need. With thieves' tools or artisan's tools in hand, you can magically create one set of artisan's tools in an unoccupied space within 5 feet of you. This creation requires 1 hour of uninterrupted work.
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  5:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Artificer Specialist.
+  6:
+    - name: Tool Expertise
+      type: passive
+      description: Your proficiency bonus is doubled for any ability check you make that uses your proficiency with a tool.
+    - name: Infuse Item
+      update: true
+      infusions_known: 6
+      infused_items: 3
+      description: You learn 2 more infusions and can have 3 infused items at a time.
+  7:
+    - name: Flash of Genius
+      type: reaction
+      description: When you or another creature you can see within 30 feet of you makes an ability check or a saving throw, you can use your reaction to add your Intelligence modifier to the roll. You can use this feature a number of times equal to your Intelligence modifier.
+  8:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  9:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Artificer Specialist.
+  10:
+    - name: Magic Item Adept
+      type: passive
+      description: You achieve a profound understanding of how to use and make magic items. You can attune to up to four magic items at once. You can craft common and uncommon magic items in half the normal time and for half the normal cost.
+    - name: Infuse Item
+      update: true
+      infusions_known: 8
+      infused_items: 4
+      description: You learn 2 more infusions and can have 4 infused items at a time.
+  11:
+    - name: Spell-Storing Item
+      type: passive
+      description: You can now store a spell in an object. Whenever you finish a long rest, you can touch one simple or martial weapon or one item that you can use as a spellcasting focus and store a spell in it.
+  12:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  13: []
+  14:
+    - name: Magic Item Savant
+      type: passive
+      description: Your skill with magic items deepens. You can attune to up to five magic items at once. You ignore all class, race, spell, and level requirements on attuning to or using a magic item.
+    - name: Infuse Item
+      update: true
+      infusions_known: 10
+      infused_items: 5
+      description: You learn 2 more infusions and can have 5 infused items at a time.
+  15:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Artificer Specialist.
+  16:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  17: []
+  18:
+    - name: Magic Item Master
+      type: passive
+      description: You can attune to up to six magic items at once.
+    - name: Infuse Item
+      update: true
+      infusions_known: 12
+      infused_items: 6
+      description: You learn 2 more infusions and can have 6 infused items at a time.
+  19:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  20:
+    - name: Soul of Artifice
+      type: passive
+      description: Your understanding of magic items is unmatched. You gain a +1 bonus to all saving throws per magic item you are currently attuned to. If you're reduced to 0 hit points but not killed outright, you can use your reaction to end one of your artificer infusions, causing you to drop to 1 hit point instead.
+starting_equipment:
+  - light_crossbow
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - dart
+  - thieves_tools
+  - dungeoneers_pack
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 2
+    options: [arcana, history, investigation, medicine, nature, perception, sleight_of_hand]
+  - id: class_equipment_1
+    title: Primary Weapon
+    type: equipment
+    choose: 1
+    options:
+      - - tag: simple_weapon
+          quantity: 2
+  - id: class_equipment_3
+    title: Armor
+    type: equipment
+    choose: 1
+    options:
+      - - item: studded_leather_armor
+      - - item: scale_mail
+icon: artificer
+multiclass_requirements:
+  Intelligence: 13
+subclass_level: 3
+subclasses:
+  - Alchemist
+  - Armorer
+  - Artillerist
+  - Battle Smith

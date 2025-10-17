@@ -1,0 +1,153 @@
+name: Wizard
+hit_die: 6
+proficiency: [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]
+primary_abilities:
+  - Intelligence
+saving_throws:
+  - Intelligence
+  - Wisdom
+armor_proficiencies: []
+weapon_proficiencies:
+  - dagger
+  - dart
+  - sling
+  - quarterstaff
+  - light_crossbow
+tool_proficiencies: []
+spellcasting:
+  casting_ability: Intelligence
+  preparation_type: prepared
+  ritual_casting: true
+  spellcasting_focus_type: arcane_focus
+  spell_list: wizard
+  spellcasting_level: 1
+  cantrips_known_by_level: [3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+  spells_known_by_level: [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+  spell_slots_by_level:
+    1: [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    2: [0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    3: [0, 0, 0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    4: [0, 0, 0, 0, 0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    5: [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3]
+    6: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2]
+    7: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2]
+    8: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+    9: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+  slot_recovery: long_rest
+features_by_level:
+  1:
+    - name: Spellcasting
+      type: spellcasting
+      casting_ability: Intelligence
+      description: As a student of arcane magic, you have a spellbook containing spells that show the first glimmerings of your true power.
+    - name: Arcane Recovery
+      type: resource
+      uses: 1
+      description: You can regain some of your magical energy by studying your spellbook. Once per day during a short rest, you can recover expended spell slots with a combined level equal to or less than half your wizard level (rounded up).
+  2:
+    - name: Arcane Tradition
+      type: subclass
+      description: Choose an arcane tradition that shapes your practice of magic. Grants subclass features at 2, 6, 10, and 14.
+  3:
+    - name: Cantrip Formulas
+      type: optional
+      description: You have scribed a set of arcane formulas in your spellbook. Whenever you finish a long rest, you can study the formulas and replace one wizard cantrip you know with another cantrip from the wizard spell list.
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  6:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Arcane Tradition.
+  8:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  10:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Arcane Tradition.
+  12:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  14:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Arcane Tradition.
+  16:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  18:
+    - name: Spell Mastery
+      type: choice
+      description: Choose one 1st-level wizard spell and one 2nd-level wizard spell from your spellbook. You can cast those spells at their lowest level without expending a spell slot.
+  19:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  20:
+    - name: Signature Spells
+      type: choice
+      description: Choose two 3rd-level wizard spells in your spellbook as your signature spells. You always have these spells prepared and can cast each once at 3rd level without expending a spell slot. You regain the ability to do so after a short or long rest.
+starting_equipment:
+  - spellbook
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 2
+    options: [arcana, history, insight, investigation, medicine, religion]
+  - id: class_equipment_1
+    title: Primary Weapon
+    type: equipment
+    choose: 1
+    options:
+      - - item: quarterstaff
+      - - item: dagger
+  - id: class_equipment_2
+    title: Spell Focus Choice
+    type: equipment
+    choose: 1
+    options:
+      - - item: component_pouch
+      - - item: arcane_focus
+  - id: class_equipment_3
+    title: Adventuring Gear
+    type: equipment
+    choose: 1
+    options:
+      - - item: scholars_pack
+      - - item: explorers_pack
+icon: wizard
+multiclass_requirements:
+  Intelligence: 13
+subclass_level: 2
+subclasses:
+  - School of Abjuration
+  - School of Conjuration
+  - School of Divination
+  - School of Enchantment
+  - School of Evocation
+  - School of Illusion
+  - School of Necromancy
+  - School of Transmutation
+  - Bladesinging
+  - Order of Scribes

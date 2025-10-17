@@ -1,0 +1,199 @@
+name: Cleric
+hit_die: 8
+proficiency: [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]
+primary_abilities:
+  - Wisdom
+saving_throws:
+  - Wisdom
+  - Charisma
+armor_proficiencies:
+  - light_armor
+  - medium_armor
+  - shields
+weapon_proficiencies:
+  - simple_weapons
+tool_proficiencies: []
+spellcasting:
+  casting_ability: Wisdom
+  preparation_type: prepared
+  ritual_casting: true
+  spellcasting_focus_type: holy_symbol
+  spell_list: cleric
+  spellcasting_level: 1
+  cantrips_known_by_level: [3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+  spell_slots_by_level:
+    1: [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    2: [0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    3: [0, 0, 0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    4: [0, 0, 0, 0, 0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    5: [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3]
+    6: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2]
+    7: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2]
+    8: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+    9: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+  slot_recovery: long_rest
+features_by_level:
+  1:
+    - name: Spellcasting
+      type: spellcasting
+      casting_ability: Wisdom
+      description: As a conduit for divine power, you can cast cleric spells.
+    - name: Divine Domain
+      type: subclass
+      description: Choose a domain related to your deity. Grants domain spells and subclass features at 1, 2, 6, 8, and 17.
+  2:
+    - name: Channel Divinity
+      type: resource
+      uses: 1
+      description: You gain the ability to channel divine energy directly from your deity. You start with two effects - Turn Undead and an effect determined by your domain. You regain the ability after a short or long rest.
+    - name: Turn Undead
+      type: action
+      description: As an action, present your holy symbol and speak a prayer. Each undead that can see or hear you within 30 feet must make a Wisdom saving throw. On a failed save, the creature is turned for 1 minute.
+  3: []
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  5:
+    - name: Destroy Undead
+      type: passive
+      cr: 1/2
+      description: When an undead of CR 1/2 or lower fails its saving throw against your Turn Undead feature, the creature is instantly destroyed.
+  6:
+    - name: Channel Divinity
+      update: true
+      uses: 2
+      description: You can use your Channel Divinity twice between rests.
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Divine Domain.
+  7: []
+  8:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+    - name: Destroy Undead
+      update: true
+      cr: 1
+      description: Your Destroy Undead feature now affects undead of CR 1 or lower.
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Divine Domain.
+  9: []
+  10:
+    - name: Divine Intervention
+      type: resource
+      description: You can call on your deity to intervene on your behalf. Roll percentile dice - if you roll equal to or lower than your cleric level, your deity intervenes. If successful, you can't use this feature again for 7 days. Otherwise, you can use it again after a long rest.
+  11:
+    - name: Destroy Undead
+      update: true
+      cr: 2
+      description: Your Destroy Undead feature now affects undead of CR 2 or lower.
+  12:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  13: []
+  14:
+    - name: Destroy Undead
+      update: true
+      cr: 3
+      description: Your Destroy Undead feature now affects undead of CR 3 or lower.
+  15: []
+  16:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  17:
+    - name: Destroy Undead
+      update: true
+      cr: 4
+      description: Your Destroy Undead feature now affects undead of CR 4 or lower.
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Divine Domain.
+  18:
+    - name: Channel Divinity
+      update: true
+      uses: 3
+      description: You can use your Channel Divinity three times between rests.
+  19:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  20:
+    - name: Divine Intervention
+      update: true
+      description: Your call for divine intervention succeeds automatically, no roll required.
+starting_equipment:
+  - shield
+  - holy_symbol
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 2
+    options: [history, insight, medicine, persuasion, religion]
+  - id: class_equipment_1
+    title: Primary Weapon
+    type: equipment
+    choose: 1
+    options:
+      - - item: mace
+      - - item: warhammer
+  - id: class_equipment_2
+    title: Armor Choice
+    type: equipment
+    choose: 1
+    options:
+      - - item: scale_mail
+      - - item: leather_armor
+      - - item: chain_mail
+  - id: class_equipment_3
+    title: Secondary Weapon
+    type: equipment
+    choose: 1
+    options:
+      - - item: light_crossbow
+        - item: bolt
+          quantity: 20
+      - - tag: simple_weapon
+  - id: class_equipment_4
+    title: Adventuring Gear
+    type: equipment
+    choose: 1
+    options:
+      - - item: priests_pack
+      - - item: explorers_pack
+icon: cleric
+multiclass_requirements:
+  Wisdom: 13
+subclass_level: 1
+subclasses:
+  - Life Domain
+  - Light Domain
+  - Knowledge Domain
+  - Nature Domain
+  - Tempest Domain
+  - Trickery Domain
+  - War Domain
+  - Grave Domain
+  - Forge Domain
+  - Order Domain
+  - Peace Domain
+  - Twilight Domain

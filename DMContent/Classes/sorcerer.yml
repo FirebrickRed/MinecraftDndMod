@@ -1,0 +1,162 @@
+name: Sorcerer
+hit_die: 6
+proficiency: [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]
+primary_abilities:
+  - Charisma
+saving_throws:
+  - Constitution
+  - Charisma
+armor_proficiencies: []
+weapon_proficiencies:
+  - dagger
+  - dart
+  - sling
+  - quarterstaff
+  - light_crossbow
+tool_proficiencies: []
+spellcasting:
+  casting_ability: Charisma
+  preparation_type: known
+  ritual_casting: false
+  spellcasting_focus_type: arcane_focus
+  spell_list: sorcerer
+  spellcasting_level: 1
+  cantrips_known_by_level: [4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+  spells_known_by_level: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 13, 14, 14, 15, 15, 15, 15]
+  spell_slots_by_level:
+    1: [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    2: [0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    3: [0, 0, 0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    4: [0, 0, 0, 0, 0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    5: [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3]
+    6: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2]
+    7: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2]
+    8: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+    9: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+  slot_recovery: long_rest
+features_by_level:
+  1:
+    - name: Spellcasting
+      type: spellcasting
+      casting_ability: Charisma
+      description: An event in your past, or in the life of a parent or ancestor, left an indelible mark on you, infusing you with arcane magic.
+    - name: Sorcerous Origin
+      type: subclass
+      description: Choose a sorcerous origin which describes the source of your innate magical power. Grants subclass features at 1, 6, 14, and 18.
+  2:
+    - name: Font of Magic
+      type: resource
+      description: You tap into a deep wellspring of magic within yourself. You have 2 sorcery points, and you gain more as you reach higher levels. You can use your sorcery points to gain additional spell slots or sacrifice spell slots to gain additional sorcery points.
+  3:
+    - name: Metamagic
+      type: choice
+      description: You gain the ability to twist your spells to suit your needs. You learn two Metamagic options of your choice. You can use only one Metamagic option on a spell when you cast it, unless otherwise noted.
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  5: []
+  6:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Sorcerous Origin.
+  7: []
+  8:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  9: []
+  10:
+    - name: Metamagic
+      type: choice
+      description: You learn a third Metamagic option.
+  11: []
+  12:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  13: []
+  14:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Sorcerous Origin.
+  15: []
+  16:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  17:
+    - name: Metamagic
+      type: choice
+      description: You learn a fourth Metamagic option.
+  18:
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Sorcerous Origin.
+  19:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  20:
+    - name: Sorcerous Restoration
+      type: passive
+      description: You regain 4 expended sorcery points whenever you finish a short rest.
+starting_equipment:
+  - dagger
+  - dagger
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 2
+    options: [arcana, deception, insight, intimidation, persuasion, religion]
+  - id: class_equipment_1
+    title: Primary Weapon
+    type: equipment
+    choose: 1
+    options:
+      - - item: light_crossbow
+        - item: bolt
+          quantity: 20
+      - - tag: simple_weapon
+  - id: class_equipment_2
+    title: Spell Focus Choice
+    type: equipment
+    choose: 1
+    options:
+      - - item: component_pouch
+      - - item: arcane_focus
+  - id: class_equipment_3
+    title: Adventuring Gear
+    type: equipment
+    choose: 1
+    options:
+      - - item: dungeoneers_pack
+      - - item: explorers_pack
+icon: sorcerer
+multiclass_requirements:
+  Charisma: 13
+subclass_level: 1
+subclasses:
+  - Draconic Bloodline
+  - Wild Magic
+  - Storm Sorcery
+  - Divine Soul
+  - Shadow Magic
+  - Aberrant Mind
+  - Clockwork Soul

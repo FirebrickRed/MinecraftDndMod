@@ -1,0 +1,208 @@
+name: Bard
+hit_die: 8
+proficiency: [2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 5, 5, 5, 5, 6, 6, 6, 6]
+primary_abilities:
+  - Charisma
+saving_throws:
+  - Dexterity
+  - Charisma
+armor_proficiencies:
+  - light_armor
+weapon_proficiencies:
+  - simple_weapons
+  - hand_crossbow
+  - longsword
+  - rapier
+  - shortsword
+# TODO: Bards should choose 3 musical instruments - see issue #38
+# Need to implement tool proficiency choice system first
+tool_proficiencies: []
+spellcasting:
+  casting_ability: Charisma
+  preparation_type: known
+  ritual_casting: true
+  spellcasting_focus_type: musical_instrument
+  spell_list: bard
+  spellcasting_level: 1
+  cantrips_known_by_level: [2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+  spells_known_by_level: [4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 15, 16, 18, 19, 19, 20, 22, 22, 22]
+  spell_slots_by_level:
+    1: [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+    2: [0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    3: [0, 0, 0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    4: [0, 0, 0, 0, 0, 0, 1, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    5: [0, 0, 0, 0, 0, 0, 0, 0, 1, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3]
+    6: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2]
+    7: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 2]
+    8: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 1, 1]
+    9: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1]
+  slot_recovery: long_rest
+features_by_level:
+  1:
+    - name: Spellcasting
+      type: spellcasting
+      casting_ability: Charisma
+      description: You have learned to untangle and reshape the fabric of reality in harmony with your wishes and music.
+    - name: Bardic Inspiration
+      type: resource
+      uses_ability: Charisma
+      dice: d6
+      description: You can inspire others through stirring words or music. As a bonus action, choose one creature within 60 feet who can hear you. That creature gains one Bardic Inspiration die (d6). Once within the next 10 minutes, the creature can roll the die and add the number rolled to one ability check, attack roll, or saving throw.
+  2:
+    - name: Jack of All Trades
+      type: passive
+      description: You can add half your proficiency bonus, rounded down, to any ability check you make that doesn't already include your proficiency bonus.
+    - name: Song of Rest
+      type: passive
+      dice: d6
+      description: You can use soothing music or oration during a short rest to help revitalize your wounded allies. Any friendly creatures who hear your performance regain extra hit points equal to 1d6.
+  3:
+    - name: Bard College
+      type: subclass
+      description: Delve into the advanced techniques of a bard college of your choice. Grants subclass features at 3, 6, and 14.
+    - name: Expertise
+      type: choice
+      description: Choose two of your skill proficiencies. Your proficiency bonus is doubled for any ability check you make that uses either of the chosen proficiencies.
+  4:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  5:
+    - name: Bardic Inspiration
+      update: true
+      dice: d8
+      description: Your Bardic Inspiration die changes to a d8.
+    - name: Font of Inspiration
+      type: passive
+      description: You regain all of your expended uses of Bardic Inspiration when you finish a short or long rest.
+  6:
+    - name: Countercharm
+      type: action
+      description: You can use musical notes or words of power to disrupt mind-influencing effects. As an action, you grant yourself and friendly creatures within 30 feet advantage on saving throws against being frightened or charmed.
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Bard College.
+  7: []
+  8:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  9:
+    - name: Song of Rest
+      update: true
+      dice: d8
+      description: Your Song of Rest die changes to a d8.
+  10:
+    - name: Bardic Inspiration
+      update: true
+      dice: d10
+      description: Your Bardic Inspiration die changes to a d10.
+    - name: Expertise
+      type: choice
+      description: Choose two more of your skill proficiencies to gain expertise in.
+    - name: Magical Secrets
+      type: choice
+      description: You learn two spells of your choice from any class. A spell you choose must be of a level you can cast or a cantrip.
+  11: []
+  12:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  13:
+    - name: Song of Rest
+      update: true
+      dice: d10
+      description: Your Song of Rest die changes to a d10.
+  14:
+    - name: Magical Secrets
+      type: choice
+      description: You learn two more spells of your choice from any class.
+    - name: Subclass Feature
+      type: subclass
+      description: Feature granted by your chosen Bard College.
+  15:
+    - name: Bardic Inspiration
+      update: true
+      dice: d12
+      description: Your Bardic Inspiration die changes to a d12.
+  16:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  17:
+    - name: Song of Rest
+      update: true
+      dice: d12
+      description: Your Song of Rest die changes to a d12.
+  18:
+    - name: Magical Secrets
+      type: choice
+      description: You learn two more spells of your choice from any class.
+  19:
+    - name: Ability Score Improvement
+      type: choice
+      options:
+        - ability_score
+        - feat
+      description: Increase one ability score by 2, or two scores by 1 each. Alternatively, choose a feat.
+  20:
+    - name: Superior Inspiration
+      type: passive
+      description: When you roll initiative and have no uses of Bardic Inspiration left, you regain one use.
+starting_equipment:
+  - leather_armor
+  - dagger
+player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 3
+    options: [acrobatics, animal_handling, arcana, athletics, deception, history, insight, intimidation, investigation, medicine, nature, perception, performance, persuasion, religion, sleight_of_hand, stealth, survival]
+  - id: class_equipment_1
+    title: Primary Weapon
+    type: equipment
+    choose: 1
+    options:
+      - - item: rapier
+      - - item: longsword
+      - - tag: simple_weapon
+  - id: class_equipment_2
+    title: Musical Instrument
+    type: equipment
+    choose: 1
+    options:
+      - - item: lute
+      - - item: flute
+      - - item: drum
+      - - item: lyre
+  - id: class_equipment_3
+    title: Adventuring Gear
+    type: equipment
+    choose: 1
+    options:
+      - - item: diplomats_pack
+      - - item: entertainers_pack
+icon: bard
+multiclass_requirements:
+  Charisma: 13
+subclass_level: 3
+subclasses:
+  - College of Lore
+  - College of Valor
+  - College of Glamour
+  - College of Swords
+  - College of Whispers
+  - College of Creation
+  - College of Eloquence
