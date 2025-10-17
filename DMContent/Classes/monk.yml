@@ -11,7 +11,6 @@ armor_proficiencies: []
 weapon_proficiencies:
   - simple_weapons
   - shortsword
-# TODO: Monks should choose one type of artisan's tools or musical instrument - see issue #38
 tool_proficiencies: []
 features_by_level:
   1:
@@ -149,6 +148,11 @@ player_choices:
     type: skill
     choose: 2
     options: [acrobatics, athletics, history, insight, religion, stealth]
+  - id: class_tool_proficiencies
+    title: Artisan's Tool or Musical Instrument
+    type: tool
+    choose: 1
+    options: [artisan_tool, musical_instrument]
   - id: class_equipment_1
     title: Primary Weapon
     type: equipment

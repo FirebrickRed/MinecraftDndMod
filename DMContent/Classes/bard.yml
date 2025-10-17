@@ -14,8 +14,6 @@ weapon_proficiencies:
   - longsword
   - rapier
   - shortsword
-# TODO: Bards should choose 3 musical instruments - see issue #38
-# Need to implement tool proficiency choice system first
 tool_proficiencies: []
 spellcasting:
   casting_ability: Charisma
@@ -170,6 +168,11 @@ player_choices:
     type: skill
     choose: 3
     options: [acrobatics, animal_handling, arcana, athletics, deception, history, insight, intimidation, investigation, medicine, nature, perception, performance, persuasion, religion, sleight_of_hand, stealth, survival]
+  - id: class_tool_proficiencies
+    title: Musical Instrument Proficiencies
+    type: tool
+    choose: 3
+    options: [musical_instrument]
   - id: class_equipment_1
     title: Primary Weapon
     type: equipment

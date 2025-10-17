@@ -12,7 +12,6 @@ armor_proficiencies:
   - shields
 weapon_proficiencies:
   - simple_weapons
-# TODO: Artificers should choose two types of artisan's tools - see issue #38
 tool_proficiencies:
   - thieves_tools
   - tinkers_tools
@@ -180,6 +179,11 @@ player_choices:
     type: skill
     choose: 2
     options: [arcana, history, investigation, medicine, nature, perception, sleight_of_hand]
+  - id: class_tool_proficiencies
+    title: Artisan's Tool Proficiency
+    type: tool
+    choose: 1
+    options: [artisan_tool]
   - id: class_equipment_1
     title: Primary Weapon
     type: equipment

@@ -214,7 +214,7 @@ public class DndClass {
     public void contributeChoices(List<PendingChoice<?>> out) {
         for (ChoiceEntry e : playerChoices) {
             switch (e.type()) {
-                case SKILL, LANGUAGE, CUSTOM -> {
+                case SKILL, TOOL, LANGUAGE, CUSTOM -> {
                     PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
                     out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "class"));
                 }

@@ -20,6 +20,7 @@ import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.data.model.enums.Size;
+import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import io.papermc.jkvttplugin.util.TagRegistry;
 import io.papermc.jkvttplugin.util.Util;
 
@@ -478,6 +479,37 @@ public class LoaderUtils {
                     type = PlayersChoice.ChoiceType.SKILL;
                     var opts = normalizeStringList(m.get("options"));
                     pc = new PlayersChoice<>(choose, opts, type);
+                }
+                case "TOOL" -> {
+                    type = PlayersChoice.ChoiceType.TOOL;
+                    var rawOpts = normalizeStringList(m.get("options"));
+
+                    // Empty options means "choose from all tools"
+                    if (rawOpts.isEmpty()) {
+                        List<String> allTools = ToolRegistry.getAllTools();
+                        rawOpts = new ArrayList<>();
+                        for (String tool : allTools) {
+                            rawOpts.add(tool.trim().toLowerCase());
+                        }
+                    } else {
+                        // Expand any tool tags (e.g., "musical_instrument" -> all instruments)
+                        List<String> expandedOpts = new ArrayList<>();
+                        for (String opt : rawOpts) {
+                            List<String> expanded = ToolRegistry.expandTag(opt);
+                            if (expanded != null) {
+                                // It's a tag - add all tools in that category (normalize to lowercase)
+                                for (String tool : expanded) {
+                                    expandedOpts.add(tool.trim().toLowerCase());
+                                }
+                            } else {
+                                // It's a specific tool name - add as-is (already normalized)
+                                expandedOpts.add(opt);
+                            }
+                        }
+                        rawOpts = expandedOpts;
+                    }
+
+                    pc = new PlayersChoice<>(choose, rawOpts, type);
                 }
                 case "LANGUAGE" -> {
                     type = PlayersChoice.ChoiceType.LANGUAGE;
