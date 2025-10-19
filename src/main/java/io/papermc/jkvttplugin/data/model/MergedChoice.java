@@ -156,12 +156,27 @@ public class MergedChoice {
 
         // Not currently selected - need to add it
         // Find which source(s) can have this option
-        List<PendingChoice<?>> candidateSources = new ArrayList<>();
+        // Prioritize sources where this is a DIRECT option (not from tag expansion)
+        List<PendingChoice<?>> directSources = new ArrayList<>();
+        List<PendingChoice<?>> tagExpandedSources = new ArrayList<>();
+
         for (PendingChoice<?> pc : sourcePendingChoices) {
-            if (pc.optionKeys().contains(optionKey)) {
-                candidateSources.add(pc);
+            if (!pc.optionKeys().contains(optionKey)) continue;
+
+            // Check if this option is direct (ITEM) or from tag expansion (TAG)
+            Object opt = pc.optionForKey(optionKey);
+            if (opt instanceof EquipmentOption eo && eo.getKind() == EquipmentOption.Kind.ITEM) {
+                directSources.add(pc);
+            } else if (opt instanceof EquipmentOption eo && eo.getKind() == EquipmentOption.Kind.TAG) {
+                tagExpandedSources.add(pc);
+            } else {
+                // For non-equipment options, treat as direct
+                directSources.add(pc);
             }
         }
+
+        // Prefer direct sources, fall back to tag-expanded sources
+        List<PendingChoice<?>> candidateSources = !directSources.isEmpty() ? directSources : tagExpandedSources;
 
         if (candidateSources.isEmpty()) return;
 
@@ -220,21 +235,49 @@ public class MergedChoice {
         for (PendingChoice<?> pc : sourcePendingChoices) {
             if (!pc.optionKeys().contains(tagOptionKey)) continue;
 
-            // Get the option and extract its tag
             Object opt = pc.optionForKey(tagOptionKey);
             if (!(opt instanceof EquipmentOption eo)) continue;
 
             String tag = EquipmentUtil.extractTag(eo);
-            if (tag == null) continue; // Not a TAG or BUNDLE with TAG
+            if (tag == null) continue;
 
-            // Check if any selected item matches this tag
             List<String> tagItems = io.papermc.jkvttplugin.util.TagRegistry.itemsFor(tag);
 
             for (Object chosen : pc.getChosen()) {
-                if (chosen instanceof EquipmentOption chosenEo) {
-                    EquipmentOption resolved = findResolvedItem(chosenEo, tagItems);
-                    if (resolved != null) return resolved;
+                if (!(chosen instanceof EquipmentOption chosenEo)) continue;
+
+                // Only count TAG options as resolved if the chosen bundle was created
+                // by selecting this specific TAG option (not a separate direct ITEM option)
+                if (eo.getKind() == EquipmentOption.Kind.BUNDLE) {
+                    boolean eoHasTag = eo.getParts().stream().anyMatch(p -> p.getKind() == EquipmentOption.Kind.TAG);
+
+                    if (eoHasTag) {
+                        // TAG-containing bundle: only count as resolved if chosen was created from THIS tag
+                        if (chosenEo.equals(eo)) continue; // Unresolved TAG bundle
+
+                        if (chosenEo.getKind() != EquipmentOption.Kind.BUNDLE ||
+                            chosenEo.getParts().size() != eo.getParts().size()) {
+                            continue; // Different structure
+                        }
+
+                        boolean chosenHasTag = chosenEo.getParts().stream().anyMatch(p -> p.getKind() == EquipmentOption.Kind.TAG);
+                        if (chosenHasTag) continue; // Still unresolved or different TAG
+
+                        // Check if this bundle exists as a direct option (not a TAG resolution)
+                        boolean isDirectOption = pc.getPlayersChoice().getOptions().stream()
+                                .anyMatch(secopt -> secopt instanceof EquipmentOption eoOpt &&
+                                        eoOpt.getKind() == EquipmentOption.Kind.BUNDLE &&
+                                        eoOpt.equals(chosenEo));
+
+                        if (isDirectOption) continue; // Direct ITEM option, not TAG resolution
+                    } else {
+                        // Direct ITEM bundle: only match if it's the exact same bundle
+                        if (!chosenEo.equals(eo)) continue;
+                    }
                 }
+
+                EquipmentOption resolved = findResolvedItem(chosenEo, tagItems);
+                if (resolved != null) return resolved;
             }
         }
         return null;
