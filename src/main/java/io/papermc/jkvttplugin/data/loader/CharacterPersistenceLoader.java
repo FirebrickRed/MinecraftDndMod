@@ -97,6 +97,34 @@ public class CharacterPersistenceLoader {
         return characters != null ? new ArrayList<>(characters.values()) : new ArrayList<>();
     }
 
+    /**
+     * Find a character by name (case-insensitive search across all players).
+     * Returns the first match found.
+     */
+    public static CharacterSheet findCharacterByName(String characterName) {
+        for (Map<UUID, CharacterSheet> playerChars : playerCharacters.values()) {
+            for (CharacterSheet sheet : playerChars.values()) {
+                if (sheet.getCharacterName().equalsIgnoreCase(characterName)) {
+                    return sheet;
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get all character names for tab completion.
+     */
+    public static List<String> getAllCharacterNames() {
+        List<String> names = new ArrayList<>();
+        for (Map<UUID, CharacterSheet> playerChars : playerCharacters.values()) {
+            for (CharacterSheet sheet : playerChars.values()) {
+                names.add(sheet.getCharacterName());
+            }
+        }
+        return names;
+    }
+
     public static void removePlayerCharacters(UUID playerId) {
         // Remove from memory
         Map<UUID, CharacterSheet> characters = playerCharacters.remove(playerId);

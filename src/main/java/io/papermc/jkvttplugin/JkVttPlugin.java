@@ -49,6 +49,23 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         this.getCommand("rolldice").setExecutor(new RollDiceCommand());
         this.getCommand("createcharacter").setExecutor(new CreateCharacterCommand());
 
+        // Rest Commands
+        this.getCommand("shortrest").setExecutor(new ShortRestCommand());
+        this.getCommand("longrest").setExecutor(new LongRestCommand());
+
+        // DM Commands
+        RestCommand restCommand = new RestCommand();
+        this.getCommand("rest").setExecutor(restCommand);
+        this.getCommand("rest").setTabCompleter(restCommand);
+
+        RestoreResourceCommand restoreResourceCommand = new RestoreResourceCommand();
+        this.getCommand("restoreresource").setExecutor(restoreResourceCommand);
+        this.getCommand("restoreresource").setTabCompleter(restoreResourceCommand);
+
+        ConsumeResourceCommand consumeResourceCommand = new ConsumeResourceCommand();
+        this.getCommand("consumeresource").setExecutor(consumeResourceCommand);
+        this.getCommand("consumeresource").setTabCompleter(consumeResourceCommand);
+
     }
 
     @EventHandler

@@ -19,3 +19,28 @@ commands:
     description: Start character creation.
     usage: /createcharacter
 #    permission: jkvttplugin.createcharacter
+  shortrest:
+    description: Take a short rest (1 hour) to recover resources.
+    usage: /shortrest
+    permission: jkvttplugin.shortrest
+    permission-message: You do not have permission to take a short rest.
+  longrest:
+    description: Take a long rest (8 hours) to recover HP and resources.
+    usage: /longrest
+    permission: jkvttplugin.longrest
+    permission-message: You do not have permission to take a long rest.
+  rest:
+    description: (DM) Trigger a rest for a character.
+    usage: /rest <character> <short|long>
+    permission: jkvttplugin.rest
+    permission-message: You do not have permission to use this command.
+  restoreresource:
+    description: (DM) Restore a character's class resource.
+    usage: /restoreresource <character> <resourceName|all>
+    permission: jkvttplugin.restoreresource
+    permission-message: You do not have permission to use this command.
+  consumeresource:
+    description: (DM) Consume a character's class resource.
+    usage: /consumeresource <character> <resourceName> [amount]
+    permission: jkvttplugin.consumeresource
+    permission-message: You do not have permission to use this command.

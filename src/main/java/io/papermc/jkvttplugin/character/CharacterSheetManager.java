@@ -121,6 +121,21 @@ public class CharacterSheetManager {
         CharacterPersistenceLoader.removePlayerCharacters(player.getUniqueId());
     }
 
+    /**
+     * Find a character by name (case-insensitive search across all players).
+     * Useful for DM commands to target characters by name.
+     */
+    public static CharacterSheet findCharacterByName(String characterName) {
+        return CharacterPersistenceLoader.findCharacterByName(characterName);
+    }
+
+    /**
+     * Get all character names for tab completion.
+     */
+    public static List<String> getAllCharacterNames() {
+        return CharacterPersistenceLoader.getAllCharacterNames();
+    }
+
 
     // ========== ITEM CREATION ==========
 
