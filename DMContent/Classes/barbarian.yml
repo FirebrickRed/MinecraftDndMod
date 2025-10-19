@@ -15,6 +15,11 @@ weapon_proficiencies:
   - simple_weapons
   - martial_weapons
 tool_proficiencies: []
+class_resources:
+  - name: Rage
+    max_by_level: [2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 999]
+    recovery: long_rest
+    icon: red_dye
 features_by_level:
   1:
     - name: Rage

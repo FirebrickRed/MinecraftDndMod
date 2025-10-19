@@ -12,6 +12,11 @@ weapon_proficiencies:
   - simple_weapons
   - shortsword
 tool_proficiencies: []
+class_resources:
+  - name: Ki Points
+    max_by_level: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
+    recovery: short_rest
+    icon: glowstone_dust
 features_by_level:
   1:
     - name: Unarmored Defense

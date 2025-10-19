@@ -15,6 +15,11 @@ weapon_proficiencies:
   - rapier
   - shortsword
 tool_proficiencies: []
+class_resources:
+  - name: Bardic Inspiration
+    uses_ability: charisma
+    recovery: long_rest  # Changes to short_rest at level 5 (Font of Inspiration)
+    icon: note_block
 spellcasting:
   casting_ability: Charisma
   preparation_type: known

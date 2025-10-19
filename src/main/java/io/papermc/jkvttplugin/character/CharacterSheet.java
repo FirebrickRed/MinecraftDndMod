@@ -39,6 +39,8 @@ public class CharacterSheet {
     private DndArmor equippedArmor;
     private DndArmor equippedShield;
 
+    private List<ClassResource> classResources = new ArrayList<>();
+
     private CharacterSheet(UUID characterId, UUID playerId, String characterName) {
         this.characterId = characterId;
         this.playerId = playerId;
@@ -79,6 +81,7 @@ public class CharacterSheet {
 
         sheet.calculateArmorClass();
         sheet.initializeSpellSlots();
+        sheet.initializeClassResources();
 
         return sheet;
     }
@@ -223,6 +226,24 @@ public class CharacterSheet {
                 spellSlots[spellLevel - 1] = slots;
             }
         }
+    }
+
+    private void initializeClassResources() {
+        if (dndClass == null) {
+            return;
+        }
+
+        // Create a function to get ability modifiers for resource calculations
+        java.util.function.Function<String, Integer> abilityModifier = (abilityName) -> {
+            try {
+                Ability ability = Ability.valueOf(abilityName.toUpperCase());
+                return getModifier(ability);
+            } catch (IllegalArgumentException e) {
+                return 0; // If ability name is invalid, return 0
+            }
+        };
+
+        classResources = dndClass.createResourcesForCharacter(getTotalLevel(), abilityModifier);
     }
 
     private void grantStartingEquipment(CharacterCreationSession session) {
@@ -462,8 +483,7 @@ public class CharacterSheet {
     }
 
     public int getModifier(Ability ability) {
-        int value = abilityScores.get(ability);
-        return Ability.getModifier(value);
+        return Ability.getModifier(abilityScores.get(ability));
     }
 
     public void gainTempHealth(int tempHP) {
@@ -534,9 +554,34 @@ public class CharacterSheet {
         return knownSpells;
     }
 
+    public List<ClassResource> getClassResources() {
+        return new ArrayList<>(classResources);
+    }
+
+    public ClassResource getResource(String resourceName) {
+        for (ClassResource resource : classResources) {
+            if (resource.getName().equalsIgnoreCase(resourceName)) {
+                return resource;
+            }
+        }
+        return null;
+    }
+
+    public boolean hasResource(String resourceName) {
+        return getResource(resourceName) != null;
+    }
+
     public void longRest() {
+        // Restore spell slots
         for (int i = 0; i < 9; i++) {
             spellSlots[i] = maxSpellSlots[i];
+        }
+
+        // Restore class resources that recover on long rest
+        for (ClassResource resource : classResources) {
+            if (resource.getRecovery() == ClassResource.RecoveryType.LONG_REST) {
+                resource.restore();
+            }
         }
 
         breakConcentration();
@@ -546,8 +591,14 @@ public class CharacterSheet {
     }
 
     public void shortRest() {
+        // Restore class resources that recover on short rest
+        for (ClassResource resource : classResources) {
+            if (resource.getRecovery() == ClassResource.RecoveryType.SHORT_REST) {
+                resource.restore();
+            }
+        }
+
         // Warlocks recover Pact Magic slots on short rest
         // ToDo: Implement when Warlock-specific slot recovery is added
-        // For now, short rest does nothing for spell slots
     }
 }

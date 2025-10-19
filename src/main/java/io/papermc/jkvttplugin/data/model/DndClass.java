@@ -40,7 +40,7 @@ public class DndClass {
     private Map<String, Integer> multiclassRequirements; // e.g. {"STR": 13, "CON": 13}
 
     private boolean allowFeats;
-    private Map<String, Integer> classResources; // Think Rage, Bardic Inspiration
+    private List<Map<String, Object>> classResources = List.of(); // Resource definitions from YAML
 
     private List<ChoiceEntry> playerChoices = List.of();
     public List<ChoiceEntry> getPlayerChoices() { return playerChoices; }
@@ -201,15 +201,71 @@ public class DndClass {
         this.allowFeats = allowFeats;
     }
 
-    public Map<String, Integer> getClassResources() {
+    public List<Map<String, Object>> getClassResources() {
         return classResources;
     }
-    public void setClassResources(Map<String, Integer> classResources) {
-        this.classResources = classResources;
+    public void setClassResources(List<Map<String, Object>> classResources) {
+        this.classResources = classResources != null ? List.copyOf(classResources) : List.of();
+    }
+    public void setClass_resources(List<Map<String, Object>> classResources) {
+        this.setClassResources(classResources);
     }
 
     public ItemStack getClassIcon() {
         return Util.createItem(Component.text(getName()), null, this.icon, 0);
+    }
+
+    /**
+     * Creates ClassResource instances for a character based on their level and ability scores.
+     * @param characterLevel The character's level
+     * @param abilityModifier Function to get ability modifiers (e.g., CHA modifier for Bardic Inspiration)
+     * @return List of ClassResource instances for this character
+     */
+    public List<ClassResource> createResourcesForCharacter(int characterLevel, Function<String, Integer> abilityModifier) {
+        List<ClassResource> resources = new ArrayList<>();
+
+        if (classResources == null || classResources.isEmpty()) {
+            return resources;
+        }
+
+        for (Map<String, Object> def : classResources) {
+            String name = (String) def.get("name");
+            String recovery = (String) def.get("recovery");
+            String icon = (String) def.get("icon");  // Optional icon field
+
+            // Determine max value
+            int max = 0;
+            if (def.containsKey("uses_ability")) {
+                // Ability-based (e.g., Bardic Inspiration uses Charisma modifier)
+                String abilityName = ((String) def.get("uses_ability")).toLowerCase();
+                max = abilityModifier.apply(abilityName);
+            } else if (def.containsKey("max_by_level")) {
+                // Level-based progression
+                List<Integer> maxByLevel = (List<Integer>) def.get("max_by_level");
+                int index = characterLevel - 1;
+                if (index >= 0 && index < maxByLevel.size()) {
+                    max = maxByLevel.get(index);
+                }
+            }
+
+            // Convert recovery string to enum
+            ClassResource.RecoveryType recoveryType = ClassResource.RecoveryType.LONG_REST;
+            if (recovery != null) {
+                recoveryType = switch (recovery.toLowerCase().trim()) {
+                    case "short_rest", "short rest" -> ClassResource.RecoveryType.SHORT_REST;
+                    case "long_rest", "long rest" -> ClassResource.RecoveryType.LONG_REST;
+                    case "dawn" -> ClassResource.RecoveryType.DAWN;
+                    case "none" -> ClassResource.RecoveryType.NONE;
+                    default -> ClassResource.RecoveryType.LONG_REST;
+                };
+            }
+
+            if (max > 0) {  // Only add resources with positive max
+                resources.add(new ClassResource(name, max, recoveryType, icon));
+            }
+        }
+
+        return resources;
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
@@ -396,8 +452,7 @@ public class DndClass {
             return this;
         }
 
-        // ToDo: implement Class Resources like Rage and Sneakattack
-        public Builder classResources(Map<String, Integer> classResources) {
+        public Builder classResources(List<Map<String, Object>> classResources) {
             instance.setClassResources(classResources);
             return this;
         }
