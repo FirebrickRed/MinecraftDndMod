@@ -68,9 +68,13 @@ public class AbilityAllocationMenu {
         }
 
         // Confirm button (bottom right)
-        ItemStack confirm = new ItemStack(Material.LIME_BED);
-        confirm.editMeta(m -> m.displayName(Component.text("Confirm Character")));
-        confirm = ItemUtil.tagAction(confirm, MenuAction.CONFIRM_CHARACTER, "ok");
+        ItemStack confirm = ItemUtil.createActionItem(
+                Material.LIME_BED,
+                Component.text("Confirm Character"),
+                null,
+                MenuAction.CONFIRM_CHARACTER,
+                "ok"
+        );
         inventory.setItem(slot(5, 0), confirm);
 
         return inventory;
@@ -115,13 +119,15 @@ public class AbilityAllocationMenu {
 
                 boolean isSelected = distKey.equals(selectedDist);
                 Material material = isSelected ? Material.LIME_STAINED_GLASS_PANE : Material.GRAY_STAINED_GLASS_PANE;
+                NamedTextColor color = isSelected ? NamedTextColor.GREEN : NamedTextColor.GRAY;
 
-                ItemStack distButton = new ItemStack(material);
-                distButton.editMeta(m -> {
-                    m.displayName(Component.text(distLabel).color(isSelected ? NamedTextColor.GREEN : NamedTextColor.GRAY));
-                    m.lore(List.of(Component.text("Click to select this distribution").color(NamedTextColor.DARK_GRAY)));
-                });
-                distButton = ItemUtil.tagAction(distButton, MenuAction.SELECT_RACIAL_BONUS_DISTRIBUTION, distKey);
+                ItemStack distButton = ItemUtil.createActionItem(
+                        material,
+                        Component.text(distLabel, color),
+                        List.of(Component.text("Click to select this distribution", NamedTextColor.DARK_GRAY)),
+                        MenuAction.SELECT_RACIAL_BONUS_DISTRIBUTION,
+                        distKey
+                );
 
                 inv.setItem(slot(rowIndex, 0), distButton);
                 rowIndex++;

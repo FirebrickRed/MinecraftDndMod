@@ -1,6 +1,7 @@
 package io.papermc.jkvttplugin.data.loader;
 
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.util.Util;
 import org.bukkit.plugin.Plugin;
@@ -201,6 +202,13 @@ public class CharacterPersistenceLoader {
         }
         data.put("abilities", abilities);
 
+        // Serialize skill proficiencies
+        List<String> skillProficiencies = new ArrayList<>();
+        for (var skill : sheet.getSkillProficiencies()) {
+            skillProficiencies.add(skill.name());
+        }
+        data.put("skillProficiencies", skillProficiencies);
+
         // Serialize spells and cantrips (save normalized keys, not display names)
         if (sheet.hasSpells()) {
             List<String> spellKeys = new ArrayList<>();
@@ -251,6 +259,20 @@ public class CharacterPersistenceLoader {
                 }
             }
 
+            // Deserialize skill proficiencies
+            Set<Skill> skillProficiencies = new HashSet<>();
+            List<String> skillData = (List<String>) data.get("skillProficiencies");
+            if (skillData != null) {
+                for (String skillName : skillData) {
+                    try {
+                        Skill skill = Skill.valueOf(skillName);
+                        skillProficiencies.add(skill);
+                    } catch (IllegalArgumentException e) {
+                        plugin.getLogger().warning("Invalid skill name in character data: " + skillName);
+                    }
+                }
+            }
+
             // Deserialize spells
             Set<String> knownSpells = new HashSet<>();
             List<String> spellData = (List<String>) data.get("knownSpells");
@@ -268,7 +290,7 @@ public class CharacterPersistenceLoader {
             int maxHealth = (Integer) data.getOrDefault("maxHealth", 1);
             int armorClass = (Integer) data.getOrDefault("armorClass", 10);
 
-            return CharacterSheet.loadFromData(characterId, playerId, characterName, raceName, subraceName, className, backgroundName, abilities, knownSpells, knownCantrips, currentHealth, maxHealth, armorClass);
+            return CharacterSheet.loadFromData(characterId, playerId, characterName, raceName, subraceName, className, backgroundName, abilities, skillProficiencies, knownSpells, knownCantrips, currentHealth, maxHealth, armorClass);
 
             // You could validate the loaded data against your loaders here if needed:
             // - Check if the race/class/background still exists

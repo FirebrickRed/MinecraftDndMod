@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.data.loader.*;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.util.DndRules;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
@@ -24,6 +25,7 @@ public class CharacterSheet {
     private DndBackground background;
 
     private EnumMap<Ability, Integer> abilityScores;
+    private Set<Skill> skillProficiencies = new HashSet<>();
 
     private Set<DndSpell> knownSpells = new HashSet<>();
     private Set<DndSpell> knownCantrips = new HashSet<>();
@@ -76,6 +78,7 @@ public class CharacterSheet {
         sheet.applyRacialBonuses(session);
 
         sheet.loadSpells(session.getSelectedSpells(), session.getSelectedCantrips());
+        sheet.loadSkillProficiencies(session);
         sheet.calculateHealth();
 
         sheet.grantStartingEquipment(session);
@@ -87,7 +90,7 @@ public class CharacterSheet {
         return sheet;
     }
 
-    public static CharacterSheet loadFromData(UUID characterId, UUID playerId, String characterName, String raceName, String subraceName, String className, String backgroundName, EnumMap<Ability, Integer> abilityScores, Set<String> spellNames, Set<String> cantripNames, int currentHealth, int maxHealth, int armorClass) {
+    public static CharacterSheet loadFromData(UUID characterId, UUID playerId, String characterName, String raceName, String subraceName, String className, String backgroundName, EnumMap<Ability, Integer> abilityScores, Set<Skill> skillProficiencies, Set<String> spellNames, Set<String> cantripNames, int currentHealth, int maxHealth, int armorClass) {
         CharacterSheet sheet = new CharacterSheet(characterId, playerId, characterName);
 
         sheet.race = RaceLoader.getRace(raceName);
@@ -98,6 +101,11 @@ public class CharacterSheet {
         sheet.background = BackgroundLoader.getBackground(backgroundName);
 
         sheet.abilityScores = new EnumMap<>(abilityScores);
+
+        // Load skill proficiencies from saved data
+        if (skillProficiencies != null) {
+            sheet.skillProficiencies = new HashSet<>(skillProficiencies);
+        }
 
         sheet.loadSpells(spellNames, cantripNames);
 
@@ -174,6 +182,30 @@ public class CharacterSheet {
                 DndSpell cantrip = SpellLoader.getSpell(cantripName);
                 if (cantrip != null) {
                     knownCantrips.add(cantrip);
+                }
+            }
+        }
+    }
+
+    /**
+     * Loads skill proficiencies from the character creation session.
+     * Extracts skill choices from pending choices (both class and background sources).
+     */
+    private void loadSkillProficiencies(CharacterCreationSession session) {
+        if (session == null || session.getPendingChoices() == null) return;
+
+        for (PendingChoice<?> pc : session.getPendingChoices()) {
+            // Only process SKILL type choices
+            if (pc.getPlayersChoice().getType() != PlayersChoice.ChoiceType.SKILL) continue;
+
+            // Get chosen skills (they're stored as strings like "acrobatics", "stealth", etc.)
+            Set<?> chosen = pc.getChosen();
+            for (Object obj : chosen) {
+                if (obj instanceof String skillName) {
+                    Skill skill = Skill.fromString(skillName);
+                    if (skill != null) {
+                        skillProficiencies.add(skill);
+                    }
                 }
             }
         }
@@ -492,6 +524,35 @@ public class CharacterSheet {
 
     public int getModifier(Ability ability) {
         return Ability.getModifier(abilityScores.get(ability));
+    }
+
+    /**
+     * Checks if the character is proficient in a specific skill.
+     * @param skill The skill to check
+     * @return true if proficient, false otherwise
+     */
+    public boolean isProficientInSkill(Skill skill) {
+        return skillProficiencies.contains(skill);
+    }
+
+    /**
+     * Calculates the skill bonus for a given skill.
+     * Formula: ability modifier + (proficiency bonus if proficient)
+     * @param skill The skill to calculate bonus for
+     * @return The total skill bonus
+     */
+    public int getSkillBonus(Skill skill) {
+        int abilityModifier = getModifier(skill.getAbility());
+        int profBonus = isProficientInSkill(skill) ? getProficiencyBonus() : 0;
+        return abilityModifier + profBonus;
+    }
+
+    /**
+     * Gets all skill proficiencies for this character.
+     * @return Set of skills the character is proficient in
+     */
+    public Set<Skill> getSkillProficiencies() {
+        return new HashSet<>(skillProficiencies);
     }
 
     public void gainTempHealth(int tempHP) {

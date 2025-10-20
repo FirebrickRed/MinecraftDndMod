@@ -37,6 +37,7 @@ public class MenuClickListener implements Listener {
     private static final TabbedChoicesHandler TABBED_CHOICES_HANDLER = new TabbedChoicesHandler();
     private static final AbilityAllocationHandler ABILITY_HANDLER = new AbilityAllocationHandler();
     private static final SpellSelectionHandler SPELL_HANDLER = new SpellSelectionHandler();
+    private static final ViewCharacterSheetHandler VIEW_SHEET_HANDLER = new ViewCharacterSheetHandler();
 
     private final Map<MenuType, MenuClickHandler> handlers = new EnumMap<>(MenuType.class);
 
@@ -50,6 +51,8 @@ public class MenuClickListener implements Listener {
         handlers.put(MenuType.TABBED_CHOICES, TABBED_CHOICES_HANDLER);
         handlers.put(MenuType.ABILITY_ALLOCATION, ABILITY_HANDLER);
         handlers.put(MenuType.SPELL_SELECTION, SPELL_HANDLER);
+        handlers.put(MenuType.VIEW_CHARACTER_SHEET, VIEW_SHEET_HANDLER);
+        handlers.put(MenuType.SKILLS_MENU, VIEW_SHEET_HANDLER);
     }
 
     @EventHandler
@@ -74,17 +77,24 @@ public class MenuClickListener implements Listener {
 
         Player player = (Player) event.getWhoClicked();
 
+        // Some menus (VIEW_CHARACTER_SHEET, SKILLS_MENU) work with finalized characters, not sessions
+        boolean isViewMenu = holder.getType() == MenuType.VIEW_CHARACTER_SHEET || holder.getType() == MenuType.SKILLS_MENU;
+        // ToDo: check if this can be simplified
+
         // Fetch or create session (centralized, avoiding duplicate service calls in handlers)
-        CharacterCreationSession session = CharacterCreationService.getSession(player.getUniqueId());
-        if (session == null) {
-            // Auto-create session for CHARACTER_CREATION_SHEET and RACE_SELECTION
-            if (holder.getType() == MenuType.CHARACTER_CREATION_SHEET || holder.getType() == MenuType.RACE_SELECTION) {
-                session = CharacterCreationService.start(player.getUniqueId());
-            } else {
-                // Other menus require an existing session
-                player.closeInventory();
-                player.sendMessage("No character creation session found.");
-                return;
+        CharacterCreationSession session = null;
+        if (!isViewMenu) {
+            session = CharacterCreationService.getSession(player.getUniqueId());
+            if (session == null) {
+                // Auto-create session for CHARACTER_CREATION_SHEET and RACE_SELECTION
+                if (holder.getType() == MenuType.CHARACTER_CREATION_SHEET || holder.getType() == MenuType.RACE_SELECTION) {
+                    session = CharacterCreationService.start(player.getUniqueId());
+                } else {
+                    // Other menus require an existing session
+                    player.closeInventory();
+                    player.sendMessage("No character creation session found.");
+                    return;
+                }
             }
         }
 

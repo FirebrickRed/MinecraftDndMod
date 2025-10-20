@@ -166,7 +166,7 @@ public class TabbedChoiceMenu {
                 }
             });
 
-            tab = ItemUtil.tagAction(tab, MenuAction.SWITCH_CHOICE_TAB, cat.name());
+            ItemUtil.setAction(tab, MenuAction.SWITCH_CHOICE_TAB, cat.name());
 
             inv.setItem(slot++, tab);
         }
@@ -201,7 +201,7 @@ public class TabbedChoiceMenu {
                                         .color(choice.getStatusColor())
                         ));
                     });
-                    header = ItemUtil.tagAction(header, MenuAction.VIEW_CHOICE_INFO, "header");
+                    ItemUtil.setAction(header, MenuAction.VIEW_CHOICE_INFO, "header");
                     inv.setItem(slot++, header);
                 }
             }
@@ -219,7 +219,7 @@ public class TabbedChoiceMenu {
                     ));
                 });
 
-                known = ItemUtil.tagAction(known, MenuAction.VIEW_CHOICE_INFO, "already_known");
+                ItemUtil.setAction(known, MenuAction.VIEW_CHOICE_INFO, "already_known");
                 inv.setItem(slot++, known);
             }
 
@@ -268,13 +268,13 @@ public class TabbedChoiceMenu {
                 if (needsDrilldown && !selected) {
                     // For TAG/BUNDLE options (resolved or not), use DRILLDOWN_OPEN
                     String payload = choice.getChoiceId() + "|" + optionKey;
-                    option = ItemUtil.tagAction(option, MenuAction.DRILLDOWN_OPEN, payload);
+                    ItemUtil.setAction(option, MenuAction.DRILLDOWN_OPEN, payload);
                 } else {
                     // For regular options or already-selected non-TAG options, use TOGGLE_CHOICE_OPTION
                     // Payload format: "CATEGORY|choiceId|optionKey"
                     // The choiceId disambiguates between multiple equipment choices with overlapping options
                     String payload = choice.getCategory().name() + "|" + choice.getChoiceId() + "|" + optionKey;
-                    option = ItemUtil.tagAction(option, MenuAction.TOGGLE_CHOICE_OPTION, payload);
+                    ItemUtil.setAction(option, MenuAction.TOGGLE_CHOICE_OPTION, payload);
                 }
 
                 inv.setItem(slot++, option);
@@ -339,7 +339,7 @@ public class TabbedChoiceMenu {
         });
 
         if (allComplete) {
-            confirm = ItemUtil.tagAction(confirm, MenuAction.CONFIRM_PLAYER_CHOICES, "ok");
+            ItemUtil.setAction(confirm, MenuAction.CONFIRM_PLAYER_CHOICES, "ok");
         }
 
         inv.setItem(53, confirm);
@@ -387,17 +387,25 @@ public class TabbedChoiceMenu {
 
         int slot = 0;
         for (String sub : subOptionKeys) {
-            ItemStack it = new ItemStack(Material.PAPER);
-            it.editMeta(m -> m.displayName(Component.text(displayFunction.apply(sub))));
             String payload = choiceId + "|" + wildcardKey + "|" + sub + "|" + returnCategory.name();
-            it = ItemUtil.tagAction(it, MenuAction.DRILLDOWN_PICK, payload);
+            ItemStack it = ItemUtil.createActionItem(
+                    Material.PAPER,
+                    Component.text(displayFunction.apply(sub)),
+                    null,
+                    MenuAction.DRILLDOWN_PICK,
+                    payload
+            );
             inventory.setItem(slot++, it);
             if (slot >= size - 9) break;
         }
 
-        ItemStack back = new ItemStack(Material.ARROW);
-        back.editMeta(m -> m.displayName(Component.text("Back")));
-        back = ItemUtil.tagAction(back, MenuAction.DRILLDOWN_BACK, returnCategory.name());
+        ItemStack back = ItemUtil.createActionItem(
+                Material.ARROW,
+                Component.text("Back"),
+                null,
+                MenuAction.DRILLDOWN_BACK,
+                returnCategory.name()
+        );
         inventory.setItem(size - 9, back);
 
         player.openInventory(inventory);

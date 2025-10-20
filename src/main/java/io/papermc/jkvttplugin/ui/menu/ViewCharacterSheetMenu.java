@@ -4,8 +4,10 @@ import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.data.model.ClassResource;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.core.MenuType;
+import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.LoreBuilder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -102,6 +104,19 @@ public class ViewCharacterSheetMenu {
         addAbilityScore(inventory, character, Ability.INTELLIGENCE, 14, Material.BOOK);
         addAbilityScore(inventory, character, Ability.WISDOM, 15, Material.ENDER_EYE);
         addAbilityScore(inventory, character, Ability.CHARISMA, 16, Material.GOLD_INGOT);
+
+        // Slot 17: Skills button (end of abilities row)
+        ItemStack skillsButton = ItemUtil.createActionItem(
+                Material.WRITABLE_BOOK,
+                Component.text("Skills", NamedTextColor.GREEN),
+                LoreBuilder.create()
+                        .addLine("Click to view all skills", NamedTextColor.GRAY)
+                        .build(),
+                MenuAction.OPEN_SKILLS_MENU,
+                null
+        );
+        inventory.setItem(17, skillsButton);
+
         // Slot 18: Empty (spacing)
 
         // Row 3+: Class Resources (starting at slot 19)
@@ -169,6 +184,7 @@ public class ViewCharacterSheetMenu {
      * Adds an ability score display to the inventory.
      * Shows ability score, modifier, and saving throw proficiency in lore.
      * Stack size shows the ability score value.
+     * Clickable - opens the skills menu.
      */
     private static void addAbilityScore(Inventory inventory, CharacterSheet character, Ability ability, int slot, Material material) {
         int score = character.getAbility(ability);
@@ -186,7 +202,7 @@ public class ViewCharacterSheetMenu {
             String sign = modifier >= 0 ? "+" : "";
             m.displayName(Component.text(ability.getAbbreviation() + " " + score + " (" + sign + modifier + ")", NamedTextColor.AQUA));
 
-            // Lore: modifier + saving throw
+            // Lore: modifier + saving throw + click hint
             LoreBuilder lore = LoreBuilder.create()
                     .addLine("Modifier: " + sign + modifier, NamedTextColor.GRAY);
 
@@ -199,8 +215,15 @@ public class ViewCharacterSheetMenu {
                 lore.addLine("  Saving Throw: " + saveSign + saveBonus, NamedTextColor.GRAY);
             }
 
+            // Click hint
+            lore.blankLine()
+                    .addLine("Click to view skills", NamedTextColor.YELLOW);
+
             m.lore(lore.build());
         });
+
+        // Make clickable - opens skills menu
+        ItemUtil.setAction(abilityItem, MenuAction.OPEN_SKILLS_MENU, null);
 
         inventory.setItem(slot, abilityItem);
     }

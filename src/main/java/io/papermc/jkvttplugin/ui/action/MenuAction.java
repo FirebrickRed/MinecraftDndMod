@@ -31,6 +31,9 @@ public enum MenuAction {
     BACK_TO_CHARACTER_SHEET,
     CONFIRM_CHARACTER,
 
+    // ===== Character Sheet View Actions =====
+    OPEN_SKILLS_MENU,
+
     // ===== Spell Casting Actions =====
     CAST_CANTRIP,
     CAST_SPELL,
