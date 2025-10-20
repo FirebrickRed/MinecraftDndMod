@@ -117,7 +117,38 @@ public class ViewCharacterSheetMenu {
         );
         inventory.setItem(17, skillsButton);
 
-        // Slot 18: Empty (spacing)
+        // Slot 18: Spellbook button (for spellcasters only)
+        if (character.hasSpells()) {
+            int totalCantrips = character.getKnownCantrips().size();
+            int totalSpells = character.getKnownSpells().size();
+
+            LoreBuilder spellbookLore = LoreBuilder.create();
+            if (totalCantrips > 0) {
+                spellbookLore.addLine("Cantrips: " + totalCantrips, NamedTextColor.GRAY);
+            }
+            if (totalSpells > 0) {
+                spellbookLore.addLine("Spells: " + totalSpells, NamedTextColor.GRAY);
+            }
+
+            // Show concentration status if concentrating
+            if (character.isConcentrating()) {
+                spellbookLore.blankLine()
+                        .addLine("⚡ Concentrating on:", NamedTextColor.YELLOW)
+                        .addLine(character.getConcentratingOn().getName(), NamedTextColor.AQUA);
+            }
+
+            spellbookLore.blankLine()
+                    .addLine("Click to view spellbook", NamedTextColor.GRAY);
+
+            ItemStack spellbookButton = ItemUtil.createActionItem(
+                    Material.ENCHANTED_BOOK,
+                    Component.text("Spellbook", NamedTextColor.LIGHT_PURPLE),
+                    spellbookLore.build(),
+                    MenuAction.OPEN_SPELLBOOK,
+                    null
+            );
+            inventory.setItem(18, spellbookButton);
+        }
 
         // Row 3+: Class Resources (starting at slot 19)
         List<ClassResource> resources = character.getClassResources();

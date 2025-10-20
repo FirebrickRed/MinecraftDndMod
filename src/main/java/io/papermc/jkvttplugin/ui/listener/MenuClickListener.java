@@ -77,8 +77,10 @@ public class MenuClickListener implements Listener {
 
         Player player = (Player) event.getWhoClicked();
 
-        // Some menus (VIEW_CHARACTER_SHEET, SKILLS_MENU) work with finalized characters, not sessions
-        boolean isViewMenu = holder.getType() == MenuType.VIEW_CHARACTER_SHEET || holder.getType() == MenuType.SKILLS_MENU;
+        // Some menus (VIEW_CHARACTER_SHEET, SKILLS_MENU, SPELL_CASTING) work with finalized characters, not sessions
+        boolean isViewMenu = holder.getType() == MenuType.VIEW_CHARACTER_SHEET
+                || holder.getType() == MenuType.SKILLS_MENU
+                || holder.getType() == MenuType.SPELL_CASTING;
         // ToDo: check if this can be simplified
 
         // Fetch or create session (centralized, avoiding duplicate service calls in handlers)

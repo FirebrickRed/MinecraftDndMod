@@ -180,6 +180,32 @@ public class LoreBuilder {
     }
 
     /**
+     * Adds word-wrapped text with a custom width.
+     * Useful for long descriptions that need to fit within tooltip constraints.
+     *
+     * @param text The text to wrap
+     * @param width Maximum characters per line
+     * @param color Color for all wrapped lines
+     */
+    public LoreBuilder addWrappedText(String text, int width, NamedTextColor color) {
+        if (text != null && !text.isEmpty()) {
+            Util.wrapText(text, width).forEach(line -> addLine(line, color));
+        }
+        return this;
+    }
+
+    /**
+     * Adds word-wrapped text with default 50-character width.
+     * This is the standard width for most D&D content tooltips.
+     *
+     * @param text The text to wrap
+     * @param color Color for all wrapped lines
+     */
+    public LoreBuilder addWrappedText(String text, NamedTextColor color) {
+        return addWrappedText(text, 50, color);
+    }
+
+    /**
      * Builds and returns the final lore list.
      */
     public List<Component> build() {

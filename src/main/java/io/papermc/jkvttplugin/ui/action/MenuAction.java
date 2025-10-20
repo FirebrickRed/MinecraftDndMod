@@ -33,6 +33,7 @@ public enum MenuAction {
 
     // ===== Character Sheet View Actions =====
     OPEN_SKILLS_MENU,
+    OPEN_SPELLBOOK,
 
     // ===== Spell Casting Actions =====
     CAST_CANTRIP,

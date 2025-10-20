@@ -1,8 +1,11 @@
 package io.papermc.jkvttplugin.ui.handler;
 
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
+import io.papermc.jkvttplugin.character.CharacterSheet;
+import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.menu.SkillsMenu;
+import io.papermc.jkvttplugin.ui.menu.SpellCastingMenu;
 import io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu;
 import org.bukkit.entity.Player;
 
@@ -22,6 +25,13 @@ public class ViewCharacterSheetHandler implements MenuClickHandler {
         switch (action) {
             case OPEN_SKILLS_MENU -> {
                 SkillsMenu.open(player, characterId);
+            }
+            case OPEN_SPELLBOOK -> {
+                // Get the character sheet to pass to SpellCastingMenu
+                CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
+                if (character != null) {
+                    SpellCastingMenu.open(player, character);
+                }
             }
             case BACK_TO_CHARACTER_SHEET -> {
                 ViewCharacterSheetMenu.open(player, characterId);

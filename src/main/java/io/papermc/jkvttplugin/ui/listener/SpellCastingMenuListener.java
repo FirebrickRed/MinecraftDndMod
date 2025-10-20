@@ -116,10 +116,10 @@ public class SpellCastingMenuListener implements Listener {
                 .append(Component.text(spellName, NamedTextColor.YELLOW))
                 .append(Component.text("!", NamedTextColor.AQUA)));
 
-        // ToDo: Implement actual spell effects when spell system is built
+        // Close inventory after casting (consistent UX with cantrips)
+        player.closeInventory();
 
-        // Refresh menu to show updated slots
-        player.openInventory(SpellCastingMenu.build(sheet, castingLevel));
+        // ToDo: Implement actual spell effects when spell system is built
     }
 
     private void handleSlotSelection(Player player, CharacterSheet sheet, String levelStr) {
