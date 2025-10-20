@@ -8,6 +8,21 @@ public enum Ability {
     WISDOM,
     CHARISMA;
 
+    /**
+     * Gets the standard 3-letter abbreviation for this ability.
+     * @return The abbreviation (e.g., "STR", "DEX", "CON")
+     */
+    public String getAbbreviation() {
+        return switch (this) {
+            case STRENGTH -> "STR";
+            case DEXTERITY -> "DEX";
+            case CONSTITUTION -> "CON";
+            case INTELLIGENCE -> "INT";
+            case WISDOM -> "WIS";
+            case CHARISMA -> "CHA";
+        };
+    }
+
     public static Ability fromString(String name) {
         try {
             return Ability.valueOf(name.toUpperCase());

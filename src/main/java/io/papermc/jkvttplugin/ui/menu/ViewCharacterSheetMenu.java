@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.ui.menu;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.data.model.ClassResource;
+import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.LoreBuilder;
@@ -32,34 +33,80 @@ public class ViewCharacterSheetMenu {
                 Component.text(character.getCharacterName() + "'s Character Sheet")
         );
 
-        ItemStack healthItem = new ItemStack(Material.REDSTONE_BLOCK);
+        // Row 1: Quick Stats (slots 0-9)
+        // Slot 0: Empty (spacing)
+
+        // Slot 1: HP
+        int currentHP = Math.max(1, character.getCurrentHealth()); // Show at least 1 for visibility
+        ItemStack healthItem = new ItemStack(Material.REDSTONE_BLOCK, currentHP);
         healthItem.editMeta(m -> {
-            m.displayName(Component.text(character.getCurrentHealth() + "/" + character.getMaxHealth() + "HP"));
+            m.displayName(Component.text(character.getCurrentHealth() + "/" + character.getMaxHealth() + " HP", NamedTextColor.RED));
         });
-        inventory.setItem(0, healthItem);
+        inventory.setItem(1, healthItem);
 
-        ItemStack acItem = new ItemStack(Material.SHIELD);
+        // Slot 2: AC
+        int ac = character.getArmorClass();
+        // Use iron ingot (armor items don't display stack sizes properly)
+        ItemStack acItem = new ItemStack(Material.IRON_INGOT, ac);
         acItem.editMeta(m -> {
-            m.displayName(Component.text(character.getArmorClass() + " AC"));
+            m.displayName(Component.text(ac + " AC", NamedTextColor.GRAY));
+            m.lore(LoreBuilder.create()
+                    .addLine("Armor Class", NamedTextColor.GRAY)
+                    .build());
         });
-        inventory.setItem(1, acItem);
+        inventory.setItem(2, acItem);
 
-        ItemStack proficiencyItem = new ItemStack(Material.PAPER);
+        // Slot 3: Speed
+        ItemStack speedItem = new ItemStack(Material.LEATHER_BOOTS);
+        speedItem.editMeta(m -> {
+            m.displayName(Component.text(character.getSpeed() + " ft.", NamedTextColor.WHITE));
+            m.lore(LoreBuilder.create()
+                    .addLine("Movement Speed", NamedTextColor.GRAY)
+                    .build());
+        });
+        inventory.setItem(3, speedItem);
+
+        // Slot 6: Proficiency Bonus
+        int profBonus = character.getProficiencyBonus();
+        ItemStack proficiencyItem = new ItemStack(Material.BOOK, profBonus);
         proficiencyItem.editMeta(m -> {
-            // ToDo: update character sheet to keep track of proficiency bonuses
-            m.displayName(Component.text("Proficiency Bonus: (need to add this to character sheet)"));
+            m.displayName(Component.text("+" + profBonus, NamedTextColor.GOLD));
+            m.lore(LoreBuilder.create()
+                    .addLine("Proficiency Bonus", NamedTextColor.GRAY)
+                    .build());
         });
-        inventory.setItem(7, proficiencyItem);
+        inventory.setItem(6, proficiencyItem);
 
-        ItemStack initItem = new ItemStack(Material.PAPER);
+        // Slot 7: Initiative
+        int init = character.getInitiative();
+        // Stack size only for positive initiative (0 or negative shows as 1)
+        int initStackSize = Math.max(1, init);
+        ItemStack initItem = new ItemStack(Material.FEATHER, initStackSize);
         initItem.editMeta(m -> {
-            m.displayName(Component.text("Initiative: " + character.getInitiative()));
+            String sign = init >= 0 ? "+" : "";
+            m.displayName(Component.text(sign + init, NamedTextColor.YELLOW));
+            m.lore(LoreBuilder.create()
+                    .addLine("Initiative", NamedTextColor.GRAY)
+                    .build());
         });
-        inventory.setItem(8, initItem);
+        inventory.setItem(7, initItem);
 
-        // Display class resources (Rage, Ki Points, Bardic Inspiration, etc.)
+        // Slot 9: Empty (spacing)
+
+        // Row 2: Ability Scores (slots 10-18)
+        // Slot 10: Empty (spacing)
+        addAbilityScore(inventory, character, Ability.STRENGTH, 10, Material.IRON_SWORD);
+        addAbilityScore(inventory, character, Ability.DEXTERITY, 11, Material.FEATHER);
+        addAbilityScore(inventory, character, Ability.CONSTITUTION, 12, Material.GOLDEN_APPLE);
+        // Slot 13: Empty (spacing between CON and INT)
+        addAbilityScore(inventory, character, Ability.INTELLIGENCE, 14, Material.BOOK);
+        addAbilityScore(inventory, character, Ability.WISDOM, 15, Material.ENDER_EYE);
+        addAbilityScore(inventory, character, Ability.CHARISMA, 16, Material.GOLD_INGOT);
+        // Slot 18: Empty (spacing)
+
+        // Row 3+: Class Resources (starting at slot 19)
         List<ClassResource> resources = character.getClassResources();
-        int resourceSlot = 9; // Start in second row
+        int resourceSlot = 19; // Start in third row
         for (ClassResource resource : resources) {
             if (resourceSlot >= 54) break; // Don't overflow inventory
 
@@ -116,5 +163,45 @@ public class ViewCharacterSheetMenu {
             case DAWN -> "Dawn";
             case NONE -> "Never";
         };
+    }
+
+    /**
+     * Adds an ability score display to the inventory.
+     * Shows ability score, modifier, and saving throw proficiency in lore.
+     * Stack size shows the ability score value.
+     */
+    private static void addAbilityScore(Inventory inventory, CharacterSheet character, Ability ability, int slot, Material material) {
+        int score = character.getAbility(ability);
+        int modifier = character.getModifier(ability);
+        int profBonus = character.getProficiencyBonus();
+        boolean isProficient = character.getMainClass() != null
+                && character.getMainClass().getSavingThrows() != null
+                && character.getMainClass().getSavingThrows().contains(ability);
+
+        // Use ability score as stack size (capped at 64 for Minecraft limits)
+        int stackSize = Math.min(score, 64);
+        ItemStack abilityItem = new ItemStack(material, stackSize);
+        abilityItem.editMeta(m -> {
+            // Display name: "STR 16 (+3)"
+            String sign = modifier >= 0 ? "+" : "";
+            m.displayName(Component.text(ability.getAbbreviation() + " " + score + " (" + sign + modifier + ")", NamedTextColor.AQUA));
+
+            // Lore: modifier + saving throw
+            LoreBuilder lore = LoreBuilder.create()
+                    .addLine("Modifier: " + sign + modifier, NamedTextColor.GRAY);
+
+            // Saving throw line
+            int saveBonus = modifier + (isProficient ? profBonus : 0);
+            String saveSign = saveBonus >= 0 ? "+" : "";
+            if (isProficient) {
+                lore.addLine("✓ Saving Throw: " + saveSign + saveBonus, NamedTextColor.GREEN);
+            } else {
+                lore.addLine("  Saving Throw: " + saveSign + saveBonus, NamedTextColor.GRAY);
+            }
+
+            m.lore(lore.build());
+        });
+
+        inventory.setItem(slot, abilityItem);
     }
 }

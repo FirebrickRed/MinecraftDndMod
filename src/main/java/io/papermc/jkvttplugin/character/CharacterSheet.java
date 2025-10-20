@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.data.loader.*;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.util.DndRules;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -461,9 +462,16 @@ public class CharacterSheet {
         return totalHealth;
     }
 
-//    public int getProficiencyBonus() {
-//        return Math.floorDiv(getTotalLevel() - 1, 4) + 2;
-//    }
+    public int getProficiencyBonus() {
+        return DndRules.getProficiencyBonus(getTotalLevel());
+    }
+
+    public int getSpeed() {
+        if (race != null) {
+            return race.getSpeed();
+        }
+        return 30; // Default if race is null
+    }
 
     public int getAbility(Ability ability) {
         return abilityScores.getOrDefault(ability, 10);
