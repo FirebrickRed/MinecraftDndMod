@@ -2,7 +2,7 @@ package io.papermc.jkvttplugin.commands;
 
 import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
 import io.papermc.jkvttplugin.character.CharacterSheet;
-import io.papermc.jkvttplugin.character.CharacterSheetManager;
+import io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
@@ -32,7 +32,7 @@ public class CloseSheetCommand implements CommandExecutor {
         }
 
         // Save character
-        CharacterSheetManager.saveCharacter(character);
+        CharacterPersistenceLoader.saveCharacter(character);
 
         // Close inventory if open
         player.closeInventory();

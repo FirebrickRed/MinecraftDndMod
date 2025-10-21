@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.ui.handler;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
+import io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.menu.SkillsMenu;
 import io.papermc.jkvttplugin.ui.menu.SpellCastingMenu;
@@ -39,7 +40,7 @@ public class ViewCharacterSheetHandler implements MenuClickHandler {
                 // Save character and close inventory
                 CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
                 if (character != null) {
-                    CharacterSheetManager.saveCharacter(character);
+                    CharacterPersistenceLoader.saveCharacter(character);
                     player.closeInventory();
                     player.sendMessage(Component.text("Character saved!", NamedTextColor.GREEN));
                 }
