@@ -548,6 +548,34 @@ public class CharacterSheet {
     }
 
     /**
+     * Gets a formatted breakdown of a skill bonus for display in chat.
+     * Examples: "+3[DEX] +2[Prof]" (proficient), "+2[DEX]" (not proficient), "-1[STR]" (negative modifier)
+     *
+     * @param skill The skill to get the breakdown for
+     * @return Formatted string showing ability modifier and proficiency bonus if applicable
+     */
+    public String getSkillBonusBreakdown(Skill skill) {
+        int abilityModifier = getModifier(skill.getAbility());
+        int profBonus = isProficientInSkill(skill) ? getProficiencyBonus() : 0;
+
+        StringBuilder breakdown = new StringBuilder();
+
+        // Add ability modifier with 3-letter abbreviation: "+3[DEX]" or "-1[STR]"
+        breakdown.append(abilityModifier >= 0 ? "+" : "")
+                 .append(abilityModifier)
+                 .append("[")
+                 .append(skill.getAbility().getAbbreviation())
+                 .append("]");
+
+        // Add proficiency if applicable: " +2[Prof]"
+        if (profBonus > 0) {
+            breakdown.append(" +").append(profBonus).append("[Prof]");
+        }
+
+        return breakdown.toString();
+    }
+
+    /**
      * Gets all skill proficiencies for this character.
      * @return Set of skills the character is proficient in
      */

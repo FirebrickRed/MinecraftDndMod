@@ -35,6 +35,14 @@ public enum MenuAction {
     OPEN_SKILLS_MENU,
     OPEN_SPELLBOOK,
     CLOSE_CHARACTER_SHEET,
+    ROLL_SKILL,
+
+    // ===== Roll Options Actions =====
+    ROLL_NORMAL,
+    ROLL_ADVANTAGE,
+    ROLL_DISADVANTAGE,
+    SHOW_MODIFIER,
+    CANCEL_ROLL,
 
     // ===== Spell Casting Actions =====
     CAST_CANTRIP,

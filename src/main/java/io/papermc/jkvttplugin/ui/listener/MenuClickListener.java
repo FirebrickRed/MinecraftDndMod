@@ -38,6 +38,7 @@ public class MenuClickListener implements Listener {
     private static final AbilityAllocationHandler ABILITY_HANDLER = new AbilityAllocationHandler();
     private static final SpellSelectionHandler SPELL_HANDLER = new SpellSelectionHandler();
     private static final ViewCharacterSheetHandler VIEW_SHEET_HANDLER = new ViewCharacterSheetHandler();
+    private static final RollOptionsMenuHandler ROLL_OPTIONS_HANDLER = new RollOptionsMenuHandler();
 
     private final Map<MenuType, MenuClickHandler> handlers = new EnumMap<>(MenuType.class);
 
@@ -53,6 +54,7 @@ public class MenuClickListener implements Listener {
         handlers.put(MenuType.SPELL_SELECTION, SPELL_HANDLER);
         handlers.put(MenuType.VIEW_CHARACTER_SHEET, VIEW_SHEET_HANDLER);
         handlers.put(MenuType.SKILLS_MENU, VIEW_SHEET_HANDLER);
+        handlers.put(MenuType.ROLL_OPTIONS_MENU, ROLL_OPTIONS_HANDLER);
     }
 
     @EventHandler
@@ -77,9 +79,10 @@ public class MenuClickListener implements Listener {
 
         Player player = (Player) event.getWhoClicked();
 
-        // Some menus (VIEW_CHARACTER_SHEET, SKILLS_MENU, SPELL_CASTING) work with finalized characters, not sessions
+        // Some menus (VIEW_CHARACTER_SHEET, SKILLS_MENU, ROLL_OPTIONS_MENU, SPELL_CASTING) work with finalized characters, not sessions
         boolean isViewMenu = holder.getType() == MenuType.VIEW_CHARACTER_SHEET
                 || holder.getType() == MenuType.SKILLS_MENU
+                || holder.getType() == MenuType.ROLL_OPTIONS_MENU
                 || holder.getType() == MenuType.SPELL_CASTING;
         // ToDo: check if this can be simplified
 

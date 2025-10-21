@@ -4,7 +4,9 @@ import io.papermc.jkvttplugin.character.CharacterCreationSession;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader;
+import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
+import io.papermc.jkvttplugin.ui.menu.RollOptionsMenu;
 import io.papermc.jkvttplugin.ui.menu.SkillsMenu;
 import io.papermc.jkvttplugin.ui.menu.SpellCastingMenu;
 import io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu;
@@ -21,14 +23,9 @@ import java.util.UUID;
 public class ViewCharacterSheetHandler implements MenuClickHandler {
 
     @Override
-    public void handleClick(Player player, CharacterCreationSession session, UUID sessionId, MenuAction action, String payload) {
-        // sessionId here is actually the characterId (UUID of the finalized character)
-        UUID characterId = sessionId;
-
+    public void handleClick(Player player, CharacterCreationSession session, UUID characterId, MenuAction action, String payload) {
         switch (action) {
-            case OPEN_SKILLS_MENU -> {
-                SkillsMenu.open(player, characterId);
-            }
+            case OPEN_SKILLS_MENU -> SkillsMenu.open(player, characterId);
             case OPEN_SPELLBOOK -> {
                 // Get the character sheet to pass to SpellCastingMenu
                 CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
@@ -45,8 +42,19 @@ public class ViewCharacterSheetHandler implements MenuClickHandler {
                     player.sendMessage(Component.text("Character saved!", NamedTextColor.GREEN));
                 }
             }
-            case BACK_TO_CHARACTER_SHEET -> {
-                ViewCharacterSheetMenu.open(player, characterId);
+            case BACK_TO_CHARACTER_SHEET -> ViewCharacterSheetMenu.open(player, characterId);
+            case ROLL_SKILL -> {
+                // Parse skill enum from payload
+                Skill skill;
+                try {
+                    skill = Skill.valueOf(payload);
+                } catch (IllegalArgumentException e) {
+                    return;
+                }
+
+                // Open roll options menu with skill enum
+                // Menu will look up character and calculate breakdown
+                RollOptionsMenu.open(player, characterId, skill);
             }
         }
     }

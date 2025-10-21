@@ -105,30 +105,37 @@ public class SkillsMenu {
     /**
      * Adds a skill item to the inventory at the specified slot.
      * Shows skill name, bonus, ability, and proficiency status.
+     * Clickable to initiate a skill roll.
      */
     private static void addSkillItem(Inventory inventory, CharacterSheet character, Skill skill, int slot) {
         int bonus = character.getSkillBonus(skill);
         boolean proficient = character.isProficientInSkill(skill);
 
-        // Use paper for all skills (consistent look)
-        ItemStack skillItem = new ItemStack(Material.PAPER);
-        skillItem.editMeta(m -> {
-            // Display name: "Athletics +5" or "Stealth +2"
-            String sign = bonus >= 0 ? "+" : "";
-            NamedTextColor nameColor = proficient ? NamedTextColor.GREEN : NamedTextColor.GRAY;
-            m.displayName(Component.text(skill.getDisplayName() + " " + sign + bonus, nameColor));
+        // Display name: "Athletics +5" or "Stealth +2"
+        String sign = bonus >= 0 ? "+" : "";
+        NamedTextColor nameColor = proficient ? NamedTextColor.GREEN : NamedTextColor.GRAY;
 
-            // Lore: proficiency status
-            LoreBuilder lore = LoreBuilder.create();
+        // Lore: proficiency status + click hint
+        LoreBuilder lore = LoreBuilder.create();
 
-            if (proficient) {
-                lore.addLine("✓ Proficient", NamedTextColor.GREEN);
-            } else {
-                lore.addLine("  Not Proficient", NamedTextColor.DARK_GRAY);
-            }
+        if (proficient) {
+            lore.addLine("✓ Proficient", NamedTextColor.GREEN);
+        } else {
+            lore.addLine("  Not Proficient", NamedTextColor.DARK_GRAY);
+        }
 
-            m.lore(lore.build());
-        });
+        lore.blankLine()
+                .addLine("Click to roll!", NamedTextColor.YELLOW);
+
+        // Create clickable item with ROLL_SKILL action
+        // Payload is the skill enum name (e.g., "STEALTH")
+        ItemStack skillItem = ItemUtil.createActionItem(
+                Material.PAPER,
+                Component.text(skill.getDisplayName() + " " + sign + bonus, nameColor),
+                lore.build(),
+                MenuAction.ROLL_SKILL,
+                skill.name() // e.g., "STEALTH", "ATHLETICS"
+        );
 
         inventory.setItem(slot, skillItem);
     }
