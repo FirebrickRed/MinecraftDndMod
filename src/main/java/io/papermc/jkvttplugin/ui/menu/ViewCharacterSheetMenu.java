@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.ui.menu;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.data.model.ClassResource;
+import io.papermc.jkvttplugin.data.model.DndArmor;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
@@ -47,15 +48,50 @@ public class ViewCharacterSheetMenu {
         });
         inventory.setItem(1, healthItem);
 
-        // Slot 2: AC
+        // Slot 2: AC with breakdown
         int ac = character.getArmorClass();
+        int dexMod = character.getModifier(Ability.DEXTERITY);
+
         // Use iron ingot (armor items don't display stack sizes properly)
         ItemStack acItem = new ItemStack(Material.IRON_INGOT, ac);
         acItem.editMeta(m -> {
             m.displayName(Component.text(ac + " AC", NamedTextColor.GRAY));
-            m.lore(LoreBuilder.create()
+
+            // Build AC breakdown
+            LoreBuilder lore = LoreBuilder.create()
                     .addLine("Armor Class", NamedTextColor.GRAY)
-                    .build());
+                    .blankLine();
+
+            // Show breakdown
+            if (character.getEquippedArmor() == null) {
+                // Unarmored: 10 + DEX
+                lore.addLine("Base: 10", NamedTextColor.YELLOW);
+                String dexSign = dexMod >= 0 ? "+" : "";
+                lore.addLine("Dexterity: " + dexSign + dexMod, NamedTextColor.GRAY);
+            } else {
+                // Armored - show breakdown matching unarmored format
+                DndArmor armor = character.getEquippedArmor();
+
+                // Show base armor AC
+                lore.addLine("Armor: " + armor.getBaseAC(), NamedTextColor.YELLOW);
+
+                // Show DEX contribution if armor allows it
+                if (armor.isAddsDexModifier()) {
+                    int dexApplied = dexMod;
+                    if (armor.getMaxDexModifier() >= 0) {
+                        dexApplied = Math.min(dexMod, armor.getMaxDexModifier());
+                    }
+                    String dexSign = dexApplied >= 0 ? "+" : "";
+                    lore.addLine("Dexterity: " + dexSign + dexApplied, NamedTextColor.GRAY);
+                }
+            }
+
+            // Add shield if equipped
+            if (character.getEquippedShield() != null) {
+                lore.addLine("Shield: +" + character.getEquippedShield().getBaseAC(), NamedTextColor.AQUA);
+            }
+
+            m.lore(lore.build());
         });
         inventory.setItem(2, acItem);
 
