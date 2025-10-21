@@ -19,6 +19,11 @@ commands:
     description: Start character creation.
     usage: /createcharacter
 #    permission: jkvttplugin.createcharacter
+  closesheet:
+    description: Save and close the active character sheet.
+    usage: /closesheet
+    permission: jkvttplugin.closesheet
+    permission-message: You do not have permission to use this command.
   shortrest:
     description: Take a short rest (1 hour) to recover resources.
     usage: /shortrest

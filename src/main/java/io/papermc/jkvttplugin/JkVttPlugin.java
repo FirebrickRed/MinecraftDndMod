@@ -9,6 +9,8 @@ import io.papermc.jkvttplugin.ui.listener.MenuClickListener;
 import io.papermc.jkvttplugin.ui.listener.SpellCastingMenuListener;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -48,6 +50,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         this.getCommand("spawnhadozee").setExecutor(new NpcCommands(this));
         this.getCommand("rolldice").setExecutor(new RollDiceCommand());
         this.getCommand("createcharacter").setExecutor(new CreateCharacterCommand());
+        this.getCommand("closesheet").setExecutor(new CloseSheetCommand());
 
         // Rest Commands
         this.getCommand("shortrest").setExecutor(new ShortRestCommand());
@@ -70,7 +73,54 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
-        event.getPlayer().sendMessage(Component.text("Hello, " + event.getPlayer().getName() + "!"));
+        // Alpha testing welcome message
+        event.getPlayer().sendMessage(Component.empty());
+        event.getPlayer().sendMessage(
+                Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)
+        );
+        event.getPlayer().sendMessage(
+                Component.text("Welcome to D&D VTT Alpha Testing!", NamedTextColor.GOLD, TextDecoration.BOLD)
+        );
+        event.getPlayer().sendMessage(Component.empty());
+        event.getPlayer().sendMessage(
+                Component.text("Getting Started:", NamedTextColor.AQUA, TextDecoration.BOLD)
+        );
+        event.getPlayer().sendMessage(
+                Component.text("  • Create a Character: ", NamedTextColor.YELLOW)
+                        .append(Component.text("/createcharacter", NamedTextColor.WHITE))
+        );
+        event.getPlayer().sendMessage(
+                Component.text("  • View Your Sheet: ", NamedTextColor.YELLOW)
+                        .append(Component.text("Right-click Character Sheet item", NamedTextColor.WHITE))
+        );
+        event.getPlayer().sendMessage(
+                Component.text("  • Rest Commands: ", NamedTextColor.YELLOW)
+                        .append(Component.text("/shortrest or /longrest", NamedTextColor.WHITE))
+        );
+        event.getPlayer().sendMessage(Component.empty());
+        event.getPlayer().sendMessage(
+                Component.text("⚠ Known Issues:", NamedTextColor.RED, TextDecoration.BOLD)
+        );
+        event.getPlayer().sendMessage(
+                Component.text("  • Some items may show as \"Item Not Found\"", NamedTextColor.GRAY)
+        );
+        event.getPlayer().sendMessage(
+                Component.text("  • Icons and visuals are not finalized", NamedTextColor.GRAY)
+        );
+        event.getPlayer().sendMessage(
+                Component.text("  • Characters may be wiped in future updates", NamedTextColor.GRAY)
+        );
+        event.getPlayer().sendMessage(Component.empty());
+        event.getPlayer().sendMessage(
+                Component.text("Found a bug or have feedback?", NamedTextColor.YELLOW, TextDecoration.BOLD)
+        );
+        event.getPlayer().sendMessage(
+                Component.text("  → Message on Discord!", NamedTextColor.GREEN)
+        );
+        event.getPlayer().sendMessage(
+                Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.DARK_GRAY)
+        );
+        event.getPlayer().sendMessage(Component.empty());
     }
 
     @Override

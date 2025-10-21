@@ -9,6 +9,7 @@ import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.core.MenuType;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.LoreBuilder;
+import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -130,6 +131,26 @@ public class ViewCharacterSheetMenu {
                 spellbookLore.addLine("Spells: " + totalSpells, NamedTextColor.GRAY);
             }
 
+            // Show spell slots (current/max per level)
+            StringBuilder slotsText = new StringBuilder();
+            for (int level = 1; level <= 9; level++) {
+                int maxSlots = character.getMaxSpellSlots(level);
+                if (maxSlots > 0) {
+                    if (slotsText.length() > 0) {
+                        slotsText.append("  "); // Spacing between levels
+                    }
+                    int current = character.getSpellSlotsRemaining(level);
+                    slotsText.append(Util.getOrdinal(level)).append(": ")
+                            .append(current).append("/").append(maxSlots);
+                }
+            }
+
+            if (slotsText.length() > 0) {
+                spellbookLore.blankLine()
+                        .addLine("Spell Slots:", NamedTextColor.AQUA)
+                        .addWrappedText(slotsText.toString(), NamedTextColor.GRAY);
+            }
+
             // Show concentration status if concentrating
             if (character.isConcentrating()) {
                 spellbookLore.blankLine()
@@ -198,6 +219,18 @@ public class ViewCharacterSheetMenu {
 
             inventory.setItem(resourceSlot++, resourceItem);
         }
+
+        // Slot 53: Close button (bottom right corner)
+        ItemStack closeButton = ItemUtil.createActionItem(
+                Material.BARRIER,
+                Component.text("Close", NamedTextColor.RED),
+                LoreBuilder.create()
+                        .addLine("Click to save and close", NamedTextColor.GRAY)
+                        .build(),
+                MenuAction.CLOSE_CHARACTER_SHEET,
+                null
+        );
+        inventory.setItem(53, closeButton);
 
         return inventory;
     }

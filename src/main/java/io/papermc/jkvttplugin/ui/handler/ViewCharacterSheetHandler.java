@@ -7,6 +7,8 @@ import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.menu.SkillsMenu;
 import io.papermc.jkvttplugin.ui.menu.SpellCastingMenu;
 import io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -31,6 +33,15 @@ public class ViewCharacterSheetHandler implements MenuClickHandler {
                 CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
                 if (character != null) {
                     SpellCastingMenu.open(player, character);
+                }
+            }
+            case CLOSE_CHARACTER_SHEET -> {
+                // Save character and close inventory
+                CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
+                if (character != null) {
+                    CharacterSheetManager.saveCharacter(character);
+                    player.closeInventory();
+                    player.sendMessage(Component.text("Character saved!", NamedTextColor.GREEN));
                 }
             }
             case BACK_TO_CHARACTER_SHEET -> {

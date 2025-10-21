@@ -58,10 +58,34 @@ public class SpellCastingMenuListener implements Listener {
     private void handleCantripCast(Player player, CharacterSheet sheet, String spellName) {
         if (spellName == null) return;
 
-        // Cantrips don't consume slots, just cast
+        // Load cantrip to check concentration (normalize name to key)
+        DndSpell cantrip = SpellLoader.getSpell(Util.normalize(spellName));
+        if (cantrip == null) {
+            player.sendMessage(Component.text("Cantrip not found: " + spellName, NamedTextColor.RED));
+            return;
+        }
+
+        // Check concentration (some cantrips require concentration)
+        if (cantrip.isConcentration() && sheet.isConcentrating()) {
+            DndSpell currentConc = sheet.getConcentratingOn();
+            player.sendMessage(Component.text("Breaking concentration on ", NamedTextColor.YELLOW)
+                    .append(Component.text(currentConc.getName(), NamedTextColor.AQUA))
+                    .append(Component.text("...", NamedTextColor.YELLOW)));
+            sheet.breakConcentration();
+        }
+
+        // Set concentration if needed
+        if (cantrip.isConcentration()) {
+            sheet.setConcentratingOn(cantrip);
+        }
+
+        // Cast message
         player.sendMessage(Component.text("You cast ", NamedTextColor.AQUA)
                 .append(Component.text(spellName, NamedTextColor.YELLOW))
                 .append(Component.text("!", NamedTextColor.AQUA)));
+
+        // Close inventory after casting (consistent UX)
+        player.closeInventory();
 
         // ToDo: Implement actual spell effects when spell system is built
     }
