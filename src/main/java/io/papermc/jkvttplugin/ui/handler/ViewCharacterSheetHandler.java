@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.character.CharacterCreationSession;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader;
+import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.menu.RollOptionsMenu;
@@ -54,7 +55,31 @@ public class ViewCharacterSheetHandler implements MenuClickHandler {
 
                 // Open roll options menu with skill enum
                 // Menu will look up character and calculate breakdown
-                RollOptionsMenu.open(player, characterId, skill);
+                RollOptionsMenu.openForSkillCheck(player, characterId, skill);
+            }
+            case ROLL_ABILITY_CHECK -> {
+                // Parse ability enum from payload
+                Ability ability;
+                try {
+                    ability = Ability.valueOf(payload);
+                } catch (IllegalArgumentException e) {
+                    return;
+                }
+
+                // Open roll options menu for ability check
+                RollOptionsMenu.openForAbilityCheck(player, characterId, ability);
+            }
+            case ROLL_SAVING_THROW -> {
+                // Parse ability enum from payload
+                Ability ability;
+                try {
+                    ability = Ability.valueOf(payload);
+                } catch (IllegalArgumentException e) {
+                    return;
+                }
+
+                // Open roll options menu for saving throw
+                RollOptionsMenu.openForSavingThrow(player, characterId, ability);
             }
         }
     }

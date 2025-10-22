@@ -583,6 +583,77 @@ public class CharacterSheet {
         return new HashSet<>(skillProficiencies);
     }
 
+    /**
+     * Checks if the character is proficient in a specific saving throw.
+     * Proficiency is determined by the character's class.
+     * @param ability The ability to check
+     * @return true if proficient in this save, false otherwise
+     */
+    public boolean isProficientInSave(Ability ability) {
+        return dndClass != null
+                && dndClass.getSavingThrows() != null
+                && dndClass.getSavingThrows().contains(ability);
+    }
+
+    /**
+     * Calculates the saving throw bonus for a given ability.
+     * Formula: ability modifier + (proficiency bonus if proficient)
+     * @param ability The ability to calculate save bonus for
+     * @return The total saving throw bonus
+     */
+    public int getSavingThrowBonus(Ability ability) {
+        int abilityModifier = getModifier(ability);
+        int profBonus = isProficientInSave(ability) ? getProficiencyBonus() : 0;
+        return abilityModifier + profBonus;
+    }
+
+    /**
+     * Gets a formatted breakdown of an ability check bonus for display in chat.
+     * Ability checks never include proficiency.
+     * Examples: "+3[STR]", "-1[INT]"
+     *
+     * @param ability The ability to get the breakdown for
+     * @return Formatted string showing ability modifier only
+     */
+    public String getAbilityCheckBreakdown(Ability ability) {
+        int abilityModifier = getModifier(ability);
+
+        // Ability checks are just the modifier: "+3[STR]" or "-1[INT]"
+        return (abilityModifier >= 0 ? "+" : "")
+                + abilityModifier
+                + "["
+                + ability.getAbbreviation()
+                + "]";
+    }
+
+    /**
+     * Gets a formatted breakdown of a saving throw bonus for display in chat.
+     * Examples: "+3[STR] +2[Prof]" (proficient), "+1[WIS]" (not proficient)
+     *
+     * @param ability The ability to get the save breakdown for
+     * @return Formatted string showing ability modifier and proficiency bonus if applicable
+     */
+    public String getSaveBreakdown(Ability ability) {
+        int abilityModifier = getModifier(ability);
+        int profBonus = isProficientInSave(ability) ? getProficiencyBonus() : 0;
+
+        StringBuilder breakdown = new StringBuilder();
+
+        // Add ability modifier: "+3[STR]" or "-1[INT]"
+        breakdown.append(abilityModifier >= 0 ? "+" : "")
+                .append(abilityModifier)
+                .append("[")
+                .append(ability.getAbbreviation())
+                .append("]");
+
+        // Add proficiency if applicable: " +2[Prof]"
+        if (profBonus > 0) {
+            breakdown.append(" +").append(profBonus).append("[Prof]");
+        }
+
+        return breakdown.toString();
+    }
+
     public void gainTempHealth(int tempHP) {
         tempHealth = Math.max(tempHealth, tempHP);
     }

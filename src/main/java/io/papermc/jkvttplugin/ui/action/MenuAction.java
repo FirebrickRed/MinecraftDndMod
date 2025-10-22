@@ -36,6 +36,8 @@ public enum MenuAction {
     OPEN_SPELLBOOK,
     CLOSE_CHARACTER_SHEET,
     ROLL_SKILL,
+    ROLL_ABILITY_CHECK,
+    ROLL_SAVING_THROW,
 
     // ===== Roll Options Actions =====
     ROLL_NORMAL,

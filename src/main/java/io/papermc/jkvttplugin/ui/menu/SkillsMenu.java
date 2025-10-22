@@ -13,7 +13,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 
@@ -40,42 +42,47 @@ public class SkillsMenu {
         );
 
         // Row 1: Strength (1 skill)
-        // [STR] [Athletics] [ ] [ ] [ ] [ ] [ ] [ ] [ ]
-        addAbilityHeader(inventory, Ability.STRENGTH, 0);
-        addSkillItem(inventory, character, Skill.ATHLETICS, 1);
+        // [STR Check] [STR Save] [Athletics] [ ] [ ] [ ] [ ] [ ] [ ]
+        addAbilityCheckIcon(inventory, character, Ability.STRENGTH, 0);
+        addSavingThrowIcon(inventory, character, Ability.STRENGTH, 1);
+        addSkillItem(inventory, character, Skill.ATHLETICS, 2);
 
         // Row 2: Dexterity (3 skills)
-        // [DEX] [Acrobatics] [Sleight of Hand] [Stealth] [ ] [ ] [ ] [ ] [ ]
-        addAbilityHeader(inventory, Ability.DEXTERITY, 9);
-        addSkillItem(inventory, character, Skill.ACROBATICS, 10);
-        addSkillItem(inventory, character, Skill.SLEIGHT_OF_HAND, 11);
-        addSkillItem(inventory, character, Skill.STEALTH, 12);
+        // [DEX Check] [DEX Save] [Acrobatics] [Sleight of Hand] [Stealth] [ ] [ ] [ ] [ ]
+        addAbilityCheckIcon(inventory, character, Ability.DEXTERITY, 9);
+        addSavingThrowIcon(inventory, character, Ability.DEXTERITY, 10);
+        addSkillItem(inventory, character, Skill.ACROBATICS, 11);
+        addSkillItem(inventory, character, Skill.SLEIGHT_OF_HAND, 12);
+        addSkillItem(inventory, character, Skill.STEALTH, 13);
 
         // Row 3: Intelligence (5 skills)
-        // [INT] [Arcana] [History] [Investigation] [Nature] [Religion] [ ] [ ] [ ]
-        addAbilityHeader(inventory, Ability.INTELLIGENCE, 18);
-        addSkillItem(inventory, character, Skill.ARCANA, 19);
-        addSkillItem(inventory, character, Skill.HISTORY, 20);
-        addSkillItem(inventory, character, Skill.INVESTIGATION, 21);
-        addSkillItem(inventory, character, Skill.NATURE, 22);
-        addSkillItem(inventory, character, Skill.RELIGION, 23);
+        // [INT Check] [INT Save] [Arcana] [History] [Investigation] [Nature] [Religion] [ ] [ ]
+        addAbilityCheckIcon(inventory, character, Ability.INTELLIGENCE, 18);
+        addSavingThrowIcon(inventory, character, Ability.INTELLIGENCE, 19);
+        addSkillItem(inventory, character, Skill.ARCANA, 20);
+        addSkillItem(inventory, character, Skill.HISTORY, 21);
+        addSkillItem(inventory, character, Skill.INVESTIGATION, 22);
+        addSkillItem(inventory, character, Skill.NATURE, 23);
+        addSkillItem(inventory, character, Skill.RELIGION, 24);
 
         // Row 4: Wisdom (5 skills)
-        // [WIS] [Animal Handling] [Insight] [Medicine] [Perception] [Survival] [ ] [ ] [ ]
-        addAbilityHeader(inventory, Ability.WISDOM, 27);
-        addSkillItem(inventory, character, Skill.ANIMAL_HANDLING, 28);
-        addSkillItem(inventory, character, Skill.INSIGHT, 29);
-        addSkillItem(inventory, character, Skill.MEDICINE, 30);
-        addSkillItem(inventory, character, Skill.PERCEPTION, 31);
-        addSkillItem(inventory, character, Skill.SURVIVAL, 32);
+        // [WIS Check] [WIS Save] [Animal Handling] [Insight] [Medicine] [Perception] [Survival] [ ] [ ]
+        addAbilityCheckIcon(inventory, character, Ability.WISDOM, 27);
+        addSavingThrowIcon(inventory, character, Ability.WISDOM, 28);
+        addSkillItem(inventory, character, Skill.ANIMAL_HANDLING, 29);
+        addSkillItem(inventory, character, Skill.INSIGHT, 30);
+        addSkillItem(inventory, character, Skill.MEDICINE, 31);
+        addSkillItem(inventory, character, Skill.PERCEPTION, 32);
+        addSkillItem(inventory, character, Skill.SURVIVAL, 33);
 
         // Row 5: Charisma (4 skills)
-        // [CHA] [Deception] [Intimidation] [Performance] [Persuasion] [ ] [ ] [ ] [ ]
-        addAbilityHeader(inventory, Ability.CHARISMA, 36);
-        addSkillItem(inventory, character, Skill.DECEPTION, 37);
-        addSkillItem(inventory, character, Skill.INTIMIDATION, 38);
-        addSkillItem(inventory, character, Skill.PERFORMANCE, 39);
-        addSkillItem(inventory, character, Skill.PERSUASION, 40);
+        // [CHA Check] [CHA Save] [Deception] [Intimidation] [Performance] [Persuasion] [ ] [ ] [ ]
+        addAbilityCheckIcon(inventory, character, Ability.CHARISMA, 36);
+        addSavingThrowIcon(inventory, character, Ability.CHARISMA, 37);
+        addSkillItem(inventory, character, Skill.DECEPTION, 38);
+        addSkillItem(inventory, character, Skill.INTIMIDATION, 39);
+        addSkillItem(inventory, character, Skill.PERFORMANCE, 40);
+        addSkillItem(inventory, character, Skill.PERSUASION, 41);
 
         // Add "Back" button (bottom-left corner - slot 45)
         ItemStack backButton = ItemUtil.createActionItem(
@@ -138,6 +145,77 @@ public class SkillsMenu {
         );
 
         inventory.setItem(slot, skillItem);
+    }
+
+    /**
+     * Adds an ability check icon - clickable to roll raw ability checks.
+     * Shows ability score and modifier.
+     * Example: "STR 16 (+3)"
+     */
+    private static void addAbilityCheckIcon(Inventory inventory, CharacterSheet character, Ability ability, int slot) {
+        Material material = getMaterialForAbility(ability);
+        int score = character.getAbility(ability);
+        int modifier = character.getModifier(ability);
+
+        String sign = modifier >= 0 ? "+" : "";
+        String displayName = ability.getAbbreviation() + " " + score + " (" + sign + modifier + ")";
+
+        LoreBuilder lore = LoreBuilder.create()
+                .addLine("Ability Check", NamedTextColor.AQUA)
+                .blankLine()
+                .addLine("Click to roll " + ability.getAbbreviation() + " check", NamedTextColor.YELLOW);
+
+        ItemStack checkIcon = ItemUtil.createActionItem(
+                material,
+                Component.text(displayName, NamedTextColor.WHITE),
+                lore.build(),
+                MenuAction.ROLL_ABILITY_CHECK,
+                ability.name() // e.g., "STRENGTH"
+        );
+
+        inventory.setItem(slot, checkIcon);
+    }
+
+    /**
+     * Adds a saving throw icon - clickable to roll saving throws.
+     * Shows save bonus and proficiency status.
+     * Enchanted glow if proficient.
+     * Example: "STR Save +5" (proficient) or "WIS Save +1" (not proficient)
+     */
+    private static void addSavingThrowIcon(Inventory inventory, CharacterSheet character, Ability ability, int slot) {
+        Material material = getMaterialForAbility(ability);
+        int saveBonus = character.getSavingThrowBonus(ability);
+        boolean proficient = character.isProficientInSave(ability);
+
+        String sign = saveBonus >= 0 ? "+" : "";
+        String displayName = ability.getAbbreviation() + " Save " + sign + saveBonus;
+
+        LoreBuilder lore = LoreBuilder.create();
+
+        if (proficient) {
+            lore.addLine("✓ Proficient", NamedTextColor.GREEN);
+        } else {
+            lore.addLine("  Not Proficient", NamedTextColor.DARK_GRAY);
+        }
+
+        lore.blankLine()
+                .addLine("Click to roll " + ability.getAbbreviation() + " save", NamedTextColor.YELLOW);
+
+        ItemStack saveIcon = ItemUtil.createActionItem(
+                material,
+                Component.text(displayName, proficient ? NamedTextColor.GREEN : NamedTextColor.GRAY),
+                lore.build(),
+                MenuAction.ROLL_SAVING_THROW,
+                ability.name() // e.g., "STRENGTH"
+        );
+
+        // Add enchantment glow if proficient
+        if (proficient) {
+            saveIcon.addUnsafeEnchantment(Enchantment.UNBREAKING, 1);
+            saveIcon.editMeta(m -> m.addItemFlags(ItemFlag.HIDE_ENCHANTS));
+        }
+
+        inventory.setItem(slot, saveIcon);
     }
 
     /**
