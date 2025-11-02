@@ -22,20 +22,20 @@ public class DataManager {
         // Clear existing data before reloading (for /reloadyaml command)
         clearAllData();
 
-        File racesFolder = new File(dmContentFolder, "Races");
-        File classFolder = new File(dmContentFolder, "Classes");
-        File backgroundsFolder = new File(dmContentFolder, "Backgrounds");
         File spellFolder = new File(dmContentFolder, "Spells");
         File weaponFolder = new File(dmContentFolder, "Weapons");
         File armorFolder = new File(dmContentFolder, "Armor");
+        File racesFolder = new File(dmContentFolder, "Races");
+        File classFolder = new File(dmContentFolder, "Classes");
+        File backgroundsFolder = new File(dmContentFolder, "Backgrounds");
         File itemFolder = new File(dmContentFolder, "Items");
-        RaceLoader.loadAllRaces(racesFolder);
-        ClassLoader.loadAllClasses(classFolder);
-        BackgroundLoader.loadAllBackgrounds(backgroundsFolder);
         SpellLoader.loadAllSpells(spellFolder);
         WeaponLoader.loadAllWeapons(weaponFolder);
         ArmorLoader.loadAllArmors(armorFolder);
         ItemLoader.loadAllItems(itemFolder);
+        RaceLoader.loadAllRaces(racesFolder);
+        ClassLoader.loadAllClasses(classFolder);
+        BackgroundLoader.loadAllBackgrounds(backgroundsFolder);
     }
 
     /**

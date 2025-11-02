@@ -4,7 +4,7 @@ import java.util.*;
 
 public class PlayersChoice<T> {
     public enum ChoiceType {
-        SKILL, TOOL, LANGUAGE, EQUIPMENT, FEAT, ABILITY_SCORE, CUSTOM
+        SKILL, TOOL, LANGUAGE, EQUIPMENT, FEAT, ABILITY_SCORE, SPELL, CUSTOM
     }
 
     private final int choose;

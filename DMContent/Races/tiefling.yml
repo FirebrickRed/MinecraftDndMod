@@ -8,10 +8,42 @@ ability_scores:
     Intelligence: 1
 size: Medium
 speed: 30
+
+# Display-only trait names
 traits:
   - Darkvision
   - Hellish Resistance
   - Infernal Legacy
+
 languages:
   - Common
   - Infernal
+
+# Mechanical trait implementations
+darkvision: 60  # 60 ft. darkvision range
+
+# Fixed damage resistance
+damage_resistances:
+  - fire
+
+# Innate spellcasting (Infernal Legacy)
+innate_spells:
+  - spell_id: thaumaturgy
+    level_requirement: 1  # Available at character level 1
+    type: cantrip
+    casting_ability: charisma
+    description: "You know the Thaumaturgy cantrip."
+  - spell_id: hellish_rebuke
+    level_requirement: 3  # Available at character level 3
+    spell_level: 1
+    uses: 1
+    recovery: long_rest
+    casting_ability: charisma
+    description: "Once you reach 3rd level, you can cast Hellish Rebuke as a 2nd-level spell once per long rest."
+  - spell_id: darkness
+    level_requirement: 5  # Available at character level 5
+    spell_level: 2
+    uses: 1
+    recovery: long_rest
+    casting_ability: charisma
+    description: "Once you reach 5th level, you can cast Darkness once per long rest."

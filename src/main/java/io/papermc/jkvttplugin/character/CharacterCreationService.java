@@ -56,12 +56,12 @@ public class CharacterCreationService {
             System.out.println("After subrace contribution: " + pending.size());
         }
         if (dndClass != null) {
-            System.out.println("Class player choices: " + dndClass.getPlayerChoices().size());
+//            System.out.println("Class player choices: " + dndClass.getPlayerChoices().size());
             dndClass.contributeChoices(pending);
             System.out.println("After class contribution: " + pending.size());
         }
         if (background != null) {
-            System.out.println("Background player choices: " + background.getPlayerChoices().size());
+//            System.out.println("Background player choices: " + background.getPlayerChoices().size());
             background.contributeChoices(pending);
             System.out.println("After background contribution: " + pending.size());
         }

@@ -57,7 +57,19 @@ public class RaceLoader {
                 .languages(langResult.languages)
                 .subraces(LoaderUtils.parseSubraces(data.get("subraces")))
                 .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
-                .icon((String) data.getOrDefault("icon_name", null));
+                .icon((String) data.getOrDefault("icon_name", null))
+            // Parse new mechanical trait fields (Issue #51)
+                .swimmingSpeed((int) data.getOrDefault("swimming_speed", 0))
+                .flyingSpeed((int) data.getOrDefault("flying_speed", 0))
+                .climbingSpeed((int) data.getOrDefault("climbing_speed", 0))
+                .burrowingSpeed((int) data.getOrDefault("burrowing_speed", 0))
+                .darkvision((Integer) data.get("darkvision"))
+                .damageResistances(LoaderUtils.parseStringList(data.get("damage_resistances")))
+                .skillProficiencies(LoaderUtils.parseStringList(data.get("skill_proficiencies")))
+                .weaponProficiencies(LoaderUtils.parseStringList(data.get("weapon_proficiencies")))
+                .armorProficiencies(LoaderUtils.parseStringList(data.get("armor_proficiencies")))
+                .innateSpells(LoaderUtils.parseInnateSpells(data.get("innate_spells")));
+
 
         DndRace dndRace = builder.build();
         return dndRace;

@@ -7,14 +7,40 @@ ability_scores:
     Dexterity: 2
 size: Medium
 speed: 30
+
+# Display-only trait names
 traits:
-- Darkvision
-- Fey Ancestry
-- Trance
-- Keen Senses
+  - Darkvision
+  - Fey Ancestry
+  - Trance
+  - Keen Senses
+
 languages:
- - Common
- - Elvish
+  - Common
+  - Elvish
+
+# Mechanical trait implementations
+darkvision: 60  # 60 ft. darkvision range
+
+# Keen Senses: Proficiency in Perception skill
+skill_proficiencies:
+  - perception
+
+# Fey Ancestry: Advantage on saves vs charmed, immune to magical sleep
+conditional_advantages:
+  - type: saving_throw
+    condition: charmed
+    description: "You have advantage on saving throws against being charmed."
+condition_immunities:
+  - type: sleep
+    magical_only: true
+    description: "Magic can't put you to sleep."
+
+# Trance: Only need 4 hours for long rest (Issue #63)
+rest_requirements:
+  long_rest_hours: 4
+  description: "Elves don't need to sleep. Instead, they meditate deeply for 4 hours a day."
+
 subraces:
   dark_elf:
     name: Dark Elf
@@ -26,37 +52,116 @@ subraces:
       - Sunlight Sensitivity
       - Drow Magic
       - Drow Weapon Training
+    # Superior Darkvision
+    darkvision: 120
+    # Drow Magic: Innate spellcasting
+    innate_spells:
+      - spell_id: dancing_lights
+        level_requirement: 1
+        is_cantrip: true
+        casting_ability: charisma
+      - spell_id: faerie_fire
+        level_requirement: 3
+        spell_level: 1
+        uses: 1
+        recovery: long_rest
+        casting_ability: charisma
+      - spell_id: darkness
+        level_requirement: 5
+        spell_level: 2
+        uses: 1
+        recovery: long_rest
+        casting_ability: charisma
+    # Drow Weapon Training
+    weapon_proficiencies:
+      - rapier
+      - shortsword
+      - hand_crossbow
+    # Sunlight Sensitivity: Disadvantage on attack rolls and Perception in sunlight (Issue #63)
+    sunlight_sensitivity: true
+
   high_elf:
     name: High Elf
     ability_scores:
       fixed:
         Intelligence: 1
     traits:
-    - 'Cantrip: choose from Wizard list'
-    - Elf Weapon Training
+      - Cantrip
+      - Elf Weapon Training
+      - Extra Language
+    # Cantrip choice from Wizard list
     player_choices:
+      - id: wizard_cantrip
+        title: Wizard Cantrip
+        type: SPELL
+        choose: 1
+        spell_list: wizard
+        spell_level: 0  # 0 = cantrips only
       - id: subrace_languages
         title: Extra Language
         type: LANGUAGE
         choose: 1
         options: []
+    # Elf Weapon Training
+    weapon_proficiencies:
+      - longsword
+      - shortsword
+      - shortbow
+      - longbow
+
   wood_elf:
     name: Wood Elf
     ability_scores:
       fixed:
         Wisdom: 1
     traits:
-    - Elf Weapon Training
-    - Fleet of Foot
-    - Mask of the Wild
+      - Elf Weapon Training
+      - Fleet of Foot
+      - Mask of the Wild
+    # Fleet of Foot
+    speed: 35  # Overrides base 30
+    # Elf Weapon Training
+    weapon_proficiencies:
+      - longsword
+      - shortsword
+      - shortbow
+      - longbow
+    # Mask of the Wild: Can hide when lightly obscured by natural phenomena (Issue #63)
+    special_hide_rules:
+      - type: natural_obscurement
+        conditions: [foliage, heavy_rain, falling_snow, mist, natural_phenomena]
+        description: "You can attempt to hide even when you are only lightly obscured by foliage, heavy rain, falling snow, mist, and other natural phenomena."
+
   pallid_elf:
     name: Pallid Elf
     ability_scores:
       fixed:
         Wisdom: 1
     traits:
-    - Incisive Sense
-    - Blessing of the Moonweaver
+      - Incisive Sense
+      - Blessing of the Moonweaver
+    # Incisive Sense: Advantage on Investigation and Insight checks
+    # (Would need special handling in skill check system)
+    # Blessing of the Moonweaver: Innate spellcasting
+    innate_spells:
+      - spell_id: light
+        level_requirement: 1
+        is_cantrip: true
+        casting_ability: wisdom
+      - spell_id: sleep
+        level_requirement: 3
+        spell_level: 1
+        uses: 1
+        recovery: long_rest
+        casting_ability: wisdom
+      - spell_id: invisibility
+        level_requirement: 5
+        spell_level: 2
+        uses: 1
+        recovery: long_rest
+        casting_ability: wisdom
+        description: "You can cast this spell on yourself only."
+
   astral_elf:
     name: Astral Elf
     ability_scores:
@@ -71,8 +176,23 @@ subraces:
       - Starlight Step
       - Astral Trance
     player_choices:
+      - id: astral_fire_cantrip
+        title: "Astral Fire Cantrip"
+        type: SPELL
+        choose: 1
+        options: [dancing_lights, light, sacred_flame]  # Spell IDs (not display names)
       - id: subrace_languages
         title: Extra Language
         type: LANGUAGE
         choose: 1
         options: []
+    # Starlight Step: Teleportation ability (functions like Misty Step but isn't a spell)
+    # Uses scale with proficiency bonus (2/3/4/5/6 at levels 1/5/9/13/17)
+    innate_spells:
+      - spell_id: misty_step
+        level_requirement: 1
+        spell_level: 2
+        uses: proficiency_bonus  # Scales with character level
+        recovery: long_rest
+        casting_ability: intelligence  # Not actually used since it's not a spell attack/save
+        description: "Starlight Step: As a bonus action, magically teleport up to 30 feet to an unoccupied space you can see. You can use this trait a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest."

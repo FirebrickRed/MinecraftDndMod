@@ -11,6 +11,7 @@ public enum ChoiceCategory {
     SKILL("Skills", Material.IRON_SWORD),
     TOOL("Tools", Material.IRON_PICKAXE),
     EQUIPMENT("Equipment", Material.CHEST),
+    SPELL("Spell", Material.BONE_MEAL),
     EXTRA("Other", Material.PAPER); // Size, feats, and other miscellaneous choices
 
     private final String displayName;
@@ -42,6 +43,7 @@ public enum ChoiceCategory {
             case SKILL -> SKILL;
             case TOOL -> TOOL;
             case EQUIPMENT -> EQUIPMENT;
+            case SPELL -> SPELL;
             case CUSTOM -> categorizeCustom(choiceId);
             case FEAT, ABILITY_SCORE -> EXTRA;
         };

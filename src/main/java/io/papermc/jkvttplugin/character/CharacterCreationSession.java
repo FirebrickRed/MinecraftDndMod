@@ -87,6 +87,14 @@ public class CharacterCreationSession {
         this.selectedSpells = new LinkedHashSet<>(spells);
     }
 
+    public void addSelectedCantrip(String cantripName) {
+        this.selectedCantrips.add(cantripName);
+    }
+
+    public void addSelectedSpell(String spellName) {
+        this.selectedSpells.add(spellName);
+    }
+
     public Map<Integer, Set<String>> getSpellsByLevel() {
         Map<Integer, Set<String>> result = new HashMap<>();
         spellsByLevel.forEach((k, v) -> result.put(k, new LinkedHashSet<>(v)));

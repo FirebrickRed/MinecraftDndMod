@@ -7,15 +7,48 @@ ability_scores:
     Constitution: 2
 size: Medium
 speed: 25
+
+# Display-only trait names
 traits:
   - Darkvision
   - Dwarven Resilience
   - Dwarven Combat Training
   - Tool Proficiency
   - Stonecunning
+
 languages:
   - Common
   - Dwarvish
+
+# Player choices during character creation
+player_choices:
+  - id: tool_proficiency
+    title: Tool Proficiency
+    type: TOOL
+    choose: 1
+    options:
+      - smiths_tools
+      - brewers_supplies
+      - masons_tools
+
+# Mechanical trait implementations
+darkvision: 60  # 60 ft. darkvision range
+
+# Dwarven Resilience: Advantage on saving throws against poison + resistance
+damage_resistances:
+  - poison
+conditional_advantages:
+  - type: saving_throw
+    condition: poison
+    description: "You have advantage on saving throws against poison."
+
+# Dwarven Combat Training: Weapon proficiencies
+weapon_proficiencies:
+  - battleaxe
+  - handaxe
+  - light_hammer
+  - warhammer
+
 subraces:
   hill_dwarf:
     name: Hill Dwarf
@@ -25,6 +58,9 @@ subraces:
         Wisdom: 1
     traits:
       - Dwarven Toughness
+    # Dwarven Toughness: +1 HP per level (same as Tough feat)
+    toughness: true
+
   mountain_dwarf:
     name: Mountain Dwarf
     description: As a mountain dwarf, you're strong and hardy, accustomed to a difficult life in rugged terrain.
@@ -33,6 +69,11 @@ subraces:
         Strength: 2
     traits:
       - Dwarven Armor Training
+    # Dwarven Armor Training: Armor proficiencies
+    armor_proficiencies:
+      - light_armor
+      - medium_armor
+
   duergar:
     name: Duergar (Gray Dwarf)
     description: Duergar are gray-skinned dwarves that dwell in the Underdark, known for their cruelty and dark magic.
@@ -44,3 +85,36 @@ subraces:
       - Duergar Resilience
       - Duergar Magic
       - Sunlight Sensitivity
+    # Superior Darkvision: Extended range
+    darkvision: 120
+    # Duergar Resilience: Advantage on saves vs illusions, charms, paralysis + poison resistance
+    damage_resistances:
+      - poison
+    conditional_advantages:
+      - type: saving_throw
+        condition: illusion
+        description: "You have advantage on saving throws against illusions."
+      - type: saving_throw
+        condition: charmed
+        description: "You have advantage on saving throws against being charmed."
+      - type: saving_throw
+        condition: paralyzed
+        description: "You have advantage on saving throws against being paralyzed."
+    # Duergar Magic: Innate spellcasting
+    innate_spells:
+      - spell_id: enlarge_reduce
+        level_requirement: 3
+        spell_level: 2
+        uses: 1
+        recovery: long_rest
+        casting_ability: intelligence
+        description: "You can cast Enlarge/Reduce on yourself once per long rest, starting at 3rd level."
+      - spell_id: invisibility
+        level_requirement: 5
+        spell_level: 2
+        uses: 1
+        recovery: long_rest
+        casting_ability: intelligence
+        description: "You can cast Invisibility on yourself once per long rest, starting at 5th level."
+    # Sunlight Sensitivity: Disadvantage on attack rolls and Perception checks in sunlight
+    # (This would need special handling in combat system)

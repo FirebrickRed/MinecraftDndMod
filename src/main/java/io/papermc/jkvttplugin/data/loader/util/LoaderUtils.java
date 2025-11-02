@@ -20,7 +20,10 @@ import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.data.model.enums.Size;
+import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
+import io.papermc.jkvttplugin.data.model.DndSpell;
+import io.papermc.jkvttplugin.data.loader.SpellLoader;
 import io.papermc.jkvttplugin.util.TagRegistry;
 import io.papermc.jkvttplugin.util.Util;
 
@@ -339,6 +342,18 @@ public class LoaderUtils {
                 .languages(langResult.languages)
                 .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
                 .icon((String) data.getOrDefault("icon_name", ""))
+                // Parse mechanical trait fields (Issue #51)
+                .speed((int) data.getOrDefault("speed", 0))
+                .swimmingSpeed((int) data.getOrDefault("swimming_speed", 0))
+                .flyingSpeed((int) data.getOrDefault("flying_speed", 0))
+                .climbingSpeed((int) data.getOrDefault("climbing_speed", 0))
+                .burrowingSpeed((int) data.getOrDefault("burrowing_speed", 0))
+                .darkvision((Integer) data.get("darkvision"))
+                .damageResistances(LoaderUtils.parseStringList(data.get("damage_resistances")))
+                .skillProficiencies(LoaderUtils.parseStringList(data.get("skill_proficiencies")))
+                .weaponProficiencies(LoaderUtils.parseStringList(data.get("weapon_proficiencies")))
+                .armorProficiencies(LoaderUtils.parseStringList(data.get("armor_proficiencies")))
+                .innateSpells(LoaderUtils.parseInnateSpells(data.get("innate_spells")))
                 .build();
     }
 
@@ -478,6 +493,15 @@ public class LoaderUtils {
                 case "SKILL" -> {
                     type = PlayersChoice.ChoiceType.SKILL;
                     var opts = normalizeStringList(m.get("options"));
+
+                    // Empty options means "choose from all skills"
+                    if (opts.isEmpty()) {
+                        opts = new ArrayList<>();
+                        for (Skill skill : Skill.values()) {
+                            opts.add(skill.name().toLowerCase());
+                        }
+                    }
+
                     pc = new PlayersChoice<>(choose, opts, type);
                 }
                 case "TOOL" -> {
@@ -519,6 +543,46 @@ public class LoaderUtils {
                         opts = LanguageRegistry.getAllLanguages();
                     }
                     pc = new PlayersChoice<>(choose, opts, type);
+                }
+                case "SPELL" -> {
+                    type = PlayersChoice.ChoiceType.SPELL;
+
+                    // First check if explicit options are provided in YAML (e.g., Astral Fire: [Dancing Lights, Light, Sacred Flame])
+                    List<String> spellOpts = normalizeStringList(m.get("options"));
+
+                    // If no explicit options, populate from spell_list (e.g., spell_list: wizard, spell_level: 0)
+                    if (spellOpts.isEmpty()) {
+                        String spellList = asString(m.get("spell_list"), "");
+                        int spellLevel = asInt(m.get("spell_level"), -1);
+
+                        if (!spellList.isEmpty()) {
+                            if (spellLevel == 0) {
+                                // Cantrips only - use spell IDs, not display names
+                                spellOpts = SpellLoader.getCantripsForClass(spellList)
+                                    .stream()
+                                    .map(DndSpell::getId)
+                                    .toList();
+                            } else if (spellLevel > 0) {
+                                // Specific spell level - use spell IDs, not display names
+                                spellOpts = SpellLoader.getSpellsByLevel(spellList, spellLevel)
+                                    .stream()
+                                    .map(DndSpell::getId)
+                                    .toList();
+                            } else {
+                                // All spells for that class - use spell IDs, not display names
+                                spellOpts = SpellLoader.getSpellsForClass(spellList)
+                                    .stream()
+                                    .map(DndSpell::getId)
+                                    .toList();
+                            }
+                        }
+                    }
+
+                    if (spellOpts.isEmpty()) {
+                        System.out.println("[LoaderUtils] WARNING: SPELL choice '" + id + "' has empty spell options!");
+                    }
+
+                    pc = new PlayersChoice<>(choose, spellOpts, type);
                 }
                 case "CUSTOM" -> {
                     type = PlayersChoice.ChoiceType.CUSTOM;
@@ -595,6 +659,96 @@ public class LoaderUtils {
             }
         }
         return null;
+    }
+
+    /**
+     * Parse a list of strings from YAML (for damage resistances, skill proficiencies, etc.)
+     * Similar to parseTraits but more generic - just returns a trimmed list of strings
+     */
+    public static List<String> parseStringList(Object input) {
+        if (!(input instanceof List<?> inputList)) return List.of();
+
+        List<String> result = new ArrayList<>();
+        for (Object obj : inputList) {
+            if (obj instanceof String str && !str.isBlank()) {
+                result.add(str.trim());
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Parse innate spells from YAML for racial spellcasting (Issue #51)
+     * Expected YAML structure:
+     * innate_spells:
+     *   - spell_id: thaumaturgy
+     *     level_requirement: 1
+     *     is_cantrip: true
+     *     spell_level: 0
+     *     uses: 0
+     *     recovery: long_rest
+     *     casting_ability: Charisma
+     *     description: "Optional description"
+     */
+    public static List<InnateSpell> parseInnateSpells(Object input) {
+        if (!(input instanceof List<?> inputList)) return List.of();
+
+        List<InnateSpell> result = new ArrayList<>();
+        for (Object obj : inputList) {
+            if (obj instanceof Map<?, ?> spellMap) {
+                try {
+                    InnateSpell spell = new InnateSpell();
+
+                    // Required fields
+                    spell.setSpellId(asString(spellMap.get("spell_id"), null));
+                    spell.setLevelRequirement(asInt(spellMap.get("level_requirement"), 1));
+
+                    // Cantrip vs leveled spell
+                    Object isCantripObj = spellMap.get("is_cantrip");
+                    boolean isCantrip = (isCantripObj instanceof Boolean) ? (Boolean) isCantripObj : false;
+                    spell.setCantrip(isCantrip);
+
+                    spell.setSpellLevel(asInt(spellMap.get("spell_level"), 0));
+
+                    // Parse uses - can be integer or "proficiency_bonus" string
+                    Object usesObj = spellMap.get("uses");
+                    if (usesObj instanceof String usesStr && "proficiency_bonus".equalsIgnoreCase(usesStr)) {
+                        spell.setScalesWithProficiency(true);
+                        spell.setUses(-1); // Marker value, will be calculated based on character's proficiency
+                    } else {
+                        spell.setUses(asInt(usesObj, 0));
+                        spell.setScalesWithProficiency(false);
+                    }
+
+                    spell.setRecovery(asString(spellMap.get("recovery"), "long_rest"));
+
+                    // Casting ability
+                    String abilityStr = asString(spellMap.get("casting_ability"), null);
+                    if (abilityStr != null) {
+                        try {
+                            spell.setCastingAbility(Ability.fromString(abilityStr));
+                        } catch (IllegalArgumentException e) {
+                            System.out.println("[LoaderUtils] Warning: Invalid casting ability '" + abilityStr + "' for spell " + spell.getSpellId());
+                        }
+                    }
+
+                    // Optional description
+                    spell.setDescription(asString(spellMap.get("description"), null));
+
+                    // Only add if we have at least a spell ID
+                    if (spell.getSpellId() != null && !spell.getSpellId().isBlank()) {
+                        result.add(spell);
+                    } else {
+                        System.out.println("[LoaderUtils] Warning: Skipped innate spell with missing/blank spell_id");
+                    }
+                } catch (Exception e) {
+                    System.out.println("[LoaderUtils] ERROR parsing innate spell: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        }
+
+        return result;
     }
 
 }

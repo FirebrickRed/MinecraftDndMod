@@ -101,6 +101,7 @@ public class ChoiceMerger {
             case LANGUAGE -> KnownItemCollector.collectKnownLanguages(session);
             case SKILL -> KnownItemCollector.collectKnownSkills(session);
             case TOOL -> KnownItemCollector.collectKnownTools(session);
+            case SPELL -> KnownItemCollector.collectKnownSpells(session);
             case EQUIPMENT, EXTRA -> Collections.emptySet(); // No filtering needed
         };
     }

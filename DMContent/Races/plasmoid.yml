@@ -1,5 +1,6 @@
 name: Plasmoid
 creature_type: Ooze
+source_url: "https://www.dndbeyond.com/races/plasmoid"
 description: Plasmoids are amorphous oozelike beings with the ability to change their shape and appearance at will. They can compress and squeeze through small spaces, and communicate via pseudopods and imitation.
 ability_scores:
   choice:
@@ -8,14 +9,19 @@ ability_scores:
       - [1, 1, 1]
 #size: Medium  # Default - will be overridden by player choice
 speed: 30
-languages:
-  - Common
+
+# Display-only trait names
 traits:
   - Amorphous
   - Darkvision
   - Hold Breath
   - Natural Resilience
   - Shape Self
+
+languages:
+  - Common
+
+# Player choices during character creation
 player_choices:
   - id: race_size
     title: Size
@@ -27,3 +33,26 @@ player_choices:
     type: LANGUAGE
     choose: 1
     options: []
+
+# Mechanical trait implementations
+darkvision: 60  # 60 ft. darkvision range
+
+# Hold Breath: Can hold breath for 1 hour
+hold_breath_minutes: 60
+
+# Amorphous: Can squeeze through 1-inch-wide space, advantage on grapple checks/saves
+# (Requires special handling - Issue #63)
+amorphous: true
+
+# Natural Resilience: Resistance to acid and poison damage, advantage on poison saves
+damage_resistances:
+  - acid
+  - poison
+conditional_advantages:
+  - type: saving_throw
+    condition: poison
+    description: "You have advantage on saving throws against poison."
+
+# Shape Self: Can reshape body, change appearance as action
+# (Requires special handling - Issue #63)
+shape_self: true

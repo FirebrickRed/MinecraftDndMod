@@ -44,6 +44,7 @@ public class SpellLoader {
 
                     try {
                         DndSpell spell = parseSpell(spellKey, spellData);
+                        spell.setId(spellKey.toLowerCase());  // Set the spell ID
                         spells.put(spellKey.toLowerCase(), spell);
                         LOGGER.info("Loaded spell: " + spell.getName());
                     } catch (Exception e) {

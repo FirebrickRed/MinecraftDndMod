@@ -7,13 +7,27 @@ ability_scores:
     Dexterity: 2
 size: Small
 speed: 25
+
+# Display-only trait names
 traits:
   - Lucky
   - Brave
   - Halfling Nimbleness
+
 languages:
   - Common
   - Halfling
+
+# Mechanical trait implementations
+# Lucky: When you roll a 1 on attack/ability check/save, reroll and use new roll
+lucky: true
+
+# Brave: Advantage on saving throws against being frightened
+conditional_advantages:
+  - type: saving_throw
+    condition: frightened
+    description: "You have advantage on saving throws against being frightened."
+
 subraces:
   lightfoot:
     name: Lightfoot Halfling
@@ -23,6 +37,9 @@ subraces:
         Charisma: 1
     traits:
       - Naturally Stealthy
+    # Naturally Stealthy: Can hide when obscured by creature >= 1 size larger
+    # (Special stealth rule, no direct mechanical field needed)
+
   stout:
     name: Stout Halfling
     description: As a stout halfling, you're hardier than average and have some resistance to poison.
@@ -31,6 +48,14 @@ subraces:
         Constitution: 1
     traits:
       - Stout Resilience
+    # Stout Resilience: Advantage on saves vs poison + resistance to poison damage
+    damage_resistances:
+      - poison
+    conditional_advantages:
+      - type: saving_throw
+        condition: poison
+        description: "You have advantage on saving throws against poison."
+
   ghostwise:
     name: Ghostwise Halfling
     description: Ghostwise halflings trace their ancestry back to a war among halfling tribes that sent their ancestors into flight from their homeland.
@@ -39,3 +64,5 @@ subraces:
         Wisdom: 1
     traits:
       - Silent Speech
+    # Silent Speech: Telepathic communication up to 30 ft
+    # (Would need special handling in chat/communication system)
