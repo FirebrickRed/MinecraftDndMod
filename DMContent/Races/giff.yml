@@ -1,4 +1,6 @@
 name: Giff
+creature_type: Humanoid
+source_url: "https://www.dndbeyond.com/races/giff"
 description: Giff are bipedal hippopotamus-like folk with a passion for explosives, military structure, and strength. They are known for their brute power and discipline, often serving in astral navies.
 ability_scores:
   choice:
@@ -7,16 +9,36 @@ ability_scores:
       - [1, 1, 1]
 size: Medium
 speed: 30
-swimming_speed: 30
-languages:
-  - Common
+
+# Display-only trait names
 traits:
   - Damage Dealer
   - Firearm Mastery
   - Hippo Build
+
+languages:
+  - Common
+
+# Player choices during character creation
 player_choices:
   - id: race_languages
     title: Languages
     type: LANGUAGE
     choose: 1
     options: []
+
+# Mechanical trait implementations
+# Hippo Build: Swimming speed equal to walking speed
+swimming_speed: 30
+
+# Damage Dealer: Advantage on STR checks/saves when pushing, pulling, lifting, or breaking objects
+# (Requires special handling in skill system - Issue #63)
+conditional_advantages:
+  - type: ability_check
+    ability: strength
+    condition: pushing_pulling_lifting_breaking
+    description: "You have advantage on Strength checks and saves when pushing, pulling, lifting, or breaking objects."
+
+# Firearm Mastery: Proficiency with firearms, no loading property penalty
+# (Requires firearm system - Issue #63)
+firearm_mastery: true

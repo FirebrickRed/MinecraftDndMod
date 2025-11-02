@@ -10,16 +10,44 @@ ability_scores:
       - [1, 1]  # Choose two different abilities for +1 each
 size: Medium
 speed: 30
+
+# Display-only trait names
 traits:
   - Darkvision
   - Fey Ancestry
   - Skill Versatility
+
 languages:
   - Common
   - Elvish
+
+# Player choices during character creation
 player_choices:
   - id: race_languages
     title: Languages
     type: LANGUAGE
     choose: 1
     options: []  # Empty means "choose from all languages"
+  - id: skill_versatility
+    title: Skill Versatility
+    type: SKILL
+    choose: 2
+    options: []  # Empty means "choose from all skills"
+
+# Mechanical trait implementations
+darkvision: 60  # 60 ft. darkvision range
+
+# Fey Ancestry: Advantage on saves vs charmed, immune to magical sleep
+conditional_advantages:
+  - type: saving_throw
+    condition: charmed
+    description: "You have advantage on saving throws against being charmed."
+condition_immunities:
+  - type: sleep
+    magical_only: true
+    description: "Magic can't put you to sleep."
+
+# Half-Elf rest: 6 hours for long rest (between human 8 and elf 4)
+rest_requirements:
+  long_rest_hours: 6
+  description: "Half-elves need 6 hours for a long rest."

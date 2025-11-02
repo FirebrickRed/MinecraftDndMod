@@ -11,7 +11,8 @@ import org.bukkit.inventory.ItemStack;
 import java.util.List;
 
 public class DndSpell {
-    private String name;
+    private String id;           // The spell ID (e.g., "chill_touch")
+    private String name;         // The display name (e.g., "Chill Touch")
     private int level;
     private SpellSchool school;
     private List<String> classes;
@@ -29,6 +30,13 @@ public class DndSpell {
     private String damageType;
 
     public DndSpell() {}
+
+    public String getId() {
+        return id;
+    }
+    public void setId(String id) {
+        this.id = id;
+    }
 
     public String getName() {
         return name;

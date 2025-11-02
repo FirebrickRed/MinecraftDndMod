@@ -30,17 +30,18 @@ public class KnownItemCollector {
 
         DndRace race = RaceLoader.getRace(session.getSelectedRace());
         if (race != null && race.getLanguages() != null) {
-            known.addAll(race.getLanguages());
+            // Normalize using Util.normalize() for consistent filtering
+            race.getLanguages().forEach(lang -> known.add(Util.normalize(lang)));
         }
 
         DndSubRace subrace = getSubrace(session);
         if (subrace != null && subrace.getLanguages() != null) {
-            known.addAll(subrace.getLanguages());
+            subrace.getLanguages().forEach(lang -> known.add(Util.normalize(lang)));
         }
 
         DndBackground bg = BackgroundLoader.getBackground(session.getSelectedBackground());
         if (bg != null && bg.getLanguages() != null) {
-            known.addAll(bg.getLanguages());
+            bg.getLanguages().forEach(lang -> known.add(Util.normalize(lang)));
         }
 
         return known;
@@ -87,6 +88,29 @@ public class KnownItemCollector {
         DndBackground bg = BackgroundLoader.getBackground(session.getSelectedBackground());
         if (bg != null && bg.getTools() != null) {
             known.addAll(bg.getTools());
+        }
+
+        return known;
+    }
+
+    /**
+     * Collects all spells the character already knows from their chosen spells and cantrips.
+     * Does not include fixed grants - only spells selected via player choices.
+     *
+     * @param session The character creation session
+     * @return Set of spell names the character knows
+     */
+    public static Set<String> collectKnownSpells(CharacterCreationSession session) {
+        Set<String> known = new LinkedHashSet<>();
+
+        // Add already-selected cantrips
+        if (session.getSelectedCantrips() != null) {
+            known.addAll(session.getSelectedCantrips());
+        }
+
+        // Add already-selected leveled spells
+        if (session.getSelectedSpells() != null) {
+            known.addAll(session.getSelectedSpells());
         }
 
         return known;

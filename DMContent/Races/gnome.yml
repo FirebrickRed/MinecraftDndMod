@@ -7,12 +7,26 @@ ability_scores:
     Intelligence: 2
 size: Small
 speed: 25
+
+# Display-only trait names
 traits:
   - Darkvision
   - Gnome Cunning
+
 languages:
   - Common
   - Gnomish
+
+# Mechanical trait implementations
+darkvision: 60  # 60 ft. darkvision range
+
+# Gnome Cunning: Advantage on INT/WIS/CHA saves vs magic
+conditional_advantages:
+  - type: saving_throw
+    condition: magic
+    abilities: [intelligence, wisdom, charisma]
+    description: "You have advantage on Intelligence, Wisdom, and Charisma saving throws against magic."
+
 subraces:
   forest_gnome:
     name: Forest Gnome
@@ -23,6 +37,16 @@ subraces:
     traits:
       - Natural Illusionist
       - Speak with Small Beasts
+    # Natural Illusionist: Minor Illusion cantrip
+    innate_spells:
+      - spell_id: minor_illusion
+        level_requirement: 1
+        type: cantrip
+        casting_ability: intelligence
+        description: "You know the Minor Illusion cantrip."
+    # Speak with Small Beasts: Communicate simple ideas with Small or smaller beasts
+    # (Requires special handling - Issue #63)
+
   rock_gnome:
     name: Rock Gnome
     description: As a rock gnome, you have a natural inventiveness and hardiness beyond that of other gnomes.
@@ -32,6 +56,11 @@ subraces:
     traits:
       - Artificer's Lore
       - Tinker
+    # Artificer's Lore: Add double proficiency to History checks about magic items, alchemical objects, technological devices
+    # (Requires special handling - Issue #63)
+    # Tinker: Can craft tiny clockwork devices
+    # (Requires special crafting system - Issue #63)
+
   deep_gnome:
     name: Deep Gnome (Svirfneblin)
     description: Forest gnomes and rock gnomes are the gnomes most commonly encountered in the lands of the surface world. There is another subrace of gnomes rarely seen by any surface-dweller - deep gnomes, also known as svirfneblin.
@@ -41,3 +70,7 @@ subraces:
     traits:
       - Superior Darkvision
       - Stone Camouflage
+    # Superior Darkvision
+    darkvision: 120
+    # Stone Camouflage: Advantage on Stealth checks in rocky terrain
+    # (Requires terrain detection - Issue #63)

@@ -1,7 +1,9 @@
 package io.papermc.jkvttplugin.ui.menu;
 
 import io.papermc.jkvttplugin.character.CharacterSheet;
+import io.papermc.jkvttplugin.data.loader.SpellLoader;
 import io.papermc.jkvttplugin.data.model.DndSpell;
+import io.papermc.jkvttplugin.data.model.InnateSpell;
 import io.papermc.jkvttplugin.data.model.SpellcastingInfo;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
@@ -26,8 +28,18 @@ import java.util.Set;
 public class SpellCastingMenu {
 
     public static void open(Player player, CharacterSheet sheet) {
-        // Default to 1st level spells
-        player.openInventory(build(sheet, 1));
+        // Default to cantrips if character only has cantrips (e.g., non-spellcaster with racial cantrips)
+        // Otherwise default to 1st level spells
+        boolean hasClassCantrips = sheet.getKnownCantrips() != null && !sheet.getKnownCantrips().isEmpty();
+        boolean hasInnateCantrips = sheet.getAvailableInnateSpells().stream().anyMatch(InnateSpell::isCantrip);
+        boolean hasCantrips = hasClassCantrips || hasInnateCantrips;
+
+        boolean hasClassSpells = sheet.getKnownSpells() != null && !sheet.getKnownSpells().isEmpty();
+        boolean hasInnateSpells = sheet.getAvailableInnateSpells().stream().anyMatch(spell -> !spell.isCantrip());
+        boolean hasLeveledSpells = hasClassSpells || hasInnateSpells;
+
+        int defaultLevel = (hasCantrips && !hasLeveledSpells) ? 0 : 1;
+        player.openInventory(build(sheet, defaultLevel));
     }
 
     public static Inventory build(CharacterSheet sheet, int selectedSpellLevel) {
@@ -62,10 +74,27 @@ public class SpellCastingMenu {
     }
 
     private static void populateCantrips(Inventory inventory, CharacterSheet sheet) {
-        Set<DndSpell> cantrips = sheet.getKnownCantrips();
-        if (cantrips == null || cantrips.isEmpty()) return;
+        List<DndSpell> allCantrips = new ArrayList<>();
 
-        List<DndSpell> sortedCantrips = Util.sortByName(cantrips, DndSpell::getName);
+        // Add class cantrips
+        Set<DndSpell> classCantrips = sheet.getKnownCantrips();
+        if (classCantrips != null) {
+            allCantrips.addAll(classCantrips);
+        }
+
+        // Add innate racial cantrips (from race/subrace)
+        for (InnateSpell innateSpell : sheet.getAvailableInnateSpells()) {
+            if (innateSpell.isCantrip()) {
+                DndSpell spell = SpellLoader.getSpell(innateSpell.getSpellId());
+                if (spell != null && !allCantrips.contains(spell)) {
+                    allCantrips.add(spell);
+                }
+            }
+        }
+
+        if (allCantrips.isEmpty()) return;
+
+        List<DndSpell> sortedCantrips = Util.sortByName(allCantrips, DndSpell::getName);
 
         // Cantrips now use rows 1-4 (slots 0-35) when viewing cantrip filter
         int slot = 0;
@@ -73,6 +102,21 @@ public class SpellCastingMenu {
             if (slot >= 36) break; // Stop at row 5
 
             ItemStack cantripItem = cantrip.createItemStack();
+
+            // Check if this is an innate cantrip and add appropriate lore
+            InnateSpell innateMatch = findInnateSpell(sheet, cantrip.getId());
+            if (innateMatch != null) {
+                ItemMeta meta = cantripItem.getItemMeta();
+                List<Component> lore = new ArrayList<>(meta.lore() != null ? meta.lore() : List.of());
+                lore.add(Component.text(""));
+                lore.add(Component.text("✦ Racial Ability", NamedTextColor.LIGHT_PURPLE));
+                if (innateMatch.getCastingAbility() != null) {
+                    lore.add(Component.text("Casting Ability: " + Util.prettify(innateMatch.getCastingAbility().name()), NamedTextColor.GRAY));
+                }
+                meta.lore(lore);
+                cantripItem.setItemMeta(meta);
+            }
+
             ItemUtil.tagAction(cantripItem, MenuAction.CAST_CANTRIP, cantrip.getName());
             inventory.setItem(slot, cantripItem);
             slot++;
@@ -80,24 +124,38 @@ public class SpellCastingMenu {
     }
 
     private static void populateLeveledSpells(Inventory inventory, CharacterSheet sheet, int selectedLevel) {
-        Set<DndSpell> spells = sheet.getKnownSpells();
-        if (spells == null || spells.isEmpty()) return;
-
         List<DndSpell> castableSpells = new ArrayList<>();
 
-        for (DndSpell spell : spells) {
-            if (spell.getLevel() == selectedLevel) {
-                castableSpells.add(spell);
+        // Add class spells
+        Set<DndSpell> spells = sheet.getKnownSpells();
+        if (spells != null) {
+            for (DndSpell spell : spells) {
+                if (spell.getLevel() == selectedLevel) {
+                    castableSpells.add(spell);
+                }
+            }
+
+            // Add lower-level spells that can be upcast
+            if (selectedLevel > 0) {
+                for (DndSpell spell : spells) {
+                    if (spell.getLevel() > 0 && spell.getLevel() < selectedLevel) {
+                        castableSpells.add(spell);
+                    }
+                }
             }
         }
 
-        if (selectedLevel > 0) {
-            for (DndSpell spell : spells) {
-                if (spell.getLevel() > 0 && spell.getLevel() < selectedLevel) {
+        // Add innate racial spells at this level
+        for (InnateSpell innateSpell : sheet.getAvailableInnateSpells()) {
+            if (!innateSpell.isCantrip() && innateSpell.getSpellLevel() == selectedLevel) {
+                DndSpell spell = SpellLoader.getSpell(innateSpell.getSpellId());
+                if (spell != null && !castableSpells.contains(spell)) {
                     castableSpells.add(spell);
                 }
             }
         }
+
+        if (castableSpells.isEmpty()) return;
 
         castableSpells.sort(Comparator.comparingInt(DndSpell::getLevel).thenComparing(DndSpell::getName));
 
@@ -106,15 +164,30 @@ public class SpellCastingMenu {
             if (slot >= 36) break;
 
             ItemStack spellItem = spell.createItemStack();
+            ItemMeta meta = spellItem.getItemMeta();
+            List<Component> lore = new ArrayList<>(meta.lore() != null ? meta.lore() : List.of());
 
-            if (spell.getLevel() < selectedLevel && spell.getLevel() > 0) {
-                ItemMeta meta = spellItem.getItemMeta();
-                List<Component> lore = new ArrayList<>(meta.lore() != null ? meta.lore() : List.of());
+            // Check if this is an innate spell and add usage information
+            InnateSpell innateMatch = findInnateSpell(sheet, spell.getId());
+            if (innateMatch != null && !innateMatch.isCantrip()) {
+                lore.add(Component.text(""));
+                lore.add(Component.text("✦ Racial Ability", NamedTextColor.LIGHT_PURPLE));
+                lore.add(Component.text("Uses: " + innateMatch.getUsageDisplay(), innateMatch.canCast() ? NamedTextColor.GREEN : NamedTextColor.RED));
+                if (innateMatch.getRecovery() != null) {
+                    String recoveryText = innateMatch.getRecovery().replace("_", " ");
+                    lore.add(Component.text("Recovers on " + Util.prettify(recoveryText), NamedTextColor.GRAY));
+                }
+                if (innateMatch.getCastingAbility() != null) {
+                    lore.add(Component.text("Casting Ability: " + Util.prettify(innateMatch.getCastingAbility().name()), NamedTextColor.GRAY));
+                }
+            } else if (spell.getLevel() < selectedLevel && spell.getLevel() > 0) {
+                // Upcasting indicator for class spells
                 lore.add(Component.text(""));
                 lore.add(Component.text("⬆ Casting at " + Util.getOrdinal(selectedLevel) + " level", NamedTextColor.LIGHT_PURPLE));
-                meta.lore(lore);
-                spellItem.setItemMeta(meta);
             }
+
+            meta.lore(lore);
+            spellItem.setItemMeta(meta);
 
             ItemUtil.tagAction(spellItem, MenuAction.CAST_SPELL, spell.getName() + ":" + selectedLevel);
             inventory.setItem(slot, spellItem);
@@ -122,58 +195,97 @@ public class SpellCastingMenu {
         }
     }
 
+    /**
+     * Helper method to find an InnateSpell by spell ID.
+     * Returns null if the spell is not an innate spell.
+     */
+    private static InnateSpell findInnateSpell(CharacterSheet sheet, String spellId) {
+        for (InnateSpell innateSpell : sheet.getAvailableInnateSpells()) {
+            if (innateSpell.getSpellId().equalsIgnoreCase(spellId)) {
+                return innateSpell;
+            }
+        }
+        return null;
+    }
+
     private static void populateSpellSlots(Inventory inventory, CharacterSheet sheet) {
         for (int level = 1; level <= 9; level++) {
-            int maxSlots = sheet.getMaxSpellSlots(level);
-            int remainingSlots = sheet.getSpellSlotsRemaining(level);
+            final int currentLevel = level; // Capture for lambda
+            int maxSlots = sheet.getMaxSpellSlots(currentLevel);
+            int remainingSlots = sheet.getSpellSlotsRemaining(currentLevel);
 
-            if (maxSlots == 0) continue;
+            // Check if character has innate spells at this level
+            boolean hasInnateSpells = sheet.hasInnateSpellsAtLevel(currentLevel);
 
-            int slot = 35 + level;
+            // Skip if no spell slots AND no innate spells at this level
+            if (maxSlots == 0 && !hasInnateSpells) continue;
 
-            Material material = remainingSlots > 0 ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
+            int slot = 35 + currentLevel;
 
+            // Determine material and lore based on whether this is spell slots or innate abilities
+            Material material;
             List<Component> lore = new ArrayList<>();
-            lore.add(Component.text("Available: " + remainingSlots + "/" + maxSlots, NamedTextColor.GRAY));
+
+            if (maxSlots > 0) {
+                // Has spell slots - show slot availability
+                material = remainingSlots > 0 ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
+                lore.add(Component.text("Available: " + remainingSlots + "/" + maxSlots, NamedTextColor.GRAY));
+            } else {
+                // No spell slots, but has innate spells - different styling
+                material = Material.PURPLE_STAINED_GLASS_PANE;
+                lore.add(Component.text("Innate Abilities Only", NamedTextColor.LIGHT_PURPLE));
+            }
+
             lore.add(Component.text(""));
             lore.add(Component.text("Click to view spells", NamedTextColor.YELLOW));
 
             ItemStack slotIndicator = Util.createItem(
-                    Component.text(Util.getOrdinal(level) + " Level Slots", NamedTextColor.AQUA),
+                    Component.text(Util.getOrdinal(currentLevel) + " Level", NamedTextColor.AQUA),
                     lore,
-                    "spell_slot_" + level,
-                    Math.max(1, remainingSlots),
+                    "spell_slot_" + currentLevel,
+                    1,
                     material
             );
-            ItemUtil.tagAction(slotIndicator, MenuAction.SELECT_SPELL_LEVEL, String.valueOf(level));
+            ItemUtil.tagAction(slotIndicator, MenuAction.SELECT_SPELL_LEVEL, String.valueOf(currentLevel));
             inventory.setItem(slot, slotIndicator);
         }
     }
 
     private static void populateInfoRow(Inventory inventory, CharacterSheet sheet) {
+        // Symmetric layout: [45: Cantrips] [46: Empty] [47: Spell Info] [48-50: Empty] [51: Prepare] [52: Empty] [53: Concentration]
+
+        // Slot 45: Cantrips Button (always show if character has cantrips, even for non-spellcasters with racial cantrips)
+        int classCantripsCount = (sheet.getKnownCantrips() != null) ? sheet.getKnownCantrips().size() : 0;
+        int innateCantripsCount = (int) sheet.getAvailableInnateSpells().stream().filter(InnateSpell::isCantrip).count();
+        int totalCantrips = classCantripsCount + innateCantripsCount;
+
+        if (totalCantrips > 0) {
+            List<Component> cantripsLore = new ArrayList<>();
+            cantripsLore.add(Component.text("Known Cantrips: " + totalCantrips, NamedTextColor.GRAY));
+            if (classCantripsCount > 0) {
+                cantripsLore.add(Component.text("  Class: " + classCantripsCount, NamedTextColor.DARK_GRAY));
+            }
+            if (innateCantripsCount > 0) {
+                cantripsLore.add(Component.text("  Racial: " + innateCantripsCount, NamedTextColor.DARK_GRAY));
+            }
+            cantripsLore.add(Component.text(""));
+            cantripsLore.add(Component.text("Click to view cantrips", NamedTextColor.YELLOW));
+
+            ItemStack cantripsButton = Util.createItem(
+                    Component.text("Cantrips", NamedTextColor.GREEN),
+                    cantripsLore,
+                    "cantrips_button",
+                    1,
+                    Material.PAPER
+            );
+            ItemUtil.tagAction(cantripsButton, MenuAction.VIEW_CANTRIPS, null);
+            inventory.setItem(45, cantripsButton);
+        }
+
+        // Rest of the info row requires spellcasting class
         if (sheet.getMainClass() == null || sheet.getMainClass().getSpellcastingInfo() == null) return;
 
         SpellcastingInfo spellcasting = sheet.getMainClass().getSpellcastingInfo();
-
-        // Symmetric layout: [45: Cantrips] [46: Empty] [47: Spell Info] [48-50: Empty] [51: Prepare] [52: Empty] [53: Concentration]
-
-        // Slot 45: Cantrips Button
-        List<Component> cantripsLore = new ArrayList<>();
-        Set<DndSpell> cantrips = sheet.getKnownCantrips();
-        int cantripCount = cantrips != null ? cantrips.size() : 0;
-        cantripsLore.add(Component.text("Known Cantrips: " + cantripCount, NamedTextColor.GRAY));
-        cantripsLore.add(Component.text(""));
-        cantripsLore.add(Component.text("Click to view cantrips", NamedTextColor.YELLOW));
-
-        ItemStack cantripsButton = Util.createItem(
-                Component.text("Cantrips", NamedTextColor.GREEN),
-                cantripsLore,
-                "cantrips_button",
-                1,
-                Material.PAPER
-        );
-        ItemUtil.tagAction(cantripsButton, MenuAction.VIEW_CANTRIPS, null);
-        inventory.setItem(45, cantripsButton);
 
         // Slot 47: Spellcasting Info (attack bonus, save DC)
         String abilityName = spellcasting.getCastingAbility();

@@ -1,6 +1,10 @@
 package io.papermc.jkvttplugin.character;
 
 import io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader;
+import io.papermc.jkvttplugin.data.loader.SpellLoader;
+import io.papermc.jkvttplugin.data.model.DndSpell;
+import io.papermc.jkvttplugin.data.model.PendingChoice;
+import io.papermc.jkvttplugin.data.model.PlayersChoice;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
@@ -29,6 +33,10 @@ public class CharacterSheetManager {
     public static CharacterSheet createCharacterFromSession(Player player, CharacterCreationSession session) {
         UUID characterId = UUID.randomUUID();
 
+        // Extract spell choices from pending choices and add to session
+        // This is needed for racial cantrips and other SPELL type choices
+        finalizeSpellChoices(session);
+
         CharacterSheet characterSheet = CharacterSheet.createFromSession(characterId, player.getUniqueId(), session);
 
         CharacterPersistenceLoader.storeCharacterInMemory(characterSheet);
@@ -37,6 +45,56 @@ public class CharacterSheetManager {
         grantStartingEquipmentToPlayer(player, characterSheet);
 
         return characterSheet;
+    }
+
+    /**
+     * Extracts SPELL choices from pending choices and adds them to the session's
+     * selectedSpells and selectedCantrips lists. This is necessary because SPELL
+     * choices (like racial cantrips) are stored in PendingChoice objects during
+     * character creation but need to be transferred to the session before finalization.
+     */
+    private static void finalizeSpellChoices(CharacterCreationSession session) {
+        if (session.getPendingChoices() == null) {
+            System.out.println("[CharacterSheetManager] No pending choices to finalize");
+            return;
+        }
+
+        System.out.println("[CharacterSheetManager] Finalizing spell choices from " + session.getPendingChoices().size() + " pending choices");
+
+        for (PendingChoice<?> pc : session.getPendingChoices()) {
+            System.out.println("[CharacterSheetManager] Checking pending choice: " + pc.getId() + " (type: " + pc.getPlayersChoice().getType() + ")");
+
+            if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.SPELL) {
+                // Get chosen spells from this pending choice
+                Set<?> chosen = pc.getChosen();
+                System.out.println("[CharacterSheetManager] Found SPELL choice '" + pc.getId() + "' with " + chosen.size() + " selected spells");
+
+                for (Object obj : chosen) {
+                    System.out.println("[CharacterSheetManager] Processing chosen object: " + obj + " (type: " + obj.getClass().getSimpleName() + ")");
+
+                    if (obj instanceof String spellName) {
+                        // Determine if it's a cantrip or leveled spell
+                        DndSpell spell = SpellLoader.getSpell(spellName);
+                        if (spell != null) {
+                            System.out.println("[CharacterSheetManager] Found spell: " + spell.getName() + " (level " + spell.getLevel() + ")");
+                            if (spell.getLevel() == 0) {
+                                session.addSelectedCantrip(spellName);
+                                System.out.println("[CharacterSheetManager] Added cantrip to session: " + spellName);
+                            } else {
+                                session.addSelectedSpell(spellName);
+                                System.out.println("[CharacterSheetManager] Added spell to session: " + spellName);
+                            }
+                        } else {
+                            System.out.println("[CharacterSheetManager] WARNING: Could not find spell in SpellLoader: " + spellName);
+                        }
+                    }
+                }
+            }
+        }
+
+        System.out.println("[CharacterSheetManager] Finalization complete. Session now has " +
+            session.getSelectedCantrips().size() + " cantrips and " +
+            session.getSelectedSpells().size() + " spells");
     }
 
     public static void grantStartingEquipmentToPlayer(Player player, CharacterSheet characterSheet) {

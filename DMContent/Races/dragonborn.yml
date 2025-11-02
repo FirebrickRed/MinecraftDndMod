@@ -9,10 +9,98 @@ ability_scores:
       - [1, 1, 1]   # Or spread across three abilities
 size: Medium
 speed: 30
+
+# Display-only trait names (for character sheet)
 traits:
   - Draconic Ancestry
   - Breath Weapon
   - Damage Resistance
+
 languages:
   - Common
   - Draconic
+
+# Player choices during character creation
+player_choices:
+  - id: draconic_ancestry
+    title: Draconic Ancestry
+    type: CUSTOM
+    choose: 1
+    options:
+      - Black (Acid, 5x30 ft. line, DEX save)
+      - Blue (Lightning, 5x30 ft. line, DEX save)
+      - Brass (Fire, 5x30 ft. line, DEX save)
+      - Bronze (Lightning, 5x30 ft. line, DEX save)
+      - Copper (Acid, 5x30 ft. line, DEX save)
+      - Gold (Fire, 15 ft. cone, DEX save)
+      - Green (Poison, 15 ft. cone, CON save)
+      - Red (Fire, 15 ft. cone, DEX save)
+      - Silver (Cold, 15 ft. cone, CON save)
+      - White (Cold, 15 ft. cone, CON save)
+
+# Mechanical trait implementations
+# Damage resistance: Linked to draconic ancestry choice
+damage_resistance:
+  type: linked
+  source_choice: draconic_ancestry
+  mapping:
+    "Black (Acid, 5x30 ft. line, DEX save)": acid
+    "Blue (Lightning, 5x30 ft. line, DEX save)": lightning
+    "Brass (Fire, 5x30 ft. line, DEX save)": fire
+    "Bronze (Lightning, 5x30 ft. line, DEX save)": lightning
+    "Copper (Acid, 5x30 ft. line, DEX save)": acid
+    "Gold (Fire, 15 ft. cone, DEX save)": fire
+    "Green (Poison, 15 ft. cone, CON save)": poison
+    "Red (Fire, 15 ft. cone, DEX save)": fire
+    "Silver (Cold, 15 ft. cone, CON save)": cold
+    "White (Cold, 15 ft. cone, CON save)": cold
+
+# Breath Weapon: Limited-use racial resource
+racial_resources:
+  - id: breath_weapon
+    name: Breath Weapon
+    uses_proficiency_bonus: true  # Uses = proficiency bonus
+    recovery: long_rest
+    linked_to_choice: draconic_ancestry
+    description: "You can use your action to exhale destructive energy."
+    damage_mapping:
+      "Black (Acid, 5x30 ft. line, DEX save)":
+        damage_type: acid
+        area: "5 by 30 ft. line"
+        save: dexterity
+      "Blue (Lightning, 5x30 ft. line, DEX save)":
+        damage_type: lightning
+        area: "5 by 30 ft. line"
+        save: dexterity
+      "Brass (Fire, 5x30 ft. line, DEX save)":
+        damage_type: fire
+        area: "5 by 30 ft. line"
+        save: dexterity
+      "Bronze (Lightning, 5x30 ft. line, DEX save)":
+        damage_type: lightning
+        area: "5 by 30 ft. line"
+        save: dexterity
+      "Copper (Acid, 5x30 ft. line, DEX save)":
+        damage_type: acid
+        area: "5 by 30 ft. line"
+        save: dexterity
+      "Gold (Fire, 15 ft. cone, DEX save)":
+        damage_type: fire
+        area: "15 ft. cone"
+        save: dexterity
+      "Green (Poison, 15 ft. cone, CON save)":
+        damage_type: poison
+        area: "15 ft. cone"
+        save: constitution
+      "Red (Fire, 15 ft. cone, DEX save)":
+        damage_type: fire
+        area: "15 ft. cone"
+        save: dexterity
+      "Silver (Cold, 15 ft. cone, CON save)":
+        damage_type: cold
+        area: "15 ft. cone"
+        save: constitution
+      "White (Cold, 15 ft. cone, CON save)":
+        damage_type: cold
+        area: "15 ft. cone"
+        save: constitution

@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.loader.SpellLoader;
 import io.papermc.jkvttplugin.data.model.DndSpell;
+import io.papermc.jkvttplugin.data.model.InnateSpell;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.core.MenuType;
@@ -65,19 +66,8 @@ public class SpellCastingMenuListener implements Listener {
             return;
         }
 
-        // Check concentration (some cantrips require concentration)
-        if (cantrip.isConcentration() && sheet.isConcentrating()) {
-            DndSpell currentConc = sheet.getConcentratingOn();
-            player.sendMessage(Component.text("Breaking concentration on ", NamedTextColor.YELLOW)
-                    .append(Component.text(currentConc.getName(), NamedTextColor.AQUA))
-                    .append(Component.text("...", NamedTextColor.YELLOW)));
-            sheet.breakConcentration();
-        }
-
-        // Set concentration if needed
-        if (cantrip.isConcentration()) {
-            sheet.setConcentratingOn(cantrip);
-        }
+        // Handle concentration
+        handleConcentration(player, sheet, cantrip);
 
         // Cast message
         player.sendMessage(Component.text("You cast ", NamedTextColor.AQUA)
@@ -105,12 +95,6 @@ public class SpellCastingMenuListener implements Listener {
             return;
         }
 
-        // Check if slot available
-        if (!sheet.hasSpellSlot(castingLevel)) {
-            player.sendMessage(Component.text("You don't have any " + castingLevel + " level slots remaining!", NamedTextColor.RED));
-            return;
-        }
-
         // Load spell to check concentration (normalize name to key)
         DndSpell spell = SpellLoader.getSpell(Util.normalize(spellName));
         if (spell == null) {
@@ -118,27 +102,49 @@ public class SpellCastingMenuListener implements Listener {
             return;
         }
 
-        // Check concentration
-        if (spell.isConcentration() && sheet.isConcentrating()) {
-            DndSpell currentConc = sheet.getConcentratingOn();
-            player.sendMessage(Component.text("Breaking concentration on ", NamedTextColor.YELLOW)
-                    .append(Component.text(currentConc.getName(), NamedTextColor.AQUA))
-                    .append(Component.text("...", NamedTextColor.YELLOW)));
-            sheet.breakConcentration();
+        // Check if this is an innate spell
+        InnateSpell innateSpell = sheet.getAvailableInnateSpells().stream()
+                .filter(innate -> innate.getSpellId().equalsIgnoreCase(spell.getId()))
+                .findFirst()
+                .orElse(null);
+
+        if (innateSpell != null) {
+            // Casting innate spell - check uses instead of spell slots
+            if (!innateSpell.canCast()) {
+                player.sendMessage(Component.text("You have no uses remaining for this ability!", NamedTextColor.RED));
+                return;
+            }
+
+            // Use the innate spell
+            innateSpell.use();
+
+            // Handle concentration
+            handleConcentration(player, sheet, spell);
+
+            // Cast message
+            player.sendMessage(Component.text("You use ", NamedTextColor.AQUA)
+                    .append(Component.text(spellName, NamedTextColor.YELLOW))
+                    .append(Component.text("! (", NamedTextColor.AQUA))
+                    .append(Component.text(innateSpell.getUsageDisplay() + " remaining", NamedTextColor.GRAY))
+                    .append(Component.text(")", NamedTextColor.AQUA)));
+        } else {
+            // Casting class spell - check spell slots
+            if (!sheet.hasSpellSlot(castingLevel)) {
+                player.sendMessage(Component.text("You don't have any " + castingLevel + " level slots remaining!", NamedTextColor.RED));
+                return;
+            }
+
+            // Consume slot
+            sheet.consumeSpellSlot(castingLevel);
+
+            // Handle concentration
+            handleConcentration(player, sheet, spell);
+
+            // Cast message
+            player.sendMessage(Component.text("You cast ", NamedTextColor.AQUA)
+                    .append(Component.text(spellName, NamedTextColor.YELLOW))
+                    .append(Component.text("!", NamedTextColor.AQUA)));
         }
-
-        // Consume slot
-        sheet.consumeSpellSlot(castingLevel);
-
-        // Set concentration if needed
-        if (spell.isConcentration()) {
-            sheet.setConcentratingOn(spell);
-        }
-
-        // Cast message
-        player.sendMessage(Component.text("You cast ", NamedTextColor.AQUA)
-                .append(Component.text(spellName, NamedTextColor.YELLOW))
-                .append(Component.text("!", NamedTextColor.AQUA)));
 
         // Close inventory after casting (consistent UX with cantrips)
         player.closeInventory();
@@ -156,7 +162,11 @@ public class SpellCastingMenuListener implements Listener {
             return;
         }
 
-        if (!sheet.hasSpellSlot(spellLevel)) {
+        // Check if character has spell slots OR innate spells at this level
+        boolean hasSpellSlots = sheet.hasSpellSlot(spellLevel);
+        boolean hasInnateSpells = sheet.hasInnateSpellsAtLevel(spellLevel);
+
+        if (!hasSpellSlots && !hasInnateSpells) {
             player.sendMessage(Component.text("No spell slots available for that level!", NamedTextColor.RED));
             return;
         }
@@ -168,6 +178,32 @@ public class SpellCastingMenuListener implements Listener {
     private void handleViewCantrips(Player player, CharacterSheet sheet) {
         // Rebuild menu with cantrips view (level 0)
         player.openInventory(SpellCastingMenu.build(sheet, 0));
+    }
+
+    /**
+     * Handles concentration for spell casting.
+     * If the new spell requires concentration and the character is already concentrating,
+     * breaks the old concentration and notifies the player.
+     * Then sets the new concentration if the spell requires it.
+     *
+     * @param player The player casting the spell
+     * @param sheet The character sheet
+     * @param spell The spell being cast
+     */
+    private void handleConcentration(Player player, CharacterSheet sheet, DndSpell spell) {
+        // Break existing concentration if new spell requires it
+        if (spell.isConcentration() && sheet.isConcentrating()) {
+            DndSpell currentConc = sheet.getConcentratingOn();
+            player.sendMessage(Component.text("Breaking concentration on ", NamedTextColor.YELLOW)
+                    .append(Component.text(currentConc.getName(), NamedTextColor.AQUA))
+                    .append(Component.text("...", NamedTextColor.YELLOW)));
+            sheet.breakConcentration();
+        }
+
+        // Set new concentration if needed
+        if (spell.isConcentration()) {
+            sheet.setConcentratingOn(spell);
+        }
     }
 
     private void handleConcentrationClick(Player player, CharacterSheet sheet) {

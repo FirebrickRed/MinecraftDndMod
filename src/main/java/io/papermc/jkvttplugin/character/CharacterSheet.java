@@ -44,6 +44,20 @@ public class CharacterSheet {
 
     private List<ClassResource> classResources = new ArrayList<>();
 
+    // Racial traits (Issue #51)
+    private Set<String> weaponProficiencies = new HashSet<>();
+    private Set<String> armorProficiencies = new HashSet<>();
+    private Set<String> damageResistances = new HashSet<>();
+    private List<InnateSpell> innateSpells = new ArrayList<>();
+    private Integer darkvision;  // Vision range in feet (60, 120, etc.), null = no darkvision
+
+    // Movement speeds
+    private int speed = 30;  // Walking speed (default 30)
+    private int swimmingSpeed = 0;  // 0 = use default (half walking speed)
+    private int flyingSpeed = 0;    // 0 = can't fly
+    private int climbingSpeed = 0;  // 0 = use default (half walking speed)
+    private int burrowingSpeed = 0; // 0 = can't burrow
+
     private CharacterSheet(UUID characterId, UUID playerId, String characterName) {
         this.characterId = characterId;
         this.playerId = playerId;
@@ -77,6 +91,9 @@ public class CharacterSheet {
         // Apply racial ability score bonuses (both fixed and player-chosen)
         sheet.applyRacialBonuses(session);
 
+        // Apply racial traits (proficiencies, resistances, innate spells, movement speeds, darkvision)
+        sheet.applyRacialTraits();
+
         sheet.loadSpells(session.getSelectedSpells(), session.getSelectedCantrips());
         sheet.loadSkillProficiencies(session);
         sheet.calculateHealth();
@@ -106,6 +123,9 @@ public class CharacterSheet {
         if (skillProficiencies != null) {
             sheet.skillProficiencies = new HashSet<>(skillProficiencies);
         }
+
+        // Apply racial traits (proficiencies, resistances, innate spells, movement speeds, darkvision)
+        sheet.applyRacialTraits();
 
         sheet.loadSpells(spellNames, cantripNames);
 
@@ -164,6 +184,87 @@ public class CharacterSheet {
                 int currentScore = abilityScores.getOrDefault(ability, 10);
                 abilityScores.put(ability, currentScore + bonus);
             }
+        }
+    }
+
+    /**
+     * Apply racial traits to the character (Issue #51)
+     * This includes proficiencies, damage resistances, innate spells, darkvision, and movement speeds.
+     * Traits are applied from both race and subrace (subrace overrides race where applicable).
+     */
+    private void applyRacialTraits() {
+        // Apply movement speeds (race base, subrace can override)
+        if (race != null) {
+            this.speed = race.getSpeed();
+            this.swimmingSpeed = race.getSwimmingSpeed();
+            this.flyingSpeed = race.getFlyingSpeed();
+            this.climbingSpeed = race.getClimbingSpeed();
+            this.burrowingSpeed = race.getBurrowingSpeed();
+            this.darkvision = race.getDarkvision();
+        }
+
+        // Subrace can override movement speeds
+        if (subrace != null) {
+            if (subrace.getSpeed() > 0) {
+                this.speed = subrace.getSpeed();
+            }
+            if (subrace.getSwimmingSpeed() > 0) {
+                this.swimmingSpeed = subrace.getSwimmingSpeed();
+            }
+            if (subrace.getFlyingSpeed() > 0) {
+                this.flyingSpeed = subrace.getFlyingSpeed();
+            }
+            if (subrace.getClimbingSpeed() > 0) {
+                this.climbingSpeed = subrace.getClimbingSpeed();
+            }
+            if (subrace.getBurrowingSpeed() > 0) {
+                this.burrowingSpeed = subrace.getBurrowingSpeed();
+            }
+            if (subrace.getDarkvision() != null) {
+                this.darkvision = subrace.getDarkvision();
+            }
+        }
+
+        // Apply proficiencies from race
+        if (race != null) {
+            this.weaponProficiencies.addAll(race.getWeaponProficiencies());
+            this.armorProficiencies.addAll(race.getArmorProficiencies());
+            this.damageResistances.addAll(race.getDamageResistances());
+            this.innateSpells.addAll(race.getInnateSpells());
+
+            // Add skill proficiencies from race (convert String to Skill enum)
+            for (String skillName : race.getSkillProficiencies()) {
+                try {
+                    Skill skill = Skill.valueOf(skillName.toUpperCase().replace(" ", "_"));
+                    this.skillProficiencies.add(skill);
+                } catch (IllegalArgumentException e) {
+                    // Skip invalid skill names
+                }
+            }
+        }
+
+        // Apply proficiencies from subrace (additive, not override)
+        if (subrace != null) {
+            this.weaponProficiencies.addAll(subrace.getWeaponProficiencies());
+            this.armorProficiencies.addAll(subrace.getArmorProficiencies());
+            this.damageResistances.addAll(subrace.getDamageResistances());
+            this.innateSpells.addAll(subrace.getInnateSpells());
+
+            // Add skill proficiencies from subrace
+            for (String skillName : subrace.getSkillProficiencies()) {
+                try {
+                    Skill skill = Skill.valueOf(skillName.toUpperCase().replace(" ", "_"));
+                    this.skillProficiencies.add(skill);
+                } catch (IllegalArgumentException e) {
+                    // Skip invalid skill names
+                }
+            }
+        }
+
+        // Initialize innate spell uses (including proficiency-scaled abilities)
+        int proficiencyBonus = getProficiencyBonus();
+        for (InnateSpell innateSpell : innateSpells) {
+            innateSpell.initializeUses(proficiencyBonus);
         }
     }
 
@@ -499,10 +600,7 @@ public class CharacterSheet {
     }
 
     public int getSpeed() {
-        if (race != null) {
-            return race.getSpeed();
-        }
-        return 30; // Default if race is null
+        return speed; // Uses character's own speed field (set from race/subrace in applyRacialTraits)
     }
 
     public int getAbility(Ability ability) {
@@ -722,6 +820,49 @@ public class CharacterSheet {
         return knownSpells;
     }
 
+    /**
+     * Gets all innate spells granted by this character's race and subrace.
+     * This includes spells that may not yet be available due to level requirements.
+     *
+     * @return An unmodifiable list of all innate racial spells
+     * @see #getAvailableInnateSpells() for spells available at current level
+     */
+    public List<InnateSpell> getInnateSpells() {
+        return new ArrayList<>(innateSpells);
+    }
+
+    /**
+     * Gets innate spells available at the character's current level.
+     * Filters out spells that require a higher character level.
+     *
+     * <p>For example, a Drow's Darkness spell requires level 5, so it won't
+     * appear in this list for a level 3 character, but will for a level 5+ character.
+     *
+     * @return A list of innate spells the character can currently use
+     * @see #getInnateSpells() for all racial spells regardless of level
+     */
+    public List<InnateSpell> getAvailableInnateSpells() {
+        int characterLevel = getTotalLevel();
+        return innateSpells.stream()
+                .filter(spell -> spell.isAvailableAtLevel(characterLevel))
+                .toList();
+    }
+
+    /**
+     * Checks if the character has any innate spells available at the specified spell level.
+     * This is used to determine whether spell level buttons should be shown in the UI
+     * for non-spellcasters who have racial magic abilities.
+     *
+     * @param spellLevel The spell level to check (1-9, not character level)
+     * @return true if the character has at least one innate spell at this level, false otherwise
+     */
+    public boolean hasInnateSpellsAtLevel(int spellLevel) {
+        return innateSpells.stream()
+                .anyMatch(innate -> innate.isAvailableAtLevel(getTotalLevel())
+                        && !innate.isCantrip()
+                        && innate.getSpellLevel() == spellLevel);
+    }
+
     public List<ClassResource> getClassResources() {
         return new ArrayList<>(classResources);
     }
@@ -752,6 +893,14 @@ public class CharacterSheet {
             }
         }
 
+        // Restore innate spells that recover on long rest
+        int proficiencyBonus = getProficiencyBonus();
+        for (InnateSpell innateSpell : innateSpells) {
+            if ("long_rest".equalsIgnoreCase(innateSpell.getRecovery())) {
+                innateSpell.resetUses(proficiencyBonus);
+            }
+        }
+
         breakConcentration();
 
         currentHealth = totalHealth;
@@ -763,6 +912,14 @@ public class CharacterSheet {
         for (ClassResource resource : classResources) {
             if (resource.getRecovery() == ClassResource.RecoveryType.SHORT_REST) {
                 resource.restore();
+            }
+        }
+
+        // Restore innate spells that recover on short rest
+        int proficiencyBonus = getProficiencyBonus();
+        for (InnateSpell innateSpell : innateSpells) {
+            if ("short_rest".equalsIgnoreCase(innateSpell.getRecovery())) {
+                innateSpell.resetUses(proficiencyBonus);
             }
         }
 

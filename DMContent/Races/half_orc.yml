@@ -8,11 +8,29 @@ ability_scores:
     Constitution: 1
 size: Medium
 speed: 30
+
+# Display-only trait names
 traits:
   - Darkvision
   - Menacing
   - Relentless Endurance
   - Savage Attacks
+
 languages:
   - Common
   - Orc
+
+# Mechanical trait implementations
+darkvision: 60  # 60 ft. darkvision range
+
+# Menacing: Proficiency in Intimidation
+skill_proficiencies:
+  - intimidation
+
+# Relentless Endurance: Drop to 1 HP instead of 0 once per long rest
+# (Requires special handling in combat system - Issue #63)
+relentless_endurance: true
+
+# Savage Attacks: Extra weapon damage die on critical hit
+# (Requires special handling in combat system - Issue #63)
+savage_attacks: true

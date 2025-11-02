@@ -2,7 +2,6 @@ package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.CreatureType;
-import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.data.model.enums.Size;
 import io.papermc.jkvttplugin.util.ChoiceUtil;
 import io.papermc.jkvttplugin.util.LoreBuilder;
@@ -15,7 +14,6 @@ import org.bukkit.inventory.ItemStack;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class DndRace {
@@ -26,9 +24,11 @@ public class DndRace {
 
     private CreatureType creatureType;
     private Size size;
-    // ToDo: update speed to use all different movements examples I've found:
-    // flying, swimming, climbing
-    private int speed;
+    private int speed;  // Walking speed (required)
+    private int swimmingSpeed;   // 0 = use default (half walking speed)
+    private int flyingSpeed;     // 0 = can't fly
+    private int climbingSpeed;   // 0 = use default (half walking speed)
+    private int burrowingSpeed;  // 0 = can't burrow
 
     private Map<Ability, Integer> fixedAbilityScores;
     private AbilityScoreChoice abilityScoreChoice;
@@ -36,6 +36,14 @@ public class DndRace {
     private List<String> traits;
 
     private List<String> languages;
+
+    // Mechanical trait implementations (Issue #51)
+    private Integer darkvision;  // Vision range in feet (60, 120, etc.)
+    private List<String> damageResistances = List.of();
+    private List<String> skillProficiencies = List.of();
+    private List<String> weaponProficiencies = List.of();
+    private List<String> armorProficiencies = List.of();
+    private List<InnateSpell> innateSpells = List.of();
 
     private Map<String, DndSubRace> subraces;
     private List<ChoiceEntry> playerChoices = List.of();
@@ -120,6 +128,76 @@ public class DndRace {
         this.languages = languages != null ? List.copyOf(languages) : List.of();
     }
 
+    public int getSwimmingSpeed() {
+        return swimmingSpeed;
+    }
+    public void setSwimmingSpeed(int swimmingSpeed) {
+        this.swimmingSpeed = swimmingSpeed;
+    }
+
+    public int getFlyingSpeed() {
+        return flyingSpeed;
+    }
+    public void setFlyingSpeed(int flyingSpeed) {
+        this.flyingSpeed = flyingSpeed;
+    }
+
+    public int getClimbingSpeed() {
+        return climbingSpeed;
+    }
+    public void setClimbingSpeed(int climbingSpeed) {
+        this.climbingSpeed = climbingSpeed;
+    }
+
+    public int getBurrowingSpeed() {
+        return burrowingSpeed;
+    }
+    public void setBurrowingSpeed(int burrowingSpeed) {
+        this.burrowingSpeed = burrowingSpeed;
+    }
+
+    public Integer getDarkvision() {
+        return darkvision;
+    }
+    public void setDarkvision(Integer darkvision) {
+        this.darkvision = darkvision;
+    }
+
+    public List<String> getDamageResistances() {
+        return damageResistances;
+    }
+    public void setDamageResistances(List<String> damageResistances) {
+        this.damageResistances = damageResistances != null ? List.copyOf(damageResistances) : List.of();
+    }
+
+    public List<String> getSkillProficiencies() {
+        return skillProficiencies;
+    }
+    public void setSkillProficiencies(List<String> skillProficiencies) {
+        this.skillProficiencies = skillProficiencies != null ? List.copyOf(skillProficiencies) : List.of();
+    }
+
+    public List<String> getWeaponProficiencies() {
+        return weaponProficiencies;
+    }
+    public void setWeaponProficiencies(List<String> weaponProficiencies) {
+        this.weaponProficiencies = weaponProficiencies != null ? List.copyOf(weaponProficiencies) : List.of();
+    }
+
+    public List<String> getArmorProficiencies() {
+        return armorProficiencies;
+    }
+    public void setArmorProficiencies(List<String> armorProficiencies) {
+        this.armorProficiencies = armorProficiencies != null ? List.copyOf(armorProficiencies) : List.of();
+    }
+
+    public List<InnateSpell> getInnateSpells() {
+        return innateSpells;
+    }
+    public void setInnateSpells(List<InnateSpell> innateSpells) {
+        this.innateSpells = innateSpells != null ? List.copyOf(innateSpells) : List.of();
+    }
+
     public Map<String, DndSubRace> getSubraces() {
         return subraces;
     }
@@ -150,25 +228,9 @@ public class DndRace {
 
     public void contributeChoices(List<PendingChoice<?>> out) {
         for(ChoiceEntry e : playerChoices) {
-            switch (e.type()) {
-                case LANGUAGE -> {
-                    PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
-                    boolean emptyOptions = (pc.getOptions() == null || pc.getOptions().isEmpty());
-                    if (emptyOptions) {
-                        List<String> allLangs = LanguageRegistry.getAllLanguages();
-                        pc = new PlayersChoice<>(pc.getChoose(), allLangs, PlayersChoice.ChoiceType.LANGUAGE);
-                    }
-                    if (ChoiceUtil.usable(pc)) {
-                        out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "race"));
-                    }
-                }
-                case CUSTOM -> {
-                    PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
-                    if (ChoiceUtil.usable(pc)) {
-                        out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "race"));
-                    }
-                }
-                default -> {}
+            PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
+            if (ChoiceUtil.usable(pc)) {
+                out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "race"));
             }
         }
     }
@@ -275,6 +337,26 @@ public class DndRace {
             return this;
         }
 
+        public Builder swimmingSpeed(int swimmingSpeed) {
+            instance.setSwimmingSpeed(swimmingSpeed);
+            return this;
+        }
+
+        public Builder flyingSpeed(int flyingSpeed) {
+            instance.setFlyingSpeed(flyingSpeed);
+            return this;
+        }
+
+        public Builder climbingSpeed(int climbingSpeed) {
+            instance.setClimbingSpeed(climbingSpeed);
+            return this;
+        }
+
+        public Builder burrowingSpeed(int burrowingSpeed) {
+            instance.setBurrowingSpeed(burrowingSpeed);
+            return this;
+        }
+
         public Builder fixedAbilityScores(Map<Ability, Integer> fixedAbilityScores) {
             instance.setFixedAbilityScores(fixedAbilityScores);
             return this;
@@ -307,6 +389,36 @@ public class DndRace {
 
         public Builder icon(String icon) {
             instance.setIcon(icon);
+            return this;
+        }
+
+        public Builder darkvision(Integer darkvision) {
+            instance.setDarkvision(darkvision);
+            return this;
+        }
+
+        public Builder damageResistances(List<String> damageResistances) {
+            instance.setDamageResistances(damageResistances);
+            return this;
+        }
+
+        public Builder skillProficiencies(List<String> skillProficiencies) {
+            instance.setSkillProficiencies(skillProficiencies);
+            return this;
+        }
+
+        public Builder weaponProficiencies(List<String> weaponProficiencies) {
+            instance.setWeaponProficiencies(weaponProficiencies);
+            return this;
+        }
+
+        public Builder armorProficiencies(List<String> armorProficiencies) {
+            instance.setArmorProficiencies(armorProficiencies);
+            return this;
+        }
+
+        public Builder innateSpells(List<InnateSpell> innateSpells) {
+            instance.setInnateSpells(innateSpells);
             return this;
         }
 
