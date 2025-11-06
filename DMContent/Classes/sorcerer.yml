@@ -6,6 +6,7 @@ primary_abilities:
 saving_throws:
   - Constitution
   - Charisma
+#  should we remove these, doesn't this mean you get proficiencies with everything?
 armor_proficiencies: []
 weapon_proficiencies:
   - dagger
@@ -13,6 +14,7 @@ weapon_proficiencies:
   - sling
   - quarterstaff
   - light_crossbow
+#  should we remove these, doesn't this mean you get proficiencies with everything?
 tool_proficiencies: []
 spellcasting:
   casting_ability: Charisma
@@ -152,11 +154,134 @@ icon: sorcerer
 multiclass_requirements:
   Charisma: 13
 subclass_level: 1
+subclass_type_name: Sorcerous Origin
 subclasses:
-  - Draconic Bloodline
-  - Wild Magic
-  - Storm Sorcery
-  - Divine Soul
-  - Shadow Magic
-  - Aberrant Mind
-  - Clockwork Soul
+  aberrant_mind:
+    name: Aberrant Mind
+    description: "Your magic is influenced by aberrant beings"
+    bonus_spells:
+      - arms_of_hadar
+      - dissonant_whispers
+      - mind_sliver
+      - calm_emotions
+      - detect_thoughts
+      - hunger_of_hadar
+      - sending
+      - evards_black_tentacles
+      - summon_aberration
+      - rarys_telepathic_bond
+      - telekinesis
+    features_by_level:
+      1:
+#        can probably make this a spell something like the racial trait
+        - "Telepathic Speech: Starting at 1st level, you can form a telepathic connection between your mind and the mind of another. As a bonus action, choose one creature you can see within 30 feet of you. You and the chosen creature can speak telepathically with each other while the two of you are within a number of miles of each other equal to your Charisma modifier (minimum of 1 mile). To understand each other, you each must speak mentally in a language the other knows. The telepathic connection lasts for a number of minutes equal to your sorcerer level. It ends early if you are incapacitated or die or if you use this ability to form a connection with a different creature."
+  clockwork_soul:
+    name: Clockwork Soul
+    description: "Your magic is influenced by the ordered realm of Mechanus"
+    bonus_spells:
+      - alarm
+      - protection_from_evil_and_good
+      - aid
+      - lesser_restoration
+      - dispel_magic
+      - protection_from_energy
+      - freedom_of_movement
+      - summon_construct
+      - greater_restoration
+      - wall_of_force
+    #    ToDo: this seems to be a players choice but what effect will show when casting so this can be implemented later
+    #    In addition, consult the Manifestations of Order table and choose or randomly determine a way your connection to order manifests while you are casting any of your sorcerer spells.
+    features_by_level:
+      1:
+        - "Restore Balance: Starting at 1st level, your connection to the plane of absolute order allows you to equalize chaotic moments. When a creature you can see within 60 feet of you is about to roll a d20 with advantage or disadvantage, you can use your reaction to prevent the roll from being affected by advantage and disadvantage. You can use this feature a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest."
+  draconic_bloodline:
+    name: Draconic Bloodline
+    description: "Your innate magic comes from draconic power"
+    languages:
+      - Draconic
+    features_by_level:
+      1:
+        - "Dragon Ancestor: You choose one type of dragon as your ancestor. The damage type associated with each dragon is used by features you gain later"
+        - "Draconic Resilience: Your hit point maximum increases by 1 and increases by 1 again whenever you gain a level in this class. Additionally, parts of your skin are covered by a thin sheen of dragon-like scales. When you aren't wearing armor, your AC equals 13 + your Dexterity modifier"
+      6:
+        - "Elemental Affinity: When you cast a spell that deals damage of the type associated with your draconic ancestry, you can add your Charisma modifier to one damage roll of that spell. At the same time, you can spend 1 sorcery point to gain resistance to that damage type for 1 hour"
+      14:
+        - "Dragon Wings: You gain the ability to sprout a pair of dragon wings from your back, gaining a flying speed equal to your current speed. You can create these wings as a bonus action on your turn. They last until you dismiss them as a bonus action on your turn. You can't manifest your wings while wearing armor unless the armor is made to accommodate them"
+      18:
+        - "Draconic Presence: You can channel the dreadful presence of your dragon ancestor, causing those around you to become awestruck or frightened. As an action, you can spend 5 sorcery points to draw on this power and exude an aura of awe or fear (your choice) to a distance of 60 feet. For 1 minute or until you lose your concentration, each hostile creature that starts its turn in this aura must succeed on a Wisdom saving throw or be charmed (if you chose awe) or frightened (if you chose fear) until the aura ends. A creature that succeeds on this saving throw is immune to your aura for 24 hours"
+  divine_soul:
+    name: Divine Soul
+    description: "Your magic is touched by divine power"
+    player_choices:
+      - id: divine_magic_affinity
+        title: Divine Affinity
+        type: other
+        choose: 1
+        options: [ good, evil, law, chaos, neutrality ]
+    features_by_level:
+      1:
+        - "Divine Magic: Your link to the divine allows you to learn spells normally associated with the cleric class. When your Spellcasting feature lets you learn a sorcerer cantrip or a sorcerer spell of 1st level or higher, you can choose the new spell from the cleric spell list or the sorcerer spell list. You must otherwise obey all the restrictions for selecting the spell, and it becomes a sorcerer spell for you."
+        - "Favored by the Gods. Starting at 1st level, divine power guards your destiny. If you fail a saving throw or miss with an attack roll, you can roll 2d4 and add it to the total, possibly changing the outcome. Once you use this feature, you can't use it again until you finish a short or long rest."
+  lunar_sorcery:
+    name: Lunar Sorcery
+    description: ""
+    player_choices:
+#      whenever you long rest you can choose what lunar phase manifests its power through your magic
+#      While in the chosen phase, you can cast one 1st-level spell of the associated phase in the Lunar Spells table once without expending a spell slot. Once you cast a spell in this way, you can’t do so again until you finish a long rest.
+      - id: lunar_phase
+        name: Lunar Phase
+        type: other
+        choose: 1
+        options: ["Full moon", "New Moon", "Crescent Moon"]
+    bonus_spells:
+#      Full Moon Spells
+      - shield
+      - lesser_restoration
+      - dispel_magic
+      - death_ward
+      - rarys_telepathic_bond
+#      New Moon Spells
+      - ray_of_sickness
+      - blindness_deafness
+      - vampiric_touch
+      - confusion
+      - hold_monster
+#      Crescent Moon Spells
+      - color_spray
+      - alter_self
+      - phantom_steed
+      - hallucinatory_terrain
+      - mislead
+    additional_spells:
+      - moon_fire
+#      ^ Starting at 1st level, you can call down the radiant light of the moon on command. You learn the Sacred Flame spell, which doesn’t count against the number of sorcerer cantrips you know. When you cast the spell, you can target one creature as normal or target two creatures within range that are within 5 feet of each other.
+#  again not sure if this should be a spell spell or a class trait or something.
+  shadow_magic:
+    name: Shadow Magic
+    description: "Your magic comes from the Shadowfell"
+    player_choices:
+      #      ToDo: not entirely sure if we want or need this since this is just for flavor and doesn't effect game play at all
+      - id: shadow_sorcerer_quirks
+        title: Shadow Sorcerer Quirk
+        type: other
+        choose: 1
+        options: [ "icy cold to the touch", "when sleeping, you don't appear to breathe", "you barely bleed, even when badly injured", "your heart beats once per minute. this event somtimes surprises you", "trouble remembering that living creatures and corpses should be treated differently", "You blinked. Once. Last week." ]
+    darkvision: 120
+    features_by_level:
+      1:
+        - "Starting at 1st level, your existence in a twilight state between life and death makes you difficult to defeat. When damage reduces you to 0 hit points, you can make a Charisma saving throw (DC 5 + the damage taken). On a success, you instead drop to 1 hit point. You can't use this feature if you are reduced to 0 hit points by radiant damage or by a critical hit. After the saving throw succeeds, you can't use this feature again until you finish a long rest."
+  storm_sorcery:
+    name: Storm Sorcery
+    description: "Your magic is tied to the power of storms"
+    languages:
+      - primordial
+    features_by_level:
+      1:
+        - "Tempestuous Magic. Starting at 1st level, you can use a bonus action on your turn to cause whirling gusts of elemental air to briefly surround you, immediately before or after you cast a spell of 1st level or higher. Doing so allows you to fly up to 10 feet without provoking opportunity attacks."
+  wild_magic:
+    name: Wild Magic
+    description: "Your magic is unpredictable and chaotic"
+    features_by_level:
+      1:
+        - "Wild Magic Surge. Starting when you choose this origin at 1st level, your spellcasting can unleash surges of untamed magic. Once per turn, the DM can have you roll a d20 immediately after you cast a sorcerer spell of 1st level or higher. If you roll a 1, roll on the Wild Magic Surge table to create a magical effect. If that effect is a spell, it is too wild to be affected by your Metamagic, and if it normally requires concentration, it doesn't require concentration in this case; the spell lasts for its full duration."
+        - "Tides of Chaos. Starting at 1st level, you can manipulate the forces of chance and chaos to gain advantage on one attack roll, ability check, or saving throw. Once you do so, you must finish a long rest before you can use this feature again. Any time before you regain the use of this feature, the DM can have you roll on the Wild Magic Surge table immediately after you cast a sorcerer spell of 1st level or higher. You then regain the use of this feature."

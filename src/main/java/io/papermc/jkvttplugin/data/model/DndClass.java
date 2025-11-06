@@ -36,7 +36,9 @@ public class DndClass {
     private SpellcastingInfo spellcasting;
 
     private Map<Integer, List<String>> featuresByLevel;
-    private List<String> subclasses; // optional, for future use
+    private Map<String, DndSubClass> subclasses; // Subclasses for this class (e.g., Divine Domains for Cleric)
+    private int subclassLevel = 3; // Level when subclass is chosen (default 3, but Cleric/Warlock/Sorcerer choose at 1)
+    private String subclassTypeName = "Subclass"; // Display name for subclass type (e.g., "Divine Domain", "Otherworldly Patron", "Sorcerous Origin")
     private Map<String, Integer> multiclassRequirements; // e.g. {"STR": 13, "CON": 13}
 
     private boolean allowFeats;
@@ -66,7 +68,7 @@ public class DndClass {
     }
 
     public int getSubClassUnlockLevel() {
-        return -1; // to be defined by each class later
+        return subclassLevel;
     }
 
     public List<String> getExtraProficienciesFromMulticlassing() {
@@ -180,11 +182,29 @@ public class DndClass {
         this.featuresByLevel = featuresByLevel;
     }
 
-    public List<String> getSubclasses() {
+    public Map<String, DndSubClass> getSubclasses() {
         return subclasses;
     }
-    public void setSubclasses(List<String> subclasses) {
+    public void setSubclasses(Map<String, DndSubClass> subclasses) {
         this.subclasses = subclasses;
+    }
+
+    public boolean hasSubclasses() {
+        return subclasses != null && !subclasses.isEmpty();
+    }
+
+    public int getSubclassLevel() {
+        return subclassLevel;
+    }
+    public void setSubclassLevel(int subclassLevel) {
+        this.subclassLevel = subclassLevel;
+    }
+
+    public String getSubclassTypeName() {
+        return subclassTypeName;
+    }
+    public void setSubclassTypeName(String subclassTypeName) {
+        this.subclassTypeName = subclassTypeName;
     }
 
     public Map<String, Integer> getMulticlassRequirements() {
@@ -437,8 +457,18 @@ public class DndClass {
             return this;
         }
 
-        public Builder subclasses(List<String> subclasses) {
+        public Builder subclasses(Map<String, DndSubClass> subclasses) {
             instance.setSubclasses(subclasses);
+            return this;
+        }
+
+        public Builder subclassLevel(int subclassLevel) {
+            instance.setSubclassLevel(subclassLevel);
+            return this;
+        }
+
+        public Builder subclassTypeName(String subclassTypeName) {
+            instance.setSubclassTypeName(subclassTypeName);
             return this;
         }
 

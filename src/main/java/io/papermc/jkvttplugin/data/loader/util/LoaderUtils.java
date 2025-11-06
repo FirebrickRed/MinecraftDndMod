@@ -357,6 +357,125 @@ public class LoaderUtils {
                 .build();
     }
 
+    public static Map<String, DndSubClass> parseSubclasses(Object rawData, String className) {
+        Map<String, DndSubClass> result = new HashMap<>();
+
+        if (rawData instanceof Map<?, ?> subclassMap) {
+            for (Map.Entry<?, ?> entry : subclassMap.entrySet()) {
+                if (entry.getKey() instanceof String id &&
+                        entry.getValue() instanceof Map<?, ?> rawSubclassData) {
+
+                    @SuppressWarnings("unchecked")
+                    Map<String, Object> subclassData = (Map<String, Object>) rawSubclassData;
+
+                    DndSubClass subclass = parseSubClass(id, subclassData, className);
+                    result.put(id, subclass);
+                }
+            }
+        }
+
+        return result;
+    }
+
+    public static DndSubClass parseSubClass(String id, Map<String, Object> data, String className) {
+        DndSubClass subclass = new DndSubClass();
+        subclass.setId(id);
+        subclass.setName((String) data.getOrDefault("name", id));
+        subclass.setParentClass(className);
+        subclass.setDescription((String) data.getOrDefault("description", ""));
+
+        // Parse features by level
+        subclass.setFeaturesByLevel(parseLevelStringListMap(data.get("features_by_level")));
+
+        // Parse bonus spells (domain spells, expanded spell list, etc.) with validation
+        List<String> bonusSpells = normalizeStringList(data.get("bonus_spells"));
+        validateSpells(bonusSpells, className, id, "bonus_spells");
+        subclass.setBonusSpells(bonusSpells);
+
+        // Parse additional spells (cantrips always known) with validation
+        List<String> additionalSpells = normalizeStringList(data.get("additional_spells"));
+        validateSpells(additionalSpells, className, id, "additional_spells");
+        subclass.setAdditionalSpells(additionalSpells);
+
+        // Parse proficiencies and languages
+        subclass.setSkillProficiencies(normalizeStringList(data.get("skill_proficiencies")));
+        subclass.setArmorProficiencies(normalizeStringList(data.get("armor_proficiencies")));
+        subclass.setWeaponProficiencies(normalizeStringList(data.get("weapon_proficiencies")));
+        subclass.setToolProficiencies(normalizeStringList(data.get("tool_proficiencies")));
+        subclass.setLanguages(parseLanguages(data.get("languages")));
+
+        // Parse special movement speeds
+        subclass.setSwimmingSpeed(asInt(data.get("swimming_speed"), 0));
+        subclass.setDarkvision(asInt(data.get("darkvision"), 0));
+
+        // Parse player choices (e.g., Knowledge Domain skill choices, Genie patron type)
+        subclass.setPlayerChoices(parsePlayerChoices(data.get("player_choices")));
+
+        // Parse conditional advantages (e.g., advantage on saves vs disease)
+        subclass.setConditionalAdvantages(parseConditionalAdvantages(data.get("conditional_advantages")));
+
+        // Parse conditional bonus spells (e.g., Genie patron spells based on genie kind)
+        subclass.setConditionalBonusSpells(parseConditionalBonusSpells(data.get("conditional_bonus_spells"), className, id));
+
+        return subclass;
+    }
+
+    /**
+     * Parses conditional advantages from YAML.
+     * Format: [{type: "saving_throw", condition: "poison", description: "..."}, ...]
+     */
+    private static List<Map<String, String>> parseConditionalAdvantages(Object input) {
+        if (!(input instanceof List<?> list)) return List.of();
+
+        List<Map<String, String>> result = new ArrayList<>();
+        for (Object item : list) {
+            if (item instanceof Map<?, ?> map) {
+                Map<String, String> advantage = new HashMap<>();
+                advantage.put("type", asString(map.get("type"), ""));
+                advantage.put("condition", asString(map.get("condition"), ""));
+                advantage.put("description", asString(map.get("description"), ""));
+                result.add(advantage);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Parses conditional bonus spells from YAML with spell validation.
+     * Format: {dao: [spell1, spell2], djinni: [spell3, spell4], ...}
+     */
+    private static Map<String, List<String>> parseConditionalBonusSpells(Object input, String className, String subclassId) {
+        if (!(input instanceof Map<?, ?> map)) return Map.of();
+
+        Map<String, List<String>> result = new HashMap<>();
+        for (Map.Entry<?, ?> entry : map.entrySet()) {
+            if (entry.getKey() instanceof String choiceOption) {
+                List<String> spells = normalizeStringList(entry.getValue());
+
+                // Validate spells
+                validateSpells(spells, className, subclassId, "conditional_bonus_spells[" + choiceOption + "]");
+
+                result.put(choiceOption, spells);
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Validates a list of spell IDs and logs warnings for any that don't exist.
+     * Does not crash - gracefully warns about missing spells.
+     */
+    private static void validateSpells(List<String> spellIds, String className, String subclassId, String fieldName) {
+        if (spellIds == null || spellIds.isEmpty()) return;
+
+        for (String spellId : spellIds) {
+            if (SpellLoader.getSpell(spellId) == null) {
+                System.out.println("[LoaderUtils] WARNING: " + className + " subclass '" + subclassId +
+                    "' references unknown spell '" + spellId + "' in " + fieldName);
+            }
+        }
+    }
+
     public static PlayersChoice<String> parseSkillChoice(Object node) {
         if (!(node instanceof List<?> blocks)) return null;
 

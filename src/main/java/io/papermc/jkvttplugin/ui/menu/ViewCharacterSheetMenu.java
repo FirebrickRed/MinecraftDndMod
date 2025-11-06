@@ -105,6 +105,46 @@ public class ViewCharacterSheetMenu {
         });
         inventory.setItem(3, speedItem);
 
+        // Slot 4: Race/Subrace
+        ItemStack raceItem = new ItemStack(Material.PLAYER_HEAD);
+        raceItem.editMeta(m -> {
+            String raceName = character.getRace().getName();
+            if (character.hasSubrace() && character.getSubrace() != null) {
+                raceName = character.getSubrace().getName();
+            }
+            m.displayName(Component.text(raceName, NamedTextColor.LIGHT_PURPLE));
+
+            LoreBuilder lore = LoreBuilder.create()
+                    .addLine("Race", NamedTextColor.GRAY);
+
+            if (character.hasSubrace() && character.getSubrace() != null) {
+                lore.addLine("(" + character.getRace().getName() + ")", NamedTextColor.DARK_GRAY);
+            }
+
+            m.lore(lore.build());
+        });
+        inventory.setItem(4, raceItem);
+
+        // Slot 5: Class/Subclass
+        ItemStack classItem = new ItemStack(Material.DIAMOND_SWORD);
+        classItem.editMeta(m -> {
+            String className = character.getMainClass().getName();
+            m.displayName(Component.text(className, NamedTextColor.GOLD));
+
+            LoreBuilder lore = LoreBuilder.create()
+                    .addLine("Class", NamedTextColor.GRAY);
+
+            // Show subclass if selected
+            if (character.getSubclass() != null) {
+                lore.blankLine()
+                        .addLine(character.getSubclass().getName(), NamedTextColor.AQUA)
+                        .addLine("(" + character.getMainClass().getSubclassTypeName() + ")", NamedTextColor.DARK_GRAY);
+            }
+
+            m.lore(lore.build());
+        });
+        inventory.setItem(5, classItem);
+
         // Slot 6: Proficiency Bonus
         int profBonus = character.getProficiencyBonus();
         ItemStack proficiencyItem = new ItemStack(Material.BOOK, profBonus);
@@ -129,6 +169,32 @@ public class ViewCharacterSheetMenu {
                     .build());
         });
         inventory.setItem(7, initItem);
+
+        // Slot 8: Background
+        ItemStack backgroundItem = new ItemStack(Material.WRITABLE_BOOK);
+        backgroundItem.editMeta(m -> {
+            String backgroundName = character.getBackground() != null ? character.getBackground().getName() : "None";
+            m.displayName(Component.text(backgroundName, NamedTextColor.AQUA));
+
+            LoreBuilder lore = LoreBuilder.create()
+                    .addLine("Background", NamedTextColor.GRAY);
+
+            // Show background skills if available
+            if (character.getBackground() != null && character.getBackground().getSkills() != null && !character.getBackground().getSkills().isEmpty()) {
+                lore.blankLine()
+                        .addLine("Skills: " + String.join(", ", character.getBackground().getSkills().stream().map(Util::prettify).toList()), NamedTextColor.DARK_GRAY);
+            }
+
+            // Show background feature if available
+            if (character.getBackground() != null && character.getBackground().getFeature() != null && !character.getBackground().getFeature().isEmpty()) {
+                lore.blankLine()
+                        .addLine("Feature:", NamedTextColor.YELLOW)
+                        .addLine(character.getBackground().getFeature(), NamedTextColor.GRAY);
+            }
+
+            m.lore(lore.build());
+        });
+        inventory.setItem(8, backgroundItem);
 
         // Slot 9: Empty (spacing)
 

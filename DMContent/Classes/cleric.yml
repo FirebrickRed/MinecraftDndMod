@@ -184,16 +184,278 @@ icon: cleric
 multiclass_requirements:
   Wisdom: 13
 subclass_level: 1
+subclass_type_name: Divine Domain
 subclasses:
-  - Life Domain
-  - Light Domain
-  - Knowledge Domain
-  - Nature Domain
-  - Tempest Domain
-  - Trickery Domain
-  - War Domain
-  - Grave Domain
-  - Forge Domain
-  - Order Domain
-  - Peace Domain
-  - Twilight Domain
+  life_domain:
+    name: Life Domain
+    description: "Focuses on healing and preserving life"
+    armor_proficiencies:
+      - heavy_armor
+    bonus_spells:
+      - bless
+      - cure_wounds
+      - lesser_restoration
+      - spiritual_weapon
+      - beacon_of_hope
+      - revivify
+      - death_ward
+      - guardian_of_faith
+      - mass_cure_wounds
+      - raise_dead
+    features_by_level:
+      1:
+        - "Bonus Proficiency: You gain proficiency with heavy armor"
+        - "Disciple of Life: Your healing spells are more effective. Whenever you use a spell of 1st level or higher to restore hit points to a creature, the creature regains additional hit points equal to 2 + the spell's level"
+      2:
+        - "Channel Divinity: Preserve Life: You can use your Channel Divinity to heal the badly injured. As an action, you present your holy symbol and evoke healing energy that can restore a number of hit points equal to five times your cleric level"
+      6:
+        - "Blessed Healer: The healing spells you cast on others heal you as well. When you cast a spell of 1st level or higher that restores hit points to a creature other than you, you regain hit points equal to 2 + the spell's level"
+      8:
+        - "Divine Strike: You gain the ability to infuse your weapon strikes with divine energy. Once on each of your turns when you hit a creature with a weapon attack, you can cause the attack to deal an extra 1d8 radiant damage to the target"
+      17:
+        - "Supreme Healing: When you would normally roll one or more dice to restore hit points with a spell, you instead use the highest number possible for each die"
+  light_domain:
+    name: Light Domain
+    description: "Wields the power of light and fire"
+#    ToDo: do we need to differentiate between the different leveled spells here? we should also see about for error handling if we can't find a spell create an item with the name we have and suggest the dm take a look at the spelling or something?
+    bonus_spells:
+      - burning_hands
+      - faerie_fire
+      - flaming_sphere
+      - scorching_ray
+      - daylight
+      - fireball
+      - guardian_of_faith
+      - wall_of_fire
+      - flame_strike
+      - scrying
+    additional_spells:
+      - light
+    features_by_level:
+      1:
+        - "Warding Flare. Uses = Wisdom modifier (minimum of 1). resets at long rest"
+  knowledge_domain:
+    name: Knowledge Domain
+    description: "Values learning and understanding"
+    bonus_spells:
+      - command
+      - identify
+      - augury
+      - suggestion
+      - nondetection
+      - speak_with_dead
+      - arcane_eye
+      - confusion
+      - legend_lore
+      - scrying
+    player_choices:
+      - id: sub_class_language
+        title: Extra Language
+        type: LANGUAGE
+        choose: 2
+        options: []
+      - id: sub_class_skill
+        title: Extra Skill
+        type: skill
+        choose: 2
+        options: [arcana, history, nature, religion]
+#        your proficiency bonus is doubled for any ability check you make that uses either of those skills
+  nature_domain:
+    name: Nature Domain
+    description: "Channels the forces of nature"
+    bonus_spells:
+      - animal_friendship
+      - speak_with_animals
+      - barkskin
+      - spike_growth
+      - plant_growth
+      - wind_wall
+      - dominate_beast
+      - grasping_vine
+      - insect_plague
+      - tree_stride
+    player_choices:
+      - id: druid_cantrip
+        title: Druid Cantrip
+        type: SPELL
+        choose: 1
+        spell_list: druid
+        spell_level: 0  # 0 = cantrips only
+      - id: sub_class_skill
+        title: Extra Skill
+        type: skill
+        choose: 1
+        options: [animal_handling, nature, survival]
+    armor_proficiencies:
+      - heavy_armor
+  tempest_domain:
+    name: Tempest Domain
+    description: "Commands storms and thunder"
+    bonus_spells:
+      - fog_cloud
+      - thunderwave
+      - gust_of_wind
+      - shatter
+      - call_lightning
+      - sleet_storm
+      - control_water
+      - ice_storm
+      - destructive_wave
+      - insect_plague
+    armor_proficiencies:
+      - heavy_armor
+    weapon_proficiencies:
+      - martial_weapons
+    features_by_level:
+      1:
+        - "Wrath of the storm. Also at 1st level, you can thunderously rebuke attackers. When a creature within 5 feet of you that you can see hits you with an attack, you can use your reaction to cause the creature to make a Dexterity saving throw. The creature takes 2d8 lightning or thunder damage (your choice) on a failed saving throw, and half as much damage on a successful one. You can use this feature a number of times equal to your Wisdom modifier (a minimum of once). You regain all expended uses when you finish a long rest."
+  trickery_domain:
+    name: Trickery Domain
+    description: "Master of deception and illusion"
+    bonus_spells:
+      - charm_person
+      - disguise_self
+      - mirror_image
+      - pass_without_trace
+      - blink
+      - dispel_magic
+      - dimension_door
+      - polymorph
+      - dominate_person
+      - modify_memory
+    features_by_level:
+      1:
+        - "Blessing of the Trickster. Starting when you choose this domain at 1st level, you can use your action to touch a willing creature other than yourself to give it advantage on Dexterity (Stealth) checks. This blessing lasts for 1 hour or until you use this feature again."
+  war_domain:
+    name: War Domain
+    description: "Embodies the fury of battle"
+    armor_proficiencies:
+      - heavy_armor
+    weapon_proficiencies:
+      - martial_weapons
+    bonus_spells:
+      - divine_favor
+      - shield_of_faith
+      - magic_weapon
+      - spiritual_weapon
+      - crusaders_mantle
+      - spirit_guardians
+      - freedom_of_movement
+      - stoneskin
+      - flame_strike
+      - hold_monster
+    features_by_level:
+      1:
+        - "War Priest. From 1st level, your god delivers bolts of inspiration to you while you are engaged in battle. When you use the Attack action, you can make one weapon attack as a bonus action. You can use this feature a number of times equal to your Wisdom modifier (a minimum of once). You regain all expended uses when you finish a long rest."
+  grave_domain:
+    name: Grave Domain
+    description: "Guards the line between life and death"
+    bonus_spells:
+      - bane
+      - false_life
+      - gentle_repose
+      - ray_of_enfeeblement
+      - revivify
+      - vampiric_touch
+      - blight
+      - death_ward
+      - antilife_shell
+      - raise_dead
+    additional_spells:
+      - spare_the_dying
+#      has a range of 30 feet and can cast it as a bonus action (would probably be best to just make a spell specific for this case
+    features_by_level:
+      1:
+        - "Circle of Mortality. At 1st level, you gain the ability to manipulate the line between life and death. When you would normally roll one or more dice to restore hit points with a spell to a creature at 0 hit points, you instead use the highest number possible for each die."
+        - "Eyes of the grave. At 1st level, you gain the ability to occasionally sense the presence of the undead, whose existence is an insult to the natural cycle of life. As an action, you can open your awareness to magically detect undead. Until the end of your next turn, you know the location of any undead within 60 feet of you that isn't behind total cover and that isn't protected from divination magic. This sense doesn't tell you anything about a creature's capabilities or identity. You can use this feature a number of times equal to your Wisdom modifier (minimum of once). You regain all expended uses when you finish a long rest."
+  forge_domain:
+    name: Forge Domain
+    description: "Masters the art of creation and smithing"
+    bonus_spells:
+      - identify
+      - searing_smite
+      - heat_metal
+      - magic_weapon
+      - elemental_weapon
+      - protection_from_energy
+      - fabricate
+      - wall_of_fire
+      - animate_objects
+      - creation
+    armor_proficiencies:
+      - heavy_armor
+    tool_proficiencies:
+      - smiths_tools
+    features_by_level:
+      1:
+        - "Blessing of the Forge. At 1st level, you gain the ability to imbue magic into a weapon or armor. At the end of a long rest, you can touch one nonmagical object that is a suit of armor or a simple or martial weapon. Until the end of your next long rest or until you die, the object becomes a magic item, granting a +1 bonus to AC if it's armor or a +1 bonus to attack and damage rolls if it's a weapon. Once you use this feature, you can't use it again until you finish a long rest."
+  order_domain:
+    name: Order Domain
+    description: "Upholds law and order"
+    bonus_spells:
+      - command
+      - heroism
+      - hold_person
+      - zone_of_truth
+      - mass_healing_word
+      - slow
+      - compulsion
+      - locate_creature
+      - commune
+      - dominate_person
+    armor_proficiencies:
+      - heavy_armor
+    player_choices:
+      - id: sub_class_skill
+        title: Extra Skill
+        type: skill
+        choose: 1
+        options: [intimidation, persuasion]
+    features_by_level:
+      1:
+        - "Voice of Authority. Starting at 1st level, you can invoke the power of law to embolden an ally to attack. If you cast a spell with a spell slot of 1st level or higher and target an ally with the spell, that ally can use their reaction immediately after the spell to make one weapon attack against a creature of your choice that you can see. If the spell targets more than one ally, you choose the ally who can make the attack."
+  peace_domain:
+    name: Peace Domain
+    description: "Promotes harmony and unity"
+    bonus_spells:
+      - heroism
+      - sanctuary
+      - aid
+      - warding_bond
+      - beacon_of_hope
+      - sending
+      - aura_of_purity
+      - otilukes_resilient_sphere
+      - greater_restoration
+      - rarys_telepathic_bond
+    player_choices:
+      - id: subclass_skill
+        title: Extra Skill
+        type: skill
+        choose: 1
+        options: [insight, performance, persuasion]
+    features_by_level:
+      1:
+        - "Emboldening Bond. Starting at 1st level, you can forge an empowering bond among people who are at peace with one another. As an action, you choose a number of willing creatures within 30 feet of you (this can include yourself) equal to your proficiency bonus. You create a magical bond among them for 10 minutes or until you use this feature again. While any bonded creature is within 30 feet of another, the creature can roll a d4 and add the number rolled to an attack roll, an ability check, or a saving throw it makes. Each creature can add the d4 no more than once per turn. You can use this feature a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest."
+  twilight_domain:
+    name: Twilight Domain
+    description: "Protects in darkness and brings comfort"
+    bonus_spells:
+      - faerie_fire
+      - sleep
+      - moonbeam
+      - see_invisibility
+      - aura_of_vitality
+      - leomunds_tiny_hut
+      - aura_of_life
+      - greater_invisibility
+      - circle_of_power
+      - mislead
+    armor_proficiencies:
+      - heavy_armor
+    weapon_proficiencies:
+      - martial_weapons
+    features_by_level:
+      1:
+        - "Eyes of Night. Starting at 1st level, you can see through the deepest gloom. You have darkvision out to a range of 300 feet. In that radius, you can see in dim light as if it were bright light and in darkness as if it were dim light. As an action, you can magically share the darkvision of this feature with willing creatures you can see within 10 feet of you, up to a number of creatures equal to your Wisdom modifier (minimum of one creature). The shared darkvision lasts for 1 hour. Once you share it, you can't do so again until you finish a long rest, unless you expend a spell slot of any level to share it again."
+        - "Vigilant Blessing. At 1st level, the night has taught you to be vigilant. As an action, you give one creature you touch (including possibly yourself) advantage on the next initiative roll the creature makes. This benefit ends immediately after the roll or if you use this feature again."

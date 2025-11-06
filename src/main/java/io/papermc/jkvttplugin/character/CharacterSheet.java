@@ -22,6 +22,7 @@ public class CharacterSheet {
     private DndRace race;
     private DndSubRace subrace;
     private DndClass dndClass;
+    private DndSubClass subclass;
     private DndBackground background;
 
     private EnumMap<Ability, Integer> abilityScores;
@@ -47,6 +48,8 @@ public class CharacterSheet {
     // Racial traits (Issue #51)
     private Set<String> weaponProficiencies = new HashSet<>();
     private Set<String> armorProficiencies = new HashSet<>();
+    private Set<String> toolProficiencies = new HashSet<>();
+    private Set<String> languages = new HashSet<>();
     private Set<String> damageResistances = new HashSet<>();
     private List<InnateSpell> innateSpells = new ArrayList<>();
     private Integer darkvision;  // Vision range in feet (60, 120, etc.), null = no darkvision
@@ -81,6 +84,14 @@ public class CharacterSheet {
             throw new IllegalArgumentException("Class not found: " + session.getSelectedClass());
         }
 
+        // Load subclass if selected (only for classes with subclass_level == 1)
+        if (session.getSelectedSubclass() != null && sheet.dndClass.getSubclassLevel() == 1) {
+            sheet.subclass = sheet.dndClass.getSubclasses().get(session.getSelectedSubclass());
+            if (sheet.subclass == null) {
+                throw new IllegalArgumentException("Subclass not found: " + session.getSelectedSubclass() + " for class " + sheet.dndClass.getName());
+            }
+        }
+
         sheet.background = BackgroundLoader.getBackground(session.getSelectedBackground());
         if (sheet.background == null) {
             throw new IllegalArgumentException("Background not found: " + session.getSelectedBackground());
@@ -94,8 +105,18 @@ public class CharacterSheet {
         // Apply racial traits (proficiencies, resistances, innate spells, movement speeds, darkvision)
         sheet.applyRacialTraits();
 
+        // Apply class tool proficiencies
+        sheet.applyClassTraits();
+
+        // Apply background traits (tool proficiencies, languages, skill proficiencies)
+        sheet.applyBackgroundTraits();
+
+        // Apply subclass traits (bonus spells, proficiencies, languages, darkvision, swimming speed)
+        sheet.applySubclassTraits();
+
         sheet.loadSpells(session.getSelectedSpells(), session.getSelectedCantrips());
         sheet.loadSkillProficiencies(session);
+        sheet.loadToolAndLanguageProficiencies(session);
         sheet.calculateHealth();
 
         sheet.grantStartingEquipment(session);
@@ -107,7 +128,7 @@ public class CharacterSheet {
         return sheet;
     }
 
-    public static CharacterSheet loadFromData(UUID characterId, UUID playerId, String characterName, String raceName, String subraceName, String className, String backgroundName, EnumMap<Ability, Integer> abilityScores, Set<Skill> skillProficiencies, Set<String> spellNames, Set<String> cantripNames, int currentHealth, int maxHealth, int armorClass) {
+    public static CharacterSheet loadFromData(UUID characterId, UUID playerId, String characterName, String raceName, String subraceName, String className, String subclassName, String backgroundName, EnumMap<Ability, Integer> abilityScores, Set<Skill> skillProficiencies, Set<String> spellNames, Set<String> cantripNames, int currentHealth, int maxHealth, int armorClass) {
         CharacterSheet sheet = new CharacterSheet(characterId, playerId, characterName);
 
         sheet.race = RaceLoader.getRace(raceName);
@@ -115,6 +136,12 @@ public class CharacterSheet {
             sheet.subrace = sheet.race.getSubraces().get(subraceName);
         }
         sheet.dndClass = ClassLoader.getClass(className);
+
+        // Load subclass if present
+        if (subclassName != null && sheet.dndClass != null && sheet.dndClass.hasSubclasses()) {
+            sheet.subclass = sheet.dndClass.getSubclasses().get(subclassName);
+        }
+
         sheet.background = BackgroundLoader.getBackground(backgroundName);
 
         sheet.abilityScores = new EnumMap<>(abilityScores);
@@ -126,6 +153,13 @@ public class CharacterSheet {
 
         // Apply racial traits (proficiencies, resistances, innate spells, movement speeds, darkvision)
         sheet.applyRacialTraits();
+
+        // Apply class, background, and subclass traits to restore tool proficiencies and languages
+        sheet.applyClassTraits();
+        sheet.applyBackgroundTraits();
+        if (sheet.subclass != null) {
+            sheet.applySubclassTraits();
+        }
 
         sheet.loadSpells(spellNames, cantripNames);
 
@@ -229,6 +263,8 @@ public class CharacterSheet {
         if (race != null) {
             this.weaponProficiencies.addAll(race.getWeaponProficiencies());
             this.armorProficiencies.addAll(race.getArmorProficiencies());
+            this.toolProficiencies.addAll(race.getToolProficiencies());
+            this.languages.addAll(race.getLanguages());
             this.damageResistances.addAll(race.getDamageResistances());
             this.innateSpells.addAll(race.getInnateSpells());
 
@@ -247,6 +283,8 @@ public class CharacterSheet {
         if (subrace != null) {
             this.weaponProficiencies.addAll(subrace.getWeaponProficiencies());
             this.armorProficiencies.addAll(subrace.getArmorProficiencies());
+            this.toolProficiencies.addAll(subrace.getToolProficiencies());
+            this.languages.addAll(subrace.getLanguages());
             this.damageResistances.addAll(subrace.getDamageResistances());
             this.innateSpells.addAll(subrace.getInnateSpells());
 
@@ -266,6 +304,129 @@ public class CharacterSheet {
         for (InnateSpell innateSpell : innateSpells) {
             innateSpell.initializeUses(proficiencyBonus);
         }
+    }
+
+    /**
+     * Apply class proficiencies to the character.
+     * This includes armor, weapon, and tool proficiencies from the character's class.
+     */
+    private void applyClassTraits() {
+        if (dndClass == null) return;
+
+        // Apply armor proficiencies from class
+        if (dndClass.getArmorProficiencies() != null) {
+            this.armorProficiencies.addAll(dndClass.getArmorProficiencies());
+        }
+
+        // Apply weapon proficiencies from class
+        if (dndClass.getWeaponProficiencies() != null) {
+            this.weaponProficiencies.addAll(dndClass.getWeaponProficiencies());
+        }
+
+        // Apply tool proficiencies from class
+        if (dndClass.getToolProficiencies() != null) {
+            this.toolProficiencies.addAll(dndClass.getToolProficiencies());
+        }
+    }
+
+    /**
+     * Apply background traits to the character.
+     * This includes automatic tool proficiencies and languages from the background.
+     * Note: Skill proficiencies are handled separately in loadSkillProficiencies().
+     */
+    private void applyBackgroundTraits() {
+        if (background == null) return;
+
+        // Apply automatic tool proficiencies
+        if (background.getTools() != null) {
+            this.toolProficiencies.addAll(background.getTools());
+        }
+
+        // Apply automatic languages
+        if (background.getLanguages() != null) {
+            this.languages.addAll(background.getLanguages());
+        }
+    }
+
+    /**
+     * Apply subclass traits to the character (Issue #64)
+     * This includes bonus spells, additional spells, proficiencies, languages, darkvision, and swimming speed.
+     * Traits are applied from the subclass if one is selected.
+     */
+    private void applySubclassTraits() {
+        if (subclass == null) return;
+
+        // Apply swimming speed from subclass (additive/override)
+        if (subclass.getSwimmingSpeed() > 0) {
+            this.swimmingSpeed = subclass.getSwimmingSpeed();
+        }
+
+        // Apply darkvision from subclass (upgrade if better)
+        if (subclass.getDarkvision() > 0) {
+            // Upgrade darkvision if subclass grants better vision
+            if (this.darkvision == null || subclass.getDarkvision() > this.darkvision) {
+                this.darkvision = subclass.getDarkvision();
+            }
+        }
+
+        // Apply proficiencies from subclass
+        if (subclass.getArmorProficiencies() != null) {
+            this.armorProficiencies.addAll(subclass.getArmorProficiencies());
+        }
+        if (subclass.getWeaponProficiencies() != null) {
+            this.weaponProficiencies.addAll(subclass.getWeaponProficiencies());
+        }
+        if (subclass.getToolProficiencies() != null) {
+            this.toolProficiencies.addAll(subclass.getToolProficiencies());
+        }
+        if (subclass.getLanguages() != null) {
+            this.languages.addAll(subclass.getLanguages());
+        }
+        if (subclass.getSkillProficiencies() != null) {
+            for (String skillName : subclass.getSkillProficiencies()) {
+                try {
+                    Skill skill = Skill.valueOf(skillName.toUpperCase().replace(" ", "_"));
+                    this.skillProficiencies.add(skill);
+                } catch (IllegalArgumentException e) {
+                    // Skip invalid skill names
+                }
+            }
+        }
+
+        // Add bonus spells from subclass (always known/prepared)
+        if (subclass.getBonusSpells() != null) {
+            for (String spellId : subclass.getBonusSpells()) {
+                DndSpell spell = SpellLoader.getSpell(spellId);
+                if (spell != null) {
+                    if (spell.getLevel() == 0) {
+                        this.knownCantrips.add(spell);
+                    } else {
+                        this.knownSpells.add(spell);
+                    }
+                }
+            }
+        }
+
+        // Add additional spells from subclass (cantrips always known)
+        if (subclass.getAdditionalSpells() != null) {
+            for (String spellId : subclass.getAdditionalSpells()) {
+                DndSpell spell = SpellLoader.getSpell(spellId);
+                if (spell != null) {
+                    if (spell.getLevel() == 0) {
+                        this.knownCantrips.add(spell);
+                    } else {
+                        this.knownSpells.add(spell);
+                    }
+                }
+            }
+        }
+
+        // TODO: Apply conditional bonus spells based on player choices (e.g., Genie patron type)
+        // This will require looking up choices from CharacterCreationSession
+        // For now, conditional spells are not applied automatically
+
+        // TODO: Apply conditional advantages (e.g., advantage on saves vs disease)
+        // This will require a conditional_advantages field on CharacterSheet
     }
 
     private void loadSpells(Set<String> spellNames, Set<String> cantripNames) {
@@ -290,9 +451,20 @@ public class CharacterSheet {
 
     /**
      * Loads skill proficiencies from the character creation session.
-     * Extracts skill choices from pending choices (both class and background sources).
+     * Applies automatic background skills AND extracts skill choices from pending choices (both class and background sources).
      */
     private void loadSkillProficiencies(CharacterCreationSession session) {
+        // Apply automatic background skill proficiencies
+        if (background != null && background.getSkills() != null) {
+            for (String skillName : background.getSkills()) {
+                Skill skill = Skill.fromString(skillName);
+                if (skill != null) {
+                    skillProficiencies.add(skill);
+                }
+            }
+        }
+
+        // Apply player-chosen skills from pending choices
         if (session == null || session.getPendingChoices() == null) return;
 
         for (PendingChoice<?> pc : session.getPendingChoices()) {
@@ -306,6 +478,36 @@ public class CharacterSheet {
                     Skill skill = Skill.fromString(skillName);
                     if (skill != null) {
                         skillProficiencies.add(skill);
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Loads tool proficiencies and languages from player choices in the character creation session.
+     * Note: Automatic tool/language proficiencies are already applied in applyBackgroundTraits() and applyRacialTraits().
+     */
+    private void loadToolAndLanguageProficiencies(CharacterCreationSession session) {
+        if (session == null || session.getPendingChoices() == null) return;
+
+        for (PendingChoice<?> pc : session.getPendingChoices()) {
+            Set<?> chosen = pc.getChosen();
+
+            // Handle TOOL type choices
+            if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.TOOL) {
+                for (Object obj : chosen) {
+                    if (obj instanceof String toolName) {
+                        toolProficiencies.add(toolName);
+                    }
+                }
+            }
+
+            // Handle LANGUAGE type choices
+            if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.LANGUAGE) {
+                for (Object obj : chosen) {
+                    if (obj instanceof String languageName) {
+                        languages.add(languageName);
                     }
                 }
             }
@@ -572,6 +774,10 @@ public class CharacterSheet {
         return subrace;
     }
 
+    public DndSubClass getSubclass() {
+        return subclass;
+    }
+
     public DndClass getMainClass() { return dndClass; }
 
     // ToDo: update this logic to not be hardcoded when level up gets implemented
@@ -679,6 +885,24 @@ public class CharacterSheet {
      */
     public Set<Skill> getSkillProficiencies() {
         return new HashSet<>(skillProficiencies);
+    }
+
+    /**
+     * Gets all tool proficiencies for this character.
+     * Includes proficiencies from race, subrace, class, background, and subclass.
+     * @return Set of tool proficiency names (e.g., "smiths_tools", "thieves_tools")
+     */
+    public Set<String> getToolProficiencies() {
+        return new HashSet<>(toolProficiencies);
+    }
+
+    /**
+     * Gets all languages known by this character.
+     * Includes languages from race, subrace, background, and subclass.
+     * @return Set of language names (e.g., "Common", "Elvish", "Draconic")
+     */
+    public Set<String> getLanguages() {
+        return new HashSet<>(languages);
     }
 
     /**

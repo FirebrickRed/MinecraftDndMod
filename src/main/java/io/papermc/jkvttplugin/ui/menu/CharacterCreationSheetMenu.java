@@ -2,7 +2,9 @@ package io.papermc.jkvttplugin.ui.menu;
 
 import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
+import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
+import io.papermc.jkvttplugin.data.model.DndClass;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
@@ -50,6 +52,15 @@ public class CharacterCreationSheetMenu {
             if (race != null && race.hasSubraces()) {
                 ItemStack subraceItem = createSelectionItem(Material.PLAYER_HEAD, "Subrace", session.getSelectedSubRace(), "Click to select your subrace", MenuAction.OPEN_SUBRACE_SELECTION, "subrace");
                 inventory.setItem(19, subraceItem);
+            }
+        }
+
+        // Show subclass selection for classes with subclass_level == 1 (Cleric, Warlock, Sorcerer)
+        if (session != null && session.getSelectedClass() != null) {
+            DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
+            if (dndClass != null && dndClass.getSubclassLevel() == 1 && dndClass.hasSubclasses()) {
+                ItemStack subclassItem = createSelectionItem(Material.ENCHANTED_BOOK, "Subclass", session.getSelectedSubclass(), "Click to select your subclass", MenuAction.OPEN_SUBCLASS_SELECTION, "subclass");
+                inventory.setItem(20, subclassItem);
             }
         }
 
@@ -169,6 +180,15 @@ public class CharacterCreationSheetMenu {
                         }
                     }
 
+                    if (session.getSelectedClass() != null) {
+                        DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
+                        if (dndClass != null && dndClass.getSubclassLevel() == 1
+                                && dndClass.hasSubclasses()
+                                && session.getSelectedSubclass() == null) {
+                            lore.add(Component.text("• Select a subclass").color(NamedTextColor.RED));
+                        }
+                    }
+
 //                    var pendingChoices = CharacterCreationService.rebuildPendingChoices(player.getUniqueId());
                     var pendingChoices = session.getPendingChoices();
                     if (!pendingChoices.isEmpty() && !session.allChoicesSatisfied()) {
@@ -192,8 +212,23 @@ public class CharacterCreationSheetMenu {
             return false;
         }
 
+        // Check if subrace is required and selected
         DndRace race = RaceLoader.getRace(session.getSelectedRace());
-        return race == null || !race.hasSubraces() || session.getSelectedSubRace() != null;
+        if (race != null && race.hasSubraces() && session.getSelectedSubRace() == null) {
+            return false;
+        }
+
+        // Check if subclass is required (level 1 subclass) and selected
+        // Only classes with subclass_level == 1 (Cleric, Warlock, Sorcerer) require subclass during creation
+        // Classes with subclass_level == 2 (Wizard) or 3 (most others) will choose during level-up
+        DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
+        if (dndClass != null && dndClass.getSubclassLevel() == 1
+                && dndClass.hasSubclasses()
+                && session.getSelectedSubclass() == null) {
+            return false;
+        }
+
+        return true;
     }
 
     private static boolean isCharacterComplete(CharacterCreationSession session) {

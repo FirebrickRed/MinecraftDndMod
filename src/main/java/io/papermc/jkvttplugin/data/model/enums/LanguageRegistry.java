@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.data.model.enums;
 
+import io.papermc.jkvttplugin.util.Util;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -28,7 +29,11 @@ public class LanguageRegistry {
     }
 
     public static boolean isRegistered(String language) {
-        return language != null && registeredLanguages.contains(language.trim());
+        if (language == null) return false;
+        // Case-insensitive check using Util.normalize() - "primordial" matches "Primordial"
+        String normalized = Util.normalize(language);
+        return registeredLanguages.stream()
+                .anyMatch(lang -> Util.normalize(lang).equals(normalized));
     }
 
     public static List<String> getAllLanguages() {

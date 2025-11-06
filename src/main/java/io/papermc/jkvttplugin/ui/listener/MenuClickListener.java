@@ -32,6 +32,7 @@ public class MenuClickListener implements Listener {
     private static final RaceSelectionHandler RACE_HANDLER = new RaceSelectionHandler();
     private static final SubraceSelectionHandler SUBRACE_HANDLER = new SubraceSelectionHandler();
     private static final ClassSelectionHandler CLASS_HANDLER = new ClassSelectionHandler();
+    private static final SubclassSelectionHandler SUBCLASS_HANDLER = new SubclassSelectionHandler();
     private static final BackgroundSelectionHandler BACKGROUND_HANDLER = new BackgroundSelectionHandler();
     private static final CharacterSheetHandler CHARACTER_SHEET_HANDLER = new CharacterSheetHandler();
     private static final TabbedChoicesHandler TABBED_CHOICES_HANDLER = new TabbedChoicesHandler();
@@ -47,6 +48,7 @@ public class MenuClickListener implements Listener {
         handlers.put(MenuType.RACE_SELECTION, RACE_HANDLER);
         handlers.put(MenuType.SUBRACE_SELECTION, SUBRACE_HANDLER);
         handlers.put(MenuType.CLASS_SELECTION, CLASS_HANDLER);
+        handlers.put(MenuType.SUBCLASS_SELECTION, SUBCLASS_HANDLER);
         handlers.put(MenuType.BACKGROUND_SELECTION, BACKGROUND_HANDLER);
         handlers.put(MenuType.CHARACTER_CREATION_SHEET, CHARACTER_SHEET_HANDLER);
         handlers.put(MenuType.TABBED_CHOICES, TABBED_CHOICES_HANDLER);

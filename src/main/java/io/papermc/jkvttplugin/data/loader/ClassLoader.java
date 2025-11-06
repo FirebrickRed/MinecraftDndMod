@@ -59,7 +59,9 @@ public class ClassLoader {
                 .spellcastingAbility(LoaderUtils.extractCastingAbility(data))
                 .spellcasting(parseSpellcasting(data.get("spellcasting")))
                 .featuresByLevel(LoaderUtils.parseLevelStringListMap(data.get("features_by_level")))
-                .subclasses(LoaderUtils.castList(data.getOrDefault("subclasses", List.of()), String.class))
+                .subclasses(LoaderUtils.parseSubclasses(data.get("subclasses"), name))
+                .subclassLevel((int) data.getOrDefault("subclass_level", 3))
+                .subclassTypeName((String) data.getOrDefault("subclass_type_name", "Subclass"))
                 .multiclassRequirements(LoaderUtils.castMap(data.get("multiclass_requirements"), String.class, Integer.class))
                 .classResources((List<Map<String, Object>>) data.get("class_resources"))
 

@@ -98,12 +98,211 @@ icon: warlock
 multiclass_requirements:
   Charisma: 13
 subclass_level: 1
+subclass_type_name: Otherworldly Patron
 subclasses:
-  - The Archfey
-  - The Fiend
-  - The Great Old One
-  - The Celestial
-  - The Hexblade
-  - The Fathomless
-  - The Genie
-  - The Undead
+  the_archfey:
+    name: The Archfey
+    description: "Your patron is a lord or lady of the fey"
+    bonus_spells:
+      - faerie_fire
+      - sleep
+      - calm_emotions
+      - phantasmal_force
+      - blink
+      - plant_growth
+      - dominate_beast
+      - greater_invisibility
+      - dominate_person
+      - seeming
+    features_by_level:
+      1:
+        - "Fey Presence: Starting at 1st level, your patron bestows upon you the ability to project the beguiling and fearsome presence of the fey. As an action, you can cause each creature in a 10-foot cube originating from you to make a Wisdom saving throw against your warlock spell save DC. The creatures that fail their saving throws are all charmed or frightened by you (your choice) until the end of your next turn. Once you use this feature, you can't use it again until you finish a short or long rest."
+  the_celestial:
+    name: The Celestial
+    description: "Your patron is a powerful being of the Upper Planes"
+    bonus_spells:
+      - cure_wounds
+      - guiding_bolt
+      - flaming_sphere
+      - lesser_restoration
+      - daylight
+      - revivify
+      - guardian_of_faith
+      - wall_of_fire
+      - flame_strike
+      - greater_restoration
+    additional_spells:
+      - light
+      - sacred_flame
+    features_by_level:
+      1:
+        - "Healing Light- At 1st level, you gain the ability to channel celestial energy to heal wounds. You have a pool of d6s that you spend to fuel this healing. The number of dice in the pool equals 1 + your warlock level. As a bonus action, you can heal one creature you can see within 60 feet of you, spending dice from the pool. The maximum number of dice you can spend at once equals your Charisma modifier (minimum of one die). Roll the dice you spend, add them together, and restore a number of hit points equal to the total. Your pool regains all expended dice when you finish a long rest."
+  the_fathomless:
+    name: The Fathomless
+    description: "Your patron is an entity of the deep"
+    bonus_spells:
+      - create_or_destroy_water
+      - thunderwave
+      - gust_of_wind
+      - silence
+      - lightning_bolt
+      - sleet_storm
+      - control_water
+      - summon_elemental #water only
+      - bigbys_hand #appears as a tentacle
+      - cone_of_cold
+    swimming_speed: 40
+#    can breathe underwater
+    features_by_level:
+      1:
+        - "Tentacle of the Deep- At 1st level, you can magically summon a spectral tentacle that strikes at your foes. As a bonus action, you create a 10-foot-long tentacle at a point you can see within 60 feet of you. The tentacle lasts for 1 minute or until you use this feature to create another tentacle. When you create the tentacle, you can make a melee spell attack against one creature within 10 feet of it. On a hit, the target takes 1d8 cold damage, and its speed is reduced by 10 feet until the start of your next turn. When you reach 10th level in this class, the damage increases to 2d8. As a bonus action on your turn, you can move the tentacle up to 30 feet and repeat the attack. You can summon the tentacle a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest."
+  the_fiend:
+    name: The Fiend
+    description: "Your patron is a fiendish being from the lower planes"
+    bonus_spells:
+      - burning_hands
+      - command
+      - blindness_deafness
+      - scorching_ray
+      - fireball
+      - stinking_cloud
+      - fire_shield
+      - wall_of_fire
+      - flame_strike
+      - hallow
+    features_by_level:
+      1:
+        - "Dark One's Blessing: When you reduce a hostile creature to 0 hit points, you gain temporary hit points equal to your Charisma modifier + your warlock level (minimum of 1)"
+      6:
+        - "Dark One's Own Luck: You can call on your patron to alter fate in your favor. When you make an ability check or a saving throw, you can use this feature to add a d10 to your roll. You can do so after seeing the initial roll but before any of the roll's effects occur. Once you use this feature, you can't use it again until you finish a short or long rest"
+      10:
+        - "Fiendish Resilience: You can choose one damage type when you finish a short or long rest. You gain resistance to that damage type until you choose a different one with this feature. Damage from magical weapons or silver weapons ignores this resistance"
+      14:
+        - "Hurl Through Hell: When you hit a creature with an attack, you can use this feature to instantly transport the target through the lower planes. The creature disappears and hurtles through a nightmare landscape. At the end of your next turn, the target returns to the space it previously occupied, or the nearest unoccupied space. If the target is not a fiend, it takes 10d10 psychic damage as it reels from its horrific experience. Once you use this feature, you can't use it again until you finish a long rest"
+  the_genie:
+    name: The Genie
+    description: "Your patron is a powerful genie"
+    player_choices:
+      - id: genie_kind
+        title: Genie Kind
+        choose: 1
+        type: other
+        options: [dao, djinni, efreeti, marid, random] # could either tell the user to roll for random or we could try rolling for them
+      - id: genie_vessel
+        title: Genie's Vessel
+        choose: 1
+        type: other
+        options: [Oil lamp, Urn, Ring with a compartment, stoppered bottle, hollow statuette, ornate lantern, random]
+#        can be used as a spellcasting focus, needs to give item
+    # Spells granted to ALL genie warlocks regardless of genie kind
+    bonus_spells:
+      - detect_evil_and_good
+      - phantasmal_force
+      - create_food_and_water
+      - phantasmal_killer
+      - creation
+      - wish
+    # Spells granted based on genie_kind player choice
+    conditional_bonus_spells:
+      dao:
+        - sanctuary
+        - spike_growth
+        - meld_into_stone
+        - stone_shape
+        - wall_of_stone
+      djinni:
+        - thunderwave
+        - gust_of_wind
+        - wind_wall
+        - greater_invisibility
+        - seeming
+      efreeti:
+        - burning_hands
+        - scorching_ray
+        - fireball
+        - fire_shield
+        - flame_strike
+      marid:
+        - fog_cloud
+        - blur
+        - sleet_storm
+        - control_water
+        - cone_of_cold
+    features_by_level:
+      1:
+        - "While you are touching the vessel, you can use it in the following ways: Bottled Respite: As an action, you can magically vanish and enter your vessel, which remains in the space you left. The interior of the vessel is an extradimensional space in the shape of a 20-foot-radius cylinder, 20 feet high, and resembles your vessel. The interior is appointed with cushions and low tables and is a comfortable temperature. While inside, you can hear the area around your vessel as if you were in its space. You can remain inside the vessel up to a number of hours equal to twice your proficiency bonus. You exit the vessel early if you use a bonus action to leave, if you die, or if the vessel is destroyed. When you exit the vessel, you appear in the unoccupied space closest to it. Any objects left in the vessel remain there until carried out, and if the vessel is destroyed, every object stored there harmlessly appears in the unoccupied spaces closest to the vessel's former space. Once you enter the vessel, you can't enter again until you finish a long rest. Genie's Wrath: Once during each of your turns when you hit with an attack roll, you can deal extra damage to the target equal to your proficiency bonus. The type of this damage is determined by your patron: bludgeoning (dao), thunder (djinni), fire (efreeti), or cold (marid). The vessel's AC equals your spell save DC. Its hit points equal your warlock level plus your proficiency bonus, and it is immune to poison and psychic damage. If the vessel is destroyed or you lose it, you can perform a 1-hour ceremony to receive a replacement from your patron. This ceremony can be performed during a short or long rest, and the previous vessel is destroyed if it still exists. The vessel vanishes in a flare of elemental power when you die."
+  the_great_old_one:
+    name: The Great Old One
+    description: "Your patron is an ancient entity from beyond reality"
+    bonus_spells:
+      - dissonant_whispers
+      - tashas_hideous_laughter
+      - detect_thoughts
+      - phantasmal_force
+      - clairvoyance
+      - sending
+      - dominate_beast
+      - evards_black_tentacles
+      - dominate_person
+      - telekinesis
+    features_by_level:
+      1:
+        - "Awakened Mind- Starting at 1st level, your alien knowledge gives you the ability to touch the minds of other creatures. You can telepathically speak to any creature you can see within 30 feet of you. You don't need to share a language with the creature for it to understand your telepathic utterances, but the creature must be able to understand at least one language."
+  the_hexblade:
+    name: The Hexblade
+    description: "Your patron is a mysterious entity from the Shadowfell"
+    bonus_spells:
+      - shield
+      - wrathful_smite
+      - blur
+      - branding_smite
+      - blink
+      - elemental_weapon
+      - phantasmal_killer
+      - staggering_smite
+      - banishing_smite
+      - cone_of_cold
+    features_by_level:
+      1:
+        - "Hexblade's Curse- Starting at 1st level, you gain the ability to place a baleful curse on someone. As a bonus action, choose one creature you can see within 30 feet of you. The target is cursed for 1 minute. The curse ends early if the target dies, you die, or you are incapacitated. Until the curse ends, you gain the following benefits: You gain a bonus to damage rolls against the cursed target. The bonus equals your proficiency bonus. Any attack roll you make against the cursed target is a critical hit on a roll of 19 or 20 on the d20. If the cursed target dies, you regain hit points equal to your warlock level + your Charisma modifier (minimum of 1 hit point). You can't use this feature again until you finish a short or long rest."
+        - "Hex Warrior- At 1st level, you acquire the training necessary to effectively arm yourself for battle. You gain proficiency with medium armor, shields, and martial weapons. The influence of your patron also allows you to mystically channel your will through a particular weapon. Whenever you finish a long rest, you can touch one weapon that you are proficient with and that lacks the two-handed property. When you attack with that weapon, you can use your Charisma modifier, instead of Strength or Dexterity, for the attack and damage rolls. This benefit lasts until you finish a long rest. If you later gain the Pact of the Blade feature, this benefit extends to every pact weapon you conjure with that feature, no matter the weapon's type."
+  the_undead:
+    name: The Undead
+    description: "Your patron is an undead entity of great power"
+    bonus_spells:
+      - bane
+      - false_life
+      - blindness_deafness
+      - phantasmal_force
+      - phantom_steed
+      - speak_with_dead
+      - death_ward
+      - greater_invisibility
+      - antilife_shell
+      - cloudkill
+    features_by_level:
+      1:
+        - "Form of Dread- At 1st level, you manifest an aspect of your patron’s dreadful power. As a bonus action, you transform for 1 minute. You gain the following benefits while transformed: You gain temporary hit points equal to 1d10 + your warlock level. Once during each of your turns, when you hit a creature with an attack, you can force it to make a Wisdom saving throw, and if the saving throw fails, the target is frightened of you until the end of your next turn. You are immune to the frightened condition. You can transform a number of times equal to your proficiency bonus, and you regain all expended uses when you finish a long rest. The appearance of your Form of Dread reflects some aspect of your patron. For example, your form could be a shroud of shadows forming the crown and robes of your lich patron, or your body might glow with glyphs from ancient funerary rites and be surrounded by desert winds, suggesting your mummy patron."
+  the_undying:
+    name: The Undying
+    description: ""
+    bonus_spells:
+      - false_life
+      - ray_of_sickness
+      - blindness_deafness
+      - silence
+      - feign_death
+      - speak_with_dead
+      - aura_of_life
+      - death_ward
+      - contagion
+      - legend_lore
+    additional_spells:
+      - spare_the_dying
+    conditional_advantages:
+      - type: saving_throw
+        condition: disease
+        description: "You have advantage on saving throws against any disease."
+    features_by_level:
+      1:
+        - "Additionally, undead have difficulty harming you. If an undead targets you directly with an attack or a harmful spell, that creature must make a Wisdom saving throw against your spell save DC (an undead needn't make the save when it includes you in an area effect, such as the explosion of Fireball). On a failed save, the creature must choose a new target or forfeit targeting someone instead of you, potentially wasting the attack or spell. On a successful save, the creature is immune to this effect for 24 hours. An undead is also immune to this effect for 24 hours if you target it with an attack or a harmful spell."

@@ -1,0 +1,137 @@
+acolyte:
+  name: Acolyte
+  description: ""
+  skill_proficiencies:
+    - insight
+    - religion
+  equipment:
+    - holy_symbol
+    - prayer_book
+    - vestments
+    - common_clothes
+    - item: sticks_of_incense
+      amount: 5
+    - item: money_pouch
+      contents:
+        - id: minecraft:gold_nugget
+          amount: 15
+  feature: "Shelter of the Faithful"
+  traits: [acolyte]
+  player_choices:
+    - id: background_language
+      title: Background Language
+      type: language
+      choose: 2
+      options: []
+  links:
+    - "https://dnd5e.wikidot.com/background:acolyte"
+
+anthropologist:
+  name: Anthropologist
+  description: ""
+  skill_proficiencies:
+    - insight
+    - religion
+  equipment:
+    - diary
+    - bottle_of_ink
+    - ink_pen
+    - travelers_clothes
+    - trinket
+    - item: money_pouch
+      contents:
+        - id: minecraft:gold_nugget
+          amount: 10
+  player_choices:
+    - id: background_language
+      title: Background Language
+      type: language
+      choose: 2
+      options: []
+#  ToDo: some have more than one feature
+  feature: "Cultural Chameleon"
+  traits: [cultural_chameleon, adept_linguist]
+  links:
+    - "https://dnd5e.wikidot.com/background:anthropologist"
+
+archaeologist:
+  name: Archaeologist
+  description: ""
+  skill_proficiencies:
+    - history
+    - survival
+  equipment:
+    - item: wooden_case
+      contents:
+        - id: map_to_ruin_or_dungeon
+    - bullseye_lantern
+    - miners_pick
+    - travelers_clothes
+    - shovel
+    - two_person_tent
+    - trinket
+    - item: money_pouch
+      contents:
+        - id: minecraft:gold_nugget
+          amount: 25
+  player_choices:
+    - id: background_tool_proficiencies
+      title: Background Tool Proficiencies
+      type: equipment
+      choose: 1
+      options: [cartographers_tools, navigators_tools]
+    - id: background_language
+      title: Background Language
+      type: language
+      choose: 1
+      options: []
+  feature: ""
+  traits: [dust_digger, historical_knowledge]
+  links: ["https://dnd5e.wikidot.com/background:archaeologist"]
+
+athlete:
+  name: Athlete
+  description: ""
+  skill_proficiencies:
+    - acrobatics
+    - athletics
+  tool_proficiencies:
+    - vehicles(land)
+  equipment:
+    - leather_ball
+    - lucky_charm
+    - travelers_clothes
+    - item: money_pouch
+      contents:
+        - id: minecraft:gold_nugget
+          amount: 10
+  player_choices:
+    - id: background_language
+      title: Background Language
+      type: language
+      choose: 1
+      options: []
+  feature: ""
+  traits: [echoes_of_victory]
+  links: ["https://dnd5e.wikidot.com/background:athlete"]
+
+charlatan:
+  name: Charlatan
+  description: ""
+  skill_proficiencies:
+    - desception
+    - sleight_of_hand
+  tool_proficiencies:
+    - disguise_kit
+    - forgery_kit
+  equipment:
+    - fine_clothes
+    - disguise_kit
+    - item: money_pouch
+      contents:
+        - id: minecraft:gold_nugget
+          amount: 15
+  feature: ""
+  traits: [false_identity]
+  links: ["https://dnd5e.wikidot.com/background:charlatan"]
+

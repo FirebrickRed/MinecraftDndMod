@@ -13,6 +13,7 @@ public class CharacterCreationSession {
     private String selectedRace;
     private String selectedSubRace;
     private String selectedClass;
+    private String selectedSubclass;
     private String selectedBackground;
     private LinkedHashSet<String> selectedCantrips = new LinkedHashSet<>();
     private LinkedHashSet<String> selectedSpells = new LinkedHashSet<>();
@@ -64,6 +65,13 @@ public class CharacterCreationSession {
     }
     public void setSelectedClass(String selectedClass) {
         this.selectedClass = selectedClass;
+    }
+
+    public String getSelectedSubclass() {
+        return selectedSubclass;
+    }
+    public void setSelectedSubclass(String selectedSubclass) {
+        this.selectedSubclass = selectedSubclass;
     }
 
     public String getSelectedBackground() {

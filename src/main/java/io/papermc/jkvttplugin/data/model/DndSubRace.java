@@ -39,6 +39,7 @@ public class DndSubRace {
     private List<String> skillProficiencies = List.of();
     private List<String> weaponProficiencies = List.of();
     private List<String> armorProficiencies = List.of();
+    private List<String> toolProficiencies = List.of();
     private List<InnateSpell> innateSpells = List.of();
 
     public DndSubRace() {}
@@ -160,6 +161,13 @@ public class DndSubRace {
     }
     public void setArmorProficiencies(List<String> armorProficiencies) {
         this.armorProficiencies = armorProficiencies != null ? List.copyOf(armorProficiencies) : List.of();
+    }
+
+    public List<String> getToolProficiencies() {
+        return toolProficiencies;
+    }
+    public void setToolProficiencies(List<String> toolProficiencies) {
+        this.toolProficiencies = toolProficiencies != null ? List.copyOf(toolProficiencies) : List.of();
     }
 
     public List<InnateSpell> getInnateSpells() {
@@ -333,6 +341,11 @@ public class DndSubRace {
 
         public Builder armorProficiencies(List<String> armorProficiencies) {
             instance.setArmorProficiencies(armorProficiencies);
+            return this;
+        }
+
+        public Builder toolProficiencies(List<String> toolProficiencies) {
+            instance.setToolProficiencies(toolProficiencies);
             return this;
         }
 

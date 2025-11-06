@@ -190,6 +190,7 @@ public class CharacterPersistenceLoader {
         data.put("raceName", sheet.getRace() != null ? sheet.getRace().getId() : null);
         data.put("subraceName", sheet.getSubrace() != null ? sheet.getSubrace().getId() : null);
         data.put("className", sheet.getMainClass() != null ? sheet.getMainClass().getId() : null);
+        data.put("subclassName", sheet.getSubclass() != null ? sheet.getSubclass().getId() : null);
         data.put("backgroundName", sheet.getBackground() != null ? sheet.getBackground().getId() : null);
         data.put("currentHealth", sheet.getCurrentHealth());
         data.put("maxHealth", sheet.getMaxHealth());
@@ -243,6 +244,7 @@ public class CharacterPersistenceLoader {
             String raceName = (String) data.get("raceName");
             String subraceName = (String) data.get("subraceName");
             String className = (String) data.get("className");
+            String subclassName = (String) data.get("subclassName");
             String backgroundName = (String) data.get("backgroundName");
 
             // Deserialize abilities
@@ -290,7 +292,7 @@ public class CharacterPersistenceLoader {
             int maxHealth = (Integer) data.getOrDefault("maxHealth", 1);
             int armorClass = (Integer) data.getOrDefault("armorClass", 10);
 
-            return CharacterSheet.loadFromData(characterId, playerId, characterName, raceName, subraceName, className, backgroundName, abilities, skillProficiencies, knownSpells, knownCantrips, currentHealth, maxHealth, armorClass);
+            return CharacterSheet.loadFromData(characterId, playerId, characterName, raceName, subraceName, className, subclassName, backgroundName, abilities, skillProficiencies, knownSpells, knownCantrips, currentHealth, maxHealth, armorClass);
 
             // You could validate the loaded data against your loaders here if needed:
             // - Check if the race/class/background still exists

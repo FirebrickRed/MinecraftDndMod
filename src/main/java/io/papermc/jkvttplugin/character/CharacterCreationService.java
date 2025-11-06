@@ -33,11 +33,13 @@ public class CharacterCreationService {
         String raceId = session.getSelectedRace();
         String subraceId = session.getSelectedSubRace();
         String classId = session.getSelectedClass();
+        String subclassId = session.getSelectedSubclass();
         String backgroundId = session.getSelectedBackground();
 
         var race = RaceLoader.getRace(raceId);
         var subrace = (race != null && subraceId != null) ? race.getSubraces().get(subraceId) : null;
         var dndClass = ClassLoader.getClass(classId);
+        var subclass = (dndClass != null && subclassId != null) ? dndClass.getSubclasses().get(subclassId) : null;
         var background = BackgroundLoader.getBackground(backgroundId);
 
         List<PendingChoice<?>> pending = new ArrayList<>();
@@ -59,6 +61,10 @@ public class CharacterCreationService {
 //            System.out.println("Class player choices: " + dndClass.getPlayerChoices().size());
             dndClass.contributeChoices(pending);
             System.out.println("After class contribution: " + pending.size());
+        }
+        if (subclass != null) {
+            subclass.contributeChoices(pending);
+            System.out.println("After subclass contribution: " + pending.size());
         }
         if (background != null) {
 //            System.out.println("Background player choices: " + background.getPlayerChoices().size());

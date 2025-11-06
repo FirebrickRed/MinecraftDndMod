@@ -46,6 +46,14 @@ public class CharacterSheetHandler implements MenuClickHandler {
             case OPEN_CLASS_SELECTION -> {
                 ClassSelectionMenu.open(player, Util.sortByName(ClassLoader.getAllClasses(), DndClass::getName), sessionId);
             }
+            case OPEN_SUBCLASS_SELECTION -> {
+                if (session.getSelectedClass() != null) {
+                    DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
+                    if (dndClass != null) {
+                        SubclassSelectionMenu.open(player, dndClass, sessionId);
+                    }
+                }
+            }
             case OPEN_BACKGROUND_SELECTION -> {
                 BackgroundSelectionMenu.open(player, Util.sortByName(BackgroundLoader.getAllBackgrounds(), io.papermc.jkvttplugin.data.model.DndBackground::getName), sessionId);
             }
