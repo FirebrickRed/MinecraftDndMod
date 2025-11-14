@@ -30,7 +30,9 @@ public class ClassSelectionHandler implements MenuClickHandler {
             session.clearAllSpells();
             // Clear pending choices (class-specific equipment)
             session.clearPendingChoices();
-            player.sendMessage("Class changed! Your spell and equipment selections have been reset.");
+            // Clear subclass (class-specific subclass)
+            session.setSelectedSubclass(null);
+            player.sendMessage("Class changed! Your spell, equipment, and subclass selections have been reset.");
         } else {
             player.sendMessage("You have selected " + payload + " as your class!");
         }

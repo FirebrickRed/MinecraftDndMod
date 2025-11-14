@@ -203,19 +203,101 @@ public class DndSubRace {
         }
     }
 
+    /**
+     * Contributes automatic grants (proficiencies, darkvision, etc.) from this subrace.
+     * These are traits the player receives automatically without needing to choose.
+     */
+    public void contributeAutomaticGrants(List<AutomaticGrant> out) {
+        String source = this.name;
+
+        // Speed (only if different from base race)
+        if (speed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Walking Speed", source, speed + " ft"));
+        }
+        if (swimmingSpeed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Swimming Speed", source, swimmingSpeed + " ft"));
+        }
+        if (flyingSpeed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Flying Speed", source, flyingSpeed + " ft"));
+        }
+        if (climbingSpeed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Climbing Speed", source, climbingSpeed + " ft"));
+        }
+        if (burrowingSpeed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Burrowing Speed", source, burrowingSpeed + " ft"));
+        }
+
+        // Darkvision (only if different from base race)
+        if (darkvision != null && darkvision > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.DARKVISION, "Darkvision", source, darkvision + " ft"));
+        }
+
+        // Languages
+        if (languages != null) {
+            for (String lang : languages) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.LANGUAGE, Util.prettify(lang), source));
+            }
+        }
+
+        // Skill Proficiencies
+        if (skillProficiencies != null) {
+            for (String skill : skillProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.SKILL_PROFICIENCY, Util.prettify(skill), source));
+            }
+        }
+
+        // Weapon Proficiencies
+        if (weaponProficiencies != null) {
+            for (String weapon : weaponProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.WEAPON_PROFICIENCY, Util.prettify(weapon), source));
+            }
+        }
+
+        // Armor Proficiencies
+        if (armorProficiencies != null) {
+            for (String armor : armorProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.ARMOR_PROFICIENCY, Util.prettify(armor), source));
+            }
+        }
+
+        // Tool Proficiencies
+        if (toolProficiencies != null) {
+            for (String tool : toolProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.TOOL_PROFICIENCY, Util.prettify(tool), source));
+            }
+        }
+
+        // Damage Resistances
+        if (damageResistances != null) {
+            for (String resistance : damageResistances) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.DAMAGE_RESISTANCE, Util.prettify(resistance), source));
+            }
+        }
+
+        // Ability Score Bonuses
+        if (fixedAbilityScores != null) {
+            for (var entry : fixedAbilityScores.entrySet()) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.ABILITY_SCORE, entry.getKey().toString(), source, "+" + entry.getValue()));
+            }
+        }
+
+        // Innate Spells
+        if (innateSpells != null) {
+            for (InnateSpell spell : innateSpells) {
+                String spellName = Util.prettify(spell.getSpellId());
+                String details = spell.isCantrip() ? "Cantrip" : "Level " + spell.getSpellLevel();
+                if (!spell.isCantrip() && spell.getUses() > 0) {
+                    details += ", " + spell.getUses() + "/day";
+                }
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.INNATE_SPELL, spellName, source, details));
+            }
+        }
+    }
+
     public List<Component> getSelectionMenuLore() {
         LoreBuilder builder = LoreBuilder.create();
 
-        // 1. Ability score bonuses (main mechanical difference from base race)
-        if (fixedAbilityScores != null && !fixedAbilityScores.isEmpty()) {
-            List<String> abilityLines = new ArrayList<>();
-            for (Map.Entry<Ability, Integer> entry : fixedAbilityScores.entrySet()) {
-                abilityLines.add("+" + entry.getValue() + " " + entry.getKey());
-            }
-            builder.addListSection("Ability Bonuses:", abilityLines, NamedTextColor.GOLD, NamedTextColor.YELLOW);
-        }
-
-        // 2. Ability score choice (e.g., Tasha's custom lineage)
+        // Ability Score Choices (player choices - not automatic grants)
         if (abilityScoreChoice != null) {
             builder.blankLine()
                    .addLine("Ability Score Choice:", NamedTextColor.GOLD);
@@ -227,7 +309,7 @@ public class DndSubRace {
             }
         }
 
-        // 3. Traits (unique features of this subrace)
+        // Traits (unique features of this subrace)
         if (traits != null && !traits.isEmpty()) {
             List<String> truncatedTraits = traits.stream()
                     .map(trait -> trait.length() > 40 ? trait.substring(0, 37) + "..." : trait)
@@ -235,11 +317,15 @@ public class DndSubRace {
             builder.addListSection("Traits:", truncatedTraits, NamedTextColor.AQUA, NamedTextColor.WHITE);
         }
 
-        // 4. Languages (fixed + choices)
-        builder.addListSection("Languages:", languages, NamedTextColor.AQUA);
-        builder.addLanguageChoices(languages, playerChoices);
+        // Automatic Grants (ability scores, languages, speed, proficiencies, darkvision, resistances, etc.)
+        List<AutomaticGrant> grants = new ArrayList<>();
+        contributeAutomaticGrants(grants);
+        builder.addAutomaticGrants(grants);
 
-        // 5. Description (flavor - keep brief)
+        // Player Choices (languages, etc.)
+        builder.addLanguageChoices(null, playerChoices);
+
+        // Description (flavor text)
         builder.addDescription(description, 50);
 
         return builder.build();

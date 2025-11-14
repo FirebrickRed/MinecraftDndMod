@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.ui.menu;
 
 import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
+import io.papermc.jkvttplugin.data.model.AutomaticGrant;
 import io.papermc.jkvttplugin.data.model.ChoiceCategory;
 import io.papermc.jkvttplugin.data.model.EquipmentOption;
 import io.papermc.jkvttplugin.data.model.MergedChoice;
@@ -60,7 +61,10 @@ public class TabbedChoiceMenu {
         }
         List<MergedChoice> merged = ChoiceMerger.mergeChoices(allChoices, session);
 
-        if (merged.isEmpty()) {
+        // Get automatic grants
+        List<AutomaticGrant> grants = session.getAutomaticGrants();
+
+        if (merged.isEmpty() && grants.isEmpty()) {
             player.sendMessage(Component.text("No choices to make!").color(NamedTextColor.GOLD));
             CharacterCreationSheetMenu.open(player, sessionId);
             return;
@@ -68,16 +72,23 @@ public class TabbedChoiceMenu {
 
         // Default to first category if none specified
         if (activeTab == null) {
-            activeTab = merged.get(0).getCategory();
+            // Default to AUTOMATIC_GRANTS if there are grants and no choices, otherwise first choice category
+            if (!grants.isEmpty() && merged.isEmpty()) {
+                activeTab = ChoiceCategory.AUTOMATIC_GRANTS;
+            } else if (!merged.isEmpty()) {
+                activeTab = merged.get(0).getCategory();
+            } else {
+                activeTab = ChoiceCategory.AUTOMATIC_GRANTS;
+            }
         }
 
-        player.openInventory(build(merged, sessionId, activeTab));
+        player.openInventory(build(merged, grants, sessionId, activeTab));
     }
 
     /**
      * Builds the tabbed choice inventory.
      */
-    private static Inventory build(List<MergedChoice> mergedChoices, UUID sessionId, ChoiceCategory activeTab) {
+    private static Inventory build(List<MergedChoice> mergedChoices, List<AutomaticGrant> automaticGrants, UUID sessionId, ChoiceCategory activeTab) {
         Inventory inv = Bukkit.createInventory(
                 new MenuHolder(MenuType.TABBED_CHOICES, sessionId),
                 54,
@@ -85,14 +96,18 @@ public class TabbedChoiceMenu {
         );
 
         // Row 0: Category tabs (slots 0-8)
-        buildTabRow(inv, mergedChoices, activeTab);
+        buildTabRow(inv, mergedChoices, automaticGrants, activeTab);
 
         // Rows 1-4: Content for active tab (slots 9-44)
-        // For equipment, we may have multiple MergedChoice objects (one per choice)
-        // For other categories, there's only one MergedChoice
-        List<MergedChoice> activeChoices = findAllMergedChoices(mergedChoices, activeTab);
-        if (!activeChoices.isEmpty()) {
-            buildContentArea(inv, activeChoices, sessionId);
+        if (activeTab == ChoiceCategory.AUTOMATIC_GRANTS && !automaticGrants.isEmpty()) {
+            buildAutomaticGrantsContent(inv, automaticGrants);
+        } else {
+            // For equipment, we may have multiple MergedChoice objects (one per choice)
+            // For other categories, there's only one MergedChoice
+            List<MergedChoice> activeChoices = findAllMergedChoices(mergedChoices, activeTab);
+            if (!activeChoices.isEmpty()) {
+                buildContentArea(inv, activeChoices, sessionId);
+            }
         }
 
         // Row 5: Confirm button (slot 53)
@@ -103,14 +118,41 @@ public class TabbedChoiceMenu {
 
     /**
      * Builds the top row of category tabs.
-     * Groups equipment choices into a single tab.
+     * Groups equipment choices into a single tab, and adds automatic grants tab if present.
      */
     private static void buildTabRow(
             Inventory inv,
             List<MergedChoice> merged,
+            List<AutomaticGrant> automaticGrants,
             ChoiceCategory activeTab
     ) {
         int slot = 0;
+
+        // Add AUTOMATIC_GRANTS tab first if there are grants
+        if (!automaticGrants.isEmpty()) {
+            ItemStack grantsTab = new ItemStack(ChoiceCategory.AUTOMATIC_GRANTS.getIcon());
+            grantsTab.editMeta(m -> {
+                m.displayName(Component.text(ChoiceCategory.AUTOMATIC_GRANTS.getDisplayName())
+                        .color(NamedTextColor.AQUA));
+
+                List<Component> lore = new ArrayList<>();
+                lore.add(Component.text(automaticGrants.size() + " automatic traits")
+                        .color(NamedTextColor.GRAY));
+                lore.add(Component.text(""));
+                lore.add(Component.text("Click to view").color(NamedTextColor.YELLOW));
+
+                m.lore(lore);
+
+                // Glow active tab
+                if (ChoiceCategory.AUTOMATIC_GRANTS == activeTab) {
+                    m.addEnchant(Enchantment.UNBREAKING, 1, true);
+                    m.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+                }
+            });
+
+            ItemUtil.setAction(grantsTab, MenuAction.SWITCH_CHOICE_TAB, ChoiceCategory.AUTOMATIC_GRANTS.name());
+            inv.setItem(slot++, grantsTab);
+        }
 
         // Group by category to avoid duplicate tabs (especially for equipment)
         var byCategory = new java.util.LinkedHashMap<ChoiceCategory, List<MergedChoice>>();
@@ -173,6 +215,63 @@ public class TabbedChoiceMenu {
     }
 
     /**
+     * Builds the content area showing automatic grants (proficiencies, darkvision, etc.).
+     * These are read-only informational items showing what the player receives automatically.
+     */
+    private static void buildAutomaticGrantsContent(Inventory inv, List<AutomaticGrant> grants) {
+        int slot = 9;
+
+        // Group grants by type for better organization
+        var byType = new java.util.LinkedHashMap<AutomaticGrant.GrantType, List<AutomaticGrant>>();
+        for (AutomaticGrant grant : grants) {
+            byType.computeIfAbsent(grant.type(), k -> new ArrayList<>()).add(grant);
+        }
+
+        for (var entry : byType.entrySet()) {
+            if (slot >= 45) break; // Reserve row 5 for buttons
+
+            AutomaticGrant.GrantType type = entry.getKey();
+            List<AutomaticGrant> grantsOfType = entry.getValue();
+
+            // Add section header for this grant type
+            ItemStack header = new ItemStack(Material.LIME_STAINED_GLASS_PANE);
+            header.editMeta(m -> {
+                m.displayName(Component.text("─ " + type.getDisplayName() + " ─")
+                        .color(NamedTextColor.AQUA));
+                m.lore(List.of(
+                        Component.text(grantsOfType.size() + " " + (grantsOfType.size() == 1 ? "grant" : "grants"))
+                                .color(NamedTextColor.GRAY)
+                ));
+            });
+            ItemUtil.setAction(header, MenuAction.VIEW_CHOICE_INFO, "auto_grant_header");
+            inv.setItem(slot++, header);
+
+            // Show each grant of this type
+            for (AutomaticGrant grant : grantsOfType) {
+                if (slot >= 45) break;
+
+                ItemStack grantItem = new ItemStack(grant.getIcon());
+                grantItem.editMeta(m -> {
+                    m.displayName(Component.text(grant.getFullDisplay())
+                            .color(NamedTextColor.GREEN));
+
+                    List<Component> lore = new ArrayList<>();
+                    lore.add(Component.text("From: " + grant.source())
+                            .color(NamedTextColor.GRAY));
+                    lore.add(Component.text(""));
+                    lore.add(Component.text("✓ Automatically Granted")
+                            .color(NamedTextColor.DARK_GREEN));
+
+                    m.lore(lore);
+                });
+
+                ItemUtil.setAction(grantItem, MenuAction.VIEW_CHOICE_INFO, "auto_grant");
+                inv.setItem(slot++, grantItem);
+            }
+        }
+    }
+
+    /**
      * Builds the content area showing options for the active category.
      * Supports multiple MergedChoice objects for equipment (each with its own header).
      */
@@ -228,6 +327,7 @@ public class TabbedChoiceMenu {
                 if (slot >= 45) break;
 
                 boolean selected = choice.isSelected(optionKey);
+                boolean selectedElsewhere = choice.getSelectedElsewhere().contains(optionKey);
                 String displayLabel = choice.displayFor(optionKey);
 
                 // Check if this is a TAG or BUNDLE option that needs drilldown
@@ -238,8 +338,17 @@ public class TabbedChoiceMenu {
                 EquipmentOption resolvedItem = isResolved ? choice.getResolvedItem(optionKey) : null;
 
                 // Use glass panes for visual status
-                // Resolved TAGs show as green (selected state)
-                Material material = (selected || isResolved) ? Material.GREEN_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
+                // Resolved TAGs and selected items: green
+                // Selected elsewhere (other sections): lime (light green)
+                // Not selected: red
+                Material material;
+                if (selected || isResolved) {
+                    material = Material.GREEN_STAINED_GLASS_PANE;
+                } else if (selectedElsewhere) {
+                    material = Material.LIME_STAINED_GLASS_PANE; // Light green for "selected elsewhere"
+                } else {
+                    material = Material.RED_STAINED_GLASS_PANE;
+                }
 
                 ItemStack option = new ItemStack(material);
                 option.editMeta(m -> {
@@ -255,6 +364,9 @@ public class TabbedChoiceMenu {
                     } else if (selected) {
                         lore.add(Component.text("✓ Selected").color(NamedTextColor.GREEN));
                         lore.add(Component.text("Click to deselect").color(NamedTextColor.GRAY));
+                    } else if (selectedElsewhere) {
+                        lore.add(Component.text("✓ Selected in other section").color(NamedTextColor.YELLOW));
+                        lore.add(Component.text("Click to move selection here").color(NamedTextColor.GRAY));
                     } else if (needsDrilldown) {
                         lore.add(Component.text("Click to choose specific item").color(NamedTextColor.AQUA));
                     } else {

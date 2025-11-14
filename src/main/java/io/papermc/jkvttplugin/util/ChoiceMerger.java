@@ -57,8 +57,25 @@ public class ChoiceMerger {
                     MergedChoice individualChoice = mergeCategory(category, List.of(pc), session);
                     merged.add(individualChoice);
                 }
+            } else if (category == ChoiceCategory.SKILL) {
+                // Skill choices should NOT be merged if they come from different sources
+                // (e.g., class skills vs subclass skills must be separate choices)
+                // Group by source, then create separate MergedChoice for each source
+                Map<String, List<PendingChoice<?>>> bySource = new LinkedHashMap<>();
+                for (PendingChoice<?> pc : choices) {
+                    bySource.computeIfAbsent(pc.getSource(), k -> new ArrayList<>()).add(pc);
+                }
+
+                for (List<PendingChoice<?>> sourceChoices : bySource.values()) {
+                    // For SKILL category, collect skills selected in OTHER sections
+                    String choiceId = sourceChoices.get(0).getId();
+                    Set<String> selectedElsewhere = KnownItemCollector.collectSelectedSkillsFromOtherSections(session, choiceId);
+
+                    MergedChoice mergedChoice = mergeCategory(category, sourceChoices, session, selectedElsewhere);
+                    merged.add(mergedChoice);
+                }
             } else {
-                // Other categories (Languages, Skills, Tools) can be merged
+                // Other categories (Languages, Tools) can be freely merged across sources
                 MergedChoice mergedChoice = mergeCategory(category, choices, session);
                 merged.add(mergedChoice);
             }
@@ -80,8 +97,26 @@ public class ChoiceMerger {
             List<PendingChoice<?>> choices,
             CharacterCreationSession session
     ) {
+        return mergeCategory(category, choices, session, Collections.emptySet());
+    }
+
+    /**
+     * Merges all PendingChoice objects in a single category into one MergedChoice.
+     *
+     * @param category The category being merged
+     * @param choices All pending choices in this category
+     * @param session The session (used to collect already-known items)
+     * @param selectedElsewhere Items selected in OTHER sections (for SKILL category cross-section display)
+     * @return A merged choice combining all sources
+     */
+    private static MergedChoice mergeCategory(
+            ChoiceCategory category,
+            List<PendingChoice<?>> choices,
+            CharacterCreationSession session,
+            Set<String> selectedElsewhere
+    ) {
         Set<String> alreadyKnown = collectKnownForCategory(category, session);
-        return new MergedChoice(category, choices, alreadyKnown);
+        return new MergedChoice(category, choices, alreadyKnown, selectedElsewhere);
     }
 
     /**
@@ -102,7 +137,7 @@ public class ChoiceMerger {
             case SKILL -> KnownItemCollector.collectKnownSkills(session);
             case TOOL -> KnownItemCollector.collectKnownTools(session);
             case SPELL -> KnownItemCollector.collectKnownSpells(session);
-            case EQUIPMENT, EXTRA -> Collections.emptySet(); // No filtering needed
+            case EQUIPMENT, EXTRA, AUTOMATIC_GRANTS -> Collections.emptySet(); // No filtering needed
         };
     }
 }

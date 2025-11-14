@@ -20,13 +20,14 @@ public class CharacterCreationSession {
     private Map<Integer, LinkedHashSet<String>> spellsByLevel = new HashMap<>();
 
     private List<PendingChoice<?>> pendingChoices = Collections.emptyList();
+    private List<AutomaticGrant> automaticGrants = Collections.emptyList();
 
     private EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
     private boolean abilityAllocationVisited = false;
 
     // Racial ability score bonus tracking
     private String racialBonusDistribution = null; // "2-1" or "1-1-1"
-    private EnumMap<Ability, Integer> racialBonusAllocations = new EnumMap<>(Ability.class);
+    private Map<Ability, Integer> racialBonusAllocations = new LinkedHashMap<>(); // LinkedHashMap preserves insertion order for auto-replacement
 
     public CharacterCreationSession(UUID playerId) {
         this.playerId = playerId;
@@ -121,6 +122,13 @@ public class CharacterCreationSession {
     }
     public void clearPendingChoices() {
         this.pendingChoices = new ArrayList<>();
+    }
+
+    public List<AutomaticGrant> getAutomaticGrants() {
+        return Collections.unmodifiableList(automaticGrants);
+    }
+    public void setAutomaticGrants(List<AutomaticGrant> list) {
+        this.automaticGrants = (list == null) ? new ArrayList<>() : new ArrayList<>(list);
     }
 
     public PendingChoice<?> findPendingChoice(String id) {
@@ -277,8 +285,8 @@ public class CharacterCreationSession {
         this.racialBonusDistribution = distribution;
     }
 
-    public EnumMap<Ability, Integer> getRacialBonusAllocations() {
-        return new EnumMap<>(racialBonusAllocations);
+    public Map<Ability, Integer> getRacialBonusAllocations() {
+        return new LinkedHashMap<>(racialBonusAllocations);
     }
 
     public void setRacialBonus(Ability ability, int bonus) {

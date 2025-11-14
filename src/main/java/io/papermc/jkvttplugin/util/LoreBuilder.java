@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.util;
 
+import io.papermc.jkvttplugin.data.model.AutomaticGrant;
 import io.papermc.jkvttplugin.data.model.ChoiceEntry;
 import io.papermc.jkvttplugin.data.model.PlayersChoice;
 import net.kyori.adventure.text.Component;
@@ -7,7 +8,9 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Fluent API for building consistent lore displays across D&D content menus.
@@ -203,6 +206,51 @@ public class LoreBuilder {
      */
     public LoreBuilder addWrappedText(String text, NamedTextColor color) {
         return addWrappedText(text, 50, color);
+    }
+
+    /**
+     * Adds automatic grants (proficiencies, darkvision, languages, etc.) in a consistent format.
+     * This is the unified display method used across races, classes, backgrounds, subraces, and subclasses.
+     *
+     * @param grants List of automatic grants to display
+     * @return This builder for chaining
+     */
+    public LoreBuilder addAutomaticGrants(List<AutomaticGrant> grants) {
+        if (grants == null || grants.isEmpty()) {
+            return this;
+        }
+
+        // Group grants by type
+        Map<AutomaticGrant.GrantType, List<AutomaticGrant>> grantsByType = new LinkedHashMap<>();
+        for (AutomaticGrant grant : grants) {
+            grantsByType.computeIfAbsent(grant.type(), k -> new ArrayList<>()).add(grant);
+        }
+
+        // Display each type
+        for (var entry : grantsByType.entrySet()) {
+            List<String> grantDisplays = entry.getValue().stream()
+                    .map(AutomaticGrant::getFullDisplay)
+                    .toList();
+
+            // Use simple, consistent names
+            String displayName = switch (entry.getKey()) {
+                case WEAPON_PROFICIENCY -> "Weapons";
+                case ARMOR_PROFICIENCY -> "Armor";
+                case TOOL_PROFICIENCY -> "Tools";
+                case SKILL_PROFICIENCY -> "Skills";
+                case LANGUAGE -> "Languages";
+                case DARKVISION -> "Darkvision";
+                case SPEED -> "Speed";
+                case DAMAGE_RESISTANCE -> "Resistances";
+                case INNATE_SPELL -> "Innate Spells";
+                case ABILITY_SCORE -> "Ability Scores";
+                default -> entry.getKey().getDisplayName();
+            };
+
+            addListSection(displayName + ":", grantDisplays, NamedTextColor.GRAY, NamedTextColor.DARK_GRAY);
+        }
+
+        return this;
     }
 
     /**

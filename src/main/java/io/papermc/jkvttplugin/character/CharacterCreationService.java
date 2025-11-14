@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.character;
 import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
+import io.papermc.jkvttplugin.data.model.AutomaticGrant;
 import io.papermc.jkvttplugin.data.model.PendingChoice;
 
 import java.util.*;
@@ -43,36 +44,43 @@ public class CharacterCreationService {
         var background = BackgroundLoader.getBackground(backgroundId);
 
         List<PendingChoice<?>> pending = new ArrayList<>();
+        List<AutomaticGrant> grants = new ArrayList<>();
 
         // ToDo: add player choices to Race
         if (race != null) {
             // I guess there is not getPlayerChoices here... need to update this later
 //            System.out.println("Race player choices: " + race.getPlayerChoices().size());
             race.contributeChoices(pending);
+            race.contributeAutomaticGrants(grants);
             System.out.println("After race contribution: " + pending.size());
         }
         // ToDo: add player choices to Subrace
         if (subrace != null) {
 //            System.out.println("Subrace player choices: " + subrace.getPlayerChoices().size());
             subrace.contributeChoices(pending);
+            subrace.contributeAutomaticGrants(grants);
             System.out.println("After subrace contribution: " + pending.size());
         }
         if (dndClass != null) {
 //            System.out.println("Class player choices: " + dndClass.getPlayerChoices().size());
             dndClass.contributeChoices(pending);
+            dndClass.contributeAutomaticGrants(grants);
             System.out.println("After class contribution: " + pending.size());
         }
         if (subclass != null) {
             subclass.contributeChoices(pending);
+            subclass.contributeAutomaticGrants(grants);
             System.out.println("After subclass contribution: " + pending.size());
         }
         if (background != null) {
 //            System.out.println("Background player choices: " + background.getPlayerChoices().size());
             background.contributeChoices(pending);
+            background.contributeAutomaticGrants(grants);
             System.out.println("After background contribution: " + pending.size());
         }
 
         session.setPendingChoices(pending);
+        session.setAutomaticGrants(grants);
         return pending;
     }
 }

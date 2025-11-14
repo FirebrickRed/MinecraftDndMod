@@ -175,35 +175,52 @@ public class DndBackground {
         }
     }
 
+    /**
+     * Contributes automatic grants (skills, languages, tools) from this background.
+     * These are traits the player receives automatically without needing to choose.
+     */
+    public void contributeAutomaticGrants(List<AutomaticGrant> out) {
+        String source = this.name;
+
+        // Skill Proficiencies
+        if (skills != null) {
+            for (String skill : skills) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.SKILL_PROFICIENCY, Util.prettify(skill), source));
+            }
+        }
+
+        // Tool Proficiencies
+        if (tools != null) {
+            for (String tool : tools) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.TOOL_PROFICIENCY, Util.prettify(tool), source));
+            }
+        }
+
+        // Languages
+        if (languages != null) {
+            for (String lang : languages) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.LANGUAGE, Util.prettify(lang), source));
+            }
+        }
+    }
+
     public List<Component> getSelectionMenuLore() {
         LoreBuilder builder = LoreBuilder.create();
 
-        // 1. Skill proficiencies (immediate mechanical benefit)
-        if (skills != null && !skills.isEmpty()) {
-            List<String> prettySkills = skills.stream()
-                    .map(Util::prettify)
-                    .toList();
-            builder.addListSection("Skills:", prettySkills, NamedTextColor.GREEN);
-        }
+        // Automatic Grants (skills, tools, languages via unified system)
+        List<AutomaticGrant> grants = new ArrayList<>();
+        contributeAutomaticGrants(grants);
+        builder.addAutomaticGrants(grants);
 
-        // 2. Tool proficiencies (if any)
-        if (tools != null && !tools.isEmpty()) {
-            List<String> prettyTools = tools.stream()
-                    .map(Util::prettify)
-                    .toList();
-            builder.addListSection("Tools:", prettyTools, NamedTextColor.GRAY);
-        }
+        // Player Choices (languages, etc.)
+        builder.addLanguageChoices(null, playerChoices);
 
-        // 3. Languages (fixed + choices)
-        builder.addListSection("Languages:", languages, NamedTextColor.AQUA);
-        builder.addLanguageChoices(languages, playerChoices);
-
-        // 4. Feature name (unique ability)
+        // Background Feature (unique ability)
         if (feature != null && !feature.isEmpty()) {
             builder.addListSection("Feature:", List.of(feature), NamedTextColor.GOLD);
         }
 
-        // 5. Description preview (flavor text - keep short!)
+        // Description preview (flavor text)
         builder.addDescription(description, 60);
 
         return builder.build();

@@ -46,7 +46,7 @@ public class AbilityAllocationMenu {
         }
 
         EnumMap<Ability, Integer> baseScores = session.getAbilityScores();
-        EnumMap<Ability, Integer> racialBonuses = session.getRacialBonusAllocations();
+        Map<Ability, Integer> racialBonuses = session.getRacialBonusAllocations();
 
         // Row assignments
         final int RACE_BONUS_ROW = 0;
@@ -144,7 +144,7 @@ public class AbilityAllocationMenu {
             Ability ability,
             int col,
             EnumMap<Ability, Integer> baseScores,
-            EnumMap<Ability, Integer> racialBonuses,
+            Map<Ability, Integer> racialBonuses,
             DndRace race,
             DndSubRace subrace,
             CharacterCreationSession session,
@@ -243,7 +243,7 @@ public class AbilityAllocationMenu {
             AbilityScoreChoice choiceBonuses,
             CharacterCreationSession session,
             String source,
-            EnumMap<Ability, Integer> currentAllocations
+            Map<Ability, Integer> currentAllocations
     ) {
         // Check if this ability has a fixed bonus
         Integer fixedBonus = fixedBonuses.get(ability);

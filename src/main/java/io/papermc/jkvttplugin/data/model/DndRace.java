@@ -12,6 +12,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -243,11 +244,101 @@ public class DndRace {
         }
     }
 
+    /**
+     * Contributes automatic grants (proficiencies, darkvision, etc.) from this race.
+     * These are traits the player receives automatically without needing to choose.
+     */
+    public void contributeAutomaticGrants(List<AutomaticGrant> out) {
+        String source = this.name;
+
+        // Speed
+        if (speed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Walking Speed", source, speed + " ft"));
+        }
+        if (swimmingSpeed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Swimming Speed", source, swimmingSpeed + " ft"));
+        }
+        if (flyingSpeed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Flying Speed", source, flyingSpeed + " ft"));
+        }
+        if (climbingSpeed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Climbing Speed", source, climbingSpeed + " ft"));
+        }
+        if (burrowingSpeed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Burrowing Speed", source, burrowingSpeed + " ft"));
+        }
+
+        // Darkvision
+        if (darkvision != null && darkvision > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.DARKVISION, "Darkvision", source, darkvision + " ft"));
+        }
+
+        // Languages
+        if (languages != null) {
+            for (String lang : languages) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.LANGUAGE, Util.prettify(lang), source));
+            }
+        }
+
+        // Skill Proficiencies
+        if (skillProficiencies != null) {
+            for (String skill : skillProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.SKILL_PROFICIENCY, Util.prettify(skill), source));
+            }
+        }
+
+        // Weapon Proficiencies
+        if (weaponProficiencies != null) {
+            for (String weapon : weaponProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.WEAPON_PROFICIENCY, Util.prettify(weapon), source));
+            }
+        }
+
+        // Armor Proficiencies
+        if (armorProficiencies != null) {
+            for (String armor : armorProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.ARMOR_PROFICIENCY, Util.prettify(armor), source));
+            }
+        }
+
+        // Tool Proficiencies
+        if (toolProficiencies != null) {
+            for (String tool : toolProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.TOOL_PROFICIENCY, Util.prettify(tool), source));
+            }
+        }
+
+        // Damage Resistances
+        if (damageResistances != null) {
+            for (String resistance : damageResistances) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.DAMAGE_RESISTANCE, Util.prettify(resistance), source));
+            }
+        }
+
+        // Ability Score Bonuses
+        if (fixedAbilityScores != null) {
+            for (var entry : fixedAbilityScores.entrySet()) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.ABILITY_SCORE, entry.getKey().toString(), source, "+" + entry.getValue()));
+            }
+        }
+
+        // Innate Spells
+        if (innateSpells != null) {
+            for (InnateSpell spell : innateSpells) {
+                String spellName = Util.prettify(spell.getSpellId());
+                String details = spell.isCantrip() ? "Cantrip" : "Level " + spell.getSpellLevel();
+                if (!spell.isCantrip() && spell.getUses() > 0) {
+                    details += ", " + spell.getUses() + "/day";
+                }
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.INNATE_SPELL, spellName, source, details));
+            }
+        }
+    }
+
     public List<Component> getSelectionMenuLore() {
         LoreBuilder builder = LoreBuilder.create();
 
-        // Basic info - Size
-        // Check if there's a size choice in playerChoices first
+        // Size (race-specific - may be fixed or a choice)
         boolean hasSizeChoice = false;
         List<String> sizeOptions = new ArrayList<>();
         for (ChoiceEntry choice : playerChoices) {
@@ -269,17 +360,7 @@ public class DndRace {
             builder.addLine("Size: " + size);
         }
 
-        builder.addLine("Speed: " + speed + " ft");
-
-        // Ability scores
-        if (!fixedAbilityScores.isEmpty()) {
-            List<String> abilityLines = new ArrayList<>();
-            for (Map.Entry<Ability, Integer> entry : fixedAbilityScores.entrySet()) {
-                abilityLines.add("+" + entry.getValue() + " " + entry.getKey());
-            }
-            builder.addListSection("Ability Bonuses:", abilityLines, NamedTextColor.GOLD);
-        }
-
+        // Ability Score Choices (player choices - not automatic grants)
         if (abilityScoreChoice != null) {
             builder.blankLine()
                    .addLine("Ability Score Choice:", NamedTextColor.GOLD);
@@ -291,7 +372,7 @@ public class DndRace {
             }
         }
 
-        // Subraces
+        // Subraces (race-specific)
         if (hasSubraces()) {
             List<String> subraceNames = subraces.values().stream()
                     .map(DndSubRace::getName)
@@ -299,9 +380,13 @@ public class DndRace {
             builder.addListSection("Subraces:", subraceNames, NamedTextColor.YELLOW, NamedTextColor.WHITE);
         }
 
-        // Languages (fixed + choices)
-        builder.addListSection("Languages:", languages, NamedTextColor.AQUA);
-        builder.addLanguageChoices(languages, playerChoices);
+        // Automatic Grants (all traits: speed, ability scores, languages, proficiencies, darkvision, etc.)
+        List<AutomaticGrant> grants = new ArrayList<>();
+        contributeAutomaticGrants(grants);
+        builder.addAutomaticGrants(grants);
+
+        // Player Choices (languages, etc.)
+        builder.addLanguageChoices(null, playerChoices);
 
         return builder.build();
     }

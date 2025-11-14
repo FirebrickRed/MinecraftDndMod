@@ -11,6 +11,7 @@ import org.bukkit.entity.Player;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -49,8 +50,21 @@ public class AbilityAllocationHandler implements MenuClickHandler {
                         if (distKey != null) {
                             List<Integer> bonusValues = Util.parseDistribution(distKey);
                             int bonusToApply = findNextAvailableBonus(session, bonusValues);
+
                             if (bonusToApply > 0) {
                                 session.setRacialBonus(ability, bonusToApply);
+                            } else {
+                                // All bonuses are used - implement auto-replacement
+                                // Remove the oldest (first) bonus to make room
+                                Map<Ability, Integer> allocations = session.getRacialBonusAllocations();
+                                if (!allocations.isEmpty()) {
+                                    // Get the first ability that has a bonus (LinkedHashMap preserves insertion order)
+                                    Ability oldestAbility = allocations.keySet().iterator().next();
+                                    int removedBonus = allocations.get(oldestAbility);
+                                    session.clearRacialBonus(oldestAbility);
+                                    // Apply the removed bonus to the new ability
+                                    session.setRacialBonus(ability, removedBonus);
+                                }
                             }
                         }
                     }
@@ -87,7 +101,7 @@ public class AbilityAllocationHandler implements MenuClickHandler {
      */
     private int findNextAvailableBonus(CharacterCreationSession session, List<Integer> bonusValues) {
         // Count how many of each bonus value have been used
-        EnumMap<Ability, Integer> allocations = session.getRacialBonusAllocations();
+        Map<Ability, Integer> allocations = session.getRacialBonusAllocations();
         List<Integer> usedBonuses = new ArrayList<>(allocations.values());
 
         // Find the first bonus from bonusValues that hasn't been fully used

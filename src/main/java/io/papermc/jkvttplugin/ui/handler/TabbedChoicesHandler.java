@@ -56,16 +56,47 @@ public class TabbedChoicesHandler implements MenuClickHandler {
 
                     List<MergedChoice> merged = io.papermc.jkvttplugin.util.ChoiceMerger.mergeChoices(allChoices, session);
 
-                    // Find the specific merged choice by matching both category AND choice ID
-                    MergedChoice targetChoice = merged.stream()
-                            .filter(mc -> mc.getCategory() == category && mc.getChoiceId().equals(choiceId))
-                            .findFirst()
-                            .orElse(null);
+                    // For SKILL category: handle moving selections between sections
+                    // (e.g., clicking History in Subclass Skills when it's selected in Class Skills moves it)
+                    if (category == ChoiceCategory.SKILL) {
+                        // Find the target choice where the click occurred
+                        MergedChoice targetChoice = merged.stream()
+                                .filter(mc -> mc.getCategory() == category && mc.getChoiceId().equals(choiceId))
+                                .findFirst()
+                                .orElse(null);
 
-                    if (targetChoice != null) {
-                        targetChoice.toggleOption(optionKey);
-                        TabbedChoiceMenu.open(player, sessionId, category);
+                        if (targetChoice != null) {
+                            // Check if this skill is selected elsewhere
+                            boolean selectedElsewhere = targetChoice.getSelectedElsewhere().contains(optionKey);
+
+                            if (selectedElsewhere) {
+                                // Move the selection: deselect from other sections, select in this one
+                                for (MergedChoice mc : merged) {
+                                    if (mc.getCategory() == ChoiceCategory.SKILL && mc.isSelected(optionKey)) {
+                                        // Deselect from the other section
+                                        mc.toggleOption(optionKey);
+                                    }
+                                }
+                                // Select in this section
+                                targetChoice.toggleOption(optionKey);
+                            } else {
+                                // Normal toggle within this section
+                                targetChoice.toggleOption(optionKey);
+                            }
+                        }
+                    } else {
+                        // For other categories, toggle only in the specific choice
+                        MergedChoice targetChoice = merged.stream()
+                                .filter(mc -> mc.getCategory() == category && mc.getChoiceId().equals(choiceId))
+                                .findFirst()
+                                .orElse(null);
+
+                        if (targetChoice != null) {
+                            targetChoice.toggleOption(optionKey);
+                        }
                     }
+
+                    TabbedChoiceMenu.open(player, sessionId, category);
                 } catch (IllegalArgumentException e) {
                     player.sendMessage("Invalid choice: " + payload);
                 }

@@ -256,43 +256,10 @@ public class DndSubClass {
             lore.blankLine();
         }
 
-        // Proficiencies
-        boolean hasProficiencies = false;
-        if (armorProficiencies != null && !armorProficiencies.isEmpty()) {
-            if (!hasProficiencies) lore.addLine("Proficiencies:", NamedTextColor.GREEN);
-            hasProficiencies = true;
-            lore.addLine("Armor: " + String.join(", ", armorProficiencies.stream().map(Util::prettify).toList()), NamedTextColor.GRAY);
-        }
-        if (weaponProficiencies != null && !weaponProficiencies.isEmpty()) {
-            if (!hasProficiencies) lore.addLine("Proficiencies:", NamedTextColor.GREEN);
-            hasProficiencies = true;
-            lore.addLine("Weapons: " + String.join(", ", weaponProficiencies.stream().map(Util::prettify).toList()), NamedTextColor.GRAY);
-        }
-        if (toolProficiencies != null && !toolProficiencies.isEmpty()) {
-            if (!hasProficiencies) lore.addLine("Proficiencies:", NamedTextColor.GREEN);
-            hasProficiencies = true;
-            lore.addLine("Tools: " + String.join(", ", toolProficiencies.stream().map(Util::prettify).toList()), NamedTextColor.GRAY);
-        }
-        if (hasProficiencies) lore.blankLine();
-
-        // Special traits
-        boolean hasTraits = false;
-        if (languages != null && !languages.isEmpty()) {
-            if (!hasTraits) lore.addLine("Special Traits:", NamedTextColor.AQUA);
-            hasTraits = true;
-            lore.addLine("Languages: " + String.join(", ", languages), NamedTextColor.GRAY);
-        }
-        if (darkvision > 0) {
-            if (!hasTraits) lore.addLine("Special Traits:", NamedTextColor.AQUA);
-            hasTraits = true;
-            lore.addLine("Darkvision: " + darkvision + " ft.", NamedTextColor.GRAY);
-        }
-        if (swimmingSpeed > 0) {
-            if (!hasTraits) lore.addLine("Special Traits:", NamedTextColor.AQUA);
-            hasTraits = true;
-            lore.addLine("Swimming Speed: " + swimmingSpeed + " ft.", NamedTextColor.GRAY);
-        }
-        if (hasTraits) lore.blankLine();
+        // Automatic Grants (proficiencies, languages, darkvision, speed via unified system)
+        List<AutomaticGrant> grants = new ArrayList<>();
+        contributeAutomaticGrants(grants);
+        lore.addAutomaticGrants(grants);
 
         // Player choices (e.g., Knowledge Domain skill/language choices)
         if (playerChoices != null && !playerChoices.isEmpty()) {
@@ -322,6 +289,59 @@ public class DndSubClass {
             if (ChoiceUtil.usable(pc)) {
                 out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "subclass"));
             }
+        }
+    }
+
+    /**
+     * Contributes automatic grants (proficiencies, spells, etc.) from this subclass.
+     * These are traits the player receives automatically without needing to choose.
+     */
+    public void contributeAutomaticGrants(List<AutomaticGrant> out) {
+        String source = this.name;
+
+        // Weapon Proficiencies
+        if (weaponProficiencies != null) {
+            for (String weapon : weaponProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.WEAPON_PROFICIENCY, Util.prettify(weapon), source));
+            }
+        }
+
+        // Armor Proficiencies
+        if (armorProficiencies != null) {
+            for (String armor : armorProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.ARMOR_PROFICIENCY, Util.prettify(armor), source));
+            }
+        }
+
+        // Tool Proficiencies
+        if (toolProficiencies != null) {
+            for (String tool : toolProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.TOOL_PROFICIENCY, Util.prettify(tool), source));
+            }
+        }
+
+        // Skill Proficiencies (automatic, not from choices)
+        if (skillProficiencies != null) {
+            for (String skill : skillProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.SKILL_PROFICIENCY, Util.prettify(skill), source));
+            }
+        }
+
+        // Languages
+        if (languages != null) {
+            for (String lang : languages) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.LANGUAGE, Util.prettify(lang), source));
+            }
+        }
+
+        // Darkvision
+        if (darkvision > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.DARKVISION, "Darkvision", source, darkvision + " ft"));
+        }
+
+        // Swimming Speed
+        if (swimmingSpeed > 0) {
+            out.add(new AutomaticGrant(AutomaticGrant.GrantType.SPEED, "Swimming Speed", source, swimmingSpeed + " ft"));
         }
     }
 

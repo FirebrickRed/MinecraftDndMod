@@ -8,8 +8,11 @@ import io.papermc.jkvttplugin.data.model.DndBackground;
 import io.papermc.jkvttplugin.data.model.DndClass;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.DndSubRace;
+import io.papermc.jkvttplugin.data.model.PendingChoice;
+import io.papermc.jkvttplugin.data.model.PlayersChoice;
 
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -49,25 +52,63 @@ public class KnownItemCollector {
 
     /**
      * Collects all skill proficiencies the character already has from their class and background.
-     * Does not include skills from player choices - only fixed grants.
+     * Only includes FIXED skills, not player-selected skills.
      *
      * @param session The character creation session
-     * @return Set of skill IDs the character knows
+     * @return Set of skill IDs the character knows from fixed sources (grayed out, can't be selected)
      */
     public static Set<String> collectKnownSkills(CharacterCreationSession session) {
         Set<String> known = new LinkedHashSet<>();
 
+        // Fixed skills from class
         DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
         if (dndClass != null && dndClass.getSkills() != null) {
             known.addAll(dndClass.getSkills());
         }
 
+        // Fixed skills from background
         DndBackground bg = BackgroundLoader.getBackground(session.getSelectedBackground());
         if (bg != null && bg.getSkills() != null) {
             known.addAll(bg.getSkills());
         }
 
+        // Note: We do NOT include player-selected skills here.
+        // Player-selected skills are handled separately via collectSelectedSkillsFromOtherSections()
+        // to show as "light green/selected elsewhere" instead of gray "already known".
+
         return known;
+    }
+
+    /**
+     * Collects skills that have been selected in OTHER pending choices (not the current one).
+     * Used to show skills as "selected elsewhere" (light green) so they can be moved between sections.
+     *
+     * @param session The character creation session
+     * @param currentChoiceId The ID of the current choice to exclude from the search
+     * @return Set of skill IDs selected in other sections
+     */
+    public static Set<String> collectSelectedSkillsFromOtherSections(CharacterCreationSession session, String currentChoiceId) {
+        Set<String> selectedElsewhere = new LinkedHashSet<>();
+
+        List<PendingChoice<?>> pendingChoices = session.getPendingChoices();
+        if (pendingChoices != null) {
+            for (PendingChoice<?> pc : pendingChoices) {
+                // Skip the current choice - we only want skills from OTHER sections
+                if (pc.getId().equals(currentChoiceId)) continue;
+
+                if (pc.getPlayersChoice() != null &&
+                    pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.SKILL) {
+                    // Add all chosen skills from this other pending choice
+                    for (Object chosen : pc.getChosen()) {
+                        if (chosen instanceof String skill) {
+                            selectedElsewhere.add(skill);
+                        }
+                    }
+                }
+            }
+        }
+
+        return selectedElsewhere;
     }
 
     /**

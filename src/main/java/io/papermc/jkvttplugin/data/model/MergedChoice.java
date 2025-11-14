@@ -16,6 +16,7 @@ public class MergedChoice {
     private final ChoiceCategory category;
     private final List<PendingChoice<?>> sourcePendingChoices;
     private final Set<String> alreadyKnown;
+    private final Set<String> selectedElsewhere; // Skills selected in OTHER sections (for cross-section display)
     private final Set<String> availableOptionKeys;
     private final int totalChooseCount;
     private final Map<String, Integer> sourceContributions; // source -> count
@@ -25,9 +26,19 @@ public class MergedChoice {
             List<PendingChoice<?>> sources,
             Set<String> alreadyKnown
     ) {
+        this(category, sources, alreadyKnown, Collections.emptySet());
+    }
+
+    public MergedChoice(
+            ChoiceCategory category,
+            List<PendingChoice<?>> sources,
+            Set<String> alreadyKnown,
+            Set<String> selectedElsewhere
+    ) {
         this.category = category;
         this.sourcePendingChoices = List.copyOf(sources);
         this.alreadyKnown = Set.copyOf(alreadyKnown);
+        this.selectedElsewhere = Set.copyOf(selectedElsewhere);
 
         // Calculate source contributions for display
         this.sourceContributions = new LinkedHashMap<>();
@@ -42,6 +53,7 @@ public class MergedChoice {
                 .sum();
 
         // Deduplicate options and filter out already known
+        // NOTE: We do NOT filter out selectedElsewhere - those should still be shown (as light green)
         this.availableOptionKeys = sources.stream()
                 .flatMap(pc -> pc.optionKeys().stream())
                 .distinct() // Remove duplicates from multiple sources
@@ -75,6 +87,10 @@ public class MergedChoice {
 
     public Set<String> getAlreadyKnown() {
         return alreadyKnown;
+    }
+
+    public Set<String> getSelectedElsewhere() {
+        return selectedElsewhere;
     }
 
     public Set<String> getAvailableOptionKeys() {
@@ -131,6 +147,8 @@ public class MergedChoice {
 
     /**
      * Checks if a specific option key is currently selected in any of the source choices.
+     * For skills that appear in multiple sections (e.g., History in both class and subclass),
+     * this returns true if it's selected in ANY section.
      */
     public boolean isSelected(String optionKey) {
         return sourcePendingChoices.stream()
@@ -140,64 +158,77 @@ public class MergedChoice {
     /**
      * Toggles selection of an option key.
      * For merged choices, this implements smart distribution across multiple source PendingChoices:
-     * - If deselecting: finds which source has it selected and removes it
-     * - If selecting: finds a source with available capacity, or uses any source (which will auto-replace oldest)
+     * - If deselecting: removes it from ALL sources that have it selected
+     * - If selecting: adds it to the first source with available capacity
+     *
+     * Special handling for skills: If a skill appears in multiple sections (e.g., History in both
+     * class and subclass skills), toggling it will affect ALL sections to keep them synchronized.
      */
     public void toggleOption(String optionKey) {
-        // Check if already selected somewhere - if so, deselect it
+        // Check if already selected somewhere
+        boolean isCurrentlySelected = false;
         for (PendingChoice<?> pc : sourcePendingChoices) {
             if (pc.isSelectedKey(optionKey)) {
-                @SuppressWarnings("unchecked")
-                PendingChoice<Object> rawPc = (PendingChoice<Object>) pc;
-                rawPc.toggleKey(optionKey, Collections.emptySet());
-                return;
-            }
-        }
-
-        // Not currently selected - need to add it
-        // Find which source(s) can have this option
-        // Prioritize sources where this is a DIRECT option (not from tag expansion)
-        List<PendingChoice<?>> directSources = new ArrayList<>();
-        List<PendingChoice<?>> tagExpandedSources = new ArrayList<>();
-
-        for (PendingChoice<?> pc : sourcePendingChoices) {
-            if (!pc.optionKeys().contains(optionKey)) continue;
-
-            // Check if this option is direct (ITEM) or from tag expansion (TAG)
-            Object opt = pc.optionForKey(optionKey);
-            if (opt instanceof EquipmentOption eo && eo.getKind() == EquipmentOption.Kind.ITEM) {
-                directSources.add(pc);
-            } else if (opt instanceof EquipmentOption eo && eo.getKind() == EquipmentOption.Kind.TAG) {
-                tagExpandedSources.add(pc);
-            } else {
-                // For non-equipment options, treat as direct
-                directSources.add(pc);
-            }
-        }
-
-        // Prefer direct sources, fall back to tag-expanded sources
-        List<PendingChoice<?>> candidateSources = !directSources.isEmpty() ? directSources : tagExpandedSources;
-
-        if (candidateSources.isEmpty()) return;
-
-        // Try to find a source with available capacity
-        PendingChoice<?> targetSource = null;
-        for (PendingChoice<?> pc : candidateSources) {
-            if (pc.selectedCount() < pc.getChoose()) {
-                targetSource = pc;
+                isCurrentlySelected = true;
                 break;
             }
         }
 
-        // If no source has capacity, use the first candidate (it will auto-replace oldest)
-        if (targetSource == null) {
-            targetSource = candidateSources.get(0);
-        }
+        if (isCurrentlySelected) {
+            // Deselect from ALL sources that have it
+            for (PendingChoice<?> pc : sourcePendingChoices) {
+                if (pc.isSelectedKey(optionKey)) {
+                    @SuppressWarnings("unchecked")
+                    PendingChoice<Object> rawPc = (PendingChoice<Object>) pc;
+                    rawPc.toggleKey(optionKey, Collections.emptySet());
+                }
+            }
+        } else {
+            // Not currently selected - need to add it
+            // Find which source(s) can have this option
+            // Prioritize sources where this is a DIRECT option (not from tag expansion)
+            List<PendingChoice<?>> directSources = new ArrayList<>();
+            List<PendingChoice<?>> tagExpandedSources = new ArrayList<>();
 
-        // Toggle on the target source
-        @SuppressWarnings("unchecked")
-        PendingChoice<Object> rawPc = (PendingChoice<Object>) targetSource;
-        rawPc.toggleKey(optionKey, Collections.emptySet());
+            for (PendingChoice<?> pc : sourcePendingChoices) {
+                if (!pc.optionKeys().contains(optionKey)) continue;
+
+                // Check if this option is direct (ITEM) or from tag expansion (TAG)
+                Object opt = pc.optionForKey(optionKey);
+                if (opt instanceof EquipmentOption eo && eo.getKind() == EquipmentOption.Kind.ITEM) {
+                    directSources.add(pc);
+                } else if (opt instanceof EquipmentOption eo && eo.getKind() == EquipmentOption.Kind.TAG) {
+                    tagExpandedSources.add(pc);
+                } else {
+                    // For non-equipment options, treat as direct
+                    directSources.add(pc);
+                }
+            }
+
+            // Prefer direct sources, fall back to tag-expanded sources
+            List<PendingChoice<?>> candidateSources = !directSources.isEmpty() ? directSources : tagExpandedSources;
+
+            if (candidateSources.isEmpty()) return;
+
+            // Try to find a source with available capacity
+            PendingChoice<?> targetSource = null;
+            for (PendingChoice<?> pc : candidateSources) {
+                if (pc.selectedCount() < pc.getChoose()) {
+                    targetSource = pc;
+                    break;
+                }
+            }
+
+            // If no source has capacity, use the first candidate (it will auto-replace oldest)
+            if (targetSource == null) {
+                targetSource = candidateSources.get(0);
+            }
+
+            // Toggle on the target source (only add to ONE source, not all)
+            @SuppressWarnings("unchecked")
+            PendingChoice<Object> rawPc = (PendingChoice<Object>) targetSource;
+            rawPc.toggleKey(optionKey, Collections.emptySet());
+        }
     }
 
     /**

@@ -10,6 +10,7 @@ import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -343,13 +344,42 @@ public class DndClass {
         }
     }
 
+    /**
+     * Contributes automatic grants (proficiencies, etc.) from this class.
+     * These are traits the player receives automatically without needing to choose.
+     */
+    public void contributeAutomaticGrants(List<AutomaticGrant> out) {
+        String source = this.name;
+
+        // Weapon Proficiencies
+        if (weaponProficiencies != null) {
+            for (String weapon : weaponProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.WEAPON_PROFICIENCY, Util.prettify(weapon), source));
+            }
+        }
+
+        // Armor Proficiencies
+        if (armorProficiencies != null) {
+            for (String armor : armorProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.ARMOR_PROFICIENCY, Util.prettify(armor), source));
+            }
+        }
+
+        // Tool Proficiencies (automatic, not from choices)
+        if (toolProficiencies != null) {
+            for (String tool : toolProficiencies) {
+                out.add(new AutomaticGrant(AutomaticGrant.GrantType.TOOL_PROFICIENCY, Util.prettify(tool), source));
+            }
+        }
+    }
+
     public List<Component> getSelectionMenuLore() {
         LoreBuilder builder = LoreBuilder.create();
 
-        // 1. Hit Die (critical for survivability)
+        // Class-specific: Hit Die
         builder.addLine("Hit Die: d" + hitDie, NamedTextColor.RED);
 
-        // 2. Saving Throws
+        // Class-specific: Saving Throws
         if (savingThrows != null && !savingThrows.isEmpty()) {
             List<String> abilityNames = savingThrows.stream()
                     .map(Ability::toString)
@@ -357,7 +387,7 @@ public class DndClass {
             builder.addListSection("Saving Throws:", abilityNames, NamedTextColor.GOLD);
         }
 
-        // 3. Spellcasting (if applicable - major class distinction!)
+        // Class-specific: Spellcasting indicator
         if (spellcasting != null || spellcastingAbility != null) {
             builder.blankLine()
                    .addLine("✦ Spellcaster", NamedTextColor.LIGHT_PURPLE);
@@ -366,19 +396,35 @@ public class DndClass {
             }
         }
 
-        // 4. Key proficiencies (armor = survivability)
-        if (armorProficiencies != null && !armorProficiencies.isEmpty()) {
-            List<String> prettyArmor = armorProficiencies.stream()
-                    .map(Util::prettify)
+        // Class-specific: Subclass information
+        if (hasSubclasses()) {
+            builder.blankLine()
+                   .addLine("Subclass at Level " + subclassLevel + ": " + subclassTypeName, NamedTextColor.AQUA);
+
+            // Show available subclasses (first 3, or all if 3 or fewer)
+            List<String> subclassNames = subclasses.values().stream()
+                    .map(DndSubClass::getName)
+                    .limit(3)
                     .toList();
-            builder.addListSection("Armor:", prettyArmor, NamedTextColor.GRAY);
+
+            for (String subclassName : subclassNames) {
+                builder.addLine("  • " + subclassName, NamedTextColor.GRAY);
+            }
+
+            if (subclasses.size() > 3) {
+                builder.addLine("  ...and " + (subclasses.size() - 3) + " more", NamedTextColor.DARK_GRAY);
+            }
         }
 
-        // 5. Level 1 features preview (unique flavor)
-        // ToDo: Starting Features title is present but doesn't show the text below (currently in progress)
+        // Class-specific: Level 1 features preview
         if (featuresByLevel != null && featuresByLevel.containsKey(1)) {
             builder.addListSection("Starting Features:", featuresByLevel.get(1), NamedTextColor.YELLOW, NamedTextColor.WHITE);
         }
+
+        // Automatic Grants (all proficiencies via unified system)
+        List<AutomaticGrant> grants = new ArrayList<>();
+        contributeAutomaticGrants(grants);
+        builder.addAutomaticGrants(grants);
 
         return builder.build();
     }

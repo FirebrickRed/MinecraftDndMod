@@ -211,7 +211,7 @@ public class CharacterSheet {
 
         // Apply player-chosen racial bonuses from session
         if (session != null && session.getRacialBonusAllocations() != null) {
-            EnumMap<Ability, Integer> chosenBonuses = session.getRacialBonusAllocations();
+            Map<Ability, Integer> chosenBonuses = session.getRacialBonusAllocations();
             for (Map.Entry<Ability, Integer> entry : chosenBonuses.entrySet()) {
                 Ability ability = entry.getKey();
                 int bonus = entry.getValue();
