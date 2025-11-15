@@ -12,8 +12,11 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.AsyncPlayerChatEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.inventory.ItemStack;
 
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
@@ -133,6 +136,47 @@ public class CharacterNameListener implements Listener {
             // Log the error for debugging
             e.printStackTrace();
         }
+    }
+
+    /**
+     * Apply character name when player joins the server.
+     * Looks for the player's first character and applies their name.
+     */
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        Player player = event.getPlayer();
+
+        System.out.println("[CharacterNameListener] Player joined: " + player.getName());
+
+        // Get player's characters
+        List<CharacterSheet> characters = CharacterSheetManager.getPlayerCharacters(player.getUniqueId());
+
+        System.out.println("[CharacterNameListener] Found " + (characters != null ? characters.size() : 0) + " characters");
+
+        if (characters != null && !characters.isEmpty()) {
+            // Apply the first character's name (in the future, this could be "active character")
+            CharacterSheet character = characters.get(0);
+            System.out.println("[CharacterNameListener] Applying name for character: " + character.getCharacterName());
+            CharacterSheetManager.applyCharacterName(player, character);
+        } else {
+            System.out.println("[CharacterNameListener] No characters found, skipping name application");
+        }
+    }
+
+    /**
+     * Clear character name when player leaves to prevent issues.
+     * Optional - could keep the name persistent across sessions instead.
+     */
+    @EventHandler
+    public void onPlayerQuit(PlayerQuitEvent event) {
+        Player player = event.getPlayer();
+
+        // Clean up any pending name input
+        awaitingNameInput.remove(player.getUniqueId());
+
+        // Optional: Clear character name on logout
+        // CharacterSheetManager.clearCharacterName(player);
+        // (Currently commented out to keep names persistent across sessions)
     }
 
     private static class ValidationResult {
