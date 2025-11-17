@@ -1,0 +1,88 @@
+# Multi-entity file - NO 'id' at root, entity IDs are map keys
+# This tests the format detection logic
+
+kobold:
+  name: "Kobold"
+  random_names:
+    - "Skrix"
+    - "Yeek"
+    - "Meepo"
+    - "Tik"
+    - "Zek"
+
+  creature_type: humanoid
+  subtype: kobold
+  size: small
+
+  hit_dice: "2d6" # Smaller, weaker creatures
+  armor_class: 12
+  speed: 30
+
+  abilities:
+    strength: 7
+    dexterity: 15
+    constitution: 9
+    intelligence: 8
+    wisdom: 7
+    charisma: 8
+
+  attacks:
+    - name: "Dagger"
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d4+2"
+      damage_type: piercing
+    - name: "Sling"
+      to_hit: 4
+      reach: "30/120 ft."
+      damage: "1d4+2"
+      damage_type: bludgeoning
+
+  inventory:
+    - dagger
+    - sling
+
+  model: "kobold"
+  dm_notes: "Pack tactics. Cowardly alone, dangerous in groups."
+
+kobold_sorcerer:
+  name: "Kobold Sorcerer"
+  random_names:
+    - "Zix the Scorched"
+    - "Ember-Scale"
+    - "Flamecaller Rik"
+
+  creature_type: humanoid
+  subtype: kobold
+  size: small
+
+  hit_points: 27 # Fixed HP (no variance for this one)
+  armor_class: 15
+  speed: 30
+
+  abilities:
+    strength: 7
+    dexterity: 15
+    constitution: 14
+    intelligence: 10
+    wisdom: 9
+    charisma: 14
+
+  attacks:
+    - name: "Dagger"
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d4+2"
+      damage_type: piercing
+    - name: "Fire Bolt"
+      to_hit: 4
+      reach: "120 ft."
+      damage: "1d10"
+      damage_type: fire
+
+  inventory:
+    - dagger
+    - spell_focus
+
+  model: "kobold_sorcerer"
+  dm_notes: "Arrogant. Will brag about dragon heritage. Focuses spellcasters first."

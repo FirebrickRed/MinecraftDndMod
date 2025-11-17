@@ -22,13 +22,14 @@ public class DataManager {
         // Clear existing data before reloading (for /reloadyaml command)
         clearAllData();
 
-        File spellFolder = new File(dmContentFolder, "Spells");
-        File weaponFolder = new File(dmContentFolder, "Weapons");
-        File armorFolder = new File(dmContentFolder, "Armor");
-        File racesFolder = new File(dmContentFolder, "Races");
-        File classFolder = new File(dmContentFolder, "Classes");
-        File backgroundsFolder = new File(dmContentFolder, "Backgrounds");
-        File itemFolder = new File(dmContentFolder, "Items");
+        File spellFolder = new File(dmContentFolder, "Spells"); // No Dependencies
+        File weaponFolder = new File(dmContentFolder, "Weapons");  // No Dependencies
+        File armorFolder = new File(dmContentFolder, "Armor"); // No Dependencies
+        File itemFolder = new File(dmContentFolder, "Items"); // No Dependencies
+        File racesFolder = new File(dmContentFolder, "Races"); // References Spells for innate Casting
+        File classFolder = new File(dmContentFolder, "Classes"); // References Spells for Spell lists
+        File backgroundsFolder = new File(dmContentFolder, "Backgrounds"); // references items/tools
+        File entitiesFolder = new File(dmContentFolder, "Entities"); // References Weapons/Armor/Items
         SpellLoader.loadAllSpells(spellFolder);
         WeaponLoader.loadAllWeapons(weaponFolder);
         ArmorLoader.loadAllArmors(armorFolder);
@@ -36,6 +37,7 @@ public class DataManager {
         RaceLoader.loadAllRaces(racesFolder);
         ClassLoader.loadAllClasses(classFolder);
         BackgroundLoader.loadAllBackgrounds(backgroundsFolder);
+        EntityLoader.loadAllEntities(entitiesFolder);
     }
 
     /**
@@ -50,5 +52,6 @@ public class DataManager {
         WeaponLoader.clear();
         ArmorLoader.clear();
         ItemLoader.clear();
+        EntityLoader.clear();
     }
 }
