@@ -49,3 +49,8 @@ commands:
     usage: /consumeresource <character> <resourceName> [amount]
     permission: jkvttplugin.consumeresource
     permission-message: You do not have permission to use this command.
+  dmentity:
+    description: (DM) Spawn and manage entities in the world.
+    usage: /dmentity <spawn|list|remove|teleport|spawngroup>
+    permission: jkvtt.dm
+    permission-message: You do not have permission to use this command.

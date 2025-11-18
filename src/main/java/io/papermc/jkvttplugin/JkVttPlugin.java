@@ -69,6 +69,10 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         this.getCommand("consumeresource").setExecutor(consumeResourceCommand);
         this.getCommand("consumeresource").setTabCompleter(consumeResourceCommand);
 
+        DmEntityCommand dmEntityCommand = new DmEntityCommand();
+        this.getCommand("dmentity").setExecutor(dmEntityCommand);
+        this.getCommand("dmentity").setTabCompleter(dmEntityCommand);
+
     }
 
     @EventHandler
