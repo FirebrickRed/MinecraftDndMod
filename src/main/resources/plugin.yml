@@ -54,3 +54,7 @@ commands:
     usage: /dmentity <spawn|list|remove|teleport|spawngroup>
     permission: jkvtt.dm
     permission-message: You do not have permission to use this command.
+  dm:
+    description: Manage DM (Dungeon Master) role assignments.
+    usage: /dm <add|remove|list>
+    permission-message: Only server operators can manage DMs.

@@ -4,6 +4,8 @@ import io.papermc.jkvttplugin.character.CharacterSheetItemListener;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.commands.*;
 import io.papermc.jkvttplugin.data.DataManager;
+import io.papermc.jkvttplugin.dm.DmCommand;
+import io.papermc.jkvttplugin.dm.DMPersistenceLoader;
 import io.papermc.jkvttplugin.listeners.*;
 import io.papermc.jkvttplugin.ui.listener.MenuClickListener;
 import io.papermc.jkvttplugin.ui.listener.SpellCastingMenuListener;
@@ -32,6 +34,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         dataManager.loadAllData();
 
         CharacterSheetManager.initialize(this);
+        DMPersistenceLoader.initialize(this);
 
         // Listeners
         Bukkit.getPluginManager().registerEvents(this, this);
@@ -74,6 +77,10 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         DmEntityCommand dmEntityCommand = new DmEntityCommand();
         this.getCommand("dmentity").setExecutor(dmEntityCommand);
         this.getCommand("dmentity").setTabCompleter(dmEntityCommand);
+
+        DmCommand dmCommand = new DmCommand();
+        this.getCommand("dm").setExecutor(dmCommand);
+        this.getCommand("dm").setTabCompleter(dmCommand);
 
     }
 

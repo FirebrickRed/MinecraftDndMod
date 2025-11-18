@@ -4,6 +4,7 @@ package io.papermc.jkvttplugin.commands;
 import io.papermc.jkvttplugin.data.loader.EntityLoader;
 import io.papermc.jkvttplugin.data.model.DndEntity;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
+import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.ui.menu.EntityStatBlockMenu;
 import io.papermc.jkvttplugin.util.CommandUtil;
 import io.papermc.jkvttplugin.util.DiceRoller;
@@ -48,8 +49,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        // Permission check
-        if (!sender.hasPermission("jkvtt.dm")) {
+        // DM permission check
+        if (!DMManager.isDM(sender)) {
             sender.sendMessage(Component.text("You do not have permission to use this command.", NamedTextColor.RED));
             return true;
         }
@@ -549,7 +550,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
-        if (!sender.hasPermission("jkvtt.dm")) {
+        if (!DMManager.isDM(sender)) {
             return List.of();
         }
 

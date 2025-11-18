@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.data.model.DndAttack;
 import io.papermc.jkvttplugin.data.model.DndEntity;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.util.LoreBuilder;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -38,16 +39,15 @@ public class EntityStatBlockMenu {
 
     /**
      * Builds the stat block inventory.
-     * NOTE: Currently hardcoded for DM-only access. Player visibility system deferred.
+     * NOTE: DM-only access via DMManager. Player visibility system deferred.
      *
      * @param player The player viewing the stat block
      * @param instance The entity instance being viewed
      * @return Inventory containing the stat block display
      */
     public static Inventory build(Player player, DndEntityInstance instance) {
-        // TODO: Future - Implement proper DM permission system (jkvtt.dm check)
         // TODO: Future - Re-enable StatBlockVisibility for player/DM differentiation if needed
-        boolean isDm = true; // HARDCODED: All users treated as DMs (stat blocks are DM-only for now)
+        boolean isDm = DMManager.isDM(player);
         DndEntity template = instance.getTemplate();
 
         Inventory inv = Bukkit.createInventory(null, 54,
