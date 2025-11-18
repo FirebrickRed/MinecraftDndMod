@@ -44,6 +44,8 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new SpellFocusListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArmorEquipListener(this), this);
         Bukkit.getPluginManager().registerEvents(new SpellCastingMenuListener(), this);
+        // EntityInteractionListener removed - use /dmentity info command instead
+        Bukkit.getPluginManager().registerEvents(new StatBlockMenuListener(), this);
 
         // Commands
         this.getCommand("reloadyaml").setExecutor(new ReloadYamlCommand());

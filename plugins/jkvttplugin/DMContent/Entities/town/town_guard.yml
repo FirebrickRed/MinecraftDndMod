@@ -1,0 +1,58 @@
+# Single entity file - has 'id' at root level
+id: town_guard
+name: "Town Guard"
+
+# Random names for variety when spawning multiple guards
+random_names:
+  - "Marcus"
+  - "Leon"
+  - "Thaddeus"
+  - "Helena"
+  - "Vera"
+
+# D&D stat block
+creature_type: humanoid
+subtype: human
+size: medium
+
+# HP system test: hit_dice takes priority over hit_points
+hit_dice: "2d8+4"  # Will roll HP on spawn (between 6-20)
+# hit_points: 15   # If uncommented, this would be ignored since hit_dice is present
+
+armor_class: 16
+speed: 30
+
+# Abilities (will be parsed to Ability enum)
+abilities:
+  strength: 14
+  dexterity: 12
+  constitution: 14
+  intelligence: 10
+  wisdom: 11
+  charisma: 10
+
+# Attacks (stubbed for now, full combat in future epic)
+attacks:
+  - name: "Longsword"
+    to_hit: 4
+    reach: "5 ft."
+    damage: "1d8+2"
+    damage_type: slashing
+  - name: "Crossbow"
+    to_hit: 3
+    reach: "80/320 ft."
+    damage: "1d8+1"
+    damage_type: piercing
+
+# Inventory (references weapon/armor/item IDs)
+inventory:
+  - longsword
+  - chainmail
+  - shield
+  - crossbow
+
+# Visual reference to resource pack model
+model: "town_guard"
+
+# DM notes for roleplay
+dm_notes: "Gruff but loyal. Cockney accent. Secretly afraid of spiders."

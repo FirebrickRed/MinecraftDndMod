@@ -118,6 +118,12 @@ public class DndEntity {
      */
     private String dmNotes;
 
+    /**
+     * Controls what information players can see in the stat block.
+     * If null, uses default visibility (players can see most info except current HP).
+     */
+    private StatBlockVisibility statBlockVisibility;
+
     // ==================== CONSTRUCTORS ====================
 
     /**
@@ -176,6 +182,14 @@ public class DndEntity {
 
     public String getDmNotes() { return dmNotes; }
     public void setDmNotes(String dmNotes) { this.dmNotes = dmNotes; }
+
+    public StatBlockVisibility getStatBlockVisibility() {
+        // Return default if not specified
+        return statBlockVisibility != null ? statBlockVisibility : new StatBlockVisibility();
+    }
+    public void setStatBlockVisibility(StatBlockVisibility statBlockVisibility) {
+        this.statBlockVisibility = statBlockVisibility;
+    }
 
     // ==================== UTILITY METHODS ====================
 

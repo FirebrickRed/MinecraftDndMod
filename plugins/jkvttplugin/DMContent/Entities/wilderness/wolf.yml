@@ -1,0 +1,28 @@
+# Simple beast - tests minimal config and defaults
+id: wolf
+name: "Wolf"
+
+creature_type: beast
+size: medium
+
+# Simple fixed HP
+hit_points: 11
+armor_class: 13
+speed: 40
+
+# Minimal abilities (others will default to 10)
+abilities:
+  strength: 12
+  dexterity: 15
+  constitution: 12
+  wisdom: 12
+
+# Single attack
+attacks:
+  - name: "Bite"
+    to_hit: 4
+    reach: "5 ft."
+    damage: "2d4+2"
+    damage_type: piercing
+
+model: "wolf"

@@ -4,6 +4,7 @@ package io.papermc.jkvttplugin.commands;
 import io.papermc.jkvttplugin.data.loader.EntityLoader;
 import io.papermc.jkvttplugin.data.model.DndEntity;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
+import io.papermc.jkvttplugin.ui.menu.EntityStatBlockMenu;
 import io.papermc.jkvttplugin.util.CommandUtil;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
@@ -65,6 +66,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "list" -> handleList(sender, args);
             case "remove" -> handleRemove(sender, args);
             case "teleport" -> handleTeleport(sender, args);
+            case "info" -> handleInfo(sender, args);
             case "spawngroup" -> handleSpawnGroup(sender, args);
             default -> sendHelp(sender);
         }
@@ -272,6 +274,39 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("✓ Teleported ", NamedTextColor.GREEN)
                 .append(Component.text(instance.getDisplayName(), NamedTextColor.GOLD))
                 .append(Component.text(" to " + formatLocation(newLocation), NamedTextColor.GRAY)));
+    }
+
+    // ==================== INFO SUBCOMMAND ====================
+
+    private void handleInfo(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only players can view stat blocks.", NamedTextColor.RED));
+            return;
+        }
+
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /dmentity info <name>", NamedTextColor.RED));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 1);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+        } else {
+            entityName = args[1];
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        // Open stat block menu
+        EntityStatBlockMenu.open(player, instance);
     }
 
     // ==================== SPAWNGROUP SUBCOMMAND ====================
@@ -504,6 +539,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("  - Remove one or more entities (supports multiple names)", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity teleport <name> [x y z]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Teleport entity to location", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("/dmentity info <name>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  - View entity stat block", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity spawngroup <group_id>", NamedTextColor.DARK_GRAY)
                 .append(Component.text(" (Coming in Issue #79)", NamedTextColor.DARK_GRAY)));
     }
@@ -518,7 +555,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             // Subcommands
-            return List.of("spawn", "list", "remove", "teleport", "spawngroup").stream()
+            return List.of("spawn", "list", "remove", "teleport", "info", "spawngroup").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -546,6 +583,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                             .collect(Collectors.toList());
 
                 case "teleport":
+                case "info":
                     // Suggest spawned entity names
                     return spawnedEntities.values().stream()
                             .map(DndEntityInstance::getDisplayName)

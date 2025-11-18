@@ -24,7 +24,8 @@ public class CharacterPersistenceLoader {
 
     public static void initialize(Plugin pluginInstance) {
         plugin = pluginInstance;
-        dataFolder = new File(plugin.getDataFolder(), "Characters");
+        // Updated to use DMContent/Saved/ structure (all saved data in one place)
+        dataFolder = new File("DMContent/Saved/Characters");
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
