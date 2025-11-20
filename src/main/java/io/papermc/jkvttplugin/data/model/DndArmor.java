@@ -1,13 +1,11 @@
 package io.papermc.jkvttplugin.data.model;
 
+import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
-import org.bukkit.persistence.PersistentDataType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -23,7 +21,7 @@ public class DndArmor {
     private int strengthRequirement = 0;
     private boolean stealthDisadvantage = false;
     private String weight;
-    private String cost;
+    private Cost cost;
     private String description;
     private String icon;
     private Material material;
@@ -107,8 +105,8 @@ public class DndArmor {
         if (weight != null && !weight.isEmpty()) {
             lore.add(Component.text("Weight: " + weight, NamedTextColor.DARK_GRAY));
         }
-        if (cost != null && !cost.isEmpty()) {
-            lore.add(Component.text("Cost: " + cost, NamedTextColor.GOLD));
+        if (cost != null) {
+            lore.add(Component.text("Cost: " + cost.toDisplayString(), NamedTextColor.GOLD));
         }
 
         if (description != null && !description.isEmpty()) {
@@ -124,13 +122,8 @@ public class DndArmor {
                 getMaterial()
         );
 
-        ItemMeta meta = item.getItemMeta();
-        meta.getPersistentDataContainer().set(
-                new NamespacedKey("jkvtt", "armor_id"),
-                PersistentDataType.STRING,
-                id
-        );
-        item.setItemMeta(meta);
+        // Tag with standardized item_id for reliable identification (Issue #75)
+        ItemUtil.tagItemId(item, id);
 
         return item;
     }
@@ -174,8 +167,8 @@ public class DndArmor {
     public String getWeight() { return weight; }
     public void setWeight(String weight) { this.weight = weight; }
 
-    public String getCost() { return cost; }
-    public void setCost(String cost) { this.cost = cost; }
+    public Cost getCost() { return cost; }
+    public void setCost(Cost cost) { this.cost = cost; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

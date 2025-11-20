@@ -1,8 +1,10 @@
 package io.papermc.jkvttplugin.data.model;
 
+import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -18,7 +20,7 @@ public class DndItem {
     private String focusType;
     private String description;
     private String icon;
-    private String cost;
+    private Cost cost;
 
     public String getId() {
         return this.id;
@@ -62,10 +64,10 @@ public class DndItem {
         this.icon = icon;
     }
 
-    public String getCost() {
+    public Cost getCost() {
         return this.cost;
     }
-    public void setCost(String cost) {
+    public void setCost(Cost cost) {
         this.cost = cost;
     }
 
@@ -94,22 +96,44 @@ public class DndItem {
             lore.add(Component.text(description, NamedTextColor.YELLOW));
         }
 
+        // Parse icon as Material (for currency and other items with custom materials)
+        Material material = Material.PAPER; // Default fallback
+        if (icon != null && !icon.isEmpty()) {
+            try {
+                material = Material.valueOf(icon.toUpperCase());
+            } catch (IllegalArgumentException e) {
+                // Icon not a valid material - use PAPER as fallback
+                System.out.println("[DndItem] Warning: Invalid material '" + icon + "' for item " + id + ", defaulting to PAPER");
+            }
+        }
+
         ItemStack item = Util.createItem(
                 Component.text(name, NamedTextColor.WHITE),
                 lore,
                 icon,
-                1
+                1,
+                material
+        );
+
+        // Add NBT tags (item_id and optionally spell_focus) in one operation
+        ItemMeta meta = item.getItemMeta();
+
+        // Tag with standardized item_id for reliable identification (Issue #75)
+        meta.getPersistentDataContainer().set(
+                ItemUtil.getItemIdKey(),
+                PersistentDataType.STRING,
+                id
         );
 
         if (isSpellcastingFocus()) {
-            ItemMeta meta = item.getItemMeta();
             meta.getPersistentDataContainer().set(
                     new NamespacedKey("jkvtt", "spell_focus"),
                     PersistentDataType.STRING,
                     focusType
             );
-            item.setItemMeta(meta);
         }
+
+        item.setItemMeta(meta);
 
         return item;
     }

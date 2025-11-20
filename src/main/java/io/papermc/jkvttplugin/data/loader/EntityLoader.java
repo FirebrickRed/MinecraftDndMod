@@ -1,7 +1,7 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import io.papermc.jkvttplugin.data.model.DndAttack;
-import io.papermc.jkvttplugin.data.model.DndEntity;
+import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.Util;
 import org.yaml.snakeyaml.Yaml;
@@ -235,6 +235,13 @@ public class EntityLoader {
             // Visual and metadata
             entity.setModel((String) data.get("model"));
             entity.setDmNotes((String) data.get("dm_notes"));
+
+            // Shop system (Issue #75)
+            Object shopObj = data.get("shop");
+            if (shopObj instanceof Map<?, ?> shopData) {
+                ShopConfig shop = LoaderUtils.parseShop(shopData, id);
+                entity.setShop(shop);
+            }
 
             return entity;
 

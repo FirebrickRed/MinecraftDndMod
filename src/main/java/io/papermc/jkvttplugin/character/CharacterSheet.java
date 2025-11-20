@@ -6,6 +6,7 @@ import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.util.DndRules;
+import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -695,12 +696,15 @@ public class CharacterSheet {
             return item.createItemStack();
         }
 
-        return Util.createItem(
+        // Fallback for unknown items - still tag with item_id for shop compatibility (Issue #75)
+        ItemStack fallbackItem = Util.createItem(
                 Component.text(Util.prettify(itemId), NamedTextColor.WHITE),
                 List.of(Component.text("Unknown item", NamedTextColor.GRAY)),
                 "unknown_item",
                 1
         );
+        ItemUtil.tagItemId(fallbackItem, itemId);
+        return fallbackItem;
     }
 
     private String getItemName(ItemStack item) {

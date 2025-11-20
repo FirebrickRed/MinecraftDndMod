@@ -8,6 +8,19 @@ This is a Paper/Spigot Minecraft plugin that transforms Minecraft into a virtual
 
 **Target Platform:** PaperMC 1.21.3 (Java 21)
 
+## ⚠️ Pre-Alpha Development Status
+
+**This project is in PRE-ALPHA.** We are actively refining data structures, APIs, and architecture. Breaking changes are expected and encouraged.
+
+**If you notice structural improvements that should be made, NOW is the time to suggest them.** Don't hesitate to propose changes to:
+- YAML schema/format (item costs, entity definitions, etc.)
+- Class hierarchies and data models
+- Command syntax and naming
+- Database/persistence structure
+- API designs
+
+We will not have this flexibility once we reach alpha/beta, so please flag any architectural concerns or improvements early. It's much easier to fix now than later.
+
 ## Build Commands
 
 ```bash
@@ -59,6 +72,85 @@ The plugin loads D&D content (races, classes, spells, weapons, armor, items) fro
 - Right-click character sheet item to view character stats
 - Click ability scores to view skills and roll checks
 - Click skills to roll with advantage/disadvantage
+
+### Testing Shop System (Issue #75)
+
+**1. Setup Test Merchant:**
+```
+/dmentity spawn merchant_balin
+/dmentity shop create merchant_balin
+/dmentity shop add merchant_balin longsword 5 15 gold
+/dmentity shop add merchant_balin shortsword 3 10 gold
+/dmentity shop add merchant_balin leather_armor 2 5 gold
+```
+
+**2. Test Tab Completion:**
+- Type `/dmentity shop add merchant_balin ` and press TAB → should suggest all item IDs (weapons, armor, items)
+- Type `/dmentity shop add merchant_balin longsword 5 15 ` and press TAB → should suggest currencies (gold, silver, copper, platinum, electrum)
+- Type `/dmentity shop restock merchant_balin ` and press TAB → should suggest only items in Balin's current inventory
+
+**3. Test Player Buying (Merchant to Player):**
+```
+/dmentity trade merchant_balin
+```
+- Merchant GUI should open with items for sale
+- Each item should show price in gold pieces
+- Execute a trade to buy longsword
+- Verify stock decreases: `/dmentity shop view merchant_balin`
+- Buy remaining stock until item is out of stock
+- Verify "out of stock" message appears
+
+**4. Test Player Selling (Player to Merchant):**
+```
+/dmgive weapon longsword 1
+/dmentity trade merchant_balin
+```
+- Merchant GUI should show reverse trades (player gives item, gets currency)
+- Sell longsword to merchant for gold (50% of buy price)
+- Verify merchant's inventory increases: `/dmentity shop view merchant_balin`
+- Verify sold item appears in merchant's stock
+- Try selling an item not in merchant's acceptance list → should fail
+
+**5. Test NBT-Based Item Identification:**
+- Create two longswords with different display names but same item_id
+- Verify both are recognized as "longsword" by the shop system
+- Verify currency items (gold_piece, silver_piece) are properly identified
+- Check that items have `item_id` NBT tag: drop item, inspect with F3+H
+
+**6. Test Shop Persistence:**
+```
+/dmentity shop view merchant_balin
+```
+- Note current stock levels
+- Restart server or use `/reload confirm`
+- Verify merchant still exists and stock persists
+- Check `plugins/jkvttplugin/Shops/merchant_balin.yml` exists
+- Verify both stock decreases (from buying) and inventory increases (from selling) persist
+
+**7. Test Complete Buy/Sell Cycle:**
+1. Buy longsword from merchant (stock: 5 → 4)
+2. Verify stock decreased: `/dmentity shop view merchant_balin`
+3. Sell longsword back to merchant (stock: 4 → 5)
+4. Verify merchant inventory increased
+5. Remove merchant: `/dmentity remove merchant_balin`
+6. Respawn merchant: `/dmentity spawn merchant_balin`
+7. Verify shop data persists (stock still at 5)
+
+**8. Test Edge Cases:**
+- Try buying with insufficient inventory space
+- Try buying out of stock items
+- Try selling items with no acceptance list configured
+- Try restocking with negative amounts
+- Verify proper error messages for all failure cases
+
+**Expected Results:**
+- ✅ All items have `item_id` NBT tags
+- ✅ Merchant GUI shows both buy and sell trades
+- ✅ Stock tracking works correctly (increases/decreases)
+- ✅ Shop data persists to YAML and survives restarts
+- ✅ Tab completion works for items and currencies
+- ✅ Sell prices are 50% of buy prices
+- ✅ Acceptance list controls what players can sell
 
 ### Adding New D&D Content
 All D&D content is defined in `DMContent/` YAML files:
@@ -152,6 +244,21 @@ Each category has a corresponding loader in `src/main/java/io/papermc/jkvttplugi
 - Supports fixed amounts, ability modifiers, proficiency bonus, and formulas
 - Displayed in character sheet with current/max tracking
 - Recovered automatically via `/shortrest` and `/longrest` commands
+
+**Shop System (Issue #75):**
+- Native Minecraft Merchant GUI integration for D&D economy
+- **Currency System:** Gold, silver, copper, platinum, electrum pieces as items with NBT tags
+- **Shop Data Model:** `ShopConfig` defines items, prices, stock, and accepted items
+- **Bidirectional Trading:**
+  - Player buying from merchant (merchant stock decreases)
+  - Player selling to merchant (merchant inventory increases with sold items)
+- **Stock Tracking:** Limited and unlimited stock per item, persists across server restarts
+- **Shop Persistence:** Shops save to `plugins/jkvttplugin/Shops/<entityId>.yml`
+- **NBT-Based Item Identification:** All items tagged with `item_id` NBT for reliable identification
+  - Allows items with different display names to share the same mechanics
+  - Currency items identified by `item_id` ending in "_piece"
+  - Works for weapons, armor, items, and custom content
+- **Shop Commands:** DM entity commands for creating/managing shops (see Commands section)
 
 ### Key Design Patterns
 
@@ -314,11 +421,34 @@ Menu clicks are handled in `MenuClickListener.onMenuClick()` via switch on `Menu
 - ✅ Class resources display (Issue #25)
 - ✅ Race and subclass display
 
+### Shop System (Issue #75)
+- ✅ Native Minecraft Merchant GUI integration
+- ✅ Currency system (gold, silver, copper, platinum, electrum pieces)
+- ✅ Bidirectional trading (buy from merchant, sell to merchant)
+- ✅ Stock tracking with persistence across restarts
+- ✅ NBT-based item identification (`item_id` tag on all items)
+- ✅ Tab completion for shop commands (item IDs, currencies)
+- ✅ Shop persistence to YAML files
+- ✅ Merchant acceptance lists (controls what players can sell)
+- ✅ Dynamic pricing (50% sell multiplier for player-to-merchant trades)
+
 ### Commands
+
+**Character Commands:**
 - ✅ `/createcharacter` - Start character creation
-- ✅ `/reloadyaml` - Reload all YAML content (Issue #30)
 - ✅ `/shortrest` - Recover short rest resources (Issue #41)
 - ✅ `/longrest` - Recover long rest resources (Issue #41)
+
+**DM Entity Commands (Shop System):**
+- ✅ `/dmentity shop create <entity_name>` - Convert entity to merchant with shop
+- ✅ `/dmentity shop add <entity> <item_id> <amount> <price> <currency>` - Add item to shop (tab completion for items/currencies)
+- ✅ `/dmentity shop restock <entity> <item_id> <amount>` - Restock existing item (tab completion for merchant's inventory)
+- ✅ `/dmentity shop view <entity>` - View merchant's inventory
+- ✅ `/dmentity trade <entity>` - Open merchant trade GUI
+
+**System Commands:**
+- ✅ `/reloadyaml` - Reload all YAML content (Issue #30)
+- ✅ `/dmgive <item_type> <item_id> [amount]` - Give D&D items to players
 
 ## In Progress / Future Work
 

@@ -1,0 +1,107 @@
+# Balin the Blacksmith - Example Merchant Entity
+# This demonstrates the shop system for Issue #75
+
+# ==================== IDENTIFICATION ====================
+id: balin_blacksmith
+name: "Balin"
+random_names:
+  - "Balin Ironforge"
+  - "Balin the Smith"
+
+# ==================== D&D STAT BLOCK ====================
+creature_type: humanoid
+subtype: dwarf
+size: medium
+
+hit_points: 45
+armor_class: 14
+speed: 25
+
+abilities:
+  strength: 16
+  dexterity: 10
+  constitution: 14
+  intelligence: 12
+  wisdom: 11
+  charisma: 13
+
+# ==================== COMBAT ====================
+attacks:
+  - name: "Warhammer"
+    to_hit: 5
+    damage: "1d8+3"
+    damage_type: "bludgeoning"
+    reach: "5 ft"
+
+# ==================== VISUAL ====================
+model: "blacksmith"  # References resource pack model
+
+# ==================== DM NOTES ====================
+dm_notes: |
+  Balin is a gruff but fair dwarf blacksmith. He's been crafting weapons and armor for
+  adventurers for over 40 years. He has a soft spot for underdogs and may offer discounts
+  to young adventurers. He refuses to sell weapons to anyone he suspects might use them
+  for evil purposes.
+
+  Personality: Direct, no-nonsense, secretly kind-hearted
+  Accent: Scottish dwarf stereotype
+  Secret: His finest work (a +2 longsword) was stolen years ago - he'll pay handsomely for its return
+
+# ==================== SHOP SYSTEM ====================
+shop:
+  enabled: true
+
+  # Items for sale
+  items:
+    # Weapons
+    - item_id: dagger
+      price:
+        amount: 2
+        currency: gold
+      stock: 10
+
+    - item_id: longsword
+      price:
+        amount: 15
+        currency: gold
+      stock: 5
+
+    - item_id: greatsword
+      price:
+        amount: 50
+        currency: gold
+      stock: 2
+
+    # Armor
+    - item_id: leather_armor
+      price:
+        amount: 10
+        currency: gold
+      stock: 8
+
+    - item_id: chainmail
+      price:
+        amount: 75  # Currency defaults to gold if omitted
+      stock: 3
+
+    - item_id: plate_armor
+      price:
+        amount: 1500
+        currency: gold
+      stock: 1
+
+    # Consumables (cheap copper-priced items)
+    - item_id: whetstone
+      price:
+        amount: 10
+        currency: copper
+      stock: -1  # Unlimited stock
+
+  # What Balin will buy from players
+  accepts:
+    - longsword
+    - greatsword
+    - dagger
+    - leather_armor
+    - chainmail
+    - plate_armor

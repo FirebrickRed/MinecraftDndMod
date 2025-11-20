@@ -4,7 +4,9 @@ arcane_focus:
   focus_type: "arcane_focus"
   description: "A crystal orb used to channel arcane magic"
   icon: "arcane_focus"
-  cost: "10 gp"
+  cost:
+    amount: 10
+    currency: gold
 
 component_pouch:
   name: "Component Pouch"
@@ -12,7 +14,9 @@ component_pouch:
   focus_type: "component"
   description: "A small pouch containing spell components"
   icon: "component_pouch"
-  cost: "25 gp"
+  cost:
+    amount: 25
+    currency: gold
 
 holy_symbol:
   name: "Holy Symbol"
@@ -20,7 +24,9 @@ holy_symbol:
   focus_type: "divine_focus"
   description: "A sacred symbol of your deity"
   icon: "holy_symbol"
-  cost: "5 gp"
+  cost:
+    amount: 5
+    currency: gold
 
 druidic_focus:
   name: "Druidic Focus"
@@ -28,4 +34,6 @@ druidic_focus:
   focus_type: "druidic_focus"
   description: "A wooden staff or totem imbued with nature's power"
   icon: "druidic_focus"
-  cost: "10 gp"
+  cost:
+    amount: 15
+    currency: gold

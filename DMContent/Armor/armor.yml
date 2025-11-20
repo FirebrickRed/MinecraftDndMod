@@ -9,7 +9,9 @@ padded_armor:
   strength_requirement: 0
   stealth_disadvantage: true
   weight: "8 lb"
-  cost: "5 gp"
+  cost:
+    amount: 5
+    currency: gold
   description: "Quilted layers of cloth and batting."
   icon: "padded_armor"
   material: LEATHER_CHESTPLATE
@@ -24,7 +26,9 @@ leather_armor:
   strength_requirement: 0
   stealth_disadvantage: false
   weight: "10 lb"
-  cost: "10 gp"
+  cost:
+    amount: 10
+    currency: gold
   description: "Boiled leather chest piece."
   icon: "leather_armor"
   material: LEATHER_CHESTPLATE
@@ -39,7 +43,9 @@ studded_leather_armor:
   strength_requirement: 0
   stealth_disadvantage: false
   weight: "13 lb"
-  cost: "45 gp"
+  cost:
+    amount: 45
+    currency: gold
   description: "Leather reinforced with close-set rivets or spikes."
   icon: "studded_leather"
   material: LEATHER_CHESTPLATE
@@ -55,7 +61,9 @@ hide_armor:
   strength_requirement: 0
   stealth_disadvantage: false
   weight: "12 lb"
-  cost: "10 gp"
+  cost:
+    amount: 10
+    currency: gold
   description: "Crude armor made from thick furs and pelts."
   icon: "hide_armor"
   material: CHAINMAIL_CHESTPLATE
@@ -67,7 +75,9 @@ chain_shirt:
   strength_requirement: 0
   stealth_disadvantage: false
   weight: "20 lb"
-  cost: "50 gp"
+  cost:
+    amount: 50
+    currency: gold
   description: "A shirt of interlocking metal rings."
   icon: "chain_shirt"
   material: CHAINMAIL_CHESTPLATE
@@ -79,7 +89,9 @@ scale_mail:
   strength_requirement: 0
   stealth_disadvantage: true
   weight: "45 lb"
-  cost: "50 gp"
+  cost:
+    amount: 50
+    currency: gold
   description: "Coat and leggings of leather covered with overlapping pieces of metal."
   icon: "scale_mail"
   material: CHAINMAIL_CHESTPLATE
@@ -91,7 +103,9 @@ breastplate:
   strength_requirement: 0
   stealth_disadvantage: false
   weight: "20 lb"
-  cost: "400 gp"
+  cost:
+    amount: 400
+    currency: gold
   description: "Fitted metal chest piece with supple leather."
   icon: "breastplate"
   material: CHAINMAIL_CHESTPLATE
@@ -103,7 +117,9 @@ half_plate:
   strength_requirement: 0
   stealth_disadvantage: true
   weight: "40 lb"
-  cost: "750 gp"
+  cost:
+    amount: 450
+    currency: gold
   description: "Plate armor covering most of the body."
   icon: "half_plate"
   material: CHAINMAIL_CHESTPLATE
@@ -116,7 +132,9 @@ ring_mail:
   strength_requirement: 0
   stealth_disadvantage: true
   weight: "40 lb"
-  cost: "30 gp"
+  cost:
+    amount: 30
+    currency: gold
   description: "Leather armor with heavy rings sewn into it."
   icon: "ring_mail"
   material: IRON_CHESTPLATE
@@ -128,7 +146,9 @@ chain_mail:
   strength_requirement: 13
   stealth_disadvantage: true
   weight: "55 lb"
-  cost: "75 gp"
+  cost:
+    amount: 75
+    currency: gold
   description: "Interlocking metal rings covering the entire body."
   icon: "chain_mail"
   material: IRON_CHESTPLATE
@@ -140,7 +160,9 @@ splint:
   strength_requirement: 15
   stealth_disadvantage: true
   weight: "60 lb"
-  cost: "200 gp"
+  cost:
+    amount: 200
+    currency: gold
   description: "Narrow vertical strips of metal riveted to a leather backing."
   icon: "splint_armor"
   material: IRON_CHESTPLATE
@@ -152,7 +174,9 @@ plate:
   strength_requirement: 15
   stealth_disadvantage: true
   weight: "65 lb"
-  cost: "1,500 gp"
+  cost:
+    amount: 1500
+    currency: gold
   description: "Interlocking metal plates covering the entire body."
   icon: "plate_armor"
   material: IRON_CHESTPLATE
@@ -165,7 +189,9 @@ shield:
   strength_requirement: 0
   stealth_disadvantage: false
   weight: "6 lb"
-  cost: "10 gp"
+  cost:
+    amount: 10
+    currency: gold
   description: "Increases AC by 2. Must be strapped to the arm."
   icon: "shield"
   material: SHIELD
@@ -177,7 +203,9 @@ wooden_shield:
   strength_requirement: 0
   stealth_disadvantage: false
   weight: "6 lb"
-  cost: "10 gp"
+  cost:
+    amount: 10
+    currency: gold
   description: "Increases AC by 2. Must be strapped to the arm."
   icon: "shield"
   material: SHIELD

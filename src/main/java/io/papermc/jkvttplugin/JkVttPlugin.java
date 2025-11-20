@@ -7,6 +7,8 @@ import io.papermc.jkvttplugin.data.DataManager;
 import io.papermc.jkvttplugin.dm.DmCommand;
 import io.papermc.jkvttplugin.dm.DMPersistenceLoader;
 import io.papermc.jkvttplugin.listeners.*;
+import io.papermc.jkvttplugin.shop.ShopListener;
+import io.papermc.jkvttplugin.shop.ShopPersistenceLoader;
 import io.papermc.jkvttplugin.ui.listener.MenuClickListener;
 import io.papermc.jkvttplugin.ui.listener.SpellCastingMenuListener;
 import io.papermc.jkvttplugin.util.ItemUtil;
@@ -35,6 +37,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
 
         CharacterSheetManager.initialize(this);
         DMPersistenceLoader.initialize(this);
+        ShopPersistenceLoader.initialize(this);
 
         // Listeners
         Bukkit.getPluginManager().registerEvents(this, this);
@@ -49,6 +52,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new SpellCastingMenuListener(), this);
         // EntityInteractionListener removed - use /dmentity info command instead
         Bukkit.getPluginManager().registerEvents(new StatBlockMenuListener(), this);
+        Bukkit.getPluginManager().registerEvents(new ShopListener(this), this);
 
         // Commands
         this.getCommand("reloadyaml").setExecutor(new ReloadYamlCommand());
@@ -77,6 +81,10 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         DmEntityCommand dmEntityCommand = new DmEntityCommand();
         this.getCommand("dmentity").setExecutor(dmEntityCommand);
         this.getCommand("dmentity").setTabCompleter(dmEntityCommand);
+
+        DmGiveCommand dmGiveCommand = new DmGiveCommand();
+        this.getCommand("dmgive").setExecutor(dmGiveCommand);
+        this.getCommand("dmgive").setTabCompleter(dmGiveCommand);
 
         DmCommand dmCommand = new DmCommand();
         this.getCommand("dm").setExecutor(dmCommand);

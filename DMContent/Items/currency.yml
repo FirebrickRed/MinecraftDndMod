@@ -1,0 +1,53 @@
+# D&D 5e Currency Items
+# These are the standard coins used for economy and merchant trades
+# Standard conversion: 1 platinum = 10 gold = 100 silver = 1000 copper
+
+copper_piece:
+  name: "Copper Piece"
+  type: "currency"
+  description: "A common copper coin used for small transactions"
+  icon: "copper_ingot"
+  cost:
+    amount: 1
+    currency: copper
+  currency_type: copper
+
+silver_piece:
+  name: "Silver Piece"
+  type: "currency"
+  description: "A silver coin worth 10 copper pieces"
+  icon: "iron_nugget"
+  cost:
+    amount: 1
+    currency: silver
+  currency_type: silver
+
+electrum_piece:
+  name: "Electrum Piece"
+  type: "currency"
+  description: "A rare electrum coin worth 5 silver pieces (50 copper)"
+  icon: "gold_ingot"
+  cost:
+    amount: 1
+    currency: electrum
+  currency_type: electrum
+
+gold_piece:
+  name: "Gold Piece"
+  type: "currency"
+  description: "A shiny gold coin worth 10 silver pieces (100 copper)"
+  icon: "gold_nugget"
+  cost:
+    amount: 1
+    currency: gold
+  currency_type: gold
+
+platinum_piece:
+  name: "Platinum Piece"
+  type: "currency"
+  description: "A rare platinum coin worth 10 gold pieces (1000 copper)"
+  icon: "netherite_scrap"
+  cost:
+    amount: 1
+    currency: platinum
+  currency_type: platinum

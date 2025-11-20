@@ -1,10 +1,14 @@
 package io.papermc.jkvttplugin.commands;
 
 
+import io.papermc.jkvttplugin.data.loader.ArmorLoader;
 import io.papermc.jkvttplugin.data.loader.EntityLoader;
-import io.papermc.jkvttplugin.data.model.DndEntity;
-import io.papermc.jkvttplugin.data.model.DndEntityInstance;
+import io.papermc.jkvttplugin.data.loader.ItemLoader;
+import io.papermc.jkvttplugin.data.loader.WeaponLoader;
+import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.dm.DMManager;
+import io.papermc.jkvttplugin.shop.ShopGuiUtil;
+import io.papermc.jkvttplugin.shop.ShopPersistenceLoader;
 import io.papermc.jkvttplugin.ui.menu.EntityStatBlockMenu;
 import io.papermc.jkvttplugin.util.CommandUtil;
 import io.papermc.jkvttplugin.util.DiceRoller;
@@ -21,6 +25,7 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.Merchant;
 import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.*;
@@ -68,6 +73,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "remove" -> handleRemove(sender, args);
             case "teleport" -> handleTeleport(sender, args);
             case "info" -> handleInfo(sender, args);
+            case "trade" -> handleTrade(sender, args);
+            case "shop" -> handleShop(sender, args);
             case "spawngroup" -> handleSpawnGroup(sender, args);
             default -> sendHelp(sender);
         }
@@ -135,6 +142,15 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         // Create entity instance
         DndEntityInstance instance = new DndEntityInstance(template, armorStand, finalName, maxHp);
+
+        // Initialize shop if entity is a merchant (Issue #75)
+        if (template.hasShop()) {
+            ShopConfig instanceShop = cloneShop(template.getShop());
+            instance.setInstanceShop(instanceShop);
+
+            // Try to load saved shop stock
+            ShopPersistenceLoader.loadShop(instance.getInstanceId(), instanceShop);
+        }
 
         // Track entity
         String trackingKey = generateTrackingKey(finalName);
@@ -310,6 +326,331 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         EntityStatBlockMenu.open(player, instance);
     }
 
+    // ==================== TRADE SUBCOMMAND ====================
+
+    private void handleTrade(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only players can trade with entities.", NamedTextColor.RED));
+            return;
+        }
+
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /dmentity trade <name>", NamedTextColor.RED));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 1);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+        } else {
+            entityName = args[1];
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        // Check if entity has a shop
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        // Create and open merchant GUI (uses instance shop with per-instance stock)
+        Merchant merchant = ShopGuiUtil.createMerchant(
+            instance.getShop(),
+            instance.getDisplayName(),
+            instance
+        );
+
+        if (merchant == null) {
+            sender.sendMessage(Component.text("Failed to create merchant GUI.", NamedTextColor.RED));
+            return;
+        }
+
+        player.openMerchant(merchant, true);
+    }
+
+    // ==================== SHOP SUBCOMMAND ====================
+
+    private void handleShop(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop <view|restock|add> <entity> ...", NamedTextColor.RED));
+            return;
+        }
+
+        String shopAction = args[1].toLowerCase();
+
+        switch (shopAction) {
+            case "view" -> handleShopView(sender, args);
+            case "restock" -> handleShopRestock(sender, args);
+            case "add" -> handleShopAdd(sender, args);
+            default -> sender.sendMessage(Component.text("Unknown shop action. Use: view, restock, or add", NamedTextColor.RED));
+        }
+    }
+
+    /**
+     * /dmentity shop view <entity>
+     * Shows current stock for all items in the merchant's shop.
+     */
+    private void handleShopView(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop view <entity>", NamedTextColor.RED));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+        } else {
+            entityName = args[2];
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+        sender.sendMessage(Component.text("=== " + instance.getDisplayName() + "'s Shop ===", NamedTextColor.GOLD));
+
+        if (shop.getItems() == null || shop.getItems().isEmpty()) {
+            sender.sendMessage(Component.text("Shop is empty.", NamedTextColor.GRAY));
+            return;
+        }
+
+        for (ShopItem item : shop.getItems()) {
+            String stockDisplay = item.hasUnlimitedStock()
+                ? "∞"
+                : item.getStock() + "/" + instance.getTemplate().getShop().findItem(item.getItemId()).getStock();
+
+            String priceDisplay = item.getPrice().getAmount() + " " + item.getPrice().getCurrency();
+
+            Component line = Component.text("• ", NamedTextColor.GRAY)
+                    .append(Component.text(item.getItemId(), NamedTextColor.WHITE))
+                    .append(Component.text(" - ", NamedTextColor.DARK_GRAY))
+                    .append(Component.text(priceDisplay, NamedTextColor.GOLD))
+                    .append(Component.text(" [Stock: ", NamedTextColor.DARK_GRAY))
+                    .append(Component.text(stockDisplay, item.isInStock() ? NamedTextColor.GREEN : NamedTextColor.RED))
+                    .append(Component.text("]", NamedTextColor.DARK_GRAY));
+
+            sender.sendMessage(line);
+        }
+    }
+
+    /**
+     * /dmentity shop restock <entity> <item_id> [amount]
+     * Restocks an item to specified amount (or template default if not specified).
+     */
+    private void handleShopRestock(CommandSender sender, String[] args) {
+        if (args.length < 4) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop restock <entity> <item_id> [amount]", NamedTextColor.RED));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        int nextArgIndex;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+            nextArgIndex = quotedResult.getNextIndex();
+        } else {
+            entityName = args[2];
+            nextArgIndex = 3;
+        }
+
+        if (args.length < nextArgIndex + 1) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop restock <entity> <item_id> [amount]", NamedTextColor.RED));
+            return;
+        }
+
+        String itemId = args[nextArgIndex];
+        Integer restockAmount = null;
+
+        if (args.length >= nextArgIndex + 2) {
+            try {
+                restockAmount = Integer.parseInt(args[nextArgIndex + 1]);
+                if (restockAmount < -1) {
+                    sender.sendMessage(Component.text("Amount must be -1 (unlimited) or >= 0", NamedTextColor.RED));
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                sender.sendMessage(Component.text("Invalid amount: " + args[nextArgIndex + 1], NamedTextColor.RED));
+                return;
+            }
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+        ShopItem shopItem = shop.findItem(itemId);
+
+        if (shopItem == null) {
+            sender.sendMessage(Component.text("Item not found in shop: " + itemId, NamedTextColor.RED));
+            return;
+        }
+
+        // Determine restock amount
+        int newStock;
+        if (restockAmount != null) {
+            newStock = restockAmount;
+        } else {
+            // Restore to template default
+            ShopItem templateItem = instance.getTemplate().getShop().findItem(itemId);
+            newStock = templateItem != null ? templateItem.getStock() : 0;
+        }
+
+        shopItem.setStock(newStock);
+
+        // Save shop
+        ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+
+        String stockDisplay = newStock == -1 ? "unlimited" : String.valueOf(newStock);
+        sender.sendMessage(Component.text("✓ Restocked ", NamedTextColor.GREEN)
+                .append(Component.text(itemId, NamedTextColor.GOLD))
+                .append(Component.text(" to " + stockDisplay, NamedTextColor.GREEN)));
+    }
+
+    /**
+     * /dmentity shop add <entity> <item_id> <price_amount> <price_currency> [stock]
+     * Adds a new item to the shop.
+     */
+    private void handleShopAdd(CommandSender sender, String[] args) {
+        if (args.length < 6) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop add <entity> <item_id> <price_amount> <price_currency> [stock]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dmentity shop add balin healing_potion 50 gold 10", NamedTextColor.GRAY));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        int nextArgIndex;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+            nextArgIndex = quotedResult.getNextIndex();
+        } else {
+            entityName = args[2];
+            nextArgIndex = 3;
+        }
+
+        if (args.length < nextArgIndex + 3) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop add <entity> <item_id> <price_amount> <price_currency> [stock]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dmentity shop add balin healing_potion 50 gold 10", NamedTextColor.GRAY));
+            return;
+        }
+
+        String itemId = args[nextArgIndex];
+        int priceAmount;
+        String priceCurrency = args[nextArgIndex + 2];
+        int stock = -1; // Default unlimited
+
+        try {
+            priceAmount = Integer.parseInt(args[nextArgIndex + 1]);
+        } catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("Invalid price amount: " + args[nextArgIndex + 1], NamedTextColor.RED));
+            return;
+        }
+
+        if (args.length >= nextArgIndex + 4) {
+            try {
+                stock = Integer.parseInt(args[nextArgIndex + 3]);
+                if (stock < -1) {
+                    sender.sendMessage(Component.text("Stock must be -1 (unlimited) or >= 0", NamedTextColor.RED));
+                    return;
+                }
+            } catch (NumberFormatException e) {
+                sender.sendMessage(Component.text("Invalid stock: " + args[nextArgIndex + 3], NamedTextColor.RED));
+                return;
+            }
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        // Verify item exists in data
+        if (resolveItemForShop(itemId) == null) {
+            sender.sendMessage(Component.text("Unknown item ID: " + itemId, NamedTextColor.RED));
+            sender.sendMessage(Component.text("Item must exist in weapons, armor, or items data.", NamedTextColor.GRAY));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+
+        // Check if item already exists
+        if (shop.findItem(itemId) != null) {
+            sender.sendMessage(Component.text("Item already exists in shop. Use 'restock' to change stock.", NamedTextColor.RED));
+            return;
+        }
+
+        // Create new shop item
+        ShopItem newItem = new ShopItem();
+        newItem.setItemId(itemId);
+        newItem.setPrice(new Cost(priceAmount, priceCurrency));
+        newItem.setStock(stock);
+
+        // Add to shop
+        if (shop.getItems() == null) {
+            shop.setItems(new ArrayList<>());
+        }
+        shop.getItems().add(newItem);
+
+        // Save shop
+        ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+
+        String stockDisplay = stock == -1 ? "unlimited" : String.valueOf(stock);
+        sender.sendMessage(Component.text("✓ Added ", NamedTextColor.GREEN)
+                .append(Component.text(itemId, NamedTextColor.GOLD))
+                .append(Component.text(" to shop (", NamedTextColor.GREEN))
+                .append(Component.text(priceAmount + " " + priceCurrency, NamedTextColor.YELLOW))
+                .append(Component.text(", stock: " + stockDisplay + ")", NamedTextColor.GREEN)));
+    }
+
+    /**
+     * Helper method to verify an item exists in the data loaders.
+     * Returns true if item exists in weapons, armor, or items.
+     */
+    private Object resolveItemForShop(String itemId) {
+        if (WeaponLoader.getWeapon(itemId) != null) return WeaponLoader.getWeapon(itemId);
+        if (ArmorLoader.getArmor(itemId) != null) return ArmorLoader.getArmor(itemId);
+        if (ItemLoader.getItem(itemId) != null) return ItemLoader.getItem(itemId);
+        return null;
+    }
+
     // ==================== SPAWNGROUP SUBCOMMAND ====================
 
     private void handleSpawnGroup(CommandSender sender, String[] args) {
@@ -423,6 +764,10 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     private void removeAll(CommandSender sender) {
         int count = spawnedEntities.size();
         for (DndEntityInstance instance : spawnedEntities.values()) {
+            // Save shop before removing (Issue #75)
+            if (instance.getShop() != null) {
+                ShopPersistenceLoader.saveShop(instance.getInstanceId(), instance.getShop());
+            }
             instance.getArmorStand().remove();
             instance.unregister();
         }
@@ -440,6 +785,10 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         for (Map.Entry<String, DndEntityInstance> entry : spawnedEntities.entrySet()) {
             if (creatureType.equalsIgnoreCase(entry.getValue().getTemplate().getCreatureType())) {
+                // Save shop before removing (Issue #75)
+                if (entry.getValue().getShop() != null) {
+                    ShopPersistenceLoader.saveShop(entry.getValue().getInstanceId(), entry.getValue().getShop());
+                }
                 entry.getValue().getArmorStand().remove();
                 entry.getValue().unregister();
                 toRemove.add(entry.getKey());
@@ -462,6 +811,10 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         for (Map.Entry<String, DndEntityInstance> entry : spawnedEntities.entrySet()) {
             Location entityLoc = entry.getValue().getArmorStand().getLocation();
             if (entityLoc.distance(center) <= radius) {
+                // Save shop before removing (Issue #75)
+                if (entry.getValue().getShop() != null) {
+                    ShopPersistenceLoader.saveShop(entry.getValue().getInstanceId(), entry.getValue().getShop());
+                }
                 entry.getValue().getArmorStand().remove();
                 entry.getValue().unregister();
                 toRemove.add(entry.getKey());
@@ -489,6 +842,10 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                         .findFirst().orElse(null);
 
                 if (key != null) {
+                    // Save shop before removing (Issue #75)
+                    if (instance.getShop() != null) {
+                        ShopPersistenceLoader.saveShop(instance.getInstanceId(), instance.getShop());
+                    }
                     instance.getArmorStand().remove();
                     instance.unregister();
                     spawnedEntities.remove(key);
@@ -542,6 +899,10 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("  - Teleport entity to location", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity info <name>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - View entity stat block", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("/dmentity trade <name>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  - Open merchant trade GUI", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("/dmentity shop <view|restock|add> <entity> ...", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  - Manage merchant shop inventory", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity spawngroup <group_id>", NamedTextColor.DARK_GRAY)
                 .append(Component.text(" (Coming in Issue #79)", NamedTextColor.DARK_GRAY)));
     }
@@ -556,7 +917,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             // Subcommands
-            return List.of("spawn", "list", "remove", "teleport", "info", "spawngroup").stream()
+            return List.of("spawn", "list", "remove", "teleport", "info", "trade", "shop", "spawngroup").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -585,25 +946,131 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
                 case "teleport":
                 case "info":
+                case "trade":
                     // Suggest spawned entity names
                     return spawnedEntities.values().stream()
                             .map(DndEntityInstance::getDisplayName)
                             .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
                             .collect(Collectors.toList());
+
+                case "shop":
+                    // Suggest shop actions
+                    return List.of("view", "restock", "add").stream()
+                            .filter(s -> s.startsWith(args[1].toLowerCase()))
+                            .collect(Collectors.toList());
             }
         }
 
-        if (args.length == 3 && args[0].equalsIgnoreCase("remove") && args[1].equalsIgnoreCase("type")) {
-            // Suggest creature types
-            return EntityLoader.getAllEntities().stream()
-                    .map(DndEntity::getCreatureType)
-                    .filter(Objects::nonNull)
-                    .distinct()
-                    .filter(type -> type.toLowerCase().startsWith(args[2].toLowerCase()))
+        if (args.length == 3) {
+            if (args[0].equalsIgnoreCase("remove") && args[1].equalsIgnoreCase("type")) {
+                // Suggest creature types
+                return EntityLoader.getAllEntities().stream()
+                        .map(DndEntity::getCreatureType)
+                        .filter(Objects::nonNull)
+                        .distinct()
+                        .filter(type -> type.toLowerCase().startsWith(args[2].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+
+            if (args[0].equalsIgnoreCase("shop")) {
+                // Suggest merchant names
+                return spawnedEntities.values().stream()
+                        .filter(e -> e.getTemplate().hasShop())
+                        .map(DndEntityInstance::getDisplayName)
+                        .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+        }
+
+        if (args.length == 4) {
+            if (args[0].equalsIgnoreCase("shop")) {
+                String shopAction = args[1].toLowerCase();
+
+                if (shopAction.equals("restock")) {
+                    // Suggest item IDs from merchant's shop
+                    DndEntityInstance merchant = findEntity(args[2]);
+                    if (merchant != null && merchant.getShop() != null && merchant.getShop().getItems() != null) {
+                        return merchant.getShop().getItems().stream()
+                                .map(ShopItem::getItemId)
+                                .filter(id -> id.toLowerCase().startsWith(args[3].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                } else if (shopAction.equals("add")) {
+                    // Suggest all available item IDs (weapons, armor, items)
+                    return getAllItemIds().stream()
+                            .filter(id -> id.toLowerCase().startsWith(args[3].toLowerCase()))
+                            .collect(Collectors.toList());
+                }
+            }
+        }
+
+        if (args.length == 6 && args[0].equalsIgnoreCase("shop") && args[1].equalsIgnoreCase("add")) {
+            // Suggest currency types
+            // ToDo: update
+            return List.of("gold", "silver", "copper", "platinum", "electrum").stream()
+                    .filter(c -> c.toLowerCase().startsWith(args[5].toLowerCase()))
                     .collect(Collectors.toList());
         }
 
         return List.of();
+    }
+
+    /**
+     * Gets all available item IDs from weapons, armor, and items.
+     */
+    private List<String> getAllItemIds() {
+        List<String> allIds = new ArrayList<>();
+
+        // Add weapons
+        allIds.addAll(WeaponLoader.getAllWeapons().stream()
+                .map(DndWeapon::getId)
+                .collect(Collectors.toList()));
+
+        // Add armor
+        allIds.addAll(ArmorLoader.getAllArmors().stream()
+                .map(DndArmor::getId)
+                .collect(Collectors.toList()));
+
+        // Add items
+        allIds.addAll(ItemLoader.getAllItems().stream()
+                .map(DndItem::getId)
+                .collect(Collectors.toList()));
+
+        return allIds;
+    }
+
+    /**
+     * Clone shop configuration for per-instance shops.
+     * Creates a deep copy so each spawned merchant has independent stock.
+     * Issue #75 - Shop System
+     */
+    private ShopConfig cloneShop(ShopConfig template) {
+        if (template == null) {
+            return null;
+        }
+
+        ShopConfig clone = new ShopConfig();
+        clone.setEnabled(template.isEnabled());
+
+        // Clone shop items (deep copy so stock is independent)
+        if (template.getItems() != null) {
+            List<ShopItem> clonedItems = new ArrayList<>();
+            for (ShopItem item : template.getItems()) {
+                ShopItem clonedItem = new ShopItem();
+                clonedItem.setItemId(item.getItemId());
+                clonedItem.setPrice(item.getPrice()); // Cost is immutable, no need to clone
+                clonedItem.setStock(item.getStock());
+                clonedItems.add(clonedItem);
+            }
+            clone.setItems(clonedItems);
+        }
+
+        // Clone accepts list
+        if (template.getAccepts() != null) {
+            clone.setAccepts(new ArrayList<>(template.getAccepts()));
+        }
+
+        return clone;
     }
 
     // ==================== PUBLIC API ====================

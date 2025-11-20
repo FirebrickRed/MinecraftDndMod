@@ -7,7 +7,9 @@ club:
   damage_type: "bludgeoning"
   properties: ["light"]
   weight: "2 lb"
-  cost: "1 sp"
+  cost:
+    amount: 1
+    currency: silver
   description: "A simple wooden club."
   icon: "club"
 
@@ -20,7 +22,9 @@ dagger:
   properties: ["finesse", "light", "thrown"]
   range: "20/60"
   weight: "1 lb"
-  cost: "2 gp"
+  cost:
+    amount: 2
+    currency: gold
   description: "A simple blade."
   icon: "dagger"
 
@@ -33,7 +37,9 @@ javelin:
   properties: ["thrown"]
   range: "30/120"
   weight: "2 lb"
-  cost: "5 sp"
+  cost:
+    amount: 5
+    currency: silver
   description: "A light throwing spear."
   icon: "javelin"
 
@@ -48,7 +54,9 @@ light_crossbow:
     normal: 80
     long: 320
   weight: "5 lb"
-  cost: "25 gp"
+  cost:
+    amount: 25
+    currency: gold
   description: "A simple crossbow."
   icon: "light_crossbow"
 
@@ -61,7 +69,9 @@ shortbow:
   properties: ["ammunition", "two-handed"]
   range: "80/320"
   weight: "2 lb"
-  cost: "25 gp"
+  cost:
+    amount: 25
+    currency: gold
   description: "A simple bow."
   icon: "shortbow"
 
@@ -74,7 +84,9 @@ longsword:
   damage_type: "slashing"
   properties: ["versatile"]
   weight: "3 lb"
-  cost: "15 gp"
+  cost:
+    amount: 15
+    currency: gold
   description: "A classic knightly blade. Can be wielded with two hands for 1d10 damage."
   icon: "longsword"
 
@@ -86,7 +98,9 @@ greatsword:
   damage_type: "slashing"
   properties: ["heavy", "two-handed"]
   weight: "6 lb"
-  cost: "50 gp"
+  cost:
+    amount: 50
+    currency: gold
   description: "A massive two-handed sword."
   icon: "greatsword"
 
@@ -98,7 +112,9 @@ rapier:
   damage_type: "piercing"
   properties: ["finesse"]
   weight: "2 lb"
-  cost: "25 gp"
+  cost:
+    amount: 25
+    currency: gold
   description: "A light, precise thrusting blade."
   icon: "rapier"
 
@@ -111,6 +127,8 @@ longbow:
   properties: ["ammunition", "heavy", "two-handed"]
   range: "150/600"
   weight: "2 lb"
-  cost: "50 gp"
+  cost:
+    amount: 50
+    currency: gold
   description: "A powerful ranged weapon requiring great strength to draw."
   icon: "longbow"

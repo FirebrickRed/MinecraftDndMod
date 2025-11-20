@@ -54,6 +54,11 @@ commands:
     usage: /dmentity <spawn|list|remove|teleport|spawngroup>
     permission: jkvtt.dm
     permission-message: You do not have permission to use this command.
+  dmgive:
+    description: (DM) Give D&D items to players.
+    usage: /dmgive <player> <item_id> [amount]
+    permission: jkvtt.dm
+    permission-message: You do not have permission to use this command.
   dm:
     description: Manage DM (Dungeon Master) role assignments.
     usage: /dm <add|remove|list>

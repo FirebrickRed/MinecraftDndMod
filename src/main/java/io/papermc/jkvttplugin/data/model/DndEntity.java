@@ -124,6 +124,14 @@ public class DndEntity {
      */
     private StatBlockVisibility statBlockVisibility;
 
+    // ==================== SHOP SYSTEM (Issue #75) ====================
+
+    /**
+     * Optional shop configuration for merchant entities.
+     * If present, players can trade with this entity via /dmentity trade
+     */
+    private ShopConfig shop;
+
     // ==================== CONSTRUCTORS ====================
 
     /**
@@ -191,7 +199,17 @@ public class DndEntity {
         this.statBlockVisibility = statBlockVisibility;
     }
 
+    public ShopConfig getShop() { return shop; }
+    public void setShop(ShopConfig shop) { this.shop = shop; }
+
     // ==================== UTILITY METHODS ====================
+
+    /**
+     * Check if this entity has a shop (is a merchant).
+     */
+    public boolean hasShop() {
+        return shop != null && shop.isEnabled() && shop.hasItems();
+    }
 
     /**
      * Gets an ability score, or 10 (the default) if not set.

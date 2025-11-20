@@ -1,10 +1,13 @@
 package io.papermc.jkvttplugin.data.loader;
 
+import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
 import io.papermc.jkvttplugin.data.model.DndItem;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
 import java.io.FileReader;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.logging.Logger;
@@ -51,12 +54,21 @@ public class ItemLoader {
         item.setFocusType((String) data.get("focus_type"));
         item.setDescription((String) data.get("description"));
         item.setIcon((String) data.get("icon"));
-        item.setCost((String) data.get("cost"));
+        item.setCost(LoaderUtils.parseCost(data.get("cost"), id));
         return item;
     }
 
     public static DndItem getItem(String id) {
         return loadedItems.get(normalize(id));
+    }
+
+    /**
+     * Gets all loaded items.
+     *
+     * @return Unmodifiable collection of all items
+     */
+    public static Collection<DndItem> getAllItems() {
+        return Collections.unmodifiableCollection(loadedItems.values());
     }
 
     /**

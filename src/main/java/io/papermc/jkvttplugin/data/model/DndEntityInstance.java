@@ -71,6 +71,13 @@ public class DndEntityInstance {
      */
     private boolean isDead;
 
+    /**
+     * Per-instance shop configuration (cloned from template).
+     * Allows each spawned merchant to have independent stock.
+     * Issue #75 - Shop System
+     */
+    private ShopConfig instanceShop;
+
     // ==================== CONSTRUCTOR ====================
 
     /**
@@ -170,6 +177,21 @@ public class DndEntityInstance {
 
     public boolean isDead() { return isDead; }
     public void setDead(boolean dead) { isDead = dead; }
+
+    /**
+     * Get the instance-specific shop configuration.
+     * Returns the per-instance shop (with modified stock) if entity is a merchant.
+     * Falls back to template shop if no instance shop has been initialized.
+     *
+     * @return The shop configuration, or null if entity is not a merchant
+     */
+    public ShopConfig getShop() {
+        return instanceShop != null ? instanceShop : template.getShop();
+    }
+
+    public void setInstanceShop(ShopConfig instanceShop) {
+        this.instanceShop = instanceShop;
+    }
 
     // ==================== UTILITY METHODS ====================
 

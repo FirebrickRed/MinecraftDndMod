@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.data.loader;
 
+import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
 import io.papermc.jkvttplugin.data.model.DndWeapon;
 import io.papermc.jkvttplugin.util.Util;
 import org.yaml.snakeyaml.Yaml;
@@ -59,7 +60,7 @@ public class WeaponLoader {
         weapon.setDamage((String) data.get("damage"));
         weapon.setDamageType((String) data.get("damage_type"));
         weapon.setWeight((String) data.get("weight"));
-        weapon.setCost((String) data.get("cost"));
+        weapon.setCost(LoaderUtils.parseCost(data.get("cost"), id));
         weapon.setDescription((String) data.get("description"));
         weapon.setIcon((String) data.get("icon"));
 

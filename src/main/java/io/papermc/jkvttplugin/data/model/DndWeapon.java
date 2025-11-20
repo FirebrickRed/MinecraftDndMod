@@ -1,6 +1,7 @@
 package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -21,7 +22,7 @@ public class DndWeapon {
     private int normalRange; // For ranged weapons
     private int longRange; // For ranged weapons
     private String weight; // "2 lb", "6 lb", etc.
-    private String cost; // "5 gp", "10 gp", etc.
+    private Cost cost; // Structured cost with amount and currency
     private String description;
     private String icon; // For Minecraft item model
 
@@ -94,8 +95,9 @@ public class DndWeapon {
         if (weight != null && !weight.isEmpty()) {
             lore.add(Component.text("Weight: " + weight, NamedTextColor.DARK_GRAY));
         }
-        if (cost != null && !cost.isEmpty()) {
-            lore.add(Component.text("Cost: " + cost, NamedTextColor.GOLD));
+        // ToDo: can cost be null?
+        if (cost != null) {
+            lore.add(Component.text("Cost: " + cost.toDisplayString(), NamedTextColor.GOLD));
         }
 
         // Add description
@@ -104,12 +106,17 @@ public class DndWeapon {
             lore.add(Component.text(description, NamedTextColor.YELLOW));
         }
 
-        return Util.createItem(
+        ItemStack item = Util.createItem(
                 Component.text(name, NamedTextColor.WHITE),
                 lore,
                 icon != null ? icon : "weapon_" + Util.normalize(name),
                 1
         );
+
+        // Tag with item_id for reliable identification (Issue #75)
+        ItemUtil.tagItemId(item, id);
+
+        return item;
     }
 
     // Getters and Setters
@@ -143,8 +150,8 @@ public class DndWeapon {
     public String getWeight() { return weight; }
     public void setWeight(String weight) { this.weight = weight; }
 
-    public String getCost() { return cost; }
-    public void setCost(String cost) { this.cost = cost; }
+    public Cost getCost() { return cost; }
+    public void setCost(Cost cost) { this.cost = cost; }
 
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }

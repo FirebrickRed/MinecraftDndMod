@@ -16,6 +16,7 @@ public class ItemUtil {
     private static Plugin plugin;
     private static NamespacedKey ACTION_KEY;
     private static NamespacedKey PAYLOAD_KEY;
+    private static NamespacedKey ITEM_ID_KEY;
 
     private ItemUtil() {}
 
@@ -23,6 +24,7 @@ public class ItemUtil {
         ItemUtil.plugin = plugin;
         ACTION_KEY = new NamespacedKey(plugin, "menu_action");
         PAYLOAD_KEY = new NamespacedKey(plugin, "menu_payload");
+        ITEM_ID_KEY = new NamespacedKey(plugin, "item_id");
     }
 
     /**
@@ -107,5 +109,51 @@ public class ItemUtil {
 
         PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
         return pdc.get(PAYLOAD_KEY, PersistentDataType.STRING);
+    }
+
+    /**
+     * Tags an ItemStack with its item_id for reliable identification.
+     * This allows multiple items with different display names to share the same ID.
+     *
+     * @param item The item to tag
+     * @param itemId The item ID (e.g., "longsword", "gold_piece")
+     * @return The tagged item (same instance, for chaining)
+     */
+    public static ItemStack tagItemId(ItemStack item, String itemId) {
+        if (item == null || itemId == null) {
+            return item;
+        }
+
+        ItemMeta meta = item.getItemMeta();
+        PersistentDataContainer pdc = meta.getPersistentDataContainer();
+        pdc.set(ITEM_ID_KEY, PersistentDataType.STRING, itemId);
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /**
+     * Retrieves the item_id from an ItemStack's NBT data.
+     * Returns null if the item doesn't have an item_id tag.
+     *
+     * @param item The item to check
+     * @return The item ID, or null if not found
+     */
+    public static String getItemId(ItemStack item) {
+        if (item == null || !item.hasItemMeta()) {
+            return null;
+        }
+
+        PersistentDataContainer pdc = item.getItemMeta().getPersistentDataContainer();
+        return pdc.get(ITEM_ID_KEY, PersistentDataType.STRING);
+    }
+
+    /**
+     * Gets the NamespacedKey used for item_id tagging.
+     * Allows external classes to add item_id tags directly to ItemMeta.
+     *
+     * @return The item_id NamespacedKey
+     */
+    public static NamespacedKey getItemIdKey() {
+        return ITEM_ID_KEY;
     }
 }

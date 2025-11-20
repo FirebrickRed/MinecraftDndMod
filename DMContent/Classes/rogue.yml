@@ -75,8 +75,8 @@ features_by_level:
         choose a feat.
 starting_equipment:
   - leather_armor
-  - daggers
-  - daggers
+  - dagger
+  - dagger
   - thieves_tools
 player_choices:
   - id: class_skills
