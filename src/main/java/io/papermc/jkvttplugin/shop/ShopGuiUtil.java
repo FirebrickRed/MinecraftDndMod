@@ -47,7 +47,7 @@ public class ShopGuiUtil {
 
         // Convert each ShopItem to a MerchantRecipe (merchant selling TO player)
         for (ShopItem shopItem : shopConfig.getItems()) {
-            MerchantRecipe recipe = createRecipe(shopItem);
+            MerchantRecipe recipe = createRecipe(shopItem, shopConfig);
             if (recipe != null) {
                 recipes.add(recipe);
             }
@@ -75,11 +75,16 @@ public class ShopGuiUtil {
 
     /**
      * Creates a MerchantRecipe from a ShopItem.
+     * Applies DM price adjustments from shop config (Issue #76):
+     * - Item price overrides (fixed price, ignores multipliers)
+     * - Global discount/markup
+     * - Base buy multiplier
      *
      * @param shopItem The shop item to convert
+     * @param shopConfig The shop configuration (for price adjustments)
      * @return A MerchantRecipe, or null if the item couldn't be resolved
      */
-    private static MerchantRecipe createRecipe(ShopItem shopItem) {
+    private static MerchantRecipe createRecipe(ShopItem shopItem, ShopConfig shopConfig) {
         if (shopItem == null || !shopItem.isInStock()) {
             return null;
         }
@@ -91,8 +96,12 @@ public class ShopGuiUtil {
             return null;
         }
 
+        // Apply all DM price adjustments (Issue #76)
+        // Priority: override > discount/markup > base multiplier
+        Cost effectivePrice = shopConfig.getEffectivePrice(shopItem.getItemId(), shopItem.getPrice());
+
         // Create the currency item(s) required as payment
-        ItemStack currency = createCurrencyItem(shopItem.getPrice());
+        ItemStack currency = createCurrencyItem(effectivePrice);
         if (currency == null) {
             LOGGER.warning("Could not create currency for item: " + shopItem.getItemId());
             return null;
@@ -233,7 +242,8 @@ public class ShopGuiUtil {
 
     /**
      * Calculates the sell price for an item.
-     * If item is in shop, sells for 50% of buy price.
+     * Uses configurable sell multiplier from shop config (Issue #76).
+     * If item is in shop, applies multiplier to buy price.
      * Otherwise, uses default pricing based on item type.
      *
      * @param itemId The item ID
@@ -244,28 +254,24 @@ public class ShopGuiUtil {
         // Check if item is in shop inventory
         ShopItem shopItem = shopConfig.findItem(itemId);
         if (shopItem != null) {
-            // Sell for 50% of buy price (Issue #76 will make this configurable)
-            int sellAmount = Math.max(1, shopItem.getPrice().getAmount() / 2);
-            return new Cost(sellAmount, shopItem.getPrice().getCurrency());
+            // Use configurable sell multiplier (Issue #76)
+            return shopConfig.calculateSellPrice(shopItem.getPrice());
         }
 
         // Item not in shop - use default pricing based on cost field from item data
         DndWeapon weapon = WeaponLoader.getWeapon(itemId);
         if (weapon != null && weapon.getCost() != null) {
-            int sellAmount = Math.max(1, weapon.getCost().getAmount() / 2);
-            return new Cost(sellAmount, weapon.getCost().getCurrency());
+            return shopConfig.calculateSellPrice(weapon.getCost());
         }
 
         DndArmor armor = ArmorLoader.getArmor(itemId);
         if (armor != null && armor.getCost() != null) {
-            int sellAmount = Math.max(1, armor.getCost().getAmount() / 2);
-            return new Cost(sellAmount, armor.getCost().getCurrency());
+            return shopConfig.calculateSellPrice(armor.getCost());
         }
 
         DndItem item = ItemLoader.getItem(itemId);
         if (item != null && item.getCost() != null) {
-            int sellAmount = Math.max(1, item.getCost().getAmount() / 2);
-            return new Cost(sellAmount, item.getCost().getCurrency());
+            return shopConfig.calculateSellPrice(item.getCost());
         }
 
         // No cost found - default to 1 gold

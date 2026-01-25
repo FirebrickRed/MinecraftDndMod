@@ -87,7 +87,7 @@ public class ShopListener implements Listener {
 
     /**
      * Handles when player BUYS from merchant (merchant selling TO player).
-     * Decreases merchant's stock.
+     * Decreases merchant's stock and adds payment to merchant's currency reserves (Issue #76).
      */
     private void handlePlayerBuy(Player player, DndEntityInstance entityInstance, MerchantRecipe selectedRecipe, InventoryClickEvent event) {
         // Check if recipe is still in stock (uses >= maxUses means out of stock)
@@ -125,7 +125,13 @@ public class ShopListener implements Listener {
                     LOGGER.info("Stock for " + purchasedItemId + ": " + stockBefore + " -> " + stockAfter + " (purchased: " + quantityPurchased + ")");
 
                     if (success) {
-                        // Save shop after stock change (Issue #75)
+                        // Add payment to merchant's currency reserves (Issue #76)
+                        Cost payment = shopItem.getPrice();
+                        int totalPayment = payment.getAmount() * quantityPurchased;
+                        shopConfig.addCurrency(payment.getCurrency(), totalPayment);
+                        LOGGER.info("Merchant " + entityInstance.getDisplayName() + " received " + totalPayment + " " + payment.getCurrency());
+
+                        // Save shop after stock change and currency update
                         ShopPersistenceLoader.saveShop(entityInstance.getInstanceId(), shopConfig);
 
                         if (shopItem.getStock() <= 0) {
@@ -142,6 +148,7 @@ public class ShopListener implements Listener {
 
     /**
      * Handles when player SELLS to merchant (player selling TO merchant).
+     * Checks merchant's currency reserves and deducts payment (Issue #76).
      * Adds sold item to merchant's inventory.
      */
     private void handlePlayerSell(Player player, DndEntityInstance entityInstance, MerchantRecipe selectedRecipe) {
@@ -167,8 +174,26 @@ public class ShopListener implements Listener {
             return;
         }
 
-        // Add item to merchant's inventory
+        // Extract sell price and check merchant's funds (Issue #76)
         Cost sellPrice = extractSellPrice(selectedRecipe);
+
+        if (!shopConfig.hasCurrency(sellPrice.getCurrency(), sellPrice.getAmount())) {
+            player.sendMessage(Component.text("The merchant doesn't have enough " +
+                sellPrice.getCurrency() + " to buy that!", NamedTextColor.RED));
+            LOGGER.info("Merchant " + entityInstance.getDisplayName() + " has insufficient funds: needs " +
+                sellPrice.getAmount() + " " + sellPrice.getCurrency() + ", has " +
+                shopConfig.getCurrencyAmount(sellPrice.getCurrency()));
+            return;
+        }
+
+        // Deduct payment from merchant's currency reserves (Issue #76)
+        boolean paymentSuccess = shopConfig.removeCurrency(sellPrice.getCurrency(), sellPrice.getAmount());
+        if (!paymentSuccess) {
+            player.sendMessage(Component.text("Transaction failed - merchant couldn't pay!", NamedTextColor.RED));
+            return;
+        }
+
+        // Add item to merchant's inventory
         ShopItem newShopItem = new ShopItem();
         newShopItem.setItemId(soldItemId);
         newShopItem.setPrice(sellPrice);
@@ -176,12 +201,16 @@ public class ShopListener implements Listener {
 
         shopConfig.addOrUpdateItem(newShopItem);
 
-        // Save shop
+        // Save shop (includes currency and inventory updates)
         ShopPersistenceLoader.saveShop(entityInstance.getInstanceId(), shopConfig);
 
         // Confirm to player
         player.sendMessage(Component.text("✓ Sold " + soldItemId + " for " +
             sellPrice.getAmount() + " " + sellPrice.getCurrency(), NamedTextColor.GREEN));
+
+        LOGGER.info("Merchant " + entityInstance.getDisplayName() + " paid " +
+            sellPrice.getAmount() + " " + sellPrice.getCurrency() +
+            " (remaining: " + shopConfig.getCurrencyAmount(sellPrice.getCurrency()) + ")");
     }
 
     /**

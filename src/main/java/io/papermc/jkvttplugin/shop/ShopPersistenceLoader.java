@@ -46,8 +46,8 @@ public class ShopPersistenceLoader {
     }
 
     /**
-     * Saves shop stock for an entity instance.
-     * Only saves stock values, not the full shop configuration.
+     * Saves shop data for an entity instance.
+     * Saves stock values, DM price adjustments (Issue #76), and currency reserves.
      *
      * @param entityUuid The entity instance UUID
      * @param shopConfig The shop configuration with current stock
@@ -69,6 +69,22 @@ public class ShopPersistenceLoader {
             }
             data.put("stock", stockMap);
 
+            // Issue #76 - Save DM price adjustments
+            if (shopConfig.getGlobalDiscount() > 0.0) {
+                data.put("global_discount", shopConfig.getGlobalDiscount());
+            }
+            if (shopConfig.getGlobalMarkup() > 0.0) {
+                data.put("global_markup", shopConfig.getGlobalMarkup());
+            }
+            if (shopConfig.getItemPriceOverrides() != null && !shopConfig.getItemPriceOverrides().isEmpty()) {
+                data.put("item_price_overrides", shopConfig.getItemPriceOverrides());
+            }
+
+            // Save currency reserves
+            if (shopConfig.getCurrency() != null && !shopConfig.getCurrency().isEmpty()) {
+                data.put("currency", shopConfig.getCurrency());
+            }
+
             // Write to YAML
             DumperOptions options = new DumperOptions();
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
@@ -84,12 +100,12 @@ public class ShopPersistenceLoader {
     }
 
     /**
-     * Loads shop stock for an entity instance.
-     * Applies saved stock values to the shop configuration.
+     * Loads shop data for an entity instance.
+     * Applies saved stock values, DM price adjustments (Issue #76), and currency reserves.
      *
      * @param entityUuid The entity instance UUID
      * @param shopConfig The shop configuration to update
-     * @return true if stock was loaded successfully
+     * @return true if data was loaded successfully
      */
     @SuppressWarnings("unchecked")
     public static boolean loadShop(UUID entityUuid, ShopConfig shopConfig) {
@@ -116,7 +132,7 @@ public class ShopPersistenceLoader {
             if (stockObj instanceof Map<?, ?> stockMap) {
                 for (Map.Entry<?, ?> entry : stockMap.entrySet()) {
                     String itemId = (String) entry.getKey();
-                    Integer stock = (Integer) entry.getValue();
+                    Integer stock = ((Number) entry.getValue()).intValue();
 
                     // Find the corresponding shop item and update stock
                     ShopItem shopItem = shopConfig.findItem(itemId);
@@ -124,6 +140,40 @@ public class ShopPersistenceLoader {
                         shopItem.setStock(stock);
                     }
                 }
+            }
+
+            // Issue #76 - Load DM price adjustments
+            Object discountObj = data.get("global_discount");
+            if (discountObj instanceof Number discount) {
+                shopConfig.setGlobalDiscount(discount.doubleValue());
+            }
+
+            Object markupObj = data.get("global_markup");
+            if (markupObj instanceof Number markup) {
+                shopConfig.setGlobalMarkup(markup.doubleValue());
+            }
+
+            Object overridesObj = data.get("item_price_overrides");
+            if (overridesObj instanceof Map<?, ?> overridesMap) {
+                Map<String, Integer> overrides = new HashMap<>();
+                for (Map.Entry<?, ?> entry : overridesMap.entrySet()) {
+                    String itemId = (String) entry.getKey();
+                    Integer price = ((Number) entry.getValue()).intValue();
+                    overrides.put(itemId, price);
+                }
+                shopConfig.setItemPriceOverrides(overrides);
+            }
+
+            // Load currency reserves
+            Object currencyObj = data.get("currency");
+            if (currencyObj instanceof Map<?, ?> currencyMap) {
+                Map<String, Integer> currency = new HashMap<>();
+                for (Map.Entry<?, ?> entry : currencyMap.entrySet()) {
+                    String currencyType = (String) entry.getKey();
+                    Integer amount = ((Number) entry.getValue()).intValue();
+                    currency.put(currencyType, amount);
+                }
+                shopConfig.setCurrency(currency);
             }
 
             LOGGER.info("Loaded shop for entity " + entityUuid);

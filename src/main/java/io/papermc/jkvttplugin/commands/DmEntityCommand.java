@@ -380,7 +380,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
     private void handleShop(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop <view|restock|add> <entity> ...", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dmentity shop <action> <entity> ...", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Actions: view, restock, add, adjust, discount, markup, reset, setfunds, setmultiplier", NamedTextColor.GRAY));
             return;
         }
 
@@ -390,13 +391,23 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "view" -> handleShopView(sender, args);
             case "restock" -> handleShopRestock(sender, args);
             case "add" -> handleShopAdd(sender, args);
-            default -> sender.sendMessage(Component.text("Unknown shop action. Use: view, restock, or add", NamedTextColor.RED));
+            case "adjust" -> handleShopAdjust(sender, args);       // Issue #76 - Item price override
+            case "discount" -> handleShopDiscount(sender, args);   // Issue #76 - Global discount
+            case "markup" -> handleShopMarkup(sender, args);       // Issue #76 - Global markup
+            case "reset" -> handleShopReset(sender, args);         // Issue #76 - Reset adjustments
+            case "setfunds" -> handleShopSetFunds(sender, args);
+            case "setmultiplier" -> handleShopSetMultiplier(sender, args);
+            default -> {
+                sender.sendMessage(Component.text("Unknown shop action: " + shopAction, NamedTextColor.RED));
+                sender.sendMessage(Component.text("Actions: view, restock, add, adjust, discount, markup, reset, setfunds, setmultiplier", NamedTextColor.GRAY));
+            }
         }
     }
 
     /**
      * /dmentity shop view <entity>
      * Shows current stock for all items in the merchant's shop.
+     * Issue #76 - Enhanced to show DM price adjustments
      */
     private void handleShopView(CommandSender sender, String[] args) {
         if (args.length < 3) {
@@ -428,8 +439,47 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         ShopConfig shop = instance.getShop();
         sender.sendMessage(Component.text("=== " + instance.getDisplayName() + "'s Shop ===", NamedTextColor.GOLD));
 
+        // Display currency reserves
+        sender.sendMessage(Component.text("Currency Reserves:", NamedTextColor.YELLOW));
+        if (shop.getCurrency() != null && !shop.getCurrency().isEmpty()) {
+            for (Map.Entry<String, Integer> entry : shop.getCurrency().entrySet()) {
+                sender.sendMessage(Component.text("  " + entry.getKey() + ": ", NamedTextColor.GRAY)
+                        .append(Component.text(String.valueOf(entry.getValue()), NamedTextColor.GREEN)));
+            }
+        } else {
+            sender.sendMessage(Component.text("  No currency", NamedTextColor.DARK_GRAY));
+        }
+
+        // Display price multipliers
+        sender.sendMessage(Component.text("Price Multipliers:", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  Buy (merchant→player): ", NamedTextColor.GRAY)
+                .append(Component.text(String.format("%.2f", shop.getBaseBuyMultiplier()), NamedTextColor.AQUA))
+                .append(Component.text(" (" + (int)(shop.getBaseBuyMultiplier() * 100) + "%)", NamedTextColor.DARK_GRAY)));
+        sender.sendMessage(Component.text("  Sell (player→merchant): ", NamedTextColor.GRAY)
+                .append(Component.text(String.format("%.2f", shop.getBaseSellMultiplier()), NamedTextColor.AQUA))
+                .append(Component.text(" (" + (int)(shop.getBaseSellMultiplier() * 100) + "%)", NamedTextColor.DARK_GRAY)));
+
+        // Issue #76 - Display DM Price Adjustments
+        if (shop.hasActiveAdjustments()) {
+            sender.sendMessage(Component.text("DM Adjustments:", NamedTextColor.LIGHT_PURPLE));
+            if (shop.getGlobalDiscount() > 0) {
+                sender.sendMessage(Component.text("  Discount: ", NamedTextColor.GRAY)
+                        .append(Component.text((int)(shop.getGlobalDiscount() * 100) + "%", NamedTextColor.GREEN)));
+            }
+            if (shop.getGlobalMarkup() > 0) {
+                sender.sendMessage(Component.text("  Markup: ", NamedTextColor.GRAY)
+                        .append(Component.text("+" + (int)(shop.getGlobalMarkup() * 100) + "%", NamedTextColor.RED)));
+            }
+            int overrideCount = shop.getItemPriceOverrides() != null ? shop.getItemPriceOverrides().size() : 0;
+            if (overrideCount > 0) {
+                sender.sendMessage(Component.text("  Item Overrides: ", NamedTextColor.GRAY)
+                        .append(Component.text(overrideCount + " item(s)", NamedTextColor.YELLOW)));
+            }
+        }
+
+        sender.sendMessage(Component.text("Items for Sale:", NamedTextColor.YELLOW));
         if (shop.getItems() == null || shop.getItems().isEmpty()) {
-            sender.sendMessage(Component.text("Shop is empty.", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("  No items", NamedTextColor.DARK_GRAY));
             return;
         }
 
@@ -438,27 +488,57 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                 ? "∞"
                 : item.getStock() + "/" + instance.getTemplate().getShop().findItem(item.getItemId()).getStock();
 
-            String priceDisplay = item.getPrice().getAmount() + " " + item.getPrice().getCurrency();
+            // Issue #76 - Show base price vs effective price (with all adjustments)
+            Cost basePrice = item.getPrice();
+            Cost effectivePrice = shop.getEffectivePrice(item.getItemId(), basePrice); // Actual price with adjustments
+            Cost sellPrice = shop.calculateSellPrice(basePrice); // What merchant pays player
 
-            Component line = Component.text("• ", NamedTextColor.GRAY)
+            boolean hasOverride = shop.hasItemPriceOverride(item.getItemId());
+
+            // Build item line with override indicator
+            Component line = Component.text("  • ", NamedTextColor.GRAY)
                     .append(Component.text(item.getItemId(), NamedTextColor.WHITE))
-                    .append(Component.text(" - ", NamedTextColor.DARK_GRAY))
-                    .append(Component.text(priceDisplay, NamedTextColor.GOLD))
                     .append(Component.text(" [Stock: ", NamedTextColor.DARK_GRAY))
                     .append(Component.text(stockDisplay, item.isInStock() ? NamedTextColor.GREEN : NamedTextColor.RED))
                     .append(Component.text("]", NamedTextColor.DARK_GRAY));
 
+            if (hasOverride) {
+                line = line.append(Component.text(" [OVERRIDE]", NamedTextColor.LIGHT_PURPLE));
+            }
+
             sender.sendMessage(line);
+
+            // Show detailed pricing - base vs adjusted
+            sender.sendMessage(Component.text("    Base: ", NamedTextColor.DARK_GRAY)
+                    .append(Component.text(basePrice.toDisplayString(), NamedTextColor.GRAY)));
+
+            // Show effective price (what player actually pays)
+            Component buyLine = Component.text("    Buy (player pays): ", NamedTextColor.DARK_GRAY)
+                    .append(Component.text(effectivePrice.toDisplayString(), NamedTextColor.GOLD));
+
+            // Add indicator if price differs from base
+            if (effectivePrice.getAmount() != basePrice.getAmount()) {
+                String diff = effectivePrice.getAmount() < basePrice.getAmount() ? "↓" : "↑";
+                NamedTextColor diffColor = effectivePrice.getAmount() < basePrice.getAmount() ? NamedTextColor.GREEN : NamedTextColor.RED;
+                buyLine = buyLine.append(Component.text(" " + diff, diffColor));
+            }
+
+            sender.sendMessage(buyLine);
+            sender.sendMessage(Component.text("    Sell (merchant pays): ", NamedTextColor.DARK_GRAY)
+                    .append(Component.text(sellPrice.toDisplayString(), NamedTextColor.AQUA)));
         }
     }
 
     /**
-     * /dmentity shop restock <entity> <item_id> [amount]
+     * /dmentity shop restock <entity> [item_id] [amount]
      * Restocks an item to specified amount (or template default if not specified).
+     * If no item_id is provided, restocks ALL items to template defaults.
+     * Issue #76 - Added "restock all" variant
      */
     private void handleShopRestock(CommandSender sender, String[] args) {
-        if (args.length < 4) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop restock <entity> <item_id> [amount]", NamedTextColor.RED));
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop restock <entity> [item_id] [amount]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Without item_id: restocks ALL items to template defaults", NamedTextColor.GRAY));
             return;
         }
 
@@ -474,11 +554,40 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             nextArgIndex = 3;
         }
 
-        if (args.length < nextArgIndex + 1) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop restock <entity> <item_id> [amount]", NamedTextColor.RED));
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
             return;
         }
 
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+        ShopConfig templateShop = instance.getTemplate().getShop();
+
+        // Check if restocking all items (no item_id provided)
+        if (args.length <= nextArgIndex) {
+            // Restock ALL items to template defaults
+            int restockedCount = 0;
+            for (ShopItem shopItem : shop.getItems()) {
+                ShopItem templateItem = templateShop.findItem(shopItem.getItemId());
+                if (templateItem != null) {
+                    shopItem.setStock(templateItem.getStock());
+                    restockedCount++;
+                }
+            }
+
+            ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+            sender.sendMessage(Component.text("✓ Restocked all " + restockedCount + " items for ", NamedTextColor.GREEN)
+                    .append(Component.text(instance.getDisplayName(), NamedTextColor.GOLD)));
+            return;
+        }
+
+        // Restock specific item
         String itemId = args[nextArgIndex];
         Integer restockAmount = null;
 
@@ -495,19 +604,6 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        DndEntityInstance instance = findEntity(entityName);
-
-        if (instance == null) {
-            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
-            return;
-        }
-
-        if (!instance.getTemplate().hasShop()) {
-            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
-            return;
-        }
-
-        ShopConfig shop = instance.getShop();
         ShopItem shopItem = shop.findItem(itemId);
 
         if (shopItem == null) {
@@ -521,7 +617,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             newStock = restockAmount;
         } else {
             // Restore to template default
-            ShopItem templateItem = instance.getTemplate().getShop().findItem(itemId);
+            ShopItem templateItem = templateShop.findItem(itemId);
             newStock = templateItem != null ? templateItem.getStock() : 0;
         }
 
@@ -649,6 +745,420 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         if (ArmorLoader.getArmor(itemId) != null) return ArmorLoader.getArmor(itemId);
         if (ItemLoader.getItem(itemId) != null) return ItemLoader.getItem(itemId);
         return null;
+    }
+
+    /**
+     * /dmentity shop setfunds <entity> <amount> <currency>
+     * Sets merchant's currency reserves (Issue #76).
+     */
+    private void handleShopSetFunds(CommandSender sender, String[] args) {
+        if (args.length < 5) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop setfunds <entity> <amount> <currency>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dmentity shop setfunds balin 500 gold", NamedTextColor.GRAY));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        int nextArgIndex;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+            nextArgIndex = quotedResult.getNextIndex();
+        } else {
+            entityName = args[2];
+            nextArgIndex = 3;
+        }
+
+        if (args.length < nextArgIndex + 2) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop setfunds <entity> <amount> <currency>", NamedTextColor.RED));
+            return;
+        }
+
+        int amount;
+        try {
+            amount = Integer.parseInt(args[nextArgIndex]);
+            if (amount < 0) {
+                sender.sendMessage(Component.text("Amount must be >= 0", NamedTextColor.RED));
+                return;
+            }
+        } catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("Invalid amount: " + args[nextArgIndex], NamedTextColor.RED));
+            return;
+        }
+
+        String currency = args[nextArgIndex + 1].toLowerCase();
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+        shop.setCurrencyAmount(currency, amount);
+
+        // Save shop
+        ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+
+        sender.sendMessage(Component.text("✓ Set ", NamedTextColor.GREEN)
+                .append(Component.text(instance.getDisplayName(), NamedTextColor.GOLD))
+                .append(Component.text("'s " + currency + " to ", NamedTextColor.GREEN))
+                .append(Component.text(String.valueOf(amount), NamedTextColor.YELLOW)));
+    }
+
+    /**
+     * /dmentity shop setmultiplier <entity> <buy|sell> <multiplier>
+     * Sets merchant's price multipliers (Issue #76).
+     */
+    private void handleShopSetMultiplier(CommandSender sender, String[] args) {
+        if (args.length < 5) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop setmultiplier <entity> <buy|sell> <multiplier>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dmentity shop setmultiplier balin sell 0.6", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("  buy = price when merchant sells TO player", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("  sell = price when merchant buys FROM player", NamedTextColor.GRAY));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        int nextArgIndex;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+            nextArgIndex = quotedResult.getNextIndex();
+        } else {
+            entityName = args[2];
+            nextArgIndex = 3;
+        }
+
+        if (args.length < nextArgIndex + 2) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop setmultiplier <entity> <buy|sell> <multiplier>", NamedTextColor.RED));
+            return;
+        }
+
+        String multiplierType = args[nextArgIndex].toLowerCase();
+        if (!multiplierType.equals("buy") && !multiplierType.equals("sell")) {
+            sender.sendMessage(Component.text("Multiplier type must be 'buy' or 'sell'", NamedTextColor.RED));
+            return;
+        }
+
+        double multiplier;
+        try {
+            multiplier = Double.parseDouble(args[nextArgIndex + 1]);
+            if (multiplier < 0) {
+                sender.sendMessage(Component.text("Multiplier must be >= 0", NamedTextColor.RED));
+                return;
+            }
+        } catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("Invalid multiplier: " + args[nextArgIndex + 1], NamedTextColor.RED));
+            return;
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+
+        if (multiplierType.equals("buy")) {
+            shop.setBaseBuyMultiplier(multiplier);
+        } else {
+            shop.setBaseSellMultiplier(multiplier);
+        }
+
+        // Save shop
+        ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+
+        sender.sendMessage(Component.text("✓ Set ", NamedTextColor.GREEN)
+                .append(Component.text(instance.getDisplayName(), NamedTextColor.GOLD))
+                .append(Component.text("'s " + multiplierType + " multiplier to ", NamedTextColor.GREEN))
+                .append(Component.text(String.format("%.2f", multiplier), NamedTextColor.YELLOW))
+                .append(Component.text(" (" + (int)(multiplier * 100) + "%)", NamedTextColor.GRAY)));
+    }
+
+    /**
+     * /dmentity shop adjust <entity> <item_id> <price>
+     * Sets a fixed price override for a specific item (ignores all multipliers).
+     * Issue #76 - Price Adjustment System
+     */
+    private void handleShopAdjust(CommandSender sender, String[] args) {
+        if (args.length < 5) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop adjust <entity> <item_id> <price>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dmentity shop adjust balin longsword 10", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Sets a fixed price that ignores all discounts/markups.", NamedTextColor.GRAY));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        int nextArgIndex;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+            nextArgIndex = quotedResult.getNextIndex();
+        } else {
+            entityName = args[2];
+            nextArgIndex = 3;
+        }
+
+        if (args.length < nextArgIndex + 2) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop adjust <entity> <item_id> <price>", NamedTextColor.RED));
+            return;
+        }
+
+        String itemId = args[nextArgIndex];
+        int price;
+        try {
+            price = Integer.parseInt(args[nextArgIndex + 1]);
+            if (price < 1) {
+                sender.sendMessage(Component.text("Price must be >= 1", NamedTextColor.RED));
+                return;
+            }
+        } catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("Invalid price: " + args[nextArgIndex + 1], NamedTextColor.RED));
+            return;
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+
+        // Verify item exists in shop
+        ShopItem shopItem = shop.findItem(itemId);
+        if (shopItem == null) {
+            sender.sendMessage(Component.text("Item not found in shop: " + itemId, NamedTextColor.RED));
+            return;
+        }
+
+        // Set the price override
+        int oldPrice = shopItem.getPrice().getAmount();
+        shop.setItemPriceOverride(itemId, price);
+
+        // Save shop
+        ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+
+        sender.sendMessage(Component.text("✓ Set ", NamedTextColor.GREEN)
+                .append(Component.text(itemId, NamedTextColor.GOLD))
+                .append(Component.text(" price to ", NamedTextColor.GREEN))
+                .append(Component.text(price + " " + shopItem.getPrice().getCurrency(), NamedTextColor.YELLOW))
+                .append(Component.text(" (base: " + oldPrice + ")", NamedTextColor.GRAY)));
+    }
+
+    /**
+     * /dmentity shop discount <entity> <percent>
+     * Applies a global discount to all items in the shop.
+     * Issue #76 - Price Adjustment System
+     */
+    private void handleShopDiscount(CommandSender sender, String[] args) {
+        if (args.length < 4) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop discount <entity> <percent>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dmentity shop discount balin 20", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Applies a 20% discount to all items.", NamedTextColor.GRAY));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        int nextArgIndex;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+            nextArgIndex = quotedResult.getNextIndex();
+        } else {
+            entityName = args[2];
+            nextArgIndex = 3;
+        }
+
+        if (args.length < nextArgIndex + 1) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop discount <entity> <percent>", NamedTextColor.RED));
+            return;
+        }
+
+        double percent;
+        try {
+            percent = Double.parseDouble(args[nextArgIndex]);
+            if (percent < 0 || percent > 100) {
+                sender.sendMessage(Component.text("Discount must be between 0 and 100", NamedTextColor.RED));
+                return;
+            }
+        } catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("Invalid percent: " + args[nextArgIndex], NamedTextColor.RED));
+            return;
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+        shop.setGlobalDiscount(percent / 100.0);
+
+        // Save shop
+        ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+
+        sender.sendMessage(Component.text("✓ Applied ", NamedTextColor.GREEN)
+                .append(Component.text((int) percent + "% discount", NamedTextColor.YELLOW))
+                .append(Component.text(" to ", NamedTextColor.GREEN))
+                .append(Component.text(instance.getDisplayName(), NamedTextColor.GOLD))
+                .append(Component.text("'s shop", NamedTextColor.GREEN)));
+    }
+
+    /**
+     * /dmentity shop markup <entity> <percent>
+     * Applies a global markup to all items in the shop.
+     * Issue #76 - Price Adjustment System
+     */
+    private void handleShopMarkup(CommandSender sender, String[] args) {
+        if (args.length < 4) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop markup <entity> <percent>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dmentity shop markup balin 15", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Increases all prices by 15%.", NamedTextColor.GRAY));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        int nextArgIndex;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+            nextArgIndex = quotedResult.getNextIndex();
+        } else {
+            entityName = args[2];
+            nextArgIndex = 3;
+        }
+
+        if (args.length < nextArgIndex + 1) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop markup <entity> <percent>", NamedTextColor.RED));
+            return;
+        }
+
+        double percent;
+        try {
+            percent = Double.parseDouble(args[nextArgIndex]);
+            if (percent < 0) {
+                sender.sendMessage(Component.text("Markup must be >= 0", NamedTextColor.RED));
+                return;
+            }
+        } catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("Invalid percent: " + args[nextArgIndex], NamedTextColor.RED));
+            return;
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+        shop.setGlobalMarkup(percent / 100.0);
+
+        // Save shop
+        ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+
+        sender.sendMessage(Component.text("✓ Applied ", NamedTextColor.GREEN)
+                .append(Component.text((int) percent + "% markup", NamedTextColor.YELLOW))
+                .append(Component.text(" to ", NamedTextColor.GREEN))
+                .append(Component.text(instance.getDisplayName(), NamedTextColor.GOLD))
+                .append(Component.text("'s shop", NamedTextColor.GREEN)));
+    }
+
+    /**
+     * /dmentity shop reset <entity> [item_id]
+     * Resets price adjustments for all items or a specific item.
+     * Issue #76 - Price Adjustment System
+     */
+    private void handleShopReset(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /dmentity shop reset <entity> [item_id]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Without item_id: resets discount, markup, and all overrides", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("With item_id: resets only that item's override", NamedTextColor.GRAY));
+            return;
+        }
+
+        // Parse entity name (may be quoted)
+        String entityName;
+        int nextArgIndex;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
+        if (quotedResult != null) {
+            entityName = quotedResult.getValue();
+            nextArgIndex = quotedResult.getNextIndex();
+        } else {
+            entityName = args[2];
+            nextArgIndex = 3;
+        }
+
+        DndEntityInstance instance = findEntity(entityName);
+
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+
+        if (!instance.getTemplate().hasShop()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " is not a merchant.", NamedTextColor.RED));
+            return;
+        }
+
+        ShopConfig shop = instance.getShop();
+
+        if (args.length > nextArgIndex) {
+            // Reset specific item override
+            String itemId = args[nextArgIndex];
+            if (shop.removeItemPriceOverride(itemId)) {
+                ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+                sender.sendMessage(Component.text("✓ Reset price override for ", NamedTextColor.GREEN)
+                        .append(Component.text(itemId, NamedTextColor.GOLD)));
+            } else {
+                sender.sendMessage(Component.text("No price override found for: " + itemId, NamedTextColor.YELLOW));
+            }
+        } else {
+            // Reset all adjustments
+            shop.resetAllAdjustments();
+            ShopPersistenceLoader.saveShop(instance.getInstanceId(), shop);
+            sender.sendMessage(Component.text("✓ Reset all price adjustments for ", NamedTextColor.GREEN)
+                    .append(Component.text(instance.getDisplayName(), NamedTextColor.GOLD)));
+        }
     }
 
     // ==================== SPAWNGROUP SUBCOMMAND ====================
@@ -954,8 +1464,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                             .collect(Collectors.toList());
 
                 case "shop":
-                    // Suggest shop actions
-                    return List.of("view", "restock", "add").stream()
+                    // Suggest shop actions (Issue #76 - added adjust, discount, markup, reset)
+                    return List.of("view", "restock", "add", "adjust", "discount", "markup", "reset", "setfunds", "setmultiplier").stream()
                             .filter(s -> s.startsWith(args[1].toLowerCase()))
                             .collect(Collectors.toList());
             }
@@ -986,8 +1496,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             if (args[0].equalsIgnoreCase("shop")) {
                 String shopAction = args[1].toLowerCase();
 
-                if (shopAction.equals("restock")) {
-                    // Suggest item IDs from merchant's shop
+                if (shopAction.equals("restock") || shopAction.equals("adjust") || shopAction.equals("reset")) {
+                    // Suggest item IDs from merchant's shop (Issue #76)
                     DndEntityInstance merchant = findEntity(args[2]);
                     if (merchant != null && merchant.getShop() != null && merchant.getShop().getItems() != null) {
                         return merchant.getShop().getItems().stream()
@@ -999,6 +1509,11 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                     // Suggest all available item IDs (weapons, armor, items)
                     return getAllItemIds().stream()
                             .filter(id -> id.toLowerCase().startsWith(args[3].toLowerCase()))
+                            .collect(Collectors.toList());
+                } else if (shopAction.equals("setmultiplier")) {
+                    // Suggest buy/sell
+                    return List.of("buy", "sell").stream()
+                            .filter(s -> s.startsWith(args[3].toLowerCase()))
                             .collect(Collectors.toList());
                 }
             }
