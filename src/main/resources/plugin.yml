@@ -63,3 +63,13 @@ commands:
     description: Manage DM (Dungeon Master) role assignments.
     usage: /dm <add|remove|list>
     permission-message: Only server operators can manage DMs.
+  combat:
+    description: (DM) Combat session management commands.
+    usage: /combat <start|add|remove|nextturn|end|...>
+    permission: jkvtt.dm
+    permission-message: Only the DM can use combat commands.
+  rollforinitiative:
+    description: (DM) Roll initiative for all combatants and start combat.
+    usage: /rollforinitiative
+    permission: jkvtt.dm
+    permission-message: Only the DM can roll for initiative.

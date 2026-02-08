@@ -2,6 +2,8 @@ package io.papermc.jkvttplugin;
 
 import io.papermc.jkvttplugin.character.CharacterSheetItemListener;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
+import io.papermc.jkvttplugin.combat.CombatCommand;
+import io.papermc.jkvttplugin.combat.RollForInitiativeCommand;
 import io.papermc.jkvttplugin.commands.*;
 import io.papermc.jkvttplugin.data.DataManager;
 import io.papermc.jkvttplugin.dm.DmCommand;
@@ -89,6 +91,13 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         DmCommand dmCommand = new DmCommand();
         this.getCommand("dm").setExecutor(dmCommand);
         this.getCommand("dm").setTabCompleter(dmCommand);
+
+        // Combat Commands (Issue #97)
+        CombatCommand combatCommand = new CombatCommand();
+        this.getCommand("combat").setExecutor(combatCommand);
+        this.getCommand("combat").setTabCompleter(combatCommand);
+
+        this.getCommand("rollforinitiative").setExecutor(new RollForInitiativeCommand());
 
     }
 
