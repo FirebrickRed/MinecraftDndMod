@@ -44,6 +44,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     // DM session tracking (player UUID -> their active combat session)
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
+    // Subcommands that players can use on their own turn (no DM permission needed)
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn");
+
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
@@ -53,18 +56,26 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Check DM permission for most commands
-        if (!isDM(player) && !player.hasPermission("jkvtt.dm")) {
-            sender.sendMessage(Component.text("Only the DM can use combat commands.", NamedTextColor.RED));
-            return true;
-        }
-
         if (args.length == 0) {
             showHelp(player);
             return true;
         }
 
         String subcommand = args[0].toLowerCase();
+
+        // Check permissions: DM can use any command, players can only use PLAYER_ALLOWED on their turn
+        if (!isDM(player) && !player.hasPermission("jkvtt.dm")) {
+            if (!PLAYER_ALLOWED.contains(subcommand)) {
+                sender.sendMessage(Component.text("Only the DM can use this command.", NamedTextColor.RED));
+                return true;
+            }
+            // Verify player is in combat
+            CombatSession playerSession = CombatSession.getSessionForPlayer(player.getUniqueId());
+            if (playerSession == null) {
+                sender.sendMessage(Component.text("You are not in combat.", NamedTextColor.RED));
+                return true;
+            }
+        }
 
         switch (subcommand) {
             case "start" -> handleStart(player);
@@ -80,6 +91,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "end" -> handleEnd(player);
             case "reveal" -> handleReveal(player, args);
             case "hide" -> handleHide(player, args);
+            case "action" -> handleAction(player, args);
+            case "bonus" -> handleBonusAction(player, args);
+            case "movement" -> handleMovement(player, args);
             default -> showHelp(player);
         }
 
@@ -473,30 +487,44 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void handleEndTurn(Player dm, String[] args) {
-        CombatSession session = getActiveSession(dm);
+    private void handleEndTurn(Player player, String[] args) {
+        // Use resolveSession so both DM and players can end turns
+        CombatSession session = resolveSession(player);
         if (session == null) return;
 
         if (session.isSetupPhase()) {
-            dm.sendMessage(Component.text("Combat hasn't started yet. Use /combat rollforinitiative first.", NamedTextColor.RED));
+            player.sendMessage(Component.text("Combat hasn't started yet. Use /combat rollforinitiative first.", NamedTextColor.RED));
             return;
         }
 
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
         Combatant combatant;
         if (args.length < 2) {
             // Default to current combatant
             combatant = session.getCurrentCombatant();
             if (combatant == null) {
-                dm.sendMessage(Component.text("No active turn to end.", NamedTextColor.RED));
+                player.sendMessage(Component.text("No active turn to end.", NamedTextColor.RED));
+                return;
+            }
+
+            // Non-DM players can only end their own turn
+            if (!isDM && combatant.isPlayer() && !combatant.getId().equals(player.getUniqueId())) {
+                player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
                 return;
             }
         } else {
+            // Only DM can specify a target
+            if (!isDM) {
+                player.sendMessage(Component.text("Only the DM can end other combatants' turns.", NamedTextColor.RED));
+                return;
+            }
+
             // Find by name (supports names with spaces by joining remaining args)
             String targetName = joinArgs(args, 1);
             combatant = findCombatantByName(session, targetName);
 
             if (combatant == null) {
-                dm.sendMessage(Component.text("Combatant not found: " + targetName, NamedTextColor.RED));
+                player.sendMessage(Component.text("Combatant not found: " + targetName, NamedTextColor.RED));
                 return;
             }
         }
@@ -633,6 +661,164 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         dm.sendMessage(Component.text(combatant.getDisplayName() + " is now hidden (shown as ???).", NamedTextColor.GREEN));
     }
 
+    // ==================== ACTION ECONOMY (Issue #98) ====================
+
+    private void handleAction(Player player, String[] args) {
+        // Resolve session: DM uses DM_SESSIONS, player uses PLAYER_SESSIONS
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+
+        Combatant target = resolveActionTarget(player, session, args);
+        if (target == null) return;
+
+        TurnState state = target.getTurnState();
+        if (state == null) {
+            player.sendMessage(Component.text("It's not " + target.getDisplayName() + "'s turn.", NamedTextColor.RED));
+            return;
+        }
+
+        if (state.isActionUsed()) {
+            player.sendMessage(Component.text(target.getDisplayName() + " has already used their Action.", NamedTextColor.YELLOW));
+            return;
+        }
+
+        state.useAction();
+        session.broadcast(Component.text(target.getDisplayName(true) + " uses their Action.", NamedTextColor.YELLOW));
+        session.sendActionBar(target);
+    }
+
+    private void handleBonusAction(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+
+        Combatant target = resolveActionTarget(player, session, args);
+        if (target == null) return;
+
+        TurnState state = target.getTurnState();
+        if (state == null) {
+            player.sendMessage(Component.text("It's not " + target.getDisplayName() + "'s turn.", NamedTextColor.RED));
+            return;
+        }
+
+        if (state.isBonusActionUsed()) {
+            player.sendMessage(Component.text(target.getDisplayName() + " has already used their Bonus Action.", NamedTextColor.YELLOW));
+            return;
+        }
+
+        state.useBonusAction();
+        session.broadcast(Component.text(target.getDisplayName(true) + " uses their Bonus Action.", NamedTextColor.YELLOW));
+        session.sendActionBar(target);
+    }
+
+    private void handleMovement(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+
+        if (args.length >= 2 && args[1].equalsIgnoreCase("undo")) {
+            // Movement undo - teleport back to turn start position
+            Combatant current = session.getCurrentCombatant();
+            if (current == null || current.getTurnState() == null) {
+                player.sendMessage(Component.text("No active turn to undo movement for.", NamedTextColor.RED));
+                return;
+            }
+
+            TurnState state = current.getTurnState();
+            org.bukkit.Location startLoc = state.getTurnStartLocation();
+
+            if (startLoc == null) {
+                player.sendMessage(Component.text("No start location recorded.", NamedTextColor.RED));
+                return;
+            }
+
+            // Teleport combatant back
+            if (current.isPlayer()) {
+                Player targetPlayer = current.getPlayer();
+                if (targetPlayer != null) {
+                    targetPlayer.teleport(startLoc);
+                }
+            } else {
+                DndEntityInstance entity = current.getEntityInstance();
+                if (entity != null && entity.getArmorStand() != null) {
+                    entity.getArmorStand().teleport(startLoc);
+                }
+            }
+
+            state.undoMovement();
+            session.broadcast(Component.text(
+                current.getDisplayName(true) + "'s movement has been undone.",
+                NamedTextColor.YELLOW));
+            session.sendActionBar(current);
+        } else {
+            // Show movement status for current combatant
+            Combatant current = session.getCurrentCombatant();
+            if (current == null || current.getTurnState() == null) {
+                player.sendMessage(Component.text("No active turn.", NamedTextColor.RED));
+                return;
+            }
+
+            TurnState state = current.getTurnState();
+            player.sendMessage(Component.text(
+                current.getDisplayName() + ": " +
+                String.format("%.0f", state.getMovementUsed()) + "/" +
+                state.getMovementBudget() + " ft used (" +
+                String.format("%.0f", state.getMovementRemaining()) + " ft remaining)",
+                NamedTextColor.YELLOW));
+        }
+    }
+
+    /**
+     * Resolve which session this player belongs to (DM or player combatant).
+     */
+    private CombatSession resolveSession(Player player) {
+        // First check if they're the DM
+        CombatSession dmSession = DM_SESSIONS.get(player.getUniqueId());
+        if (dmSession != null && dmSession.isActive()) {
+            return dmSession;
+        }
+
+        // Otherwise check if they're a player combatant
+        CombatSession playerSession = CombatSession.getSessionForPlayer(player.getUniqueId());
+        if (playerSession != null && playerSession.isActive()) {
+            return playerSession;
+        }
+
+        player.sendMessage(Component.text("You are not in an active combat session.", NamedTextColor.RED));
+        return null;
+    }
+
+    /**
+     * Resolve the target combatant for action/bonus commands.
+     * DM can specify a target name; players default to themselves (must be their turn).
+     */
+    private Combatant resolveActionTarget(Player player, CombatSession session, String[] args) {
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+
+        if (isDM && args.length >= 2) {
+            // DM specified a target
+            String targetName = joinArgs(args, 1);
+            Combatant target = findCombatantByName(session, targetName);
+            if (target == null) {
+                player.sendMessage(Component.text("Combatant not found: " + targetName, NamedTextColor.RED));
+            }
+            return target;
+        }
+
+        // Default to current combatant
+        Combatant current = session.getCurrentCombatant();
+        if (current == null) {
+            player.sendMessage(Component.text("No active turn.", NamedTextColor.RED));
+            return null;
+        }
+
+        // Non-DM players can only use on their own turn
+        if (!isDM && current.isPlayer() && !current.getId().equals(player.getUniqueId())) {
+            player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
+            return null;
+        }
+
+        return current;
+    }
+
     // ==================== HELPER METHODS ====================
 
     private void announceTurnStart(CombatSession session, Combatant combatant) {
@@ -677,6 +863,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         session.broadcast(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
+
+        // Send action bar to the active player at turn start
+        session.sendActionBar(combatant);
     }
 
     private CombatSession getActiveSession(Player dm) {
@@ -835,6 +1024,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - End turn (default: current)", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat turn <target>", NamedTextColor.YELLOW)
             .append(Component.text(" - Jump to turn", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat action [target]", NamedTextColor.YELLOW)
+            .append(Component.text(" - Mark action used", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat bonus [target]", NamedTextColor.YELLOW)
+            .append(Component.text(" - Mark bonus action used", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat movement [undo]", NamedTextColor.YELLOW)
+            .append(Component.text(" - Check/undo movement", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat reveal/hide <entity>", NamedTextColor.YELLOW)
             .append(Component.text(" - Show/hide name", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat end", NamedTextColor.YELLOW)
@@ -863,7 +1058,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             // Subcommands
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
-                "rollforinitiative", "nextturn", "endturn", "turn", "status", "end", "reveal", "hide"));
+                "rollforinitiative", "nextturn", "endturn", "turn", "status", "end",
+                "reveal", "hide", "action", "bonus", "movement"));
             return filterCompletions(completions, args[0]);
         }
 
@@ -881,13 +1077,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     }
                     // Add entity names would need entity registry iteration
                 }
-                case "remove", "surprise", "endturn", "turn" -> {
+                case "remove", "surprise", "endturn", "turn", "action", "bonus" -> {
                     // Suggest combatants in session
                     if (session != null) {
                         for (Combatant c : session.getCombatants()) {
                             completions.add(c.getDisplayName());
                         }
                     }
+                }
+                case "movement" -> {
+                    completions.add("undo");
                 }
                 case "initiative" -> {
                     // Suggest combatants

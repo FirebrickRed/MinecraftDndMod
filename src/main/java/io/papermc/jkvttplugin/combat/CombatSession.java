@@ -1,10 +1,12 @@
 package io.papermc.jkvttplugin.combat;
 
+import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.scoreboard.*;
 
@@ -95,6 +97,22 @@ public class CombatSession {
      */
     public static Collection<CombatSession> getAllSessions() {
         return Collections.unmodifiableCollection(ACTIVE_SESSIONS.values());
+    }
+
+    /**
+     * Find the combat session containing a specific armor stand entity.
+     * Used for DM possession movement tracking.
+     */
+    public static CombatSession getSessionForEntity(org.bukkit.entity.ArmorStand armorStand) {
+        for (CombatSession session : ACTIVE_SESSIONS.values()) {
+            for (Combatant c : session.getCombatants()) {
+                if (!c.isPlayer() && c.getEntityInstance() != null
+                    && c.getEntityInstance().getArmorStand().equals(armorStand)) {
+                    return session;
+                }
+            }
+        }
+        return null;
     }
 
     // ==================== COMBATANT MANAGEMENT ====================
@@ -282,6 +300,14 @@ public class CombatSession {
         isSetupPhase = false;
         roundNumber = 1;
         currentTurnIndex = 0;
+
+        // Initialize first combatant's turn
+        Combatant first = getCurrentCombatant();
+        if (first != null) {
+            first.startNewTurn(first.getLocation());
+            applyGlowEffect(first);
+        }
+
         updateScoreboard();
     }
 
@@ -311,8 +337,12 @@ public class CombatSession {
     public Combatant nextTurn() {
         if (isSetupPhase || combatants.isEmpty()) return null;
 
-        // Clear surprised status on first turn (they lose their turn)
+        // End previous combatant's turn: clear state + remove glow
         Combatant previous = getCurrentCombatant();
+        if (previous != null) {
+            previous.clearTurnState();
+            clearGlowEffect(previous);
+        }
 
         currentTurnIndex++;
 
@@ -331,6 +361,13 @@ public class CombatSession {
             broadcastRoundStart();
         }
 
+        // Start new combatant's turn: init state + apply glow
+        Combatant current = getCurrentCombatant();
+        if (current != null) {
+            current.startNewTurn(current.getLocation());
+            applyGlowEffect(current);
+        }
+
         updateScoreboard();
         return getCurrentCombatant();
     }
@@ -341,7 +378,19 @@ public class CombatSession {
     public void jumpToTurn(Combatant combatant) {
         int index = combatants.indexOf(combatant);
         if (index != -1) {
+            // End previous combatant's turn
+            Combatant previous = getCurrentCombatant();
+            if (previous != null) {
+                previous.clearTurnState();
+                clearGlowEffect(previous);
+            }
+
             currentTurnIndex = index;
+
+            // Start new combatant's turn
+            combatant.startNewTurn(combatant.getLocation());
+            applyGlowEffect(combatant);
+
             updateScoreboard();
         }
     }
@@ -364,8 +413,11 @@ public class CombatSession {
     public void endCombat() {
         isActive = false;
 
-        // Remove all players from session tracking
+        // Remove all players from session tracking, clear glows and turn state
         for (Combatant c : combatants) {
+            clearGlowEffect(c);
+            c.clearTurnState();
+
             if (c.isPlayer()) {
                 PLAYER_SESSIONS.remove(c.getId());
 
@@ -510,6 +562,80 @@ public class CombatSession {
                 }
             }
         }
+    }
+
+    // ==================== GLOW EFFECTS (Issue #98) ====================
+
+    /**
+     * Apply glow effect to the active combatant.
+     */
+    private void applyGlowEffect(Combatant combatant) {
+        if (combatant.isPlayer()) {
+            Player player = combatant.getPlayer();
+            if (player != null) {
+                player.setGlowing(true);
+            }
+        } else {
+            DndEntityInstance entity = combatant.getEntityInstance();
+            if (entity != null && entity.getArmorStand() != null) {
+                entity.getArmorStand().setGlowing(true);
+            }
+        }
+    }
+
+    /**
+     * Remove glow effect from a combatant.
+     */
+    private void clearGlowEffect(Combatant combatant) {
+        if (combatant.isPlayer()) {
+            Player player = combatant.getPlayer();
+            if (player != null) {
+                player.setGlowing(false);
+            }
+        } else {
+            DndEntityInstance entity = combatant.getEntityInstance();
+            if (entity != null && entity.getArmorStand() != null) {
+                entity.getArmorStand().setGlowing(false);
+            }
+        }
+    }
+
+    // ==================== ACTION BAR (Issue #98) ====================
+
+    /**
+     * Send the action bar display to the active combatant (if player).
+     * Shows: Action status | Bonus Action status | Movement remaining
+     */
+    public void sendActionBar(Combatant combatant) {
+        if (!combatant.isPlayer()) return;
+
+        Player player = combatant.getPlayer();
+        if (player == null) return;
+
+        TurnState state = combatant.getTurnState();
+        if (state == null) return;
+
+        Component actionPart = Component.text("Action: ", NamedTextColor.WHITE)
+            .append(state.isActionUsed()
+                ? Component.text("USED", NamedTextColor.RED)
+                : Component.text("READY", NamedTextColor.GREEN));
+
+        Component bonusPart = Component.text(" | Bonus: ", NamedTextColor.WHITE)
+            .append(state.isBonusActionUsed()
+                ? Component.text("USED", NamedTextColor.RED)
+                : Component.text("READY", NamedTextColor.GREEN));
+
+        double remaining = state.getMovementRemaining();
+        NamedTextColor moveColor = remaining <= 0 ? NamedTextColor.RED
+            : remaining <= state.getMovementBudget() * 0.25 ? NamedTextColor.YELLOW
+            : NamedTextColor.GREEN;
+
+        Component movePart = Component.text(" | Move: ", NamedTextColor.WHITE)
+            .append(Component.text(
+                String.format("%.0f", remaining) + "/" + state.getMovementBudget() + " ft",
+                moveColor));
+
+        player.sendActionBar(actionPart.append(bonusPart).append(movePart));
     }
 
     // ==================== BROADCASTING ====================

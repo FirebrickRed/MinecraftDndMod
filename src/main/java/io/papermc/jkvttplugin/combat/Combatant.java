@@ -5,6 +5,7 @@ import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
 import java.util.UUID;
@@ -41,6 +42,9 @@ public class Combatant {
     private int deathSaveSuccesses;
     private int deathSaveFailures;
     private boolean isStabilized;
+
+    // Per-turn state (Issue #98)
+    private TurnState turnState;
 
     // ==================== CONSTRUCTORS ====================
 
@@ -193,6 +197,40 @@ public class Combatant {
         deathSaveSuccesses = 0;
         deathSaveFailures = 0;
         isStabilized = false;
+    }
+
+    // ==================== TURN STATE (Issue #98) ====================
+
+    public TurnState getTurnState() { return turnState; }
+
+    /**
+     * Initialize a new turn for this combatant.
+     * Creates a fresh TurnState with the combatant's speed and current location.
+     */
+    public void startNewTurn(Location location) {
+        this.turnState = new TurnState(getSpeed(), location);
+    }
+
+    /**
+     * Clear the turn state (when turn ends).
+     */
+    public void clearTurnState() {
+        this.turnState = null;
+    }
+
+    /**
+     * Get the current location of this combatant.
+     * @return Location or null if unavailable
+     */
+    public Location getLocation() {
+        if (isPlayer()) {
+            Player player = getPlayer();
+            return player != null ? player.getLocation() : null;
+        } else {
+            DndEntityInstance entity = getEntityInstance();
+            return (entity != null && entity.getArmorStand() != null)
+                ? entity.getArmorStand().getLocation() : null;
+        }
     }
 
     // ==================== UTILITY METHODS ====================

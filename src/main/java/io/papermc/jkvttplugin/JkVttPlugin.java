@@ -55,6 +55,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         // EntityInteractionListener removed - use /dmentity info command instead
         Bukkit.getPluginManager().registerEvents(new StatBlockMenuListener(), this);
         Bukkit.getPluginManager().registerEvents(new ShopListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.CombatListener(), this);
 
         // Commands
         this.getCommand("reloadyaml").setExecutor(new ReloadYamlCommand());

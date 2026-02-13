@@ -31,8 +31,16 @@ import java.util.UUID;
 
 public class NpcListener implements Listener {
     private final JkVttPlugin plugin;
-    private final Map<UUID, ArmorStand> possessedNpcs = new HashMap<>();
+    private static final Map<UUID, ArmorStand> possessedNpcs = new HashMap<>();
     private final Map<UUID, BukkitRunnable> movementTasks = new HashMap<>();
+
+    /**
+     * Get the armor stand a player is currently possessing, or null.
+     * Used by CombatListener for tracking entity movement during combat.
+     */
+    public static ArmorStand getPossessedNpc(UUID playerId) {
+        return possessedNpcs.get(playerId);
+    }
 
     public NpcListener() {
         this.plugin = JkVttPlugin.getInstance();
