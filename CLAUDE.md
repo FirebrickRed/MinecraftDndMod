@@ -434,21 +434,19 @@ Menu clicks are handled in `MenuClickListener.onMenuClick()` via switch on `Menu
 
 ### Commands
 
-**Character Commands:**
-- ✅ `/createcharacter` - Start character creation
-- ✅ `/shortrest` - Recover short rest resources (Issue #41)
-- ✅ `/longrest` - Recover long rest resources (Issue #41)
+**Canonical reference:** `COMMANDS.md` at the repo root is the full, grouped, up-to-date
+command list. `src/main/resources/plugin.yml` is the registration source of truth.
+Summary of groups:
 
-**DM Entity Commands (Shop System):**
-- ✅ `/dmentity shop create <entity_name>` - Convert entity to merchant with shop
-- ✅ `/dmentity shop add <entity> <item_id> <amount> <price> <currency>` - Add item to shop (tab completion for items/currencies)
-- ✅ `/dmentity shop restock <entity> <item_id> <amount>` - Restock existing item (tab completion for merchant's inventory)
-- ✅ `/dmentity shop view <entity>` - View merchant's inventory
-- ✅ `/dmentity trade <entity>` - Open merchant trade GUI
+- **Character (any player):** `/createcharacter`, `/viewsheet`, `/closesheet`, `/shortrest`, `/longrest`, `/rolldice <XdY[+Z]>`
+- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `end`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave` — plus `/rollforinitiative`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.
+- **DM entities & items:** `/dmentity <spawn|list|remove|teleport|info|trade|spawngroup|shop create|shop add|shop restock|shop view>`, `/dmgive <player> <item_id> [amount]`
+- **DM character tools:** `/viewsheet <characterName>` / `/viewsheet player <name>`, `/givesheet <player> <characterName>`, `/check <player> <ability|save|skill> <name> [adv|dis]`, `/rest <character> <short|long>`, `/restoreresource`, `/consumeresource`
+- **Op/admin:** `/dm <add|remove|list>`, `/reloadyaml`
 
-**System Commands:**
-- ✅ `/reloadyaml` - Reload all YAML content (Issue #30)
-- ✅ `/dmgive <item_type> <item_id> [amount]` - Give D&D items to players
+**DM authorization:** a "DM" is an op, a holder of the `jkvtt.dm` permission node, OR a
+player added via `/dm add` (`DMManager.isDM`). DM commands are gated in-command, not via
+plugin.yml permissions (a plugin.yml permission would default to op-only and block `/dm add` DMs).
 
 ## In Progress / Future Work
 
@@ -458,7 +456,7 @@ Menu clicks are handled in `MenuClickListener.onMenuClick()` via switch on `Menu
 - ❌ Feats
 - ❌ Conditional spell application (Genie patron, Lunar Sorcery)
 - ❌ Conditional advantages application
-- ❌ Combat system (initiative tracking, HP management)
+- ⚠️ Combat system — core is implemented (initiative, turn/action economy, attack rolls, damage/healing, temp HP, death saves; Issues #97–#101). Remaining: conditions (#103), enemy-visibility polish (#102), combat crash recovery/persistence (#105/#89), minor follow-ups (#109). NOTE: much of the combat code is currently in the working tree uncommitted.
 - ❌ Equipment management (equip/unequip in-game)
 - ❌ Persistence of player-chosen tool/language proficiencies (Issue #17)
 
