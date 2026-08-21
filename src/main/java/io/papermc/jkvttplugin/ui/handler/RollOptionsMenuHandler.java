@@ -54,6 +54,22 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         }
     }
 
+    /** Roll mode for programmatic rolls outside the menu flow (Issue #61 - /check). */
+    public enum RollMode { NORMAL, ADVANTAGE, DISADVANTAGE }
+
+    /**
+     * Perform a roll for a character without opening the menu (Issue #61).
+     * @param type  "SKILL", "CHECK", or "SAVE"
+     * @param value the enum name (e.g. "STEALTH", "STRENGTH")
+     */
+    public static void performRoll(CharacterSheet character, String type, String value, RollMode mode) {
+        switch (mode) {
+            case NORMAL -> rollNormal(character, type, value);
+            case ADVANTAGE -> rollAdvantage(character, type, value);
+            case DISADVANTAGE -> rollDisadvantage(character, type, value);
+        }
+    }
+
     /**
      * Roll 1d20 + bonus with breakdown
      */

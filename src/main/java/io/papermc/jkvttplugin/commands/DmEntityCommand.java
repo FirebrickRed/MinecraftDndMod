@@ -1287,6 +1287,24 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
+     * Despawn all tracked entities on plugin shutdown (saving any shops first) so they
+     * don't linger as orphaned armor stands the plugin can no longer track. Temporary
+     * stopgap until real entity persistence lands (Issue #89).
+     */
+    public static void despawnAllOnShutdown() {
+        for (DndEntityInstance instance : new ArrayList<>(spawnedEntities.values())) {
+            if (instance.getShop() != null) {
+                ShopPersistenceLoader.saveShop(instance.getInstanceId(), instance.getShop());
+            }
+            if (instance.getArmorStand() != null) {
+                instance.getArmorStand().remove();
+            }
+            instance.unregister();
+        }
+        spawnedEntities.clear();
+    }
+
+    /**
      * Remove entities by creature type.
      */
     private void removeByType(CommandSender sender, String creatureType) {

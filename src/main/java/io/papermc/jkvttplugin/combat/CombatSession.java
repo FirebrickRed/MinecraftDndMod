@@ -309,6 +309,7 @@ public class CombatSession {
         }
 
         updateScoreboard();
+        promptDeathSaveIfNeeded(getCurrentCombatant());
     }
 
     /**
@@ -369,6 +370,7 @@ public class CombatSession {
         }
 
         updateScoreboard();
+        promptDeathSaveIfNeeded(getCurrentCombatant());
         return getCurrentCombatant();
     }
 
@@ -392,6 +394,7 @@ public class CombatSession {
             applyGlowEffect(combatant);
 
             updateScoreboard();
+            promptDeathSaveIfNeeded(combatant);
         }
     }
 
@@ -417,6 +420,7 @@ public class CombatSession {
         for (Combatant c : combatants) {
             clearGlowEffect(c);
             c.clearTurnState();
+            DeathSaveHandler.removeProne(c);
 
             if (c.isPlayer()) {
                 PLAYER_SESSIONS.remove(c.getId());
@@ -687,6 +691,28 @@ public class CombatSession {
 
     private void broadcastRoundStart() {
         broadcast(Component.text("━━━ Round " + roundNumber + " ━━━", NamedTextColor.GOLD, TextDecoration.BOLD));
+    }
+
+    /**
+     * If the current combatant is a downed player, prompt them for a death save
+     * (or note that they're stable). Called at the start of each turn (Issue #101).
+     */
+    private void promptDeathSaveIfNeeded(Combatant c) {
+        if (c == null || !c.isPlayer() || c.isDead()) return;
+        // Sync: a player at 0 HP is unconscious even if they were downed outside the
+        // /combat damage path (e.g. already at 0 HP when combat started).
+        if (!c.isUnconscious() && c.getCurrentHp() <= 0) {
+            c.setUnconscious(true);
+            c.resetDeathSaves();
+            DeathSaveHandler.applyProne(c);
+        }
+        if (c.isStabilized()) {
+            broadcast(Component.text(c.getDisplayName() + " is stable and skips their turn.", NamedTextColor.GRAY));
+        } else if (c.isUnconscious()) {
+            broadcast(Component.text(c.getDisplayName() + " is UNCONSCIOUS and must make a death saving throw.",
+                    NamedTextColor.DARK_RED, TextDecoration.BOLD));
+            broadcast(Component.text("Type /combat deathsave", NamedTextColor.YELLOW));
+        }
     }
 
     // ==================== GETTERS ====================

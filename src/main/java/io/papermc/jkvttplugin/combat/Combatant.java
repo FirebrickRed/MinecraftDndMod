@@ -8,6 +8,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+import java.util.Collections;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -209,7 +211,13 @@ public class Combatant {
      */
     public void startNewTurn(Location location) {
         this.turnState = new TurnState(getSpeed(), location);
+        this.rolledDeathSaveThisTurn = false;
     }
+
+    // Tracks whether this combatant has already made its one death save this turn (Issue #101).
+    private boolean rolledDeathSaveThisTurn;
+    public boolean hasRolledDeathSaveThisTurn() { return rolledDeathSaveThisTurn; }
+    public void setRolledDeathSaveThisTurn(boolean value) { this.rolledDeathSaveThisTurn = value; }
 
     /**
      * Clear the turn state (when turn ends).
@@ -299,6 +307,85 @@ public class Combatant {
             return entity != null ? entity.getTemplate().getArmorClass() : 10;
         }
     }
+
+    // ==================== COMBAT HP (Issue #100) ====================
+
+    /** Current hit points, abstracted over player characters and entities. */
+    public int getCurrentHp() {
+        if (isPlayer()) {
+            CharacterSheet sheet = getCharacterSheet();
+            return sheet != null ? sheet.getCurrentHealth() : 0;
+        }
+        DndEntityInstance entity = getEntityInstance();
+        return entity != null ? entity.getCurrentHp() : 0;
+    }
+
+    /** Maximum hit points. */
+    public int getMaxHp() {
+        if (isPlayer()) {
+            CharacterSheet sheet = getCharacterSheet();
+            return sheet != null ? sheet.getMaxHealth() : 0;
+        }
+        DndEntityInstance entity = getEntityInstance();
+        return entity != null ? entity.getMaxHp() : 0;
+    }
+
+    /** Temporary hit points (players only; entities always report 0). */
+    public int getTempHp() {
+        if (isPlayer()) {
+            CharacterSheet sheet = getCharacterSheet();
+            return sheet != null ? sheet.getTempHealth() : 0;
+        }
+        return 0;
+    }
+
+    /** Apply already type-adjusted damage. Temp HP absorbs first for players. */
+    public void applyDamage(int amount) {
+        if (isPlayer()) {
+            CharacterSheet sheet = getCharacterSheet();
+            if (sheet != null) sheet.takeDamage(amount);
+        } else {
+            DndEntityInstance entity = getEntityInstance();
+            if (entity != null) entity.takeDamage(amount);
+        }
+    }
+
+    /** Restore hit points, capped at max. */
+    public void applyHealing(int amount) {
+        if (isPlayer()) {
+            CharacterSheet sheet = getCharacterSheet();
+            if (sheet != null) sheet.heal(amount);
+        } else {
+            DndEntityInstance entity = getEntityInstance();
+            if (entity != null) entity.heal(amount);
+        }
+    }
+
+    /** Grant temporary HP. Only players track temp HP; returns false for entities. */
+    public boolean grantTempHp(int amount) {
+        if (isPlayer()) {
+            CharacterSheet sheet = getCharacterSheet();
+            if (sheet != null) {
+                sheet.setTemporaryHp(amount);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /** Damage types this combatant resists (half damage). */
+    public Set<String> getDamageResistances() {
+        if (isPlayer()) {
+            CharacterSheet sheet = getCharacterSheet();
+            if (sheet != null) return sheet.getDamageResistances();
+        }
+        return Collections.emptySet();
+    }
+
+    // Vulnerability / immunity are not modeled in the data yet (Issue #100 follow-up),
+    // but the damage pipeline already consumes them so they light up when data exists.
+    public Set<String> getDamageVulnerabilities() { return Collections.emptySet(); }
+    public Set<String> getDamageImmunities() { return Collections.emptySet(); }
 
     @Override
     public String toString() {

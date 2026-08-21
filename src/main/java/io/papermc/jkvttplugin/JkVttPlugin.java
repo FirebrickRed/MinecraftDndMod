@@ -3,7 +3,8 @@ package io.papermc.jkvttplugin;
 import io.papermc.jkvttplugin.character.CharacterSheetItemListener;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.combat.CombatCommand;
-import io.papermc.jkvttplugin.combat.RollForInitiativeCommand;
+import io.papermc.jkvttplugin.combat.CombatSession;
+import io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader;
 import io.papermc.jkvttplugin.commands.*;
 import io.papermc.jkvttplugin.data.DataManager;
 import io.papermc.jkvttplugin.dm.DmCommand;
@@ -59,7 +60,6 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
 
         // Commands
         this.getCommand("reloadyaml").setExecutor(new ReloadYamlCommand());
-        this.getCommand("spawnhadozee").setExecutor(new NpcCommands(this));
         this.getCommand("rolldice").setExecutor(new RollDiceCommand());
         this.getCommand("createcharacter").setExecutor(new CreateCharacterCommand());
         this.getCommand("closesheet").setExecutor(new CloseSheetCommand());
@@ -98,8 +98,19 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         this.getCommand("combat").setExecutor(combatCommand);
         this.getCommand("combat").setTabCompleter(combatCommand);
 
-        this.getCommand("rollforinitiative").setExecutor(new RollForInitiativeCommand());
+        // Character sheet commands (Issue #47)
+        ViewSheetCommand viewSheetCommand = new ViewSheetCommand();
+        this.getCommand("viewsheet").setExecutor(viewSheetCommand);
+        this.getCommand("viewsheet").setTabCompleter(viewSheetCommand);
 
+        GiveSheetCommand giveSheetCommand = new GiveSheetCommand();
+        this.getCommand("givesheet").setExecutor(giveSheetCommand);
+        this.getCommand("givesheet").setTabCompleter(giveSheetCommand);
+
+        // DM-prompted checks with advantage/disadvantage (Issue #61)
+        CheckCommand checkCommand = new CheckCommand();
+        this.getCommand("check").setExecutor(checkCommand);
+        this.getCommand("check").setTabCompleter(checkCommand);
     }
 
     @EventHandler
@@ -156,6 +167,28 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
+        // Tidy shutdown: persist characters (so mid-combat HP isn't lost) and cleanly
+        // end any active combat (clears glow, scoreboards, prone). This is a safety net,
+        // not full crash recovery — see Issue #105.
+        try {
+            CharacterPersistenceLoader.saveAllCharacters();
+        } catch (Exception e) {
+            getLogger().warning("Failed to save characters on shutdown: " + e.getMessage());
+        }
+        for (CombatSession session : new java.util.ArrayList<>(CombatSession.getAllSessions())) {
+            try {
+                session.endCombat();
+            } catch (Exception e) {
+                getLogger().warning("Failed to end a combat session cleanly on shutdown: " + e.getMessage());
+            }
+        }
+        // Despawn tracked entities so they don't become orphaned armor stands the plugin
+        // can no longer manage after restart (stopgap until entity persistence, Issue #89).
+        try {
+            DmEntityCommand.despawnAllOnShutdown();
+        } catch (Exception e) {
+            getLogger().warning("Failed to despawn entities on shutdown: " + e.getMessage());
+        }
         getLogger().info("D&D Plugin has been disabled!");
     }
 

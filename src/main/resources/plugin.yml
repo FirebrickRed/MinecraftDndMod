@@ -3,9 +3,6 @@ version: '1.0-SNAPSHOT'
 main: io.papermc.jkvttplugin.JkVttPlugin
 api-version: '1.21'
 commands:
-  spawnhadozee:
-    description: Spawn a Hadozee NPC
-    usage: /spawnhadozee
   rolldice:
     description: Roll dice using XdY format (e.g., 2d6+3).
     usage: /rolldice <XdY[+Z]>
@@ -52,13 +49,12 @@ commands:
   dmentity:
     description: (DM) Spawn and manage entities in the world.
     usage: /dmentity <spawn|list|remove|teleport|spawngroup>
-    permission: jkvtt.dm
-    permission-message: You do not have permission to use this command.
+    # Authorization handled in-command via DMManager.isDM (op or /dm add), so
+    # non-op DMs work. A plugin.yml permission would default to op-only and block them.
   dmgive:
     description: (DM) Give D&D items to players.
     usage: /dmgive <player> <item_id> [amount]
-    permission: jkvtt.dm
-    permission-message: You do not have permission to use this command.
+    # Authorization handled in-command via DMManager.isDM.
   dm:
     description: Manage DM (Dungeon Master) role assignments.
     usage: /dm <add|remove|list>
@@ -66,10 +62,14 @@ commands:
   combat:
     description: (DM) Combat session management commands.
     usage: /combat <start|add|remove|nextturn|end|...>
-    permission: jkvtt.dm
-    permission-message: Only the DM can use combat commands.
-  rollforinitiative:
-    description: (DM) Roll initiative for all combatants and start combat.
-    usage: /rollforinitiative
-    permission: jkvtt.dm
-    permission-message: Only the DM can roll for initiative.
+    # Authorization handled in-command: DMs get full control, players get their
+    # own-turn subcommands (see PLAYER_ALLOWED in CombatCommand).
+  viewsheet:
+    description: View a character sheet (your own, by name, or a player's).
+    usage: /viewsheet [characterName | player <playerName>]
+  givesheet:
+    description: (DM) Give a player their character sheet paper item.
+    usage: /givesheet <player> <characterName>
+  check:
+    description: (DM) Prompt a player for an ability/save/skill check with optional advantage.
+    usage: /check <player> <ability|save|skill> <name> [adv|dis]

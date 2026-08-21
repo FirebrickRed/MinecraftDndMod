@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.listeners;
 import io.papermc.jkvttplugin.CustomNPCs.NpcData;
 import io.papermc.jkvttplugin.CustomNPCs.NpcManager;
 import io.papermc.jkvttplugin.JkVttPlugin;
+import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -53,6 +54,10 @@ public class NpcListener implements Listener {
 
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
+
+        // Only DMs may possess/control entities. (This whole possession system is slated
+        // to be rebuilt on the unified entity model — see #78 / epic #110.)
+        if (!DMManager.isDM(player)) return;
 
         if (player.isSneaking() || player.getInventory().getItemInMainHand().getType() == Material.NAME_TAG) {
             System.out.println("in name tag if");

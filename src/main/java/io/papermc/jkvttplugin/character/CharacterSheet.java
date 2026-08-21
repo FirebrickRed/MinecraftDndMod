@@ -805,6 +805,61 @@ public class CharacterSheet {
         return totalHealth;
     }
 
+    public int getTempHealth() {
+        return tempHealth;
+    }
+
+    // ==================== Combat HP (Issue #100) ====================
+
+    /**
+     * Heal this character, never exceeding max HP. Ignores non-positive amounts.
+     */
+    public void heal(int amount) {
+        if (amount <= 0) return;
+        currentHealth = Math.min(totalHealth, currentHealth + amount);
+    }
+
+    /**
+     * Grant temporary HP. Per 5e, temp HP does not stack — keep the higher value.
+     */
+    public void setTemporaryHp(int amount) {
+        if (amount < 0) return;
+        tempHealth = Math.max(tempHealth, amount);
+    }
+
+    /**
+     * A character at 0 HP is unconscious (and begins death saves — Issue #101).
+     */
+    public boolean isUnconscious() {
+        return currentHealth <= 0;
+    }
+
+    /**
+     * Apply incoming damage. Temporary HP absorbs damage first; any remainder
+     * reduces current HP and never drops it below 0.
+     */
+    public void takeDamage(int damage) {
+        if (damage <= 0) return;
+
+        // Temporary HP absorbs damage first; leftover temp HP persists.
+        if (tempHealth > 0) {
+            int absorbed = Math.min(tempHealth, damage);
+            tempHealth -= absorbed;
+            damage -= absorbed;
+        }
+
+        // Any remaining damage reduces current HP, never below 0 (MVP: no negative HP).
+        currentHealth = Math.max(0, currentHealth - damage);
+    }
+
+    /**
+     * Damage types this character resists (takes half). Vulnerability/immunity
+     * data is not modeled yet — see the Issue #100 follow-up.
+     */
+    public Set<String> getDamageResistances() {
+        return new HashSet<>(damageResistances);
+    }
+
     public int getProficiencyBonus() {
         return DndRules.getProficiencyBonus(getTotalLevel());
     }
@@ -889,6 +944,15 @@ public class CharacterSheet {
      */
     public Set<Skill> getSkillProficiencies() {
         return new HashSet<>(skillProficiencies);
+    }
+
+    /**
+     * Gets all weapon proficiencies for this character.
+     * Includes proficiencies from race, subrace, class, and subclass.
+     * @return Set of weapon proficiency names (e.g., "longsword", "simple_weapons")
+     */
+    public Set<String> getWeaponProficiencies() {
+        return new HashSet<>(weaponProficiencies);
     }
 
     /**

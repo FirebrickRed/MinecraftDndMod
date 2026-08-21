@@ -45,7 +45,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -88,12 +88,18 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "endturn" -> handleEndTurn(player, args);
             case "turn" -> handleJumpToTurn(player, args);
             case "status" -> handleStatus(player);
-            case "end" -> handleEnd(player);
+            case "end" -> handleEnd(player, args);
             case "reveal" -> handleReveal(player, args);
             case "hide" -> handleHide(player, args);
             case "action" -> handleAction(player, args);
             case "bonus" -> handleBonusAction(player, args);
             case "movement" -> handleMovement(player, args);
+            case "attack" -> handleAttack(player, args);
+            case "damage" -> handleDamage(player, args);
+            case "override" -> handleDamage(player, args); // DM-only (not in PLAYER_ALLOWED): apply corrective damage anytime
+            case "heal" -> handleHeal(player, args);
+            case "temphp" -> handleTempHp(player, args);
+            case "deathsave" -> handleDeathSave(player, args);
             default -> showHelp(player);
         }
 
@@ -507,8 +513,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 return;
             }
 
-            // Non-DM players can only end their own turn
-            if (!isDM && combatant.isPlayer() && !combatant.getId().equals(player.getUniqueId())) {
+            // Non-DM players can only end their OWN turn (never an entity's).
+            if (!isDM && (!combatant.isPlayer() || !combatant.getId().equals(player.getUniqueId()))) {
                 player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
                 return;
             }
@@ -580,9 +586,17 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         dm.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
     }
 
-    private void handleEnd(Player dm) {
+    private void handleEnd(Player dm, String[] args) {
         CombatSession session = getActiveSession(dm);
         if (session == null) return;
+
+        // Guard: "/combat end" is one keystroke from "/combat endturn" and ends the WHOLE
+        // encounter — require explicit confirmation.
+        if (args.length < 2 || !args[1].equalsIgnoreCase("confirm")) {
+            dm.sendMessage(Component.text("⚠ This ends the ENTIRE encounter — did you mean /combat endturn?", NamedTextColor.YELLOW));
+            dm.sendMessage(Component.text("Type /combat end confirm to end combat.", NamedTextColor.GRAY));
+            return;
+        }
 
         int rounds = session.getRoundNumber();
         int combatantsRemaining = session.getCombatants().size();
@@ -766,6 +780,402 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
     }
 
+    // ==================== ATTACK COMMAND (Issue #99) ====================
+
+    private void handleAttack(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+
+        if (session.isSetupPhase()) {
+            player.sendMessage(Component.text("Cannot attack during setup phase. Roll initiative first!", NamedTextColor.RED));
+            return;
+        }
+
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+
+        // Get the current combatant as the attacker
+        Combatant attacker = session.getCurrentCombatant();
+        if (attacker == null) {
+            player.sendMessage(Component.text("No active turn.", NamedTextColor.RED));
+            return;
+        }
+
+        // Non-DM may only act as their OWN character on their own turn.
+        // (Entities are always DM-controlled — never let a player drive a monster.)
+        if (!isDM && (!attacker.isPlayer() || !attacker.getId().equals(player.getUniqueId()))) {
+            player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
+            return;
+        }
+
+        // Parse flags
+        boolean showMods = hasFlag(args, "--showmods");
+        Integer providedRoll = getFlagValueInt(args, "--roll");
+        Integer providedTotal = getFlagValueInt(args, "--total");
+
+        // A physical d20 face must be 1-20; reject out-of-range values.
+        if (providedRoll != null && (providedRoll < 1 || providedRoll > 20)) {
+            player.sendMessage(Component.text("A d20 roll must be between 1 and 20.", NamedTextColor.RED));
+            return;
+        }
+
+        // Action economy check (skip for --showmods)
+        if (!showMods) {
+            TurnState state = attacker.getTurnState();
+            if (state == null) {
+                player.sendMessage(Component.text("No active turn state.", NamedTextColor.RED));
+                return;
+            }
+            if (state.isActionUsed()) {
+                player.sendMessage(Component.text(attacker.getDisplayName() + " has already used their Action this turn.", NamedTextColor.YELLOW));
+                return;
+            }
+        }
+
+        // Collect positional args (after "attack", excluding flags and their values)
+        List<String> positionalArgs = collectPositionalArgs(args, 1);
+
+        if (positionalArgs.isEmpty()) {
+            player.sendMessage(Component.text("Usage: /combat attack <target> [weapon] [--showmods] [--roll N] [--total N]", NamedTextColor.RED));
+            return;
+        }
+
+        // Greedy target match: try all positional as target, then try dropping last as weapon/attack name
+        String allPositional = String.join(" ", positionalArgs);
+        Combatant target = findCombatantByName(session, stripQuotes(allPositional));
+        String weaponOrAttackName = null;
+
+        if (target == null && positionalArgs.size() >= 2) {
+            // Try dropping the last arg as weapon/attack name
+            weaponOrAttackName = positionalArgs.get(positionalArgs.size() - 1);
+            String targetName = String.join(" ", positionalArgs.subList(0, positionalArgs.size() - 1));
+            target = findCombatantByName(session, stripQuotes(targetName));
+        }
+
+        if (target == null) {
+            player.sendMessage(Component.text("Target not found: " + allPositional, NamedTextColor.RED));
+            return;
+        }
+
+        // Block self-attack
+        if (attacker.getId().equals(target.getId())) {
+            player.sendMessage(Component.text("You cannot attack yourself!", NamedTextColor.RED));
+            return;
+        }
+
+        // Delegate to AttackHandler based on combatant type
+        if (attacker.isPlayer()) {
+            AttackHandler.executePlayerAttack(attacker, target, session, player,
+                    weaponOrAttackName, providedRoll, providedTotal, showMods);
+        } else {
+            AttackHandler.executeEntityAttack(attacker, target, session, player,
+                    weaponOrAttackName, providedRoll, providedTotal, showMods);
+        }
+
+        // Consume action + refresh action bar (skip for --showmods)
+        if (!showMods) {
+            TurnState state = attacker.getTurnState();
+            if (state != null) {
+                state.useAction();
+                session.sendActionBar(attacker);
+            }
+        }
+    }
+
+    /**
+     * Get the value after a flag (e.g., --roll 14 → "14").
+     * Returns null if flag not found or no value follows.
+     */
+    private String getFlagValue(String[] args, String flag) {
+        for (int i = 0; i < args.length - 1; i++) {
+            if (args[i].equalsIgnoreCase(flag)) {
+                return args[i + 1];
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Get the integer value after a flag (e.g., --roll 14 → 14).
+     * Also handles attached values like --roll14 → 14.
+     * Returns null if flag not found, no value, or not a valid integer.
+     */
+    private Integer getFlagValueInt(String[] args, String flag) {
+        // First try separated format: --roll 14
+        String value = getFlagValue(args, flag);
+        if (value != null) {
+            try {
+                return Integer.parseInt(value);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+
+        // Then try attached format: --roll14
+        String flagLower = flag.toLowerCase();
+        for (String arg : args) {
+            String argLower = arg.toLowerCase();
+            if (argLower.startsWith(flagLower) && argLower.length() > flagLower.length()) {
+                String attached = arg.substring(flag.length());
+                try {
+                    return Integer.parseInt(attached);
+                } catch (NumberFormatException e) {
+                    // Not a valid number attached
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Collect positional (non-flag) args starting from startIndex.
+     * Skips flags (--something) and their values.
+     * Handles both "--flag value" and "--flagvalue" formats.
+     */
+    private List<String> collectPositionalArgs(String[] args, int startIndex) {
+        List<String> positional = new ArrayList<>();
+        for (int i = startIndex; i < args.length; i++) {
+            if (args[i].startsWith("--")) {
+                // Check if this is a flag with an attached value (e.g., --roll20)
+                // or a standalone flag like --showmods
+                String flagPart = args[i].toLowerCase();
+                boolean hasAttachedValue = flagPart.matches("--\\w+\\d+");
+
+                if (!hasAttachedValue) {
+                    // Separated format: skip flag AND next arg (its value)
+                    // But only if the flag expects a value (valueless flags: --showmods, --crit)
+                    boolean valueless = flagPart.equals("--showmods") || flagPart.equals("--crit");
+                    if (!valueless && i + 1 < args.length && !args[i + 1].startsWith("--")) {
+                        i++; // skip the value after the flag
+                    }
+                }
+                // Either way, skip the flag itself
+                continue;
+            }
+            positional.add(args[i]);
+        }
+        return positional;
+    }
+
+    // ==================== DAMAGE / HEAL / TEMP HP (Issue #100) ====================
+
+    private void handleDamage(Player dm, String[] args) {
+        CombatSession session = resolveSession(dm);
+        if (session == null) return;
+
+        // Players may apply damage only on their own turn; the DM (and /combat override) may anytime.
+        boolean isDM = isDM(dm) || dm.hasPermission("jkvtt.dm");
+        if (!isDM) {
+            Combatant current = session.getCurrentCombatant();
+            if (current == null || !current.isPlayer() || !current.getId().equals(dm.getUniqueId())) {
+                dm.sendMessage(Component.text("You can only apply damage on your own turn.", NamedTextColor.RED));
+                return;
+            }
+        }
+
+        String rollStr = getFlagValue(args, "--roll");
+        Integer total = getFlagValueInt(args, "--total");
+        String type = getFlagValue(args, "--type");
+        boolean crit = hasFlag(args, "--crit");
+
+        List<String> positional = collectPositionalArgs(args, 1);
+        if (positional.isEmpty()) {
+            dm.sendMessage(Component.text("Usage: /combat damage <target> [amount] [--roll <dice>] [--total <n>] [--type <type>] [--crit]", NamedTextColor.RED));
+            return;
+        }
+
+        // A trailing integer positional is a flat damage amount; the rest is the target name.
+        Integer flat = null;
+        if (positional.size() >= 2) {
+            String last = positional.get(positional.size() - 1);
+            try {
+                flat = Integer.parseInt(last);
+                positional = positional.subList(0, positional.size() - 1);
+            } catch (NumberFormatException ignored) { /* last token is part of the name */ }
+        }
+
+        Combatant target = findCombatantByName(session, stripQuotes(String.join(" ", positional)));
+        if (target == null) {
+            dm.sendMessage(Component.text("Target not found: " + String.join(" ", positional), NamedTextColor.RED));
+            return;
+        }
+
+        int damage;
+        if (rollStr != null) {
+            damage = DiceRoller.parseDiceRoll(rollStr);
+            if (damage < 0) {
+                // Not a dice formula — accept a plain flat number passed via --roll.
+                try {
+                    damage = Integer.parseInt(rollStr.trim());
+                } catch (NumberFormatException e) {
+                    dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));
+                    return;
+                }
+            } else {
+                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + damage, NamedTextColor.GRAY));
+            }
+        } else if (total != null) {
+            damage = total;
+        } else if (flat != null) {
+            damage = flat;
+        } else {
+            dm.sendMessage(Component.text("Provide an amount, --roll <dice>, or --total <n>.", NamedTextColor.RED));
+            return;
+        }
+
+        DamageHandler.applyDamage(session, target, damage, type, crit);
+    }
+
+    private void handleHeal(Player dm, String[] args) {
+        CombatSession session = resolveSession(dm);
+        if (session == null) return;
+
+        String rollStr = getFlagValue(args, "--roll");
+        Integer total = getFlagValueInt(args, "--total");
+
+        List<String> positional = collectPositionalArgs(args, 1);
+        if (positional.isEmpty()) {
+            dm.sendMessage(Component.text("Usage: /combat heal <target> [amount] [--roll <dice>] [--total <n>]", NamedTextColor.RED));
+            return;
+        }
+
+        Integer flat = null;
+        if (positional.size() >= 2) {
+            String last = positional.get(positional.size() - 1);
+            try {
+                flat = Integer.parseInt(last);
+                positional = positional.subList(0, positional.size() - 1);
+            } catch (NumberFormatException ignored) { /* part of the name */ }
+        }
+
+        Combatant target = findCombatantByName(session, stripQuotes(String.join(" ", positional)));
+        if (target == null) {
+            dm.sendMessage(Component.text("Target not found: " + String.join(" ", positional), NamedTextColor.RED));
+            return;
+        }
+
+        int heal;
+        if (rollStr != null) {
+            heal = DiceRoller.parseDiceRoll(rollStr);
+            if (heal < 0) {
+                try {
+                    heal = Integer.parseInt(rollStr.trim());
+                } catch (NumberFormatException e) {
+                    dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));
+                    return;
+                }
+            } else {
+                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + heal, NamedTextColor.GRAY));
+            }
+        } else if (total != null) {
+            heal = total;
+        } else if (flat != null) {
+            heal = flat;
+        } else {
+            dm.sendMessage(Component.text("Provide an amount, --roll <dice>, or --total <n>.", NamedTextColor.RED));
+            return;
+        }
+
+        DamageHandler.applyHealing(session, target, heal);
+    }
+
+    private void handleTempHp(Player dm, String[] args) {
+        CombatSession session = resolveSession(dm);
+        if (session == null) return;
+
+        List<String> positional = collectPositionalArgs(args, 1);
+        if (positional.size() < 2) {
+            dm.sendMessage(Component.text("Usage: /combat temphp <target> <amount>", NamedTextColor.RED));
+            return;
+        }
+
+        int amount;
+        try {
+            amount = Integer.parseInt(positional.get(positional.size() - 1));
+        } catch (NumberFormatException e) {
+            dm.sendMessage(Component.text("Amount must be a number.", NamedTextColor.RED));
+            return;
+        }
+
+        String targetName = stripQuotes(String.join(" ", positional.subList(0, positional.size() - 1)));
+        Combatant target = findCombatantByName(session, targetName);
+        if (target == null) {
+            dm.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED));
+            return;
+        }
+
+        DamageHandler.applyTempHp(session, target, amount);
+    }
+
+    // ==================== DEATH SAVES (Issue #101) ====================
+
+    private void handleDeathSave(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+        // Only the DM may supply a manual d20 — otherwise a downed player could
+        // hand themselves a natural 20 and self-revive.
+        Integer providedRoll = isDM ? getFlagValueInt(args, "--roll") : null;
+        List<String> positional = collectPositionalArgs(args, 1);
+
+        // DM may roll for a named downed player; otherwise you roll for yourself.
+        Combatant target;
+        if (isDM && !positional.isEmpty()) {
+            target = findCombatantByName(session, stripQuotes(String.join(" ", positional)));
+            if (target == null) {
+                player.sendMessage(Component.text("Target not found: " + String.join(" ", positional), NamedTextColor.RED));
+                return;
+            }
+        } else {
+            target = findOwnCombatant(session, player.getUniqueId());
+            if (target == null) {
+                player.sendMessage(Component.text("You are not a combatant in this session.", NamedTextColor.RED));
+                return;
+            }
+        }
+
+        if (!target.isPlayer()) {
+            player.sendMessage(Component.text("Only players make death saving throws.", NamedTextColor.RED));
+            return;
+        }
+        if (target.isDead()) {
+            player.sendMessage(Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.RED));
+            return;
+        }
+        if (!target.isUnconscious()) {
+            player.sendMessage(Component.text(target.getDisplayName() + " is not making death saves.", NamedTextColor.RED));
+            return;
+        }
+        if (target.isStabilized()) {
+            player.sendMessage(Component.text(target.getDisplayName() + " is stable and does not need to roll.", NamedTextColor.YELLOW));
+            return;
+        }
+        // A death save happens once, on the dying creature's own turn.
+        if (!target.equals(session.getCurrentCombatant())) {
+            player.sendMessage(Component.text("Death saves are made on " + target.getDisplayName() + "'s turn.", NamedTextColor.RED));
+            return;
+        }
+        if (target.hasRolledDeathSaveThisTurn()) {
+            player.sendMessage(Component.text(target.getDisplayName() + " has already rolled a death save this turn.", NamedTextColor.YELLOW));
+            return;
+        }
+
+        DeathSaveHandler.rollDeathSave(session, target, providedRoll);
+        target.setRolledDeathSaveThisTurn(true);
+    }
+
+    /** Find the combatant belonging to a specific player in a session. */
+    private Combatant findOwnCombatant(CombatSession session, UUID playerId) {
+        for (Combatant c : session.getCombatants()) {
+            if (c.isPlayer() && c.getId().equals(playerId)) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    // ==================== SESSION/TARGET RESOLUTION ====================
+
     /**
      * Resolve which session this player belongs to (DM or player combatant).
      */
@@ -810,8 +1220,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return null;
         }
 
-        // Non-DM players can only use on their own turn
-        if (!isDM && current.isPlayer() && !current.getId().equals(player.getUniqueId())) {
+        // Non-DM players can only act as their OWN character on their own turn
+        // (never as a DM-controlled entity).
+        if (!isDM && (!current.isPlayer() || !current.getId().equals(player.getUniqueId()))) {
             player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
             return null;
         }
@@ -920,16 +1331,33 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * Supports names with spaces via case-insensitive partial matching.
      */
     private Combatant findCombatantByName(CombatSession session, String name) {
-        String searchLower = name.toLowerCase();
+        String searchLower = name.toLowerCase().trim();
 
-        // First try exact match
+        // First try exact display name match
         for (Combatant c : session.getCombatants()) {
             if (c.getDisplayName().equalsIgnoreCase(name)) {
                 return c;
             }
         }
 
-        // Then try starts-with match
+        // Try matching with flexible # formatting (e.g., "Wolf 2", "Wolf#2", "Wolf #2")
+        // Normalize both sides by removing spaces around #
+        String normalizedSearch = searchLower.replaceAll("\\s*#\\s*", "#");
+        for (Combatant c : session.getCombatants()) {
+            String normalizedDisplay = c.getDisplayName().toLowerCase().replaceAll("\\s*#\\s*", "#");
+            if (normalizedDisplay.equals(normalizedSearch)) {
+                return c;
+            }
+        }
+
+        // Try base name match (e.g., "Wolf" matches first "Wolf" combatant)
+        for (Combatant c : session.getCombatants()) {
+            if (c.getBaseName().equalsIgnoreCase(name)) {
+                return c;
+            }
+        }
+
+        // Then try starts-with match on display name
         for (Combatant c : session.getCombatants()) {
             if (c.getDisplayName().toLowerCase().startsWith(searchLower)) {
                 return c;
@@ -1028,6 +1456,24 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - Mark action used", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat bonus [target]", NamedTextColor.YELLOW)
             .append(Component.text(" - Mark bonus action used", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat attack <target> [weapon]", NamedTextColor.GREEN)
+            .append(Component.text(" - Attack a target", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat attack <target> --showmods", NamedTextColor.YELLOW)
+            .append(Component.text(" - Show modifier breakdown", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat attack <target> --roll <d20>", NamedTextColor.YELLOW)
+            .append(Component.text(" - Provide physical d20", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat attack <target> --total <N>", NamedTextColor.YELLOW)
+            .append(Component.text(" - Provide final total", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat damage <target> [amt|--roll <dice>] [--type <t>]", NamedTextColor.RED)
+            .append(Component.text(" - Apply damage (your turn, or DM)", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat override <target> [amt|--roll <dice>]", NamedTextColor.RED)
+            .append(Component.text(" - DM: apply corrective damage anytime", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat heal <target> [amt|--roll <dice>]", NamedTextColor.GREEN)
+            .append(Component.text(" - Restore HP (DM)", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat temphp <target> <amt>", NamedTextColor.AQUA)
+            .append(Component.text(" - Grant temporary HP (DM)", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat deathsave [--roll <d20>]", NamedTextColor.DARK_RED)
+            .append(Component.text(" - Roll a death saving throw when down", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat movement [undo]", NamedTextColor.YELLOW)
             .append(Component.text(" - Check/undo movement", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat reveal/hide <entity>", NamedTextColor.YELLOW)
@@ -1059,11 +1505,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Subcommands
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "end",
-                "reveal", "hide", "action", "bonus", "movement"));
+                "reveal", "hide", "action", "bonus", "movement", "attack",
+                "damage", "override", "heal", "temphp", "deathsave"));
             return filterCompletions(completions, args[0]);
         }
 
+        // Try DM session first, then player session for tab completion
         CombatSession session = DM_SESSIONS.get(player.getUniqueId());
+        if (session == null) {
+            session = CombatSession.getSessionForPlayer(player.getUniqueId());
+        }
 
         if (args.length == 2) {
             String sub = args[0].toLowerCase();
@@ -1077,7 +1528,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     }
                     // Add entity names would need entity registry iteration
                 }
-                case "remove", "surprise", "endturn", "turn", "action", "bonus" -> {
+                case "remove", "surprise", "endturn", "turn", "action", "bonus", "attack", "damage", "override", "heal", "temphp", "deathsave" -> {
                     // Suggest combatants in session
                     if (session != null) {
                         for (Combatant c : session.getCombatants()) {
@@ -1087,6 +1538,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 }
                 case "movement" -> {
                     completions.add("undo");
+                }
+                case "end" -> {
+                    completions.add("confirm");
                 }
                 case "initiative" -> {
                     // Suggest combatants
@@ -1132,6 +1586,65 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (args.length == 4 && args[0].equalsIgnoreCase("initiative") && args[2].equalsIgnoreCase("set")) {
             completions.addAll(List.of("1", "5", "10", "15", "20", "25"));
             return filterCompletions(completions, args[3]);
+        }
+
+        // Attack tab completion for weapon/attack names and flags
+        if (args[0].equalsIgnoreCase("attack") && args.length >= 3) {
+            String lastArg = args[args.length - 1];
+            String prevArg = args[args.length - 2];
+
+            // After --roll or --total, don't suggest anything
+            if (prevArg.equalsIgnoreCase("--roll") || prevArg.equalsIgnoreCase("--total")) {
+                return completions;
+            }
+
+            // If typing a flag
+            if (lastArg.startsWith("--")) {
+                completions.addAll(List.of("--showmods", "--roll", "--total"));
+                return filterCompletions(completions, lastArg);
+            }
+
+            // Suggest weapons/attack names after the target
+            if (session != null) {
+                Combatant current = session.getCurrentCombatant();
+                if (current != null) {
+                    if (current.isPlayer()) {
+                        Player currentPlayer = current.getPlayer();
+                        if (currentPlayer != null) {
+                            completions.addAll(AttackHandler.getWeaponIdsInInventory(currentPlayer));
+                        }
+                    } else {
+                        completions.addAll(AttackHandler.getEntityAttackNames(current));
+                    }
+                }
+            }
+            // Always offer flags
+            completions.addAll(List.of("--showmods", "--roll", "--total"));
+            return filterCompletions(completions, lastArg);
+        }
+
+        // Damage/heal/temphp flag + damage-type completion
+        if (args.length >= 3 && (args[0].equalsIgnoreCase("damage") || args[0].equalsIgnoreCase("override")
+                || args[0].equalsIgnoreCase("heal") || args[0].equalsIgnoreCase("temphp"))) {
+            String lastArg = args[args.length - 1];
+            String prevArg = args[args.length - 2];
+
+            if (prevArg.equalsIgnoreCase("--roll") || prevArg.equalsIgnoreCase("--total")) {
+                return completions;
+            }
+            if (prevArg.equalsIgnoreCase("--type")) {
+                completions.addAll(List.of("slashing", "piercing", "bludgeoning", "fire", "cold",
+                    "lightning", "acid", "poison", "necrotic", "radiant", "psychic", "thunder", "force"));
+                return filterCompletions(completions, lastArg);
+            }
+            if (lastArg.startsWith("--")) {
+                if (args[0].equalsIgnoreCase("damage") || args[0].equalsIgnoreCase("override")) {
+                    completions.addAll(List.of("--roll", "--total", "--type", "--crit"));
+                } else if (args[0].equalsIgnoreCase("heal")) {
+                    completions.addAll(List.of("--roll", "--total"));
+                }
+                return filterCompletions(completions, lastArg);
+            }
         }
 
         return completions;

@@ -40,7 +40,9 @@ public class DMManager {
      * @return true if player is a DM
      */
     public static boolean isDM(Player player) {
-        return player.isOp() || dmPlayers.contains(player.getUniqueId());
+        // op, the jkvtt.dm permission node (for permission-plugin-managed staff),
+        // or an explicit /dm add entry all count as DM.
+        return player.isOp() || player.hasPermission("jkvtt.dm") || dmPlayers.contains(player.getUniqueId());
     }
 
     /**
