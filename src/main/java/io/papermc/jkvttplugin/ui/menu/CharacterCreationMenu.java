@@ -371,8 +371,13 @@ public class CharacterCreationMenu {
                 // Show progress right on the tab, like the spell sub-tabs ("Skills 1/2").
                 tabLabel = cat.getDisplayName() + "  " + sel + "/" + req + (sel >= req ? " ✓" : "");
             }
-            inv.setItem(catSlots[ci], subTab(cat.getIcon(), tabLabel, cat == active, color,
-                    MenuAction.SWITCH_CHOICE_TAB, cat.name()));
+            ItemStack tab = subTab(cat.getIcon(), tabLabel, cat == active, color,
+                    MenuAction.SWITCH_CHOICE_TAB, cat.name());
+            // List what the character has in this category right on the tab (e.g. under
+            // "Languages 1/2": Common granted, Elvish chosen).
+            List<Component> summary = categorySummaryLore(cat, merged, grants);
+            if (!summary.isEmpty()) tab.editMeta(m -> m.lore(summary));
+            inv.setItem(catSlots[ci], tab);
         }
 
         int slot = 18;
@@ -442,6 +447,31 @@ public class CharacterCreationMenu {
         List<AutomaticGrant> out = new ArrayList<>();
         for (AutomaticGrant g : grants) if (grantsCategoryOf(g.type()) == cat) out.add(g);
         return out;
+    }
+
+    /** Sub-tab lore: everything the character has in a category — grants (aqua) + already-known (gray) + chosen (green). */
+    private static List<Component> categorySummaryLore(ChoiceCategory cat, List<MergedChoice> merged, List<AutomaticGrant> grants) {
+        List<Component> lore = new ArrayList<>();
+        Set<String> seen = new HashSet<>();
+        for (AutomaticGrant g : grantsForCategory(grants, cat)) {
+            if (seen.add(Util.normalize(g.displayName()))) {
+                lore.add(Component.text("• " + g.displayName() + " (granted)", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            }
+        }
+        for (MergedChoice mc : merged) {
+            if (mc.getCategory() != cat) continue;
+            for (String k : mc.getAlreadyKnown()) {
+                if (seen.add(Util.normalize(k))) {
+                    lore.add(Component.text("• " + Util.prettify(k), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+                }
+            }
+            for (String key : mc.getAvailableOptionKeys()) {
+                if (mc.isSelected(key) && seen.add(Util.normalize(mc.displayFor(key)))) {
+                    lore.add(Component.text("• " + mc.displayFor(key), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+                }
+            }
+        }
+        return lore;
     }
 
     /** A locked, non-interactive tile for something the character is granted automatically. */
@@ -657,7 +687,12 @@ public class CharacterCreationMenu {
         List<Component> lore = baseLore == null ? new ArrayList<>() : new ArrayList<>(baseLore);
         lore.add(Component.empty());
         lore.add(Component.text(selected ? "✔ Selected" : "Click to choose", selected ? NamedTextColor.GREEN : NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
-        ItemStack item = plain(mat, Component.text(name, color).decoration(TextDecoration.ITALIC, false));
+        // Selected reads clearly even when the enchant glint renders faintly over a custom
+        // model: a ✔ prefix + bold + green name. The glint is kept as a bonus where it shows.
+        Component display = Component.text((selected ? "✔ " : "") + name, selected ? NamedTextColor.GREEN : color)
+                .decoration(TextDecoration.ITALIC, false)
+                .decoration(TextDecoration.BOLD, selected);
+        ItemStack item = plain(mat, display);
         item.editMeta(m -> {
             m.lore(lore);
             if (selected) m.setEnchantmentGlintOverride(true);
