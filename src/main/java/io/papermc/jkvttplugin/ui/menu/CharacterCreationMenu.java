@@ -158,6 +158,7 @@ public class CharacterCreationMenu {
             boolean needsSub = sel && race.hasSubraces() && session.getSelectedSubRace() == null;
             NamedTextColor color = !sel ? NamedTextColor.WHITE : (needsSub ? NamedTextColor.YELLOW : NamedTextColor.GREEN);
             ItemStack item = option(race.getIconMaterial(), race.getName(), color, race.getSelectionMenuLore(), sel);
+            ItemUtil.applyModel(item, race.getIcon());
             ItemUtil.tagAction(item, MenuAction.CHOOSE_RACE, race.getId());
             if (slot > CONTENT_END) break;
             inv.setItem(slot++, item);
@@ -173,6 +174,7 @@ public class CharacterCreationMenu {
                 boolean sel = sub.getId().equals(selSub);
                 ItemStack item = option(sub.getIconMaterial(), sub.getName(),
                         sel ? NamedTextColor.GREEN : NamedTextColor.WHITE, sub.getSelectionMenuLore(), sel);
+                ItemUtil.applyModel(item, sub.getIcon());
                 ItemUtil.tagAction(item, MenuAction.CHOOSE_SUBRACE, sub.getId());
                 inv.setItem(slot++, item);
             }
@@ -188,6 +190,7 @@ public class CharacterCreationMenu {
             boolean needsSub = sel && c.getSubclassLevel() == 1 && c.hasSubclasses() && session.getSelectedSubclass() == null;
             NamedTextColor color = !sel ? NamedTextColor.WHITE : (needsSub ? NamedTextColor.YELLOW : NamedTextColor.GREEN);
             ItemStack item = option(c.getIconMaterial(), c.getName(), color, c.getSelectionMenuLore(), sel);
+            ItemUtil.applyModel(item, c.getIcon());
             ItemUtil.tagAction(item, MenuAction.CHOOSE_CLASS, c.getId());
             if (slot > CONTENT_END) break;
             inv.setItem(slot++, item);
@@ -203,6 +206,7 @@ public class CharacterCreationMenu {
                 boolean sel = sub.getId().equals(selSub);
                 ItemStack item = option(sub.getIconMaterial(), sub.getName(),
                         sel ? NamedTextColor.GREEN : NamedTextColor.WHITE, sub.getSelectionMenuLore(), sel);
+                ItemUtil.applyModel(item, sub.getIcon());
                 ItemUtil.tagAction(item, MenuAction.CHOOSE_SUBCLASS, sub.getId());
                 inv.setItem(slot++, item);
             }
@@ -217,6 +221,7 @@ public class CharacterCreationMenu {
             boolean sel = bg.getId().equals(selected);
             ItemStack item = option(bg.getIconMaterial(), bg.getName(),
                     sel ? NamedTextColor.GREEN : NamedTextColor.WHITE, bg.getSelectionMenuLore(), sel);
+            ItemUtil.applyModel(item, bg.getIcon());
             ItemUtil.tagAction(item, MenuAction.CHOOSE_BACKGROUND, bg.getId());
             inv.setItem(slot++, item);
         }
@@ -243,6 +248,7 @@ public class CharacterCreationMenu {
                     Component.text(a.getAbbreviation() + "  " + total, NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
             item.setAmount(amount);
             item.editMeta(m -> m.lore(lore));
+            ItemUtil.applyModel(item, a.getAbbreviation().toLowerCase() + "_icon"); // str_icon, dex_icon, ...
             ItemUtil.tagAction(item, MenuAction.ADJUST_ABILITY, a.name());
             inv.setItem(10 + i, item); // slots 10..15
         }
@@ -464,6 +470,7 @@ public class CharacterCreationMenu {
             inv.setItem(slot++, it);
         }
         ItemStack back = plain(Material.ARROW, Component.text("← Back", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        // Vanilla ARROW for now — back_arrow_icon model has no texture in the pack yet.
         ItemUtil.tagAction(back, MenuAction.DRILLDOWN_BACK, returnCat == null ? "EQUIPMENT" : returnCat);
         inv.setItem(45, back);
     }

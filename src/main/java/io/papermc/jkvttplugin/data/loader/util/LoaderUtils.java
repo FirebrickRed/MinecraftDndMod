@@ -386,6 +386,7 @@ public class LoaderUtils {
         subclass.setName((String) data.getOrDefault("name", id));
         subclass.setParentClass(className);
         subclass.setDescription((String) data.getOrDefault("description", ""));
+        subclass.setIcon((String) data.get("icon"));
 
         // Parse features by level
         subclass.setFeaturesByLevel(parseLevelStringListMap(data.get("features_by_level")));

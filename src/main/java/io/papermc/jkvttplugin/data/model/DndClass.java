@@ -99,6 +99,11 @@ public class DndClass {
         this.icon = icon;
     }
 
+    /** Resource-pack model name (from YAML {@code icon:}); null → vanilla fallback. */
+    public String getIcon() {
+        return icon;
+    }
+
     public int getHitDie() {
         return hitDie;
     }

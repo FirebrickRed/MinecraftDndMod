@@ -13,12 +13,45 @@ import org.bukkit.plugin.Plugin;
 import java.util.List;
 
 public class ItemUtil {
+    /** Namespace of the bundled resource pack. Model names in YAML (icon: / icon_name:) resolve here. */
+    public static final String RESOURCE_PACK_NAMESPACE = "jkvttresourcepack";
+
     private static Plugin plugin;
     private static NamespacedKey ACTION_KEY;
     private static NamespacedKey PAYLOAD_KEY;
     private static NamespacedKey ITEM_ID_KEY;
 
     private ItemUtil() {}
+
+    /**
+     * Applies a resource-pack item model to an item, if a model name is provided.
+     *
+     * <p>This is the single place the plugin sets a custom {@code item_model}. When
+     * {@code modelName} is null/blank the item keeps its vanilla Material appearance —
+     * the graceful fallback for content with no {@code icon}/{@code icon_name} declared,
+     * and for players who don't have the resource pack loaded. A malformed model name is
+     * logged and ignored rather than crashing the menu.
+     *
+     * @param item      the item to model (modified in place)
+     * @param modelName the resource-pack model name, e.g. "bard_icon" (may be null/blank)
+     * @return the same item, for chaining
+     */
+    public static ItemStack applyModel(ItemStack item, String modelName) {
+        if (item == null || modelName == null || modelName.isBlank()) {
+            return item;
+        }
+        ItemMeta meta = item.getItemMeta();
+        if (meta == null) return item;
+        try {
+            meta.setItemModel(new NamespacedKey(RESOURCE_PACK_NAMESPACE, modelName.trim().toLowerCase()));
+            item.setItemMeta(meta);
+        } catch (IllegalArgumentException ex) {
+            if (plugin != null) {
+                plugin.getLogger().warning("Ignoring invalid icon model '" + modelName + "': " + ex.getMessage());
+            }
+        }
+        return item;
+    }
 
     public static void initialize(Plugin plugin) {
         ItemUtil.plugin = plugin;

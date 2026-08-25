@@ -118,6 +118,11 @@ public class DndBackground {
         this.icon = icon;
     }
 
+    /** Resource-pack model name (from YAML {@code icon_name:}); null → vanilla fallback. */
+    public String getIcon() {
+        return icon;
+    }
+
     public ItemStack getBackgroundIcon() {
         return Util.createItem(Component.text(getName()), null, icon, 0);
     }

@@ -164,6 +164,25 @@ All D&D content is defined in `DMContent/` YAML files:
 
 Each category has a corresponding loader in `src/main/java/io/papermc/jkvttplugin/data/loader/` and model in `data/model/`.
 
+### Custom Icons (Resource Pack)
+
+Menu icons are **data-driven** — change them in YAML, not code.
+
+- A content entry's `icon:` (classes/subclasses) or `icon_name:` (races/subraces/backgrounds)
+  is the **exact resource-pack model name** in the `jkvttresourcepack` namespace
+  (e.g. `icon: bard_icon` → the pack's `bard_icon` item model).
+- Absent, blank, or malformed → the item keeps its **vanilla Material** (graceful fallback),
+  so content and players without the pack still work.
+- All model application goes through one helper: `ItemUtil.applyModel(item, modelName)`
+  (namespace constant: `ItemUtil.RESOURCE_PACK_NAMESPACE`). Never call `setItemModel` directly.
+- Fixed game concepts use hardcoded models: ability tiles resolve to `<abbr>_icon`
+  (`str_icon`, `dex_icon`, …). Other fixed UI icons (Back arrow, tabs) are vanilla until
+  their pack textures exist; a house-rule/UI-icon override config is future work (#104).
+- A model needs a **complete chain** to render: `items/<name>.json` → `models/item/<name>.json`
+  → `textures/item/<name>.png`. A model with no texture shows a broken (purple) placeholder,
+  which is worse than the vanilla fallback — so only reference models whose textures exist.
+- The `ResourcePack/` folder is **not** committed (gitignored); it lives locally for testing.
+
 ## Architecture
 
 ### Core Systems

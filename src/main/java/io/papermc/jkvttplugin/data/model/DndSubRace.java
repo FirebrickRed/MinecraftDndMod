@@ -185,6 +185,11 @@ public class DndSubRace {
         this.icon = icon;
     }
 
+    /** Resource-pack model name (from YAML {@code icon_name:}); null → vanilla fallback. */
+    public String getIcon() {
+        return icon;
+    }
+
     public Material getIconMaterial() {
         // ToDo: update to use custom icons
         return Material.PAPER;

@@ -150,7 +150,7 @@ player_choices:
     options:
       - - item: dungeoneers_pack
       - - item: explorers_pack
-icon: sorcerer
+icon: sorcerer_icon
 multiclass_requirements:
   Charisma: 13
 subclass_level: 1

@@ -172,7 +172,7 @@ player_choices:
     options:
       - - item: dungeoneers_pack
       - - item: explorers_pack
-icon: monk
+icon: monk_icon
 multiclass_requirements:
   Dexterity: 13
   Wisdom: 13

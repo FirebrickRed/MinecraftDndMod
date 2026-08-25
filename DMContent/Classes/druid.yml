@@ -130,7 +130,7 @@ player_choices:
     options:
       - - item: scimitar
       - - tag: simple_weapon
-icon: druid
+icon: druid_icon
 multiclass_requirements:
   Wisdom: 13
 subclass_level: 2

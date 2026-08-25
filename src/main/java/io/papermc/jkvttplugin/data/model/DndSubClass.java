@@ -23,6 +23,7 @@ public class DndSubClass {
     private String id;           // Normalized name (e.g., "life_domain", "the_fiend")
     private String name;         // Display name (e.g., "Life Domain", "The Fiend")
     private String parentClass;  // The class this subclass belongs to (e.g., "cleric", "warlock")
+    private String icon;         // Resource-pack model name (from YAML icon:); null → vanilla fallback
     private String description;  // Flavor text for the subclass
 
     // Subclass features and spells
@@ -194,6 +195,15 @@ public class DndSubClass {
      * Currently uses default icons based on parent class.
      * TODO: Add custom icons per subclass in YAML.
      */
+    /** Resource-pack model name (from YAML {@code icon:}); null → vanilla fallback. */
+    public String getIcon() {
+        return icon;
+    }
+
+    public void setIcon(String icon) {
+        this.icon = icon;
+    }
+
     public Material getIconMaterial() {
         if (parentClass == null) return Material.ENCHANTED_BOOK;
 

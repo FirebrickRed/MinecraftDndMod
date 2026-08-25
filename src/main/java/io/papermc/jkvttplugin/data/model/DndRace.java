@@ -222,6 +222,11 @@ public class DndRace {
         this.icon = icon;
     }
 
+    /** Resource-pack model name (from YAML {@code icon_name:}); null → vanilla fallback. */
+    public String getIcon() {
+        return icon;
+    }
+
     public boolean hasSubraces() {
         return !subraces.isEmpty();
     }

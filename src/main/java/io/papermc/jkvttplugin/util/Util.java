@@ -3,7 +3,6 @@ package io.papermc.jkvttplugin.util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
-import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -33,10 +32,8 @@ public class Util {
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
-//        meta.setItemModel(new NamespacedKey("jkvttresourcepack", itemModelName));
-
         item.setItemMeta(meta);
-        return item;
+        return ItemUtil.applyModel(item, itemModelName); // null/blank → keeps vanilla PAPER
     }
 
     public static ItemStack createItem(Component displayName, List<Component> lore, String itemModelName, int quantity, Material material) {
@@ -48,10 +45,8 @@ public class Util {
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
         meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
-//        meta.setItemModel(new NamespacedKey("jkvttresourcepack", itemModelName));
-
         item.setItemMeta(meta);
-        return item;
+        return ItemUtil.applyModel(item, itemModelName); // null/blank → keeps the vanilla material
     }
 
     public static int getInventorySize(int itemCount) {
