@@ -291,7 +291,11 @@ public class CharacterSheetManager {
         lore.add(Component.text("Character: " + characterName).color(NamedTextColor.WHITE));
         lore.add(Component.text("Level: " + sheet.getTotalLevel()).color(NamedTextColor.WHITE));
         lore.add(Component.text("Class: " + sheet.getMainClass().getName()).color(NamedTextColor.WHITE));
-        lore.add(Component.text("Race: " + sheet.getRace().getName()).color(NamedTextColor.WHITE));
+        String raceLabel = sheet.getRace().getName();
+        if (sheet.getSubrace() != null) {
+            raceLabel = sheet.getSubrace().getName() + " (" + raceLabel + ")";
+        }
+        lore.add(Component.text("Race: " + raceLabel).color(NamedTextColor.WHITE));
         lore.add(Component.empty());
         lore.add(Component.text("Right-click to view details").color(NamedTextColor.GRAY));
 

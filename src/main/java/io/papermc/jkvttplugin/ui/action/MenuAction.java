@@ -2,15 +2,10 @@ package io.papermc.jkvttplugin.ui.action;
 
 public enum MenuAction {
     // ===== Character Creation Actions =====
-    OPEN_RACE_SELECTION,
     CHOOSE_RACE,
-    OPEN_SUBRACE_SELECTION,
     CHOOSE_SUBRACE,
-    OPEN_CLASS_SELECTION,
     CHOOSE_CLASS,
-    OPEN_SUBCLASS_SELECTION,
     CHOOSE_SUBCLASS,
-    OPEN_BACKGROUND_SELECTION,
     CHOOSE_BACKGROUND,
     OPEN_PLAYER_OPTION_SELECTION,
     CHOOSE_OPTION,
@@ -32,6 +27,12 @@ public enum MenuAction {
     CONFIRM_SPELL_SELECTION,
     BACK_TO_CHARACTER_SHEET,
     CONFIRM_CHARACTER,
+
+    // ===== Single-pane creation (Issue #121) =====
+    SWITCH_CREATION_TAB,    // Switch the active category tab in the single-pane creation menu
+    ADJUST_ABILITY,         // Left-click +1 / right-click -1 on an ability
+    OPEN_NAME_ANVIL,        // Open the name-entry step (anvil)
+    OPEN_NAME_CHAT,         // Name-entry fallback: type in chat
 
     // ===== Character Sheet View Actions =====
     OPEN_SKILLS_MENU,

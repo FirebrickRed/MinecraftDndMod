@@ -4,7 +4,7 @@ import io.papermc.jkvttplugin.character.CharacterCreationSession;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.menu.AbilityAllocationMenu;
-import io.papermc.jkvttplugin.ui.menu.CharacterCreationSheetMenu;
+import io.papermc.jkvttplugin.ui.menu.CharacterCreationMenu;
 import io.papermc.jkvttplugin.util.Util;
 import org.bukkit.entity.Player;
 
@@ -25,7 +25,7 @@ public class AbilityAllocationHandler implements MenuClickHandler {
         switch (action) {
             case CONFIRM_CHARACTER -> {
                 player.closeInventory();
-                CharacterCreationSheetMenu.open(player, sessionId);
+                CharacterCreationMenu.open(player, sessionId);
             }
             case SELECT_RACIAL_BONUS_DISTRIBUTION -> {
                 // Payload is the distribution key like "[2, 1]"

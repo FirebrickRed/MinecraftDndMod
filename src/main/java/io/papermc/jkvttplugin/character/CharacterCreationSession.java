@@ -25,6 +25,15 @@ public class CharacterCreationSession {
     private EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
     private boolean abilityAllocationVisited = false;
 
+    // Transient UI state for the single-pane creation menu (Issue #121) — not persisted
+    private String activeCreationTab = "race";
+    private String activeChoiceCategory = null;   // null → menu picks the first category
+    private int activeSpellLevel = 0;
+    // Equipment drilldown state (null = not drilling down)
+    private String drilldownChoiceId = null;
+    private String drilldownWildcardKey = null;
+    private String drilldownReturnCategory = null;
+
     // Racial ability score bonus tracking
     private String racialBonusDistribution = null; // "2-1" or "1-1-1"
     private Map<Ability, Integer> racialBonusAllocations = new LinkedHashMap<>(); // LinkedHashMap preserves insertion order for auto-replacement
@@ -259,6 +268,51 @@ public class CharacterCreationSession {
 
     public void markAbilityAllocationVisited() {
         this.abilityAllocationVisited = true;
+    }
+
+    public String getActiveCreationTab() {
+        return activeCreationTab == null ? "race" : activeCreationTab;
+    }
+
+    public void setActiveCreationTab(String tab) {
+        this.activeCreationTab = tab;
+    }
+
+    public String getActiveChoiceCategory() {
+        return activeChoiceCategory;
+    }
+    public void setActiveChoiceCategory(String category) {
+        this.activeChoiceCategory = category;
+    }
+
+    public int getActiveSpellLevel() {
+        return activeSpellLevel;
+    }
+    public void setActiveSpellLevel(int level) {
+        this.activeSpellLevel = level;
+    }
+
+    public String getDrilldownChoiceId() {
+        return drilldownChoiceId;
+    }
+    public String getDrilldownWildcardKey() {
+        return drilldownWildcardKey;
+    }
+    public String getDrilldownReturnCategory() {
+        return drilldownReturnCategory;
+    }
+    public boolean isDrilldownActive() {
+        return drilldownChoiceId != null && drilldownWildcardKey != null;
+    }
+    public void setDrilldown(String choiceId, String wildcardKey, String returnCategory) {
+        this.drilldownChoiceId = choiceId;
+        this.drilldownWildcardKey = wildcardKey;
+        this.drilldownReturnCategory = returnCategory;
+    }
+    public void clearDrilldown() {
+        this.drilldownChoiceId = null;
+        this.drilldownWildcardKey = null;
+        this.drilldownReturnCategory = null;
     }
 
     /**

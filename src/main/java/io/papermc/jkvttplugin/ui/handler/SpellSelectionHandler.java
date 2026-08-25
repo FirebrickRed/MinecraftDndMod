@@ -8,7 +8,7 @@ import io.papermc.jkvttplugin.data.model.DndSpell;
 import io.papermc.jkvttplugin.data.model.SpellcastingInfo;
 import io.papermc.jkvttplugin.data.model.SpellsPreparedFormula;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
-import io.papermc.jkvttplugin.ui.menu.CharacterCreationSheetMenu;
+import io.papermc.jkvttplugin.ui.menu.CharacterCreationMenu;
 import io.papermc.jkvttplugin.ui.menu.SpellSelectionMenu;
 import org.bukkit.entity.Player;
 
@@ -68,12 +68,12 @@ public class SpellSelectionHandler implements MenuClickHandler {
             case CONFIRM_SPELL_SELECTION -> {
                 if (validateAllSpellSelections(session, dndClass)) {
                     player.closeInventory();
-                    CharacterCreationSheetMenu.open(player, sessionId);
+                    CharacterCreationMenu.open(player, sessionId);
                 }
             }
             case BACK_TO_CHARACTER_SHEET -> {
                 player.closeInventory();
-                CharacterCreationSheetMenu.open(player, sessionId);
+                CharacterCreationMenu.open(player, sessionId);
             }
         }
     }

@@ -334,3 +334,11 @@ lol it shows the wolf as dead but I can still do commands as it... I don't mind 
 I brought his health down to 0 and it said he  needs to make death saving throws
 he was able to make death saving throws is there a way to make him prone when he is downed?
 is there anything else I should test?
+
+1. /createcharacter → new single-pane menu. (Right-clicking a blank sheet should also open it.)
+2. Race → Elf → subrace appears nested; Race tab ⚠ then ✓.
+3. Class → Cleric → domain (subclass) appears nested.
+4. Abilities → left-click +1, right-click −1; number shows as the item's stack count.
+5. Choices / Spells → open existing menus, then land back on the new menu.
+6. Name → test both buttons (anvil and chat).
+7. Finish → locked until complete (lists missing), then creates the character + gives the sheet item.

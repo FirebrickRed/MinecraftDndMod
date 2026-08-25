@@ -10,6 +10,7 @@ import io.papermc.jkvttplugin.util.ItemUtil;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
 
@@ -29,28 +30,18 @@ import java.util.Map;
 public class MenuClickListener implements Listener {
 
     // Stateless singleton handlers (no instance state, safe to reuse)
-    private static final RaceSelectionHandler RACE_HANDLER = new RaceSelectionHandler();
-    private static final SubraceSelectionHandler SUBRACE_HANDLER = new SubraceSelectionHandler();
-    private static final ClassSelectionHandler CLASS_HANDLER = new ClassSelectionHandler();
-    private static final SubclassSelectionHandler SUBCLASS_HANDLER = new SubclassSelectionHandler();
-    private static final BackgroundSelectionHandler BACKGROUND_HANDLER = new BackgroundSelectionHandler();
-    private static final CharacterSheetHandler CHARACTER_SHEET_HANDLER = new CharacterSheetHandler();
     private static final TabbedChoicesHandler TABBED_CHOICES_HANDLER = new TabbedChoicesHandler();
     private static final AbilityAllocationHandler ABILITY_HANDLER = new AbilityAllocationHandler();
     private static final SpellSelectionHandler SPELL_HANDLER = new SpellSelectionHandler();
     private static final ViewCharacterSheetHandler VIEW_SHEET_HANDLER = new ViewCharacterSheetHandler();
     private static final RollOptionsMenuHandler ROLL_OPTIONS_HANDLER = new RollOptionsMenuHandler();
+    private static final CharacterCreationHandler CREATION_HANDLER = new CharacterCreationHandler();
 
     private final Map<MenuType, MenuClickHandler> handlers = new EnumMap<>(MenuType.class);
 
     public MenuClickListener() {
         // Register stateless singleton handlers for each menu type
-        handlers.put(MenuType.RACE_SELECTION, RACE_HANDLER);
-        handlers.put(MenuType.SUBRACE_SELECTION, SUBRACE_HANDLER);
-        handlers.put(MenuType.CLASS_SELECTION, CLASS_HANDLER);
-        handlers.put(MenuType.SUBCLASS_SELECTION, SUBCLASS_HANDLER);
-        handlers.put(MenuType.BACKGROUND_SELECTION, BACKGROUND_HANDLER);
-        handlers.put(MenuType.CHARACTER_CREATION_SHEET, CHARACTER_SHEET_HANDLER);
+        handlers.put(MenuType.CREATE_CHARACTER, CREATION_HANDLER);
         handlers.put(MenuType.TABBED_CHOICES, TABBED_CHOICES_HANDLER);
         handlers.put(MenuType.ABILITY_ALLOCATION, ABILITY_HANDLER);
         handlers.put(MenuType.SPELL_SELECTION, SPELL_HANDLER);
@@ -93,8 +84,8 @@ public class MenuClickListener implements Listener {
         if (!isViewMenu) {
             session = CharacterCreationService.getSession(player.getUniqueId());
             if (session == null) {
-                // Auto-create session for CHARACTER_CREATION_SHEET and RACE_SELECTION
-                if (holder.getType() == MenuType.CHARACTER_CREATION_SHEET || holder.getType() == MenuType.RACE_SELECTION) {
+                // Auto-create the session when the player opens the creation menu
+                if (holder.getType() == MenuType.CREATE_CHARACTER) {
                     session = CharacterCreationService.start(player.getUniqueId());
                 } else {
                     // Other menus require an existing session
@@ -103,6 +94,12 @@ public class MenuClickListener implements Listener {
                     return;
                 }
             }
+        }
+
+        // Single-pane creation needs the click type (left = +1 ability, right = -1)
+        if (holder.getType() == MenuType.CREATE_CHARACTER) {
+            CREATION_HANDLER.handleClick(player, session, holder.getSessionId(), action, payload, event.getClick());
+            return;
         }
 
         // Route to appropriate handler

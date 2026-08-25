@@ -2,12 +2,7 @@ package io.papermc.jkvttplugin.ui.core;
 
 public enum MenuType {
     VIEW_CHARACTER_SHEET,
-    CHARACTER_CREATION_SHEET,
-    RACE_SELECTION,
-    SUBRACE_SELECTION,
-    CLASS_SELECTION,
-    SUBCLASS_SELECTION,
-    BACKGROUND_SELECTION,
+    CREATE_CHARACTER,           // Single-pane character creation (Issue #121)
     TABBED_CHOICES,
     ABILITY_ALLOCATION,
     SPELL_SELECTION,

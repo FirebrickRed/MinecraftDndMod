@@ -7,7 +7,7 @@ import io.papermc.jkvttplugin.data.model.EquipmentOption;
 import io.papermc.jkvttplugin.data.model.MergedChoice;
 import io.papermc.jkvttplugin.data.model.PendingChoice;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
-import io.papermc.jkvttplugin.ui.menu.CharacterCreationSheetMenu;
+import io.papermc.jkvttplugin.ui.menu.CharacterCreationMenu;
 import io.papermc.jkvttplugin.ui.menu.TabbedChoiceMenu;
 import io.papermc.jkvttplugin.util.EquipmentUtil;
 import io.papermc.jkvttplugin.util.TagRegistry;
@@ -198,7 +198,7 @@ public class TabbedChoicesHandler implements MenuClickHandler {
 
                 player.closeInventory();
                 player.sendMessage("Choices saved!");
-                CharacterCreationSheetMenu.open(player, sessionId);
+                CharacterCreationMenu.open(player, sessionId);
             }
         }
     }

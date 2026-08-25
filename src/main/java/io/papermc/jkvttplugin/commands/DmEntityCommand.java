@@ -16,7 +16,9 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -50,6 +52,10 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
     // Track all spawned entities globally
     private static final Map<String, DndEntityInstance> spawnedEntities = new HashMap<>();
+
+    /** PDC marker written to every spawned D&D entity armor stand, so orphans (post-restart) are identifiable. */
+    private static final NamespacedKey DND_ENTITY_KEY =
+            new NamespacedKey(io.papermc.jkvttplugin.JkVttPlugin.getInstance(), "dnd_entity");
     private static int nameCounter = 0; // For handling duplicate names
 
     @Override
@@ -76,6 +82,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "trade" -> handleTrade(sender, args);
             case "shop" -> handleShop(sender, args);
             case "spawngroup" -> handleSpawnGroup(sender, args);
+            case "cleanup" -> handleCleanup(sender, args);
             default -> sendHelp(sender);
         }
 
@@ -1244,7 +1251,28 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             armorStand.getEquipment().setHelmet(modelItem);
         }
 
+        // Mark this stand as ours so it can be cleaned up even after a restart orphans it (#89).
+        armorStand.getPersistentDataContainer().set(DND_ENTITY_KEY, PersistentDataType.BYTE, (byte) 1);
         return armorStand;
+    }
+
+    /**
+     * Remove orphaned D&D entity armor stands — marked stands the plugin no longer tracks
+     * (e.g. left over after a server restart). Safe: only touches stands carrying our marker.
+     */
+    private void handleCleanup(CommandSender sender, String[] args) {
+        int removed = 0;
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            for (ArmorStand stand : world.getEntitiesByClass(ArmorStand.class)) {
+                if (!stand.getPersistentDataContainer().has(DND_ENTITY_KEY, PersistentDataType.BYTE)) continue;
+                if (DndEntityInstance.getByArmorStand(stand) == null) {   // marked but untracked = orphan
+                    stand.remove();
+                    removed++;
+                }
+            }
+        }
+        sender.sendMessage(Component.text("✓ Removed " + removed + " orphaned D&D entity stand(s).", NamedTextColor.GREEN));
+        sender.sendMessage(Component.text("(Stands spawned before this feature have no marker — use /kill for those once.)", NamedTextColor.GRAY));
     }
 
     /**
@@ -1445,7 +1473,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             // Subcommands
-            return List.of("spawn", "list", "remove", "teleport", "info", "trade", "shop", "spawngroup").stream()
+            return List.of("spawn", "list", "remove", "teleport", "info", "trade", "shop", "spawngroup", "cleanup").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }

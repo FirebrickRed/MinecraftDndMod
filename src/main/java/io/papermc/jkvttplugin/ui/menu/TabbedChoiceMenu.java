@@ -66,7 +66,7 @@ public class TabbedChoiceMenu {
 
         if (merged.isEmpty() && grants.isEmpty()) {
             player.sendMessage(Component.text("No choices to make!").color(NamedTextColor.GOLD));
-            CharacterCreationSheetMenu.open(player, sessionId);
+            CharacterCreationMenu.open(player, sessionId);
             return;
         }
 

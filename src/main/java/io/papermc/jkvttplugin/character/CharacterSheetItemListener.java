@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.character;
 
-import io.papermc.jkvttplugin.ui.menu.CharacterCreationSheetMenu;
+import io.papermc.jkvttplugin.ui.menu.CharacterCreationMenu;
 import io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -35,13 +35,13 @@ public class CharacterSheetItemListener implements Listener {
     private void handleCharacterCreation(Player player) {
         if (CharacterCreationService.hasSession(player.getUniqueId())) {
             player.sendMessage("You already have a character creation session in progress.");
-            CharacterCreationSheetMenu.open(player, CharacterCreationService.getSession(player.getUniqueId()).getSessionId());
+            CharacterCreationMenu.open(player, CharacterCreationService.getSession(player.getUniqueId()).getSessionId());
             return;
         }
 
         CharacterCreationSession session = CharacterCreationService.start(player.getUniqueId());
         player.sendMessage("Starting character creation...");
-        CharacterCreationSheetMenu.open(player, session.getSessionId());
+        CharacterCreationMenu.open(player, session.getSessionId());
     }
 
     private void handleCharacterSheetView(Player player, ItemStack item) {
