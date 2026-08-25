@@ -465,8 +465,9 @@ Menu clicks are handled in `MenuClickListener.onMenuClick()` via switch on `Menu
 command list. `src/main/resources/plugin.yml` is the registration source of truth.
 Summary of groups:
 
-Consolidated into ~5 base commands (Issue #122). Legacy top-level commands remain as
-deprecated aliases during the transition (see COMMANDS.md for the full list).
+Consolidated into 5 base commands (Issue #122): `/character`, `/roll`, `/combat`,
+`/dmentity`, `/dm`. The legacy per-action commands have been removed (their executor
+classes remain and are delegated to from CharacterCommand / DmCommand).
 - **Character (any player):** `/character <create|view|list|close|rest|give>` (alias `/char`); `create <player>` and `give <player> <name>` are DM-only.
 - **Roll:** `/roll <XdY[+Z]>` (alias of the old `/rolldice`).
 - **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `end`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.

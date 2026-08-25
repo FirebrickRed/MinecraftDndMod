@@ -180,7 +180,8 @@ public class DndArmor {
     public void setCustomModel(String customModel) { this.customModel = customModel; }
 
     public Material getMaterial() {
-        return material != null ? material : isShield() ? Material.SHIELD : Material.LEATHER_CHESTPLATE;
+        // Every armor entry sets `material:` in YAML; paper is the only hardcoded fallback.
+        return material != null ? material : Material.PAPER;
     }
     public void setMaterial(Material material) {
         this.material = material;

@@ -6,7 +6,7 @@ in the handler classes. In-game, typing a command with no args (e.g. `/combat`)
 prints that command's own help.
 
 > **DM authorization:** "DM" = a server op, a player with the `jkvtt.dm` permission
-> node, or a player added via `/dm add`. Op is required only for `/dm` itself and `/reloadyaml`.
+> node, or a player added via `/dm add`. Op is required only for `/dm add`/`/dm remove`.
 
 ---
 
@@ -21,7 +21,7 @@ prints that command's own help.
 | `/character rest long` | Long rest — full HP, spell slots, resources |
 | `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
 
-`/character` is aliased to `/char`. DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. **Deprecated aliases** (still work during the consolidation transition, will be retired): `/createcharacter`, `/viewsheet`, `/closesheet`, `/givesheet`, `/shortrest`, `/longrest`, `/rolldice`, `/dmgive`, `/check`, `/rest`, `/restoreresource`, `/consumeresource`, `/reloadyaml`.
+`/character` is aliased to `/char`. DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the five roots below.
 
 **In combat, on your own turn only:**
 `/combat action` · `/combat bonus` · `/combat attack <target>` · `/combat damage <target>` · `/combat endturn` · `/combat deathsave`
@@ -99,6 +99,6 @@ combat session, HP changes, and spawned-entity stats are lost, and glowing NPCs 
 glowing. **Before stopping the server:**
 1. `/combat end` (clears glow, scoreboards, prone)
 2. `/dmentity remove <name>` for NPCs you don't want lingering
-3. `/longrest` or `/closesheet` to persist player HP (no auto-save on shutdown)
+3. `/character rest long` or `/character close` to persist player HP (no auto-save on shutdown)
 
 Tracked in issues #105 (combat auto-save), #89 (entity persistence), #31 (character auto-save).

@@ -11,6 +11,7 @@ club:
     amount: 1
     currency: silver
   description: "A simple wooden club."
+  material: MACE
 
 dagger:
   name: "Dagger"
@@ -25,6 +26,7 @@ dagger:
     amount: 2
     currency: gold
   description: "A simple blade."
+  material: IRON_SWORD
 
 javelin:
   name: "Javelin"
@@ -39,6 +41,7 @@ javelin:
     amount: 5
     currency: silver
   description: "A light throwing spear."
+  material: TRIDENT
 
 light_crossbow:
   name: "Light Crossbow"
@@ -55,6 +58,7 @@ light_crossbow:
     amount: 25
     currency: gold
   description: "A simple crossbow."
+  material: CROSSBOW
 
 shortbow:
   name: "Shortbow"
@@ -69,6 +73,7 @@ shortbow:
     amount: 25
     currency: gold
   description: "A simple bow."
+  material: BOW
 
 # Martial Weapons
 longsword:
@@ -83,6 +88,7 @@ longsword:
     amount: 15
     currency: gold
   description: "A classic knightly blade. Can be wielded with two hands for 1d10 damage."
+  material: IRON_SWORD
 
 greatsword:
   name: "Greatsword"
@@ -96,6 +102,7 @@ greatsword:
     amount: 50
     currency: gold
   description: "A massive two-handed sword."
+  material: DIAMOND_SWORD
 
 rapier:
   name: "Rapier"
@@ -109,6 +116,7 @@ rapier:
     amount: 25
     currency: gold
   description: "A light, precise thrusting blade."
+  material: IRON_SWORD
 
 longbow:
   name: "Longbow"
@@ -123,3 +131,4 @@ longbow:
     amount: 50
     currency: gold
   description: "A powerful ranged weapon requiring great strength to draw."
+  material: BOW

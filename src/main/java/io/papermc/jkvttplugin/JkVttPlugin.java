@@ -60,66 +60,26 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new ShopListener(this), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.CombatListener(), this);
 
-        // Commands
-        this.getCommand("reloadyaml").setExecutor(new ReloadYamlCommand());
-        this.getCommand("rolldice").setExecutor(new RollDiceCommand());
-        this.getCommand("createcharacter").setExecutor(new CreateCharacterCommand());
-        this.getCommand("closesheet").setExecutor(new CloseSheetCommand());
+        // Commands — five consolidated roots (Issue #122). The legacy per-action command
+        // classes still exist and are delegated to from CharacterCommand / DmCommand; they
+        // are simply no longer registered as their own top-level commands.
+        CharacterCommand characterCommand = new CharacterCommand();
+        this.getCommand("character").setExecutor(characterCommand);
+        this.getCommand("character").setTabCompleter(characterCommand);
 
-        // Rest Commands
-        this.getCommand("shortrest").setExecutor(new ShortRestCommand());
-        this.getCommand("longrest").setExecutor(new LongRestCommand());
+        this.getCommand("roll").setExecutor(new RollDiceCommand());
 
-        // DM Commands
-        RestCommand restCommand = new RestCommand();
-        this.getCommand("rest").setExecutor(restCommand);
-        this.getCommand("rest").setTabCompleter(restCommand);
-
-        RestoreResourceCommand restoreResourceCommand = new RestoreResourceCommand();
-        this.getCommand("restoreresource").setExecutor(restoreResourceCommand);
-        this.getCommand("restoreresource").setTabCompleter(restoreResourceCommand);
-
-        ConsumeResourceCommand consumeResourceCommand = new ConsumeResourceCommand();
-        this.getCommand("consumeresource").setExecutor(consumeResourceCommand);
-        this.getCommand("consumeresource").setTabCompleter(consumeResourceCommand);
+        CombatCommand combatCommand = new CombatCommand();
+        this.getCommand("combat").setExecutor(combatCommand);
+        this.getCommand("combat").setTabCompleter(combatCommand);
 
         DmEntityCommand dmEntityCommand = new DmEntityCommand();
         this.getCommand("dmentity").setExecutor(dmEntityCommand);
         this.getCommand("dmentity").setTabCompleter(dmEntityCommand);
 
-        DmGiveCommand dmGiveCommand = new DmGiveCommand();
-        this.getCommand("dmgive").setExecutor(dmGiveCommand);
-        this.getCommand("dmgive").setTabCompleter(dmGiveCommand);
-
         DmCommand dmCommand = new DmCommand();
         this.getCommand("dm").setExecutor(dmCommand);
         this.getCommand("dm").setTabCompleter(dmCommand);
-
-        // Combat Commands (Issue #97)
-        CombatCommand combatCommand = new CombatCommand();
-        this.getCommand("combat").setExecutor(combatCommand);
-        this.getCommand("combat").setTabCompleter(combatCommand);
-
-        // Consolidated character command (Issue #122): /character (alias /char).
-        // The legacy top-level commands below stay registered as deprecated aliases
-        // during the transition and will be retired once command consolidation lands.
-        CharacterCommand characterCommand = new CharacterCommand();
-        this.getCommand("character").setExecutor(characterCommand);
-        this.getCommand("character").setTabCompleter(characterCommand);
-
-        // Character sheet commands (Issue #47)
-        ViewSheetCommand viewSheetCommand = new ViewSheetCommand();
-        this.getCommand("viewsheet").setExecutor(viewSheetCommand);
-        this.getCommand("viewsheet").setTabCompleter(viewSheetCommand);
-
-        GiveSheetCommand giveSheetCommand = new GiveSheetCommand();
-        this.getCommand("givesheet").setExecutor(giveSheetCommand);
-        this.getCommand("givesheet").setTabCompleter(giveSheetCommand);
-
-        // DM-prompted checks with advantage/disadvantage (Issue #61)
-        CheckCommand checkCommand = new CheckCommand();
-        this.getCommand("check").setExecutor(checkCommand);
-        this.getCommand("check").setTabCompleter(checkCommand);
     }
 
     @EventHandler

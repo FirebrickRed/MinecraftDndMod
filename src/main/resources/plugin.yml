@@ -3,78 +3,25 @@ version: '1.0-SNAPSHOT'
 main: io.papermc.jkvttplugin.JkVttPlugin
 api-version: '1.21'
 commands:
-  rolldice:
+  character:
+    description: Character commands (create, view, list, close, rest, give).
+    usage: /character <create|view|list|close|rest|give>
+    aliases: [char]
+  roll:
     description: Roll dice using XdY format (e.g., 2d6+3).
     usage: /roll <XdY[+Z]>
     permission: dnd.rolldice
-    aliases: [roll]
-  reloadyaml:
-    description: (Deprecated - use /dm reload) Reloads all YAML files.
-    usage: /reloadyaml
-    permission: jkvttplugin.reloadyaml
-    permission-message: You do not have permission to use this command.
-  character:
-    description: Character commands (create, view, list, close, give).
-    usage: /character <create|view|list|close|give>
-    aliases: [char]
-  createcharacter:
-    description: (Deprecated - use /character create) Start character creation.
-    usage: /createcharacter
-#    permission: jkvttplugin.createcharacter
-  closesheet:
-    description: Save and close the active character sheet.
-    usage: /closesheet
-    permission: jkvttplugin.closesheet
-    permission-message: You do not have permission to use this command.
-  shortrest:
-    description: (Deprecated - use /character rest short) Take a short rest.
-    usage: /shortrest
-    permission: jkvttplugin.shortrest
-    permission-message: You do not have permission to take a short rest.
-  longrest:
-    description: (Deprecated - use /character rest long) Take a long rest.
-    usage: /longrest
-    permission: jkvttplugin.longrest
-    permission-message: You do not have permission to take a long rest.
-  rest:
-    description: (Deprecated - use /dm rest) Trigger a rest for a character.
-    usage: /rest <character> <short|long>
-    permission: jkvttplugin.rest
-    permission-message: You do not have permission to use this command.
-  restoreresource:
-    description: (Deprecated - use /dm resource restore) Restore a class resource.
-    usage: /restoreresource <character> <resourceName|all>
-    permission: jkvttplugin.restoreresource
-    permission-message: You do not have permission to use this command.
-  consumeresource:
-    description: (Deprecated - use /dm resource consume) Consume a class resource.
-    usage: /consumeresource <character> <resourceName> [amount]
-    permission: jkvttplugin.consumeresource
-    permission-message: You do not have permission to use this command.
-  dmentity:
-    description: (DM) Spawn and manage entities in the world.
-    usage: /dmentity <spawn|list|remove|teleport|spawngroup>
-    # Authorization handled in-command via DMManager.isDM (op or /dm add), so
-    # non-op DMs work. A plugin.yml permission would default to op-only and block them.
-  dmgive:
-    description: (Deprecated - use /dm give) Give D&D items to players.
-    usage: /dmgive <player> <item_id> [amount]
-    # Authorization handled in-command via DMManager.isDM.
-  dm:
-    description: DM role management and DM admin tools.
-    usage: /dm <add|remove|list|give|check|rest|resource|reload>
-    permission-message: Only server operators can manage DMs.
   combat:
     description: (DM) Combat session management commands.
     usage: /combat <start|add|remove|nextturn|end|...>
     # Authorization handled in-command: DMs get full control, players get their
     # own-turn subcommands (see PLAYER_ALLOWED in CombatCommand).
-  viewsheet:
-    description: View a character sheet (your own, by name, or a player's).
-    usage: /viewsheet [characterName | player <playerName>]
-  givesheet:
-    description: (DM) Give a player their character sheet paper item.
-    usage: /givesheet <player> <characterName>
-  check:
-    description: (Deprecated - use /dm check) Prompt a player for a check.
-    usage: /check <player> <ability|save|skill> <name> [adv|dis]
+  dmentity:
+    description: (DM) Spawn and manage entities in the world.
+    usage: /dmentity <spawn|list|remove|teleport|info|trade|spawngroup|shop|cleanup>
+    # Authorization handled in-command via DMManager.isDM (op or /dm add), so
+    # non-op DMs work. A plugin.yml permission would default to op-only and block them.
+  dm:
+    description: DM role management and DM admin tools.
+    usage: /dm <add|remove|list|give|check|rest|resource|reload>
+    permission-message: Only server operators can manage DMs.

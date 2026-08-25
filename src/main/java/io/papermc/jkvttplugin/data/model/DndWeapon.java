@@ -111,9 +111,9 @@ public class DndWeapon {
             lore.add(Component.text(description, NamedTextColor.YELLOW));
         }
 
-        // Base: the vanilla Minecraft item (YAML `material:`), defaulting to a sensible
-        // weapon so it never renders as blank paper. Ranged weapons default to a bow.
-        Material base = Util.parseMaterial(material, isRanged() ? Material.BOW : Material.IRON_SWORD);
+        // Base: the vanilla Minecraft item, from YAML `material:`. Paper is the only
+        // hardcoded fallback (used only if a weapon omits/misspells its material).
+        Material base = Util.parseMaterial(material, Material.PAPER);
         ItemStack item = Util.createItem(
                 Component.text(name, NamedTextColor.WHITE),
                 lore,
