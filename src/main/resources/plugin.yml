@@ -9,7 +9,7 @@ commands:
     permission: dnd.rolldice
     aliases: [roll]
   reloadyaml:
-    description: Reloads all YAML files (Weapons & NPCs).
+    description: (Deprecated - use /dm reload) Reloads all YAML files.
     usage: /reloadyaml
     permission: jkvttplugin.reloadyaml
     permission-message: You do not have permission to use this command.
@@ -37,17 +37,17 @@ commands:
     permission: jkvttplugin.longrest
     permission-message: You do not have permission to take a long rest.
   rest:
-    description: (DM) Trigger a rest for a character.
+    description: (Deprecated - use /dm rest) Trigger a rest for a character.
     usage: /rest <character> <short|long>
     permission: jkvttplugin.rest
     permission-message: You do not have permission to use this command.
   restoreresource:
-    description: (DM) Restore a character's class resource.
+    description: (Deprecated - use /dm resource restore) Restore a class resource.
     usage: /restoreresource <character> <resourceName|all>
     permission: jkvttplugin.restoreresource
     permission-message: You do not have permission to use this command.
   consumeresource:
-    description: (DM) Consume a character's class resource.
+    description: (Deprecated - use /dm resource consume) Consume a class resource.
     usage: /consumeresource <character> <resourceName> [amount]
     permission: jkvttplugin.consumeresource
     permission-message: You do not have permission to use this command.
@@ -57,12 +57,12 @@ commands:
     # Authorization handled in-command via DMManager.isDM (op or /dm add), so
     # non-op DMs work. A plugin.yml permission would default to op-only and block them.
   dmgive:
-    description: (DM) Give D&D items to players.
+    description: (Deprecated - use /dm give) Give D&D items to players.
     usage: /dmgive <player> <item_id> [amount]
     # Authorization handled in-command via DMManager.isDM.
   dm:
-    description: Manage DM (Dungeon Master) role assignments.
-    usage: /dm <add|remove|list>
+    description: DM role management and DM admin tools.
+    usage: /dm <add|remove|list|give|check|rest|resource|reload>
     permission-message: Only server operators can manage DMs.
   combat:
     description: (DM) Combat session management commands.
@@ -76,5 +76,5 @@ commands:
     description: (DM) Give a player their character sheet paper item.
     usage: /givesheet <player> <characterName>
   check:
-    description: (DM) Prompt a player for an ability/save/skill check with optional advantage.
+    description: (Deprecated - use /dm check) Prompt a player for a check.
     usage: /check <player> <ability|save|skill> <name> [adv|dis]

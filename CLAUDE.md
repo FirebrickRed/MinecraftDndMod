@@ -457,11 +457,13 @@ Menu clicks are handled in `MenuClickListener.onMenuClick()` via switch on `Menu
 command list. `src/main/resources/plugin.yml` is the registration source of truth.
 Summary of groups:
 
-- **Character (any player):** `/createcharacter`, `/viewsheet`, `/closesheet`, `/shortrest`, `/longrest`, `/rolldice <XdY[+Z]>`
-- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `end`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave` — plus `/rollforinitiative`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.
-- **DM entities & items:** `/dmentity <spawn|list|remove|teleport|info|trade|spawngroup|shop create|shop add|shop restock|shop view>`, `/dmgive <player> <item_id> [amount]`
-- **DM character tools:** `/viewsheet <characterName>` / `/viewsheet player <name>`, `/givesheet <player> <characterName>`, `/check <player> <ability|save|skill> <name> [adv|dis]`, `/rest <character> <short|long>`, `/restoreresource`, `/consumeresource`
-- **Op/admin:** `/dm <add|remove|list>`, `/reloadyaml`
+Consolidated into ~5 base commands (Issue #122). Legacy top-level commands remain as
+deprecated aliases during the transition (see COMMANDS.md for the full list).
+- **Character (any player):** `/character <create|view|list|close|rest|give>` (alias `/char`); `create <player>` and `give <player> <name>` are DM-only.
+- **Roll:** `/roll <XdY[+Z]>` (alias of the old `/rolldice`).
+- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `end`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.
+- **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `teleport`, `info`, `trade`, `spawngroup`, `cleanup`, `shop <create|add|restock|view>`.
+- **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
 
 **DM authorization:** a "DM" is an op, a holder of the `jkvtt.dm` permission node, OR a
 player added via `/dm add` (`DMManager.isDM`). DM commands are gated in-command, not via

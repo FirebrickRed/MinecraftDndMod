@@ -21,7 +21,7 @@ prints that command's own help.
 | `/character rest long` | Long rest — full HP, spell slots, resources |
 | `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
 
-`/character` is aliased to `/char`. DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old `/createcharacter`, `/viewsheet`, `/closesheet`, `/shortrest`, `/longrest`, and `/rolldice` still work as deprecated aliases during the command-consolidation transition.
+`/character` is aliased to `/char`. DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. **Deprecated aliases** (still work during the consolidation transition, will be retired): `/createcharacter`, `/viewsheet`, `/closesheet`, `/givesheet`, `/shortrest`, `/longrest`, `/rolldice`, `/dmgive`, `/check`, `/rest`, `/restoreresource`, `/consumeresource`, `/reloadyaml`.
 
 **In combat, on your own turn only:**
 `/combat action` · `/combat bonus` · `/combat attack <target>` · `/combat damage <target>` · `/combat endturn` · `/combat deathsave`
@@ -70,26 +70,25 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `shop add <name> <item_id> <amount> <price> <currency>` | Add stock |
 | `shop restock <name> <item_id> <amount>` | Restock an item |
 | `shop view <name>` | View a merchant's inventory |
+| `cleanup` | Remove orphaned spawned entities the plugin lost track of (post-crash) |
 
-### Character & resource management
-| Command | What it does |
+### DM admin — `/dm <subcommand>`
+| Subcommand | What it does |
 |---|---|
-| `/dmgive <player> <item_id> [amount]` | Give a D&D item |
-| `/viewsheet <characterName>` | View any character by name |
-| `/viewsheet player <playerName>` | View a player's character |
-| `/givesheet <player> <characterName>` | Give a player their sheet paper (if lost) |
-| `/check <player> <ability\|save\|skill> <name> [adv\|dis]` | Roll a check for a player |
-| `/rest <character> <short\|long>` | Force a rest |
-| `/restoreresource <character> <name\|all>` | Restore a class resource |
-| `/consumeresource <character> <name> [amount]` | Spend a class resource |
+| `add\|remove\|list` | Manage who is a DM (`add`/`remove` op only) |
+| `give <player> <item_id> [amount]` | Give a D&D item |
+| `check <player> <ability\|save\|skill> <name> [adv\|dis]` | Roll a check for a player |
+| `rest <character> <short\|long>` | Force a rest |
+| `resource restore <character> <name\|all>` | Restore a class resource |
+| `resource consume <character> <name> [amount]` | Spend a class resource |
+| `reload` | Reload all `DMContent/` YAML without a restart |
+
+Viewing/giving character sheets is under `/character`: `/character view <name>`, `/character view player <p>`, `/character give <player> <name>`.
 
 ---
 
 ## 🛠️ Op / admin
-| Command | What it does |
-|---|---|
-| `/dm <add\|remove\|list>` | Manage who is a DM (op only) |
-| `/reloadyaml` | Reload all `DMContent/` YAML without a restart |
+DM role management lives under `/dm add\|remove\|list` (see above). `/dm add`/`remove` are op-only.
 
 ---
 

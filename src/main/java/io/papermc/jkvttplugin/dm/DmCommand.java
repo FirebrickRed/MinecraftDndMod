@@ -1,5 +1,11 @@
 package io.papermc.jkvttplugin.dm;
 
+import io.papermc.jkvttplugin.commands.CheckCommand;
+import io.papermc.jkvttplugin.commands.ConsumeResourceCommand;
+import io.papermc.jkvttplugin.commands.DmGiveCommand;
+import io.papermc.jkvttplugin.commands.ReloadYamlCommand;
+import io.papermc.jkvttplugin.commands.RestCommand;
+import io.papermc.jkvttplugin.commands.RestoreResourceCommand;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -10,6 +16,7 @@ import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -22,6 +29,17 @@ import java.util.stream.Collectors;
  * - /dm list - Show all current DMs (anyone can use)
  */
 public class DmCommand implements CommandExecutor, TabCompleter {
+
+    // Folded DM-admin tools (Issue #122). Each delegates to its original executor.
+    private final DmGiveCommand giveExec = new DmGiveCommand();
+    private final CheckCommand checkExec = new CheckCommand();
+    private final RestCommand restExec = new RestCommand();
+    private final RestoreResourceCommand restoreExec = new RestoreResourceCommand();
+    private final ConsumeResourceCommand consumeExec = new ConsumeResourceCommand();
+    private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
+
+    /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "rest", "resource", "reload");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -36,10 +54,45 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "list" -> handleList(sender);
             case "add" -> handleAdd(sender, args);
             case "remove" -> handleRemove(sender, args);
+            case "give" -> delegateDm(sender, command, label, args, giveExec);
+            case "check" -> delegateDm(sender, command, label, args, checkExec);
+            case "rest" -> delegateDm(sender, command, label, args, restExec);
+            case "reload" -> delegateDm(sender, command, label, args, reloadExec);
+            case "resource" -> handleResource(sender, command, label, args);
             default -> sendHelp(sender);
         }
 
         return true;
+    }
+
+    // ==================== FOLDED DM TOOLS (Issue #122) ====================
+
+    /** Gates on DM, then hands the remaining args to the original executor. */
+    private void delegateDm(CommandSender sender, Command command, String label, String[] args, CommandExecutor exec) {
+        if (!DMManager.isDM(sender)) {
+            sender.sendMessage(Component.text("Only a DM can use this command.", NamedTextColor.RED));
+            return;
+        }
+        exec.onCommand(sender, command, label, Arrays.copyOfRange(args, 1, args.length));
+    }
+
+    /** /dm resource <restore|consume> <character> ... */
+    private void handleResource(CommandSender sender, Command command, String label, String[] args) {
+        if (!DMManager.isDM(sender)) {
+            sender.sendMessage(Component.text("Only a DM can use this command.", NamedTextColor.RED));
+            return;
+        }
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /dm resource <restore|consume> <character> ...", NamedTextColor.RED));
+            return;
+        }
+        String op = args[1].toLowerCase();
+        String[] sub = Arrays.copyOfRange(args, 2, args.length);
+        switch (op) {
+            case "restore" -> restoreExec.onCommand(sender, command, label, sub);
+            case "consume" -> consumeExec.onCommand(sender, command, label, sub);
+            default -> sender.sendMessage(Component.text("Resource action must be 'restore' or 'consume'.", NamedTextColor.RED));
+        }
     }
 
     // ==================== LIST SUBCOMMAND ====================
@@ -156,6 +209,16 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("/dm remove <player>", NamedTextColor.YELLOW));
             sender.sendMessage(Component.text("  - Revoke DM role from a player", NamedTextColor.GRAY));
         }
+
+        if (DMManager.isDM(sender)) {
+            sender.sendMessage(Component.text("DM tools:", NamedTextColor.GOLD));
+            sender.sendMessage(Component.text("/dm give <player> <item_id> [amount]", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm check <player> <ability|save|skill> <name> [adv|dis]", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm rest <character> <short|long>", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm resource <restore|consume> <character> ...", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm reload", NamedTextColor.AQUA)
+                    .append(Component.text("  - reload YAML content", NamedTextColor.GRAY)));
+        }
     }
 
     // ==================== TAB COMPLETION ====================
@@ -163,29 +226,51 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String label, String[] args) {
         if (args.length == 1) {
-            // Subcommands
             List<String> subcommands = new ArrayList<>();
             subcommands.add("list");
-
             if (sender.isOp()) {
                 subcommands.add("add");
                 subcommands.add("remove");
             }
-
+            if (DMManager.isDM(sender)) {
+                subcommands.addAll(DM_TOOL_SUBS);
+            }
             return subcommands.stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
 
-        if (args.length == 2 && sender.isOp()) {
-            String subcommand = args[0].toLowerCase();
+        String subcommand = args[0].toLowerCase();
+        String[] sub = Arrays.copyOfRange(args, 1, args.length);
 
-            if (subcommand.equals("add") || subcommand.equals("remove")) {
-                // Suggest online player names
+        if (subcommand.equals("add") || subcommand.equals("remove")) {
+            if (args.length == 2 && sender.isOp()) {
                 return Bukkit.getOnlinePlayers().stream()
                         .map(Player::getName)
                         .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
                         .collect(Collectors.toList());
+            }
+            return List.of();
+        }
+
+        // Folded DM tools: forward to the original executor's completer.
+        if (DMManager.isDM(sender)) {
+            switch (subcommand) {
+                case "give" -> { return giveExec.onTabComplete(sender, command, label, sub); }
+                case "check" -> { return checkExec.onTabComplete(sender, command, label, sub); }
+                case "rest" -> { return restExec.onTabComplete(sender, command, label, sub); }
+                case "resource" -> {
+                    if (args.length == 2) {
+                        return java.util.stream.Stream.of("restore", "consume")
+                                .filter(s -> s.startsWith(args[1].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    String[] sub2 = Arrays.copyOfRange(args, 2, args.length);
+                    if (args[1].equalsIgnoreCase("restore")) return restoreExec.onTabComplete(sender, command, label, sub2);
+                    if (args[1].equalsIgnoreCase("consume")) return consumeExec.onTabComplete(sender, command, label, sub2);
+                    return List.of();
+                }
+                default -> { return List.of(); }
             }
         }
 
