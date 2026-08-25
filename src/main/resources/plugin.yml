@@ -5,8 +5,9 @@ api-version: '1.21'
 commands:
   rolldice:
     description: Roll dice using XdY format (e.g., 2d6+3).
-    usage: /rolldice <XdY[+Z]>
+    usage: /roll <XdY[+Z]>
     permission: dnd.rolldice
+    aliases: [roll]
   reloadyaml:
     description: Reloads all YAML files (Weapons & NPCs).
     usage: /reloadyaml
@@ -26,12 +27,12 @@ commands:
     permission: jkvttplugin.closesheet
     permission-message: You do not have permission to use this command.
   shortrest:
-    description: Take a short rest (1 hour) to recover resources.
+    description: (Deprecated - use /character rest short) Take a short rest.
     usage: /shortrest
     permission: jkvttplugin.shortrest
     permission-message: You do not have permission to take a short rest.
   longrest:
-    description: Take a long rest (8 hours) to recover HP and resources.
+    description: (Deprecated - use /character rest long) Take a long rest.
     usage: /longrest
     permission: jkvttplugin.longrest
     permission-message: You do not have permission to take a long rest.

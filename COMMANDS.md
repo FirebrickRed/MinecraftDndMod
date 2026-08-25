@@ -17,11 +17,11 @@ prints that command's own help.
 | `/character view [name]` | Open your character sheet (or view one by name) |
 | `/character list` | List your characters |
 | `/character close` | Save & close the active character sheet |
-| `/shortrest` | Short rest — recover short-rest resources |
-| `/longrest` | Long rest — full HP, spell slots, resources |
-| `/rolldice <XdY[+Z]>` | Roll dice, e.g. `/rolldice 2d6+3` |
+| `/character rest short` | Short rest — recover short-rest resources |
+| `/character rest long` | Long rest — full HP, spell slots, resources |
+| `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
 
-`/character` is aliased to `/char`. DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old `/createcharacter`, `/viewsheet`, `/closesheet` still work as deprecated aliases during the command-consolidation transition.
+`/character` is aliased to `/char`. DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old `/createcharacter`, `/viewsheet`, `/closesheet`, `/shortrest`, `/longrest`, and `/rolldice` still work as deprecated aliases during the command-consolidation transition.
 
 **In combat, on your own turn only:**
 `/combat action` · `/combat bonus` · `/combat attack <target>` · `/combat damage <target>` · `/combat endturn` · `/combat deathsave`
