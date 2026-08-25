@@ -27,13 +27,12 @@ public class ShopPersistenceLoader {
 
     /**
      * Initialize the shop persistence system.
-     * Creates DMContent/Saved/Shops/ directory if it doesn't exist.
+     * Creates plugins/jkvttplugin/Saved/Shops/ directory if it doesn't exist.
      *
      * @param plugin The plugin instance
      */
     public static void initialize(Plugin plugin) {
-        File dmContentFolder = new File(plugin.getDataFolder().getParentFile().getParentFile(), "DMContent");
-        File savedFolder = new File(dmContentFolder, "Saved");
+        File savedFolder = new File(plugin.getDataFolder(), "Saved");
         shopsFolder = new File(savedFolder, "Shops");
 
         if (!shopsFolder.exists()) {

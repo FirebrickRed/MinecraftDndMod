@@ -24,8 +24,10 @@ public class CharacterPersistenceLoader {
 
     public static void initialize(Plugin pluginInstance) {
         plugin = pluginInstance;
-        // Updated to use DMContent/Saved/ structure (all saved data in one place)
-        dataFolder = new File("DMContent/Saved/Characters");
+        // Runtime saves live under the plugin data folder: plugins/jkvttplugin/Saved/Characters
+        // (NOT a relative path — that resolved to the server working dir and created a stray
+        //  DMContent/Saved in the server root, separate from the authored content folder).
+        dataFolder = new File(plugin.getDataFolder(), "Saved/Characters");
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }

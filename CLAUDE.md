@@ -64,7 +64,7 @@ The plugin loads D&D content (races, classes, spells, weapons, armor, items) fro
 ### Testing Character Creation
 1. Use `/createcharacter` to start the character creation flow
 2. Alternatively, right-click a paper item named "Character Sheet" to open the creation menu
-3. Character data persists to `plugins/jkvttplugin/Characters/` as YAML files
+3. Character data persists to `plugins/jkvttplugin/Saved/Characters/` as YAML files
 
 ### Testing Character Features
 - `/shortrest` - Recover short rest resources and innate spells
@@ -124,7 +124,7 @@ The plugin loads D&D content (races, classes, spells, weapons, armor, items) fro
 - Note current stock levels
 - Restart server or use `/reload confirm`
 - Verify merchant still exists and stock persists
-- Check `plugins/jkvttplugin/Shops/merchant_balin.yml` exists
+- Check `plugins/jkvttplugin/Saved/Shops/merchant_balin.yml` exists
 - Verify both stock decreases (from buying) and inventory increases (from selling) persist
 
 **7. Test Complete Buy/Sell Cycle:**
@@ -272,7 +272,7 @@ Menu icons are **data-driven** — change them in YAML, not code.
   - Player buying from merchant (merchant stock decreases)
   - Player selling to merchant (merchant inventory increases with sold items)
 - **Stock Tracking:** Limited and unlimited stock per item, persists across server restarts
-- **Shop Persistence:** Shops save to `plugins/jkvttplugin/Shops/<entityId>.yml`
+- **Shop Persistence:** Shops save to `plugins/jkvttplugin/Saved/Shops/<entityId>.yml`
 - **NBT-Based Item Identification:** All items tagged with `item_id` NBT for reliable identification
   - Allows items with different display names to share the same mechanics
   - Currency items identified by `item_id` ending in "_piece"
@@ -350,7 +350,7 @@ Menu icons are **data-driven** — change them in YAML, not code.
 
 - Character creation sessions are logged when created/destroyed
 - Check `CharacterCreationService.getSession()` for active sessions
-- Character sheets saved to `plugins/jkvttplugin/Characters/<UUID>.yml`
+- Character sheets saved to `plugins/jkvttplugin/Saved/Characters/<UUID>.yml`
 - Use `CharacterPersistenceLoader.loadAllCharacters()` to reload saved characters
 
 ### Working with Inventory Menus

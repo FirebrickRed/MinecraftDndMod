@@ -13,7 +13,7 @@ import java.util.logging.Logger;
 
 /**
  * Handles persistence of DM role assignments.
- * Saves/loads DM list to/from DMContent/Saved/dms.yml
+ * Saves/loads DM list to/from plugins/jkvttplugin/Saved/dms.yml
  */
 public class DMPersistenceLoader {
 
@@ -22,12 +22,12 @@ public class DMPersistenceLoader {
 
     /**
      * Initialize the persistence system.
-     * Creates DMContent/Saved/ directory if needed.
+     * Creates plugins/jkvttplugin/Saved/ directory if needed.
      *
      * @param plugin The plugin instance
      */
     public static void initialize(Plugin plugin) {
-        File dataFolder = new File("DMContent/Saved");
+        File dataFolder = new File(plugin.getDataFolder(), "Saved");
         if (!dataFolder.exists()) {
             dataFolder.mkdirs();
         }
