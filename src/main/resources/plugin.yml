@@ -12,8 +12,12 @@ commands:
     usage: /reloadyaml
     permission: jkvttplugin.reloadyaml
     permission-message: You do not have permission to use this command.
+  character:
+    description: Character commands (create, view, list, close, give).
+    usage: /character <create|view|list|close|give>
+    aliases: [char]
   createcharacter:
-    description: Start character creation.
+    description: (Deprecated - use /character create) Start character creation.
     usage: /createcharacter
 #    permission: jkvttplugin.createcharacter
   closesheet:

@@ -121,3 +121,6 @@ runs/
 # Dynamic saved data (characters, entities, shop stock)
 DMContent/Saved/
 ResourcePack/
+
+# Generated resource-pack archive (build-resourcepack.ps1)
+jkvttresourcepack.zip

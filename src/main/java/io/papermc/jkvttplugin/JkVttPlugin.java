@@ -100,6 +100,13 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         this.getCommand("combat").setExecutor(combatCommand);
         this.getCommand("combat").setTabCompleter(combatCommand);
 
+        // Consolidated character command (Issue #122): /character (alias /char).
+        // The legacy top-level commands below stay registered as deprecated aliases
+        // during the transition and will be retired once command consolidation lands.
+        CharacterCommand characterCommand = new CharacterCommand();
+        this.getCommand("character").setExecutor(characterCommand);
+        this.getCommand("character").setTabCompleter(characterCommand);
+
         // Character sheet commands (Issue #47)
         ViewSheetCommand viewSheetCommand = new ViewSheetCommand();
         this.getCommand("viewsheet").setExecutor(viewSheetCommand);

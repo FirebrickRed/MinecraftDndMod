@@ -13,12 +13,15 @@ prints that command's own help.
 ## 👤 Player commands (anyone)
 | Command | What it does |
 |---|---|
-| `/createcharacter` | Start character creation (or right-click your **Character Sheet** paper) |
-| `/viewsheet` | Open your own character sheet |
-| `/closesheet` | Save & close the active character sheet |
+| `/character create` | Start character creation (or right-click your **Character Sheet** paper) |
+| `/character view [name]` | Open your character sheet (or view one by name) |
+| `/character list` | List your characters |
+| `/character close` | Save & close the active character sheet |
 | `/shortrest` | Short rest — recover short-rest resources |
 | `/longrest` | Long rest — full HP, spell slots, resources |
 | `/rolldice <XdY[+Z]>` | Roll dice, e.g. `/rolldice 2d6+3` |
+
+`/character` is aliased to `/char`. DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old `/createcharacter`, `/viewsheet`, `/closesheet` still work as deprecated aliases during the command-consolidation transition.
 
 **In combat, on your own turn only:**
 `/combat action` · `/combat bonus` · `/combat attack <target>` · `/combat damage <target>` · `/combat endturn` · `/combat deathsave`
