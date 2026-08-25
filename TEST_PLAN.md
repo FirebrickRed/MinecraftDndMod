@@ -47,7 +47,9 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 
 ## Choices pane
 - [ ] Skills/Tools/Languages/Equipment sub-tabs show a count ("Skills 1/2"), green ✓ when done.
+- [ ] Hovering a sub-tab (e.g. Languages) lists what you have: granted (aqua), chosen (green) — e.g. Common (granted), Elvish.
 - [ ] Each choice shows a "— Choose N more —" divider; groups are visually separated.
+- [ ] A **selected** option reads as a **bold green "✔ <name>"** (obvious even if the glint is faint).
 - [ ] **Automatic grants** (e.g. Common under Languages, background skills) appear as locked cyan tiles under "— Granted — automatic —". ⚠️ If Common does NOT appear, tell me — it means the language grant isn't being populated into the session (a data step, not the UI).
 
 ## Save location
@@ -55,8 +57,8 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] Shops save under **`plugins/jkvttplugin/Saved/Shops/`**.
 - [ ] No stray `<server-root>/DMContent/` folder is recreated.
 
-## Deprecated aliases (should all still work)
-- [ ] `/createcharacter`, `/viewsheet`, `/closesheet`, `/givesheet`, `/shortrest`, `/longrest`, `/rolldice`, `/dmgive`, `/check`, `/rest`, `/restoreresource`, `/consumeresource`, `/reloadyaml`.
+## Old commands removed (should NOT exist)
+- [ ] `/createcharacter`, `/viewsheet`, `/closesheet`, `/givesheet`, `/shortrest`, `/longrest`, `/rolldice`, `/dmgive`, `/check`, `/rest`, `/restoreresource`, `/consumeresource`, `/reloadyaml` — each should be "Unknown command". Only the five roots (`/character`, `/roll`, `/combat`, `/dmentity`, `/dm`) exist.
 
 ## Known deferred (not in this build)
 - Character-sheet inventory redesign (waiting until more content lands).
