@@ -170,7 +170,7 @@ player_choices:
       - - item: handaxe
           quantity: 2
       - - tag: simple_weapon
-icon: barbarian_icon
+icon: barbarian
 multiclass_requirements:
   Strength: 13
 subclass_level: 3
