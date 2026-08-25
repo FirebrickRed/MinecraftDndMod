@@ -44,8 +44,10 @@ import org.bukkit.inventory.meta.ItemMeta;
 
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -359,14 +361,17 @@ public class CharacterCreationMenu {
         for (int ci = 0; ci < categories.size() && ci < catSlots.length; ci++) {
             ChoiceCategory cat = categories.get(ci);
             NamedTextColor color;
+            String tabLabel = cat.getDisplayName();
             if (cat == ChoiceCategory.AUTOMATIC_GRANTS) {
                 color = NamedTextColor.AQUA;
             } else {
                 int sel = 0, req = 0;
                 for (MergedChoice mc : merged) if (mc.getCategory() == cat) { sel += mc.getSelectedCount(); req += mc.getTotalChooseCount(); }
                 color = sel >= req ? NamedTextColor.GREEN : sel > 0 ? NamedTextColor.YELLOW : NamedTextColor.RED;
+                // Show progress right on the tab, like the spell sub-tabs ("Skills 1/2").
+                tabLabel = cat.getDisplayName() + "  " + sel + "/" + req + (sel >= req ? " ✓" : "");
             }
-            inv.setItem(catSlots[ci], subTab(cat.getIcon(), cat.getDisplayName(), cat == active, color,
+            inv.setItem(catSlots[ci], subTab(cat.getIcon(), tabLabel, cat == active, color,
                     MenuAction.SWITCH_CHOICE_TAB, cat.name()));
         }
 
@@ -383,10 +388,35 @@ public class CharacterCreationMenu {
             return;
         }
 
+        // Track what the character is already given for free so we never render it twice
+        // (e.g. Common shows up both as an automatic grant and as an "already known" key).
+        Set<String> shownFree = new HashSet<>();
+
+        // 1) Automatic grants that belong to THIS category (e.g. Common under Languages) — locked.
+        List<AutomaticGrant> catGrants = grantsForCategory(grants, active);
+        if (!catGrants.isEmpty() && slot <= 44) {
+            inv.setItem(slot++, sectionHeader("Granted — automatic", NamedTextColor.AQUA));
+            for (AutomaticGrant grant : catGrants) {
+                if (slot > 44) break;
+                shownFree.add(Util.normalize(grant.displayName()));
+                inv.setItem(slot++, grantTile(grant));
+            }
+        }
+
+        // 2) The actual choices for this category, each under its own progress header.
         for (MergedChoice choice : merged) {
             if (choice.getCategory() != active) continue;
+            if (slot > 44) break;
+
+            int remaining = Math.max(0, choice.getTotalChooseCount() - choice.getSelectedCount());
+            String headerText = remaining > 0
+                    ? "Choose " + remaining + " more  (" + choice.getProgressText() + ")"
+                    : "All chosen  (" + choice.getProgressText() + ") ✓";
+            inv.setItem(slot++, sectionHeader(headerText, choice.getStatusColor()));
+
             for (String knownKey : choice.getAlreadyKnown()) {
                 if (slot > 44) break;
+                if (shownFree.contains(Util.normalize(knownKey))) continue; // already shown as a grant
                 ItemStack known = plain(Material.GRAY_STAINED_GLASS_PANE, Component.text(Util.prettify(knownKey), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
                 known.editMeta(m -> m.lore(List.of(Component.text("Already known (can't select)", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false))));
                 inv.setItem(slot++, known);
@@ -396,6 +426,38 @@ public class CharacterCreationMenu {
                 inv.setItem(slot++, choiceOption(choice, optionKey));
             }
         }
+    }
+
+    /** Maps an automatic grant to the choice category it should also appear under (or null). */
+    private static ChoiceCategory grantsCategoryOf(AutomaticGrant.GrantType type) {
+        return switch (type) {
+            case LANGUAGE -> ChoiceCategory.LANGUAGE;
+            case SKILL_PROFICIENCY -> ChoiceCategory.SKILL;
+            case TOOL_PROFICIENCY -> ChoiceCategory.TOOL;
+            default -> null; // weapon/armor/darkvision/etc. live only under the Automatic Traits tab
+        };
+    }
+
+    private static List<AutomaticGrant> grantsForCategory(List<AutomaticGrant> grants, ChoiceCategory cat) {
+        List<AutomaticGrant> out = new ArrayList<>();
+        for (AutomaticGrant g : grants) if (grantsCategoryOf(g.type()) == cat) out.add(g);
+        return out;
+    }
+
+    /** A locked, non-interactive tile for something the character is granted automatically. */
+    private static ItemStack grantTile(AutomaticGrant grant) {
+        ItemStack g = plain(Material.CYAN_STAINED_GLASS_PANE,
+                Component.text(grant.getFullDisplay(), NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+        g.editMeta(m -> m.lore(List.of(
+                Component.text("From: " + grant.source(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                Component.text("✓ Granted — automatic (can't change)", NamedTextColor.DARK_AQUA).decoration(TextDecoration.ITALIC, false))));
+        return g;
+    }
+
+    /** A slim divider/header that labels the group of items that follows it. */
+    private static ItemStack sectionHeader(String text, NamedTextColor color) {
+        return plain(Material.BLACK_STAINED_GLASS_PANE,
+                Component.text("— " + text + " —", color).decoration(TextDecoration.ITALIC, false));
     }
 
     private static ItemStack choiceOption(MergedChoice choice, String optionKey) {
