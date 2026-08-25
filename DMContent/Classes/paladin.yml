@@ -58,7 +58,7 @@ player_choices:
     options:
       - - item: priests_pack
       - - item: explorers_pack
-icon: paladin_icon
+custom_model: paladin_icon
 multiclass_requirements:
   Charisma: 13
 subclass_level: 3

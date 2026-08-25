@@ -136,7 +136,7 @@ player_choices:
     options:
       - - item: scholars_pack
       - - item: explorers_pack
-icon: wizard_icon
+custom_model: wizard_icon
 multiclass_requirements:
   Intelligence: 13
 subclass_level: 2

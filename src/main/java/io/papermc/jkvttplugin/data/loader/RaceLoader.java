@@ -57,7 +57,7 @@ public class RaceLoader {
                 .languages(langResult.languages)
                 .subraces(LoaderUtils.parseSubraces(data.get("subraces")))
                 .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
-                .icon((String) data.getOrDefault("icon_name", null))
+                .icon((String) data.getOrDefault("custom_model", null)) // resource-pack model name
             // Parse new mechanical trait fields (Issue #51)
                 .swimmingSpeed((int) data.getOrDefault("swimming_speed", 0))
                 .flyingSpeed((int) data.getOrDefault("flying_speed", 0))

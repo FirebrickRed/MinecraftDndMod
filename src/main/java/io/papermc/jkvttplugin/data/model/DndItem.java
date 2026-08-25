@@ -19,7 +19,8 @@ public class DndItem {
     private String type;
     private String focusType;
     private String description;
-    private String icon;
+    private String material;     // YAML material: vanilla Minecraft item to render as
+    private String customModel;  // YAML custom_model: optional resource-pack model (opt-in)
     private Cost cost;
 
     public String getId() {
@@ -57,11 +58,17 @@ public class DndItem {
         this.description = description;
     }
 
-    public String getIcon() {
-        return this.icon;
+    public String getMaterial() {
+        return this.material;
     }
-    public void setIcon(String icon) {
-        this.icon = icon;
+    public void setMaterial(String material) {
+        this.material = material;
+    }
+    public String getCustomModel() {
+        return this.customModel;
+    }
+    public void setCustomModel(String customModel) {
+        this.customModel = customModel;
     }
 
     public Cost getCost() {
@@ -96,24 +103,19 @@ public class DndItem {
             lore.add(Component.text(description, NamedTextColor.YELLOW));
         }
 
-        // Parse icon as Material (for currency and other items with custom materials)
-        Material material = Material.PAPER; // Default fallback
-        if (icon != null && !icon.isEmpty()) {
-            try {
-                material = Material.valueOf(icon.toUpperCase());
-            } catch (IllegalArgumentException e) {
-                // Icon not a valid material - use PAPER as fallback
-                System.out.println("[DndItem] Warning: Invalid material '" + icon + "' for item " + id + ", defaulting to PAPER");
-            }
-        }
+        // Base: the vanilla Minecraft item (YAML material:), defaulting to paper.
+        Material base = Util.parseMaterial(this.material, Material.PAPER);
 
         ItemStack item = Util.createItem(
                 Component.text(name, NamedTextColor.WHITE),
                 lore,
-                icon,
+                null,
                 1,
-                material
+                base
         );
+
+        // Optional resource-pack overlay (YAML custom_model:); null/blank keeps the vanilla item.
+        ItemUtil.applyModel(item, customModel);
 
         // Add NBT tags (item_id and optionally spell_focus) in one operation
         ItemMeta meta = item.getItemMeta();

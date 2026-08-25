@@ -3,7 +3,7 @@ arcane_focus:
   type: "spellcasting_focus"
   focus_type: "arcane_focus"
   description: "A crystal orb used to channel arcane magic"
-  icon: "arcane_focus"
+  material: "arcane_focus"
   cost:
     amount: 10
     currency: gold
@@ -13,7 +13,7 @@ component_pouch:
   type: "spellcasting_focus"
   focus_type: "component"
   description: "A small pouch containing spell components"
-  icon: "component_pouch"
+  material: "component_pouch"
   cost:
     amount: 25
     currency: gold
@@ -23,7 +23,7 @@ holy_symbol:
   type: "spellcasting_focus"
   focus_type: "divine_focus"
   description: "A sacred symbol of your deity"
-  icon: "holy_symbol"
+  material: "holy_symbol"
   cost:
     amount: 5
     currency: gold
@@ -33,7 +33,7 @@ druidic_focus:
   type: "spellcasting_focus"
   focus_type: "druidic_focus"
   description: "A wooden staff or totem imbued with nature's power"
-  icon: "druidic_focus"
+  material: "druidic_focus"
   cost:
     amount: 15
     currency: gold

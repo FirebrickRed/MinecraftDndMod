@@ -180,7 +180,7 @@ player_choices:
     options:
       - - item: priests_pack
       - - item: explorers_pack
-icon: cleric_icon
+custom_model: cleric_icon
 multiclass_requirements:
   Wisdom: 13
 subclass_level: 1

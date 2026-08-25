@@ -108,7 +108,7 @@ player_choices:
       - - item: burglars_pack
       - - item: dungeoneers_pack
       - - item: explorers_pack
-icon: rogue_icon
+custom_model: rogue_icon
 multiclass_requirements:
   Dexterity: 13
 subclass_level: 3

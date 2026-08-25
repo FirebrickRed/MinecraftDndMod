@@ -188,7 +188,7 @@ player_choices:
           - item: longbow
           - item: arrow
             quantity: 20
-icon: fighter_icon
+custom_model: fighter_icon
 multiclass_requirements:
   Strength: 13
   Dexterity: 13

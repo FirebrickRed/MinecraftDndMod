@@ -13,7 +13,6 @@ padded_armor:
     amount: 5
     currency: gold
   description: "Quilted layers of cloth and batting."
-  icon: "padded_armor"
   material: LEATHER_CHESTPLATE
 
 leather_armor:
@@ -30,7 +29,6 @@ leather_armor:
     amount: 10
     currency: gold
   description: "Boiled leather chest piece."
-  icon: "leather_armor"
   material: LEATHER_CHESTPLATE
 
 studded_leather_armor:
@@ -47,7 +45,6 @@ studded_leather_armor:
     amount: 45
     currency: gold
   description: "Leather reinforced with close-set rivets or spikes."
-  icon: "studded_leather"
   material: LEATHER_CHESTPLATE
 
 # Medium Armor
@@ -65,7 +62,6 @@ hide_armor:
     amount: 10
     currency: gold
   description: "Crude armor made from thick furs and pelts."
-  icon: "hide_armor"
   material: CHAINMAIL_CHESTPLATE
 
 chain_shirt:
@@ -79,7 +75,6 @@ chain_shirt:
     amount: 50
     currency: gold
   description: "A shirt of interlocking metal rings."
-  icon: "chain_shirt"
   material: CHAINMAIL_CHESTPLATE
 
 scale_mail:
@@ -93,7 +88,6 @@ scale_mail:
     amount: 50
     currency: gold
   description: "Coat and leggings of leather covered with overlapping pieces of metal."
-  icon: "scale_mail"
   material: CHAINMAIL_CHESTPLATE
 
 breastplate:
@@ -107,7 +101,6 @@ breastplate:
     amount: 400
     currency: gold
   description: "Fitted metal chest piece with supple leather."
-  icon: "breastplate"
   material: CHAINMAIL_CHESTPLATE
 
 half_plate:
@@ -121,7 +114,6 @@ half_plate:
     amount: 450
     currency: gold
   description: "Plate armor covering most of the body."
-  icon: "half_plate"
   material: CHAINMAIL_CHESTPLATE
 
 # Heavy Armor
@@ -136,7 +128,6 @@ ring_mail:
     amount: 30
     currency: gold
   description: "Leather armor with heavy rings sewn into it."
-  icon: "ring_mail"
   material: IRON_CHESTPLATE
 
 chain_mail:
@@ -150,7 +141,6 @@ chain_mail:
     amount: 75
     currency: gold
   description: "Interlocking metal rings covering the entire body."
-  icon: "chain_mail"
   material: IRON_CHESTPLATE
 
 splint:
@@ -164,7 +154,6 @@ splint:
     amount: 200
     currency: gold
   description: "Narrow vertical strips of metal riveted to a leather backing."
-  icon: "splint_armor"
   material: IRON_CHESTPLATE
 
 plate:
@@ -178,7 +167,6 @@ plate:
     amount: 1500
     currency: gold
   description: "Interlocking metal plates covering the entire body."
-  icon: "plate_armor"
   material: IRON_CHESTPLATE
 
 # Shields
@@ -193,7 +181,6 @@ shield:
     amount: 10
     currency: gold
   description: "Increases AC by 2. Must be strapped to the arm."
-  icon: "shield"
   material: SHIELD
 
 wooden_shield:
@@ -207,5 +194,4 @@ wooden_shield:
     amount: 10
     currency: gold
   description: "Increases AC by 2. Must be strapped to the arm."
-  icon: "shield"
   material: SHIELD

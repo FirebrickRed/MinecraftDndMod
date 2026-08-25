@@ -56,7 +56,7 @@ public class ArmorLoader {
         armor.setWeight((String) data.get("weight"));
         armor.setCost(LoaderUtils.parseCost(data.get("cost"), id));
         armor.setDescription((String) data.get("description"));
-        armor.setIcon((String) data.get("icon"));
+        armor.setCustomModel((String) data.get("custom_model")); // optional resource-pack model
 
         // Parse material
         Object materialObj = data.get("material");

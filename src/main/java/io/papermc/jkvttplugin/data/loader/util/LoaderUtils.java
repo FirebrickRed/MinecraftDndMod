@@ -344,7 +344,7 @@ public class LoaderUtils {
                 .traits(parseTraits(data.get("traits")))
                 .languages(langResult.languages)
                 .playerChoices(parsePlayerChoices(data.get("player_choices")))
-                .icon((String) data.getOrDefault("icon_name", ""))
+                .icon((String) data.getOrDefault("custom_model", "")) // resource-pack model name
                 // Parse mechanical trait fields (Issue #51)
                 .speed((int) data.getOrDefault("speed", 0))
                 .swimmingSpeed((int) data.getOrDefault("swimming_speed", 0))
@@ -386,7 +386,7 @@ public class LoaderUtils {
         subclass.setName((String) data.getOrDefault("name", id));
         subclass.setParentClass(className);
         subclass.setDescription((String) data.getOrDefault("description", ""));
-        subclass.setIcon((String) data.get("icon"));
+        subclass.setIcon((String) data.get("custom_model")); // resource-pack model name
 
         // Parse features by level
         subclass.setFeaturesByLevel(parseLevelStringListMap(data.get("features_by_level")));

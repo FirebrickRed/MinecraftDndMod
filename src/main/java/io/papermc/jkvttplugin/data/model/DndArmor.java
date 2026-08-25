@@ -23,7 +23,7 @@ public class DndArmor {
     private String weight;
     private Cost cost;
     private String description;
-    private String icon;
+    private String customModel; // YAML custom_model: optional resource-pack model (opt-in)
     private Material material;
 
     public DndArmor() {}
@@ -117,10 +117,13 @@ public class DndArmor {
         ItemStack item = Util.createItem(
                 Component.text(name, NamedTextColor.WHITE),
                 lore,
-                icon != null ? icon : "armor_" + Util.normalize(name),
+                null,
                 1,
-                getMaterial()
+                getMaterial() // vanilla base derived from the armor slot (LEATHER_CHESTPLATE, etc.)
         );
+
+        // Optional resource-pack overlay (YAML custom_model:); null/blank keeps the vanilla armor.
+        ItemUtil.applyModel(item, customModel);
 
         // Tag with standardized item_id for reliable identification (Issue #75)
         ItemUtil.tagItemId(item, id);
@@ -173,8 +176,8 @@ public class DndArmor {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public String getIcon() { return icon; }
-    public void setIcon(String icon) { this.icon = icon; }
+    public String getCustomModel() { return customModel; }
+    public void setCustomModel(String customModel) { this.customModel = customModel; }
 
     public Material getMaterial() {
         return material != null ? material : isShield() ? Material.SHIELD : Material.LEATHER_CHESTPLATE;

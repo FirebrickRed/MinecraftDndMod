@@ -62,8 +62,8 @@ public class WeaponLoader {
         weapon.setWeight((String) data.get("weight"));
         weapon.setCost(LoaderUtils.parseCost(data.get("cost"), id));
         weapon.setDescription((String) data.get("description"));
-        weapon.setIcon((String) data.get("icon"));
-        weapon.setMaterial((String) data.get("material"));
+        weapon.setMaterial((String) data.get("material"));         // vanilla Minecraft item
+        weapon.setCustomModel((String) data.get("custom_model"));  // optional resource-pack model
 
         // Parse properties
         Object propertiesObj = data.get("properties");

@@ -191,7 +191,7 @@ player_choices:
     options:
       - - item: dungeoneers_pack
       - - item: explorers_pack
-icon: ranger_icon
+custom_model: ranger_icon
 multiclass_requirements:
   Dexterity: 13
   Wisdom: 13

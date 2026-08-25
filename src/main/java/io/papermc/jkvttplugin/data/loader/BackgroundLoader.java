@@ -55,7 +55,7 @@ public class BackgroundLoader {
                 .traits(LoaderUtils.parseTraits(data.get("traits")))
                 .links(LoaderUtils.normalizeStringList(data.get("links")))
                 .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
-                .icon((String) data.get("icon_name"));
+                .icon((String) data.get("custom_model")); // resource-pack model name
 
         DndBackground dndBackground = builder.build();
         return dndBackground;

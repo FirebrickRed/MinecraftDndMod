@@ -202,7 +202,7 @@ player_choices:
     options:
       - - item: diplomats_pack
       - - item: entertainers_pack
-icon: bard_icon
+custom_model: bard_icon
 multiclass_requirements:
   Charisma: 13
 subclass_level: 3

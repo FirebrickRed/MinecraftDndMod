@@ -164,17 +164,25 @@ All D&D content is defined in `DMContent/` YAML files:
 
 Each category has a corresponding loader in `src/main/java/io/papermc/jkvttplugin/data/loader/` and model in `data/model/`.
 
-### Custom Icons (Resource Pack)
+### Icons & Materials (Resource Pack)
 
-Menu icons are **data-driven** — change them in YAML, not code.
+Two clear YAML keys, used consistently — change them in YAML, not code:
 
-- A content entry's `icon:` (classes/subclasses) or `icon_name:` (races/subraces/backgrounds)
-  is the **exact resource-pack model name** in the `jkvttresourcepack` namespace
-  (e.g. `icon: bard_icon` → the pack's `bard_icon` item model).
-- Absent, blank, or malformed → the item keeps its **vanilla Material** (graceful fallback),
-  so content and players without the pack still work.
+- **`material:`** — the **vanilla Minecraft item** to render (e.g. `IRON_SWORD`, `GOLD_INGOT`).
+  This is what everyone sees, and the fallback for players without the resource pack.
+  Used by the things a player physically receives: **weapons, armor, items**. Absent/invalid
+  → a sensible per-type default (weapons → `IRON_SWORD`/`BOW`, items → `PAPER`, armor → its slot).
+- **`custom_model:`** — the **resource-pack model name** to overlay if the pack is loaded
+  (e.g. `custom_model: bard_icon` → the pack's `bard_icon` model in the `jkvttresourcepack`
+  namespace). Optional and opt-in: absent/blank → keeps the vanilla `material`/item. Used by
+  menu content (**races, subraces, classes, subclasses, backgrounds**) and, when art exists,
+  by equipment. **Only set it when the model's texture actually exists** — a model with no
+  texture renders a broken (purple) placeholder, which is worse than the vanilla fallback.
 - All model application goes through one helper: `ItemUtil.applyModel(item, modelName)`
   (namespace constant: `ItemUtil.RESOURCE_PACK_NAMESPACE`). Never call `setItemModel` directly.
+  Vanilla base materials go through `Util.parseMaterial(name, fallback)`.
+- Note: a class-*resource* still uses a nested `icon:` (a Material name for the sheet display) —
+  that's a separate concept from content icons and is unchanged.
 - Fixed game concepts use hardcoded models: ability tiles resolve to `<abbr>_icon`
   (`str_icon`, `dex_icon`, …). Other fixed UI icons (Back arrow, tabs) are vanilla until
   their pack textures exist; a house-rule/UI-icon override config is future work (#104).

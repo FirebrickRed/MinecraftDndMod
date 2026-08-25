@@ -53,7 +53,8 @@ public class ItemLoader {
         item.setType((String) data.get("type"));
         item.setFocusType((String) data.get("focus_type"));
         item.setDescription((String) data.get("description"));
-        item.setIcon((String) data.get("icon"));
+        item.setMaterial((String) data.get("material"));         // vanilla Minecraft item
+        item.setCustomModel((String) data.get("custom_model"));  // optional resource-pack model
         item.setCost(LoaderUtils.parseCost(data.get("cost"), id));
         return item;
     }

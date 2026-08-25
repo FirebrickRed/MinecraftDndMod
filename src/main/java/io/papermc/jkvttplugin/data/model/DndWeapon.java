@@ -25,8 +25,8 @@ public class DndWeapon {
     private String weight; // "2 lb", "6 lb", etc.
     private Cost cost; // Structured cost with amount and currency
     private String description;
-    private String icon; // Optional resource-pack model name (opt-in; only when pack art exists)
-    private String material; // Vanilla Material to render as (base + fallback); default IRON_SWORD
+    private String customModel; // YAML custom_model: optional resource-pack model (opt-in, when pack art exists)
+    private String material;    // YAML material: vanilla Minecraft item to render as (base + fallback)
 
     public DndWeapon() {}
 
@@ -111,15 +111,19 @@ public class DndWeapon {
             lore.add(Component.text(description, NamedTextColor.YELLOW));
         }
 
-        // Render as a real vanilla item (default a sword) instead of a blank paper.
-        Material base = Util.parseMaterial(material, Material.IRON_SWORD);
+        // Base: the vanilla Minecraft item (YAML `material:`), defaulting to a sensible
+        // weapon so it never renders as blank paper. Ranged weapons default to a bow.
+        Material base = Util.parseMaterial(material, isRanged() ? Material.BOW : Material.IRON_SWORD);
         ItemStack item = Util.createItem(
                 Component.text(name, NamedTextColor.WHITE),
                 lore,
-                null, // custom model is opt-in via the pack; omit until weapon art exists
+                null,
                 1,
                 base
         );
+
+        // Optional resource-pack overlay (YAML `custom_model:`); null/blank keeps the vanilla item.
+        ItemUtil.applyModel(item, customModel);
 
         // Tag with item_id for reliable identification (Issue #75)
         ItemUtil.tagItemId(item, id);
@@ -164,6 +168,6 @@ public class DndWeapon {
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
 
-    public String getIcon() { return icon; }
-    public void setIcon(String icon) { this.icon = icon; }
+    public String getCustomModel() { return customModel; }
+    public void setCustomModel(String customModel) { this.customModel = customModel; }
 }

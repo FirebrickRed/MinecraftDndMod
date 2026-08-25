@@ -198,7 +198,7 @@ player_choices:
     options:
       - - item: studded_leather_armor
       - - item: scale_mail
-icon: artificer_icon
+custom_model: artificer_icon
 multiclass_requirements:
   Intelligence: 13
 subclass_level: 3
