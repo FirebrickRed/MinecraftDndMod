@@ -5,6 +5,7 @@ import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
 
 import java.util.ArrayList;
@@ -24,9 +25,13 @@ public class DndWeapon {
     private String weight; // "2 lb", "6 lb", etc.
     private Cost cost; // Structured cost with amount and currency
     private String description;
-    private String icon; // For Minecraft item model
+    private String icon; // Optional resource-pack model name (opt-in; only when pack art exists)
+    private String material; // Vanilla Material to render as (base + fallback); default IRON_SWORD
 
     public DndWeapon() {}
+
+    public String getMaterial() { return material; }
+    public void setMaterial(String material) { this.material = material; }
 
     // Core combat methods
     public boolean isFinesse() {
@@ -106,11 +111,14 @@ public class DndWeapon {
             lore.add(Component.text(description, NamedTextColor.YELLOW));
         }
 
+        // Render as a real vanilla item (default a sword) instead of a blank paper.
+        Material base = Util.parseMaterial(material, Material.IRON_SWORD);
         ItemStack item = Util.createItem(
                 Component.text(name, NamedTextColor.WHITE),
                 lore,
-                icon != null ? icon : "weapon_" + Util.normalize(name),
-                1
+                null, // custom model is opt-in via the pack; omit until weapon art exists
+                1,
+                base
         );
 
         // Tag with item_id for reliable identification (Issue #75)

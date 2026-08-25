@@ -33,7 +33,11 @@ public class Util {
         meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
         item.setItemMeta(meta);
-        return ItemUtil.applyModel(item, itemModelName); // null/blank → keeps vanilla PAPER
+        // NOTE: itemModelName is NOT applied here. `icon` means different things per item
+        // type (a Material name for DndItem, a model name for weapons/armor), so applying it
+        // blindly renders broken (purple) icons. Custom equipment models are opt-in via
+        // ItemUtil.applyModel in the specific item builder once real pack art exists.
+        return item;
     }
 
     public static ItemStack createItem(Component displayName, List<Component> lore, String itemModelName, int quantity, Material material) {
@@ -46,7 +50,17 @@ public class Util {
         meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
         item.setItemMeta(meta);
-        return ItemUtil.applyModel(item, itemModelName); // null/blank → keeps the vanilla material
+        return item; // see the single-arg overload: model application is intentionally omitted
+    }
+
+    /** Parse a Bukkit Material by name (case-insensitive), returning {@code fallback} if null/blank/invalid. */
+    public static Material parseMaterial(String name, Material fallback) {
+        if (name == null || name.isBlank()) return fallback;
+        try {
+            return Material.valueOf(name.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            return fallback;
+        }
     }
 
     public static int getInventorySize(int itemCount) {

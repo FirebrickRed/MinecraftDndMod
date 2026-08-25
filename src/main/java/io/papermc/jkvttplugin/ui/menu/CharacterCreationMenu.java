@@ -81,7 +81,6 @@ public class CharacterCreationMenu {
         String active = session.getActiveCreationTab();
         renderTabs(inv, session, active);
         renderContent(inv, session, sessionId, active);
-        renderFooter(inv, session);
         return inv;
     }
 
@@ -293,12 +292,18 @@ public class CharacterCreationMenu {
                 for (int i = 0; i < abilities.length; i++) {
                     Ability a = abilities[i];
                     int b = session.getRacialBonus(a);
-                    ItemStack tile = plain(b > 0 ? Material.LIME_STAINED_GLASS_PANE : Material.LIGHT_BLUE_STAINED_GLASS_PANE,
-                            Component.text(a.getAbbreviation() + (b > 0 ? "  +" + b : ""),
-                                    b > 0 ? NamedTextColor.GREEN : NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false));
-                    tile.editMeta(m -> m.lore(List.of(Component.text(
-                            b > 0 ? "Racial +" + b + " here — click to clear" : "Click to add your racial bonus here",
-                            b > 0 ? NamedTextColor.GRAY : NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false))));
+                    final int bonus = b;
+                    ItemStack tile = plain(bonus > 0 ? Material.LIME_STAINED_GLASS_PANE : Material.LIGHT_BLUE_STAINED_GLASS_PANE,
+                            Component.text(a.getAbbreviation() + (bonus > 0 ? "  +" + bonus : ""),
+                                    bonus > 0 ? NamedTextColor.GREEN : NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false));
+                    tile.editMeta(m -> {
+                        m.lore(List.of(Component.text(
+                                bonus > 0 ? "Racial +" + bonus + " here — click to clear" : "Click to add your racial bonus here",
+                                bonus > 0 ? NamedTextColor.GRAY : NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false)));
+                        if (bonus > 0) m.setEnchantmentGlintOverride(true); // assigned = shimmer
+                    });
+                    // Show the ability icon (str_icon, dex_icon, ...) like the main ability row.
+                    ItemUtil.applyModel(tile, a.getAbbreviation().toLowerCase() + "_icon");
                     ItemUtil.tagAction(tile, MenuAction.APPLY_RACIAL_BONUS, a.name() + ":race");
                     inv.setItem(37 + i, tile); // slots 37..42
                 }
@@ -566,19 +571,6 @@ public class CharacterCreationMenu {
         chatBtn.editMeta(m -> m.lore(chatLore));
         ItemUtil.tagAction(chatBtn, MenuAction.OPEN_NAME_CHAT, "name");
         inv.setItem(23, chatBtn);
-    }
-
-    // ==================== FOOTER (row 5) ====================
-
-    private static void renderFooter(Inventory inv, CharacterCreationSession session) {
-        List<String> missing = CharacterCreationHandler.missingSteps(session);
-        ItemStack progress;
-        if (missing.isEmpty()) {
-            progress = plain(Material.LIME_STAINED_GLASS_PANE, Component.text("Ready to finish — click the Finish tab!", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
-        } else {
-            progress = plain(Material.YELLOW_STAINED_GLASS_PANE, Component.text(missing.size() + " step(s) remaining", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
-        }
-        inv.setItem(49, progress);
     }
 
     // ==================== HELPERS ====================

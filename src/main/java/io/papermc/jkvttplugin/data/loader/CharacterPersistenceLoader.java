@@ -101,6 +101,15 @@ public class CharacterPersistenceLoader {
         return characters != null ? new ArrayList<>(characters.values()) : new ArrayList<>();
     }
 
+    /** Every loaded character across all players (for DM {@code /character list all}). */
+    public static List<CharacterSheet> getAllCharacters() {
+        List<CharacterSheet> all = new ArrayList<>();
+        for (Map<UUID, CharacterSheet> playerChars : playerCharacters.values()) {
+            all.addAll(playerChars.values());
+        }
+        return all;
+    }
+
     /**
      * Find a character by name (case-insensitive search across all players).
      * Returns the first match found.

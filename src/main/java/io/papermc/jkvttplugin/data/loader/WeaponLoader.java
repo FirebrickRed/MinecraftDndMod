@@ -63,6 +63,7 @@ public class WeaponLoader {
         weapon.setCost(LoaderUtils.parseCost(data.get("cost"), id));
         weapon.setDescription((String) data.get("description"));
         weapon.setIcon((String) data.get("icon"));
+        weapon.setMaterial((String) data.get("material"));
 
         // Parse properties
         Object propertiesObj = data.get("properties");

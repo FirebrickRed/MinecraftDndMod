@@ -110,6 +110,27 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleList(CommandSender sender, String[] rest) {
+        // DM: /character list all -> every saved character across all players.
+        if (rest.length >= 1 && rest[0].equalsIgnoreCase("all")) {
+            if (!DMManager.isDM(sender)) {
+                sender.sendMessage(Component.text("Only a DM can list all characters.", NamedTextColor.RED));
+                return true;
+            }
+            List<CharacterSheet> all = CharacterSheetManager.getAllCharacters();
+            if (all.isEmpty()) {
+                sender.sendMessage(Component.text("No saved characters.", NamedTextColor.GRAY));
+                return true;
+            }
+            sender.sendMessage(Component.text("All characters (" + all.size() + "):", NamedTextColor.GOLD));
+            for (CharacterSheet sheet : all) {
+                String owner = Bukkit.getOfflinePlayer(sheet.getPlayerId()).getName();
+                Component line = Component.text("  • " + sheet.getCharacterName(), NamedTextColor.WHITE);
+                if (owner != null) line = line.append(Component.text("  (" + owner + ")", NamedTextColor.GRAY));
+                sender.sendMessage(line);
+            }
+            return true;
+        }
+
         UUID targetId;
         String who;
         if (rest.length >= 1) {
@@ -195,13 +216,14 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                 return List.of();
             }
             case "create", "list" -> {
-                // DM forms take an online player name as the first extra arg.
+                // DM forms take an online player name (and, for list, "all") as the first extra arg.
                 if (rest.length == 1 && DMManager.isDM(sender)) {
-                    List<String> names = new ArrayList<>();
+                    List<String> opts = new ArrayList<>();
+                    if (sub.equals("list") && "all".startsWith(rest[0].toLowerCase())) opts.add("all");
                     for (Player p : Bukkit.getOnlinePlayers()) {
-                        if (p.getName().toLowerCase().startsWith(rest[0].toLowerCase())) names.add(p.getName());
+                        if (p.getName().toLowerCase().startsWith(rest[0].toLowerCase())) opts.add(p.getName());
                     }
-                    return names;
+                    return opts;
                 }
                 return List.of();
             }

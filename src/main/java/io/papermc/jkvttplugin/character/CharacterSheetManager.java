@@ -246,6 +246,10 @@ public class CharacterSheetManager {
         return CharacterPersistenceLoader.getCharacter(playerId, characterId);
     }
 
+    public static List<CharacterSheet> getAllCharacters() {
+        return CharacterPersistenceLoader.getAllCharacters();
+    }
+
     public static List<CharacterSheet> getPlayerCharacters(UUID playerId) {
         return CharacterPersistenceLoader.getPlayerCharacters(playerId);
     }
