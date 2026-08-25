@@ -30,9 +30,6 @@ import java.util.Map;
 public class MenuClickListener implements Listener {
 
     // Stateless singleton handlers (no instance state, safe to reuse)
-    private static final TabbedChoicesHandler TABBED_CHOICES_HANDLER = new TabbedChoicesHandler();
-    private static final AbilityAllocationHandler ABILITY_HANDLER = new AbilityAllocationHandler();
-    private static final SpellSelectionHandler SPELL_HANDLER = new SpellSelectionHandler();
     private static final ViewCharacterSheetHandler VIEW_SHEET_HANDLER = new ViewCharacterSheetHandler();
     private static final RollOptionsMenuHandler ROLL_OPTIONS_HANDLER = new RollOptionsMenuHandler();
     private static final CharacterCreationHandler CREATION_HANDLER = new CharacterCreationHandler();
@@ -42,9 +39,6 @@ public class MenuClickListener implements Listener {
     public MenuClickListener() {
         // Register stateless singleton handlers for each menu type
         handlers.put(MenuType.CREATE_CHARACTER, CREATION_HANDLER);
-        handlers.put(MenuType.TABBED_CHOICES, TABBED_CHOICES_HANDLER);
-        handlers.put(MenuType.ABILITY_ALLOCATION, ABILITY_HANDLER);
-        handlers.put(MenuType.SPELL_SELECTION, SPELL_HANDLER);
         handlers.put(MenuType.VIEW_CHARACTER_SHEET, VIEW_SHEET_HANDLER);
         handlers.put(MenuType.SKILLS_MENU, VIEW_SHEET_HANDLER);
         handlers.put(MenuType.ROLL_OPTIONS_MENU, ROLL_OPTIONS_HANDLER);
