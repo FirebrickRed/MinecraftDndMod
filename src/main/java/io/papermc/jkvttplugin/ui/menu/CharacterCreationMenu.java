@@ -602,6 +602,8 @@ public class CharacterCreationMenu {
         int active = session.getActiveSpellLevel();
         if (!levels.contains(active)) active = levels.get(0);
 
+        List<DndSpell> classSpells = SpellLoader.getSpellsForClass(session.getSelectedClass());
+
         int[] tabSlots = centeredSlots(levels.size(), 9);
         for (int i = 0; i < levels.size() && i < tabSlots.length; i++) {
             int lvl = levels.get(i);
@@ -609,12 +611,21 @@ public class CharacterCreationMenu {
             int lvlCur = lvl == 0 ? session.getSpellCount(0) : session.getTotalSpellsSelected();
             String lbl = (lvl == 0 ? "Cantrips" : "Level " + lvl) + "  " + lvlCur + "/" + lvlMax;
             Material icon = lvl == 0 ? Material.GLOWSTONE_DUST : Material.LIGHT_BLUE_CONCRETE;
-            inv.setItem(tabSlots[i], subTab(icon, lbl, lvl == active, lvl == active ? NamedTextColor.GREEN : NamedTextColor.WHITE,
-                    MenuAction.CHANGE_SPELL_LEVEL, String.valueOf(lvl)));
+            ItemStack tab = subTab(icon, lbl, lvl == active, lvl == active ? NamedTextColor.GREEN : NamedTextColor.WHITE,
+                    MenuAction.CHANGE_SPELL_LEVEL, String.valueOf(lvl));
+            // List the picked spells for this level right on the tab, like the choices sub-tabs.
+            List<Component> picked = new ArrayList<>();
+            for (DndSpell sp : classSpells) {
+                if (sp.getLevel() == lvl && session.hasSpell(Util.normalize(sp.getName()))) {
+                    picked.add(Component.text("• " + sp.getName(), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+                }
+            }
+            if (!picked.isEmpty()) tab.editMeta(m -> m.lore(picked));
+            inv.setItem(tabSlots[i], tab);
         }
 
         final int level = active;
-        List<DndSpell> spells = SpellLoader.getSpellsForClass(session.getSelectedClass()).stream()
+        List<DndSpell> spells = classSpells.stream()
                 .filter(s -> s.getLevel() == level)
                 .sorted(Comparator.comparing(DndSpell::getName))
                 .toList();
