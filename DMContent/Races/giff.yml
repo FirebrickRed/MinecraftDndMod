@@ -9,6 +9,7 @@ ability_scores:
       - [1, 1, 1]
 size: Medium
 speed: 30
+custom_model: giff_icon
 
 # Display-only trait names
 traits:

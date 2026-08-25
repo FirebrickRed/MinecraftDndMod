@@ -12,6 +12,7 @@ ability_scores:
     Charisma: 1
 size: Medium
 speed: 30
+custom_model: human_icon
 
 # Display-only trait names
 traits:

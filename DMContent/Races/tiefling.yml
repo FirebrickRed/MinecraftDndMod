@@ -8,6 +8,7 @@ ability_scores:
     Intelligence: 1
 size: Medium
 speed: 30
+custom_model: tiefling_icon
 
 # Display-only trait names
 traits:

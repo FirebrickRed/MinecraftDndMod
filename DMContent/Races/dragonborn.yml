@@ -9,6 +9,7 @@ ability_scores:
       - [1, 1, 1]   # Or spread across three abilities
 size: Medium
 speed: 30
+custom_model: dragonborn_icon
 
 # Display-only trait names (for character sheet)
 traits:

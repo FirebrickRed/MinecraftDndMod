@@ -8,6 +8,7 @@ ability_scores:
     Constitution: 1
 size: Medium
 speed: 30
+custom_model: half_orc_icon
 
 # Display-only trait names
 traits:

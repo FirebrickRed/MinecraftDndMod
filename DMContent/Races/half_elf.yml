@@ -10,6 +10,7 @@ ability_scores:
       - [1, 1]  # Choose two different abilities for +1 each
 size: Medium
 speed: 30
+custom_model: half_elf_icon
 
 # Display-only trait names
 traits:
