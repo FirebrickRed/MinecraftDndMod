@@ -42,7 +42,13 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 
 ## Equipment items (starting gear)
 - [ ] Create a character; the granted items (Rapier, Dagger, Leather Armor, Flute, Entertainer's Pack, Dice Set) show **real vanilla items**, NOT purple/black boxes.
-- [ ] Weapons look like a sword by default; set `material:` in a weapon's YAML to change the base item.
+- [ ] Weapons look like a sword (ranged = bow) by default; set `material:` in a weapon's YAML to change the base item (e.g. `material: GOLD_INGOT`).
+- [ ] Currency shows as ingots/nuggets; items with no real material fall back to paper (set `material:` to improve).
+
+## Choices pane
+- [ ] Skills/Tools/Languages/Equipment sub-tabs show a count ("Skills 1/2"), green ✓ when done.
+- [ ] Each choice shows a "— Choose N more —" divider; groups are visually separated.
+- [ ] **Automatic grants** (e.g. Common under Languages, background skills) appear as locked cyan tiles under "— Granted — automatic —". ⚠️ If Common does NOT appear, tell me — it means the language grant isn't being populated into the session (a data step, not the UI).
 
 ## Save location
 - [ ] New characters save under **`plugins/jkvttplugin/Saved/Characters/`**.
@@ -53,5 +59,6 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] `/createcharacter`, `/viewsheet`, `/closesheet`, `/givesheet`, `/shortrest`, `/longrest`, `/rolldice`, `/dmgive`, `/check`, `/rest`, `/restoreresource`, `/consumeresource`, `/reloadyaml`.
 
 ## Known deferred (not in this build)
-- Choices pane polish: per-category "X of Y chosen", show already-chosen incl. automatic grants (e.g. Common), restore separators.
 - Character-sheet inventory redesign (waiting until more content lands).
+- Unify the class-resource nested `icon:` (a sheet-display Material) into the `material:` naming.
+- Give spellcasting foci / packs nicer default `material:` values.
