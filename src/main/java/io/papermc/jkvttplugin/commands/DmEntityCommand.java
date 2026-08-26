@@ -24,6 +24,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.TabCompleter;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -1249,6 +1250,16 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             meta.displayName(Component.text(name));
             modelItem.setItemMeta(meta);
             armorStand.getEquipment().setHelmet(modelItem);
+        }
+
+        // Don't let players punch the stand apart or strip the model "head"/gear off it.
+        // (DMs still remove entities via /dmentity, which isn't affected by these.)
+        armorStand.setInvulnerable(true);
+        for (EquipmentSlot slot : new EquipmentSlot[]{
+                EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS,
+                EquipmentSlot.FEET, EquipmentSlot.HAND, EquipmentSlot.OFF_HAND}) {
+            armorStand.addEquipmentLock(slot, ArmorStand.LockType.ADDING_OR_CHANGING);
+            armorStand.addEquipmentLock(slot, ArmorStand.LockType.REMOVING_OR_CHANGING);
         }
 
         // Mark this stand as ours so it can be cleaned up even after a restart orphans it (#89).
