@@ -49,7 +49,7 @@ prints that command's own help.
 | `heal <target> [amount] [--roll <dice>] [--total <n>]` | Restore HP |
 | `temphp <target> <amount>` | Grant temporary HP |
 | `deathsave [<player>] [--roll <d20>]` | Roll a death save (DM may roll for a downed player) |
-| `end confirm` | **End combat & clean up** (clears glow, scoreboards, prone) — requires `confirm` so it's not confused with `endturn` |
+| `finished` | **End combat & clean up** (clears glow, scoreboards, prone) — named distinctly from `endturn`, so no confirm needed |
 
 Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combatants, starts Round 1).
 
@@ -97,7 +97,7 @@ DM role management lives under `/dm add\|remove\|list` (see above). `/dm add`/`r
 **There is no combat crash-recovery yet.** If the server stops mid-encounter, the
 combat session, HP changes, and spawned-entity stats are lost, and glowing NPCs stay
 glowing. **Before stopping the server:**
-1. `/combat end` (clears glow, scoreboards, prone)
+1. `/combat finished` (clears glow, scoreboards, prone)
 2. `/dmentity remove <name>` for NPCs you don't want lingering
 3. `/character rest long` or `/character close` to persist player HP (no auto-save on shutdown)
 

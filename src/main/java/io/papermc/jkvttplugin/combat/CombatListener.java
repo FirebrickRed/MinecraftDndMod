@@ -5,10 +5,12 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.vehicle.VehicleMoveEvent;
 
 /**
  * Handles combat-related events: movement tracking with action bar refresh.
@@ -94,5 +96,36 @@ public class CombatListener implements Listener {
 
         // Refresh action bar on each block moved (keeps it visible while moving)
         session.sendActionBar(tracked);
+    }
+
+    /**
+     * Freeze boats/mounts too: cancelling PlayerMoveEvent doesn't stop a player being carried by
+     * a vehicle, so if a vehicle's passenger is a frozen combatant, pin the vehicle in place.
+     */
+    @EventHandler
+    public void onVehicleMove(VehicleMoveEvent event) {
+        // Only care about real block movement.
+        if (event.getFrom().getBlockX() == event.getTo().getBlockX()
+            && event.getFrom().getBlockY() == event.getTo().getBlockY()
+            && event.getFrom().getBlockZ() == event.getTo().getBlockZ()) {
+            return;
+        }
+        for (Entity passenger : event.getVehicle().getPassengers()) {
+            if (passenger instanceof Player player && isMovementFrozen(player)) {
+                event.getVehicle().teleport(event.getFrom());
+                return;
+            }
+        }
+    }
+
+    /** True when this player is in an active combat but it is NOT their turn (and they're not the DM). */
+    private static boolean isMovementFrozen(Player player) {
+        CombatSession session = CombatSession.getSessionForPlayer(player.getUniqueId());
+        if (session == null || session.isSetupPhase()) return false;
+        Combatant current = session.getCurrentCombatant();
+        if (current != null && current.isPlayer() && current.getId().equals(player.getUniqueId())) {
+            return false; // it's their turn
+        }
+        return !session.getDmId().equals(player.getUniqueId());
     }
 }

@@ -345,22 +345,29 @@ public class CombatSession {
             clearGlowEffect(previous);
         }
 
-        currentTurnIndex++;
+        // Advance to the next combatant, skipping any that are dead (dead monsters, or
+        // players who have failed their death saves). Unconscious-but-not-dead players
+        // still get turns (to roll death saves). Guard against everyone being dead.
+        int skipped = 0;
+        do {
+            currentTurnIndex++;
 
-        // Check for round advancement
-        if (currentTurnIndex >= combatants.size()) {
-            currentTurnIndex = 0;
-            roundNumber++;
+            // Check for round advancement
+            if (currentTurnIndex >= combatants.size()) {
+                currentTurnIndex = 0;
+                roundNumber++;
 
-            // Clear all surprised status after Round 1
-            if (roundNumber == 2) {
-                for (Combatant c : combatants) {
-                    c.setSurprised(false);
+                // Clear all surprised status after Round 1
+                if (roundNumber == 2) {
+                    for (Combatant c : combatants) {
+                        c.setSurprised(false);
+                    }
                 }
-            }
 
-            broadcastRoundStart();
-        }
+                broadcastRoundStart();
+            }
+            skipped++;
+        } while (getCurrentCombatant() != null && getCurrentCombatant().isDead() && skipped <= combatants.size());
 
         // Start new combatant's turn: init state + apply glow
         Combatant current = getCurrentCombatant();

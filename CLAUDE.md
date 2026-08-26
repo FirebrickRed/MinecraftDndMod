@@ -470,7 +470,7 @@ Consolidated into 5 base commands (Issue #122): `/character`, `/roll`, `/combat`
 classes remain and are delegated to from CharacterCommand / DmCommand).
 - **Character (any player):** `/character <create|view|list|close|rest|give>` (alias `/char`); `create <player>` and `give <player> <name>` are DM-only.
 - **Roll:** `/roll <XdY[+Z]>` (alias of the old `/rolldice`).
-- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `end`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.
+- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `finished`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.
 - **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `teleport`, `info`, `trade`, `spawngroup`, `cleanup`, `shop <create|add|restock|view>`.
 - **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
 

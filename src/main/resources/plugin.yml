@@ -13,7 +13,7 @@ commands:
     permission: dnd.rolldice
   combat:
     description: (DM) Combat session management commands.
-    usage: /combat <start|add|remove|nextturn|end|...>
+    usage: /combat <start|add|remove|nextturn|endturn|finished|...>
     # Authorization handled in-command: DMs get full control, players get their
     # own-turn subcommands (see PLAYER_ALLOWED in CombatCommand).
   dmentity:

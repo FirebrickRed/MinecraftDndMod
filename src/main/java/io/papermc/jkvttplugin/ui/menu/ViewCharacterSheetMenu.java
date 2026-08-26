@@ -26,11 +26,16 @@ public class ViewCharacterSheetMenu {
     private ViewCharacterSheetMenu() {}
 
     public static void open(Player player, UUID characterId) {
+        // Global lookup so DMs can view characters they don't own; guard against a missing id.
+        if (CharacterSheetManager.getCharacterById(characterId) == null) {
+            player.sendMessage(Component.text("That character could not be found.", NamedTextColor.RED));
+            return;
+        }
         player.openInventory(build(player, characterId));
     }
 
     public static Inventory build(Player player, UUID characterId) {
-        CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
+        CharacterSheet character = CharacterSheetManager.getCharacterById(characterId);
         Inventory inventory = Bukkit.createInventory(
                 new MenuHolder(MenuType.VIEW_CHARACTER_SHEET, characterId),
                 54,

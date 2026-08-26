@@ -88,7 +88,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "endturn" -> handleEndTurn(player, args);
             case "turn" -> handleJumpToTurn(player, args);
             case "status" -> handleStatus(player);
-            case "end" -> handleEnd(player, args);
+            case "finished" -> handleEnd(player, args);
             case "reveal" -> handleReveal(player, args);
             case "hide" -> handleHide(player, args);
             case "action" -> handleAction(player, args);
@@ -590,14 +590,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         CombatSession session = getActiveSession(dm);
         if (session == null) return;
 
-        // Guard: "/combat end" is one keystroke from "/combat endturn" and ends the WHOLE
-        // encounter — require explicit confirmation.
-        if (args.length < 2 || !args[1].equalsIgnoreCase("confirm")) {
-            dm.sendMessage(Component.text("⚠ This ends the ENTIRE encounter — did you mean /combat endturn?", NamedTextColor.YELLOW));
-            dm.sendMessage(Component.text("Type /combat end confirm to end combat.", NamedTextColor.GRAY));
-            return;
-        }
-
+        // "/combat finished" is deliberately distinct from "/combat endturn", so no confirm needed.
         int rounds = session.getRoundNumber();
         int combatantsRemaining = session.getCombatants().size();
 
@@ -972,6 +965,19 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        // /combat damage applies the damage from ONE attack hit. /combat override is the DM's
+        // escape hatch to correct HP anytime and skips this gate.
+        boolean isOverride = args.length > 0 && args[0].equalsIgnoreCase("override");
+        Combatant attacker = session.getCurrentCombatant();
+        if (!isOverride) {
+            TurnState ts = attacker != null ? attacker.getTurnState() : null;
+            if (ts == null || !ts.isDamagePending()) {
+                dm.sendMessage(Component.text("No attack hit to apply damage for — use /combat attack first.", NamedTextColor.YELLOW));
+                dm.sendMessage(Component.text("(DM: use /combat override to correct HP directly.)", NamedTextColor.GRAY));
+                return;
+            }
+        }
+
         String rollStr = getFlagValue(args, "--roll");
         Integer total = getFlagValueInt(args, "--total");
         String type = getFlagValue(args, "--type");
@@ -1023,6 +1029,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         DamageHandler.applyDamage(session, target, damage, type, crit);
+
+        // Consume the hit's damage window so it can't be applied again this turn.
+        if (!isOverride && attacker != null && attacker.getTurnState() != null) {
+            attacker.getTurnState().clearDamagePending();
+        }
     }
 
     private void handleHeal(Player dm, String[] args) {
@@ -1504,7 +1515,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (args.length == 1) {
             // Subcommands
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
-                "rollforinitiative", "nextturn", "endturn", "turn", "status", "end",
+                "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
                 "reveal", "hide", "action", "bonus", "movement", "attack",
                 "damage", "override", "heal", "temphp", "deathsave"));
             return filterCompletions(completions, args[0]);
@@ -1538,9 +1549,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 }
                 case "movement" -> {
                     completions.add("undo");
-                }
-                case "end" -> {
-                    completions.add("confirm");
                 }
                 case "initiative" -> {
                     // Suggest combatants

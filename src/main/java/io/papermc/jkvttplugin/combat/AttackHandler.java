@@ -369,6 +369,10 @@ public class AttackHandler {
      */
     private static void promptDamage(CombatSession session, Combatant attacker, Combatant target,
                                      String damageStr, String damageType, boolean isCrit) {
+        // Open a single damage window for this hit; /combat damage consumes it (anti-spam).
+        if (attacker.getTurnState() != null) {
+            attacker.getTurnState().markAttackHit(target.getId());
+        }
         String name = target.getDisplayName();
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
         // Dice formulas (e.g. 1d8+3) go through --roll; a flat number (e.g. 6) is a plain amount.

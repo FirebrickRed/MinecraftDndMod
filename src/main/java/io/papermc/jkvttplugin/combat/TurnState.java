@@ -2,6 +2,8 @@ package io.papermc.jkvttplugin.combat;
 
 import org.bukkit.Location;
 
+import java.util.UUID;
+
 /**
  * Tracks per-turn state for a combatant during their active turn.
  * Created fresh at the start of each turn, discarded when the turn ends.
@@ -13,6 +15,10 @@ public class TurnState {
     private boolean actionUsed;
     private boolean bonusActionUsed;
     private boolean reactionUsed;
+
+    // Set when an attack HITS; consumed by /combat damage so damage can only be applied
+    // once per hit (no /combat damage spamming). Cleared at the start of each turn.
+    private UUID pendingDamageTargetId;
 
     private double movementUsed;      // feet moved this turn
     private final int movementBudget; // max feet (from speed)
@@ -39,6 +45,14 @@ public class TurnState {
     public boolean isActionUsed() { return actionUsed; }
     public boolean isBonusActionUsed() { return bonusActionUsed; }
     public boolean isReactionUsed() { return reactionUsed; }
+
+    // ==================== PENDING DAMAGE (one damage application per hit) ====================
+
+    /** Record that an attack hit {@code target}, opening a single /combat damage window. */
+    public void markAttackHit(UUID targetId) { this.pendingDamageTargetId = targetId; }
+    public boolean isDamagePending() { return pendingDamageTargetId != null; }
+    public UUID getPendingDamageTargetId() { return pendingDamageTargetId; }
+    public void clearDamagePending() { this.pendingDamageTargetId = null; }
 
     // ==================== MOVEMENT ====================
 

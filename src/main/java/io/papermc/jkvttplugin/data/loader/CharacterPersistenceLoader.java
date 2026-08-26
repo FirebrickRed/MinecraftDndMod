@@ -96,6 +96,15 @@ public class CharacterPersistenceLoader {
         return characters != null ? characters.get(characterId) : null;
     }
 
+    /** Look up a character by id across all players (for DMs viewing someone else's sheet). */
+    public static CharacterSheet getCharacterById(UUID characterId) {
+        for (Map<UUID, CharacterSheet> characters : playerCharacters.values()) {
+            CharacterSheet sheet = characters.get(characterId);
+            if (sheet != null) return sheet;
+        }
+        return null;
+    }
+
     public static List<CharacterSheet> getPlayerCharacters(UUID playerId) {
         Map<UUID, CharacterSheet> characters = playerCharacters.get(playerId);
         return characters != null ? new ArrayList<>(characters.values()) : new ArrayList<>();
