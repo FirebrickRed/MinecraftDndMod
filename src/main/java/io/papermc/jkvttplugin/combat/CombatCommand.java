@@ -8,7 +8,9 @@ import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import io.papermc.jkvttplugin.data.model.DndWeapon;
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
@@ -861,6 +863,17 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        // Range check for player attacks: are you close enough to swing / within weapon range?
+        // (--showmods just previews modifiers, so skip the range gate for it.)
+        if (!showMods && attacker.isPlayer()) {
+            DndWeapon rangeWeapon = AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName);
+            String rangeError = attackRangeError(attacker, target, rangeWeapon);
+            if (rangeError != null) {
+                player.sendMessage(Component.text(rangeError, NamedTextColor.RED));
+                return;
+            }
+        }
+
         // Delegate to AttackHandler based on combatant type
         if (attacker.isPlayer()) {
             AttackHandler.executePlayerAttack(attacker, target, session, player,
@@ -879,6 +892,41 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
     }
+
+    /**
+     * Returns an error message if the attacker is out of range of the target for this weapon,
+     * or null if the attack is in range (or positions can't be determined). 1 block ≈ 5 ft,
+     * with a half-square tolerance so diagonally-adjacent still counts as "in reach".
+     */
+    private String attackRangeError(Combatant attacker, Combatant target, DndWeapon weapon) {
+        Location a = attacker.getLocation();
+        Location t = target.getLocation();
+        if (a == null || t == null || a.getWorld() == null || !a.getWorld().equals(t.getWorld())) {
+            return null; // can't determine positions — don't block the attack
+        }
+        double feet = a.distance(t) * 5.0;
+        double reach = (weapon != null && weapon.hasProperty("reach")) ? 10.0 : 5.0;
+        double tolerance = 2.5;
+
+        boolean canThrowOrShoot = weapon != null && (weapon.isRanged() || weapon.hasProperty("thrown"));
+        if (canThrowOrShoot) {
+            if (weapon.isMelee() && feet <= reach + tolerance) return null; // used in melee
+            int max = weapon.getLongRange() > 0 ? weapon.getLongRange() : weapon.getNormalRange();
+            if (max > 0 && feet > max + tolerance) {
+                return target.getDisplayName() + " is out of range — " + fmtFeet(feet) + " away (max " + max + " ft).";
+            }
+            return null; // within range
+        }
+
+        // Melee / unarmed: must be within reach.
+        if (feet > reach + tolerance) {
+            return target.getDisplayName() + " is too far — " + fmtFeet(feet) + " away, but your reach is "
+                    + (int) reach + " ft. Move closer or use a ranged attack.";
+        }
+        return null;
+    }
+
+    private static String fmtFeet(double feet) { return String.format("%.0f ft", feet); }
 
     /**
      * Get the value after a flag (e.g., --roll 14 → "14").
