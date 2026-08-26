@@ -509,6 +509,13 @@ public class CombatSession {
                 // Add invisible unique suffix to prevent entry merging
                 display.append(makeUniqueSuffix(i));
 
+                // HP at a glance (hidden combatants show ??? and no HP — see #102 for DM control).
+                if (!c.isHidden()) {
+                    display.append(" ").append(hpColorCode(c.getCurrentHp(), c.getMaxHp()))
+                           .append(c.getCurrentHp()).append("/").append(c.getMaxHp());
+                    if (c.getTempHp() > 0) display.append("§b+").append(c.getTempHp());
+                }
+
                 // Status indicators
                 if (c.isSurprised()) display.append(" §e[S]");
                 if (c.isUnconscious()) {
@@ -648,7 +655,45 @@ public class CombatSession {
                 String.format("%.0f", remaining) + "/" + state.getMovementBudget() + " ft",
                 moveColor));
 
-        player.sendActionBar(actionPart.append(bonusPart).append(movePart));
+        int hp = combatant.getCurrentHp(), max = combatant.getMaxHp(), temp = combatant.getTempHp();
+        Component hpPart = Component.text("♥ " + hp + "/" + max + (temp > 0 ? "+" + temp : ""), hpColor(hp, max))
+            .append(Component.text("  AC " + combatant.getArmorClass(), NamedTextColor.AQUA))
+            .append(Component.text("  |  ", NamedTextColor.DARK_GRAY));
+
+        player.sendActionBar(hpPart.append(actionPart).append(bonusPart).append(movePart));
+    }
+
+    /** HP colour by fraction of max: green healthy, yellow bloodied, red critical, grey dead. */
+    private static NamedTextColor hpColor(int hp, int max) {
+        if (max <= 0 || hp <= 0) return NamedTextColor.DARK_GRAY;
+        double r = (double) hp / max;
+        return r > 0.5 ? NamedTextColor.GREEN : r > 0.25 ? NamedTextColor.YELLOW : NamedTextColor.RED;
+    }
+
+    /** Legacy §-code equivalent of {@link #hpColor} for the scoreboard text. */
+    private static String hpColorCode(int hp, int max) {
+        if (max <= 0 || hp <= 0) return "§8";
+        double r = (double) hp / max;
+        return r > 0.5 ? "§a" : r > 0.25 ? "§e" : "§c";
+    }
+
+    /**
+     * Refresh the HP-at-a-glance surfaces after a combatant's HP changes: the shared scoreboard,
+     * and — if the affected player has their own character sheet open — that sheet in place (#117).
+     */
+    public void refreshHpDisplays(Combatant target) {
+        updateScoreboard();
+        if (target == null || target.getCharacterSheet() == null) return;
+        Player p = target.getPlayer();
+        if (p == null) return;
+        var top = p.getOpenInventory().getTopInventory();
+        if (top.getHolder() instanceof io.papermc.jkvttplugin.ui.core.MenuHolder h
+                && h.getType() == io.papermc.jkvttplugin.ui.core.MenuType.VIEW_CHARACTER_SHEET
+                && target.getCharacterSheet().getCharacterId().equals(h.getSessionId())) {
+            var fresh = io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu.build(p, h.getSessionId());
+            int n = Math.min(top.getSize(), fresh.getSize());
+            for (int i = 0; i < n; i++) top.setItem(i, fresh.getItem(i));
+        }
     }
 
     // ==================== BROADCASTING ====================

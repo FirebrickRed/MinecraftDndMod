@@ -1108,6 +1108,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         DamageHandler.applyDamage(session, target, damage, type, crit);
+        session.refreshHpDisplays(target);
 
         // Consume the hit's damage window so it can't be applied again this turn.
         if (!isOverride && attacker != null && attacker.getTurnState() != null) {
@@ -1166,6 +1167,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         DamageHandler.applyHealing(session, target, heal);
+        session.refreshHpDisplays(target);
     }
 
     private void handleTempHp(Player dm, String[] args) {
@@ -1194,6 +1196,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         DamageHandler.applyTempHp(session, target, amount);
+        session.refreshHpDisplays(target);
     }
 
     // ==================== DEATH SAVES (Issue #101) ====================
