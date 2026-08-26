@@ -509,8 +509,9 @@ public class CombatSession {
                 // Add invisible unique suffix to prevent entry merging
                 display.append(makeUniqueSuffix(i));
 
-                // HP at a glance (hidden combatants show ??? and no HP — see #102 for DM control).
-                if (!c.isHidden()) {
+                // HP at a glance — PLAYERS ONLY. Enemy HP is never shown to players; the DM
+                // checks entity HP via /combat status or /dmentity info.
+                if (c.isPlayer() && !c.isHidden()) {
                     display.append(" ").append(hpColorCode(c.getCurrentHp(), c.getMaxHp()))
                            .append(c.getCurrentHp()).append("/").append(c.getMaxHp());
                     if (c.getTempHp() > 0) display.append("§b+").append(c.getTempHp());

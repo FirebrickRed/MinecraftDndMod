@@ -581,10 +581,18 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         Combatant current = session.getCurrentCombatant();
         if (current != null) {
-            dm.sendMessage(Component.text("Current Turn: " + current.getDisplayName(), NamedTextColor.GREEN));
+            dm.sendMessage(Component.text("Current Turn: " + current.getDisplayName(true), NamedTextColor.GREEN));
         }
 
         dm.sendMessage(Component.text("Phase: " + (session.isSetupPhase() ? "Setup" : "Active"), NamedTextColor.WHITE));
+
+        // Full HP list — DM-only (players never see enemy HP; /combat status isn't player-allowed).
+        for (Combatant c : session.getCombatants()) {
+            String hp = c.getCurrentHp() + "/" + c.getMaxHp() + (c.getTempHp() > 0 ? " +" + c.getTempHp() : "");
+            String tag = c.isDead() ? " [DEAD]" : c.isUnconscious() ? " [DOWN]" : "";
+            dm.sendMessage(Component.text("  " + c.getDisplayName(true) + "  " + hp + tag,
+                    c.isPlayer() ? NamedTextColor.AQUA : NamedTextColor.RED));
+        }
         dm.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
     }
 
