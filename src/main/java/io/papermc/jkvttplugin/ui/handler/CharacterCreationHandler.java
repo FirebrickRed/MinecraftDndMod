@@ -377,11 +377,11 @@ public class CharacterCreationHandler implements MenuClickHandler {
             int maxCantrips = info.getCantripsKnownByLevel().get(0);
             if (session.getSpellCount(0) != maxCantrips) return false;
         }
-        if ("known".equals(info.getPreparationType())) {
-            if (info.getSpellsKnownByLevel() != null && !info.getSpellsKnownByLevel().isEmpty()) {
-                int maxSpells = info.getSpellsKnownByLevel().get(0);
-                return session.getSelectedSpells().size() == maxSpells;
-            }
+        // Any class with a spells_known list picks leveled spells at creation ("known" casters
+        // plus the Wizard's spellbook); prepared-from-the-list casters only need cantrips (#113).
+        if (info.getSpellsKnownByLevel() != null && !info.getSpellsKnownByLevel().isEmpty()) {
+            int maxSpells = info.getSpellsKnownByLevel().get(0);
+            return session.getSelectedSpells().size() == maxSpells;
         }
         return true;
     }

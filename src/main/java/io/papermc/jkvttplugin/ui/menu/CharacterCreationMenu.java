@@ -596,8 +596,24 @@ public class CharacterCreationMenu {
         List<Integer> levels = new ArrayList<>();
         boolean hasCantrips = info.getCantripsKnownByLevel() != null && !info.getCantripsKnownByLevel().isEmpty() && info.getCantripsKnownByLevel().get(0) > 0;
         if (hasCantrips) levels.add(0);
-        for (int lvl = 1; lvl <= 5; lvl++) if (hasSpellSlotAtLevel(info, lvl)) levels.add(lvl);
-        if (levels.isEmpty()) { inv.setItem(22, label("No spells available for this class yet.")); return; }
+
+        // Only classes that LEARN specific leveled spells at creation pick them here: "known"
+        // casters (Bard, Sorcerer, Ranger, Warlock) and the Wizard's spellbook — i.e. classes
+        // with spells_known. Prepared-from-the-list casters (Cleric, Druid, Paladin, Artificer)
+        // prepare daily and choose only cantrips at creation (#113).
+        boolean picksLeveledSpells = info.getSpellsKnownByLevel() != null && !info.getSpellsKnownByLevel().isEmpty();
+        if (picksLeveledSpells) {
+            for (int lvl = 1; lvl <= 5; lvl++) if (hasSpellSlotAtLevel(info, lvl)) levels.add(lvl);
+        }
+
+        if (levels.isEmpty()) {
+            // e.g. Paladin: no cantrips + prepares from the list → nothing to choose at creation.
+            inv.setItem(22, label(c.getName() + "s prepare spells daily — nothing to choose at creation."));
+            return;
+        }
+        if (!picksLeveledSpells) {
+            inv.setItem(49, label(c.getName() + "s prepare leveled spells daily — only cantrips are chosen here."));
+        }
 
         int active = session.getActiveSpellLevel();
         if (!levels.contains(active)) active = levels.get(0);
