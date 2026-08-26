@@ -306,6 +306,7 @@ public class CombatSession {
         if (first != null) {
             first.startNewTurn(first.getLocation());
             applyGlowEffect(first);
+            sendActionBar(first); // show action/movement budget immediately on turn 1
         }
 
         updateScoreboard();
@@ -374,6 +375,7 @@ public class CombatSession {
         if (current != null) {
             current.startNewTurn(current.getLocation());
             applyGlowEffect(current);
+            sendActionBar(current); // show action/movement budget immediately when the turn begins
         }
 
         updateScoreboard();
