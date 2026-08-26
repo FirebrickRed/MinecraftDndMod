@@ -855,6 +855,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        // Can't attack something that's already dead (#119).
+        if (target.isDead()) {
+            player.sendMessage(Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.YELLOW));
+            return;
+        }
+
         // Delegate to AttackHandler based on combatant type
         if (attacker.isPlayer()) {
             AttackHandler.executePlayerAttack(attacker, target, session, player,
