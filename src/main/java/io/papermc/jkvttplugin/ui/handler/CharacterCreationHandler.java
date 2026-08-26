@@ -106,6 +106,7 @@ public class CharacterCreationHandler implements MenuClickHandler {
                     base.put(ability, cur);
                     session.setAbilityScores(base);
                     session.markAbilityAllocationVisited();
+                    resetPreparedSpellsOnAbilityChange(session, player);
                 }
                 CharacterCreationMenu.open(player, sessionId);
             }
@@ -114,11 +115,13 @@ public class CharacterCreationHandler implements MenuClickHandler {
             case SELECT_RACIAL_BONUS_DISTRIBUTION -> {
                 session.setRacialBonusDistribution(payload);
                 session.markAbilityAllocationVisited();
+                resetPreparedSpellsOnAbilityChange(session, player);
                 CharacterCreationMenu.open(player, sessionId);
             }
             case APPLY_RACIAL_BONUS -> {
                 applyRacialBonus(session, payload);
                 session.markAbilityAllocationVisited();
+                resetPreparedSpellsOnAbilityChange(session, player);
                 CharacterCreationMenu.open(player, sessionId);
             }
 
@@ -283,6 +286,26 @@ public class CharacterCreationHandler implements MenuClickHandler {
         if (ability == null) return 0;
         Integer score = session.getAbilityScores().get(ability);
         return score == null ? 0 : Ability.getModifier(score);
+    }
+
+    /**
+     * A prepared caster's leveled-spell count depends on their spellcasting-ability modifier, so
+     * wipe any prepared (leveled) spells whenever abilities change — the player then re-prepares
+     * with the correct count, and we never have to reconcile "too many prepared". Cantrips are
+     * left alone (their count is fixed).
+     */
+    private void resetPreparedSpellsOnAbilityChange(CharacterCreationSession session, Player player) {
+        if (session.getSelectedClass() == null) return;
+        DndClass c = ClassLoader.getClass(session.getSelectedClass());
+        if (c == null || c.getSpellcastingInfo() == null) return;
+        SpellcastingInfo info = c.getSpellcastingInfo();
+        boolean preparesFromList = info.getSpellsKnownByLevel() == null || info.getSpellsKnownByLevel().isEmpty();
+        if (preparesFromList && !session.getSelectedSpells().isEmpty()) {
+            session.setSelectedSpells(java.util.Collections.emptySet());
+            player.sendMessage(Component.text(
+                    "Your prepared spells were cleared because your abilities changed — re-prepare them on the Spells tab.",
+                    NamedTextColor.YELLOW));
+        }
     }
 
     // ==================== RACIAL BONUS (inline, Phase 2) — mirrors AbilityAllocationHandler ====================
