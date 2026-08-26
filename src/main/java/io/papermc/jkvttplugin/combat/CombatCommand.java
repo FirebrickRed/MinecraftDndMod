@@ -828,27 +828,52 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         // Collect positional args (after "attack", excluding flags and their values)
         List<String> positionalArgs = collectPositionalArgs(args, 1);
-
         if (positionalArgs.isEmpty()) {
-            player.sendMessage(Component.text("Usage: /combat attack <target> [weapon] [--showmods] [--roll N] [--total N]", NamedTextColor.RED));
+            player.sendMessage(Component.text("Usage: /combat attack <target> <weapon>  (use 'fist' for an unarmed strike)", NamedTextColor.RED));
             return;
         }
 
-        // Greedy target match: try all positional as target, then try dropping last as weapon/attack name
-        String allPositional = String.join(" ", positionalArgs);
-        Combatant target = findCombatantByName(session, stripQuotes(allPositional));
-        String weaponOrAttackName = null;
+        Combatant target;
+        String weaponOrAttackName;
 
-        if (target == null && positionalArgs.size() >= 2) {
-            // Try dropping the last arg as weapon/attack name
+        if (attacker.isPlayer()) {
+            // Players MUST name a weapon: the last token is the weapon (or 'fist'), the rest is the target.
+            if (positionalArgs.size() < 2) {
+                player.sendMessage(Component.text("Name your weapon: /combat attack <target> <weapon>", NamedTextColor.RED));
+                player.sendMessage(Component.text("Tab-complete to see your weapons, or type 'fist' for an unarmed strike.", NamedTextColor.GRAY));
+                return;
+            }
             weaponOrAttackName = positionalArgs.get(positionalArgs.size() - 1);
             String targetName = String.join(" ", positionalArgs.subList(0, positionalArgs.size() - 1));
             target = findCombatantByName(session, stripQuotes(targetName));
-        }
-
-        if (target == null) {
-            player.sendMessage(Component.text("Target not found: " + allPositional, NamedTextColor.RED));
-            return;
+            if (target == null) {
+                player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED));
+                return;
+            }
+            // Validate the weapon: 'fist' (unarmed) or an item actually in the player's inventory.
+            if (weaponOrAttackName.equalsIgnoreCase("fist")) {
+                weaponOrAttackName = "fist";
+            } else if (!AttackHandler.getWeaponIdsInInventory(player).contains(weaponOrAttackName.toLowerCase())) {
+                player.sendMessage(Component.text("You don't have a weapon called '" + weaponOrAttackName + "'.", NamedTextColor.RED));
+                player.sendMessage(Component.text("Tab-complete to see your weapons, or use 'fist'.", NamedTextColor.GRAY));
+                return;
+            } else {
+                weaponOrAttackName = weaponOrAttackName.toLowerCase();
+            }
+        } else {
+            // Entities (DM-controlled) keep the flexible match; the attack name is optional.
+            String allPositional = String.join(" ", positionalArgs);
+            target = findCombatantByName(session, stripQuotes(allPositional));
+            weaponOrAttackName = null;
+            if (target == null && positionalArgs.size() >= 2) {
+                weaponOrAttackName = positionalArgs.get(positionalArgs.size() - 1);
+                String targetName = String.join(" ", positionalArgs.subList(0, positionalArgs.size() - 1));
+                target = findCombatantByName(session, stripQuotes(targetName));
+            }
+            if (target == null) {
+                player.sendMessage(Component.text("Target not found: " + allPositional, NamedTextColor.RED));
+                return;
+            }
         }
 
         // Block self-attack
@@ -1674,6 +1699,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                         Player currentPlayer = current.getPlayer();
                         if (currentPlayer != null) {
                             completions.addAll(AttackHandler.getWeaponIdsInInventory(currentPlayer));
+                            completions.add("fist"); // unarmed strike
                         }
                     } else {
                         completions.addAll(AttackHandler.getEntityAttackNames(current));

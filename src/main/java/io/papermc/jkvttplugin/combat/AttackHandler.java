@@ -103,8 +103,11 @@ public class AttackHandler {
      * @return DndWeapon, or null for unarmed strike
      */
     public static DndWeapon resolvePlayerWeapon(Player player, String weaponId) {
+        // Explicit unarmed strike — never fall back to a held weapon.
+        if ("fist".equalsIgnoreCase(weaponId)) return null;
+
         if (weaponId != null) {
-            DndWeapon weapon = WeaponLoader.getWeapon(weaponId);
+            DndWeapon weapon = WeaponLoader.getWeapon(weaponId.toLowerCase());
             if (weapon != null) return weapon;
         }
 
