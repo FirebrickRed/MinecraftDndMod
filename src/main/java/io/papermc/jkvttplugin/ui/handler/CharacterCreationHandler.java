@@ -255,17 +255,34 @@ public class CharacterCreationHandler implements MenuClickHandler {
     public static int spellMax(DndClass dndClass, int spellLevel, CharacterCreationSession session) {
         SpellcastingInfo info = dndClass.getSpellcastingInfo();
         if (info == null) return 0;
-        String prep = info.getPreparationType();
-        if (spellLevel == 0 && info.getCantripsKnownByLevel() != null && !info.getCantripsKnownByLevel().isEmpty()) {
-            return info.getCantripsKnownByLevel().get(0);
+
+        if (spellLevel == 0) {
+            return (info.getCantripsKnownByLevel() != null && !info.getCantripsKnownByLevel().isEmpty())
+                    ? info.getCantripsKnownByLevel().get(0) : 0;
         }
-        if ("known".equals(prep) && info.getSpellsKnownByLevel() != null && !info.getSpellsKnownByLevel().isEmpty()) {
+
+        // Leveled spells chosen at creation (character level 1):
+        // - known casters (Bard, Sorcerer, …) and the Wizard's spellbook use spells_known
+        if (info.getSpellsKnownByLevel() != null && !info.getSpellsKnownByLevel().isEmpty()) {
             return info.getSpellsKnownByLevel().get(0);
         }
-        if ("prepared".equals(prep) && info.getSpellsPreparedFormula() != null) {
+        // - prepared casters prepare (spellcasting mod + level) spells from the whole list
+        if (info.getSpellsPreparedFormula() != null) {
             return info.getSpellsPreparedFormula().calculate(session.getAbilityScores(), 1);
         }
-        return 2;
+        if ("prepared".equalsIgnoreCase(info.getPreparationType())) {
+            return Math.max(1, castingAbilityMod(info, session) + 1); // + level (1 at creation)
+        }
+        return 0;
+    }
+
+    /** Modifier of the class's spellcasting ability from the session's (base) ability scores. */
+    private static int castingAbilityMod(SpellcastingInfo info, CharacterCreationSession session) {
+        if (info.getCastingAbility() == null || session.getAbilityScores() == null) return 0;
+        Ability ability = Ability.fromString(info.getCastingAbility());
+        if (ability == null) return 0;
+        Integer score = session.getAbilityScores().get(ability);
+        return score == null ? 0 : Ability.getModifier(score);
     }
 
     // ==================== RACIAL BONUS (inline, Phase 2) — mirrors AbilityAllocationHandler ====================
@@ -377,11 +394,17 @@ public class CharacterCreationHandler implements MenuClickHandler {
             int maxCantrips = info.getCantripsKnownByLevel().get(0);
             if (session.getSpellCount(0) != maxCantrips) return false;
         }
-        // Any class with a spells_known list picks leveled spells at creation ("known" casters
-        // plus the Wizard's spellbook); prepared-from-the-list casters only need cantrips (#113).
-        if (info.getSpellsKnownByLevel() != null && !info.getSpellsKnownByLevel().isEmpty()) {
-            int maxSpells = info.getSpellsKnownByLevel().get(0);
-            return session.getSelectedSpells().size() == maxSpells;
+        // Leveled spells are required only if the class has 1st-level slots at creation — this
+        // covers known casters, the Wizard's spellbook, and prepared casters (Cleric/Druid)
+        // preparing their initial spells (#113).
+        boolean hasLeveledSlots = false;
+        if (info.getSpellSlotsByLevel() != null) {
+            List<Integer> lvl1 = info.getSpellSlotsByLevel().get(1);
+            hasLeveledSlots = lvl1 != null && !lvl1.isEmpty() && lvl1.get(0) > 0;
+        }
+        if (hasLeveledSlots) {
+            int need = spellMax(dndClass, 1, session);
+            if (need > 0) return session.getSelectedSpells().size() == need;
         }
         return true;
     }
