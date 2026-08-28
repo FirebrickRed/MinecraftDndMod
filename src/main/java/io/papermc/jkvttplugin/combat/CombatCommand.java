@@ -859,7 +859,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 return;
             }
             // Validate the weapon: 'unarmed' or an item actually in the player's inventory.
-            if (weaponOrAttackName.equalsIgnoreCase("unarmed") || weaponOrAttackName.equalsIgnoreCase("fist")) {
+            if (weaponOrAttackName.equalsIgnoreCase("unarmed")) {
                 weaponOrAttackName = "unarmed";
             } else if (!AttackHandler.getWeaponIdsInInventory(player).contains(weaponOrAttackName.toLowerCase())) {
                 player.sendMessage(Component.text("You don't have a weapon called '" + weaponOrAttackName + "'.", NamedTextColor.RED));
