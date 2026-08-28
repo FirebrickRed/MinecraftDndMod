@@ -1,7 +1,13 @@
 package io.papermc.jkvttplugin.data.model;
 
+import io.papermc.jkvttplugin.JkVttPlugin;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.ArmorStand;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -102,6 +108,48 @@ public class DndEntityInstance {
         UUID_REGISTRY.put(instanceId, this);
     }
 
+    /**
+     * Re-hydration constructor (Issue #89): rebuilds an instance from saved state, reusing the
+     * original instanceId and current HP rather than rolling fresh. Used when restoring entities
+     * from their armor stand's persistent data after a restart.
+     */
+    public DndEntityInstance(DndEntity template, ArmorStand armorStand, String displayName,
+                             int maxHp, UUID instanceId, int currentHp, boolean isDead) {
+        this.template = template;
+        this.armorStand = armorStand;
+        this.displayName = displayName;
+        this.maxHp = maxHp;
+        this.currentHp = Math.max(0, Math.min(maxHp, currentHp));
+        this.isDead = isDead;
+        this.instanceId = instanceId;
+        INSTANCE_REGISTRY.put(armorStand, this);
+        UUID_REGISTRY.put(instanceId, this);
+    }
+
+    // ==================== PERSISTENCE (Issue #89) ====================
+
+    private static NamespacedKey key(String name) {
+        return new NamespacedKey(JkVttPlugin.getInstance(), name);
+    }
+
+    /** Every live instance (for save-on-shutdown). */
+    public static Collection<DndEntityInstance> getAll() {
+        return new ArrayList<>(UUID_REGISTRY.values());
+    }
+
+    /** Write this instance's state onto its armor stand's PDC so it survives a restart. */
+    public void persist() {
+        if (armorStand == null || !armorStand.isValid()) return;
+        PersistentDataContainer pdc = armorStand.getPersistentDataContainer();
+        pdc.set(key("dnd_entity"), PersistentDataType.BYTE, (byte) 1); // shared marker
+        pdc.set(key("dnd_instance_id"), PersistentDataType.STRING, instanceId.toString());
+        pdc.set(key("dnd_template_id"), PersistentDataType.STRING, template.getId());
+        pdc.set(key("dnd_display_name"), PersistentDataType.STRING, displayName == null ? "" : displayName);
+        pdc.set(key("dnd_current_hp"), PersistentDataType.INTEGER, currentHp);
+        pdc.set(key("dnd_max_hp"), PersistentDataType.INTEGER, maxHp);
+        pdc.set(key("dnd_is_dead"), PersistentDataType.BYTE, (byte) (isDead ? 1 : 0));
+    }
+
     // ==================== STATIC REGISTRY METHODS ====================
 
     /**
@@ -142,6 +190,7 @@ public class DndEntityInstance {
         if (currentHp == 0) {
             isDead = true;
         }
+        persist();
         // TODO: Update armor stand name to show HP
         // TODO: Trigger death effects if isDead
     }
@@ -155,6 +204,7 @@ public class DndEntityInstance {
         if (!isDead) {
             currentHp = Math.min(maxHp, currentHp + healing);
         }
+        persist();
         // TODO: Update armor stand name
     }
 
@@ -170,13 +220,13 @@ public class DndEntityInstance {
     public void setDisplayName(String displayName) { this.displayName = displayName; }
 
     public int getCurrentHp() { return currentHp; }
-    public void setCurrentHp(int currentHp) { this.currentHp = Math.max(0, Math.min(maxHp, currentHp)); }
+    public void setCurrentHp(int currentHp) { this.currentHp = Math.max(0, Math.min(maxHp, currentHp)); persist(); }
 
     public int getMaxHp() { return maxHp; }
     public void setMaxHp(int maxHp) { this.maxHp = maxHp; }
 
     public boolean isDead() { return isDead; }
-    public void setDead(boolean dead) { isDead = dead; }
+    public void setDead(boolean dead) { isDead = dead; persist(); }
 
     /**
      * Get the instance-specific shop configuration.

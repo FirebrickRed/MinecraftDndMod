@@ -160,9 +160,10 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             ShopPersistenceLoader.loadShop(instance.getInstanceId(), instanceShop);
         }
 
-        // Track entity
+        // Track entity + persist so it survives a restart (Issue #89).
         String trackingKey = generateTrackingKey(finalName);
         spawnedEntities.put(trackingKey, instance);
+        instance.persist();
 
         // Success message
         sender.sendMessage(Component.text("✓ Spawned ", NamedTextColor.GREEN)
@@ -1199,7 +1200,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     /**
      * Generate unique tracking key for entity (handles duplicates).
      */
-    private String generateTrackingKey(String name) {
+    private static String generateTrackingKey(String name) {
         String baseKey = name.toLowerCase();
         if (!spawnedEntities.containsKey(baseKey)) {
             return baseKey;
@@ -1265,6 +1266,59 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         // Mark this stand as ours so it can be cleaned up even after a restart orphans it (#89).
         armorStand.getPersistentDataContainer().set(DND_ENTITY_KEY, PersistentDataType.BYTE, (byte) 1);
         return armorStand;
+    }
+
+    // ==================== PERSISTENCE / RESTORE (Issue #89) ====================
+
+    private static NamespacedKey key(String name) {
+        return new NamespacedKey(io.papermc.jkvttplugin.JkVttPlugin.getInstance(), name);
+    }
+
+    /**
+     * Restore a saved entity from its armor stand's persistent data. Safe on any armor stand:
+     * no-ops unless the stand is one of ours, carries saved instance data, and isn't already
+     * registered. Returns the restored instance, or null.
+     */
+    public static DndEntityInstance rehydrate(ArmorStand stand) {
+        if (stand == null || !stand.isValid()) return null;
+        var pdc = stand.getPersistentDataContainer();
+        if (!pdc.has(DND_ENTITY_KEY, PersistentDataType.BYTE)) return null;
+        if (DndEntityInstance.getByArmorStand(stand) != null) return null; // already live
+
+        String idStr = pdc.get(key("dnd_instance_id"), PersistentDataType.STRING);
+        String templateId = pdc.get(key("dnd_template_id"), PersistentDataType.STRING);
+        if (idStr == null || templateId == null) return null; // marked but pre-#89 (no saved state)
+
+        DndEntity template = EntityLoader.getEntity(templateId);
+        if (template == null) return null; // template no longer exists
+
+        String name = pdc.getOrDefault(key("dnd_display_name"), PersistentDataType.STRING, templateId);
+        int maxHp = pdc.getOrDefault(key("dnd_max_hp"), PersistentDataType.INTEGER, 1);
+        int curHp = pdc.getOrDefault(key("dnd_current_hp"), PersistentDataType.INTEGER, maxHp);
+        boolean dead = pdc.getOrDefault(key("dnd_is_dead"), PersistentDataType.BYTE, (byte) 0) == 1;
+
+        UUID instanceId;
+        try { instanceId = UUID.fromString(idStr); } catch (IllegalArgumentException e) { return null; }
+
+        DndEntityInstance instance = new DndEntityInstance(template, stand, name, maxHp, instanceId, curHp, dead);
+        if (template.hasShop()) {
+            ShopConfig shop = cloneShop(template.getShop());
+            instance.setInstanceShop(shop);
+            ShopPersistenceLoader.loadShop(instanceId, shop);
+        }
+        spawnedEntities.put(generateTrackingKey(name), instance);
+        return instance;
+    }
+
+    /** Restore all saved entities in currently-loaded chunks (call on startup). */
+    public static int restoreAll() {
+        int restored = 0;
+        for (org.bukkit.World world : Bukkit.getWorlds()) {
+            for (ArmorStand stand : world.getEntitiesByClass(ArmorStand.class)) {
+                if (rehydrate(stand) != null) restored++;
+            }
+        }
+        return restored;
     }
 
     /**
@@ -1616,7 +1670,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
      * Creates a deep copy so each spawned merchant has independent stock.
      * Issue #75 - Shop System
      */
-    private ShopConfig cloneShop(ShopConfig template) {
+    private static ShopConfig cloneShop(ShopConfig template) {
         if (template == null) {
             return null;
         }

@@ -51,6 +51,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new MenuClickListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.CreationNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.AnvilNameListener(), this);
+        Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.EntityChunkListener(), this);
         Bukkit.getPluginManager().registerEvents(new CharacterNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new SpellFocusListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArmorEquipListener(this), this);
@@ -80,6 +81,13 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         DmCommand dmCommand = new DmCommand();
         this.getCommand("dm").setExecutor(dmCommand);
         this.getCommand("dm").setTabCompleter(dmCommand);
+
+        // Restore saved D&D entities in already-loaded chunks, next tick so worlds are ready.
+        // Entities in other chunks re-hydrate via EntityChunkListener as they load (Issue #89).
+        Bukkit.getScheduler().runTask(this, () -> {
+            int restored = io.papermc.jkvttplugin.commands.DmEntityCommand.restoreAll();
+            if (restored > 0) getLogger().info("Restored " + restored + " saved D&D entities.");
+        });
     }
 
     @EventHandler
@@ -143,6 +151,14 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
             CharacterPersistenceLoader.saveAllCharacters();
         } catch (Exception e) {
             getLogger().warning("Failed to save characters on shutdown: " + e.getMessage());
+        }
+        // Persist spawned entities' current state onto their armor stands so they survive a
+        // restart with the right HP (Issue #89).
+        for (io.papermc.jkvttplugin.data.model.DndEntityInstance inst
+                : io.papermc.jkvttplugin.data.model.DndEntityInstance.getAll()) {
+            try { inst.persist(); } catch (Exception e) {
+                getLogger().warning("Failed to persist an entity on shutdown: " + e.getMessage());
+            }
         }
         for (CombatSession session : new java.util.ArrayList<>(CombatSession.getAllSessions())) {
             try {
