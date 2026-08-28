@@ -43,6 +43,21 @@ javelin:
   description: "A light throwing spear."
   material: TRIDENT
 
+handaxe:
+  name: "Handaxe"
+  category: "simple"
+  type: "melee"
+  damage: "1d6"
+  damage_type: "slashing"
+  properties: ["light", "thrown"]
+  range: "20/60"
+  weight: "2 lb"
+  cost:
+    amount: 5
+    currency: gold
+  description: "A light throwing axe."
+  material: IRON_AXE
+
 light_crossbow:
   name: "Light Crossbow"
   category: "simple"
@@ -103,6 +118,20 @@ greatsword:
     currency: gold
   description: "A massive two-handed sword."
   material: DIAMOND_SWORD
+
+greataxe:
+  name: "Greataxe"
+  category: "martial"
+  type: "melee"
+  damage: "1d12"
+  damage_type: "slashing"
+  properties: ["heavy", "two-handed"]
+  weight: "7 lb"
+  cost:
+    amount: 30
+    currency: gold
+  description: "A massive two-handed axe."
+  material: DIAMOND_AXE
 
 rapier:
   name: "Rapier"

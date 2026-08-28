@@ -837,7 +837,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // Collect positional args (after "attack", excluding flags and their values)
         List<String> positionalArgs = collectPositionalArgs(args, 1);
         if (positionalArgs.isEmpty()) {
-            player.sendMessage(Component.text("Usage: /combat attack <target> <weapon>  (use 'fist' for an unarmed strike)", NamedTextColor.RED));
+            player.sendMessage(Component.text("Usage: /combat attack <target> <weapon>  (use 'unarmed' for an unarmed strike)", NamedTextColor.RED));
             return;
         }
 
@@ -848,7 +848,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Players MUST name a weapon: the last token is the weapon (or 'fist'), the rest is the target.
             if (positionalArgs.size() < 2) {
                 player.sendMessage(Component.text("Name your weapon: /combat attack <target> <weapon>", NamedTextColor.RED));
-                player.sendMessage(Component.text("Tab-complete to see your weapons, or type 'fist' for an unarmed strike.", NamedTextColor.GRAY));
+                player.sendMessage(Component.text("Tab-complete to see your weapons, or type 'unarmed' for an unarmed strike.", NamedTextColor.GRAY));
                 return;
             }
             weaponOrAttackName = positionalArgs.get(positionalArgs.size() - 1);
@@ -858,12 +858,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED));
                 return;
             }
-            // Validate the weapon: 'fist' (unarmed) or an item actually in the player's inventory.
-            if (weaponOrAttackName.equalsIgnoreCase("fist")) {
-                weaponOrAttackName = "fist";
+            // Validate the weapon: 'unarmed' or an item actually in the player's inventory.
+            if (weaponOrAttackName.equalsIgnoreCase("unarmed") || weaponOrAttackName.equalsIgnoreCase("fist")) {
+                weaponOrAttackName = "unarmed";
             } else if (!AttackHandler.getWeaponIdsInInventory(player).contains(weaponOrAttackName.toLowerCase())) {
                 player.sendMessage(Component.text("You don't have a weapon called '" + weaponOrAttackName + "'.", NamedTextColor.RED));
-                player.sendMessage(Component.text("Tab-complete to see your weapons, or use 'fist'.", NamedTextColor.GRAY));
+                player.sendMessage(Component.text("Tab-complete to see your weapons, or use 'unarmed'.", NamedTextColor.GRAY));
                 return;
             } else {
                 weaponOrAttackName = weaponOrAttackName.toLowerCase();
@@ -1702,23 +1702,33 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 return filterCompletions(completions, lastArg);
             }
 
-            // Suggest weapons/attack names after the target
-            if (session != null) {
-                Combatant current = session.getCurrentCombatant();
-                if (current != null) {
-                    if (current.isPlayer()) {
-                        Player currentPlayer = current.getPlayer();
-                        if (currentPlayer != null) {
-                            completions.addAll(AttackHandler.getWeaponIdsInInventory(currentPlayer));
-                            completions.add("fist"); // unarmed strike
-                        }
-                    } else {
-                        completions.addAll(AttackHandler.getEntityAttackNames(current));
-                    }
+            // Build the set of valid weapons/attacks for the current attacker.
+            Combatant current = session != null ? session.getCurrentCombatant() : null;
+            java.util.List<String> choices = new java.util.ArrayList<>();
+            if (current != null) {
+                if (current.isPlayer() && current.getPlayer() != null) {
+                    choices.addAll(AttackHandler.getWeaponIdsInInventory(current.getPlayer()));
+                    choices.add("unarmed");
+                } else if (!current.isPlayer()) {
+                    choices.addAll(AttackHandler.getEntityAttackNames(current));
                 }
             }
-            // Always offer flags
-            completions.addAll(List.of("--showmods", "--roll", "--total"));
+
+            // Has a weapon already been named among the earlier tokens?
+            boolean weaponChosen = false;
+            java.util.Set<String> known = new java.util.HashSet<>();
+            for (String ch : choices) known.add(ch.toLowerCase());
+            for (int i = 2; i < args.length - 1; i++) {
+                if (known.contains(args[i].toLowerCase())) { weaponChosen = true; break; }
+            }
+
+            if (!weaponChosen) {
+                // Still choosing the weapon — offer weapons/attacks only, NOT flags (no --roll yet).
+                completions.addAll(choices);
+            } else {
+                // Weapon chosen — now the roll flags make sense.
+                completions.addAll(List.of("--showmods", "--roll", "--total"));
+            }
             return filterCompletions(completions, lastArg);
         }
 
