@@ -60,6 +60,7 @@ public class PossessionManager {
 
         possessedByDm.put(dm.getUniqueId(), stand);
         dm.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
+        dm.hideEntity(JkVttPlugin.getInstance(), stand); // hide our own body so it doesn't block our view
         applyScale(dm, instance.getTemplate().getSize()); // stand at the entity's height (sword lines up)
         giveEntityKit(dm, instance);
 
@@ -101,6 +102,7 @@ public class PossessionManager {
         if (task != null) task.cancel();
         clearAimHighlight(dm);
         if (stand == null) return false;
+        if (stand.isValid()) dm.showEntity(JkVttPlugin.getInstance(), stand); // reveal our body again
         clearPossessionEffects(dm);
         return true;
     }
@@ -142,9 +144,9 @@ public class PossessionManager {
         Entity aimed = result != null ? result.getHitEntity() : null;
         Entity previous = aimHighlight.get(dm.getUniqueId());
         if (aimed == previous) return;
-        if (previous != null && previous.isValid()) previous.setGlowing(false);
+        if (previous != null && previous.isValid()) setTargetGlow(previous, false);
         if (aimed != null) {
-            aimed.setGlowing(true);
+            setTargetGlow(aimed, true);
             aimHighlight.put(dm.getUniqueId(), aimed);
         } else {
             aimHighlight.remove(dm.getUniqueId());
@@ -153,7 +155,30 @@ public class PossessionManager {
 
     private static void clearAimHighlight(Player dm) {
         Entity previous = aimHighlight.remove(dm.getUniqueId());
-        if (previous != null && previous.isValid()) previous.setGlowing(false);
+        if (previous != null && previous.isValid()) setTargetGlow(previous, false);
+    }
+
+    /** Glow an entity RED (glow colour comes from a scoreboard team) to mark it as the aimed target. */
+    private static void setTargetGlow(Entity entity, boolean on) {
+        String entry = entity instanceof Player p ? p.getName() : entity.getUniqueId().toString();
+        org.bukkit.scoreboard.Team team = targetTeam();
+        if (on) {
+            team.addEntry(entry);
+            entity.setGlowing(true);
+        } else {
+            team.removeEntry(entry);
+            entity.setGlowing(false);
+        }
+    }
+
+    private static org.bukkit.scoreboard.Team targetTeam() {
+        org.bukkit.scoreboard.Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
+        org.bukkit.scoreboard.Team team = board.getTeam("dnd_aim_target");
+        if (team == null) {
+            team = board.registerNewTeam("dnd_aim_target");
+            team.setColor(org.bukkit.ChatColor.RED);
+        }
+        return team;
     }
 
     // ==================== ENTITY KIT ====================
