@@ -130,9 +130,20 @@ public class WeaponListener implements Listener {
 
     /** The combatant the player is looking at within {@code maxDistance} blocks, or null. */
     private Combatant traceTarget(Player player, AttackContext ctx, int maxDistance) {
-        RayTraceResult result = player.rayTraceEntities(maxDistance);
-        if (result == null || result.getHitEntity() == null) return null;
-        return combatantFor(ctx.session, result.getHitEntity(), player);
+        Entity hit = traceEntity(player, maxDistance, null);
+        return hit != null ? combatantFor(ctx.session, hit, player) : null;
+    }
+
+    /**
+     * Ray-trace to the entity the player is looking at, skipping themselves and (when possessing) the
+     * possessed stand — which sits on the player and would otherwise block the ray. A generous ray
+     * size makes aiming at invisible armor-stand entities forgiving.
+     */
+    private Entity traceEntity(Player player, double maxDistance, Entity exclude) {
+        org.bukkit.Location eye = player.getEyeLocation();
+        RayTraceResult result = player.getWorld().rayTraceEntities(eye, eye.getDirection(), maxDistance, 0.6,
+                e -> !e.equals(player) && (exclude == null || !e.equals(exclude)));
+        return result != null ? result.getHitEntity() : null;
     }
 
     /** Map a hit Bukkit entity to a combatant in the session (never the attacker themselves). */
@@ -166,8 +177,8 @@ public class WeaponListener implements Listener {
         if (clicked != null) {
             target = combatantForEntity(session, clicked);
         } else {
-            RayTraceResult hit = player.rayTraceEntities(60);
-            target = (hit != null && hit.getHitEntity() != null) ? combatantForEntity(session, hit.getHitEntity()) : null;
+            Entity hit = traceEntity(player, 60, possessed); // skip the possessed stand sitting on us
+            target = hit != null ? combatantForEntity(session, hit) : null;
         }
         if (target == null || target == self) {
             player.sendActionBar(Component.text("Aim at a target to attack as " + self.getDisplayName() + ".", NamedTextColor.GRAY));
