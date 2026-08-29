@@ -7,8 +7,11 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
+import org.bukkit.Color;
 import org.bukkit.Location;
+import org.bukkit.Particle;
 import org.bukkit.entity.Player;
+import org.bukkit.scheduler.BukkitTask;
 import org.bukkit.scoreboard.*;
 
 import java.util.*;
@@ -309,6 +312,8 @@ public class CombatSession {
         // Clear the setup 'added' glow from everyone; from here only the active turn glows.
         for (Combatant c : combatants) clearGlowEffect(c);
 
+        startMovementRing();
+
         // Initialize first combatant's turn
         Combatant first = getCurrentCombatant();
         if (first != null) {
@@ -464,6 +469,59 @@ public class CombatSession {
         return true;
     }
 
+    // ==================== MOVEMENT RANGE RING (#133) ====================
+
+    private BukkitTask movementRingTask;
+
+    private void startMovementRing() {
+        if (movementRingTask != null) return;
+        movementRingTask = Bukkit.getScheduler().runTaskTimer(
+                io.papermc.jkvttplugin.JkVttPlugin.getInstance(), this::drawMovementRing, 0L, 5L);
+    }
+
+    private void stopMovementRing() {
+        if (movementRingTask != null) {
+            movementRingTask.cancel();
+            movementRingTask = null;
+        }
+    }
+
+    /**
+     * Draw a green ring on the ground showing how far the current combatant may move — a circle
+     * centred on where its turn began, radius = its full speed (movement is measured as straight-line
+     * displacement from the turn start, so this circle is exactly the set of reachable end positions).
+     * Shown to the DM, plus the active player on their own turn.
+     */
+    private void drawMovementRing() {
+        if (!isActive || isSetupPhase) return;
+        Combatant current = getCurrentCombatant();
+        if (current == null || current.getTurnState() == null) return;
+        Location center = current.getTurnState().getTurnStartLocation();
+        if (center == null || center.getWorld() == null) return;
+        double radius = current.getTurnState().getMovementBudget() / 5.0;
+        if (radius <= 0) return;
+
+        List<Player> viewers = new ArrayList<>();
+        Player dm = Bukkit.getPlayer(dmId);
+        if (dm != null) viewers.add(dm);
+        if (current.isPlayer() && current.getPlayer() != null && !current.getPlayer().equals(dm)) {
+            viewers.add(current.getPlayer());
+        }
+        if (viewers.isEmpty()) return;
+
+        Particle.DustOptions green = new Particle.DustOptions(Color.LIME, 1.2f);
+        double y = center.getY() + 0.15;
+        int points = (int) Math.max(24, Math.min(120, radius * 8));
+        for (int i = 0; i < points; i++) {
+            double angle = 2 * Math.PI * i / points;
+            double x = center.getX() + radius * Math.cos(angle);
+            double z = center.getZ() + radius * Math.sin(angle);
+            for (Player v : viewers) {
+                v.spawnParticle(Particle.DUST, x, y, z, 1, 0, 0, 0, 0, green);
+            }
+        }
+    }
+
     // ==================== COMBAT STATE ====================
 
     /**
@@ -471,6 +529,7 @@ public class CombatSession {
      */
     public void endCombat() {
         isActive = false;
+        stopMovementRing();
 
         // Remove all players from session tracking, clear glows and turn state
         for (Combatant c : combatants) {

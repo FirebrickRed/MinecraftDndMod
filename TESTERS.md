@@ -53,6 +53,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] Boats/mounts are **frozen** when it's not your turn.
 - [ ] **Undo movement** works for **players too** (not just entities): `/combat movement undo` on your
       turn snaps you back to where the turn started.
+- [ ] **Movement ring** (#133): on a combatant's turn, a green particle ring shows how far it can move
+      (radius = its speed), centered where the turn began. DM sees it always; the active player sees
+      their own. It's the visual for the Move-tool speed cap.
 
 ### Character creation
 - [ ] **Prepared casters** (Cleric/Druid) prepare leveled spells (count = mod + level); changing abilities **resets** prepared spells.
