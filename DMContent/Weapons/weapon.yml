@@ -276,3 +276,17 @@ hand_crossbow:
     currency: gold
   description: "A small one-handed crossbow."
   material: CROSSBOW
+
+warhammer:
+  name: "Warhammer"
+  category: "martial"
+  type: "melee"
+  damage: "1d8"
+  damage_type: "bludgeoning"
+  properties: ["versatile"]
+  weight: "2 lb"
+  cost:
+    amount: 15
+    currency: gold
+  description: "A heavy two-handed-capable hammer. 1d10 when wielded with two hands."
+  material: MACE

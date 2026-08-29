@@ -12,6 +12,7 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -21,6 +22,8 @@ import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.util.RayTraceResult;
+
+import java.util.List;
 
 /**
  * Right-click-to-attack (Issue #115). On your turn in combat, right-click while holding a weapon:
@@ -37,6 +40,10 @@ public class WeaponListener implements Listener {
         if (!event.getAction().isRightClick()) return;
 
         Player player = event.getPlayer();
+
+        // Possessing an entity on its turn: attack AS the entity (right-click while aiming).
+        if (tryPossessedAttack(player, null)) { event.setCancelled(true); return; }
+
         AttackContext ctx = contextFor(player);
         if (ctx == null) return;
 
@@ -54,6 +61,10 @@ public class WeaponListener implements Listener {
         if (event.getHand() != EquipmentSlot.HAND) return;
 
         Player player = event.getPlayer();
+
+        // Possessing an entity on its turn: attack AS the entity (right-click the target directly).
+        if (tryPossessedAttack(player, event.getRightClicked())) { event.setCancelled(true); return; }
+
         AttackContext ctx = contextFor(player);
         if (ctx == null) return;
 
@@ -133,6 +144,63 @@ public class WeaponListener implements Listener {
                     && hit.equals(c.getEntityInstance().getArmorStand())) {
                 return c;
             }
+        }
+        return null;
+    }
+
+    // ==================== POSSESSED-ENTITY ATTACK (#78 follow-up) ====================
+
+    /** If the player is possessing the current entity combatant, prompt an attack AS that entity. */
+    private boolean tryPossessedAttack(Player player, Entity clicked) {
+        ArmorStand possessed = io.papermc.jkvttplugin.dm.PossessionManager.getPossessedArmorStand(player.getUniqueId());
+        if (possessed == null) return false;
+        CombatSession session = CombatSession.getSessionForEntity(possessed);
+        if (session == null || session.isSetupPhase()) return false;
+        Combatant self = session.getCurrentCombatant();
+        if (self == null || !self.isEntity() || self.getEntityInstance() == null
+                || !possessed.equals(self.getEntityInstance().getArmorStand())) {
+            return false; // not the possessed entity's turn
+        }
+
+        Combatant target;
+        if (clicked != null) {
+            target = combatantForEntity(session, clicked);
+        } else {
+            RayTraceResult hit = player.rayTraceEntities(60);
+            target = (hit != null && hit.getHitEntity() != null) ? combatantForEntity(session, hit.getHitEntity()) : null;
+        }
+        if (target == null || target == self) {
+            player.sendActionBar(Component.text("Aim at a target to attack as " + self.getDisplayName() + ".", NamedTextColor.GRAY));
+            return true;
+        }
+        promptEntityAttack(player, self, target);
+        return true;
+    }
+
+    private void promptEntityAttack(Player player, Combatant entity, Combatant target) {
+        List<String> attacks = AttackHandler.getEntityAttackNames(entity);
+        if (attacks.isEmpty()) {
+            player.sendMessage(Component.text(entity.getDisplayName() + " has no defined attacks — use /combat attack manually.", NamedTextColor.GRAY));
+            return;
+        }
+        String targetName = target.getDisplayName();
+        String targetArg = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
+        Component msg = Component.text("⚔ Attack ", NamedTextColor.GOLD)
+                .append(Component.text(targetName, NamedTextColor.YELLOW))
+                .append(Component.text(" as " + entity.getDisplayName() + ":", NamedTextColor.GOLD));
+        for (String atk : attacks) {
+            String cmd = "/combat attack " + targetArg + " " + atk + " --roll ";
+            msg = msg.append(Component.text("  [" + atk + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                    .clickEvent(ClickEvent.suggestCommand(cmd))
+                    .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<roll>"))));
+        }
+        player.sendMessage(msg);
+    }
+
+    private Combatant combatantForEntity(CombatSession session, Entity hit) {
+        for (Combatant c : session.getCombatants()) {
+            if (c.isPlayer() && hit.equals(c.getPlayer())) return c;
+            if (c.isEntity() && c.getEntityInstance() != null && hit.equals(c.getEntityInstance().getArmorStand())) return c;
         }
         return null;
     }
