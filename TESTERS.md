@@ -60,6 +60,7 @@ Newest first. Tick these off after a build to confirm they work in-game.
 ### DM tools
 - [ ] **`/dm mode`** enters DM mode — your items are stashed and swapped for a **View** tool + **Exit** item.
 - [ ] **View tool**: right-click a **player** → their character sheet; right-click an **entity** → its stat block (DM-only).
+- [ ] **Possess tool**: right-click an entity → you go invisible, it follows you, your hotbar becomes its kit; **sneak** to stop.
 - [ ] **Exit item** (or `/dm mode` again) restores your real inventory exactly.
 - [ ] **Crash-safe:** enter DM mode, then disconnect/kill the server → on rejoin you're OUT of DM mode with your real inventory back.
 
