@@ -33,6 +33,12 @@ attacks:
     damage_type: "bludgeoning"
     reach: "5 ft"
 
+# ==================== INVENTORY (carried gear; shown when possessed) ====================
+# Note: his warhammer is also listed under `attacks:` above. Until #132 unifies attacks and
+# inventory, list carried weapons/armor here so they appear in the possession hotbar.
+inventory:
+  - warhammer
+
 # ==================== VISUAL ====================
 model: "blacksmith"  # References resource pack model
 
