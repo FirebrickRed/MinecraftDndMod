@@ -82,6 +82,9 @@ public class DmModeManager {
      * crashed). Restore their real inventory and leave them OUT of DM mode.
      */
     public static void recoverOnJoin(Player player) {
+        // A crash mid-possession can leave the persisted invisibility/scale on the player even when
+        // no snapshot exists; always scrub those so nobody logs in invisible or shrunk.
+        PossessionManager.clearPossessionEffects(player);
         if (snapshotFile(player.getUniqueId()).exists()) {
             inDmMode.remove(player.getUniqueId());
             player.getInventory().clear();

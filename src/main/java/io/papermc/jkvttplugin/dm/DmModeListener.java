@@ -123,6 +123,12 @@ public class DmModeListener implements Listener {
     }
 
     @EventHandler
+    public void onQuit(org.bukkit.event.player.PlayerQuitEvent event) {
+        // Disconnecting mid-possession would otherwise leave the DM invisible/shrunk on rejoin.
+        PossessionManager.endPossession(event.getPlayer(), true);
+    }
+
+    @EventHandler
     public void onDrop(PlayerDropItemEvent event) {
         // Don't let DM tools be dropped into the world.
         if (DmModeManager.getToolType(event.getItemDrop().getItemStack()) != null) {
