@@ -58,9 +58,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] Starting gear shows **real items** (no purple boxes); handaxe/greataxe/scimitar/etc. exist.
 
 ### DM tools
-- [ ] **`/dm inventory`** enters DM mode — your items are stashed and swapped for a **View** tool + **Exit** item.
+- [ ] **`/dm mode`** enters DM mode — your items are stashed and swapped for a **View** tool + **Exit** item.
 - [ ] **View tool**: right-click a **player** → their character sheet; right-click an **entity** → its stat block (DM-only).
-- [ ] **Exit item** (or `/dm inventory` again) restores your real inventory exactly.
+- [ ] **Exit item** (or `/dm mode` again) restores your real inventory exactly.
 - [ ] **Crash-safe:** enter DM mode, then disconnect/kill the server → on rejoin you're OUT of DM mode with your real inventory back.
 
 ### Commands & misc
