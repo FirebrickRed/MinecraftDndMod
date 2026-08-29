@@ -520,6 +520,15 @@ public class CombatSession {
                 v.spawnParticle(Particle.DUST, x, y, z, 1, 0, 0, 0, 0, green);
             }
         }
+
+        // "You started here" marker: a short gold pillar at the ring's centre — the turn-start point
+        // that /combat movement undo returns to.
+        Particle.DustOptions gold = new Particle.DustOptions(Color.fromRGB(255, 200, 0), 1.3f);
+        for (double dy = 0.1; dy <= 1.2; dy += 0.3) {
+            for (Player v : viewers) {
+                v.spawnParticle(Particle.DUST, center.getX(), center.getY() + dy, center.getZ(), 1, 0, 0, 0, 0, gold);
+            }
+        }
     }
 
     // ==================== COMBAT STATE ====================

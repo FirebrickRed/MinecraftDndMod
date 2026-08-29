@@ -58,7 +58,7 @@ public class DmModeListener implements Listener {
                 player.sendActionBar(Component.text("Look at an entity to possess it.", NamedTextColor.GRAY));
             }
         } else if (DmModeManager.TOOL_START.equals(tool)) {
-            player.performCommand("combat start");
+            toggleEncounter(player);
         } else if (DmModeManager.TOOL_INITIATIVE.equals(tool)) {
             player.performCommand("combat rollforinitiative");
         } else if (DmModeManager.TOOL_ADD.equals(tool)) {
@@ -96,13 +96,24 @@ public class DmModeListener implements Listener {
             toggleCombatant(player, event.getRightClicked());
         } else if (DmModeManager.TOOL_START.equals(tool)) {
             event.setCancelled(true);
-            player.performCommand("combat start");
+            toggleEncounter(player);
         } else if (DmModeManager.TOOL_INITIATIVE.equals(tool)) {
             event.setCancelled(true);
             player.performCommand("combat rollforinitiative");
         } else if (DmModeManager.TOOL_MOVE.equals(tool) && event.getRightClicked() instanceof ArmorStand stand) {
             event.setCancelled(true);
             MoveToolManager.toggleSelect(player, stand);
+        }
+    }
+
+    /** The Start Combat tool toggles: start an encounter, or cancel/end the current one. */
+    private void toggleEncounter(Player dm) {
+        io.papermc.jkvttplugin.combat.CombatSession session =
+                io.papermc.jkvttplugin.combat.CombatCommand.getDMSession(dm.getUniqueId());
+        if (session != null && session.isActive()) {
+            dm.performCommand("combat finished");
+        } else {
+            dm.performCommand("combat start");
         }
     }
 

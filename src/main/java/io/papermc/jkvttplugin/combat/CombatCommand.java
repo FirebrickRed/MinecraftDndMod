@@ -37,7 +37,7 @@ import java.util.stream.Collectors;
  * - /combat endturn <target> - Force end someone's turn
  * - /combat turn <target> - Jump to specific combatant
  * - /combat status - View combat status
- * - /combat end - End combat session
+ * - /combat finished - End combat session
  *
  * Issue #97 - Combat Session Foundation
  */
@@ -115,7 +115,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         CombatSession existing = DM_SESSIONS.get(dm.getUniqueId());
         if (existing != null && existing.isActive()) {
             dm.sendMessage(Component.text("You already have an active combat session.", NamedTextColor.RED));
-            dm.sendMessage(Component.text("Use /combat end to end it first.", NamedTextColor.GRAY));
+            dm.sendMessage(Component.text("Use /combat finished to end it first.", NamedTextColor.GRAY));
             return;
         }
 
@@ -1615,7 +1615,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - Check/undo movement", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat reveal/hide <entity>", NamedTextColor.YELLOW)
             .append(Component.text(" - Show/hide name", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat end", NamedTextColor.YELLOW)
+        player.sendMessage(Component.text("/combat finished", NamedTextColor.YELLOW)
             .append(Component.text(" - End combat", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
     }
