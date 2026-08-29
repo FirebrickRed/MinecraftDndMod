@@ -20,9 +20,25 @@ if (-not (Test-Path (Join-Path $packDir "pack.mcmeta"))) {
 # Rebuild from scratch so stale files never linger in the zip.
 if (Test-Path $outZip) { Remove-Item $outZip -Force }
 
-# Compress the CONTENTS of the pack folder (pack.mcmeta + assets/) so they land
-# at the ZIP ROOT. Minecraft rejects a pack whose files are nested one level down.
-Compress-Archive -Path (Join-Path $packDir "*") -DestinationPath $outZip -CompressionLevel Optimal
+# Build the zip manually with FORWARD-SLASH entry names. PowerShell's Compress-Archive
+# (and .NET's CreateFromDirectory on Windows PowerShell 5.1) write Windows BACKSLASHES into
+# the zip entries, which Minecraft cannot read — the pack downloads but every asset path is
+# broken. So we add each file ourselves, rooting entries at the pack folder with '/' separators.
+Add-Type -AssemblyName System.IO.Compression | Out-Null
+Add-Type -AssemblyName System.IO.Compression.FileSystem | Out-Null
+
+$packRoot = (Resolve-Path $packDir).Path.TrimEnd('\','/')
+$zip = [System.IO.Compression.ZipFile]::Open((Join-Path (Get-Location) $outZip), 'Create')
+try {
+    foreach ($file in Get-ChildItem -LiteralPath $packDir -Recurse -File) {
+        $entryName = $file.FullName.Substring($packRoot.Length + 1).Replace('\', '/')
+        [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+            $zip, $file.FullName, $entryName,
+            [System.IO.Compression.CompressionLevel]::Optimal) | Out-Null
+    }
+} finally {
+    $zip.Dispose()
+}
 
 $sha1 = (Get-FileHash -Algorithm SHA1 -Path $outZip).Hash.ToLower()
 $sizeKb = [math]::Round((Get-Item $outZip).Length / 1KB, 1)
