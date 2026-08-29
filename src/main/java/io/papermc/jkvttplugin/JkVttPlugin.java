@@ -41,6 +41,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         CharacterSheetManager.initialize(this);
         DMPersistenceLoader.initialize(this);
         ShopPersistenceLoader.initialize(this);
+        io.papermc.jkvttplugin.dm.DmModeManager.initialize(this);
 
         // Listeners
         Bukkit.getPluginManager().registerEvents(this, this);
@@ -48,6 +49,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new NpcListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlanetListener(), this);
         Bukkit.getPluginManager().registerEvents(new WeaponListener(), this);
+        Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.dm.DmModeListener(), this);
         Bukkit.getPluginManager().registerEvents(new MenuClickListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.CreationNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.AnvilNameListener(), this);

@@ -39,7 +39,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "rest", "resource", "reload");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "rest", "resource", "reload", "inventory");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -59,6 +59,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "rest" -> delegateDm(sender, command, label, args, restExec);
             case "reload" -> delegateDm(sender, command, label, args, reloadExec);
             case "resource" -> handleResource(sender, command, label, args);
+            case "inventory" -> handleInventory(sender);
             default -> sendHelp(sender);
         }
 
@@ -66,6 +67,19 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     }
 
     // ==================== FOLDED DM TOOLS (Issue #122) ====================
+
+    /** Toggle DM Inventory Mode (Issue #85): swaps the DM's hotbar for DM tools and back. */
+    private void handleInventory(CommandSender sender) {
+        if (!DMManager.isDM(sender)) {
+            sender.sendMessage(Component.text("Only a DM can use DM mode.", NamedTextColor.RED));
+            return;
+        }
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("DM mode is for in-game players.", NamedTextColor.RED));
+            return;
+        }
+        DmModeManager.toggle(player);
+    }
 
     /** Gates on DM, then hands the remaining args to the original executor. */
     private void delegateDm(CommandSender sender, Command command, String label, String[] args, CommandExecutor exec) {
