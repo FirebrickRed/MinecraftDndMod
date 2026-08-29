@@ -9,6 +9,7 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Player;
+import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -42,6 +43,11 @@ public class MoveToolManager {
             dm.sendActionBar(Component.text("Deselected " + inst.getDisplayName()
                     + (sel.isEmpty() ? "." : " (" + sel.size() + " selected)."), NamedTextColor.GRAY));
         } else {
+            // In combat you can only move the entity whose turn it is (group-select is out-of-combat only).
+            if (!isCurrentTurnStand(stand) && inCombat(stand)) {
+                dm.sendActionBar(Component.text("In combat you can only move the entity whose turn it is.", NamedTextColor.RED));
+                return;
+            }
             sel.add(stand);
             stand.setGlowing(true);
             dm.sendActionBar(Component.text("Selected " + inst.getDisplayName()
@@ -93,12 +99,33 @@ public class MoveToolManager {
                 dm.sendActionBar(Component.text("It's not " + inst.getDisplayName() + "'s turn.", NamedTextColor.RED));
                 return false;
             }
-            stand.teleport(d);
-            trackBudget(dm, session, current, d);
+            // Hard-cap the destination at the entity's speed — it can't move past its budget.
+            Location capped = capToBudget(current, d);
+            boolean wasCapped = capped != d;
+            stand.teleport(capped);
+            trackBudget(dm, session, current, capped);
+            if (wasCapped) {
+                dm.sendActionBar(Component.text(inst.getDisplayName() + " moved as far as its speed allows.", NamedTextColor.YELLOW));
+            }
         } else {
             stand.teleport(d); // out of combat: free repositioning
         }
         return true;
+    }
+
+    /** Clamp {@code dest} so its straight-line distance from the turn's start stays within budget. */
+    private static Location capToBudget(Combatant entity, Location dest) {
+        TurnState ts = entity.getTurnState();
+        if (ts == null || ts.getTurnStartLocation() == null) return dest;
+        Location start = ts.getTurnStartLocation();
+        double budgetBlocks = ts.getMovementBudget() / 5.0;
+        Vector fromStart = dest.toVector().subtract(start.toVector());
+        double dist = fromStart.length();
+        if (dist <= budgetBlocks || dist < 1.0e-6) return dest;
+        Location capped = start.clone().add(fromStart.normalize().multiply(budgetBlocks));
+        capped.setYaw(dest.getYaw());
+        capped.setPitch(dest.getPitch());
+        return capped;
     }
 
     /** Count the move against the entity's speed budget (straight-line from its turn start). */
@@ -123,6 +150,12 @@ public class MoveToolManager {
     private static void setSelectGlow(ArmorStand stand, boolean on) {
         if (!on && isCurrentTurnStand(stand)) return;
         stand.setGlowing(on);
+    }
+
+    /** True if this entity is in an active (past-setup) combat. */
+    private static boolean inCombat(ArmorStand stand) {
+        CombatSession s = CombatSession.getSessionForEntity(stand);
+        return s != null && !s.isSetupPhase();
     }
 
     private static boolean isCurrentTurnStand(ArmorStand stand) {
