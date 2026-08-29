@@ -37,6 +37,7 @@ public class DmModeManager {
     public static final String TOOL_START = "combat_start";
     public static final String TOOL_ADD = "combat_add";
     public static final String TOOL_INITIATIVE = "combat_initiative";
+    public static final String TOOL_MOVE = "move";
     public static final String TOOL_EXIT = "exit";
 
     private static final Set<UUID> inDmMode = new HashSet<>();
@@ -74,6 +75,7 @@ public class DmModeManager {
     public static void exit(Player player) {
         if (!inDmMode.remove(player.getUniqueId())) return;
         PossessionManager.endPossession(player, true); // drop possession (invis + follow) if any
+        MoveToolManager.clearSelection(player);        // drop any Move-tool selection (clears glow)
         player.getInventory().clear();
         restoreInventory(player); // repopulates from the snapshot, then deletes it
         player.sendMessage(Component.text("⚙ DM mode OFF", NamedTextColor.GOLD, TextDecoration.BOLD)
@@ -149,6 +151,9 @@ public class DmModeManager {
                 "Right-click a player or entity to add them (they glow)", "Right-click again to remove them"));
         player.getInventory().setItem(4, tool(Material.CLOCK, TOOL_INITIATIVE, "Roll for Initiative",
                 "Right-click to roll initiative", "(begins turns for everyone added)"));
+        player.getInventory().setItem(5, tool(Material.LEATHER_BOOTS, TOOL_MOVE, "Move",
+                "Right-click entities to select them (they glow)", "then right-click the ground to send them there",
+                "(in combat: only on that entity's turn, counts vs speed)"));
         player.getInventory().setItem(8, tool(Material.BARRIER, TOOL_EXIT, "Exit DM Mode",
                 "Right-click to leave DM mode", "(gives your normal inventory back)"));
     }

@@ -51,9 +51,8 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **HP at a glance** — your HP on the scoreboard/action bar; **enemy HP hidden** from players; DM sees all via `/combat status`.
 - [ ] **NPC turn** — DM sees the entity's action/move bar + its **attack list**.
 - [ ] Boats/mounts are **frozen** when it's not your turn.
-- [ ] **Move an entity without possessing** (#107): on its turn, `/combat move <entity> <dir> <blocks>`
-      (dir = north/south/east/west/up/down or forward/back/left/right) slides it, counts against its
-      speed (warns when over), and `/combat movement undo` puts it back.
+- [ ] **Undo movement** works for **players too** (not just entities): `/combat movement undo` on your
+      turn snaps you back to where the turn started.
 
 ### Character creation
 - [ ] **Prepared casters** (Cleric/Druid) prepare leveled spells (count = mod + level); changing abilities **resets** prepared spells.
@@ -67,8 +66,12 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **View tool**: right-click a **player** → their character sheet; right-click an **entity** → its stat block (DM-only).
 - [ ] **Possess tool**: right-click an entity → you go invisible, it follows you, your hotbar becomes its kit; **sneak** to stop.
 - [ ] **Combat-setup tools** (#130): **Start Combat** (iron sword) begins an encounter; **Add/Remove**
-      (name tag) right-click a player/entity to add, right-click again to remove; **Roll for
+      (book) right-click a player/entity to add (they glow), right-click again to remove; **Roll for
       Initiative** (clock) starts turns. Whole encounter set up without typing commands.
+- [ ] **Move tool** (#107, leather boots): right-click entities to **select** them (they glow), then
+      right-click the ground to send them there. Works **out of combat** (free) and **in combat**
+      (only on that entity's turn, counts vs its speed; `/combat movement undo` reverses). Multi-select
+      several before moving.
 - [ ] **Exit item** (or `/dm mode` again) restores your real inventory exactly.
 - [ ] **Crash-safe:** enter DM mode, then disconnect/kill the server → on rejoin you're OUT of DM mode with your real inventory back.
 

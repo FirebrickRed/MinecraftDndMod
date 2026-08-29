@@ -68,6 +68,15 @@ public class DmModeListener implements Listener {
             } else {
                 player.sendActionBar(Component.text("Look at a player or entity to add/remove them.", NamedTextColor.GRAY));
             }
+        } else if (DmModeManager.TOOL_MOVE.equals(tool)) {
+            // Right-click the ground → send the selection there (aim at distant ground works too).
+            org.bukkit.block.Block dest = event.getClickedBlock();
+            if (dest == null) dest = player.getTargetBlockExact(24);
+            if (dest == null) {
+                player.sendActionBar(Component.text("Aim at the ground where they should go.", NamedTextColor.GRAY));
+            } else {
+                MoveToolManager.moveSelectionTo(player, dest.getLocation().add(0.5, 1, 0.5));
+            }
         }
     }
 
@@ -91,6 +100,9 @@ public class DmModeListener implements Listener {
         } else if (DmModeManager.TOOL_INITIATIVE.equals(tool)) {
             event.setCancelled(true);
             player.performCommand("combat rollforinitiative");
+        } else if (DmModeManager.TOOL_MOVE.equals(tool) && event.getRightClicked() instanceof ArmorStand stand) {
+            event.setCancelled(true);
+            MoveToolManager.toggleSelect(player, stand);
         }
     }
 

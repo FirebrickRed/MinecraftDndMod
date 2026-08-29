@@ -47,7 +47,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -96,7 +96,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "action" -> handleAction(player, args);
             case "bonus" -> handleBonusAction(player, args);
             case "movement" -> handleMovement(player, args);
-            case "move" -> handleMove(player, args);
             case "attack" -> handleAttack(player, args);
             case "damage" -> handleDamage(player, args);
             case "override" -> handleDamage(player, args); // DM-only (not in PLAYER_ALLOWED): apply corrective damage anytime
@@ -729,117 +728,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         session.sendActionBar(target);
     }
 
-    /**
-     * DM moves an entity during its turn without possessing it (#107):
-     * {@code /combat move <entity> <direction> <blocks>}. Directions are absolute
-     * (north/south/east/west/up/down) or relative to the entity's facing (forward/back/left/right).
-     * Movement is tracked against the entity's speed budget (straight-line from its turn start, the
-     * same model as walked movement) and can be reversed with {@code /combat movement undo}.
-     */
-    private void handleMove(Player dm, String[] args) {
-        CombatSession session = getActiveSession(dm);
-        if (session == null) return;
-
-        // /combat move <entity...> <direction> <blocks>
-        if (args.length < 4) {
-            dm.sendMessage(Component.text("Usage: /combat move <entity> <direction> <blocks>", NamedTextColor.RED));
-            dm.sendMessage(Component.text("Directions: north/south/east/west/up/down, or forward/back/left/right", NamedTextColor.GRAY));
-            return;
-        }
-
-        int blocks;
-        try {
-            blocks = Integer.parseInt(args[args.length - 1]);
-        } catch (NumberFormatException e) {
-            dm.sendMessage(Component.text("Blocks must be a whole number: " + args[args.length - 1], NamedTextColor.RED));
-            return;
-        }
-        if (blocks <= 0) {
-            dm.sendMessage(Component.text("Move a positive number of blocks.", NamedTextColor.RED));
-            return;
-        }
-
-        String direction = args[args.length - 2].toLowerCase();
-        // Entity name is everything between "move" and the direction (supports spaces).
-        StringBuilder nameB = new StringBuilder();
-        for (int i = 1; i < args.length - 2; i++) {
-            if (i > 1) nameB.append(" ");
-            nameB.append(args[i]);
-        }
-        String entityName = stripQuotes(nameB.toString());
-
-        Combatant target = findCombatantByName(session, entityName);
-        if (target == null) {
-            dm.sendMessage(Component.text("Combatant not found: " + entityName, NamedTextColor.RED));
-            return;
-        }
-        if (!target.isEntity() || target.getEntityInstance() == null
-                || target.getEntityInstance().getArmorStand() == null) {
-            dm.sendMessage(Component.text("Only entities can be moved this way (players walk their own turn).", NamedTextColor.RED));
-            return;
-        }
-        if (session.getCurrentCombatant() != target) {
-            dm.sendMessage(Component.text("You can only move " + target.getDisplayName() + " on its own turn.", NamedTextColor.RED));
-            return;
-        }
-
-        org.bukkit.entity.ArmorStand stand = target.getEntityInstance().getArmorStand();
-        org.bukkit.util.Vector dir = directionVector(direction, stand);
-        if (dir == null) {
-            dm.sendMessage(Component.text("Unknown direction: " + direction
-                    + " (use north/south/east/west/up/down or forward/back/left/right)", NamedTextColor.RED));
-            return;
-        }
-
-        Location dest = stand.getLocation().add(dir.multiply(blocks));
-        stand.teleport(dest); // add() preserves yaw/pitch
-
-        // Track against the budget: straight-line feet from the turn's start position.
-        TurnState ts = target.getTurnState();
-        if (ts != null && ts.getTurnStartLocation() != null) {
-            Location start = ts.getTurnStartLocation();
-            double dx = dest.getBlockX() - start.getBlockX();
-            double dy = dest.getBlockY() - start.getBlockY();
-            double dz = dest.getBlockZ() - start.getBlockZ();
-            double feet = Math.sqrt(dx * dx + dy * dy + dz * dz) * 5.0;
-            ts.setMovementUsed(feet);
-            if (ts.isOverMovementBudget() && !ts.hasMovementWarned()) {
-                ts.setMovementWarned(true);
-                dm.sendMessage(Component.text("⚠ " + target.getDisplayName() + " has exceeded its movement! ("
-                        + String.format("%.0f", ts.getMovementUsed()) + "/" + ts.getMovementBudget() + " ft)", NamedTextColor.RED));
-            }
-        }
-
-        dm.sendMessage(Component.text(target.getDisplayName() + " moves " + blocks + " block"
-                + (blocks == 1 ? "" : "s") + " " + direction + ".", NamedTextColor.GREEN));
-        session.sendActionBar(target);
-    }
-
-    /** Unit direction for a move: world-absolute, or relative to the stand's facing. Null if unknown. */
-    private org.bukkit.util.Vector directionVector(String direction, org.bukkit.entity.ArmorStand stand) {
-        switch (direction) {
-            case "north": return new org.bukkit.util.Vector(0, 0, -1);
-            case "south": return new org.bukkit.util.Vector(0, 0, 1);
-            case "east":  return new org.bukkit.util.Vector(1, 0, 0);
-            case "west":  return new org.bukkit.util.Vector(-1, 0, 0);
-            case "up":    return new org.bukkit.util.Vector(0, 1, 0);
-            case "down":  return new org.bukkit.util.Vector(0, -1, 0);
-            default: break;
-        }
-        // Relative directions use the stand's horizontal facing.
-        org.bukkit.util.Vector fwd = stand.getLocation().getDirection();
-        fwd.setY(0);
-        if (fwd.lengthSquared() < 1.0e-6) fwd = new org.bukkit.util.Vector(0, 0, 1);
-        else fwd.normalize();
-        return switch (direction) {
-            case "forward", "fwd" -> fwd;
-            case "back", "backward" -> fwd.multiply(-1);
-            case "right" -> new org.bukkit.util.Vector(-fwd.getZ(), 0, fwd.getX()); // 90° right of facing
-            case "left"  -> new org.bukkit.util.Vector(fwd.getZ(), 0, -fwd.getX());
-            default -> null;
-        };
-    }
-
     private void handleMovement(Player player, String[] args) {
         CombatSession session = resolveSession(player);
         if (session == null) return;
@@ -849,6 +737,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             Combatant current = session.getCurrentCombatant();
             if (current == null || current.getTurnState() == null) {
                 player.sendMessage(Component.text("No active turn to undo movement for.", NamedTextColor.RED));
+                return;
+            }
+            // A player may only undo their own movement, on their own turn; the DM may undo anyone's.
+            boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+            if (!isDM && (!current.isPlayer() || !current.getId().equals(player.getUniqueId()))) {
+                player.sendMessage(Component.text("You can only undo movement on your own turn.", NamedTextColor.RED));
                 return;
             }
 
@@ -1719,8 +1613,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - Roll a death saving throw when down", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat movement [undo]", NamedTextColor.YELLOW)
             .append(Component.text(" - Check/undo movement", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat move <entity> <dir> <blocks>", NamedTextColor.YELLOW)
-            .append(Component.text(" - DM: move an entity on its turn", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat reveal/hide <entity>", NamedTextColor.YELLOW)
             .append(Component.text(" - Show/hide name", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat end", NamedTextColor.YELLOW)
@@ -1750,7 +1642,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Subcommands
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
-                "reveal", "hide", "action", "bonus", "movement", "move", "attack",
+                "reveal", "hide", "action", "bonus", "movement", "attack",
                 "damage", "override", "heal", "temphp", "deathsave"));
             return filterCompletions(completions, args[0]);
         }
@@ -1783,14 +1675,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 }
                 case "movement" -> {
                     completions.add("undo");
-                }
-                case "move" -> {
-                    // Only entities can be command-moved
-                    if (session != null) {
-                        for (Combatant c : session.getCombatants()) {
-                            if (c.isEntity()) completions.add(c.getDisplayName());
-                        }
-                    }
                 }
                 case "initiative" -> {
                     // Suggest combatants
@@ -1829,10 +1713,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 completions.addAll(List.of("10", "20", "30", "50"));
             } else if (args[0].equalsIgnoreCase("initiative")) {
                 completions.add("set");
-            } else if (args[0].equalsIgnoreCase("move")) {
-                // (single-word entity name at arg 2 → direction here)
-                completions.addAll(List.of("north", "south", "east", "west", "up", "down",
-                        "forward", "back", "left", "right"));
             }
             return filterCompletions(completions, args[2]);
         }
