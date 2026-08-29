@@ -547,6 +547,24 @@ public class CombatSession {
                 }
             }
         }
+
+        // Off-turn planning: each waiting player sees a faint ring of their own movement range at
+        // their feet — visible only to them — so they can plan their next turn.
+        Particle.DustOptions faint = new Particle.DustOptions(Color.fromRGB(120, 170, 120), 0.7f);
+        for (Combatant c : combatants) {
+            if (!c.isPlayer() || c == current || c.isDead() || c.getPlayer() == null) continue;
+            Player p = c.getPlayer();
+            double pr = c.getSpeed() / 5.0;
+            if (pr <= 0 || p.getLocation().getWorld() == null) continue;
+            Location loc = p.getLocation();
+            int fp = (int) Math.max(16, Math.min(70, pr * 5));
+            for (int i = 0; i < fp; i++) {
+                double angle = 2 * Math.PI * i / fp;
+                double x = loc.getX() + pr * Math.cos(angle);
+                double z = loc.getZ() + pr * Math.sin(angle);
+                p.spawnParticle(Particle.DUST, x, loc.getY() + 0.1, z, 1, 0, 0, 0, 0, faint);
+            }
+        }
     }
 
     /** Attack reach of a combatant in blocks: held weapon (player) or best attack (entity). */
