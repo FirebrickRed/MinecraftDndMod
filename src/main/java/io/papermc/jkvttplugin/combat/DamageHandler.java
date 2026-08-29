@@ -52,6 +52,9 @@ public class DamageHandler {
 
         handleDeathTriggers(session, target, wasUnconscious, finalDamage, wasCrit);
         session.broadcast(Component.text("━━━━━━━━━━━━━━", NamedTextColor.RED));
+
+        // If that drop decided the fight, let the DM wrap it up (one-click /combat finished).
+        session.offerEndIfDecided();
     }
 
     /**

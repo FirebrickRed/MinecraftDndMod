@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.combat;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
@@ -415,6 +416,45 @@ public class CombatSession {
             return nextTurn();
         }
         return getCurrentCombatant();
+    }
+
+    // ==================== END DETECTION ====================
+
+    /** Combatants that are still alive (monsters not defeated; players not dead). */
+    public List<Combatant> getLivingCombatants() {
+        return combatants.stream().filter(c -> !c.isDead()).toList();
+    }
+
+    /**
+     * If one side can no longer fight, tell the DM combat can wrap up (with a one-click
+     * /combat finished). Sides are players vs entities; also fires when only one combatant is
+     * left standing, which covers 1v1 and all-entity test fights. Called after a combatant drops.
+     * @return true if an end was offered.
+     */
+    public boolean offerEndIfDecided() {
+        if (isSetupPhase || !isActive) return false;
+
+        long totalLiving = combatants.stream().filter(c -> !c.isDead()).count();
+        boolean anyPlayers = combatants.stream().anyMatch(Combatant::isPlayer);
+        long livingEntities = combatants.stream().filter(c -> c.isEntity() && !c.isDead()).count();
+        long consciousPlayers = combatants.stream()
+                .filter(c -> c.isPlayer() && !c.isDead() && !c.isUnconscious()).count();
+
+        String reason;
+        if (totalLiving <= 1) {
+            reason = totalLiving == 0 ? "No one is left standing." : "Only one combatant is left standing.";
+        } else if (livingEntities == 0) {
+            reason = "All enemies have been defeated!";
+        } else if (anyPlayers && consciousPlayers == 0) {
+            reason = "The whole party is down!";
+        } else {
+            return false;
+        }
+
+        sendToDM(Component.text("⚑ " + reason + " ", NamedTextColor.GOLD)
+                .append(Component.text("[click to finish combat]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand("/combat finished"))));
+        return true;
     }
 
     // ==================== COMBAT STATE ====================

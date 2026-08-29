@@ -602,13 +602,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         // "/combat finished" is deliberately distinct from "/combat endturn", so no confirm needed.
         int rounds = session.getRoundNumber();
-        int combatantsRemaining = session.getCombatants().size();
+        int standing = session.getLivingCombatants().size();
+        int defeated = session.getCombatants().size() - standing;
 
         session.broadcast(Component.empty());
         session.broadcast(Component.text("━━━ Combat Ended ━━━", NamedTextColor.GOLD, TextDecoration.BOLD));
         session.broadcast(Component.text("Final Stats:", NamedTextColor.YELLOW));
         session.broadcast(Component.text("  Rounds: " + rounds, NamedTextColor.WHITE));
-        session.broadcast(Component.text("  Combatants remaining: " + combatantsRemaining, NamedTextColor.WHITE));
+        session.broadcast(Component.text("  Still standing: " + standing + "   Defeated: " + defeated, NamedTextColor.WHITE));
         session.broadcast(Component.text("━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
 
         session.endCombat();

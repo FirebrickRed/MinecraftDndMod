@@ -45,6 +45,8 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **Weapon required** — `/combat attack <target>` alone asks for a weapon; `unarmed` works.
 - [ ] **/combat damage** only applies once per attack hit (no spamming); `/combat override` bypasses.
 - [ ] **Dead things** are skipped on their turn and can't be targeted.
+- [ ] **Combat end** — when one side is wiped (or one combatant is left standing), the DM gets a
+      one-click **[finish combat]** prompt; `/combat finished` reports **standing vs defeated**.
 - [ ] **/combat finished** ends combat (no `confirm` needed).
 - [ ] **HP at a glance** — your HP on the scoreboard/action bar; **enemy HP hidden** from players; DM sees all via `/combat status`.
 - [ ] **NPC turn** — DM sees the entity's action/move bar + its **attack list**.
