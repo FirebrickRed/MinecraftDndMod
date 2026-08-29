@@ -39,7 +39,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "rest", "resource", "reload", "inventory");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "rest", "resource", "reload", "mode");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -59,7 +59,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "rest" -> delegateDm(sender, command, label, args, restExec);
             case "reload" -> delegateDm(sender, command, label, args, reloadExec);
             case "resource" -> handleResource(sender, command, label, args);
-            case "inventory" -> handleInventory(sender);
+            case "mode" -> handleInventory(sender);
             default -> sendHelp(sender);
         }
 

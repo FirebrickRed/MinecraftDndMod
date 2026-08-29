@@ -55,6 +55,9 @@ public class NpcListener implements Listener {
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
 
+        // In DM mode holding a DM tool (e.g. View), let that tool act — don't possess.
+        if (io.papermc.jkvttplugin.dm.DmModeManager.getToolType(item) != null) return;
+
         // Only DMs may possess/control entities. (This whole possession system is slated
         // to be rebuilt on the unified entity model — see #78 / epic #110.)
         if (!DMManager.isDM(player)) return;
@@ -72,7 +75,6 @@ public class NpcListener implements Listener {
             unpossessNpc(player);
         } else {
             possessNpc(player, (ArmorStand) entity);
-            giveNpcInventoryItem(player);
         }
         event.setCancelled(true);
     }

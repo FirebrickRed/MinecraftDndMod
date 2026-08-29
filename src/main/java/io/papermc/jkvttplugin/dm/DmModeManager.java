@@ -64,7 +64,7 @@ public class DmModeManager {
         player.getInventory().clear();
         giveTools(player);
         player.sendMessage(Component.text("⚙ DM mode ON", NamedTextColor.GOLD, TextDecoration.BOLD)
-                .append(Component.text(" — your items are safely stashed. Use the Exit item or /dm inventory to leave.", NamedTextColor.GRAY)));
+                .append(Component.text(" — your items are safely stashed. Use the Exit item or /dm mode to leave.", NamedTextColor.GRAY)));
     }
 
     public static void exit(Player player) {
