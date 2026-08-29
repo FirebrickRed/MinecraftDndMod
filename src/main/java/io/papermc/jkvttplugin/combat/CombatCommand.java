@@ -1362,6 +1362,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             session.sendToDM(Component.text("DM: It's " + combatant.getDisplayName() + "'s turn", NamedTextColor.AQUA, TextDecoration.BOLD));
             session.sendToDM(Component.text("• 1 Action | 1 Bonus Action | " + speed + " ft movement", NamedTextColor.WHITE));
 
+            // Prompt the DM with this entity's available attacks.
+            List<String> attacks = AttackHandler.getEntityAttackNames(combatant);
+            if (!attacks.isEmpty()) {
+                session.sendToDM(Component.text("• Attacks: " + String.join(", ", attacks), NamedTextColor.WHITE));
+                session.sendToDM(Component.text("  /combat attack <target> <attack>", NamedTextColor.DARK_GRAY));
+            }
+
             // Players see hidden name version
             String playerVisibleName = combatant.getDisplayName(false);
             for (Combatant c : session.getCombatants()) {
@@ -1465,7 +1472,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        return null;
+        // Finally, a UNIQUE contains-match (e.g. "kobold" -> "Meepo the Kobold"). If more than
+        // one combatant contains the term it's ambiguous, so require a more specific name.
+        Combatant containsMatch = null;
+        for (Combatant c : session.getCombatants()) {
+            if (c.getDisplayName().toLowerCase().contains(searchLower)) {
+                if (containsMatch != null) return null;
+                containsMatch = c;
+            }
+        }
+        return containsMatch;
     }
 
     // ==================== STRING HELPERS ====================

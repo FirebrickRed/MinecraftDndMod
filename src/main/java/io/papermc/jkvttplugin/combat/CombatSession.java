@@ -628,9 +628,8 @@ public class CombatSession {
      * Shows: Action status | Bonus Action status | Movement remaining
      */
     public void sendActionBar(Combatant combatant) {
-        if (!combatant.isPlayer()) return;
-
-        Player player = combatant.getPlayer();
+        // Players see their own bar; on an entity's turn the DM (who controls it) sees it.
+        Player player = combatant.isPlayer() ? combatant.getPlayer() : Bukkit.getPlayer(dmId);
         if (player == null) return;
 
         TurnState state = combatant.getTurnState();
@@ -657,7 +656,9 @@ public class CombatSession {
                 moveColor));
 
         int hp = combatant.getCurrentHp(), max = combatant.getMaxHp(), temp = combatant.getTempHp();
-        Component hpPart = Component.text("♥ " + hp + "/" + max + (temp > 0 ? "+" + temp : ""), hpColor(hp, max))
+        // Label the bar with the entity's name when it's shown to the DM (not the DM's own bar).
+        String namePrefix = combatant.isPlayer() ? "" : combatant.getDisplayName(true) + "  ";
+        Component hpPart = Component.text(namePrefix + "♥ " + hp + "/" + max + (temp > 0 ? "+" + temp : ""), hpColor(hp, max))
             .append(Component.text("  AC " + combatant.getArmorClass(), NamedTextColor.AQUA))
             .append(Component.text("  |  ", NamedTextColor.DARK_GRAY));
 

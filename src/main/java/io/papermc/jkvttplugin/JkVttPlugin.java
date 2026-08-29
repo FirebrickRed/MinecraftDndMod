@@ -106,15 +106,19 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         );
         event.getPlayer().sendMessage(
                 Component.text("  • Create a Character: ", NamedTextColor.YELLOW)
-                        .append(Component.text("/createcharacter", NamedTextColor.WHITE))
+                        .append(Component.text("/character create", NamedTextColor.WHITE))
         );
         event.getPlayer().sendMessage(
                 Component.text("  • View Your Sheet: ", NamedTextColor.YELLOW)
-                        .append(Component.text("Right-click Character Sheet item", NamedTextColor.WHITE))
+                        .append(Component.text("/character view (or right-click the Character Sheet)", NamedTextColor.WHITE))
         );
         event.getPlayer().sendMessage(
-                Component.text("  • Rest Commands: ", NamedTextColor.YELLOW)
-                        .append(Component.text("/shortrest or /longrest", NamedTextColor.WHITE))
+                Component.text("  • Rest: ", NamedTextColor.YELLOW)
+                        .append(Component.text("/character rest short|long", NamedTextColor.WHITE))
+        );
+        event.getPlayer().sendMessage(
+                Component.text("  • Roll Dice: ", NamedTextColor.YELLOW)
+                        .append(Component.text("/roll 2d6+3", NamedTextColor.WHITE))
         );
         event.getPlayer().sendMessage(Component.empty());
         event.getPlayer().sendMessage(
