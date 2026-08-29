@@ -34,6 +34,9 @@ public class DmModeManager {
     /** DM tool identifiers (stored on the item's PDC). */
     public static final String TOOL_VIEW = "view";
     public static final String TOOL_POSSESS = "possess";
+    public static final String TOOL_START = "combat_start";
+    public static final String TOOL_ADD = "combat_add";
+    public static final String TOOL_INITIATIVE = "combat_initiative";
     public static final String TOOL_EXIT = "exit";
 
     private static final Set<UUID> inDmMode = new HashSet<>();
@@ -139,6 +142,12 @@ public class DmModeManager {
                 "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
         player.getInventory().setItem(1, tool(Material.LEAD, TOOL_POSSESS, "Possess",
                 "Right-click an entity → control it", "(you go invisible, it follows you; sneak to stop)"));
+        player.getInventory().setItem(2, tool(Material.IRON_SWORD, TOOL_START, "Start Combat",
+                "Right-click to begin a combat encounter", "(then add combatants and roll initiative)"));
+        player.getInventory().setItem(3, tool(Material.NAME_TAG, TOOL_ADD, "Add / Remove Combatant",
+                "Right-click a player or entity to add them", "Right-click again to remove them"));
+        player.getInventory().setItem(4, tool(Material.CLOCK, TOOL_INITIATIVE, "Roll for Initiative",
+                "Right-click to roll initiative", "(begins turns for everyone added)"));
         player.getInventory().setItem(8, tool(Material.BARRIER, TOOL_EXIT, "Exit DM Mode",
                 "Right-click to leave DM mode", "(gives your normal inventory back)"));
     }

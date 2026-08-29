@@ -57,6 +57,17 @@ public class DmModeListener implements Listener {
             } else {
                 player.sendActionBar(Component.text("Look at an entity to possess it.", NamedTextColor.GRAY));
             }
+        } else if (DmModeManager.TOOL_START.equals(tool)) {
+            player.performCommand("combat start");
+        } else if (DmModeManager.TOOL_INITIATIVE.equals(tool)) {
+            player.performCommand("combat rollforinitiative");
+        } else if (DmModeManager.TOOL_ADD.equals(tool)) {
+            RayTraceResult hit = player.rayTraceEntities(10);
+            if (hit != null && hit.getHitEntity() != null) {
+                toggleCombatant(player, hit.getHitEntity());
+            } else {
+                player.sendActionBar(Component.text("Look at a player or entity to add/remove them.", NamedTextColor.GRAY));
+            }
         }
     }
 
@@ -71,7 +82,50 @@ public class DmModeListener implements Listener {
         } else if (DmModeManager.TOOL_POSSESS.equals(tool) && event.getRightClicked() instanceof ArmorStand stand) {
             event.setCancelled(true);
             PossessionManager.possess(player, stand);
+        } else if (DmModeManager.TOOL_ADD.equals(tool)) {
+            event.setCancelled(true);
+            toggleCombatant(player, event.getRightClicked());
+        } else if (DmModeManager.TOOL_START.equals(tool)) {
+            event.setCancelled(true);
+            player.performCommand("combat start");
+        } else if (DmModeManager.TOOL_INITIATIVE.equals(tool)) {
+            event.setCancelled(true);
+            player.performCommand("combat rollforinitiative");
         }
+    }
+
+    /**
+     * Add the clicked player/entity to the DM's combat, or remove it if already in — so the same
+     * tool toggles membership. Routes through /combat add|remove to reuse all the command logic.
+     */
+    private void toggleCombatant(Player dm, Entity target) {
+        io.papermc.jkvttplugin.combat.CombatSession session =
+                io.papermc.jkvttplugin.combat.CombatCommand.getDMSession(dm.getUniqueId());
+        if (session == null || !session.isActive()) {
+            dm.sendActionBar(Component.text("Start combat first (use the Start Combat tool).", NamedTextColor.RED));
+            return;
+        }
+
+        UUID id;
+        String name;
+        if (target instanceof Player p) {
+            id = p.getUniqueId();
+            name = p.getName();
+        } else if (target instanceof ArmorStand stand) {
+            DndEntityInstance inst = DndEntityInstance.getByArmorStand(stand);
+            if (inst == null) {
+                dm.sendActionBar(Component.text("That isn't a combatant entity.", NamedTextColor.GRAY));
+                return;
+            }
+            id = inst.getInstanceId();
+            name = inst.getDisplayName();
+        } else {
+            dm.sendActionBar(Component.text("Right-click a player or a D&D entity.", NamedTextColor.GRAY));
+            return;
+        }
+
+        boolean member = session.getCombatants().stream().anyMatch(c -> c.getId().equals(id));
+        dm.performCommand("combat " + (member ? "remove " : "add ") + name);
     }
 
     @EventHandler
