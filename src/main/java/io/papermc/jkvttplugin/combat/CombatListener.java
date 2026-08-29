@@ -62,6 +62,11 @@ public class CombatListener implements Listener {
                         && current.getEntityInstance().getArmorStand().equals(possessed)) {
                         tracked = current;
                         session = possessedSession;
+                    } else {
+                        // Possessing an entity in combat but it's NOT its turn — freeze, like any
+                        // other combatant off-turn (otherwise the DM could walk it around anytime).
+                        event.setCancelled(true);
+                        return;
                     }
                 }
             }

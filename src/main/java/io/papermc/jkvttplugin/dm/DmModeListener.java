@@ -106,14 +106,20 @@ public class DmModeListener implements Listener {
         }
     }
 
-    /** The Start Combat tool toggles: start an encounter, or cancel/end the current one. */
+    /**
+     * The Start Combat tool: begin an encounter, or cancel one that's still being set up. It will
+     * NOT end a fight that's already underway (too easy to wipe an active combat by mis-click) — use
+     * /combat finished deliberately for that.
+     */
     private void toggleEncounter(Player dm) {
         io.papermc.jkvttplugin.combat.CombatSession session =
                 io.papermc.jkvttplugin.combat.CombatCommand.getDMSession(dm.getUniqueId());
-        if (session != null && session.isActive()) {
-            dm.performCommand("combat finished");
-        } else {
+        if (session == null || !session.isActive()) {
             dm.performCommand("combat start");
+        } else if (session.isSetupPhase()) {
+            dm.performCommand("combat finished"); // cancel the not-yet-started encounter
+        } else {
+            dm.sendActionBar(Component.text("Combat is underway — use /combat finished to end it.", NamedTextColor.YELLOW));
         }
     }
 

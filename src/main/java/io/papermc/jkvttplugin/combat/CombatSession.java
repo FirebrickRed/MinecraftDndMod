@@ -529,6 +529,63 @@ public class CombatSession {
                 v.spawnParticle(Particle.DUST, center.getX(), center.getY() + dy, center.getZ(), 1, 0, 0, 0, 0, gold);
             }
         }
+
+        // Attack-reach ring (#133): an orange circle at the combatant's CURRENT position showing how
+        // far it can hit with its held weapon (player) or best attack (entity). Follows it as it moves.
+        double reach = attackReachBlocks(current);
+        Location here = current.getLocation();
+        if (reach > 0 && here != null && here.getWorld() != null) {
+            Particle.DustOptions orange = new Particle.DustOptions(Color.fromRGB(255, 110, 0), 1.1f);
+            double ry = here.getY() + 0.12;
+            int rpoints = (int) Math.max(20, Math.min(90, reach * 10));
+            for (int i = 0; i < rpoints; i++) {
+                double angle = 2 * Math.PI * i / rpoints;
+                double x = here.getX() + reach * Math.cos(angle);
+                double z = here.getZ() + reach * Math.sin(angle);
+                for (Player v : viewers) {
+                    v.spawnParticle(Particle.DUST, x, ry, z, 1, 0, 0, 0, 0, orange);
+                }
+            }
+        }
+    }
+
+    /** Attack reach of a combatant in blocks: held weapon (player) or best attack (entity). */
+    private double attackReachBlocks(Combatant c) {
+        if (c.isPlayer() && c.getPlayer() != null) {
+            org.bukkit.inventory.ItemStack item = c.getPlayer().getInventory().getItemInMainHand();
+            String id = io.papermc.jkvttplugin.util.ItemUtil.getItemId(item);
+            io.papermc.jkvttplugin.data.model.DndWeapon w =
+                    id != null ? io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(id) : null;
+            if (w == null) return 1.0; // unarmed: 5 ft
+            if (w.isRanged()) {
+                int r = w.getNormalRange() > 0 ? w.getNormalRange() : 5;
+                return Math.min(r / 5.0, 40.0);
+            }
+            boolean reachProp = w.getProperties() != null && w.getProperties().contains("reach");
+            return reachProp ? 2.0 : 1.0; // 10 ft reach weapon, else 5 ft
+        }
+        if (c.isEntity() && c.getEntityInstance() != null) {
+            double best = 1.0;
+            java.util.List<io.papermc.jkvttplugin.data.model.DndAttack> attacks =
+                    c.getEntityInstance().getTemplate().getAttacks();
+            if (attacks != null) {
+                for (io.papermc.jkvttplugin.data.model.DndAttack a : attacks) {
+                    best = Math.max(best, parseReachBlocks(a.getReach()));
+                }
+            }
+            return Math.min(best, 40.0);
+        }
+        return 1.0;
+    }
+
+    /** Parse a reach/range string ("5 ft", "10 ft.", "80/320 ft") to blocks (first number ÷ 5). */
+    private double parseReachBlocks(String reach) {
+        if (reach == null) return 1.0;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(reach);
+        if (m.find()) {
+            try { return Math.max(1.0, Integer.parseInt(m.group(1)) / 5.0); } catch (NumberFormatException ignored) {}
+        }
+        return 1.0;
     }
 
     // ==================== COMBAT STATE ====================
