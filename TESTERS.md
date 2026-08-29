@@ -51,6 +51,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **HP at a glance** — your HP on the scoreboard/action bar; **enemy HP hidden** from players; DM sees all via `/combat status`.
 - [ ] **NPC turn** — DM sees the entity's action/move bar + its **attack list**.
 - [ ] Boats/mounts are **frozen** when it's not your turn.
+- [ ] **Move an entity without possessing** (#107): on its turn, `/combat move <entity> <dir> <blocks>`
+      (dir = north/south/east/west/up/down or forward/back/left/right) slides it, counts against its
+      speed (warns when over), and `/combat movement undo` puts it back.
 
 ### Character creation
 - [ ] **Prepared casters** (Cleric/Druid) prepare leveled spells (count = mod + level); changing abilities **resets** prepared spells.
