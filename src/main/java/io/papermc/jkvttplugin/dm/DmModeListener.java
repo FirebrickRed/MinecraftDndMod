@@ -50,6 +50,13 @@ public class DmModeListener implements Listener {
             } else {
                 player.sendActionBar(Component.text("Look at a player or entity to view them.", NamedTextColor.GRAY));
             }
+        } else if (DmModeManager.TOOL_POSSESS.equals(tool)) {
+            RayTraceResult hit = player.rayTraceEntities(10);
+            if (hit != null && hit.getHitEntity() instanceof ArmorStand stand) {
+                PossessionManager.possess(player, stand);
+            } else {
+                player.sendActionBar(Component.text("Look at an entity to possess it.", NamedTextColor.GRAY));
+            }
         }
     }
 
@@ -57,9 +64,21 @@ public class DmModeListener implements Listener {
     public void onInteractEntity(PlayerInteractAtEntityEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) return;
         Player player = event.getPlayer();
-        if (!DmModeManager.TOOL_VIEW.equals(DmModeManager.getToolType(player.getInventory().getItemInMainHand()))) return;
-        event.setCancelled(true);
-        view(player, event.getRightClicked());
+        String tool = DmModeManager.getToolType(player.getInventory().getItemInMainHand());
+        if (DmModeManager.TOOL_VIEW.equals(tool)) {
+            event.setCancelled(true);
+            view(player, event.getRightClicked());
+        } else if (DmModeManager.TOOL_POSSESS.equals(tool) && event.getRightClicked() instanceof ArmorStand stand) {
+            event.setCancelled(true);
+            PossessionManager.possess(player, stand);
+        }
+    }
+
+    @EventHandler
+    public void onSneak(org.bukkit.event.player.PlayerToggleSneakEvent event) {
+        if (event.isSneaking() && PossessionManager.isPossessing(event.getPlayer().getUniqueId())) {
+            PossessionManager.unpossess(event.getPlayer());
+        }
     }
 
     private void view(Player dm, Entity target) {

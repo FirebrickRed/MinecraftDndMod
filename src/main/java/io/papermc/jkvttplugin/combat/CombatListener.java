@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.combat;
 
-import io.papermc.jkvttplugin.listeners.NpcListener;
+import io.papermc.jkvttplugin.dm.PossessionManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Location;
@@ -51,7 +51,7 @@ public class CombatListener implements Listener {
 
         // If not tracking as player, check if DM is possessing an entity in combat
         if (tracked == null) {
-            ArmorStand possessed = NpcListener.getPossessedNpc(player.getUniqueId());
+            ArmorStand possessed = PossessionManager.getPossessedArmorStand(player.getUniqueId());
             if (possessed != null) {
                 // Find the combat session containing this possessed entity
                 CombatSession possessedSession = CombatSession.getSessionForEntity(possessed);

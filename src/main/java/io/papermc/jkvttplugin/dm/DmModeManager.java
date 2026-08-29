@@ -33,6 +33,7 @@ public class DmModeManager {
 
     /** DM tool identifiers (stored on the item's PDC). */
     public static final String TOOL_VIEW = "view";
+    public static final String TOOL_POSSESS = "possess";
     public static final String TOOL_EXIT = "exit";
 
     private static final Set<UUID> inDmMode = new HashSet<>();
@@ -69,6 +70,7 @@ public class DmModeManager {
 
     public static void exit(Player player) {
         if (!inDmMode.remove(player.getUniqueId())) return;
+        PossessionManager.endPossession(player, true); // drop possession (invis + follow) if any
         player.getInventory().clear();
         restoreInventory(player); // repopulates from the snapshot, then deletes it
         player.sendMessage(Component.text("⚙ DM mode OFF", NamedTextColor.GOLD, TextDecoration.BOLD)
@@ -129,9 +131,11 @@ public class DmModeManager {
 
     // ==================== DM TOOLS ====================
 
-    private static void giveTools(Player player) {
+    public static void giveTools(Player player) {
         player.getInventory().setItem(0, tool(Material.SPYGLASS, TOOL_VIEW, "View",
                 "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
+        player.getInventory().setItem(1, tool(Material.LEAD, TOOL_POSSESS, "Possess",
+                "Right-click an entity → control it", "(you go invisible, it follows you; sneak to stop)"));
         player.getInventory().setItem(8, tool(Material.BARRIER, TOOL_EXIT, "Exit DM Mode",
                 "Right-click to leave DM mode", "(gives your normal inventory back)"));
     }

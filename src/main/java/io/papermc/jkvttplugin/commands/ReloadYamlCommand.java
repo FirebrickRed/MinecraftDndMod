@@ -1,6 +1,5 @@
 package io.papermc.jkvttplugin.commands;
 
-import io.papermc.jkvttplugin.CustomNPCs.NpcManager;
 import io.papermc.jkvttplugin.JkVttPlugin;
 import io.papermc.jkvttplugin.data.DataManager;
 import org.bukkit.command.Command;
@@ -24,10 +23,7 @@ public class ReloadYamlCommand implements CommandExecutor {
             sender.sendMessage("✓ Weapons reloaded");
             sender.sendMessage("✓ Armor reloaded");
             sender.sendMessage("✓ Items reloaded");
-
-            // Reload NPCs (separate system)
-            NpcManager.loadNpcs();
-            sender.sendMessage("✓ NPCs reloaded");
+            sender.sendMessage("✓ Entities reloaded");
 
             sender.sendMessage("All YAML files successfully reloaded!");
         } catch (Exception e) {

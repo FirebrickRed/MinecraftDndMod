@@ -46,7 +46,6 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         // Listeners
         Bukkit.getPluginManager().registerEvents(this, this);
         Bukkit.getPluginManager().registerEvents(new CharacterSheetItemListener(), this);
-        Bukkit.getPluginManager().registerEvents(new NpcListener(), this);
         Bukkit.getPluginManager().registerEvents(new PlanetListener(), this);
         Bukkit.getPluginManager().registerEvents(new WeaponListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.dm.DmModeListener(), this);
