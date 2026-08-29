@@ -135,8 +135,16 @@ public class PossessionManager {
         attr.setBaseValue(scale);
     }
 
-    /** Glow the attackable entity the DM is currently aiming at; clear the previous one. */
+    /**
+     * Glow the attackable entity the DM is aiming at — but only while it's actually the possessed
+     * entity's turn in combat, since that's the only time an attack can be made. Outside combat
+     * (or off-turn) nothing highlights.
+     */
     private static void updateAimHighlight(Player dm, ArmorStand possessed) {
+        if (!isPossessedEntityTurn(possessed)) {
+            clearAimHighlight(dm);
+            return;
+        }
         Location eye = dm.getEyeLocation();
         RayTraceResult result = dm.getWorld().rayTraceEntities(eye, eye.getDirection(), 30, 0.6,
                 e -> !e.equals(dm) && !e.equals(possessed)
@@ -144,41 +152,28 @@ public class PossessionManager {
         Entity aimed = result != null ? result.getHitEntity() : null;
         Entity previous = aimHighlight.get(dm.getUniqueId());
         if (aimed == previous) return;
-        if (previous != null && previous.isValid()) setTargetGlow(previous, false);
+        if (previous != null && previous.isValid()) previous.setGlowing(false);
         if (aimed != null) {
-            setTargetGlow(aimed, true);
+            aimed.setGlowing(true);
             aimHighlight.put(dm.getUniqueId(), aimed);
         } else {
             aimHighlight.remove(dm.getUniqueId());
         }
     }
 
+    /** True only when {@code stand} is the current combatant in an active (non-setup) combat. */
+    private static boolean isPossessedEntityTurn(ArmorStand stand) {
+        io.papermc.jkvttplugin.combat.CombatSession session =
+                io.papermc.jkvttplugin.combat.CombatSession.getSessionForEntity(stand);
+        if (session == null || session.isSetupPhase()) return false;
+        io.papermc.jkvttplugin.combat.Combatant current = session.getCurrentCombatant();
+        return current != null && current.isEntity() && current.getEntityInstance() != null
+                && stand.equals(current.getEntityInstance().getArmorStand());
+    }
+
     private static void clearAimHighlight(Player dm) {
         Entity previous = aimHighlight.remove(dm.getUniqueId());
-        if (previous != null && previous.isValid()) setTargetGlow(previous, false);
-    }
-
-    /** Glow an entity RED (glow colour comes from a scoreboard team) to mark it as the aimed target. */
-    private static void setTargetGlow(Entity entity, boolean on) {
-        String entry = entity instanceof Player p ? p.getName() : entity.getUniqueId().toString();
-        org.bukkit.scoreboard.Team team = targetTeam();
-        if (on) {
-            team.addEntry(entry);
-            entity.setGlowing(true);
-        } else {
-            team.removeEntry(entry);
-            entity.setGlowing(false);
-        }
-    }
-
-    private static org.bukkit.scoreboard.Team targetTeam() {
-        org.bukkit.scoreboard.Scoreboard board = Bukkit.getScoreboardManager().getMainScoreboard();
-        org.bukkit.scoreboard.Team team = board.getTeam("dnd_aim_target");
-        if (team == null) {
-            team = board.registerNewTeam("dnd_aim_target");
-            team.setColor(org.bukkit.ChatColor.RED);
-        }
-        return team;
+        if (previous != null && previous.isValid()) previous.setGlowing(false);
     }
 
     // ==================== ENTITY KIT ====================
