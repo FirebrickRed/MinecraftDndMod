@@ -144,8 +144,9 @@ public class DmModeManager {
                 "Right-click an entity → control it", "(you go invisible, it follows you; sneak to stop)"));
         player.getInventory().setItem(2, tool(Material.IRON_SWORD, TOOL_START, "Start Combat",
                 "Right-click to begin a combat encounter", "(then add combatants and roll initiative)"));
-        player.getInventory().setItem(3, tool(Material.NAME_TAG, TOOL_ADD, "Add / Remove Combatant",
-                "Right-click a player or entity to add them", "Right-click again to remove them"));
+        // NB: not a NAME_TAG — vanilla would stamp the tool's name onto the clicked mob.
+        player.getInventory().setItem(3, tool(Material.BOOK, TOOL_ADD, "Add / Remove Combatant",
+                "Right-click a player or entity to add them (they glow)", "Right-click again to remove them"));
         player.getInventory().setItem(4, tool(Material.CLOCK, TOOL_INITIATIVE, "Roll for Initiative",
                 "Right-click to roll initiative", "(begins turns for everyone added)"));
         player.getInventory().setItem(8, tool(Material.BARRIER, TOOL_EXIT, "Exit DM Mode",

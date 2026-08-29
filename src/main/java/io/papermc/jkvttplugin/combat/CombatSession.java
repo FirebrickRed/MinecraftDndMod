@@ -149,6 +149,9 @@ public class CombatSession {
             rollInitiativeFor(combatant);
             sortByInitiative();
             updateScoreboard();
+        } else {
+            // During setup, glow the added combatant so the DM can see the roster at a glance.
+            applyGlowEffect(combatant);
         }
 
         return true;
@@ -173,6 +176,7 @@ public class CombatSession {
             }
         }
 
+        clearGlowEffect(combatant); // drop the setup/turn glow when leaving combat
         combatants.remove(combatant);
 
         // Unregister player from session
@@ -301,6 +305,9 @@ public class CombatSession {
         isSetupPhase = false;
         roundNumber = 1;
         currentTurnIndex = 0;
+
+        // Clear the setup 'added' glow from everyone; from here only the active turn glows.
+        for (Combatant c : combatants) clearGlowEffect(c);
 
         // Initialize first combatant's turn
         Combatant first = getCurrentCombatant();
