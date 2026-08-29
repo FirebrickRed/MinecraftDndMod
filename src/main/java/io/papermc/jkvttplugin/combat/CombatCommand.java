@@ -1092,19 +1092,32 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        // Consistent with attack rolls: --roll is what you physically rolled on the damage dice, and
+        // the game adds the pending bonus (e.g. +3 STR). A dice *formula* (contains 'd') is still
+        // rolled as-is for DM convenience; --total is the final number with nothing added.
+        int pendingBonus = (!isOverride && attacker != null && attacker.getTurnState() != null)
+                ? attacker.getTurnState().getPendingDamageBonus() : 0;
         int damage;
         if (rollStr != null) {
-            damage = DiceRoller.parseDiceRoll(rollStr);
-            if (damage < 0) {
-                // Not a dice formula — accept a plain flat number passed via --roll.
+            if (rollStr.toLowerCase().contains("d")) {
+                damage = DiceRoller.parseDiceRoll(rollStr);
+                if (damage < 0) {
+                    dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED));
+                    return;
+                }
+                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + damage, NamedTextColor.GRAY));
+            } else {
                 try {
-                    damage = Integer.parseInt(rollStr.trim());
+                    int rolled = Integer.parseInt(rollStr.trim());
+                    damage = rolled + pendingBonus;
+                    if (pendingBonus != 0) {
+                        dm.sendMessage(Component.text("Damage: " + rolled + (pendingBonus > 0 ? " +" + pendingBonus : " " + pendingBonus)
+                                + " = " + damage, NamedTextColor.GRAY));
+                    }
                 } catch (NumberFormatException e) {
                     dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));
                     return;
                 }
-            } else {
-                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + damage, NamedTextColor.GRAY));
             }
         } else if (total != null) {
             damage = total;

@@ -19,6 +19,9 @@ public class TurnState {
     // Set when an attack HITS; consumed by /combat damage so damage can only be applied
     // once per hit (no /combat damage spamming). Cleared at the start of each turn.
     private UUID pendingDamageTargetId;
+    // The flat damage modifier for the pending hit (e.g. +3 STR). When the player supplies their
+    // physically-rolled damage dice via --roll <n>, the game adds this — mirroring attack rolls.
+    private int pendingDamageBonus;
 
     private double movementUsed;      // feet moved this turn
     private final int movementBudget; // max feet (from speed)
@@ -49,10 +52,16 @@ public class TurnState {
     // ==================== PENDING DAMAGE (one damage application per hit) ====================
 
     /** Record that an attack hit {@code target}, opening a single /combat damage window. */
-    public void markAttackHit(UUID targetId) { this.pendingDamageTargetId = targetId; }
+    public void markAttackHit(UUID targetId) { markAttackHit(targetId, 0); }
+    /** As above, remembering the flat damage bonus the game should add to a rolled damage die. */
+    public void markAttackHit(UUID targetId, int damageBonus) {
+        this.pendingDamageTargetId = targetId;
+        this.pendingDamageBonus = damageBonus;
+    }
     public boolean isDamagePending() { return pendingDamageTargetId != null; }
     public UUID getPendingDamageTargetId() { return pendingDamageTargetId; }
-    public void clearDamagePending() { this.pendingDamageTargetId = null; }
+    public int getPendingDamageBonus() { return pendingDamageBonus; }
+    public void clearDamagePending() { this.pendingDamageTargetId = null; this.pendingDamageBonus = 0; }
 
     // ==================== MOVEMENT ====================
 

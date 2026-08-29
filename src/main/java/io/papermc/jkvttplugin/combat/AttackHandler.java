@@ -9,6 +9,8 @@ import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
@@ -372,27 +374,43 @@ public class AttackHandler {
      */
     private static void promptDamage(CombatSession session, Combatant attacker, Combatant target,
                                      String damageStr, String damageType, boolean isCrit) {
-        // Open a single damage window for this hit; /combat damage consumes it (anti-spam).
-        if (attacker.getTurnState() != null) {
-            attacker.getTurnState().markAttackHit(target.getId());
-        }
         String name = target.getDisplayName();
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
-        // Dice formulas (e.g. 1d8+3) go through --roll; a flat number (e.g. 6) is a plain amount.
-        String amtFlag;
-        if (damageStr == null || damageStr.isEmpty()) {
-            amtFlag = "";
-        } else if (damageStr.toLowerCase().contains("d")) {
-            amtFlag = " --roll " + damageStr;
-        } else {
-            amtFlag = " " + damageStr;
-        }
         String typeFlag = (damageType == null || damageType.isEmpty()) ? "" : " --type " + damageType;
+        String critFlag = isCrit ? " --crit" : "";
 
-        Component prompt = Component.text("→ Apply damage: ", NamedTextColor.YELLOW)
-                .append(Component.text("/combat damage " + quoted + amtFlag + typeFlag, NamedTextColor.WHITE));
+        // Split "1d8+3" into the dice you physically roll ("1d8") and the flat bonus (3). This mirrors
+        // attack rolls: you roll the dice, the game adds the known modifier via --roll <your result>.
+        int[] split = splitDamageBonus(damageStr);
+        String dice = damageStr == null ? "" : damageStr.replaceAll("[+-]\\s*\\d+\\s*$", "").trim();
+        int bonus = split[0];
+        boolean hasDice = dice.toLowerCase().contains("d");
+
+        if (attacker.getTurnState() != null) {
+            attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0);
+        }
+
+        Component prompt;
+        if (hasDice) {
+            // Clickable: fills the command with --roll open for the player's physical damage roll.
+            String cmd = "/combat damage " + quoted + typeFlag + critFlag + " --roll ";
+            String bonusStr = bonus > 0 ? " +" + bonus : (bonus < 0 ? " " + bonus : "");
+            prompt = Component.text("→ Apply damage — roll " + dice + ", the game adds" + (bonus == 0 ? " nothing" : bonusStr) + ": ", NamedTextColor.YELLOW)
+                    .append(Component.text("[click, then type your damage roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                            .clickEvent(ClickEvent.suggestCommand(cmd))
+                            .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your " + dice + " result>"
+                                    + (bonus != 0 ? "\nThe game adds " + bonusStr.trim() + "." : "")))));
+        } else {
+            // Flat damage (e.g. unarmed): nothing to roll — one click applies it.
+            String amt = (damageStr == null || damageStr.isEmpty()) ? "1" : damageStr;
+            String cmd = "/combat damage " + quoted + " " + amt + typeFlag + critFlag;
+            prompt = Component.text("→ Apply damage (" + amt + "): ", NamedTextColor.YELLOW)
+                    .append(Component.text("[click to apply]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                            .clickEvent(ClickEvent.suggestCommand(cmd))
+                            .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd))));
+        }
         if (isCrit) {
-            prompt = prompt.append(Component.text("  (crit — dice already doubled)", NamedTextColor.GRAY));
+            prompt = prompt.append(Component.text("  (crit — dice doubled)", NamedTextColor.GRAY));
         }
 
         // The attacking player applies their own damage; the DM always sees it (oversight / override).
@@ -400,6 +418,17 @@ public class AttackHandler {
             attacker.getPlayer().sendMessage(prompt);
         }
         session.sendToDM(prompt);
+    }
+
+    /** Extract the trailing flat bonus from a damage string like "1d8+3" → 3, "2d6-1" → -1, "1d6" → 0. */
+    private static int[] splitDamageBonus(String damageStr) {
+        if (damageStr == null) return new int[]{0};
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("([+-]\\s*\\d+)\\s*$").matcher(damageStr);
+        if (m.find()) {
+            try { return new int[]{Integer.parseInt(m.group(1).replaceAll("\\s", ""))}; }
+            catch (NumberFormatException ignored) { /* fall through */ }
+        }
+        return new int[]{0};
     }
 
     // ==================== MODIFIER DISPLAY ====================
