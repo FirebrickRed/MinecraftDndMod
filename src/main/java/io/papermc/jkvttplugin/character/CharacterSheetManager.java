@@ -250,6 +250,11 @@ public class CharacterSheetManager {
         return CharacterPersistenceLoader.getCharacterById(characterId);
     }
 
+    /** Permanently delete a character (removes it from memory and deletes its YAML file). */
+    public static void deleteCharacter(UUID playerId, UUID characterId) {
+        CharacterPersistenceLoader.removeCharacter(playerId, characterId);
+    }
+
     public static List<CharacterSheet> getAllCharacters() {
         return CharacterPersistenceLoader.getAllCharacters();
     }

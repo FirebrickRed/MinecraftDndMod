@@ -45,7 +45,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final ShortRestCommand shortRestExec = new ShortRestCommand();
     private final LongRestCommand longRestExec = new LongRestCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete");
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -100,6 +100,9 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "give" -> {
                 return giveExec.onCommand(sender, cmd, label, rest);
+            }
+            case "delete" -> {
+                return handleDelete(sender, rest);
             }
             default -> {
                 sender.sendMessage(Component.text("Unknown subcommand: " + sub, NamedTextColor.RED));
@@ -165,6 +168,29 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    private boolean handleDelete(CommandSender sender, String[] rest) {
+        if (rest.length < 1) {
+            sender.sendMessage(Component.text("Usage: /character delete <name>", NamedTextColor.RED));
+            return true;
+        }
+        String name = String.join(" ", rest);
+        if (name.length() >= 2 && name.startsWith("\"") && name.endsWith("\"")) name = name.substring(1, name.length() - 1);
+        CharacterSheet sheet = CharacterSheetManager.findCharacterByName(name);
+        if (sheet == null) {
+            sender.sendMessage(Component.text("No character named: " + name, NamedTextColor.RED));
+            return true;
+        }
+        boolean isOwn = sender instanceof Player p && sheet.getPlayerId().equals(p.getUniqueId());
+        if (!isOwn && !DMManager.isDM(sender)) {
+            sender.sendMessage(Component.text("You can only delete your own characters.", NamedTextColor.RED));
+            return true;
+        }
+        String deleted = sheet.getCharacterName();
+        CharacterSheetManager.deleteCharacter(sheet.getPlayerId(), sheet.getCharacterId());
+        sender.sendMessage(Component.text("Deleted character: " + deleted, NamedTextColor.GREEN));
+        return true;
+    }
+
     private void sendUsage(CommandSender sender) {
         sender.sendMessage(Component.text("Character commands:", NamedTextColor.GOLD));
         sender.sendMessage(Component.text("  /character create           ", NamedTextColor.YELLOW)
@@ -204,6 +230,19 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "give" -> {
                 return giveExec.onTabComplete(sender, command, alias, rest);
+            }
+            case "delete" -> {
+                if (rest.length == 1) {
+                    List<CharacterSheet> chars = DMManager.isDM(sender)
+                            ? CharacterSheetManager.getAllCharacters()
+                            : (sender instanceof Player p ? CharacterSheetManager.getPlayerCharacters(p.getUniqueId()) : List.of());
+                    List<String> names = new ArrayList<>();
+                    for (CharacterSheet s : chars) {
+                        if (s.getCharacterName().toLowerCase().startsWith(rest[0].toLowerCase())) names.add(s.getCharacterName());
+                    }
+                    return names;
+                }
+                return List.of();
             }
             case "rest" -> {
                 if (rest.length == 1) {

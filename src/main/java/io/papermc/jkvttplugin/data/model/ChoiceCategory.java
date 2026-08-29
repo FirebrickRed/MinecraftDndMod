@@ -7,11 +7,11 @@ import org.bukkit.Material;
  * Each category represents a type of choice that can be merged and displayed together.
  */
 public enum ChoiceCategory {
-    AUTOMATIC_GRANTS("Automatic Traits", Material.EMERALD), // Proficiencies, darkvision, speeds, etc. that are automatic
+    AUTOMATIC_GRANTS("Proficiencies & Traits", Material.EMERALD), // Weapon/armor/tool proficiencies, darkvision, speeds, etc. — automatic
     LANGUAGE("Languages", Material.BOOK),
-    SKILL("Skills", Material.IRON_SWORD),
-    TOOL("Tools", Material.IRON_PICKAXE),
-    EQUIPMENT("Equipment", Material.CHEST),
+    SKILL("Skill Proficiencies", Material.IRON_SWORD),
+    TOOL("Tool Proficiencies", Material.IRON_PICKAXE),
+    EQUIPMENT("Starting Equipment", Material.CHEST),
     SPELL("Spell", Material.BONE_MEAL),
     EXTRA("Other", Material.PAPER); // Size, feats, and other miscellaneous choices
 
