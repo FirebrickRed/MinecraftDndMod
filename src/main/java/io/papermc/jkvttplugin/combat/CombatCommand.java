@@ -1329,9 +1329,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (session == null) return;
 
         boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
-        // Only the DM may supply a manual d20 — otherwise a downed player could
-        // hand themselves a natural 20 and self-revive.
-        Integer providedRoll = isDM ? getFlagValueInt(args, "--roll") : null;
+        // Players roll their own death saves (trust-based, like the rest of the table).
+        Integer providedRoll = getFlagValueInt(args, "--roll");
         List<String> positional = collectPositionalArgs(args, 1);
 
         // DM may roll for a named downed player; otherwise you roll for yourself.

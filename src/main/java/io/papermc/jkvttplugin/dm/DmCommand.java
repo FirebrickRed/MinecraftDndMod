@@ -39,7 +39,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "rest", "resource", "reload", "mode");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "promptcheck", "rest", "resource", "reload", "mode");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -55,7 +55,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "add" -> handleAdd(sender, args);
             case "remove" -> handleRemove(sender, args);
             case "give" -> delegateDm(sender, command, label, args, giveExec);
-            case "check" -> delegateDm(sender, command, label, args, checkExec);
+            case "promptcheck" -> delegateDm(sender, command, label, args, checkExec);
             case "rest" -> delegateDm(sender, command, label, args, restExec);
             case "reload" -> delegateDm(sender, command, label, args, reloadExec);
             case "resource" -> handleResource(sender, command, label, args);
@@ -227,7 +227,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
         if (DMManager.isDM(sender)) {
             sender.sendMessage(Component.text("DM tools:", NamedTextColor.GOLD));
             sender.sendMessage(Component.text("/dm give <player> <item_id> [amount]", NamedTextColor.AQUA));
-            sender.sendMessage(Component.text("/dm check <player> <ability|save|skill> <name> [adv|dis]", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm promptcheck <player> <ability|save|skill> <name> [adv|dis]", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm rest <character> <short|long>", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm resource <restore|consume> <character> ...", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm reload", NamedTextColor.AQUA)
@@ -271,7 +271,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
         if (DMManager.isDM(sender)) {
             switch (subcommand) {
                 case "give" -> { return giveExec.onTabComplete(sender, command, label, sub); }
-                case "check" -> { return checkExec.onTabComplete(sender, command, label, sub); }
+                case "promptcheck" -> { return checkExec.onTabComplete(sender, command, label, sub); }
                 case "rest" -> { return restExec.onTabComplete(sender, command, label, sub); }
                 case "resource" -> {
                     if (args.length == 2) {
