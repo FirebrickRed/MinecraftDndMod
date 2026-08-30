@@ -1,6 +1,7 @@
 package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.JkVttPlugin;
+import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.ArmorStand;
 import org.bukkit.persistence.PersistentDataContainer;
@@ -186,25 +187,44 @@ public class DndEntityInstance {
      *
      * @param damage Amount of damage to take
      */
+    // How far to drop the body so the tipped-over model rests on the ground instead of floating at
+    // standing height. Approximate; can be tuned per-model later if needed.
+    private static final double CORPSE_DROP = 1.0;
+
     public void takeDamage(int damage) {
+        boolean wasDead = isDead;
         currentHp = Math.max(0, currentHp - damage);
         if (currentHp == 0) {
             isDead = true;
         }
         persist();
-        updateDeathVisual();
+        if (isDead && !wasDead) applyCorpse(true); else updateDeathVisual();
         // TODO: Update armor stand name to show HP
     }
 
     /** Bring a dead entity back into play (DM fiat): clears death, restores HP, stands it back up. */
     public void revive(int hp) {
+        boolean wasDead = isDead;
         isDead = false;
         currentHp = Math.max(1, Math.min(maxHp, hp));
         persist();
-        updateDeathVisual();
+        if (wasDead) applyCorpse(false); else updateDeathVisual();
     }
 
-    /** Tip the body over when dead so it reads as a corpse; stand it upright when alive. */
+    /**
+     * Apply the corpse transition: tip the body over and drop it to the ground on death; stand it
+     * upright and raise it on revive. The position shift happens only on the alive⇄dead transition
+     * (never on load — the world already saved the dropped position), so it can't stack up.
+     */
+    private void applyCorpse(boolean dead) {
+        updateDeathVisual();
+        if (armorStand == null || !armorStand.isValid()) return;
+        Location loc = armorStand.getLocation();
+        loc.setY(loc.getY() + (dead ? -CORPSE_DROP : CORPSE_DROP));
+        armorStand.teleport(loc);
+    }
+
+    /** Tip the body over when dead so it reads as a corpse; stand it upright when alive (pose only). */
     public void updateDeathVisual() {
         if (armorStand == null || !armorStand.isValid()) return;
         armorStand.setHeadPose(isDead
@@ -243,7 +263,14 @@ public class DndEntityInstance {
     public void setMaxHp(int maxHp) { this.maxHp = maxHp; }
 
     public boolean isDead() { return isDead; }
-    public void setDead(boolean dead) { isDead = dead; persist(); updateDeathVisual(); }
+    public void setDead(boolean dead) {
+        boolean wasDead = isDead;
+        isDead = dead;
+        persist();
+        if (dead && !wasDead) applyCorpse(true);
+        else if (!dead && wasDead) applyCorpse(false);
+        else updateDeathVisual();
+    }
 
     /**
      * Get the instance-specific shop configuration.
