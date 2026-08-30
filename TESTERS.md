@@ -67,6 +67,15 @@ Newest first. Tick these off after a build to confirm they work in-game.
       (follows it). Waiting players each see a **faint** green ring of their own move range (only they
       see it) to plan. (If you see nothing, check your client's Particles isn't on Minimal.)
 
+### Regressions to spot-check (refactors — should behave exactly as before)
+- [ ] **Attacks unchanged** (#139): player weapon attacks and possessed/entity attacks still roll,
+      hit/miss vs AC, crit on nat-20, miss on nat-1, and prompt for damage the same as before
+      (`--roll`, `--total`, and auto-roll all behave identically).
+- [ ] **Roll mode config** (#142): with `rolls.mode: physical` (default in `config.yml`), a bare
+      `/combat attack <target> <weapon>` (no `--roll`/`--total`) asks you to roll your d20 (the
+      right-click prompt still fills it). Set `rolls.mode: auto` + `/reloadyaml`-restart → the game
+      auto-rolls again. `--roll`/`--total` always work either way.
+
 ### Character creation
 - [ ] **Prepared casters** (Cleric/Druid) prepare leveled spells (count = mod + level); changing abilities **resets** prepared spells.
 - [ ] **Finish** stays locked until every required step is done.

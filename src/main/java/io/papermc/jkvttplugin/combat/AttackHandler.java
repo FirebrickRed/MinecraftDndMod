@@ -70,7 +70,7 @@ public class AttackHandler {
         String damageStr = buildPlayerDamageString(sheet, weapon);
         String damageType = (weapon != null) ? weapon.getDamageType() : "bludgeoning";
         resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal);
+                providedRoll, providedTotal, player);
     }
 
     /**
@@ -81,27 +81,22 @@ public class AttackHandler {
      */
     private static void resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
-                                      Integer providedRoll, Integer providedTotal) {
-        int targetAC = target.getArmorClass();
-        if (providedTotal != null) {
-            // --total mode: no crit detection, just compare to AC.
-            boolean hit = providedTotal >= targetAC;
-            broadcastAttackResult(session, attacker, target, false,
-                    providedTotal, targetAC, hit, false, false,
-                    damageStr, damageType, providedTotal + " (provided total)");
-        } else {
-            // Auto-roll or --roll mode.
-            int d20 = (providedRoll != null) ? providedRoll : DiceRoller.rollDice(1, 20);
-            int total = d20 + attackMod;
-            boolean isNat20 = (d20 == 20);
-            boolean isNat1 = (d20 == 1);
-            boolean hit = isNat20 || (!isNat1 && total >= targetAC);
-            String rollDetail = "d20(" + d20 + ") " + modBreakdown + " = " + total;
-            String finalDamage = isNat20 ? doubleDice(damageStr) : damageStr;
-            broadcastAttackResult(session, attacker, target, false,
-                    total, targetAC, hit, isNat20, isNat1,
-                    finalDamage, damageType, rollDetail);
+                                      Integer providedRoll, Integer providedTotal, Player commandUser) {
+        RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown);
+        if (r == null) {
+            // Physical-roll mode with no die supplied — ask for one instead of rolling.
+            commandUser.sendMessage(Component.text("Roll your d20, then add --roll <n> (or right-click your weapon).",
+                    NamedTextColor.YELLOW));
+            return;
         }
+        int targetAC = target.getArmorClass();
+        boolean hit = r.providedTotal()
+                ? r.total() >= targetAC
+                : (r.nat20() || (!r.nat1() && r.total() >= targetAC));
+        String finalDamage = r.nat20() ? doubleDice(damageStr) : damageStr;
+        broadcastAttackResult(session, attacker, target, false,
+                r.total(), targetAC, hit, r.nat20(), r.nat1(),
+                finalDamage, damageType, r.breakdown());
     }
 
     /**
@@ -281,7 +276,7 @@ public class AttackHandler {
 
         // Same resolver as player attacks — the entity just sources its numbers from the stat block.
         resolveAttack(session, attacker, target, toHit, "+" + toHit + "[ToHit]",
-                attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal);
+                attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm);
     }
 
     /**

@@ -33,6 +33,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         getLogger().info("D&D Plugin has been enabled!");
 
         ItemUtil.initialize(this);
+        io.papermc.jkvttplugin.config.PluginConfig.load(this);
 
         // Load Data
         DataManager dataManager = new DataManager(this);

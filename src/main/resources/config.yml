@@ -1,0 +1,8 @@
+# jkvttplugin configuration
+
+rolls:
+  # How d20 rolls resolve when a player doesn't supply their own result.
+  #   physical = players roll their real dice; the game prompts them to enter the number
+  #   auto     = the game rolls the d20 for the player
+  # Either way, players may always type their own result (--roll) or a final total (--total).
+  mode: physical
