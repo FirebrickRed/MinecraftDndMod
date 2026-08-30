@@ -51,8 +51,12 @@ public class SocialSpellHandler implements Listener {
     private static final double OVERHEAR_BLOCKS = 30.0;
 
     private record Pending(String spellId, String socialType, String targetName, int wordLimit) {}
+    /** Who a player may whisper back to for free, and the word cap of the spell that reached them. */
+    private record ReplyTo(String senderName, String spellName, int wordLimit) {}
 
     private static final Map<UUID, Pending> pending = new ConcurrentHashMap<>();
+    /** A received Message/Sending grants the recipient exactly one free reply (RAW). */
+    private static final Map<UUID, ReplyTo> replyTargets = new ConcurrentHashMap<>();
     private static final Random RNG = new Random();
     private static final String[] ANIMAL_NOISES = {
             "chitters", "growls low", "chirps", "squeaks", "yips", "hisses", "warbles",
@@ -149,6 +153,7 @@ public class SocialSpellHandler implements Listener {
     @EventHandler
     public void onQuit(PlayerQuitEvent event) {
         pending.remove(event.getPlayer().getUniqueId());
+        replyTargets.remove(event.getPlayer().getUniqueId());
     }
 
     // ==================== DELIVERY ====================
@@ -160,9 +165,34 @@ public class SocialSpellHandler implements Listener {
         target.sendMessage(Component.text(caster.getName() + " whispers (" + spell.getName() + "): ", NamedTextColor.LIGHT_PURPLE)
                 .append(Component.text(words, NamedTextColor.WHITE)));
         target.sendMessage(Component.text("  [reply]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                .clickEvent(ClickEvent.suggestCommand("/character cast " + spell.getId() + " " + caster.getName() + " "))
-                .hoverEvent(HoverEvent.showText(Component.text("Whisper back to " + caster.getName()))));
+                .clickEvent(ClickEvent.suggestCommand("/character reply "))
+                .hoverEvent(HoverEvent.showText(Component.text("Whisper back to " + caster.getName()
+                        + " (free — you don't need to know the spell)"))));
         caster.sendMessage(Component.text("You whisper to " + target.getName() + ": ", NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text(words, NamedTextColor.GRAY)));
+        // Grant the recipient a single free reply back to the caster (part of the spell, not a new cast).
+        replyTargets.put(target.getUniqueId(), new ReplyTo(caster.getName(), spell.getName(), spell.getWordLimit()));
+    }
+
+    /**
+     * A free reply to the last Message/Sending you received (#151). It's part of the original spell —
+     * the replier needn't know the spell, it costs no action, and it works in or out of combat.
+     */
+    public static void reply(Player replier, String rawWords) {
+        ReplyTo rt = replyTargets.remove(replier.getUniqueId());
+        if (rt == null) {
+            replier.sendMessage(Component.text("You have no whisper to reply to.", NamedTextColor.RED));
+            return;
+        }
+        Player sender = Bukkit.getPlayerExact(rt.senderName());
+        if (sender == null) {
+            replier.sendMessage(Component.text(rt.senderName() + " is no longer online.", NamedTextColor.RED));
+            return;
+        }
+        String words = clampWords(replier, rawWords, rt.wordLimit());
+        sender.sendMessage(Component.text(replier.getName() + " whispers back (" + rt.spellName() + "): ", NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text(words, NamedTextColor.WHITE)));
+        replier.sendMessage(Component.text("You whisper back to " + sender.getName() + ": ", NamedTextColor.LIGHT_PURPLE)
                 .append(Component.text(words, NamedTextColor.GRAY)));
     }
 

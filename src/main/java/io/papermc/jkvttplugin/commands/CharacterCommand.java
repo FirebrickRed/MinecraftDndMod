@@ -45,7 +45,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final ShortRestCommand shortRestExec = new ShortRestCommand();
     private final LongRestCommand longRestExec = new LongRestCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete", "loot", "check", "cast");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete", "loot", "check", "cast", "reply");
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -112,6 +112,9 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "cast" -> {
                 return handleCast(sender, rest);
+            }
+            case "reply" -> {
+                return handleReply(sender, rest);
             }
             default -> {
                 sender.sendMessage(Component.text("Unknown subcommand: " + sub, NamedTextColor.RED));
@@ -265,6 +268,20 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             words = rest.length >= 2 ? String.join(" ", Arrays.copyOfRange(rest, 1, rest.length)) : null;
         }
         io.papermc.jkvttplugin.social.SocialSpellHandler.begin(player, spell, target, words);
+        return true;
+    }
+
+    /** {@code /character reply <message…>} — free whisper back to the last Message/Sending you got (#151). */
+    private boolean handleReply(CommandSender sender, String[] rest) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only players can reply.", NamedTextColor.RED));
+            return true;
+        }
+        if (rest.length < 1) {
+            player.sendMessage(Component.text("Usage: /character reply <message…>", NamedTextColor.RED));
+            return true;
+        }
+        io.papermc.jkvttplugin.social.SocialSpellHandler.reply(player, String.join(" ", rest));
         return true;
     }
 
