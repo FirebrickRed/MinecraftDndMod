@@ -437,6 +437,12 @@ public class CombatSession {
         return combatants.stream().filter(c -> !c.isDead()).toList();
     }
 
+    // Player-rolled initiative for THIS encounter (#114). Kept across remove→re-add so a player who
+    // steps out and back in keeps their roll; discarded with the session, so a fresh encounter rerolls.
+    private final Map<UUID, Integer> playerInitiatives = new HashMap<>();
+    public void setPlayerInitiative(UUID playerId, int total) { playerInitiatives.put(playerId, total); }
+    public Integer getPlayerInitiative(UUID playerId) { return playerInitiatives.get(playerId); }
+
     /**
      * If one side can no longer fight, tell the DM combat can wrap up (with a one-click
      * /combat finished). Sides are players vs entities; also fires when only one combatant is

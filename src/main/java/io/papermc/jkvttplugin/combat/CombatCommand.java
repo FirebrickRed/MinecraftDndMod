@@ -6,6 +6,8 @@ import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import io.papermc.jkvttplugin.data.model.DndWeapon;
@@ -47,7 +49,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -250,6 +252,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (session.addCombatant(combatant)) {
                 dm.sendMessage(Component.text("Added " + sheet.getCharacterName() + " to combat.", NamedTextColor.GREEN));
                 target.sendMessage(Component.text("You have been added to combat!", NamedTextColor.YELLOW));
+                // Initiative (#114): keep an earlier roll if they're rejoining this encounter; otherwise prompt.
+                Integer kept = session.getPlayerInitiative(target.getUniqueId());
+                if (kept != null) {
+                    combatant.setInitiative(kept);
+                    target.sendMessage(Component.text("Your initiative (" + kept + ") was kept.", NamedTextColor.GRAY));
+                } else if (session.isSetupPhase()) {
+                    promptInitiativeRoll(target, combatant);
+                }
                 session.updateScoreboard();
             } else {
                 dm.sendMessage(Component.text(sheet.getCharacterName() + " is already in combat.", NamedTextColor.YELLOW));
@@ -331,6 +341,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleInitiative(Player dm, String[] args) {
+        // A player (or DM) rolling their OWN initiative has no "set" keyword; the DM setting someone
+        // else's initiative uses: /combat initiative <target> set <value>.
+        boolean hasSet = false;
+        for (int i = 1; i < args.length; i++) if (args[i].equalsIgnoreCase("set")) { hasSet = true; break; }
+        boolean isDM = isDM(dm) || dm.hasPermission("jkvtt.dm");
+        if (!(isDM && hasSet)) {
+            handleSelfInitiative(dm, args);
+            return;
+        }
+
         CombatSession session = getActiveSession(dm);
         if (session == null) return;
 
@@ -382,6 +402,51 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         dm.sendMessage(Component.text(combatant.getDisplayName() + " initiative: " + oldInit + " → " + newInit, NamedTextColor.GREEN));
     }
 
+    /** A player (or DM) rolls their own initiative during setup (#114): /combat initiative [--roll n | --total n]. */
+    private void handleSelfInitiative(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+        if (!session.isSetupPhase()) {
+            player.sendMessage(Component.text("Initiative is rolled during setup, before turns begin.", NamedTextColor.RED));
+            return;
+        }
+        Combatant self = findOwnCombatant(session, player.getUniqueId());
+        if (self == null) {
+            player.sendMessage(Component.text("You're not in this combat.", NamedTextColor.RED));
+            return;
+        }
+
+        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
+        Integer providedTotal = getFlagValueInt(args, "--total");
+        int bonus = self.getInitiativeBonus();
+        RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
+                "+" + bonus + "[DEX]");
+        if (r == null) { // physical mode, no die supplied — prompt
+            promptInitiativeRoll(player, self);
+            return;
+        }
+
+        session.setPlayerInitiative(player.getUniqueId(), r.total());
+        session.setInitiative(self, r.total());
+        player.sendMessage(Component.text("Initiative: " + r.breakdown(), NamedTextColor.AQUA));
+        session.sendToDM(Component.text(self.getDisplayName() + " rolled initiative " + r.total() + ".", NamedTextColor.GRAY));
+    }
+
+    /** Clickable prompt asking a player to roll their initiative (physical or let the game roll). */
+    private void promptInitiativeRoll(Player player, Combatant combatant) {
+        int bonus = combatant.getInitiativeBonus();
+        String bonusStr = bonus >= 0 ? "+" + bonus : String.valueOf(bonus);
+        String cmd = "/combat initiative --roll ";
+        player.sendMessage(Component.text("⚔ Roll for initiative — ", NamedTextColor.GOLD)
+                .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand(cmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds your " + bonusStr + " (DEX).")))));
+        player.sendMessage(Component.text("   or ", NamedTextColor.GRAY)
+                .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand("/combat initiative --roll 1d20"))
+                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20 and adds " + bonusStr + ".")))));
+    }
+
     private void handleRollForInitiative(Player dm) {
         CombatSession session = getActiveSession(dm);
         if (session == null) return;
@@ -402,18 +467,26 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         session.broadcast(Component.empty());
 
         for (Combatant combatant : session.getCombatants()) {
-            int roll = DiceRoller.rollDice(1, 20);
+            Integer provided = combatant.isPlayer() ? session.getPlayerInitiative(combatant.getId()) : null;
             int bonus = combatant.getInitiativeBonus();
-            int total = roll + bonus;
-            combatant.setInitiative(total);
-
-            // Show detailed roll breakdown to DM
             String bonusStr = bonus >= 0 ? "+" + bonus : String.valueOf(bonus);
-            Component rollMsg = Component.text("  " + combatant.getDisplayName() + ": ", NamedTextColor.WHITE)
-                .append(Component.text("[" + roll + "]", NamedTextColor.AQUA))
-                .append(Component.text(" " + bonusStr + " (DEX)", NamedTextColor.GRAY))
-                .append(Component.text(" = ", NamedTextColor.WHITE))
-                .append(Component.text(String.valueOf(total), NamedTextColor.GREEN, TextDecoration.BOLD));
+            Component rollMsg;
+            if (provided != null) {
+                // Player already rolled their own initiative (#114) — use it.
+                combatant.setInitiative(provided);
+                rollMsg = Component.text("  " + combatant.getDisplayName() + ": ", NamedTextColor.WHITE)
+                        .append(Component.text(String.valueOf(provided), NamedTextColor.GREEN, TextDecoration.BOLD))
+                        .append(Component.text(" (rolled their own)", NamedTextColor.DARK_GRAY));
+            } else {
+                int roll = DiceRoller.rollDice(1, 20);
+                int total = roll + bonus;
+                combatant.setInitiative(total);
+                rollMsg = Component.text("  " + combatant.getDisplayName() + ": ", NamedTextColor.WHITE)
+                        .append(Component.text("[" + roll + "]", NamedTextColor.AQUA))
+                        .append(Component.text(" " + bonusStr + " (DEX)", NamedTextColor.GRAY))
+                        .append(Component.text(" = ", NamedTextColor.WHITE))
+                        .append(Component.text(String.valueOf(total), NamedTextColor.GREEN, TextDecoration.BOLD));
+            }
             dm.sendMessage(rollMsg);
         }
 

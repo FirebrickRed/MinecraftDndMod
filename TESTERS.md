@@ -54,6 +54,10 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **Weapon required** — `/combat attack <target>` alone asks for a weapon; `unarmed` works.
 - [ ] **/combat damage** only applies once per attack hit (no spamming); `/combat override` bypasses.
 - [ ] **Dead things** are skipped on their turn and can't be targeted.
+- [ ] **Players roll their own initiative** (#114): when the DM adds you to combat you get a clickable
+      **[roll initiative]** prompt — type your d20 (game adds DEX) or let the game roll. Remove + re-add
+      you in the same encounter → your roll is kept; a brand-new encounter → you're prompted again.
+      `/combat rollforinitiative` uses your roll and only auto-rolls whoever didn't.
 - [ ] **Combat end** — when one side is wiped (or one combatant is left standing), the DM gets a
       one-click **[finish combat]** prompt; `/combat finished` reports **standing vs defeated**.
 - [ ] **/combat finished** ends combat (no `confirm` needed).
