@@ -20,10 +20,12 @@ import java.util.regex.Pattern;
 /**
  * Reactions (Issue #147) — for now, opportunity attacks.
  *
- * <p>When a combatant moves out of an enemy's melee reach (without Disengaging), that enemy — if it
- * still has its reaction and can act — is offered a BG3-style prompt to make one melee attack against
- * the mover. The attack costs the reactor its reaction (not its action) and is resolved through the
- * normal attack pipeline. Reactions refresh at the start of the reactor's own turn.
+ * <p>When a combatant moves out of an enemy's melee reach (without Disengaging), we <b>warn</b> that an
+ * opportunity attack is available — but we do not fire anything mid-move (you might step out and back).
+ * The decision surfaces at the mover's <b>end of turn</b>: the reactor's controller (DM for a creature,
+ * the player for a PC) gets a clickable prompt, framed by whether the mover actually ended out of reach,
+ * and always the DM's call. The attack costs the reactor its <b>reaction</b> (not its action) and only
+ * once {@code /combat reaction} actually resolves. Reactions refresh at the start of the reactor's turn.
  *
  * <p>Side note (#155): "enemy" is currently players-vs-entities. Factions will refine who provokes whom.
  */
@@ -69,44 +71,68 @@ public final class ReactionManager {
             double reachBlocks = meleeReachBlocks(enemy, oaAttack);
             double fromDist = eLoc.distance(from);
             double toDist = eLoc.distance(to);
-            // Left reach: was inside, now outside.
+            // Left reach: was inside, now outside. Record it and warn — decided at end of turn.
             if (fromDist <= reachBlocks && toDist > reachBlocks) {
-                provoke(session, enemy, mover, oaAttack);
+                warn(session, enemy, mover);
             }
         }
     }
 
-    private static void provoke(CombatSession session, Combatant reactor, Combatant mover, DndAttack entityAttack) {
+    /** Record a provoked-but-undecided OA and warn both sides. No prompt, no reaction spent yet. */
+    private static void warn(CombatSession session, Combatant reactor, Combatant mover) {
         Player controller = reactor.isEntity() ? Bukkit.getPlayer(session.getDmId()) : reactor.getPlayer();
-        if (controller == null) return; // no one to prompt (offline / no DM) → no OA
+        if (controller == null) return; // no one to react (offline / no DM)
         pending.put(reactor.getId(), new PendingOA(reactor.getId(), mover.getId()));
 
-        // Tell the mover they drew an attack of opportunity.
         Player moverPlayer = mover.isPlayer() ? mover.getPlayer() : null;
         if (moverPlayer != null) {
-            moverPlayer.sendActionBar(Component.text("⚡ You provoke an opportunity attack from " + reactor.getDisplayName() + "!", NamedTextColor.GOLD));
+            moverPlayer.sendActionBar(Component.text("⚠ Leaving " + reactor.getDisplayName()
+                    + "'s reach — opportunity attack decided at end of turn.", NamedTextColor.GOLD));
         }
+        controller.sendMessage(Component.text("⚠ " + mover.getDisplayName() + " is leaving " + reactor.getDisplayName()
+                + "'s reach — you'll be offered an opportunity attack when their turn ends.", NamedTextColor.GRAY));
+    }
 
-        Component header = Component.text("⚡ Opportunity Attack — ", NamedTextColor.GOLD, TextDecoration.BOLD)
-                .append(Component.text(reactor.getDisplayName() + " can strike " + mover.getDisplayName()
-                        + " as it flees.", NamedTextColor.YELLOW));
-        controller.sendMessage(header);
+    /**
+     * Called when {@code mover}'s turn ends: surface a decision for each opportunity attack it provoked.
+     * Framed by whether the mover actually ended out of reach, but always the reactor/DM's call to fire.
+     */
+    public static void resolveAtTurnEnd(CombatSession session, Combatant mover) {
+        if (session == null || mover == null || pending.isEmpty()) return;
+        for (Combatant reactor : session.getCombatants()) {
+            PendingOA p = pending.get(reactor.getId());
+            if (p == null || !p.moverId().equals(mover.getId())) continue;
+            if (reactor.isDead() || reactor.isUnconscious() || reactor.cannotAct() || !reactor.isReactionAvailable()) {
+                pending.remove(reactor.getId());
+                continue;
+            }
+            Player controller = reactor.isEntity() ? Bukkit.getPlayer(session.getDmId()) : reactor.getPlayer();
+            if (controller == null) { pending.remove(reactor.getId()); continue; }
 
+            boolean outOfReach = !withinReach(reactor, mover);
+            Component header = outOfReach
+                    ? Component.text("⚡ Opportunity Attack — ", NamedTextColor.GOLD, TextDecoration.BOLD)
+                        .append(Component.text(reactor.getDisplayName() + " can strike " + mover.getDisplayName()
+                                + ", who left its reach. Fire it?", NamedTextColor.YELLOW))
+                    : Component.text("⚡ " + reactor.getDisplayName() + " — ", NamedTextColor.GRAY)
+                        .append(Component.text(mover.getDisplayName() + " ended back within reach, so normally no OA. "
+                                + "Force it only if you rule it provoked:", NamedTextColor.GRAY));
+            controller.sendMessage(header);
+            controller.sendMessage(reactionButtons(reactor));
+        }
+    }
+
+    /** The attack/pass buttons for a reactor's pending OA (used at end of turn and in the reactions menu). */
+    static Component reactionButtons(Combatant reactor) {
         Component buttons = Component.empty();
         if (reactor.isEntity()) {
-            // One button per melee attack the creature has.
-            for (DndAttack atk : meleeAttacks(reactor)) {
-                buttons = buttons.append(attackButton(reactor, atk.getName()));
-            }
+            for (DndAttack atk : meleeAttacks(reactor)) buttons = buttons.append(attackButton(reactor, atk.getName()));
         } else {
-            // Player reactor: they name their weapon (tab-completes), then their roll.
-            buttons = buttons.append(Component.text("[take it — /combat reaction " + reactor.getDisplayName() + " <weapon>] ",
-                            NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+            buttons = buttons.append(Component.text("[take it — add your weapon] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.suggestCommand("/combat reaction " + reactor.getDisplayName() + " "))
                     .hoverEvent(HoverEvent.showText(Component.text("Fill in your weapon (or 'unarmed') and your d20 roll."))));
         }
-        buttons = buttons.append(passButton(reactor));
-        controller.sendMessage(buttons);
+        return buttons.append(passButton(reactor));
     }
 
     private static Component attackButton(Combatant reactor, String attackName) {
@@ -141,9 +167,14 @@ public final class ReactionManager {
         pending.remove(reactor.getId());
     }
 
-    /** Drop every pending opportunity attack (called when the turn moves on). */
+    /** Drop every pending opportunity attack (e.g. when combat ends). */
     public static void clearAll() {
         pending.clear();
+    }
+
+    /** Drop opportunity attacks provoked by {@code moverId} — called when that mover acts again. */
+    public static void clearForMover(UUID moverId) {
+        pending.values().removeIf(p -> p.moverId().equals(moverId));
     }
 
     /** Mark a reactor's reaction spent and clear its pending OA. */
@@ -176,6 +207,14 @@ public final class ReactionManager {
             if (reach == null || !reach.contains("/")) out.add(a); // no "/" → melee/reach, not ranged
         }
         return out;
+    }
+
+    /** True if the mover is currently within the reactor's melee reach. */
+    private static boolean withinReach(Combatant reactor, Combatant mover) {
+        Location r = reactor.getLocation();
+        Location m = mover.getLocation();
+        if (r == null || m == null || r.getWorld() == null || !r.getWorld().equals(m.getWorld())) return false;
+        return r.distance(m) <= meleeReachBlocks(reactor, meleeAttackFor(reactor));
     }
 
     /** The reach (in blocks) inside which the reactor threatens an opportunity attack. */

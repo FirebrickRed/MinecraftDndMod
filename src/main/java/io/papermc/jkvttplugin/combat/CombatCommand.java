@@ -560,6 +560,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         Combatant previous = session.getCurrentCombatant();
+        // Surface any opportunity attacks the ending combatant provoked, before the turn advances (#147).
+        if (previous != null) ReactionManager.resolveAtTurnEnd(session, previous);
         Combatant next = session.nextTurn();
 
         if (previous != null) {
@@ -614,6 +616,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        // Surface any opportunity attacks the ending combatant provoked, before the turn advances (#147).
+        ReactionManager.resolveAtTurnEnd(session, combatant);
         Combatant next = session.endTurn(combatant);
         session.sendToDM(Component.text(combatant.getDisplayName(true) + "'s turn ended by DM.", NamedTextColor.YELLOW));
         session.sendToPlayers(Component.text(combatant.getDisplayName(false) + "'s turn ended.", NamedTextColor.YELLOW));
@@ -908,38 +912,56 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
         boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
-        Combatant caster = session.getCurrentCombatant();
-        if (caster == null) { player.sendMessage(Component.text("No active turn.", NamedTextColor.RED)); return; }
-        if (!isDM && (!caster.isPlayer() || !caster.getId().equals(player.getUniqueId()))) {
-            player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
-            return;
-        }
-        if (caster.cannotAct()) {
-            player.sendMessage(Component.text(caster.getDisplayName() + " can't act — " + caster.actionBlockingCondition() + ".", NamedTextColor.RED));
-            return;
-        }
+        Combatant current = session.getCurrentCombatant();
+        boolean myTurn = isDM || (current != null && current.isPlayer() && current.getId().equals(player.getUniqueId()));
+
         if (args.length < 2) {
             player.sendMessage(Component.text("Usage: /combat cast <spell> [target] [--roll <d20>]  |  /combat cast <ritual> --ritual  |  /combat cast cancel", NamedTextColor.RED));
             return;
         }
-        // Cancel an in-progress ritual channel (#156).
-        if (args[1].equalsIgnoreCase("cancel")) {
-            if (!caster.isChanneling()) { player.sendMessage(Component.text("You aren't channelling a ritual.", NamedTextColor.YELLOW)); return; }
-            RitualManager.cancel(session, caster, "the caster stopped");
-            return;
+        // Ritual cancel / channel management only apply on your own turn.
+        if (myTurn && current != null) {
+            if (args[1].equalsIgnoreCase("cancel")) {
+                if (!current.isChanneling()) { player.sendMessage(Component.text("You aren't channelling a ritual.", NamedTextColor.YELLOW)); return; }
+                RitualManager.cancel(session, current, "the caster stopped");
+                return;
+            }
+            if (current.isChanneling()) {
+                player.sendMessage(Component.text("You're channelling " + current.getRitualSpellName() + " ("
+                        + current.getRitualRoundsLeft() + " rounds left). /combat cast cancel to stop.", NamedTextColor.RED));
+                return;
+            }
         }
-        // Already channelling: block starting anything else until it finishes or is cancelled.
-        if (caster.isChanneling()) {
-            player.sendMessage(Component.text("You're channelling " + caster.getRitualSpellName() + " ("
-                    + caster.getRitualRoundsLeft() + " rounds left). /combat cast cancel to stop.", NamedTextColor.RED));
-            return;
-        }
+
         io.papermc.jkvttplugin.data.model.DndSpell spell = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(args[1]);
         if (spell == null) { player.sendMessage(Component.text("Unknown spell: " + args[1], NamedTextColor.RED)); return; }
 
-        // Start a ritual channel (#156): /combat cast <ritual> --ritual
-        if (hasFlag(args, "--ritual")) {
-            RitualManager.begin(session, player, caster, spell);
+        boolean reactionCast = spell.getCastingTime() != null && spell.getCastingTime().toLowerCase().contains("reaction");
+
+        // Resolve who's casting and what it costs. On your turn it spends your Action; off your turn only
+        // a reaction spell is allowed, and it spends your reaction instead (#147).
+        Combatant caster;
+        boolean spendReaction = false;
+        if (myTurn) {
+            caster = current;
+            if (caster == null) { player.sendMessage(Component.text("No active turn.", NamedTextColor.RED)); return; }
+            // Start a ritual channel (#156): /combat cast <ritual> --ritual
+            if (hasFlag(args, "--ritual")) { RitualManager.begin(session, player, caster, spell); return; }
+        } else {
+            if (!reactionCast) {
+                player.sendMessage(Component.text("It's not your turn! (Only a reaction spell can be cast now.)", NamedTextColor.RED));
+                return;
+            }
+            caster = findOwnCombatant(session, player.getUniqueId());
+            if (caster == null) { player.sendMessage(Component.text("You're not in this combat.", NamedTextColor.RED)); return; }
+            if (!caster.isReactionAvailable()) {
+                player.sendMessage(Component.text("You've already used your reaction this round.", NamedTextColor.YELLOW));
+                return;
+            }
+            spendReaction = true;
+        }
+        if (caster.cannotAct()) {
+            player.sendMessage(Component.text(caster.getDisplayName() + " can't act — " + caster.actionBlockingCondition() + ".", NamedTextColor.RED));
             return;
         }
 
@@ -957,10 +979,21 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (target.isDead()) { player.sendMessage(Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.YELLOW)); return; }
             resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal);
         }
-        TurnState state = caster.getTurnState();
-        if (resolved && state != null && !state.isActionUsed()) {
-            state.useAction();
-            session.sendActionBar(caster);
+
+        if (resolved) {
+            if (spendReaction) {
+                // The reaction is only spent once the cast actually goes through.
+                caster.setReactionAvailable(false);
+                ReactionManager.clearPending(caster); // if they were mid-OA, casting instead uses the reaction
+                session.broadcast(Component.text("⚡ " + caster.getDisplayName() + " casts " + spell.getName() + " as a reaction.", NamedTextColor.GOLD));
+                session.updateScoreboard();
+            } else {
+                TurnState state = caster.getTurnState();
+                if (state != null && !state.isActionUsed()) {
+                    state.useAction();
+                    session.sendActionBar(caster);
+                }
+            }
         }
     }
 
@@ -997,7 +1030,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         List<String> pos = collectPositionalArgs(args, 1);
         if (pos.isEmpty()) {
-            player.sendMessage(Component.text("Usage: /combat reaction [<reactor>] <attack|pass>", NamedTextColor.RED));
+            // No args: show the caller's available reactions (works on or off their turn).
+            showReactions(player, session, isDM);
             return;
         }
 
@@ -1065,6 +1099,59 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             ReactionManager.spendReaction(reactor);
             session.broadcast(Component.text("⚡ " + reactor.getDisplayName() + " takes an Opportunity Attack (reaction used).", NamedTextColor.GOLD));
             session.updateScoreboard();
+        }
+    }
+
+    /**
+     * {@code /combat reaction} with no args — list the caller's available reactions and how they trigger.
+     * Automated reactions (opportunity attacks, reaction spells) get clickable buttons that <em>fill</em>
+     * the command without firing; everything else is a reminder that the DM adjudicates it. (#147)
+     */
+    private void showReactions(Player player, CombatSession session, boolean isDM) {
+        Combatant self = findOwnCombatant(session, player.getUniqueId());
+        boolean anything = false;
+
+        player.sendMessage(Component.text("⚡ Reactions", NamedTextColor.GOLD, TextDecoration.BOLD)
+                .append(Component.text("  (one per round, refreshes at the start of your turn)", NamedTextColor.GRAY)));
+
+        // A pending opportunity attack for you.
+        if (self != null && ReactionManager.hasPending(self)) {
+            anything = true;
+            player.sendMessage(Component.text("• Opportunity Attack available:", NamedTextColor.YELLOW));
+            player.sendMessage(ReactionManager.reactionButtons(self));
+        }
+        // The DM also sees every creature currently offered an opportunity attack.
+        if (isDM) {
+            for (Combatant c : session.getCombatants()) {
+                if (c.isEntity() && ReactionManager.hasPending(c)) {
+                    anything = true;
+                    player.sendMessage(Component.text("• " + c.getDisplayName() + " — Opportunity Attack:", NamedTextColor.YELLOW));
+                    player.sendMessage(ReactionManager.reactionButtons(c));
+                }
+            }
+        }
+        // Reaction spells you know (casting time contains "reaction"), e.g. Hellish Rebuke, Shield.
+        if (self != null && self.getCharacterSheet() != null) {
+            CharacterSheet sheet = self.getCharacterSheet();
+            java.util.Set<io.papermc.jkvttplugin.data.model.DndSpell> known = new java.util.LinkedHashSet<>();
+            known.addAll(sheet.getKnownCantrips());
+            known.addAll(sheet.getKnownSpells());
+            for (io.papermc.jkvttplugin.data.model.DndSpell s : known) {
+                if (s.getCastingTime() != null && s.getCastingTime().toLowerCase().contains("reaction")) {
+                    anything = true;
+                    String fill = "/combat cast " + s.getId() + " ";
+                    player.sendMessage(Component.text("• " + s.getName() + " ", NamedTextColor.AQUA)
+                            .append(Component.text("(" + s.getCastingTime() + ") ", NamedTextColor.GRAY))
+                            .append(Component.text("[cast]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                                    .clickEvent(ClickEvent.suggestCommand(fill))
+                                    .hoverEvent(HoverEvent.showText(Component.text("Fills " + fill + "<target> — press Enter to cast when its trigger happens.")))));
+                }
+            }
+        }
+
+        if (!anything) {
+            player.sendMessage(Component.text("Nothing automatic right now. Other reactions (feats, class features,"
+                    + " Ready) are the DM's call — tell the DM what you're reacting to.", NamedTextColor.GRAY));
         }
     }
 

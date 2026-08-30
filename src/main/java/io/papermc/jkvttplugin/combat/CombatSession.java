@@ -386,14 +386,12 @@ public class CombatSession {
             skipped++;
         } while (getCurrentCombatant() != null && getCurrentCombatant().isDead() && skipped <= combatants.size());
 
-        // Any opportunity attacks provoked last turn expire when the turn moves on (#147).
-        ReactionManager.clearAll();
-
         // Start new combatant's turn: init state + apply glow
         Combatant current = getCurrentCombatant();
         if (current != null) {
             current.startNewTurn(current.getLocation());
             current.setReactionAvailable(true); // reaction refreshes at the start of your turn (#147)
+            ReactionManager.clearForMover(current.getId()); // its own OAs from last round are now moot (#147)
             applyGlowEffect(current);
             onTurnStartConditions(current); // expire Dodge/Disengage, remind of the rest (#103)
             RitualManager.onTurnStart(this, current); // advance/complete/break a channelled ritual (#156)
@@ -646,6 +644,7 @@ public class CombatSession {
     public void endCombat() {
         isActive = false;
         stopMovementRing();
+        ReactionManager.clearAll(); // drop any pending opportunity attacks (#147)
 
         // Remove all players from session tracking, clear glows and turn state
         for (Combatant c : combatants) {
