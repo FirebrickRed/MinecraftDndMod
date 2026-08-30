@@ -192,15 +192,78 @@ public class PossessionManager {
 
     private static void giveEntityKit(Player dm, DndEntityInstance instance) {
         dm.getInventory().clear();
-        List<String> inventory = instance.getTemplate().getPossessionItems();
+        clearWornGear(dm); // don't keep the previous entity's armor when switching bodies
+
         int slot = 0;
+        List<String> inventory = instance.getTemplate().getPossessionItems();
         if (inventory != null) {
             for (String id : inventory) {
-                if (slot > 8) break;
                 ItemStack stack = itemById(id);
-                if (stack != null) dm.getInventory().setItem(slot++, stack);
+                if (stack == null) continue;
+                org.bukkit.inventory.EquipmentSlot armorSlot = armorSlotFor(stack);
+                if (armorSlot != null) {
+                    equip(dm, armorSlot, stack); // armor/shield auto-equips (visual only — AC is the stat block's)
+                } else if (slot <= 8) {
+                    dm.getInventory().setItem(slot++, stack);
+                }
             }
         }
+
+        // Natural / spell attacks have no weapon item — give a hotbar icon so there's something to
+        // right-click to attack with them (#132 follow-up). Default to a bone.
+        List<io.papermc.jkvttplugin.data.model.DndAttack> attacks = instance.getTemplate().getAttacks();
+        if (attacks != null) {
+            for (io.papermc.jkvttplugin.data.model.DndAttack a : attacks) {
+                if (a.getItem() != null && !a.getItem().isBlank()) continue; // weapon attack already in the kit
+                if (slot > 8) break;
+                dm.getInventory().setItem(slot++, naturalAttackIcon(a));
+            }
+        }
+    }
+
+    /** A named hotbar placeholder for a natural/spell attack (icon from YAML, default BONE). */
+    private static ItemStack naturalAttackIcon(io.papermc.jkvttplugin.data.model.DndAttack attack) {
+        org.bukkit.Material mat = org.bukkit.Material.BONE;
+        if (attack.getIcon() != null) {
+            org.bukkit.Material parsed = org.bukkit.Material.matchMaterial(attack.getIcon());
+            if (parsed != null) mat = parsed;
+        }
+        ItemStack item = new ItemStack(mat);
+        var meta = item.getItemMeta();
+        meta.displayName(Component.text(attack.getName(), NamedTextColor.AQUA)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
+        meta.lore(java.util.List.of(Component.text("Right-click to attack", NamedTextColor.GRAY)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false)));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    /** Which equipment slot an item belongs in (armor/shield), or null for a hotbar item. */
+    private static org.bukkit.inventory.EquipmentSlot armorSlotFor(ItemStack stack) {
+        String m = stack.getType().name();
+        if (m.endsWith("_HELMET")) return org.bukkit.inventory.EquipmentSlot.HEAD;
+        if (m.endsWith("_CHESTPLATE")) return org.bukkit.inventory.EquipmentSlot.CHEST;
+        if (m.endsWith("_LEGGINGS")) return org.bukkit.inventory.EquipmentSlot.LEGS;
+        if (m.endsWith("_BOOTS")) return org.bukkit.inventory.EquipmentSlot.FEET;
+        if (m.equals("SHIELD")) return org.bukkit.inventory.EquipmentSlot.OFF_HAND;
+        return null;
+    }
+
+    private static void equip(Player dm, org.bukkit.inventory.EquipmentSlot slot, ItemStack stack) {
+        switch (slot) {
+            case HEAD -> dm.getInventory().setHelmet(stack);
+            case CHEST -> dm.getInventory().setChestplate(stack);
+            case LEGS -> dm.getInventory().setLeggings(stack);
+            case FEET -> dm.getInventory().setBoots(stack);
+            case OFF_HAND -> dm.getInventory().setItemInOffHand(stack);
+            default -> { }
+        }
+    }
+
+    /** Strip worn armor + offhand (so unpossessing / switching bodies doesn't keep entity gear). */
+    static void clearWornGear(Player dm) {
+        dm.getInventory().setArmorContents(new ItemStack[4]);
+        dm.getInventory().setItemInOffHand(null);
     }
 
     /** Resolve an item id to an ItemStack via the weapon/armor/item registries. */

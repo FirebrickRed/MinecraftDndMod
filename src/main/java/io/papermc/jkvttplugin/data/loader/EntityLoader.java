@@ -318,6 +318,8 @@ public class EntityLoader {
         // The weapon this attack represents (for possession + loot), if any (#132).
         if (data.get("item") instanceof String item) attack.setItem(item);
         if (data.get("lootable") instanceof Boolean b) attack.setLootable(b);
+        // Optional hotbar icon for a natural/spell attack (no weapon item).
+        if (data.get("icon") instanceof String icon) attack.setIcon(icon);
 
         return attack;
     }

@@ -140,6 +140,7 @@ public class DmModeManager {
     // ==================== DM TOOLS ====================
 
     public static void giveTools(Player player) {
+        PossessionManager.clearWornGear(player); // drop any possessed entity's armor when back on the toolbar
         player.getInventory().setItem(0, tool(Material.SPYGLASS, TOOL_VIEW, "View",
                 "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
         player.getInventory().setItem(1, tool(Material.LEAD, TOOL_POSSESS, "Possess",

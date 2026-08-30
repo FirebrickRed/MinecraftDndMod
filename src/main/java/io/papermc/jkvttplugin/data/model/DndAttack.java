@@ -56,6 +56,12 @@ public class DndAttack {
     private String item;
     private boolean lootable = true;
 
+    /**
+     * Optional hotbar icon (a vanilla Material name) for a natural/spell attack that has no {@link #item}
+     * — e.g. a wolf's Bite or a sorcerer's Fire Bolt — so a possessing DM has something to right-click.
+     */
+    private String icon;
+
     // ==================== CONSTRUCTORS ====================
 
     /**
@@ -121,6 +127,9 @@ public class DndAttack {
 
     public boolean isLootable() { return lootable; }
     public void setLootable(boolean lootable) { this.lootable = lootable; }
+
+    public String getIcon() { return icon; }
+    public void setIcon(String icon) { this.icon = icon; }
 
     // ==================== UTILITY METHODS ====================
 
