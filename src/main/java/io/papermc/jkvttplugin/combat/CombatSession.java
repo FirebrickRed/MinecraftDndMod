@@ -504,7 +504,7 @@ public class CombatSession {
         if (current == null || current.getTurnState() == null) return;
         Location center = current.getTurnState().getTurnStartLocation();
         if (center == null || center.getWorld() == null) return;
-        double radius = current.getTurnState().getMovementBudget() / 5.0;
+        double radius = current.getTurnState().getEffectiveMovementBudget() / 5.0;
         if (radius <= 0) return;
 
         List<Player> viewers = new ArrayList<>();
@@ -860,12 +860,12 @@ public class CombatSession {
 
         double remaining = state.getMovementRemaining();
         NamedTextColor moveColor = remaining <= 0 ? NamedTextColor.RED
-            : remaining <= state.getMovementBudget() * 0.25 ? NamedTextColor.YELLOW
+            : remaining <= state.getEffectiveMovementBudget() * 0.25 ? NamedTextColor.YELLOW
             : NamedTextColor.GREEN;
 
         Component movePart = Component.text(" | Move: ", NamedTextColor.WHITE)
             .append(Component.text(
-                String.format("%.0f", remaining) + "/" + state.getMovementBudget() + " ft",
+                String.format("%.0f", remaining) + "/" + state.getEffectiveMovementBudget() + " ft",
                 moveColor));
 
         int hp = combatant.getCurrentHp(), max = combatant.getMaxHp(), temp = combatant.getTempHp();

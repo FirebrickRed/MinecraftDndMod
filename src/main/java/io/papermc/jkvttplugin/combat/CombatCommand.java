@@ -763,28 +763,94 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
     // ==================== ACTION ECONOMY (Issue #98) ====================
 
+    // The standard actions any creature can take (#143). Value is the hover description.
+    private static final java.util.LinkedHashMap<String, String> ACTIONS = new java.util.LinkedHashMap<>();
+    static {
+        ACTIONS.put("attack", "Make an attack (this spends your action).");
+        ACTIONS.put("dash", "Double your speed for this turn.");
+        ACTIONS.put("dodge", "Attacks against you have disadvantage until your next turn.");
+        ACTIONS.put("disengage", "Your movement doesn't provoke opportunity attacks.");
+        ACTIONS.put("help", "Give an ally advantage on a check or attack.");
+        ACTIONS.put("hide", "Make a Stealth check to hide.");
+        ACTIONS.put("ready", "Prepare an action to trigger on a condition.");
+        ACTIONS.put("search", "Look for something.");
+        ACTIONS.put("use", "Use or interact with an object.");
+    }
+
     private void handleAction(Player player, String[] args) {
-        // Resolve session: DM uses DM_SESSIONS, player uses PLAYER_SESSIONS
         CombatSession session = resolveSession(player);
         if (session == null) return;
 
-        Combatant target = resolveActionTarget(player, session, args);
-        if (target == null) return;
-
-        TurnState state = target.getTurnState();
+        Combatant actor = session.getCurrentCombatant();
+        if (actor == null) {
+            player.sendMessage(Component.text("No active turn.", NamedTextColor.RED));
+            return;
+        }
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+        if (!isDM && (!actor.isPlayer() || !actor.getId().equals(player.getUniqueId()))) {
+            player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
+            return;
+        }
+        TurnState state = actor.getTurnState();
         if (state == null) {
-            player.sendMessage(Component.text("It's not " + target.getDisplayName() + "'s turn.", NamedTextColor.RED));
+            player.sendMessage(Component.text("It's not " + actor.getDisplayName() + "'s turn.", NamedTextColor.RED));
             return;
         }
 
+        String name = args.length >= 2 ? args[1].toLowerCase() : null;
+        if (name == null) {
+            if (state.isActionUsed()) {
+                player.sendMessage(Component.text(actor.getDisplayName() + " has already used their Action.", NamedTextColor.YELLOW));
+                return;
+            }
+            showActionMenu(player);
+            return;
+        }
+        performAction(player, session, actor, state, name);
+    }
+
+    /** Clickable list of the standard actions (#143). */
+    private void showActionMenu(Player player) {
+        player.sendMessage(Component.text("Choose your action:", NamedTextColor.GOLD, TextDecoration.BOLD));
+        Component row = Component.empty();
+        for (java.util.Map.Entry<String, String> e : ACTIONS.entrySet()) {
+            String label = Character.toUpperCase(e.getKey().charAt(0)) + e.getKey().substring(1);
+            row = row.append(Component.text("[" + label + "] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                    .clickEvent(ClickEvent.runCommand("/combat action " + e.getKey()))
+                    .hoverEvent(HoverEvent.showText(Component.text(e.getValue()))));
+        }
+        player.sendMessage(row);
+    }
+
+    private void performAction(Player player, CombatSession session, Combatant actor, TurnState state, String name) {
+        if (!ACTIONS.containsKey(name)) {
+            player.sendMessage(Component.text("Unknown action: " + name + " — use /combat action for the list.", NamedTextColor.RED));
+            return;
+        }
+        // Attacking spends the action itself — just point them to it (don't double-spend).
+        if (name.equals("attack")) {
+            player.sendMessage(Component.text("Make your attack: right-click your weapon, or /combat attack <target> <weapon>.", NamedTextColor.YELLOW));
+            return;
+        }
         if (state.isActionUsed()) {
-            player.sendMessage(Component.text(target.getDisplayName() + " has already used their Action.", NamedTextColor.YELLOW));
+            player.sendMessage(Component.text(actor.getDisplayName() + " has already used their Action.", NamedTextColor.YELLOW));
             return;
         }
-
         state.useAction();
-        session.broadcast(Component.text(target.getDisplayName(true) + " uses their Action.", NamedTextColor.YELLOW));
-        session.sendActionBar(target);
+        String who = actor.getDisplayName(true);
+        Component msg = switch (name) {
+            case "dash" -> { state.setDashed(true); yield Component.text(who + " Dashes — movement doubled this turn!", NamedTextColor.AQUA); }
+            case "dodge" -> Component.text(who + " takes the Dodge action (attacks against them have disadvantage).", NamedTextColor.YELLOW);
+            case "disengage" -> Component.text(who + " Disengages — no opportunity attacks from moving away.", NamedTextColor.YELLOW);
+            case "help" -> Component.text(who + " takes the Help action.", NamedTextColor.YELLOW);
+            case "hide" -> Component.text(who + " tries to Hide.", NamedTextColor.YELLOW);
+            case "ready" -> Component.text(who + " Readies an action.", NamedTextColor.YELLOW);
+            case "search" -> Component.text(who + " Searches the area.", NamedTextColor.YELLOW);
+            case "use" -> Component.text(who + " uses an object.", NamedTextColor.YELLOW);
+            default -> Component.text(who + " takes an action.", NamedTextColor.YELLOW);
+        };
+        session.broadcast(msg);
+        session.sendActionBar(actor);
     }
 
     private void handleBonusAction(Player player, String[] args) {

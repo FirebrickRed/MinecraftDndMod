@@ -46,8 +46,6 @@ public class LootManager {
     private static final Set<String> searched = new HashSet<>();
     // The corpse a player is about to roll for (set on right-click, consumed by the roll).
     private static final Map<UUID, UUID> pendingCorpse = new HashMap<>();
-    // "player|corpse|check" the DM has unlocked for the player to roll (DM-mediated, #144).
-    private static final Set<String> allowedChecks = new HashSet<>();
 
     /**
      * A player right-clicked a body (#144). They learn nothing about what's on it — they just wait
@@ -122,8 +120,6 @@ public class LootManager {
             dm.sendMessage(Component.text(player.getName() + " has no active character.", NamedTextColor.RED));
             return;
         }
-        allowedChecks.add(key(player.getUniqueId(), id, check));
-
         int mod = sheet.getSkillBonus(check);
         String modStr = (mod >= 0 ? "+" + mod : String.valueOf(mod));
         String cmd = "/character loot " + check.name().toLowerCase() + " ";
@@ -144,11 +140,6 @@ public class LootManager {
         Skill check = Skill.fromString(checkArg);
         if (check == null) {
             player.sendMessage(Component.text("Unknown check: " + checkArg, NamedTextColor.RED));
-            return;
-        }
-        // DM-mediated (#144): you can only roll a check the DM has called for on this body.
-        if (!allowedChecks.contains(key(player.getUniqueId(), id, check))) {
-            player.sendMessage(Component.text("Wait for the DM to call for that roll.", NamedTextColor.YELLOW));
             return;
         }
         if (d20 < 1 || d20 > 20) {

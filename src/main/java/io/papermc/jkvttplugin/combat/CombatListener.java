@@ -89,7 +89,7 @@ public class CombatListener implements Listener {
         double feetFromStart = blocksFromStart * 5.0;
         // Hard cap: you can't move outside your speed range (the green ring). Block any step that
         // would take you past your budget; moving back within range is always allowed.
-        if (feetFromStart > turnState.getMovementBudget()) {
+        if (feetFromStart > turnState.getEffectiveMovementBudget()) {
             event.setCancelled(true);
             if (!turnState.hasMovementWarned()) {
                 turnState.setMovementWarned(true);

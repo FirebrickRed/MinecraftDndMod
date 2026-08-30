@@ -118,7 +118,7 @@ public class MoveToolManager {
         TurnState ts = entity.getTurnState();
         if (ts == null || ts.getTurnStartLocation() == null) return dest;
         Location start = ts.getTurnStartLocation();
-        double budgetBlocks = ts.getMovementBudget() / 5.0;
+        double budgetBlocks = ts.getEffectiveMovementBudget() / 5.0;
         Vector fromStart = dest.toVector().subtract(start.toVector());
         double dist = fromStart.length();
         if (dist <= budgetBlocks || dist < 1.0e-6) return dest;
@@ -141,7 +141,7 @@ public class MoveToolManager {
         if (ts.isOverMovementBudget() && !ts.hasMovementWarned()) {
             ts.setMovementWarned(true);
             dm.sendMessage(Component.text("⚠ " + entity.getDisplayName() + " exceeded its movement ("
-                    + String.format("%.0f", ts.getMovementUsed()) + "/" + ts.getMovementBudget() + " ft).", NamedTextColor.RED));
+                    + String.format("%.0f", ts.getMovementUsed()) + "/" + ts.getEffectiveMovementBudget() + " ft).", NamedTextColor.RED));
         }
         session.sendActionBar(entity);
     }

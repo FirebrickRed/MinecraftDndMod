@@ -28,6 +28,7 @@ public class TurnState {
 
     private double movementUsed;      // feet moved this turn
     private final int movementBudget; // max feet (from speed)
+    private boolean dashed;           // Dash action taken → movement doubled (#143)
     private boolean movementWarned;   // whether we've already warned about exceeding movement
 
     private final Location turnStartLocation;  // for /combat movement undo
@@ -87,14 +88,23 @@ public class TurnState {
     }
 
     public double getMovementUsed() { return movementUsed; }
+
+    /** Base speed for the turn. */
     public int getMovementBudget() { return movementBudget; }
 
+    /** Speed available this turn, doubled while the Dash action is active (#143). */
+    public int getEffectiveMovementBudget() { return dashed ? movementBudget * 2 : movementBudget; }
+
+    /** The Dash action doubles this turn's movement. */
+    public boolean isDashed() { return dashed; }
+    public void setDashed(boolean dashed) { this.dashed = dashed; }
+
     public double getMovementRemaining() {
-        return Math.max(0, movementBudget - movementUsed);
+        return Math.max(0, getEffectiveMovementBudget() - movementUsed);
     }
 
     public boolean isOverMovementBudget() {
-        return movementUsed > movementBudget;
+        return movementUsed > getEffectiveMovementBudget();
     }
 
     public boolean hasMovementWarned() { return movementWarned; }

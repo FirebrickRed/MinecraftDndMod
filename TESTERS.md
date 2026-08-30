@@ -64,6 +64,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **HP at a glance** — your HP on the scoreboard/action bar; **enemy HP hidden** from players; DM sees all via `/combat status`.
 - [ ] **NPC turn** — DM sees the entity's action/move bar + its **attack list**.
 - [ ] Boats/mounts are **frozen** when it's not your turn.
+- [ ] **Action menu** (#143): `/combat action` on your turn lists clickable actions (Attack, Dash,
+      Dodge, Disengage, Help, Hide, Ready, Search, Use). Clicking one spends your action and announces
+      it; **Dash doubles your movement** (green ring + wall both grow). `/combat action <name>` also works.
 - [ ] **Undo movement** works for **players too** (not just entities): `/combat movement undo` on your
       turn snaps you back to where the turn started.
 - [ ] **Range rings** (#133): on a combatant's turn — **green** ring = how far it can move (centered
