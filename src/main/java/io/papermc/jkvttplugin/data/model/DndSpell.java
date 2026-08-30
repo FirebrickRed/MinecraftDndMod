@@ -39,6 +39,7 @@ public class DndSpell {
     private String socialType;        // "message" (private whisper), "sending" (whisper, any range),
                                       // "speak_with_animals" (DM relays; others hear gibberish); null = not social
     private int wordLimit;            // max words the caster may send (0 = unlimited)
+    private int ritualRounds;         // combat rounds to channel this as a ritual (#156); 0 = use global default
 
     public DndSpell() {}
 
@@ -197,6 +198,8 @@ public class DndSpell {
     public void setSocialType(String socialType) { this.socialType = socialType; }
     public int getWordLimit() { return wordLimit; }
     public void setWordLimit(int wordLimit) { this.wordLimit = wordLimit; }
+    public int getRitualRounds() { return ritualRounds; }
+    public void setRitualRounds(int ritualRounds) { this.ritualRounds = ritualRounds; }
 
     /** True if this spell is a chat/social spell that opens a message prompt instead of rolling (#151). */
     public boolean isSocial() { return socialType != null && !socialType.isBlank(); }

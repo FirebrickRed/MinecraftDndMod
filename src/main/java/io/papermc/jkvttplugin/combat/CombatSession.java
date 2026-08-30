@@ -392,6 +392,7 @@ public class CombatSession {
             current.startNewTurn(current.getLocation());
             applyGlowEffect(current);
             onTurnStartConditions(current); // expire Dodge/Disengage, remind of the rest (#103)
+            RitualManager.onTurnStart(this, current); // advance/complete/break a channelled ritual (#156)
             sendActionBar(current); // show action/movement budget immediately when the turn begins
         }
 
@@ -745,6 +746,7 @@ public class CombatSession {
                 }
                 if (c.isDead()) display.append(" §4[DEAD]");
                 display.append(conditionTag(c)); // active conditions (#103)
+                display.append(RitualManager.scoreboardTag(c)); // ritual channel (#156)
 
                 // Use actual initiative as the score (shown as red number on right)
                 initiativeObjective.getScore(display.toString()).setScore(c.getInitiative());

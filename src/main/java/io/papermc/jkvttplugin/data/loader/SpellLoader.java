@@ -116,6 +116,8 @@ public class SpellLoader {
         // Social / roleplay spells (#151).
         spell.setSocialType(LoaderUtils.asString(data.get("social_type"), null));
         if (data.get("word_limit") instanceof Number wl) spell.setWordLimit(wl.intValue());
+        // Ritual-in-combat per-spell channel length (#156); 0/absent = global default.
+        if (data.get("ritual_rounds") instanceof Number rr) spell.setRitualRounds(rr.intValue());
         return spell;
     }
 

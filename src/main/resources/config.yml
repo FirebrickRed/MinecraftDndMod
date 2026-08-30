@@ -6,3 +6,18 @@ rolls:
   #   auto     = the game rolls the d20 for the player
   # Either way, players may always type their own result (--roll) or a final total (--total).
   mode: physical
+
+# Ritual casting during combat (#156). By the book a ritual adds 10 minutes (~100 rounds),
+# so it never finishes in a fight — this is a playable house rule instead.
+rituals:
+  # How many of the caster's turns a ritual takes to complete when channelled in combat.
+  # A spell may override this with its own `ritual_rounds:` in its YAML.
+  combat_rounds: 10
+  # What breaks the channel when the caster takes damage:
+  #   concentration_check = CON save or the ritual is lost (default)
+  #   break_on_damage     = any damage breaks it outright
+  #   none                = damage never breaks it
+  interrupt: concentration_check
+  # Concentration DC used by concentration_check. 0 = the 5e default of max(10, half the damage).
+  # Set a fixed number (e.g. 10) to pin a "deep concentration" DC for a specific table/encounter.
+  interrupt_dc: 0

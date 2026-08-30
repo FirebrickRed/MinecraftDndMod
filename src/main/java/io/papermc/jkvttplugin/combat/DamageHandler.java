@@ -56,6 +56,7 @@ public class DamageHandler {
         session.broadcast(Component.text("HP: " + hpBefore + " → " + hpAfter + " / " + target.getMaxHp(), NamedTextColor.GRAY));
 
         handleDeathTriggers(session, target, wasUnconscious, finalDamage, wasCrit);
+        RitualManager.onDamage(session, target, finalDamage); // may break a channelled ritual (#156)
         session.broadcast(Component.text("━━━━━━━━━━━━━━", NamedTextColor.RED));
 
         // If that drop decided the fight, let the DM wrap it up (one-click /combat finished).

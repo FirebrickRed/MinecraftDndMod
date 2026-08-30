@@ -50,6 +50,11 @@ public class Combatant {
     // Per-turn state (Issue #98)
     private TurnState turnState;
 
+    // Ritual channelled in combat (Issue #156): spell being cast over several turns.
+    private String ritualSpellId;
+    private String ritualSpellName;
+    private int ritualRoundsLeft;
+
     // ==================== CONSTRUCTORS ====================
 
     /**
@@ -204,6 +209,47 @@ public class Combatant {
 
     public boolean isDead() { return isDead; }
     public void setDead(boolean dead) { isDead = dead; }
+
+    // ==================== RITUAL CHANNEL (Issue #156) ====================
+    public boolean isChanneling() { return ritualSpellId != null; }
+    public String getRitualSpellId() { return ritualSpellId; }
+    public String getRitualSpellName() { return ritualSpellName; }
+    public int getRitualRoundsLeft() { return ritualRoundsLeft; }
+
+    /** Begin channelling a ritual over {@code rounds} of this combatant's turns. */
+    public void beginRitual(String spellId, String spellName, int rounds) {
+        this.ritualSpellId = spellId;
+        this.ritualSpellName = spellName;
+        this.ritualRoundsLeft = Math.max(1, rounds);
+    }
+
+    /** Count down one of the caster's turns; returns true once the ritual completes (reaches 0). */
+    public boolean tickRitual() {
+        if (ritualSpellId == null) return false;
+        ritualRoundsLeft--;
+        if (ritualRoundsLeft <= 0) {
+            cancelRitual();
+            return true;
+        }
+        return false;
+    }
+
+    public void cancelRitual() {
+        ritualSpellId = null;
+        ritualSpellName = null;
+        ritualRoundsLeft = 0;
+    }
+
+    /** CON modifier, for the ritual concentration check (players and entities). */
+    public int getConstitutionModifier() {
+        if (isPlayer()) {
+            CharacterSheet sheet = getCharacterSheet();
+            return sheet != null ? sheet.getModifier(Ability.CONSTITUTION) : 0;
+        }
+        DndEntityInstance entity = getEntityInstance();
+        if (entity == null) return 0;
+        return Ability.getModifier(entity.getTemplate().getAbilities().getOrDefault(Ability.CONSTITUTION, 10));
+    }
 
     public int getDeathSaveSuccesses() { return deathSaveSuccesses; }
     public int getDeathSaveFailures() { return deathSaveFailures; }

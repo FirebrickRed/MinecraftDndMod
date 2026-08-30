@@ -803,6 +803,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text(actor.getDisplayName() + " can't act — " + actor.actionBlockingCondition() + ".", NamedTextColor.RED));
             return;
         }
+        if (actor.isChanneling()) {
+            player.sendMessage(Component.text("You're channelling " + actor.getRitualSpellName() + " — /combat cast cancel to stop.", NamedTextColor.RED));
+            return;
+        }
 
         String name = args.length >= 2 ? args[1].toLowerCase() : null;
         if (name == null) {
@@ -878,6 +882,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text(target.getDisplayName() + " can't act — " + target.actionBlockingCondition() + ".", NamedTextColor.RED));
             return;
         }
+        if (target.isChanneling()) {
+            player.sendMessage(Component.text(target.getDisplayName() + " is channelling " + target.getRitualSpellName() + " — /combat cast cancel to stop.", NamedTextColor.RED));
+            return;
+        }
 
         if (state.isBonusActionUsed()) {
             player.sendMessage(Component.text(target.getDisplayName() + " has already used their Bonus Action.", NamedTextColor.YELLOW));
@@ -910,11 +918,29 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
         if (args.length < 2) {
-            player.sendMessage(Component.text("Usage: /combat cast <spell> [target] [--roll <d20>]", NamedTextColor.RED));
+            player.sendMessage(Component.text("Usage: /combat cast <spell> [target] [--roll <d20>]  |  /combat cast <ritual> --ritual  |  /combat cast cancel", NamedTextColor.RED));
+            return;
+        }
+        // Cancel an in-progress ritual channel (#156).
+        if (args[1].equalsIgnoreCase("cancel")) {
+            if (!caster.isChanneling()) { player.sendMessage(Component.text("You aren't channelling a ritual.", NamedTextColor.YELLOW)); return; }
+            RitualManager.cancel(session, caster, "the caster stopped");
+            return;
+        }
+        // Already channelling: block starting anything else until it finishes or is cancelled.
+        if (caster.isChanneling()) {
+            player.sendMessage(Component.text("You're channelling " + caster.getRitualSpellName() + " ("
+                    + caster.getRitualRoundsLeft() + " rounds left). /combat cast cancel to stop.", NamedTextColor.RED));
             return;
         }
         io.papermc.jkvttplugin.data.model.DndSpell spell = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(args[1]);
         if (spell == null) { player.sendMessage(Component.text("Unknown spell: " + args[1], NamedTextColor.RED)); return; }
+
+        // Start a ritual channel (#156): /combat cast <ritual> --ritual
+        if (hasFlag(args, "--ritual")) {
+            RitualManager.begin(session, player, caster, spell);
+            return;
+        }
 
         Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
         Integer providedTotal = getFlagValueInt(args, "--total");
@@ -1141,6 +1167,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         if (attacker.cannotAct()) {
             player.sendMessage(Component.text(attacker.getDisplayName() + " can't act — " + attacker.actionBlockingCondition() + ".", NamedTextColor.RED));
+            return;
+        }
+        if (attacker.isChanneling()) {
+            player.sendMessage(Component.text("You're channelling " + attacker.getRitualSpellName() + " — /combat cast cancel to stop.", NamedTextColor.RED));
             return;
         }
 
@@ -2107,7 +2137,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     if (session != null) for (Combatant c : session.getCombatants()) completions.add(c.getDisplayName());
                 }
                 case "cast" -> {
-                    // Suggest the current caster's known spells/cantrips (by id).
+                    // Suggest the current caster's known spells/cantrips (by id), plus 'cancel' for a ritual.
+                    completions.add("cancel");
                     Combatant cur = session != null ? session.getCurrentCombatant() : null;
                     if (cur != null && cur.getCharacterSheet() != null) {
                         for (io.papermc.jkvttplugin.data.model.DndSpell s : cur.getCharacterSheet().getKnownCantrips()) completions.add(s.getName().toLowerCase().replace(" ", "_"));
@@ -2160,6 +2191,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 }
             } else if (args[0].equalsIgnoreCase("cast")) {
                 if (session != null) for (Combatant c : session.getCombatants()) completions.add(c.getDisplayName());
+                // Offer --ritual for a ritual spell (cast it as a multi-turn channel, #156).
+                io.papermc.jkvttplugin.data.model.DndSpell s = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(args[1]);
+                if (s != null && s.isRitual()) completions.add("--ritual");
             }
             return filterCompletions(completions, args[2]);
         }

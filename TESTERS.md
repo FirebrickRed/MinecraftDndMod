@@ -80,6 +80,13 @@ Newest first. Tick these off after a build to confirm they work in-game.
       words and you're prompted to type them in chat (or `cancel`). Castable **in or out of combat**, but in
       combat only **on your turn**, where it **spends your action** (off-turn casts — including a Message
       reply — are refused); your character must **know** the spell.
+- [ ] **Ritual casting in combat** (#156): `/combat cast <ritual_spell> --ritual` on your turn begins a
+      **multi-turn channel** (default **10 rounds**, config `rituals.combat_rounds`, or a spell's own
+      `ritual_rounds`). Each of your turns the channel **eats your action** (you can still move); the
+      scoreboard shows **✦N** counting down, and it **completes** after the rounds elapse. Taking damage
+      may **break** it — default a **CON save** (DC = max(10, half the damage), or a fixed `interrupt_dc`);
+      config `rituals.interrupt` also offers `break_on_damage` / `none`. Being **downed, Stunned/Paralyzed**,
+      or using `/combat cast cancel` also ends it. (House rule — RAW rituals take 10 min ≈ 100 rounds.)
 - [ ] **Cast spells in combat** (#123): on your turn, `/combat cast fire_bolt <target> --roll <d20>`
       (tab-completes your known spells) → **attack-roll spells** (Fire Bolt) roll vs AC → damage prompt.
       **Save spells** (Poison Spray, Sacred Flame) → the *target* is prompted to roll their save

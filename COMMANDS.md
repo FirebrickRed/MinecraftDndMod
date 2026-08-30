@@ -53,6 +53,10 @@ DM extras: `/character create <player>` opens creation for another player; `/cha
 | `heal <target> [amount] [--roll <dice>] [--total <n>]` | Restore HP |
 | `temphp <target> <amount>` | Grant temporary HP |
 | `deathsave [<player>] [--roll <d20>]` | Roll a death save (DM may roll for a downed player) |
+| `cast <spell> [target] [--roll <d20>]` | Cast a combat spell — attack-roll or save; AoE spells aim (no target) (#123, #149) |
+| `cast <ritual_spell> --ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
+| `save [target] [--roll <d20>]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
+| `condition <target> [add\|remove <cond>]` · `condition list` | DM: tag/clear conditions on a combatant (#103, #150) |
 | `finished` | **End combat & clean up** (clears glow, scoreboards, prone) — named distinctly from `endturn`, so no confirm needed |
 
 Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combatants, starts Round 1).
