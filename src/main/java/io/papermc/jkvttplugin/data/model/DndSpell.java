@@ -28,6 +28,10 @@ public class DndSpell {
     private String attackType;
     private String saveType;
     private String damageType;
+    // Combat resolution (Issue #123):
+    private String damage;            // dice, e.g. "1d10" (cantrips add no ability modifier)
+    private String saveEffect;        // on a successful save: "half" or "none" (default "half")
+    private String conditionOnFail;   // a condition id (#103) applied to the target on a failed save
 
     public DndSpell() {}
 
@@ -165,6 +169,20 @@ public class DndSpell {
     public void setDamageType(String damageType) {
         this.damageType = damageType;
     }
+
+    public String getDamage() { return damage; }
+    public void setDamage(String damage) { this.damage = damage; }
+
+    public String getSaveEffect() { return saveEffect; }
+    public void setSaveEffect(String saveEffect) { this.saveEffect = saveEffect; }
+
+    public String getConditionOnFail() { return conditionOnFail; }
+    public void setConditionOnFail(String conditionOnFail) { this.conditionOnFail = conditionOnFail; }
+
+    /** True if this spell is resolved with a spell attack roll (vs a saving throw). */
+    public boolean isAttackRoll() { return attackType != null && !attackType.isBlank(); }
+    /** True if this spell forces the target to make a saving throw. */
+    public boolean isSaveSpell() { return saveType != null && !saveType.isBlank(); }
 
     public boolean isCantrip() {
         return level == 0;

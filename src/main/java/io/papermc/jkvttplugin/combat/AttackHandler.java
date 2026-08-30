@@ -359,7 +359,7 @@ public class AttackHandler {
      * with a ready-to-run /combat damage command pre-filled with the weapon's damage formula.
      * Sent only to the attacker + DM (not broadcast) so hidden-entity names don't leak.
      */
-    private static void promptDamage(CombatSession session, Combatant attacker, Combatant target,
+    static void promptDamage(CombatSession session, Combatant attacker, Combatant target,
                                      String damageStr, String damageType, boolean isCrit) {
         String name = target.getDisplayName();
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;

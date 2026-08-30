@@ -86,7 +86,7 @@ public class SpellLoader {
         String saveType = LoaderUtils.asString(data.get("save_type"), null);
         String damageType = LoaderUtils.asString(data.get("damage_type"), null);
 
-        return DndSpell.builder()
+        DndSpell spell = DndSpell.builder()
                 .name(name)
                 .level(level)
                 .school(school)
@@ -104,6 +104,11 @@ public class SpellLoader {
                 .saveType(saveType)
                 .damageType(damageType)
                 .build();
+        // Combat resolution fields (#123).
+        spell.setDamage(LoaderUtils.asString(data.get("damage"), null));
+        spell.setSaveEffect(LoaderUtils.asString(data.get("save_effect"), "half"));
+        spell.setConditionOnFail(LoaderUtils.asString(data.get("condition_on_fail"), null));
+        return spell;
     }
 
     private static SpellComponents parseComponents(Object componentsObj) {

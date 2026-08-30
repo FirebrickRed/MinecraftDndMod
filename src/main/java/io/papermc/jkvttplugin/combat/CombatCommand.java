@@ -49,7 +49,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -99,6 +99,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "bonus" -> handleBonusAction(player, args);
             case "movement" -> handleMovement(player, args);
             case "condition" -> handleCondition(player, args);
+            case "cast" -> handleCast(player, args);
+            case "save" -> handleSave(player, args);
             case "attack" -> handleAttack(player, args);
             case "damage" -> handleDamage(player, args);
             case "override" -> handleDamage(player, args); // DM-only (not in PLAYER_ALLOWED): apply corrective damage anytime
@@ -877,6 +879,63 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         state.useBonusAction();
         session.broadcast(Component.text(target.getDisplayName(true) + " uses their Bonus Action.", NamedTextColor.YELLOW));
         session.sendActionBar(target);
+    }
+
+    // ==================== SPELLCASTING (Issue #123) ====================
+
+    private void handleCast(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+        if (session.isSetupPhase()) {
+            player.sendMessage(Component.text("Roll initiative first.", NamedTextColor.RED));
+            return;
+        }
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+        Combatant caster = session.getCurrentCombatant();
+        if (caster == null) { player.sendMessage(Component.text("No active turn.", NamedTextColor.RED)); return; }
+        if (!isDM && (!caster.isPlayer() || !caster.getId().equals(player.getUniqueId()))) {
+            player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
+            return;
+        }
+        if (args.length < 3) {
+            player.sendMessage(Component.text("Usage: /combat cast <spell> <target> [--roll <d20>]", NamedTextColor.RED));
+            return;
+        }
+        io.papermc.jkvttplugin.data.model.DndSpell spell = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(args[1]);
+        if (spell == null) { player.sendMessage(Component.text("Unknown spell: " + args[1], NamedTextColor.RED)); return; }
+
+        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
+        Integer providedTotal = getFlagValueInt(args, "--total");
+        Combatant target = findCombatantByName(session, stripQuotes(joinArgsExcludingFlags(args, 2)));
+        if (target == null) { player.sendMessage(Component.text("Target not found.", NamedTextColor.RED)); return; }
+        if (target.isDead()) { player.sendMessage(Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.YELLOW)); return; }
+
+        boolean resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal);
+        TurnState state = caster.getTurnState();
+        if (resolved && state != null && !state.isActionUsed()) {
+            state.useAction();
+            session.sendActionBar(caster);
+        }
+    }
+
+    private void handleSave(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
+        Integer providedTotal = getFlagValueInt(args, "--total");
+        String targetName = joinArgsExcludingFlags(args, 1);
+
+        Combatant target;
+        if (targetName.isBlank()) {
+            target = findOwnCombatant(session, player.getUniqueId());
+            if (target == null) { player.sendMessage(Component.text("You're not in this combat.", NamedTextColor.RED)); return; }
+        } else {
+            if (!isDM) { player.sendMessage(Component.text("Only the DM rolls saves for others.", NamedTextColor.RED)); return; }
+            target = findCombatantByName(session, stripQuotes(targetName));
+            if (target == null) { player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED)); return; }
+        }
+        SpellCastHandler.resolveSave(player, session, target, providedRoll, providedTotal);
     }
 
     // ==================== CONDITIONS (Issue #103) ====================
@@ -1978,7 +2037,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Subcommands
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
-                "reveal", "hide", "action", "bonus", "movement", "condition", "attack",
+                "reveal", "hide", "action", "bonus", "movement", "condition", "cast", "save", "attack",
                 "damage", "override", "heal", "temphp", "deathsave"));
             return filterCompletions(completions, args[0]);
         }
@@ -2015,6 +2074,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 case "condition" -> {
                     completions.add("list");
                     if (session != null) for (Combatant c : session.getCombatants()) completions.add(c.getDisplayName());
+                }
+                case "cast" -> {
+                    // Suggest the current caster's known spells/cantrips (by id).
+                    Combatant cur = session != null ? session.getCurrentCombatant() : null;
+                    if (cur != null && cur.getCharacterSheet() != null) {
+                        for (io.papermc.jkvttplugin.data.model.DndSpell s : cur.getCharacterSheet().getKnownCantrips()) completions.add(s.getName().toLowerCase().replace(" ", "_"));
+                        for (io.papermc.jkvttplugin.data.model.DndSpell s : cur.getCharacterSheet().getKnownSpells()) completions.add(s.getName().toLowerCase().replace(" ", "_"));
+                    }
                 }
                 case "initiative" -> {
                     // Suggest combatants
@@ -2060,6 +2127,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 for (io.papermc.jkvttplugin.data.model.DndCondition c : io.papermc.jkvttplugin.data.loader.ConditionLoader.getAll()) {
                     completions.add(c.getId());
                 }
+            } else if (args[0].equalsIgnoreCase("cast")) {
+                if (session != null) for (Combatant c : session.getCombatants()) completions.add(c.getDisplayName());
             }
             return filterCompletions(completions, args[2]);
         }

@@ -31,6 +31,7 @@ spells:
     icon: "FIRE_CHARGE"
     attack_type: "ranged_spell_attack"
     damage_type: "fire"
+    damage: "1d10"
     higher_levels: "This spell's damage increases by 1d10 when you reach 5th level (2d10), 11th level (3d10), and 17th level (4d10)."
 
   mage_hand:
@@ -76,6 +77,8 @@ spells:
     icon: "SPIDER_EYE"
     save_type: "Constitution"
     damage_type: "poison"
+    damage: "1d12"
+    save_effect: "none"
     higher_levels: "This spell's damage increases by 1d12 when you reach 5th level (2d12), 11th level (3d12), and 17th level (4d12)."
 
   sacred_flame:
@@ -93,6 +96,8 @@ spells:
     icon: "TORCH"
     save_type: "Dexterity"
     damage_type: "radiant"
+    damage: "1d8"
+    save_effect: "none"
     higher_levels: "The spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
 
   eldritch_blast:
