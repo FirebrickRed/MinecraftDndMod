@@ -3,6 +3,7 @@
 
 blinded:
   name: "Blinded"
+  minecraft_effect: BLINDNESS
   rules:
     - "Can't see; automatically fails checks requiring sight."
     - "Attack rolls against it have advantage; its attacks have disadvantage."
@@ -37,6 +38,7 @@ incapacitated:
 
 invisible:
   name: "Invisible"
+  minecraft_effect: INVISIBILITY
   rules:
     - "Impossible to see without special senses; counts as heavily obscured."
     - "Attack rolls against it have disadvantage; its attacks have advantage."
@@ -68,12 +70,14 @@ prone:
 
 restrained:
   name: "Restrained"
+  minecraft_effect: SLOWNESS
   rules:
     - "Speed 0. Disadvantage on attacks and DEX saves."
     - "Attacks against it have advantage."
 
 stunned:
   name: "Stunned"
+  minecraft_effect: SLOWNESS
   rules:
     - "Incapacitated, can't move, speaks falteringly."
     - "Auto-fails STR and DEX saves. Attacks against it have advantage."

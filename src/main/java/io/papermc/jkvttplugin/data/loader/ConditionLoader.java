@@ -55,6 +55,7 @@ public class ConditionLoader {
         }
         c.setRules(rules);
         if (data.get("until_next_turn") instanceof Boolean b) c.setUntilNextTurn(b);
+        if (data.get("minecraft_effect") instanceof String eff) c.setMinecraftEffect(eff);
         return c;
     }
 

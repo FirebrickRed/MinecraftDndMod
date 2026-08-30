@@ -918,6 +918,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         if (args[kw].equalsIgnoreCase("add")) {
             if (target.addCondition(cond.getId())) {
+                session.setConditionEffect(target, cond, true); // apply any Minecraft effect (#103)
                 session.broadcast(Component.text(target.getDisplayName(true) + " is now ", NamedTextColor.YELLOW)
                         .append(conditionText(cond)));
             } else {
@@ -925,6 +926,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         } else {
             if (target.removeCondition(cond.getId())) {
+                session.setConditionEffect(target, cond, false);
                 session.broadcast(Component.text(target.getDisplayName(true) + " is no longer " + cond.getName() + ".", NamedTextColor.GRAY));
             } else {
                 dm.sendMessage(Component.text(target.getDisplayName() + " doesn't have " + cond.getName() + ".", NamedTextColor.GRAY));

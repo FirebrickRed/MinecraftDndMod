@@ -647,6 +647,9 @@ public class CombatSession {
             clearGlowEffect(c);
             c.clearTurnState();
             DeathSaveHandler.removeProne(c);
+            // Clear any Minecraft effects our conditions applied, so they don't linger post-combat (#103).
+            for (String id : c.getConditions()) setConditionEffect(c, ConditionLoader.get(id), false);
+            c.getConditions().clear();
 
             if (c.isPlayer()) {
                 PLAYER_SESSIONS.remove(c.getId());
@@ -755,13 +758,34 @@ public class CombatSession {
         applyScoreboardToParticipants();
     }
 
+    /**
+     * Apply or remove a condition's Minecraft potion effect on a player combatant (#103). No-op for
+     * conditions without a minecraft_effect, or for entities (they have no player to affect).
+     */
+    public void setConditionEffect(Combatant c, DndCondition cond, boolean on) {
+        if (cond == null || cond.getMinecraftEffect() == null || c == null || !c.isPlayer() || c.getPlayer() == null) return;
+        org.bukkit.potion.PotionEffectType type = org.bukkit.potion.PotionEffectType.getByName(cond.getMinecraftEffect());
+        if (type == null) return;
+        if (on) {
+            c.getPlayer().addPotionEffect(new org.bukkit.potion.PotionEffect(type, Integer.MAX_VALUE, 0, false, false, true));
+        } else {
+            c.getPlayer().removePotionEffect(type);
+        }
+    }
+
     /** At a creature's turn start: expire "until next turn" conditions, then remind of the rest (#103). */
     private void onTurnStartConditions(Combatant c) {
         if (c == null) return;
-        c.getConditions().removeIf(id -> {
+        // Remove expiring conditions and clear any Minecraft effect they applied.
+        java.util.List<String> expired = new ArrayList<>();
+        for (String id : c.getConditions()) {
             DndCondition cond = ConditionLoader.get(id);
-            return cond != null && cond.isUntilNextTurn();
-        });
+            if (cond != null && cond.isUntilNextTurn()) expired.add(id);
+        }
+        for (String id : expired) {
+            c.removeCondition(id);
+            setConditionEffect(c, ConditionLoader.get(id), false);
+        }
         if (c.getConditions().isEmpty()) return;
 
         Component msg = Component.text("⏳ " + c.getDisplayName() + " is ", NamedTextColor.LIGHT_PURPLE);

@@ -15,6 +15,10 @@ public class DndCondition {
      *  (e.g. Dodging, Disengaged — they last "until your next turn"). */
     private boolean untilNextTurn;
 
+    /** Optional Minecraft PotionEffectType name (e.g. BLINDNESS) applied to a player while they have
+     *  this condition, for real in-game feedback. Removed when the condition ends. */
+    private String minecraftEffect;
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -26,4 +30,7 @@ public class DndCondition {
 
     public boolean isUntilNextTurn() { return untilNextTurn; }
     public void setUntilNextTurn(boolean untilNextTurn) { this.untilNextTurn = untilNextTurn; }
+
+    public String getMinecraftEffect() { return minecraftEffect; }
+    public void setMinecraftEffect(String minecraftEffect) { this.minecraftEffect = minecraftEffect; }
 }
