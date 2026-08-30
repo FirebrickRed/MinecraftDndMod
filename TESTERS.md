@@ -92,6 +92,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] Five roots only: `/character` `/roll` `/combat` `/dmentity` `/dm` (old commands gone).
 - [ ] **`/character delete <name>`** removes a character (yours; DM removes any).
 - [ ] **Entities survive a server restart** (spawn kobolds, damage one, restart → still there with same HP).
+- [ ] **Dead entities** (#138): a killed entity **tips over** (corpse), **can't be possessed**, and a
+      dead entity **can't join combat** — until the DM **`/dmentity revive <name> [hp]`** stands it back
+      up. The corpse pose survives a restart.
 - [ ] **`/character view <name>`** works for the DM on any character (no crash).
 
 ---

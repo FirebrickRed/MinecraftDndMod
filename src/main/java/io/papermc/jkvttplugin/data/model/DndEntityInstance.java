@@ -124,6 +124,7 @@ public class DndEntityInstance {
         this.instanceId = instanceId;
         INSTANCE_REGISTRY.put(armorStand, this);
         UUID_REGISTRY.put(instanceId, this);
+        updateDeathVisual(); // a restored corpse should load tipped over
     }
 
     // ==================== PERSISTENCE (Issue #89) ====================
@@ -191,8 +192,24 @@ public class DndEntityInstance {
             isDead = true;
         }
         persist();
+        updateDeathVisual();
         // TODO: Update armor stand name to show HP
-        // TODO: Trigger death effects if isDead
+    }
+
+    /** Bring a dead entity back into play (DM fiat): clears death, restores HP, stands it back up. */
+    public void revive(int hp) {
+        isDead = false;
+        currentHp = Math.max(1, Math.min(maxHp, hp));
+        persist();
+        updateDeathVisual();
+    }
+
+    /** Tip the body over when dead so it reads as a corpse; stand it upright when alive. */
+    public void updateDeathVisual() {
+        if (armorStand == null || !armorStand.isValid()) return;
+        armorStand.setHeadPose(isDead
+                ? new org.bukkit.util.EulerAngle(Math.toRadians(90), 0, 0)
+                : new org.bukkit.util.EulerAngle(0, 0, 0));
     }
 
     /**
@@ -226,7 +243,7 @@ public class DndEntityInstance {
     public void setMaxHp(int maxHp) { this.maxHp = maxHp; }
 
     public boolean isDead() { return isDead; }
-    public void setDead(boolean dead) { isDead = dead; persist(); }
+    public void setDead(boolean dead) { isDead = dead; persist(); updateDeathVisual(); }
 
     /**
      * Get the instance-specific shop configuration.

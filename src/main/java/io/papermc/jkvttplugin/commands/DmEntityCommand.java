@@ -78,6 +78,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "spawn" -> handleSpawn(sender, args);
             case "list" -> handleList(sender, args);
             case "remove" -> handleRemove(sender, args);
+            case "revive" -> handleRevive(sender, args);
             case "teleport" -> handleTeleport(sender, args);
             case "info" -> handleInfo(sender, args);
             case "trade" -> handleTrade(sender, args);
@@ -333,6 +334,40 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         // Open stat block menu
         EntityStatBlockMenu.open(player, instance);
+    }
+
+    // ==================== REVIVE SUBCOMMAND (#138) ====================
+
+    private void handleRevive(CommandSender sender, String[] args) {
+        if (args.length < 2) {
+            sender.sendMessage(Component.text("Usage: /dmentity revive <name> [hp]", NamedTextColor.RED));
+            return;
+        }
+
+        String entityName;
+        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 1);
+        entityName = quotedResult != null ? quotedResult.getValue() : args[1];
+
+        DndEntityInstance instance = findEntity(entityName);
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + entityName, NamedTextColor.RED));
+            return;
+        }
+        if (!instance.isDead()) {
+            sender.sendMessage(Component.text(instance.getDisplayName() + " isn't dead.", NamedTextColor.YELLOW));
+            return;
+        }
+
+        // Optional trailing HP amount; default to full.
+        int hp = instance.getMaxHp();
+        String last = args[args.length - 1];
+        if (args.length > 2) {
+            try { hp = Integer.parseInt(last); } catch (NumberFormatException ignored) { /* keep full */ }
+        }
+
+        instance.revive(hp);
+        sender.sendMessage(Component.text("✚ Revived " + instance.getDisplayName()
+                + " (" + instance.getCurrentHp() + "/" + instance.getMaxHp() + " HP).", NamedTextColor.GREEN));
     }
 
     // ==================== TRADE SUBCOMMAND ====================
@@ -1516,6 +1551,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("  - List all spawned entities", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity remove <name...>|all|type <type>|radius <distance>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Remove one or more entities (supports multiple names)", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("/dmentity revive <name> [hp]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  - Bring a dead entity back (default full HP)", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity teleport <name> [x y z]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Teleport entity to location", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity info <name>", NamedTextColor.YELLOW));
@@ -1538,7 +1575,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             // Subcommands
-            return List.of("spawn", "list", "remove", "teleport", "info", "trade", "shop", "spawngroup", "cleanup").stream()
+            return List.of("spawn", "list", "remove", "revive", "teleport", "info", "trade", "shop", "spawngroup", "cleanup").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -1570,6 +1607,14 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                 case "trade":
                     // Suggest spawned entity names
                     return spawnedEntities.values().stream()
+                            .map(DndEntityInstance::getDisplayName)
+                            .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                            .collect(Collectors.toList());
+
+                case "revive":
+                    // Suggest only dead entities
+                    return spawnedEntities.values().stream()
+                            .filter(DndEntityInstance::isDead)
                             .map(DndEntityInstance::getDisplayName)
                             .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
                             .collect(Collectors.toList());

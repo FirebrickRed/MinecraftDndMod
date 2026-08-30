@@ -63,6 +63,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `spawngroup <groupId>` | Spawn a predefined group |
 | `list` | List spawned entities |
 | `remove <name>` | Despawn an entity |
+| `revive <name> [hp]` | Bring a dead entity back (default full HP) |
 | `teleport <name>` | Teleport an entity to you |
 | `info <name>` | Show an entity's stat block |
 | `trade <name>` | Open a merchant's trade GUI |

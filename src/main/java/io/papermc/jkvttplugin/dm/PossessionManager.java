@@ -64,6 +64,10 @@ public class PossessionManager {
             dm.sendMessage(Component.text("That isn't a controllable entity.", NamedTextColor.RED));
             return;
         }
+        if (instance.isDead()) {
+            dm.sendMessage(Component.text(instance.getDisplayName() + " is dead — revive it first (/dmentity revive).", NamedTextColor.RED));
+            return;
+        }
         if (isPossessing(dm.getUniqueId())) endPossession(dm, false); // switch targets cleanly
 
         possessedByDm.put(dm.getUniqueId(), stand);
