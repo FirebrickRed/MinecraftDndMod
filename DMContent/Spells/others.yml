@@ -21,6 +21,10 @@ spells:
     icon: "FIRE_CHARGE"
     save_type: "Dexterity"
     damage_type: "fire"
+    damage: "8d6"
+    save_effect: "half"
+    aoe_shape: "sphere"
+    aoe_size: 20
     higher_levels: "When you cast this spell using a spell slot of 4th level or higher, the damage increases by 1d6 for each slot level above 3rd."
 
   lightning_bolt:

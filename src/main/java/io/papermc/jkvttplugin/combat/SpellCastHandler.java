@@ -92,6 +92,94 @@ public class SpellCastHandler {
         return true;
     }
 
+    /**
+     * Cast an area spell (#149): find every creature in the shape and resolve the spell on each.
+     * Cone/line/burst originate from the caster; sphere centers on where the caster is looking.
+     */
+    public static boolean castAoe(Combatant caster, CombatSession session, Player player, DndSpell spell,
+                                  Integer providedRoll, Integer providedTotal) {
+        CharacterSheet sheet = caster.getCharacterSheet();
+        if (sheet == null) {
+            player.sendMessage(Component.text("Only characters cast spells this way.", NamedTextColor.RED));
+            return false;
+        }
+        Ability ability = spellcastingAbility(sheet);
+        if (ability == null) { player.sendMessage(Component.text("Your class doesn't have spellcasting.", NamedTextColor.RED)); return false; }
+        if (!sheet.getKnownCantrips().contains(spell) && !sheet.getKnownSpells().contains(spell)) {
+            player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
+            return false;
+        }
+        int mod = sheet.getProficiencyBonus() + sheet.getModifier(ability);
+
+        java.util.List<Combatant> affected = creaturesInArea(caster, player, spell);
+        affected.removeIf(c -> c.getId().equals(caster.getId()) || c.isDead()); // the caster isn't caught in their own AoE
+
+        session.broadcast(Component.empty());
+        session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
+                + " (" + spell.getAoeShape() + ", " + spell.getAoeSize() + " ft) — " + affected.size()
+                + " creature" + (affected.size() == 1 ? "" : "s") + " caught!", NamedTextColor.LIGHT_PURPLE));
+
+        if (affected.isEmpty()) return true;
+
+        if (spell.isSaveSpell()) {
+            Ability saveAbility = parseAbility(spell.getSaveType());
+            if (saveAbility == null) { player.sendMessage(Component.text("Invalid save type.", NamedTextColor.RED)); return false; }
+            int dc = 8 + mod;
+            session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation() + " save — each caught creature rolls:", NamedTextColor.GRAY));
+            for (Combatant t : affected) {
+                pendingSaves.put(t.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
+                        spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail()));
+                promptSave(session, t, saveAbility);
+            }
+        } else {
+            session.broadcast(Component.text("(no save defined — the DM applies the effect)", NamedTextColor.DARK_GRAY));
+        }
+        return true;
+    }
+
+    /** Combatants inside the spell's area. */
+    private static java.util.List<Combatant> creaturesInArea(Combatant caster, Player player, DndSpell spell) {
+        java.util.List<Combatant> result = new java.util.ArrayList<>();
+        CombatSession session = CombatSession.getSessionForPlayer(player.getUniqueId());
+        if (session == null) return result;
+        org.bukkit.Location origin = caster.getLocation();
+        if (origin == null) return result;
+        double size = spell.getAoeSize() / 5.0; // feet → blocks
+        String shape = spell.getAoeShape().toLowerCase();
+        org.bukkit.util.Vector dir = player.getEyeLocation().getDirection().setY(0).normalize();
+
+        org.bukkit.Location sphereCenter = null;
+        if (shape.equals("sphere")) {
+            org.bukkit.block.Block aimed = player.getTargetBlockExact(64);
+            sphereCenter = aimed != null ? aimed.getLocation().add(0.5, 0.5, 0.5)
+                    : player.getEyeLocation().add(player.getEyeLocation().getDirection().multiply(20));
+        }
+
+        for (Combatant c : session.getCombatants()) {
+            org.bukkit.Location loc = c.getLocation();
+            if (loc == null || loc.getWorld() == null || !loc.getWorld().equals(origin.getWorld())) continue;
+            boolean in = switch (shape) {
+                case "sphere" -> loc.distance(sphereCenter) <= size;
+                case "burst" -> loc.distance(origin) <= size;
+                case "cone", "line" -> inConeOrLine(origin, dir, loc, size, shape.equals("cone"));
+                default -> false;
+            };
+            if (in) result.add(c);
+        }
+        return result;
+    }
+
+    /** Cone (5e: width == distance from you) or line (5-ft wide) from origin along dir. */
+    private static boolean inConeOrLine(org.bukkit.Location origin, org.bukkit.util.Vector dir,
+                                        org.bukkit.Location target, double lengthBlocks, boolean cone) {
+        org.bukkit.util.Vector v = target.toVector().subtract(origin.toVector());
+        v.setY(0);
+        double along = v.dot(dir);
+        if (along < 0 || along > lengthBlocks) return false;
+        double perp = v.clone().subtract(dir.clone().multiply(along)).length();
+        return cone ? perp <= along / 2.0 : perp <= 0.5; // cone widens; line ~5 ft wide
+    }
+
     /** Send the target's controller a clickable prompt to roll the pending save. */
     private static void promptSave(CombatSession session, Combatant target, Ability ability) {
         String cmd = "/combat save --roll ";

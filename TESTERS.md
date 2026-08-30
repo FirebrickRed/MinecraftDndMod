@@ -68,6 +68,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
       snowflakes, poison → slime, etc. (configured in `DMContent/DamageTypes.yml`).
 - [ ] **Spell fixes**: casting a spell your character **doesn't know** is refused; a **successful save**
       vs a half-damage spell now **auto-halves** (no manual math).
+- [ ] **AoE spells** (#149): `/combat cast fireball` (no target) → it lands where you're **looking**
+      (sphere); `/combat cast thunderwave` bursts around **you**; cones/lines fire in your facing.
+      **Every creature caught** rolls the save (each gets a prompt) → damage/half per their roll.
 - [ ] **Cast spells in combat** (#123): on your turn, `/combat cast fire_bolt <target> --roll <d20>`
       (tab-completes your known spells) → **attack-roll spells** (Fire Bolt) roll vs AC → damage prompt.
       **Save spells** (Poison Spray, Sacred Flame) → the *target* is prompted to roll their save

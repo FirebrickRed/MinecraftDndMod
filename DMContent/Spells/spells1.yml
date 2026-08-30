@@ -113,6 +113,10 @@ spells:
     icon: "TNT"
     save_type: "Constitution"
     damage_type: "thunder"
+    damage: "2d8"
+    save_effect: "half"
+    aoe_shape: "burst"
+    aoe_size: 15
     higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d8 for each slot level above 1st."
 
   sleep:

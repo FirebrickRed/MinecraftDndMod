@@ -897,8 +897,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
             return;
         }
-        if (args.length < 3) {
-            player.sendMessage(Component.text("Usage: /combat cast <spell> <target> [--roll <d20>]", NamedTextColor.RED));
+        if (args.length < 2) {
+            player.sendMessage(Component.text("Usage: /combat cast <spell> [target] [--roll <d20>]", NamedTextColor.RED));
             return;
         }
         io.papermc.jkvttplugin.data.model.DndSpell spell = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(args[1]);
@@ -906,11 +906,18 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
         Integer providedTotal = getFlagValueInt(args, "--total");
-        Combatant target = findCombatantByName(session, stripQuotes(joinArgsExcludingFlags(args, 2)));
-        if (target == null) { player.sendMessage(Component.text("Target not found.", NamedTextColor.RED)); return; }
-        if (target.isDead()) { player.sendMessage(Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.YELLOW)); return; }
 
-        boolean resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal);
+        boolean resolved;
+        if (spell.isAoe()) {
+            // Area spell — aim (cone/line/burst from you, sphere where you look); no named target.
+            resolved = SpellCastHandler.castAoe(caster, session, player, spell, providedRoll, providedTotal);
+        } else {
+            if (args.length < 3) { player.sendMessage(Component.text("Usage: /combat cast " + args[1] + " <target> [--roll <d20>]", NamedTextColor.RED)); return; }
+            Combatant target = findCombatantByName(session, stripQuotes(joinArgsExcludingFlags(args, 2)));
+            if (target == null) { player.sendMessage(Component.text("Target not found.", NamedTextColor.RED)); return; }
+            if (target.isDead()) { player.sendMessage(Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.YELLOW)); return; }
+            resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal);
+        }
         TurnState state = caster.getTurnState();
         if (resolved && state != null && !state.isActionUsed()) {
             state.useAction();
