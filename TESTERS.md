@@ -73,8 +73,11 @@ Newest first. Tick these off after a build to confirm they work in-game.
       (`--roll`, `--total`, and auto-roll all behave identically).
 - [ ] **Roll mode config** (#142): with `rolls.mode: physical` (default in `config.yml`), a bare
       `/combat attack <target> <weapon>` (no `--roll`/`--total`) asks you to roll your d20 (the
-      right-click prompt still fills it). Set `rolls.mode: auto` + `/reloadyaml`-restart → the game
-      auto-rolls again. `--roll`/`--total` always work either way.
+      right-click prompt still fills it). Set `rolls.mode: auto` + restart → the game auto-rolls again.
+- [ ] **Smart `--roll`**: `--roll 14` = "I rolled a 14"; `--roll 1d20` = "game, roll it for me". `--total`
+      = final number. Same for `/character loot` and `/combat deathsave`.
+- [ ] **Players roll their own death saves** (`/combat deathsave --roll 12`); no `--crit` flag anymore
+      (a crit vs a downed creature still counts double failures automatically).
 
 ### Character creation
 - [ ] **Prepared casters** (Cleric/Druid) prepare leveled spells (count = mod + level); changing abilities **resets** prepared spells.

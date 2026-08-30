@@ -181,11 +181,10 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("Right-click a body, then use the prompt (or /character loot <check> <d20>).", NamedTextColor.RED));
             return true;
         }
-        int d20;
-        try {
-            d20 = Integer.parseInt(rest[1].trim());
-        } catch (NumberFormatException e) {
-            player.sendMessage(Component.text("Your d20 roll must be a number 1–20.", NamedTextColor.RED));
+        // --roll style: a number you rolled, or dice like 1d20 for the game to roll.
+        Integer d20 = io.papermc.jkvttplugin.combat.RollService.parseRollArg(rest[1]);
+        if (d20 == null) {
+            player.sendMessage(Component.text("Your roll must be a number (e.g. 14) or dice (e.g. 1d20).", NamedTextColor.RED));
             return true;
         }
         io.papermc.jkvttplugin.loot.LootManager.roll(player, rest[0], d20);

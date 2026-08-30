@@ -19,6 +19,24 @@ public final class RollService {
     public record RollResult(int d20, int total, boolean providedTotal, boolean nat20, boolean nat1, String breakdown) {}
 
     /**
+     * Interpret a {@code --roll} value. A plain number ("12") is the die the player rolled; a dice
+     * expression ("1d20") is one the game rolls for them. Returns the resulting die value, or null
+     * when the argument is empty or unparseable (the caller distinguishes those by the raw string).
+     */
+    public static Integer parseRollArg(String arg) {
+        if (arg == null || arg.isBlank()) return null;
+        if (arg.toLowerCase().contains("d")) {
+            int rolled = DiceRoller.parseDiceRoll(arg); // game rolls the expression
+            return rolled >= 0 ? rolled : null;
+        }
+        try {
+            return Integer.parseInt(arg.trim());
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
      * @param providedRoll  the player's physically-rolled d20, or null
      * @param providedTotal a final total the player computed themselves, or null
      * @param modifier      the bonus to add to a rolled die

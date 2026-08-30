@@ -363,7 +363,6 @@ public class AttackHandler {
         String name = target.getDisplayName();
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
         String typeFlag = (damageType == null || damageType.isEmpty()) ? "" : " --type " + damageType;
-        String critFlag = isCrit ? " --crit" : "";
 
         // Split "1d8+3" into the dice you physically roll ("1d8") and the flat bonus (3). This mirrors
         // attack rolls: you roll the dice, the game adds the known modifier via --roll <your result>.
@@ -372,14 +371,16 @@ public class AttackHandler {
         int bonus = split[0];
         boolean hasDice = dice.toLowerCase().contains("d");
 
+        // Remember the bonus + crit on the pending-damage window so /combat damage applies them
+        // automatically — no user-facing --crit flag (crit only matters vs a downed creature).
         if (attacker.getTurnState() != null) {
-            attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0);
+            attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0, isCrit);
         }
 
         Component prompt;
         if (hasDice) {
             // Clickable: fills the command with --roll open for the player's physical damage roll.
-            String cmd = "/combat damage " + quoted + typeFlag + critFlag + " --roll ";
+            String cmd = "/combat damage " + quoted + typeFlag + " --roll ";
             String bonusStr = bonus > 0 ? " +" + bonus : (bonus < 0 ? " " + bonus : "");
             prompt = Component.text("→ Apply damage — roll " + dice + ", the game adds" + (bonus == 0 ? " nothing" : bonusStr) + ": ", NamedTextColor.YELLOW)
                     .append(Component.text("[click, then type your damage roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
@@ -389,7 +390,7 @@ public class AttackHandler {
         } else {
             // Flat damage (e.g. unarmed): nothing to roll — one click applies it.
             String amt = (damageStr == null || damageStr.isEmpty()) ? "1" : damageStr;
-            String cmd = "/combat damage " + quoted + " " + amt + typeFlag + critFlag;
+            String cmd = "/combat damage " + quoted + " " + amt + typeFlag;
             prompt = Component.text("→ Apply damage (" + amt + "): ", NamedTextColor.YELLOW)
                     .append(Component.text("[click to apply]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                             .clickEvent(ClickEvent.suggestCommand(cmd))

@@ -826,12 +826,17 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Parse flags
+        // Parse flags. --roll takes a number (you rolled it) or dice like 1d20 (the game rolls it).
         boolean showMods = hasFlag(args, "--showmods");
-        Integer providedRoll = getFlagValueInt(args, "--roll");
+        String rollArg = getFlagValue(args, "--roll");
+        Integer providedRoll = RollService.parseRollArg(rollArg);
+        if (rollArg != null && !rollArg.isBlank() && providedRoll == null) {
+            player.sendMessage(Component.text("Invalid --roll: " + rollArg + " — use a number (e.g. 14) or dice (e.g. 1d20).", NamedTextColor.RED));
+            return;
+        }
         Integer providedTotal = getFlagValueInt(args, "--total");
 
-        // A physical d20 face must be 1-20; reject out-of-range values.
+        // A d20 result must be 1-20; reject out-of-range values.
         if (providedRoll != null && (providedRoll < 1 || providedRoll > 20)) {
             player.sendMessage(Component.text("A d20 roll must be between 1 and 20.", NamedTextColor.RED));
             return;
@@ -1124,8 +1129,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
                 if (!hasAttachedValue) {
                     // Separated format: skip flag AND next arg (its value)
-                    // But only if the flag expects a value (valueless flags: --showmods, --crit)
-                    boolean valueless = flagPart.equals("--showmods") || flagPart.equals("--crit");
+                    // But only if the flag expects a value (valueless flags: --showmods)
+                    boolean valueless = flagPart.equals("--showmods");
                     if (!valueless && i + 1 < args.length && !args[i + 1].startsWith("--")) {
                         i++; // skip the value after the flag
                     }
@@ -1170,11 +1175,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         String rollStr = getFlagValue(args, "--roll");
         Integer total = getFlagValueInt(args, "--total");
         String type = getFlagValue(args, "--type");
-        boolean crit = hasFlag(args, "--crit");
+        // Crit comes from the attack that opened this damage window, not a flag (matters only vs a
+        // downed creature: a critical hit while they're down is 2 death-save failures, not 1).
+        boolean crit = !isOverride && attacker != null && attacker.getTurnState() != null
+                && attacker.getTurnState().isPendingDamageCrit();
 
         List<String> positional = collectPositionalArgs(args, 1);
         if (positional.isEmpty()) {
-            dm.sendMessage(Component.text("Usage: /combat damage <target> [amount] [--roll <dice>] [--total <n>] [--type <type>] [--crit]", NamedTextColor.RED));
+            dm.sendMessage(Component.text("Usage: /combat damage <target> [amount] [--roll <dice>] [--total <n>] [--type <type>]", NamedTextColor.RED));
             return;
         }
 
@@ -1329,8 +1337,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (session == null) return;
 
         boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
-        // Players roll their own death saves (trust-based, like the rest of the table).
-        Integer providedRoll = getFlagValueInt(args, "--roll");
+        // Players roll their own death saves (trust-based); --roll is a number or dice (e.g. 1d20).
+        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
         List<String> positional = collectPositionalArgs(args, 1);
 
         // DM may roll for a named downed player; otherwise you roll for yourself.
@@ -1878,7 +1886,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
             if (lastArg.startsWith("--")) {
                 if (args[0].equalsIgnoreCase("damage") || args[0].equalsIgnoreCase("override")) {
-                    completions.addAll(List.of("--roll", "--total", "--type", "--crit"));
+                    completions.addAll(List.of("--roll", "--total", "--type"));
                 } else if (args[0].equalsIgnoreCase("heal")) {
                     completions.addAll(List.of("--roll", "--total"));
                 }
