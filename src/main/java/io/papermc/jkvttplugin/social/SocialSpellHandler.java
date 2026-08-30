@@ -3,6 +3,9 @@ package io.papermc.jkvttplugin.social;
 import io.papermc.jkvttplugin.JkVttPlugin;
 import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
 import io.papermc.jkvttplugin.character.CharacterSheet;
+import io.papermc.jkvttplugin.combat.Combatant;
+import io.papermc.jkvttplugin.combat.CombatSession;
+import io.papermc.jkvttplugin.combat.TurnState;
 import io.papermc.jkvttplugin.data.model.DndSpell;
 import io.papermc.jkvttplugin.dm.DMManager;
 import net.kyori.adventure.text.Component;
@@ -34,8 +37,10 @@ import java.util.concurrent.ConcurrentHashMap;
  *       ({@code /dm animalreply}); other nearby players hear only animal noises (gibberish).</li>
  * </ul>
  *
- * Casting is out-of-combat and free (these are a cantrip and a ritual). When the caster gives no
- * words inline, we set a pending cast and capture their next chat line as the spell's words.
+ * These can be cast in or out of combat — they're 1-action spells, so casting one on your own combat
+ * turn spends your action (out of combat it's free; ritual-in-combat, which takes 10 minutes, isn't
+ * modeled). When the caster gives no words inline, we set a pending cast and capture their next chat
+ * line as the spell's words.
  */
 public class SocialSpellHandler implements Listener {
 
@@ -154,6 +159,7 @@ public class SocialSpellHandler implements Listener {
                 .hoverEvent(HoverEvent.showText(Component.text("Whisper back to " + caster.getName()))));
         caster.sendMessage(Component.text("You whisper to " + target.getName() + ": ", NamedTextColor.LIGHT_PURPLE)
                 .append(Component.text(words, NamedTextColor.GRAY)));
+        chargeCombatAction(caster);
     }
 
     private static void deliverSpeak(Player caster, DndSpell spell, String rawWords) {
@@ -169,6 +175,8 @@ public class SocialSpellHandler implements Listener {
                 near.sendMessage(Component.text(caster.getName() + " " + gibberish() + " at the animals.", NamedTextColor.GRAY, TextDecoration.ITALIC));
             }
         }
+
+        chargeCombatAction(caster);
 
         // DMs voice the animals' reply.
         List<Player> dms = onlineDms();
@@ -223,6 +231,22 @@ public class SocialSpellHandler implements Listener {
         if (parts.length <= limit) return words;
         caster.sendMessage(Component.text("Your message was cut to " + limit + " words.", NamedTextColor.YELLOW));
         return String.join(" ", java.util.Arrays.copyOfRange(parts, 0, limit));
+    }
+
+    /**
+     * If the caster is in an active combat and it's their turn, a 1-action social spell spends their
+     * action. Off-turn casting (e.g. a free Message reply) and out-of-combat casting cost nothing.
+     */
+    private static void chargeCombatAction(Player caster) {
+        CombatSession session = CombatSession.getSessionForPlayer(caster.getUniqueId());
+        if (session == null || session.isSetupPhase()) return;
+        Combatant current = session.getCurrentCombatant();
+        if (current == null || !current.isPlayer() || !current.getId().equals(caster.getUniqueId())) return;
+        TurnState state = current.getTurnState();
+        if (state == null || state.isActionUsed()) return;
+        state.useAction();
+        session.sendActionBar(current);
+        caster.sendMessage(Component.text("(That spent your action this turn.)", NamedTextColor.GRAY, TextDecoration.ITALIC));
     }
 
     private static boolean inRange(Player a, Player b) {

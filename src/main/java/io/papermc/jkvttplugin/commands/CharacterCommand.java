@@ -234,7 +234,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     /**
      * {@code /character cast <spell> [target] [message…]} — cast a social/roleplay spell (#151).
      * Combat spells (attack/save) are cast with {@code /combat cast}; this is for chat spells like
-     * Message and Speak with Animals.
+     * Message and Speak with Animals. Works in or out of combat — cast on your turn it spends your action.
      */
     private boolean handleCast(CommandSender sender, String[] rest) {
         if (!(sender instanceof Player player)) {

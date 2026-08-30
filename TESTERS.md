@@ -76,8 +76,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
       a 25-word cap. `/character cast speak_with_animals [words…]` → **you** see your words, **nearby other
       players** hear only animal noises, and **online DMs** get a **[reply as the creature]** button
       (`/dm animalreply <player> <words>`) whose reply you understand but others hear as noises. Omit the
-      words and you're prompted to type them in chat (or `cancel`). Cast out of combat; your character must
-      **know** the spell.
+      words and you're prompted to type them in chat (or `cancel`). Castable **in or out of combat** — cast
+      on your combat turn it **spends your action** (a free Message reply on someone else's turn doesn't);
+      your character must **know** the spell.
 - [ ] **Cast spells in combat** (#123): on your turn, `/combat cast fire_bolt <target> --roll <d20>`
       (tab-completes your known spells) → **attack-roll spells** (Fire Bolt) roll vs AC → damage prompt.
       **Save spells** (Poison Spray, Sacred Flame) → the *target* is prompted to roll their save
