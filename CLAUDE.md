@@ -172,9 +172,10 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
   This is what everyone sees, and the fallback for players without the resource pack.
   Used by the things a player physically receives: **weapons, armor, items**. Absent/invalid
   → a sensible per-type default (weapons → `IRON_SWORD`/`BOW`, items → `PAPER`, armor → its slot).
-  **Spells** follow the same convention: `material:` (legacy `icon:` still accepted) sets the base
-  item, absent → a level-based default (cantrip → `PAPER`, low → `BOOK`, high → `ENCHANTED_BOOK`);
-  `custom_model:` is optional. (No auto `spell_<name>` model — that produced purple placeholders.)
+  **Spells** follow the same convention: `material:` sets the base item, absent → a level-based
+  default (cantrip → `PAPER`, low → `BOOK`, high → `ENCHANTED_BOOK`); `custom_model:` is optional.
+  (No auto `spell_<name>` model — that produced purple placeholders. The old spell `icon:` key was
+  renamed to `material:`.)
 - **`custom_model:`** — the **resource-pack model name** to overlay if the pack is loaded
   (e.g. `custom_model: bard_icon` → the pack's `bard_icon` model in the `jkvttresourcepack`
   namespace). Optional and opt-in: absent/blank → keeps the vanilla `material`/item. Used by

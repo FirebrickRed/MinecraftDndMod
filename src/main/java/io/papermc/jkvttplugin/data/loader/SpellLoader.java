@@ -80,10 +80,9 @@ public class SpellLoader {
         String description = LoaderUtils.asString(data.get("description"), "");
         boolean concentration = asBoolean(data.get("concentration"), false);
         boolean ritual = asBoolean(data.get("ritual"), false);
-        // Icons follow the shared convention: `material:` (or legacy `icon:`) is the vanilla item to
-        // render; absent → a level-based default (chosen in createItemStack). `custom_model:` is optional.
-        String materialStr = LoaderUtils.asString(data.get("material"), LoaderUtils.asString(data.get("icon"), null));
-        Material icon = parseIcon(materialStr); // null when absent/invalid → level default
+        // Icons follow the shared convention: `material:` is the vanilla item to render; absent → a
+        // level-based default (chosen in createItemStack). `custom_model:` is optional and opt-in.
+        Material material = parseMaterial(LoaderUtils.asString(data.get("material"), null)); // null → level default
         String higherLevels = LoaderUtils.asString(data.get("higher_levels"), null);
         String attackType = LoaderUtils.asString(data.get("attack_type"), null);
         String saveType = LoaderUtils.asString(data.get("save_type"), null);
@@ -101,7 +100,7 @@ public class SpellLoader {
                 .description(description)
                 .concentration(concentration)
                 .ritual(ritual)
-                .icon(icon)
+                .material(material)
                 .higherLevels(higherLevels)
                 .attackType(attackType)
                 .saveType(saveType)
@@ -148,12 +147,12 @@ public class SpellLoader {
     }
 
     /** Parse a vanilla Material for the spell's base item; null if absent or invalid (→ level default). */
-    private static Material parseIcon(String iconString) {
-        if (iconString == null || iconString.isBlank()) return null;
+    private static Material parseMaterial(String materialString) {
+        if (materialString == null || materialString.isBlank()) return null;
         try {
-            return Material.valueOf(iconString.trim().toUpperCase());
+            return Material.valueOf(materialString.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            LOGGER.warning("Unknown spell material/icon '" + iconString + "' — using the level-based default.");
+            LOGGER.warning("Unknown spell material '" + materialString + "' — using the level-based default.");
             return null;
         }
     }

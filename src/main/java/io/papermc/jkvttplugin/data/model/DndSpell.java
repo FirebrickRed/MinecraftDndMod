@@ -23,7 +23,7 @@ public class DndSpell {
     private String description;
     private boolean concentration;
     private boolean ritual;
-    private Material icon;         // explicit vanilla base item to render (null → a level-based default)
+    private Material material;      // explicit vanilla base item to render (null → a level-based default)
     private String customModel;    // optional resource-pack model name, applied only if the pack has it
     private String higherLevels;
     private String attackType;
@@ -141,12 +141,12 @@ public class DndSpell {
         this.ritual = ritual;
     }
 
-    public Material getIcon() {
-        return icon;
+    public Material getMaterial() {
+        return material;
     }
 
-    public void setIcon(Material icon) {
-        this.icon = icon;
+    public void setMaterial(Material material) {
+        this.material = material;
     }
 
     public String getCustomModel() { return customModel; }
@@ -298,15 +298,15 @@ public class DndSpell {
                 .addWrappedText(higherLevels, NamedTextColor.LIGHT_PURPLE);
         }
 
-        // The vanilla item everyone sees: an explicit `material`/`icon` if given, else a level-based default.
-        Material material = icon != null ? icon : getSpellMaterial();
+        // The vanilla item everyone sees: an explicit `material:` if given, else a level-based default.
+        Material base = material != null ? material : getSpellMaterial();
 
         ItemStack item = Util.createItem(
                 Component.text(name, getSpellLevelColor()),
                 lore.build(),
                 null,
                 1,
-                material
+                base
         );
         // Only overlay a resource-pack model when one is explicitly supplied (avoids purple placeholders).
         if (customModel != null && !customModel.isBlank()) {
@@ -404,8 +404,8 @@ public class DndSpell {
             return this;
         }
 
-        public Builder icon(Material icon) {
-            spell.setIcon(icon);
+        public Builder material(Material material) {
+            spell.setMaterial(material);
             return this;
         }
 
