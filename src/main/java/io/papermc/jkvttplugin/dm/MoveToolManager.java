@@ -113,6 +113,10 @@ public class MoveToolManager {
                 dm.sendActionBar(Component.text("It's not " + inst.getDisplayName() + "'s turn.", NamedTextColor.RED));
                 return false;
             }
+            if (current.isImmobilized()) {
+                dm.sendActionBar(Component.text(inst.getDisplayName() + " can't move (a condition holds it in place).", NamedTextColor.RED));
+                return false;
+            }
             // Hard-cap the destination at the entity's speed — it can't move past its budget.
             Location capped = capToBudget(current, d);
             boolean wasCapped = capped != d;

@@ -799,6 +799,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("It's not " + actor.getDisplayName() + "'s turn.", NamedTextColor.RED));
             return;
         }
+        if (actor.cannotAct()) {
+            player.sendMessage(Component.text(actor.getDisplayName() + " can't act — " + actor.actionBlockingCondition() + ".", NamedTextColor.RED));
+            return;
+        }
 
         String name = args.length >= 2 ? args[1].toLowerCase() : null;
         if (name == null) {
@@ -870,6 +874,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("It's not " + target.getDisplayName() + "'s turn.", NamedTextColor.RED));
             return;
         }
+        if (target.cannotAct()) {
+            player.sendMessage(Component.text(target.getDisplayName() + " can't act — " + target.actionBlockingCondition() + ".", NamedTextColor.RED));
+            return;
+        }
 
         if (state.isBonusActionUsed()) {
             player.sendMessage(Component.text(target.getDisplayName() + " has already used their Bonus Action.", NamedTextColor.YELLOW));
@@ -895,6 +903,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (caster == null) { player.sendMessage(Component.text("No active turn.", NamedTextColor.RED)); return; }
         if (!isDM && (!caster.isPlayer() || !caster.getId().equals(player.getUniqueId()))) {
             player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
+            return;
+        }
+        if (caster.cannotAct()) {
+            player.sendMessage(Component.text(caster.getDisplayName() + " can't act — " + caster.actionBlockingCondition() + ".", NamedTextColor.RED));
             return;
         }
         if (args.length < 2) {
@@ -1124,6 +1136,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // (Entities are always DM-controlled — never let a player drive a monster.)
         if (!isDM && (!attacker.isPlayer() || !attacker.getId().equals(player.getUniqueId()))) {
             player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
+            return;
+        }
+
+        if (attacker.cannotAct()) {
+            player.sendMessage(Component.text(attacker.getDisplayName() + " can't act — " + attacker.actionBlockingCondition() + ".", NamedTextColor.RED));
             return;
         }
 

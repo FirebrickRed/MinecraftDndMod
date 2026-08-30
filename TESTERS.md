@@ -80,7 +80,13 @@ Newest first. Tick these off after a build to confirm they work in-game.
       it shows on the scoreboard `[Pron]` and reminds (with rules on hover) at the start of their turn.
       `/combat condition <target>` lists theirs; `/combat condition list` shows all. **Dodge/Disengage**
       from the action menu now apply the **Dodging/Disengaging** condition, which auto-clears at the
-      start of that creature's next turn. (Effects are DM-interpreted for now — display only.)
+      start of that creature's next turn. (Most effects are DM-interpreted — display only.)
+- [ ] **Conditions actually enforce** (#150): a creature that's **Grappled/Restrained/Paralyzed/
+      Petrified/Stunned/Unconscious** can't move — its **speed is 0** (players hit an invisible wall
+      away from the start; the DM's Move tool refuses it). **Incapacitated/Paralyzed/Petrified/Stunned/
+      Unconscious** also **can't act** — `/combat attack`, `/combat cast`, `/combat action`, and
+      `/combat bonus` are all refused with the blocking condition named. (Flags are data-driven:
+      `no_movement`/`no_actions` in `DMContent/Conditions/conditions.yml`.)
 - [ ] **Action menu** (#143): `/combat action` on your turn lists clickable actions (Attack, Dash,
       Dodge, Disengage, Help, Hide, Ready, Search, Use). Clicking one spends your action and announces
       it; **Dash doubles your movement** (green ring + wall both grow). `/combat action <name>` also works.

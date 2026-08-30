@@ -27,12 +27,14 @@ frightened:
 
 grappled:
   name: "Grappled"
+  no_movement: true
   rules:
     - "Speed becomes 0; can't benefit from bonuses to speed."
     - "Ends if the grappler is incapacitated or the two are separated."
 
 incapacitated:
   name: "Incapacitated"
+  no_actions: true
   rules:
     - "Can't take actions or reactions."
 
@@ -45,6 +47,8 @@ invisible:
 
 paralyzed:
   name: "Paralyzed"
+  no_movement: true
+  no_actions: true
   minecraft_effect: SLOWNESS
   minecraft_effect_amplifier: 6   # near-rooted
   rules:
@@ -54,6 +58,8 @@ paralyzed:
 
 petrified:
   name: "Petrified"
+  no_movement: true
+  no_actions: true
   rules:
     - "Turned to solid substance; incapacitated, can't move or speak, unaware."
     - "Resistance to all damage; immune to poison and disease."
@@ -72,6 +78,7 @@ prone:
 
 restrained:
   name: "Restrained"
+  no_movement: true
   minecraft_effect: SLOWNESS
   rules:
     - "Speed 0. Disadvantage on attacks and DEX saves."
@@ -79,6 +86,8 @@ restrained:
 
 stunned:
   name: "Stunned"
+  no_movement: true
+  no_actions: true
   minecraft_effect: SLOWNESS
   minecraft_effect_amplifier: 4
   rules:
@@ -87,6 +96,8 @@ stunned:
 
 unconscious:
   name: "Unconscious"
+  no_movement: true
+  no_actions: true
   rules:
     - "Incapacitated, can't move or speak, unaware; drops what it's holding and falls prone."
     - "Auto-fails STR and DEX saves. Attacks have advantage; hits within 5 ft are crits."

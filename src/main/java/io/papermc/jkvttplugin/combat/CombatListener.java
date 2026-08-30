@@ -87,6 +87,16 @@ public class CombatListener implements Listener {
         double dz = event.getTo().getBlockZ() - startLoc.getBlockZ();
         double blocksFromStart = Math.sqrt(dx * dx + dy * dy + dz * dz);
         double feetFromStart = blocksFromStart * 5.0;
+
+        // A condition may set speed to 0 (Restrained, Paralyzed, …) — no moving away from the start (#150).
+        if (tracked.isImmobilized() && feetFromStart > 0.5) {
+            event.setCancelled(true);
+            if (!turnState.hasMovementWarned()) {
+                turnState.setMovementWarned(true);
+                player.sendActionBar(Component.text("⚠ " + tracked.getDisplayName() + " can't move (a condition holds it in place).", NamedTextColor.RED));
+            }
+            return;
+        }
         // Hard cap: you can't move outside your speed range (the green ring). Block any step that
         // would take you past your budget; moving back within range is always allowed.
         if (feetFromStart > turnState.getEffectiveMovementBudget()) {

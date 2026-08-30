@@ -21,6 +21,12 @@ public class DndCondition {
     /** Potion amplifier (0 = level I). Optional; lets e.g. Paralyzed use a stronger Slowness. */
     private int minecraftEffectAmplifier;
 
+    // Mechanical enforcement (Issue #150):
+    /** Speed 0 — the creature can't move (Restrained, Grappled, Paralyzed, Stunned, …). */
+    private boolean noMovement;
+    /** Can't take actions or reactions (Incapacitated, Stunned, Paralyzed, Unconscious, …). */
+    private boolean noActions;
+
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
 
@@ -38,4 +44,10 @@ public class DndCondition {
 
     public int getMinecraftEffectAmplifier() { return minecraftEffectAmplifier; }
     public void setMinecraftEffectAmplifier(int amplifier) { this.minecraftEffectAmplifier = amplifier; }
+
+    public boolean isNoMovement() { return noMovement; }
+    public void setNoMovement(boolean noMovement) { this.noMovement = noMovement; }
+
+    public boolean isNoActions() { return noActions; }
+    public void setNoActions(boolean noActions) { this.noActions = noActions; }
 }

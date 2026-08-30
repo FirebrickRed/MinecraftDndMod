@@ -57,6 +57,8 @@ public class ConditionLoader {
         if (data.get("until_next_turn") instanceof Boolean b) c.setUntilNextTurn(b);
         if (data.get("minecraft_effect") instanceof String eff) c.setMinecraftEffect(eff);
         if (data.get("minecraft_effect_amplifier") instanceof Number amp) c.setMinecraftEffectAmplifier(amp.intValue());
+        if (data.get("no_movement") instanceof Boolean nm) c.setNoMovement(nm);
+        if (data.get("no_actions") instanceof Boolean na) c.setNoActions(na);
         return c;
     }
 

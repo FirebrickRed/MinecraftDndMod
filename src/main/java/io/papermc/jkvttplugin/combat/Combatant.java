@@ -182,6 +182,26 @@ public class Combatant {
     public boolean removeCondition(String id) { return conditions.remove(id); }
     public boolean hasCondition(String id) { return conditions.contains(id); }
 
+    /** True if a condition sets this creature's speed to 0 (Restrained, Paralyzed, …) (#150). */
+    public boolean isImmobilized() { return anyCondition(true); }
+    /** True if a condition prevents actions/reactions (Incapacitated, Stunned, …) (#150). */
+    public boolean cannotAct() { return anyCondition(false); }
+    private boolean anyCondition(boolean movement) {
+        for (String id : conditions) {
+            io.papermc.jkvttplugin.data.model.DndCondition c = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(id);
+            if (c != null && (movement ? c.isNoMovement() : c.isNoActions())) return true;
+        }
+        return false;
+    }
+    /** The display name of the first condition blocking actions, or null. */
+    public String actionBlockingCondition() {
+        for (String id : conditions) {
+            io.papermc.jkvttplugin.data.model.DndCondition c = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(id);
+            if (c != null && c.isNoActions()) return c.getName();
+        }
+        return null;
+    }
+
     public boolean isDead() { return isDead; }
     public void setDead(boolean dead) { isDead = dead; }
 
