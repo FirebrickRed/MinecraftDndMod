@@ -37,10 +37,11 @@ import java.util.concurrent.ConcurrentHashMap;
  *       ({@code /dm animalreply}); other nearby players hear only animal noises (gibberish).</li>
  * </ul>
  *
- * These can be cast in or out of combat — they're 1-action spells, so casting one on your own combat
- * turn spends your action (out of combat it's free; ritual-in-combat, which takes 10 minutes, isn't
- * modeled). When the caster gives no words inline, we set a pending cast and capture their next chat
- * line as the spell's words.
+ * These can be cast in or out of combat — they're 1-action spells. Out of combat it's free; in combat
+ * you may only cast on your own turn (off-turn casting is refused — the Ready action is future work),
+ * and doing so spends your action. Ritual-in-combat (10 minutes ≈ 100 rounds) isn't modeled here.
+ * When the caster gives no words inline, we set a pending cast and capture their next chat line as the
+ * spell's words.
  */
 public class SocialSpellHandler implements Listener {
 
@@ -74,6 +75,9 @@ public class SocialSpellHandler implements Listener {
             caster.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
             return;
         }
+        // Refuse off-turn (or out-of-actions) up front so we never prompt someone who can't cast.
+        // The action is actually spent at delivery, so cancelling the prompt costs nothing.
+        if (!combatGate(caster, false)) return;
 
         String type = spell.getSocialType().toLowerCase();
         switch (type) {
@@ -150,6 +154,7 @@ public class SocialSpellHandler implements Listener {
     // ==================== DELIVERY ====================
 
     private static void deliverMessage(Player caster, Player target, DndSpell spell, String rawWords) {
+        if (!combatGate(caster, true)) return;
         String words = clampWords(caster, rawWords, spell.getWordLimit());
         // Private: only the target sees it, with a one-click whispered reply back.
         target.sendMessage(Component.text(caster.getName() + " whispers (" + spell.getName() + "): ", NamedTextColor.LIGHT_PURPLE)
@@ -159,10 +164,10 @@ public class SocialSpellHandler implements Listener {
                 .hoverEvent(HoverEvent.showText(Component.text("Whisper back to " + caster.getName()))));
         caster.sendMessage(Component.text("You whisper to " + target.getName() + ": ", NamedTextColor.LIGHT_PURPLE)
                 .append(Component.text(words, NamedTextColor.GRAY)));
-        chargeCombatAction(caster);
     }
 
     private static void deliverSpeak(Player caster, DndSpell spell, String rawWords) {
+        if (!combatGate(caster, true)) return;
         String words = clampWords(caster, rawWords, spell.getWordLimit());
         caster.sendMessage(Component.text("You speak to the animals: ", NamedTextColor.GREEN)
                 .append(Component.text(words, NamedTextColor.WHITE)));
@@ -175,8 +180,6 @@ public class SocialSpellHandler implements Listener {
                 near.sendMessage(Component.text(caster.getName() + " " + gibberish() + " at the animals.", NamedTextColor.GRAY, TextDecoration.ITALIC));
             }
         }
-
-        chargeCombatAction(caster);
 
         // DMs voice the animals' reply.
         List<Player> dms = onlineDms();
@@ -234,19 +237,33 @@ public class SocialSpellHandler implements Listener {
     }
 
     /**
-     * If the caster is in an active combat and it's their turn, a 1-action social spell spends their
-     * action. Off-turn casting (e.g. a free Message reply) and out-of-combat casting cost nothing.
+     * Combat action gate. Out of combat, always allowed and free. In combat you may only cast on your
+     * own turn (off-turn casting is refused — the Ready action is future work), and doing so spends
+     * your action. Returns {@code false} (after messaging the caster) when the cast is refused.
+     *
+     * @param spend when true and the caster is on their turn, actually consume the action
      */
-    private static void chargeCombatAction(Player caster) {
+    private static boolean combatGate(Player caster, boolean spend) {
         CombatSession session = CombatSession.getSessionForPlayer(caster.getUniqueId());
-        if (session == null || session.isSetupPhase()) return;
+        if (session == null || session.isSetupPhase()) return true; // out of combat: free
         Combatant current = session.getCurrentCombatant();
-        if (current == null || !current.isPlayer() || !current.getId().equals(caster.getUniqueId())) return;
+        boolean myTurn = current != null && current.isPlayer() && current.getId().equals(caster.getUniqueId());
+        if (!myTurn) {
+            caster.sendMessage(Component.text("You can only cast a spell on your turn in combat.", NamedTextColor.RED));
+            return false;
+        }
         TurnState state = current.getTurnState();
-        if (state == null || state.isActionUsed()) return;
-        state.useAction();
-        session.sendActionBar(current);
-        caster.sendMessage(Component.text("(That spent your action this turn.)", NamedTextColor.GRAY, TextDecoration.ITALIC));
+        if (state == null) return true;
+        if (state.isActionUsed()) {
+            caster.sendMessage(Component.text("You've already used your action this turn.", NamedTextColor.RED));
+            return false;
+        }
+        if (spend) {
+            state.useAction();
+            session.sendActionBar(current);
+            caster.sendMessage(Component.text("(That spent your action this turn.)", NamedTextColor.GRAY, TextDecoration.ITALIC));
+        }
+        return true;
     }
 
     private static boolean inRange(Player a, Player b) {
