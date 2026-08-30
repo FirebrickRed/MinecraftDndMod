@@ -4,8 +4,8 @@ main: io.papermc.jkvttplugin.JkVttPlugin
 api-version: '1.21'
 commands:
   character:
-    description: Character commands (create, view, list, close, rest, give, delete, loot).
-    usage: /character <create|view|list|close|rest|give|delete|loot>
+    description: Character commands (create, view, list, close, rest, give, delete, loot, check, cast).
+    usage: /character <create|view|list|close|rest|give|delete|loot|check|cast>
   roll:
     description: Roll dice using XdY format (e.g., 2d6+3).
     usage: /roll <XdY[+Z]>

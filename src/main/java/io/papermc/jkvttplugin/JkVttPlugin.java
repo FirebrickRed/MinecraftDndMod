@@ -63,6 +63,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new ShopListener(this), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.CombatListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.loot.LootListener(), this);
+        Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.social.SocialSpellHandler(), this);
 
         // Commands — five consolidated roots (Issue #122). The legacy per-action command
         // classes still exist and are delegated to from CharacterCommand / DmCommand; they

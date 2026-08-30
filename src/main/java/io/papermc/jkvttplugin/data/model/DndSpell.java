@@ -35,6 +35,10 @@ public class DndSpell {
     private String aoeShape;          // "sphere"/"cone"/"line"/"burst" — an area spell (#149); null = single target
     private int aoeSize;              // area size in feet (radius for sphere, length for cone/line)
     private String aoeTargets = "all"; // who the area affects: "all" | "enemies" | "allies"
+    // Social / roleplay spells (Issue #151): a chat spell opens a message prompt instead of rolling.
+    private String socialType;        // "message" (private whisper), "sending" (whisper, any range),
+                                      // "speak_with_animals" (DM relays; others hear gibberish); null = not social
+    private int wordLimit;            // max words the caster may send (0 = unlimited)
 
     public DndSpell() {}
 
@@ -188,6 +192,14 @@ public class DndSpell {
     public void setAoeSize(int aoeSize) { this.aoeSize = aoeSize; }
     public String getAoeTargets() { return aoeTargets; }
     public void setAoeTargets(String aoeTargets) { this.aoeTargets = aoeTargets != null ? aoeTargets : "all"; }
+
+    public String getSocialType() { return socialType; }
+    public void setSocialType(String socialType) { this.socialType = socialType; }
+    public int getWordLimit() { return wordLimit; }
+    public void setWordLimit(int wordLimit) { this.wordLimit = wordLimit; }
+
+    /** True if this spell is a chat/social spell that opens a message prompt instead of rolling (#151). */
+    public boolean isSocial() { return socialType != null && !socialType.isBlank(); }
 
     /** True if this spell affects an area (rather than a single target). */
     public boolean isAoe() { return aoeShape != null && !aoeShape.isBlank(); }

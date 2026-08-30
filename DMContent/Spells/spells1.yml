@@ -391,6 +391,7 @@ spells:
     concentration: false
     ritual: true
     icon: "PARROT_SPAWN_EGG"
+    social_type: "speak_with_animals"
 
   bless:
     name: "Bless"

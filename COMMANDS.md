@@ -20,9 +20,11 @@ prints that command's own help.
 | `/character rest short` | Short rest — recover short-rest resources |
 | `/character rest long` | Long rest — full HP, spell slots, resources |
 | `/character loot <check> <d20>` | Search a body you right-clicked (usually filled by the prompt) |
+| `/character check <type> <value> [--roll n]` | Resolve a skill/ability/save roll (usually filled by the sheet prompt) |
+| `/character cast <spell> [target] [message…]` | Cast a chat/social spell — Message, Speak with Animals (#151) |
 | `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
 
-`/character` is aliased to `/char`. DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the five roots below.
+DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the five roots below.
 
 **In combat, on your own turn only:**
 `/combat action` · `/combat bonus` · `/combat attack <target>` · `/combat damage <target>` · `/combat endturn` · `/combat deathsave`
@@ -81,6 +83,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `give <player> <item_id> [amount]` | Give a D&D item |
 | `promptcheck <player> <ability\|save\|skill> <name> [adv\|dis]` | Prompt a player to roll a check |
 | `lootprompt <player> <check>` | Call a loot check for a player searching a body (usually clicked, not typed) |
+| `animalreply <player> <message…>` | Voice the animals' reply to a Speak with Animals caster (usually clicked) |
 | `rest <character> <short\|long>` | Force a rest |
 | `resource restore <character> <name\|all>` | Restore a class resource |
 | `resource consume <character> <name> [amount]` | Spend a class resource |

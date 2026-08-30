@@ -113,6 +113,9 @@ public class SpellLoader {
         spell.setAoeShape(LoaderUtils.asString(data.get("aoe_shape"), null));
         if (data.get("aoe_size") instanceof Number n) spell.setAoeSize(n.intValue());
         spell.setAoeTargets(LoaderUtils.asString(data.get("aoe_targets"), "all"));
+        // Social / roleplay spells (#151).
+        spell.setSocialType(LoaderUtils.asString(data.get("social_type"), null));
+        if (data.get("word_limit") instanceof Number wl) spell.setWordLimit(wl.intValue());
         return spell;
     }
 

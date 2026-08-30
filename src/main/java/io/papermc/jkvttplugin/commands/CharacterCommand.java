@@ -45,7 +45,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final ShortRestCommand shortRestExec = new ShortRestCommand();
     private final LongRestCommand longRestExec = new LongRestCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete", "loot", "check");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete", "loot", "check", "cast");
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -109,6 +109,9 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "check" -> {
                 return handleCheck(sender, rest);
+            }
+            case "cast" -> {
+                return handleCast(sender, rest);
             }
             default -> {
                 sender.sendMessage(Component.text("Unknown subcommand: " + sub, NamedTextColor.RED));
@@ -228,6 +231,43 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * {@code /character cast <spell> [target] [message…]} — cast a social/roleplay spell (#151).
+     * Combat spells (attack/save) are cast with {@code /combat cast}; this is for chat spells like
+     * Message and Speak with Animals.
+     */
+    private boolean handleCast(CommandSender sender, String[] rest) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only players can cast spells.", NamedTextColor.RED));
+            return true;
+        }
+        if (rest.length < 1) {
+            player.sendMessage(Component.text("Usage: /character cast <spell> [target] [message…]", NamedTextColor.RED));
+            return true;
+        }
+        io.papermc.jkvttplugin.data.model.DndSpell spell =
+                io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(io.papermc.jkvttplugin.util.Util.normalize(rest[0]));
+        if (spell == null) {
+            player.sendMessage(Component.text("Unknown spell: " + rest[0], NamedTextColor.RED));
+            return true;
+        }
+        if (!spell.isSocial()) {
+            player.sendMessage(Component.text(spell.getName() + " isn't a chat spell — cast combat spells with /combat cast.", NamedTextColor.RED));
+            return true;
+        }
+        boolean needsTarget = !spell.getSocialType().equalsIgnoreCase("speak_with_animals");
+        String target = null;
+        String words;
+        if (needsTarget) {
+            target = rest.length >= 2 ? rest[1] : null;
+            words = rest.length >= 3 ? String.join(" ", Arrays.copyOfRange(rest, 2, rest.length)) : null;
+        } else {
+            words = rest.length >= 2 ? String.join(" ", Arrays.copyOfRange(rest, 1, rest.length)) : null;
+        }
+        io.papermc.jkvttplugin.social.SocialSpellHandler.begin(player, spell, target, words);
+        return true;
+    }
+
     private boolean handleDelete(CommandSender sender, String[] rest) {
         if (rest.length < 1) {
             sender.sendMessage(Component.text("Usage: /character delete <name>", NamedTextColor.RED));
@@ -311,6 +351,27 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                         if (k.startsWith(rest[0].toLowerCase())) kinds.add(k);
                     }
                     return kinds;
+                }
+                return List.of();
+            }
+            case "cast" -> {
+                if (rest.length == 1) {
+                    List<String> spells = new ArrayList<>();
+                    for (io.papermc.jkvttplugin.data.model.DndSpell s : io.papermc.jkvttplugin.data.loader.SpellLoader.getAllSpells()) {
+                        if (s.isSocial() && s.getId().startsWith(rest[0].toLowerCase())) spells.add(s.getId());
+                    }
+                    return spells;
+                }
+                if (rest.length == 2) {
+                    io.papermc.jkvttplugin.data.model.DndSpell s =
+                            io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(io.papermc.jkvttplugin.util.Util.normalize(rest[0]));
+                    if (s != null && s.isSocial() && !s.getSocialType().equalsIgnoreCase("speak_with_animals")) {
+                        List<String> names = new ArrayList<>();
+                        for (Player p : Bukkit.getOnlinePlayers()) {
+                            if (p.getName().toLowerCase().startsWith(rest[1].toLowerCase())) names.add(p.getName());
+                        }
+                        return names;
+                    }
                 }
                 return List.of();
             }

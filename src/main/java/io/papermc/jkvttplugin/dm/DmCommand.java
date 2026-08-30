@@ -39,7 +39,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "promptcheck", "lootprompt", "rest", "resource", "reload", "mode");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "promptcheck", "lootprompt", "rest", "resource", "reload", "mode", "animalreply");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -61,6 +61,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "resource" -> handleResource(sender, command, label, args);
             case "mode" -> handleInventory(sender);
             case "lootprompt" -> handleLootPrompt(sender, args);
+            case "animalreply" -> handleAnimalReply(sender, args);
             default -> sendHelp(sender);
         }
 
@@ -83,6 +84,20 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             return;
         }
         io.papermc.jkvttplugin.loot.LootManager.promptPlayerRoll(dm, target, args[2]);
+    }
+
+    /** /dm animalreply <player> <message…> — voice the animals' reply to a Speak with Animals caster (#151). */
+    private void handleAnimalReply(CommandSender sender, String[] args) {
+        if (!DMManager.isDM(sender) || !(sender instanceof Player dm)) {
+            sender.sendMessage(Component.text("Only a DM can voice the animals.", NamedTextColor.RED));
+            return;
+        }
+        if (args.length < 3) {
+            dm.sendMessage(Component.text("Usage: /dm animalreply <player> <message…>", NamedTextColor.RED));
+            return;
+        }
+        String words = String.join(" ", Arrays.copyOfRange(args, 2, args.length));
+        io.papermc.jkvttplugin.social.SocialSpellHandler.animalReply(dm, args[1], words);
     }
 
     // ==================== FOLDED DM TOOLS (Issue #122) ====================
@@ -290,6 +305,14 @@ public class DmCommand implements CommandExecutor, TabCompleter {
         if (DMManager.isDM(sender)) {
             switch (subcommand) {
                 case "give" -> { return giveExec.onTabComplete(sender, command, label, sub); }
+                case "animalreply" -> {
+                    if (args.length == 2) {
+                        return Bukkit.getOnlinePlayers().stream().map(Player::getName)
+                                .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                                .collect(Collectors.toList());
+                    }
+                    return List.of();
+                }
                 case "promptcheck" -> { return checkExec.onTabComplete(sender, command, label, sub); }
                 case "rest" -> { return restExec.onTabComplete(sender, command, label, sub); }
                 case "resource" -> {

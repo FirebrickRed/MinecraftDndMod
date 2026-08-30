@@ -71,6 +71,13 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **AoE spells** (#149): `/combat cast fireball` (no target) → it lands where you're **looking**
       (sphere); `/combat cast thunderwave` bursts around **you**; cones/lines fire in your facing.
       **Every creature caught** rolls the save (each gets a prompt) → damage/half per their roll.
+- [ ] **Social / chat spells** (#151): `/character cast message <player> [words…]` whispers privately —
+      **only the target** sees it (and gets a one-click **[reply]**); Message enforces its 120 ft range and
+      a 25-word cap. `/character cast speak_with_animals [words…]` → **you** see your words, **nearby other
+      players** hear only animal noises, and **online DMs** get a **[reply as the creature]** button
+      (`/dm animalreply <player> <words>`) whose reply you understand but others hear as noises. Omit the
+      words and you're prompted to type them in chat (or `cancel`). Cast out of combat; your character must
+      **know** the spell.
 - [ ] **Cast spells in combat** (#123): on your turn, `/combat cast fire_bolt <target> --roll <d20>`
       (tab-completes your known spells) → **attack-roll spells** (Fire Bolt) roll vs AC → damage prompt.
       **Save spells** (Poison Spray, Sacred Flame) → the *target* is prompted to roll their save
