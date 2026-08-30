@@ -80,6 +80,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `add\|remove\|list` | Manage who is a DM (`add`/`remove` op only) |
 | `give <player> <item_id> [amount]` | Give a D&D item |
 | `promptcheck <player> <ability\|save\|skill> <name> [adv\|dis]` | Prompt a player to roll a check |
+| `lootprompt <player> <check>` | Call a loot check for a player searching a body (usually clicked, not typed) |
 | `rest <character> <short\|long>` | Force a rest |
 | `resource restore <character> <name\|all>` | Restore a class resource |
 | `resource consume <character> <name> [amount]` | Spend a class resource |

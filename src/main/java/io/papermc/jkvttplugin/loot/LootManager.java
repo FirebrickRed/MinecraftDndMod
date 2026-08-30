@@ -44,51 +44,94 @@ public class LootManager {
     private static final Map<UUID, List<LootEntry>> remaining = new HashMap<>();
     // "player|corpse|check" combos already rolled, so a player can't re-roll the same check here.
     private static final Set<String> searched = new HashSet<>();
-    // The corpse a player is about to roll for (set on right-click, consumed by /loot).
+    // The corpse a player is about to roll for (set on right-click, consumed by the roll).
     private static final Map<UUID, UUID> pendingCorpse = new HashMap<>();
+    // "player|corpse|check" the DM has unlocked for the player to roll (DM-mediated, #144).
+    private static final Set<String> allowedChecks = new HashSet<>();
 
-    /** Right-clicked a dead body: prompt a roll for each still-searchable check type. */
-    public static void beginLoot(Player player, DndEntityInstance corpse) {
+    /**
+     * A player right-clicked a body (#144). They learn nothing about what's on it — they just wait
+     * while the DM is shown the answer key (loot + DCs per check) and decides what to have them roll.
+     */
+    public static void requestLoot(Player player, DndEntityInstance corpse) {
         UUID id = corpse.getInstanceId();
         List<LootEntry> table = remaining.computeIfAbsent(id, k -> new ArrayList<>(corpse.getTemplate().getLootTable()));
-
         String name = corpse.getDisplayName();
+
         if (table.isEmpty()) {
             player.sendMessage(Component.text(corpse.getTemplate().getLootTable().isEmpty()
                     ? "You find nothing of value on " + name + "." : "There's nothing left to find on " + name + ".",
                     NamedTextColor.GRAY));
             return;
         }
-
-        CharacterSheet sheet = sheetOf(player);
-        if (sheet == null) {
+        if (sheetOf(player) == null) {
             player.sendMessage(Component.text("You need an active character to search a body.", NamedTextColor.RED));
             return;
         }
 
-        // Distinct check types still present that this player hasn't rolled yet.
-        Set<Skill> checks = new LinkedHashSet<>();
-        for (LootEntry e : table) checks.add(e.getCheck());
-        List<Skill> available = new ArrayList<>();
-        for (Skill c : checks) if (!searched.contains(key(player, id, c))) available.add(c);
+        pendingCorpse.put(player.getUniqueId(), id);
+        player.sendMessage(Component.text("You begin searching " + name + "… the DM will call for a roll.", NamedTextColor.GRAY, TextDecoration.ITALIC));
 
+        // Check types still hidden that this player hasn't already rolled.
+        Set<Skill> available = new LinkedHashSet<>();
+        for (LootEntry e : table) if (!searched.contains(key(player.getUniqueId(), id, e.getCheck()))) available.add(e.getCheck());
+
+        Component notice = Component.text("🔎 " + player.getName() + " is searching " + name + ".", NamedTextColor.GOLD);
         if (available.isEmpty()) {
-            player.sendMessage(Component.text("You've searched " + name + " as thoroughly as you can.", NamedTextColor.GRAY));
+            notice = notice.append(Component.text(" (nothing left they can find)", NamedTextColor.DARK_GRAY));
+        } else {
+            notice = notice.append(Component.text("  Call a roll: ", NamedTextColor.GRAY));
+            for (Skill c : available) {
+                notice = notice.append(Component.text("[" + c.getDisplayName() + "]  ", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand("/dm lootprompt " + player.getName() + " " + c.name().toLowerCase()))
+                        .hoverEvent(HoverEvent.showText(answerKey(table, c))));
+            }
+        }
+        // Show the DM (whoever's online) the request + answer key.
+        for (Player p : org.bukkit.Bukkit.getOnlinePlayers()) {
+            if (io.papermc.jkvttplugin.dm.DMManager.isDM(p)) p.sendMessage(notice);
+        }
+    }
+
+    /** The DM's-eyes-only list of what a given check could turn up on this body (item + DC). */
+    private static Component answerKey(List<LootEntry> table, Skill check) {
+        Component c = Component.text(check.getDisplayName() + " reveals:", NamedTextColor.GOLD);
+        for (LootEntry e : table) {
+            if (e.getCheck() == check) {
+                c = c.append(Component.text("\n  " + e.getItemId()
+                        + (e.getQty() > 1 ? " x" + e.getQty() : "") + " (DC " + e.getDc() + ")", NamedTextColor.GRAY));
+            }
+        }
+        return c;
+    }
+
+    /** DM unlocks a check for a player and sends them the roll prompt (#144, via /dm lootprompt). */
+    public static void promptPlayerRoll(Player dm, Player player, String checkArg) {
+        UUID id = pendingCorpse.get(player.getUniqueId());
+        if (id == null) {
+            dm.sendMessage(Component.text(player.getName() + " isn't searching a body right now.", NamedTextColor.RED));
             return;
         }
-
-        pendingCorpse.put(player.getUniqueId(), id);
-        Component msg = Component.text("Searching " + name + " — roll: ", NamedTextColor.GOLD);
-        for (Skill c : available) {
-            int mod = sheet.getSkillBonus(c);
-            String modStr = (mod >= 0 ? "+" + mod : String.valueOf(mod));
-            String cmd = "/character loot " + c.name().toLowerCase() + " ";
-            msg = msg.append(Component.text("[" + c.getDisplayName() + " " + modStr + "]  ",
-                            NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                    .clickEvent(ClickEvent.suggestCommand(cmd))
-                    .hoverEvent(HoverEvent.showText(Component.text("Click, then type your d20 — the game adds " + modStr + "."))));
+        Skill check = Skill.fromString(checkArg);
+        if (check == null) {
+            dm.sendMessage(Component.text("Unknown check: " + checkArg, NamedTextColor.RED));
+            return;
         }
-        player.sendMessage(msg);
+        CharacterSheet sheet = sheetOf(player);
+        if (sheet == null) {
+            dm.sendMessage(Component.text(player.getName() + " has no active character.", NamedTextColor.RED));
+            return;
+        }
+        allowedChecks.add(key(player.getUniqueId(), id, check));
+
+        int mod = sheet.getSkillBonus(check);
+        String modStr = (mod >= 0 ? "+" + mod : String.valueOf(mod));
+        String cmd = "/character loot " + check.name().toLowerCase() + " ";
+        player.sendMessage(Component.text("The DM asks you to roll " + check.getDisplayName() + " — ", NamedTextColor.GOLD)
+                .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand(cmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds " + modStr + ".")))));
+        dm.sendMessage(Component.text("Asked " + player.getName() + " to roll " + check.getDisplayName() + ".", NamedTextColor.GRAY));
     }
 
     /** /loot &lt;check&gt; &lt;d20&gt;: resolve a physical roll against the pending corpse. */
@@ -103,11 +146,16 @@ public class LootManager {
             player.sendMessage(Component.text("Unknown check: " + checkArg, NamedTextColor.RED));
             return;
         }
+        // DM-mediated (#144): you can only roll a check the DM has called for on this body.
+        if (!allowedChecks.contains(key(player.getUniqueId(), id, check))) {
+            player.sendMessage(Component.text("Wait for the DM to call for that roll.", NamedTextColor.YELLOW));
+            return;
+        }
         if (d20 < 1 || d20 > 20) {
             player.sendMessage(Component.text("Your d20 roll must be 1–20.", NamedTextColor.RED));
             return;
         }
-        if (searched.contains(key(player, id, check))) {
+        if (searched.contains(key(player.getUniqueId(), id, check))) {
             player.sendMessage(Component.text("You've already rolled " + check.getDisplayName() + " on this body.", NamedTextColor.YELLOW));
             return;
         }
@@ -125,7 +173,7 @@ public class LootManager {
 
         int mod = sheet.getSkillBonus(check);
         int total = d20 + mod;
-        searched.add(key(player, id, check));
+        searched.add(key(player.getUniqueId(), id, check));
 
         List<LootEntry> found = new ArrayList<>();
         for (LootEntry e : table) {
@@ -185,7 +233,7 @@ public class LootManager {
         return cid != null ? CharacterSheetManager.getCharacterById(cid) : null;
     }
 
-    private static String key(Player p, UUID corpse, Skill check) {
-        return p.getUniqueId() + "|" + corpse + "|" + check.name();
+    private static String key(UUID playerId, UUID corpse, Skill check) {
+        return playerId + "|" + corpse + "|" + check.name();
     }
 }

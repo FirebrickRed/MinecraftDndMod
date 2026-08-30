@@ -28,7 +28,7 @@ public class LootListener implements Listener {
         if (inst == null || !inst.isDead()) return; // only dead D&D entities are lootable
 
         event.setCancelled(true);
-        LootManager.beginLoot(event.getPlayer(), inst);
+        LootManager.requestLoot(event.getPlayer(), inst);
     }
 
     @EventHandler

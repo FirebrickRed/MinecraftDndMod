@@ -118,11 +118,11 @@ Newest first. Tick these off after a build to confirm they work in-game.
       Possess Balin → he holds his **warhammer**; the town guard holds **longsword + crossbow + chain
       mail + shield** and his stat block's attacks match; loot a body → its weapons/gear drop. No more
       "has a warhammer but also doesn't."
-- [ ] **Loot the body** (#136): right-click a corpse → a clickable **[Investigation +X]** prompt → type
-      your d20 → you recover every item you beat the DC on (default 5) into a **chest** (take some,
-      the rest drops). The kobold's **sling is flagged non-lootable** so only the dagger is found.
-      A second player can search and may find items the first missed; items need a `check` (default
-      Investigation) so DMs can gate a pelt behind Nature, etc.
+- [ ] **Loot the body — DM-mediated** (#136/#144): a player right-clicks a corpse → they just see
+      "the DM will call for a roll" (no check hints). The **DM** gets "[Player] is searching [Wolf]"
+      with clickable **[check]** buttons whose hover shows the loot + DCs (answer key). DM clicks one →
+      the player gets a **[roll]** prompt → types their d20 → items they beat the DC on go to a **chest**
+      (rest drops on close). A player can't roll a check the DM hasn't called. Sling stays non-lootable.
 - [ ] **`/character view <name>`** works for the DM on any character (no crash).
 
 ---

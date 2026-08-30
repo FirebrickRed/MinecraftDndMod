@@ -39,7 +39,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "promptcheck", "rest", "resource", "reload", "mode");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "promptcheck", "lootprompt", "rest", "resource", "reload", "mode");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -60,10 +60,29 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "reload" -> delegateDm(sender, command, label, args, reloadExec);
             case "resource" -> handleResource(sender, command, label, args);
             case "mode" -> handleInventory(sender);
+            case "lootprompt" -> handleLootPrompt(sender, args);
             default -> sendHelp(sender);
         }
 
         return true;
+    }
+
+    /** /dm lootprompt <player> <check> — call a specific loot check for a player searching a body (#144). */
+    private void handleLootPrompt(CommandSender sender, String[] args) {
+        if (!DMManager.isDM(sender) || !(sender instanceof org.bukkit.entity.Player dm)) {
+            sender.sendMessage(Component.text("Only a DM can call a loot roll.", NamedTextColor.RED));
+            return;
+        }
+        if (args.length < 3) {
+            dm.sendMessage(Component.text("Usage: /dm lootprompt <player> <check>", NamedTextColor.RED));
+            return;
+        }
+        org.bukkit.entity.Player target = Bukkit.getPlayerExact(args[1]);
+        if (target == null) {
+            dm.sendMessage(Component.text("Player not online: " + args[1], NamedTextColor.RED));
+            return;
+        }
+        io.papermc.jkvttplugin.loot.LootManager.promptPlayerRoll(dm, target, args[2]);
     }
 
     // ==================== FOLDED DM TOOLS (Issue #122) ====================
