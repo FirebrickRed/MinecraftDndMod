@@ -763,13 +763,37 @@ public class CombatSession {
      * conditions without a minecraft_effect, or for entities (they have no player to affect).
      */
     public void setConditionEffect(Combatant c, DndCondition cond, boolean on) {
-        if (cond == null || cond.getMinecraftEffect() == null || c == null || !c.isPlayer() || c.getPlayer() == null) return;
+        if (cond == null || cond.getMinecraftEffect() == null || c == null) return;
+        // Route to the player who's living the condition: the player combatant, or the DM possessing
+        // an afflicted entity (so a blinded kobold blinds the DM controlling it) (#103).
+        Player p = c.isPlayer() ? c.getPlayer()
+                : (c.getEntityInstance() != null
+                    ? io.papermc.jkvttplugin.dm.PossessionManager.getPossessorOf(c.getEntityInstance().getArmorStand())
+                    : null);
+        applyEffect(p, cond, on);
+    }
+
+    private static void applyEffect(Player p, DndCondition cond, boolean on) {
+        if (p == null || cond == null || cond.getMinecraftEffect() == null) return;
         org.bukkit.potion.PotionEffectType type = org.bukkit.potion.PotionEffectType.getByName(cond.getMinecraftEffect());
         if (type == null) return;
         if (on) {
-            c.getPlayer().addPotionEffect(new org.bukkit.potion.PotionEffect(type, Integer.MAX_VALUE, 0, false, false, true));
+            p.addPotionEffect(new org.bukkit.potion.PotionEffect(type, Integer.MAX_VALUE,
+                    cond.getMinecraftEffectAmplifier(), false, false, true));
         } else {
-            c.getPlayer().removePotionEffect(type);
+            p.removePotionEffect(type);
+        }
+    }
+
+    /** Apply/remove a possessed entity's condition effects on the DM who just (un)possessed it (#103). */
+    public static void applyPossessedConditionEffects(Player dm, org.bukkit.entity.ArmorStand stand, boolean on) {
+        CombatSession s = getSessionForEntity(stand);
+        if (s == null) return;
+        for (Combatant c : s.getCombatants()) {
+            if (c.isEntity() && c.getEntityInstance() != null && c.getEntityInstance().isBody(stand)) {
+                for (String id : c.getConditions()) applyEffect(dm, ConditionLoader.get(id), on);
+                return;
+            }
         }
     }
 

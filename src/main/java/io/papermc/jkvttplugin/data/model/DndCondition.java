@@ -18,6 +18,8 @@ public class DndCondition {
     /** Optional Minecraft PotionEffectType name (e.g. BLINDNESS) applied to a player while they have
      *  this condition, for real in-game feedback. Removed when the condition ends. */
     private String minecraftEffect;
+    /** Potion amplifier (0 = level I). Optional; lets e.g. Paralyzed use a stronger Slowness. */
+    private int minecraftEffectAmplifier;
 
     public String getId() { return id; }
     public void setId(String id) { this.id = id; }
@@ -33,4 +35,7 @@ public class DndCondition {
 
     public String getMinecraftEffect() { return minecraftEffect; }
     public void setMinecraftEffect(String minecraftEffect) { this.minecraftEffect = minecraftEffect; }
+
+    public int getMinecraftEffectAmplifier() { return minecraftEffectAmplifier; }
+    public void setMinecraftEffectAmplifier(int amplifier) { this.minecraftEffectAmplifier = amplifier; }
 }

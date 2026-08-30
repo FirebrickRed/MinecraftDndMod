@@ -74,6 +74,7 @@ public class PossessionManager {
         dm.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
         dm.hideEntity(JkVttPlugin.getInstance(), stand); // hide our own body so it doesn't block our view
         applyScale(dm, instance.getTemplate().getSize()); // stand at the entity's height (sword lines up)
+        io.papermc.jkvttplugin.combat.CombatSession.applyPossessedConditionEffects(dm, stand, true); // inherit its conditions (#103)
         giveEntityKit(dm, instance);
 
         BukkitRunnable task = new BukkitRunnable() {
@@ -114,6 +115,7 @@ public class PossessionManager {
         if (task != null) task.cancel();
         clearAimHighlight(dm);
         if (stand == null) return false;
+        io.papermc.jkvttplugin.combat.CombatSession.applyPossessedConditionEffects(dm, stand, false); // drop inherited conditions
         if (stand.isValid()) dm.showEntity(JkVttPlugin.getInstance(), stand); // reveal our body again
         clearPossessionEffects(dm);
         return true;

@@ -45,6 +45,8 @@ invisible:
 
 paralyzed:
   name: "Paralyzed"
+  minecraft_effect: SLOWNESS
+  minecraft_effect_amplifier: 6   # near-rooted
   rules:
     - "Incapacitated; can't move or speak."
     - "Auto-fails STR and DEX saves. Attacks against it have advantage."
@@ -78,6 +80,7 @@ restrained:
 stunned:
   name: "Stunned"
   minecraft_effect: SLOWNESS
+  minecraft_effect_amplifier: 4
   rules:
     - "Incapacitated, can't move, speaks falteringly."
     - "Auto-fails STR and DEX saves. Attacks against it have advantage."
