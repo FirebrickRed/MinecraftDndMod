@@ -913,22 +913,29 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         // Range check: are you close enough to swing / within weapon/attack range?
-        // (--showmods just previews modifiers, so skip the range gate for it.)
-        if (!showMods && attacker.isPlayer()) {
-            DndWeapon rangeWeapon = AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName);
-            String rangeError = attackRangeError(attacker, target, rangeWeapon);
+        // (--showmods previews modifiers, and a DM may bypass with --force.)
+        boolean force = hasFlag(args, "--force") && isDM;
+        if (!showMods && !force) {
+            String rangeError;
+            if (attacker.isPlayer()) {
+                DndWeapon rangeWeapon = AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName);
+                rangeError = attackRangeError(attacker, target, rangeWeapon);
+            } else {
+                io.papermc.jkvttplugin.data.model.DndAttack atk =
+                        AttackHandler.resolveEntityAttack(attacker, weaponOrAttackName);
+                rangeError = entityAttackRangeError(attacker, target, atk);
+            }
             if (rangeError != null) {
+                if (isDM) rangeError += "  (DM: add --force to attack anyway.)";
                 player.sendMessage(Component.text(rangeError, NamedTextColor.RED));
                 return;
             }
-        } else if (!showMods && attacker.isEntity()) {
-            io.papermc.jkvttplugin.data.model.DndAttack atk =
-                    AttackHandler.resolveEntityAttack(attacker, weaponOrAttackName);
-            String rangeError = entityAttackRangeError(attacker, target, atk);
-            if (rangeError != null) {
-                player.sendMessage(Component.text(rangeError, NamedTextColor.RED));
-                return;
-            }
+        }
+
+        // 5e long-range rule: a ranged attack past its normal range still lands, but at disadvantage.
+        if (!showMods) {
+            String disadv = longRangeNotice(attacker, target, weaponOrAttackName, player);
+            if (disadv != null) player.sendMessage(Component.text(disadv, NamedTextColor.YELLOW));
         }
 
         // Delegate to AttackHandler based on combatant type
@@ -984,6 +991,43 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     }
 
     private static String fmtFeet(double feet) { return String.format("%.0f ft", feet); }
+
+    /**
+     * If this is a ranged attack landing beyond its NORMAL range (but within long range), return a
+     * disadvantage advisory (5e long-range rule); else null. Works for player weapons and entity
+     * attacks (the "80/320 ft" form).
+     */
+    private String longRangeNotice(Combatant attacker, Combatant target, String weaponOrAttackName, Player player) {
+        Location a = attacker.getLocation();
+        Location t = target.getLocation();
+        if (a == null || t == null || a.getWorld() == null || !a.getWorld().equals(t.getWorld())) return null;
+        double feet = a.distance(t) * 5.0;
+
+        int normal, longR;
+        if (attacker.isPlayer()) {
+            DndWeapon w = AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName);
+            if (w == null || !w.isRanged()) return null;
+            normal = w.getNormalRange();
+            longR = w.getLongRange();
+        } else {
+            io.papermc.jkvttplugin.data.model.DndAttack atk =
+                    AttackHandler.resolveEntityAttack(attacker, weaponOrAttackName);
+            if (atk == null || atk.getReach() == null || !atk.getReach().contains("/")) return null;
+            java.util.List<Integer> nums = new java.util.ArrayList<>();
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(atk.getReach());
+            while (m.find()) nums.add(Integer.parseInt(m.group(1)));
+            if (nums.size() < 2) return null;
+            normal = nums.get(0);
+            longR = nums.get(nums.size() - 1);
+        }
+
+        double tolerance = 2.5;
+        if (normal > 0 && feet > normal + tolerance && (longR <= 0 || feet <= longR + tolerance)) {
+            return "⚠ Long range (" + fmtFeet(feet) + " > " + normal + " ft) — attack at DISADVANTAGE "
+                    + "(roll twice, use the lower).";
+        }
+        return null;
+    }
 
     /**
      * Range gate for an entity's attack, using its {@code reach} string ("5 ft", "10 ft.", or the
@@ -1785,7 +1829,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
             // If typing a flag
             if (lastArg.startsWith("--")) {
-                completions.addAll(List.of("--showmods", "--roll", "--total"));
+                completions.addAll(List.of("--showmods", "--roll", "--total", "--force"));
                 return filterCompletions(completions, lastArg);
             }
 
@@ -1814,7 +1858,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 completions.addAll(choices);
             } else {
                 // Weapon chosen — now the roll flags make sense.
-                completions.addAll(List.of("--showmods", "--roll", "--total"));
+                completions.addAll(List.of("--showmods", "--roll", "--total", "--force"));
             }
             return filterCompletions(completions, lastArg);
         }

@@ -45,6 +45,10 @@ Newest first. Tick these off after a build to confirm they work in-game.
       too** (a wolf can't bite from across the room; the kobold's reach depends on its attack).
 - [ ] **Speed is a wall** — on your turn you can't walk (or move a possessed entity) outside the green
       ring; you stop at the edge.
+- [ ] **Long range = disadvantage** — a ranged attack past its normal range still lands but warns you
+      to roll at disadvantage (roll twice, take the lower).
+- [ ] **DM range override** — when an attack is blocked as "too far", the DM can add **`--force`** to
+      `/combat attack` to allow it anyway (the error message hints this).
 - [ ] **Possessed reach ring** follows the weapon in hand — hold the kobold's sword vs its bow and the
       orange ring resizes.
 - [ ] **Weapon required** — `/combat attack <target>` alone asks for a weapon; `unarmed` works.
