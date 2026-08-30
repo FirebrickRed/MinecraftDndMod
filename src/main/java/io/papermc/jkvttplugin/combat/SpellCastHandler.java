@@ -47,20 +47,28 @@ public class SpellCastHandler {
             player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
             return false;
         }
+        // Range: Touch = 5 ft, Self = only yourself, "N feet" = N. Unknown → not enforced.
+        String rangeErr = spellRangeError(caster, target, spell);
+        if (rangeErr != null) { player.sendMessage(Component.text(rangeErr, NamedTextColor.RED)); return false; }
         int mod = sheet.getProficiencyBonus() + sheet.getModifier(ability);
 
-        // Healing / temp HP spells (Cure Wounds, Healing Word, False Life…) — no roll, applied at once.
+        // Healing / temp HP spells (Cure Wounds, Healing Word, False Life…).
         if (spell.isHealing() || spell.grantsTempHp()) {
+            Integer healAmount = null;
+            if (spell.isHealing()) {
+                int abilityMod = sheet.getModifier(ability);
+                if (providedTotal != null) healAmount = providedTotal;                       // final total given
+                else if (providedRoll != null) healAmount = providedRoll + abilityMod;        // rolled dice given
+                else if (io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll())
+                    healAmount = rollAmount(spell.getHealing()) + abilityMod;                 // game rolls it
+                else { promptHealingRoll(player, target, spell); return false; }              // physical: ask them to roll
+                healAmount = Math.max(1, healAmount);
+            }
             session.broadcast(Component.empty());
             session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
                     + " on " + target.getDisplayName(true) + ".", NamedTextColor.LIGHT_PURPLE));
-            if (spell.isHealing()) {
-                int amount = Math.max(1, rollAmount(spell.getHealing()) + sheet.getModifier(ability));
-                DamageHandler.applyHealing(session, target, amount);
-            }
-            if (spell.grantsTempHp()) {
-                DamageHandler.applyTempHp(session, target, Math.max(0, rollAmount(spell.getTempHp())));
-            }
+            if (healAmount != null) DamageHandler.applyHealing(session, target, healAmount);
+            if (spell.grantsTempHp()) DamageHandler.applyTempHp(session, target, Math.max(0, rollAmount(spell.getTempHp())));
             return true;
         }
 
@@ -280,6 +288,44 @@ public class SpellCastHandler {
             return Ability.getModifier(c.getEntityInstance().getTemplate().getAbilityScore(ability));
         }
         return 0;
+    }
+
+    /** Prompt a caster to roll their healing dice (physical mode); fills the cast command with --roll. */
+    private static void promptHealingRoll(Player player, Combatant target, DndSpell spell) {
+        String cmd = "/combat cast " + spell.getId() + " " + quoted(target.getDisplayName()) + " --roll ";
+        player.sendMessage(Component.text("💚 Roll " + spell.getName() + " (" + spell.getHealing() + ") on "
+                + target.getDisplayName() + " — ", NamedTextColor.GREEN)
+                .append(Component.text("[click, then type your roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand(cmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<healing roll> — the game adds your spellcasting modifier.")))));
+    }
+
+    /** Range error for a single-target spell, or null if in range / unknown. Touch=5 ft, Self=self only. */
+    private static String spellRangeError(Combatant caster, Combatant target, DndSpell spell) {
+        int rangeFeet = parseSpellRange(spell.getRange());
+        if (rangeFeet < 0) return null; // unknown/unlimited → don't enforce
+        if (rangeFeet == 0) {
+            return target.getId().equals(caster.getId()) ? null : spell.getName() + " only targets you (range: Self).";
+        }
+        org.bukkit.Location a = caster.getLocation(), t = target.getLocation();
+        if (a == null || t == null || a.getWorld() == null || !a.getWorld().equals(t.getWorld())) return null;
+        double feet = a.distance(t) * 5.0;
+        if (feet > rangeFeet + 2.5) {
+            String r = rangeFeet == 5 ? "touch" : rangeFeet + " ft";
+            return target.getDisplayName() + " is out of range — " + Math.round(feet) + " ft away (" + spell.getName() + " range: " + r + ").";
+        }
+        return null;
+    }
+
+    /** Parse a spell's range string to feet: Self→0, Touch→5, "60 feet"→60; -1 if unknown. */
+    private static int parseSpellRange(String range) {
+        if (range == null) return -1;
+        String r = range.trim().toLowerCase();
+        if (r.startsWith("self")) return 0;
+        if (r.startsWith("touch")) return 5;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(r);
+        if (m.find()) return Integer.parseInt(m.group(1));
+        return -1;
     }
 
     /** Roll a dice expression ("1d8", "1d4+4") or read a flat number ("5"); 0 if unparseable. */

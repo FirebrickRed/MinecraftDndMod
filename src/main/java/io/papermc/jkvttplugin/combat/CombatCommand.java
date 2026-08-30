@@ -2318,7 +2318,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
                 "reveal", "hide", "action", "bonus", "movement", "condition", "cast", "save", "attack",
-                "damage", "override", "heal", "temphp", "deathsave"));
+                "reactions", "damage", "override", "heal", "temphp", "deathsave"));
             return filterCompletions(completions, args[0]);
         }
 
@@ -2372,7 +2372,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                         }
                     }
                 }
-                case "reaction" -> {
+                case "reaction", "reactions" -> {
                     // Suggest combatants that currently have a pending opportunity attack, plus 'pass'.
                     completions.add("pass");
                     if (session != null) {

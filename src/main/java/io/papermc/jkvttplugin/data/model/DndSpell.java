@@ -23,7 +23,8 @@ public class DndSpell {
     private String description;
     private boolean concentration;
     private boolean ritual;
-    private Material icon;
+    private Material icon;         // explicit vanilla base item to render (null → a level-based default)
+    private String customModel;    // optional resource-pack model name, applied only if the pack has it
     private String higherLevels;
     private String attackType;
     private String saveType;
@@ -147,6 +148,9 @@ public class DndSpell {
     public void setIcon(Material icon) {
         this.icon = icon;
     }
+
+    public String getCustomModel() { return customModel; }
+    public void setCustomModel(String customModel) { this.customModel = customModel; }
 
     public String getHigherLevels() {
         return higherLevels;
@@ -294,16 +298,21 @@ public class DndSpell {
                 .addWrappedText(higherLevels, NamedTextColor.LIGHT_PURPLE);
         }
 
-        // Determine material based on spell level
-        Material material = getSpellMaterial();
+        // The vanilla item everyone sees: an explicit `material`/`icon` if given, else a level-based default.
+        Material material = icon != null ? icon : getSpellMaterial();
 
-        return Util.createItem(
+        ItemStack item = Util.createItem(
                 Component.text(name, getSpellLevelColor()),
                 lore.build(),
-                icon != null ? icon.name().toLowerCase() : "spell_" + Util.normalize(name),
+                null,
                 1,
                 material
         );
+        // Only overlay a resource-pack model when one is explicitly supplied (avoids purple placeholders).
+        if (customModel != null && !customModel.isBlank()) {
+            io.papermc.jkvttplugin.util.ItemUtil.applyModel(item, customModel);
+        }
+        return item;
     }
 
     private Material getSpellMaterial() {
@@ -397,6 +406,11 @@ public class DndSpell {
 
         public Builder icon(Material icon) {
             spell.setIcon(icon);
+            return this;
+        }
+
+        public Builder customModel(String customModel) {
+            spell.setCustomModel(customModel);
             return this;
         }
 

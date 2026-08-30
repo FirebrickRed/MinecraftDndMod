@@ -80,7 +80,10 @@ public class SpellLoader {
         String description = LoaderUtils.asString(data.get("description"), "");
         boolean concentration = asBoolean(data.get("concentration"), false);
         boolean ritual = asBoolean(data.get("ritual"), false);
-        Material icon = parseIcon(LoaderUtils.asString(data.get("icon"), "ENCHANTED_BOOK"));
+        // Icons follow the shared convention: `material:` (or legacy `icon:`) is the vanilla item to
+        // render; absent → a level-based default (chosen in createItemStack). `custom_model:` is optional.
+        String materialStr = LoaderUtils.asString(data.get("material"), LoaderUtils.asString(data.get("icon"), null));
+        Material icon = parseIcon(materialStr); // null when absent/invalid → level default
         String higherLevels = LoaderUtils.asString(data.get("higher_levels"), null);
         String attackType = LoaderUtils.asString(data.get("attack_type"), null);
         String saveType = LoaderUtils.asString(data.get("save_type"), null);
@@ -121,6 +124,8 @@ public class SpellLoader {
         // Healing / temporary HP (#123).
         spell.setHealing(LoaderUtils.asString(data.get("healing"), null));
         spell.setTempHp(LoaderUtils.asString(data.get("temp_hp"), null));
+        // Optional resource-pack model overlay (only applied if the pack provides it).
+        spell.setCustomModel(LoaderUtils.asString(data.get("custom_model"), null));
         return spell;
     }
 
@@ -142,11 +147,14 @@ public class SpellLoader {
         return SpellComponents.fromString("V, S");
     }
 
+    /** Parse a vanilla Material for the spell's base item; null if absent or invalid (→ level default). */
     private static Material parseIcon(String iconString) {
+        if (iconString == null || iconString.isBlank()) return null;
         try {
-            return Material.valueOf(iconString.toUpperCase());
+            return Material.valueOf(iconString.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
-            return Material.ENCHANTED_BOOK;
+            LOGGER.warning("Unknown spell material/icon '" + iconString + "' — using the level-based default.");
+            return null;
         }
     }
 

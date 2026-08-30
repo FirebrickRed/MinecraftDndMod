@@ -103,8 +103,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
       config `rituals.interrupt` also offers `break_on_damage` / `none`. Being **downed, Stunned/Paralyzed**,
       or using `/combat cast cancel` also ends it. (House rule — RAW rituals take 10 min ≈ 100 rounds.)
 - [ ] **Healing spells** (#123): `/combat cast cure_wounds <target>` restores HP (**dice + your spellcasting
-      modifier**, no roll needed); **Healing Word** heals and correctly spends your **bonus action**, not your
-      action. Spells with `temp_hp:` grant temporary HP. (Add `healing:`/`temp_hp:` to any spell's YAML.)
+      modifier**). In **physical** roll mode you're prompted to roll the healing die (`--roll <n>`); in **auto**
+      mode the game rolls. **Range is enforced** — Cure Wounds is **Touch**, so you must be adjacent (out of
+      range is refused); Healing Word reaches 60 ft and spends your **bonus action**. `temp_hp:` grants temp HP.
 - [ ] **Reaction roster shows monster reactions** (#147): a stat block's `reactions:` list (free text, e.g.
       "Parry: +2 AC") now appears under that creature in the DM's `/combat reactions` roster.
 - [ ] **Cast spells in combat** (#123): on your turn, `/combat cast fire_bolt <target> --roll <d20>`

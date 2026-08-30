@@ -129,14 +129,14 @@ public final class ReactionManager {
             for (DndAttack atk : meleeAttacks(reactor)) buttons = buttons.append(attackButton(reactor, atk.getName()));
         } else {
             buttons = buttons.append(Component.text("[take it — add your weapon] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                    .clickEvent(ClickEvent.suggestCommand("/combat reaction " + reactor.getDisplayName() + " "))
+                    .clickEvent(ClickEvent.suggestCommand("/combat reactions " + reactor.getDisplayName() + " "))
                     .hoverEvent(HoverEvent.showText(Component.text("Fill in your weapon (or 'unarmed') and your d20 roll."))));
         }
         return buttons.append(passButton(reactor));
     }
 
     private static Component attackButton(Combatant reactor, String attackName) {
-        String base = "/combat reaction " + reactor.getDisplayName() + " " + attackName.toLowerCase().replace(" ", "_");
+        String base = "/combat reactions " + reactor.getDisplayName() + " " + attackName.toLowerCase().replace(" ", "_");
         return Component.text("[" + attackName + "] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                 .clickEvent(ClickEvent.suggestCommand(base + " --roll "))
                 .hoverEvent(HoverEvent.showText(Component.text("Attack with " + attackName + " — fills the command, then type your d20 roll.")));
@@ -144,7 +144,7 @@ public final class ReactionManager {
 
     private static Component passButton(Combatant reactor) {
         return Component.text("[pass]", NamedTextColor.GRAY, TextDecoration.UNDERLINED)
-                .clickEvent(ClickEvent.runCommand("/combat reaction " + reactor.getDisplayName() + " pass"))
+                .clickEvent(ClickEvent.runCommand("/combat reactions " + reactor.getDisplayName() + " pass"))
                 .hoverEvent(HoverEvent.showText(Component.text("Hold your reaction.")));
     }
 
