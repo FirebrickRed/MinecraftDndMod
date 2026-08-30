@@ -32,8 +32,9 @@ public class DndSpell {
     private String damage;            // dice, e.g. "1d10" (cantrips add no ability modifier)
     private String saveEffect;        // on a successful save: "half" or "none" (default "half")
     private String conditionOnFail;   // a condition id (#103) applied to the target on a failed save
-    private String aoeShape;          // "sphere"/"cone"/"line" — an area spell (#149); null = single target
+    private String aoeShape;          // "sphere"/"cone"/"line"/"burst" — an area spell (#149); null = single target
     private int aoeSize;              // area size in feet (radius for sphere, length for cone/line)
+    private String aoeTargets = "all"; // who the area affects: "all" | "enemies" | "allies"
 
     public DndSpell() {}
 
@@ -185,6 +186,8 @@ public class DndSpell {
     public void setAoeShape(String aoeShape) { this.aoeShape = aoeShape; }
     public int getAoeSize() { return aoeSize; }
     public void setAoeSize(int aoeSize) { this.aoeSize = aoeSize; }
+    public String getAoeTargets() { return aoeTargets; }
+    public void setAoeTargets(String aoeTargets) { this.aoeTargets = aoeTargets != null ? aoeTargets : "all"; }
 
     /** True if this spell affects an area (rather than a single target). */
     public boolean isAoe() { return aoeShape != null && !aoeShape.isBlank(); }

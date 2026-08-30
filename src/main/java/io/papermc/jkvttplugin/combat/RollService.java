@@ -18,6 +18,12 @@ public final class RollService {
     /** The outcome of a resolved d20 action. {@code d20} is -1 in provided-total mode. */
     public record RollResult(int d20, int total, boolean providedTotal, boolean nat20, boolean nat1, String breakdown) {}
 
+    /** Does this to-hit roll beat the target's AC? Nat 20 always hits, nat 1 always misses (#154). */
+    public static boolean hits(RollResult r, int targetAC) {
+        if (r.providedTotal()) return r.total() >= targetAC;
+        return r.nat20() || (!r.nat1() && r.total() >= targetAC);
+    }
+
     /**
      * Interpret a {@code --roll} value. A plain number ("12") is the die the player rolled; a dice
      * expression ("1d20") is one the game rolls for them. Returns the resulting die value, or null

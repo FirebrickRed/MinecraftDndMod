@@ -112,6 +112,7 @@ public class SpellLoader {
         // Area of effect (#149).
         spell.setAoeShape(LoaderUtils.asString(data.get("aoe_shape"), null));
         if (data.get("aoe_size") instanceof Number n) spell.setAoeSize(n.intValue());
+        spell.setAoeTargets(LoaderUtils.asString(data.get("aoe_targets"), "all"));
         return spell;
     }
 

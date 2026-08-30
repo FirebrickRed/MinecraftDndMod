@@ -56,7 +56,7 @@ public class SpellCastHandler {
                 return false;
             }
             int ac = target.getArmorClass();
-            boolean hit = r.providedTotal() ? r.total() >= ac : (r.nat20() || (!r.nat1() && r.total() >= ac));
+            boolean hit = RollService.hits(r, ac);
             session.broadcast(Component.empty());
             session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
                     + " at " + target.getDisplayName(true) + "!", NamedTextColor.LIGHT_PURPLE));
@@ -113,6 +113,12 @@ public class SpellCastHandler {
 
         java.util.List<Combatant> affected = creaturesInArea(caster, player, spell);
         affected.removeIf(c -> c.getId().equals(caster.getId()) || c.isDead()); // the caster isn't caught in their own AoE
+        // Some AoE hit only enemies or only allies (e.g. a beneficial burst); "all" is the default.
+        if (!"all".equalsIgnoreCase(spell.getAoeTargets())) {
+            boolean wantAllies = "allies".equalsIgnoreCase(spell.getAoeTargets());
+            affected.removeIf(c -> (c.isPlayer() == caster.isPlayer()) != wantAllies);
+        }
+        for (Combatant t : affected) markAoeTarget(t); // show who's caught (no explicit target)
 
         session.broadcast(Component.empty());
         session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
@@ -135,6 +141,13 @@ public class SpellCastHandler {
             session.broadcast(Component.text("(no save defined — the DM applies the effect)", NamedTextColor.DARK_GRAY));
         }
         return true;
+    }
+
+    /** Flag a creature caught in an AoE with a magical particle burst so the caster sees who's hit. */
+    private static void markAoeTarget(Combatant c) {
+        org.bukkit.Location loc = c.getLocation();
+        if (loc == null || loc.getWorld() == null) return;
+        loc.getWorld().spawnParticle(org.bukkit.Particle.WITCH, loc.clone().add(0, 1.2, 0), 25, 0.3, 0.7, 0.3, 0.03);
     }
 
     /** Combatants inside the spell's area. */

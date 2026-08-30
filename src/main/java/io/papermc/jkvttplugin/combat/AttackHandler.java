@@ -90,9 +90,7 @@ public class AttackHandler {
             return false;
         }
         int targetAC = target.getArmorClass();
-        boolean hit = r.providedTotal()
-                ? r.total() >= targetAC
-                : (r.nat20() || (!r.nat1() && r.total() >= targetAC));
+        boolean hit = RollService.hits(r, targetAC);
         String finalDamage = r.nat20() ? doubleDice(damageStr) : damageStr;
         broadcastAttackResult(session, attacker, target, false,
                 r.total(), targetAC, hit, r.nat20(), r.nat1(),
