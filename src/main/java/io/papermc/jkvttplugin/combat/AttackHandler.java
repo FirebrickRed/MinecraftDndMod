@@ -52,9 +52,21 @@ public class AttackHandler {
             return false;
         }
 
+        // An explicitly named weapon that resolves to nothing is a mistake (typo, or a weapon
+        // the player doesn't have). Fail loudly instead of silently downgrading to an unarmed
+        // strike — otherwise the player makes a wrong attack without knowing it. (#109)
+        if (weaponId != null && !weaponId.isBlank()
+                && !"unarmed".equalsIgnoreCase(weaponId)
+                && WeaponLoader.getWeapon(weaponId.toLowerCase()) == null) {
+            player.sendMessage(Component.text("Unknown weapon '" + weaponId
+                    + "'. Use a weapon you have, 'unarmed', or omit it to use your main hand.",
+                    NamedTextColor.RED));
+            return false;
+        }
+
         // Resolve weapon
         DndWeapon weapon = resolvePlayerWeapon(player, weaponId);
-        // weapon == null means unarmed strike
+        // weapon == null means unarmed strike (no explicit name, or an empty main hand)
 
         // Calculate attack modifier
         int attackMod = calculatePlayerAttackMod(sheet, weapon);
