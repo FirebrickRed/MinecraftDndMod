@@ -1,5 +1,7 @@
 package io.papermc.jkvttplugin.data.model.enums;
 
+import io.papermc.jkvttplugin.JkVttPlugin;
+
 import io.papermc.jkvttplugin.util.Util;
 import org.yaml.snakeyaml.Yaml;
 
@@ -62,7 +64,7 @@ public class LanguageRegistry {
                 }
             }
         } catch (Exception e) {
-            System.out.println("[LanguageRegistry] Failed to load languages from YAML: " + e.getMessage() + ". Using default languages.");
+            JkVttPlugin.logger().warning("[LanguageRegistry] Failed to load languages from YAML: " + e.getMessage() + ". Using default languages.");
             resetToDefault();
         }
     }

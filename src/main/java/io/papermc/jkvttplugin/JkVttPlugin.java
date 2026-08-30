@@ -188,4 +188,9 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
     public static JkVttPlugin getInstance() {
         return instance;
     }
+
+    /** Convenience accessor for the plugin logger from static/utility classes. */
+    public static java.util.logging.Logger logger() {
+        return instance.getLogger();
+    }
 }

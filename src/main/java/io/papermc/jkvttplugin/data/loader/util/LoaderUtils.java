@@ -16,6 +16,8 @@
 
 package io.papermc.jkvttplugin.data.loader.util;
 
+import io.papermc.jkvttplugin.JkVttPlugin;
+
 import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.Cost;
@@ -474,7 +476,7 @@ public class LoaderUtils {
 
         for (String spellId : spellIds) {
             if (SpellLoader.getSpell(spellId) == null) {
-                System.out.println("[LoaderUtils] WARNING: " + className + " subclass '" + subclassId +
+                JkVttPlugin.logger().warning("[LoaderUtils] WARNING: " + className + " subclass '" + subclassId +
                     "' references unknown spell '" + spellId + "' in " + fieldName);
             }
         }
@@ -511,10 +513,10 @@ public class LoaderUtils {
                 if (itemObj instanceof String) {
                     result.add((String) itemObj);
                 } else {
-                    System.out.println("[Warning] Equipment entry object missing valid 'item' key: " + entry);
+                    JkVttPlugin.logger().warning("[Warning] Equipment entry object missing valid 'item' key: " + entry);
                 }
             } else {
-                System.out.println("[Warning] Unexpected equipment entry type: " + entry);
+                JkVttPlugin.logger().warning("[Warning] Unexpected equipment entry type: " + entry);
             }
         }
         return result;
@@ -702,7 +704,7 @@ public class LoaderUtils {
                     }
 
                     if (spellOpts.isEmpty()) {
-                        System.out.println("[LoaderUtils] WARNING: SPELL choice '" + id + "' has empty spell options!");
+                        JkVttPlugin.logger().warning("[LoaderUtils] WARNING: SPELL choice '" + id + "' has empty spell options!");
                     }
 
                     pc = new PlayersChoice<>(choose, spellOpts, type);
@@ -851,7 +853,7 @@ public class LoaderUtils {
                         try {
                             spell.setCastingAbility(Ability.fromString(abilityStr));
                         } catch (IllegalArgumentException e) {
-                            System.out.println("[LoaderUtils] Warning: Invalid casting ability '" + abilityStr + "' for spell " + spell.getSpellId());
+                            JkVttPlugin.logger().warning("[LoaderUtils] Warning: Invalid casting ability '" + abilityStr + "' for spell " + spell.getSpellId());
                         }
                     }
 
@@ -862,10 +864,10 @@ public class LoaderUtils {
                     if (spell.getSpellId() != null && !spell.getSpellId().isBlank()) {
                         result.add(spell);
                     } else {
-                        System.out.println("[LoaderUtils] Warning: Skipped innate spell with missing/blank spell_id");
+                        JkVttPlugin.logger().warning("[LoaderUtils] Warning: Skipped innate spell with missing/blank spell_id");
                     }
                 } catch (Exception e) {
-                    System.out.println("[LoaderUtils] ERROR parsing innate spell: " + e.getMessage());
+                    JkVttPlugin.logger().warning("[LoaderUtils] ERROR parsing innate spell: " + e.getMessage());
                     e.printStackTrace();
                 }
             }
@@ -900,7 +902,7 @@ public class LoaderUtils {
                 if (amountObj instanceof Integer) {
                     amount = (Integer) amountObj;
                 } else {
-                    System.out.println("[LoaderUtils] WARNING: Missing or invalid 'amount' in cost for " + itemId);
+                    JkVttPlugin.logger().warning("[LoaderUtils] WARNING: Missing or invalid 'amount' in cost for " + itemId);
                     return null;
                 }
 
@@ -912,11 +914,11 @@ public class LoaderUtils {
 
                 return new Cost(amount, currency);
             } catch (Exception e) {
-                System.out.println("[LoaderUtils] ERROR: Failed to parse cost for " + itemId + ": " + e.getMessage());
+                JkVttPlugin.logger().warning("[LoaderUtils] ERROR: Failed to parse cost for " + itemId + ": " + e.getMessage());
                 return null;
             }
         } else {
-            System.out.println("[LoaderUtils] WARNING: Invalid cost format for " + itemId + " (expected map with amount/currency)");
+            JkVttPlugin.logger().warning("[LoaderUtils] WARNING: Invalid cost format for " + itemId + " (expected map with amount/currency)");
             return null;
         }
     }
@@ -986,7 +988,7 @@ public class LoaderUtils {
         if (itemIdObj instanceof String itemId) {
             shopItem.setItemId(itemId);
         } else {
-            System.out.println("[LoaderUtils] WARNING: Shop item missing item_id for entity " + entityId);
+            JkVttPlugin.logger().warning("[LoaderUtils] WARNING: Shop item missing item_id for entity " + entityId);
             return null;
         }
 
@@ -996,7 +998,7 @@ public class LoaderUtils {
         if (price != null) {
             shopItem.setPrice(price);
         } else {
-            System.out.println("[LoaderUtils] WARNING: Shop item " + shopItem.getItemId() + " has invalid price for entity " + entityId);
+            JkVttPlugin.logger().warning("[LoaderUtils] WARNING: Shop item " + shopItem.getItemId() + " has invalid price for entity " + entityId);
             return null;
         }
 

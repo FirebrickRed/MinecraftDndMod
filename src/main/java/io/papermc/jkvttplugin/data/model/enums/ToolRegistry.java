@@ -1,5 +1,7 @@
 package io.papermc.jkvttplugin.data.model.enums;
 
+import io.papermc.jkvttplugin.JkVttPlugin;
+
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -135,7 +137,7 @@ public class ToolRegistry {
                 }
             }
         } catch (Exception e) {
-            System.out.println("[ToolRegistry] Failed to load tools from YAML: " + e.getMessage() + ". Using default tools.");
+            JkVttPlugin.logger().warning("[ToolRegistry] Failed to load tools from YAML: " + e.getMessage() + ". Using default tools.");
             resetToDefault();
         }
     }
