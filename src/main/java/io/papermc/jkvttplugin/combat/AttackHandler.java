@@ -306,6 +306,15 @@ public class AttackHandler {
      * Find an attack by name (case-insensitive, supports partial match and underscores).
      * Handles both "Warhammer" and "warhammer" formats, as well as "heavy_crossbow" for "Heavy Crossbow".
      */
+    /** Public resolver so callers (e.g. range checks) can look up an entity's attack before it fires. */
+    public static DndAttack resolveEntityAttack(Combatant attacker, String attackName) {
+        if (attacker == null || !attacker.isEntity() || attacker.getEntityInstance() == null) return null;
+        List<DndAttack> attacks = attacker.getEntityInstance().getTemplate().getAttacks();
+        if (attacks == null || attacks.isEmpty()) return null;
+        if (attackName == null || attackName.isEmpty()) return attacks.get(0);
+        return findAttackByName(attacks, attackName);
+    }
+
     private static DndAttack findAttackByName(List<DndAttack> attacks, String name) {
         String lower = name.toLowerCase();
         // Also try with underscores replaced by spaces (tab completion format)

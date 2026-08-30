@@ -87,17 +87,19 @@ public class CombatListener implements Listener {
         double dz = event.getTo().getBlockZ() - startLoc.getBlockZ();
         double blocksFromStart = Math.sqrt(dx * dx + dy * dy + dz * dz);
         double feetFromStart = blocksFromStart * 5.0;
-        turnState.setMovementUsed(feetFromStart);
-
-        // Soft enforcement: warn once when first exceeding movement budget
-        if (turnState.isOverMovementBudget() && !turnState.hasMovementWarned()) {
-            turnState.setMovementWarned(true);
-            player.sendMessage(Component.text(
-                "\u26A0 You've exceeded your movement! ("
-                + String.format("%.0f", turnState.getMovementUsed()) + "/"
-                + turnState.getMovementBudget() + " ft)",
-                NamedTextColor.RED));
+        // Hard cap: you can't move outside your speed range (the green ring). Block any step that
+        // would take you past your budget; moving back within range is always allowed.
+        if (feetFromStart > turnState.getMovementBudget()) {
+            event.setCancelled(true);
+            if (!turnState.hasMovementWarned()) {
+                turnState.setMovementWarned(true);
+                player.sendActionBar(Component.text("\u26A0 You've reached the edge of your movement.", NamedTextColor.RED));
+            }
+            return;
         }
+
+        turnState.setMovementWarned(false); // back within range
+        turnState.setMovementUsed(feetFromStart);
 
         // Refresh action bar on each block moved (keeps it visible while moving)
         session.sendActionBar(tracked);

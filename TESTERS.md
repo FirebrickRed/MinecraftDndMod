@@ -41,7 +41,12 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **Right-click a weapon on your turn** → clickable attack prompt (aim at target, or
       right-click the enemy directly); fills `/combat attack … --roll`, plus a `[--total]`
       option if you did the math yourself.
-- [ ] **Range gate** — melee refuses a far target; bows/crossbows use their range.
+- [ ] **Range gate** — melee refuses a far target; bows/crossbows use their range. **Entity attacks
+      too** (a wolf can't bite from across the room; the kobold's reach depends on its attack).
+- [ ] **Speed is a wall** — on your turn you can't walk (or move a possessed entity) outside the green
+      ring; you stop at the edge.
+- [ ] **Possessed reach ring** follows the weapon in hand — hold the kobold's sword vs its bow and the
+      orange ring resizes.
 - [ ] **Weapon required** — `/combat attack <target>` alone asks for a weapon; `unarmed` works.
 - [ ] **/combat damage** only applies once per attack hit (no spamming); `/combat override` bypasses.
 - [ ] **Dead things** are skipped on their turn and can't be targeted.

@@ -600,6 +600,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         CombatSession session = getActiveSession(dm);
         if (session == null) return;
 
+        // If initiative was never rolled, this is a cancel, not the end of a fight — say so.
+        if (session.isSetupPhase()) {
+            session.broadcast(Component.text("✖ Encounter cancelled (never started).", NamedTextColor.GRAY, TextDecoration.ITALIC));
+            session.endCombat();
+            DM_SESSIONS.remove(dm.getUniqueId());
+            dm.sendMessage(Component.text("Encounter cancelled.", NamedTextColor.YELLOW));
+            return;
+        }
+
         // "/combat finished" is deliberately distinct from "/combat endturn", so no confirm needed.
         int rounds = session.getRoundNumber();
         int standing = session.getLivingCombatants().size();
@@ -903,11 +912,19 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Range check for player attacks: are you close enough to swing / within weapon range?
+        // Range check: are you close enough to swing / within weapon/attack range?
         // (--showmods just previews modifiers, so skip the range gate for it.)
         if (!showMods && attacker.isPlayer()) {
             DndWeapon rangeWeapon = AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName);
             String rangeError = attackRangeError(attacker, target, rangeWeapon);
+            if (rangeError != null) {
+                player.sendMessage(Component.text(rangeError, NamedTextColor.RED));
+                return;
+            }
+        } else if (!showMods && attacker.isEntity()) {
+            io.papermc.jkvttplugin.data.model.DndAttack atk =
+                    AttackHandler.resolveEntityAttack(attacker, weaponOrAttackName);
+            String rangeError = entityAttackRangeError(attacker, target, atk);
             if (rangeError != null) {
                 player.sendMessage(Component.text(rangeError, NamedTextColor.RED));
                 return;
@@ -967,6 +984,40 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     }
 
     private static String fmtFeet(double feet) { return String.format("%.0f ft", feet); }
+
+    /**
+     * Range gate for an entity's attack, using its {@code reach} string ("5 ft", "10 ft.", or the
+     * ranged "80/320 ft" form). Null if in range or positions can't be determined.
+     */
+    private String entityAttackRangeError(Combatant attacker, Combatant target,
+                                          io.papermc.jkvttplugin.data.model.DndAttack attack) {
+        Location a = attacker.getLocation();
+        Location t = target.getLocation();
+        if (a == null || t == null || a.getWorld() == null || !a.getWorld().equals(t.getWorld())) {
+            return null;
+        }
+        double feet = a.distance(t) * 5.0;
+        double tolerance = 2.5;
+
+        String reach = attack != null ? attack.getReach() : null;
+        java.util.List<Integer> nums = new java.util.ArrayList<>();
+        if (reach != null) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(reach);
+            while (m.find()) nums.add(Integer.parseInt(m.group(1)));
+        }
+
+        if (nums.isEmpty()) { // no reach data → assume 5 ft melee
+            return feet > 5 + tolerance
+                    ? target.getDisplayName() + " is too far — " + fmtFeet(feet) + " away, but reach is 5 ft." : null;
+        }
+        boolean ranged = reach.contains("/"); // e.g. "80/320 ft"
+        int max = ranged ? nums.get(nums.size() - 1) : nums.get(0);
+        if (feet > max + tolerance) {
+            String kind = ranged ? "out of range" : "too far";
+            return target.getDisplayName() + " is " + kind + " — " + fmtFeet(feet) + " away (max " + max + " ft).";
+        }
+        return null;
+    }
 
     /**
      * Get the value after a flag (e.g., --roll 14 → "14").

@@ -570,19 +570,17 @@ public class CombatSession {
     /** Attack reach of a combatant in blocks: held weapon (player) or best attack (entity). */
     private double attackReachBlocks(Combatant c) {
         if (c.isPlayer() && c.getPlayer() != null) {
-            org.bukkit.inventory.ItemStack item = c.getPlayer().getInventory().getItemInMainHand();
-            String id = io.papermc.jkvttplugin.util.ItemUtil.getItemId(item);
-            io.papermc.jkvttplugin.data.model.DndWeapon w =
-                    id != null ? io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(id) : null;
-            if (w == null) return 1.0; // unarmed: 5 ft
-            if (w.isRanged()) {
-                int r = w.getNormalRange() > 0 ? w.getNormalRange() : 5;
-                return Math.min(r / 5.0, 40.0);
-            }
-            boolean reachProp = w.getProperties() != null && w.getProperties().contains("reach");
-            return reachProp ? 2.0 : 1.0; // 10 ft reach weapon, else 5 ft
+            return heldWeaponReachBlocks(c.getPlayer(), 1.0);
         }
         if (c.isEntity() && c.getEntityInstance() != null) {
+            // If a DM is possessing this entity, show the reach of the weapon THEY'RE holding (their
+            // entity-kit item) — so a possessed kobold's ring follows its sword vs its bow.
+            Player possessor = io.papermc.jkvttplugin.dm.PossessionManager.getPossessorOf(
+                    c.getEntityInstance().getArmorStand());
+            if (possessor != null) {
+                double held = heldWeaponReachBlocks(possessor, -1.0); // -1 → not a weapon, use attacks
+                if (held > 0) return held;
+            }
             double best = 1.0;
             java.util.List<io.papermc.jkvttplugin.data.model.DndAttack> attacks =
                     c.getEntityInstance().getTemplate().getAttacks();
@@ -594,6 +592,25 @@ public class CombatSession {
             return Math.min(best, 40.0);
         }
         return 1.0;
+    }
+
+    /**
+     * Reach in blocks of the weapon a player holds. {@code noWeapon} is returned when they hold no
+     * D&D weapon (1.0 = unarmed 5 ft for a real player; -1 for a possessor so the caller can fall
+     * back to the entity's own attacks).
+     */
+    private double heldWeaponReachBlocks(Player p, double noWeapon) {
+        org.bukkit.inventory.ItemStack item = p.getInventory().getItemInMainHand();
+        String id = io.papermc.jkvttplugin.util.ItemUtil.getItemId(item);
+        io.papermc.jkvttplugin.data.model.DndWeapon w =
+                id != null ? io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(id) : null;
+        if (w == null) return noWeapon;
+        if (w.isRanged()) {
+            int r = w.getNormalRange() > 0 ? w.getNormalRange() : 5;
+            return Math.min(r / 5.0, 40.0);
+        }
+        boolean reachProp = w.getProperties() != null && w.getProperties().contains("reach");
+        return reachProp ? 2.0 : 1.0; // 10 ft reach weapon, else 5 ft
     }
 
     /** Parse a reach/range string ("5 ft", "10 ft.", "80/320 ft") to blocks (first number ÷ 5). */

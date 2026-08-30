@@ -50,6 +50,14 @@ public class PossessionManager {
         return possessedByDm.get(dmId);
     }
 
+    /** The player currently possessing {@code stand}, or null — reverse of {@link #getPossessedArmorStand}. */
+    public static Player getPossessorOf(ArmorStand stand) {
+        for (Map.Entry<UUID, ArmorStand> e : possessedByDm.entrySet()) {
+            if (stand.equals(e.getValue())) return Bukkit.getPlayer(e.getKey());
+        }
+        return null;
+    }
+
     public static void possess(Player dm, ArmorStand stand) {
         DndEntityInstance instance = DndEntityInstance.getByArmorStand(stand);
         if (instance == null) {
