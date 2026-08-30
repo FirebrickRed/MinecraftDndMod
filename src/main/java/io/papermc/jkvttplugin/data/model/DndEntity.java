@@ -207,15 +207,43 @@ public class DndEntity {
     public void setLootable(boolean lootable) { this.lootable = lootable; }
 
     /**
-     * The effective loot table: the explicit {@code loot:} section if present, otherwise the
-     * lootable items synthesized from {@code inventory:}. Empty if the creature isn't lootable.
+     * Items the entity is holding — the weapons its attacks represent plus any non-attack gear in
+     * {@code inventory:} — for the possession hotbar (#132). One coherent kit, no duplicates.
+     */
+    public List<String> getPossessionItems() {
+        java.util.LinkedHashSet<String> items = new java.util.LinkedHashSet<>();
+        if (attacks != null) {
+            for (DndAttack a : attacks) {
+                if (a.getItem() != null && !a.getItem().isBlank()) items.add(a.getItem());
+            }
+        }
+        if (inventory != null) items.addAll(inventory);
+        return new ArrayList<>(items);
+    }
+
+    /**
+     * The effective loot table (#132): the explicit {@code loot:} section if present, otherwise the
+     * lootable items synthesized from the entity's attack-weapons AND its {@code inventory:} gear.
+     * Empty if the creature isn't lootable.
      */
     public List<LootEntry> getLootTable() {
         if (!lootable) return new ArrayList<>();
-        List<LootEntry> source = (loot != null && !loot.isEmpty()) ? loot : inventoryLoot;
         List<LootEntry> result = new ArrayList<>();
-        if (source != null) {
-            for (LootEntry e : source) if (e.isLootable()) result.add(e);
+        if (loot != null && !loot.isEmpty()) {
+            for (LootEntry e : loot) if (e.isLootable()) result.add(e);
+            return result;
+        }
+        // Synthesize: attack weapons (default DC 5 Investigation) + inventory gear.
+        if (attacks != null) {
+            for (DndAttack a : attacks) {
+                if (a.getItem() != null && !a.getItem().isBlank() && a.isLootable()) {
+                    result.add(new LootEntry(a.getItem(), 1, 5,
+                            io.papermc.jkvttplugin.data.model.enums.Skill.INVESTIGATION, true));
+                }
+            }
+        }
+        if (inventoryLoot != null) {
+            for (LootEntry e : inventoryLoot) if (e.isLootable()) result.add(e);
         }
         return result;
     }

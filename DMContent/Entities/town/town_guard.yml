@@ -30,25 +30,26 @@ abilities:
   wisdom: 11
   charisma: 10
 
-# Attacks (stubbed for now, full combat in future epic)
+# Attacks. `item:` links each weapon attack to the item it wields, so it's held + lootable from one
+# definition (#132). Longsword and crossbow no longer need duplicate inventory entries.
 attacks:
   - name: "Longsword"
+    item: longsword
     to_hit: 4
     reach: "5 ft."
     damage: "1d8+2"
     damage_type: slashing
   - name: "Crossbow"
+    item: light_crossbow
     to_hit: 3
     reach: "80/320 ft."
     damage: "1d8+1"
     damage_type: piercing
 
-# Inventory (references weapon/armor/item IDs)
+# Inventory: non-weapon gear only (armor/shield). Weapons come from the attacks above.
 inventory:
-  - longsword
-  - chainmail
+  - chain_mail
   - shield
-  - crossbow
 
 # Visual reference to resource pack model
 model: "town_guard"

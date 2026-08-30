@@ -192,7 +192,7 @@ public class PossessionManager {
 
     private static void giveEntityKit(Player dm, DndEntityInstance instance) {
         dm.getInventory().clear();
-        List<String> inventory = instance.getTemplate().getInventory();
+        List<String> inventory = instance.getTemplate().getPossessionItems();
         int slot = 0;
         if (inventory != null) {
             for (String id : inventory) {

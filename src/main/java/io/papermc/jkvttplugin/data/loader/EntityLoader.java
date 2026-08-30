@@ -315,6 +315,10 @@ public class EntityLoader {
         attack.setDamage((String) data.get("damage"));
         attack.setDamageType((String) data.get("damage_type"));
 
+        // The weapon this attack represents (for possession + loot), if any (#132).
+        if (data.get("item") instanceof String item) attack.setItem(item);
+        if (data.get("lootable") instanceof Boolean b) attack.setLootable(b);
+
         return attack;
     }
 

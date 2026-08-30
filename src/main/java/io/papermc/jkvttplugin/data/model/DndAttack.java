@@ -47,6 +47,15 @@ public class DndAttack {
      */
     private String damageType;
 
+    /**
+     * The weapon item this attack represents, if any (Issue #132). When set, the entity is holding
+     * that item — so it appears in the possession hotbar and can be looted — while the attack's
+     * stats (to-hit/damage/reach) still drive combat. Natural attacks (bite, claw) and spell attacks
+     * leave this null. {@link #lootable} lets a weapon be usable/held but not dropped.
+     */
+    private String item;
+    private boolean lootable = true;
+
     // ==================== CONSTRUCTORS ====================
 
     /**
@@ -106,6 +115,12 @@ public class DndAttack {
     public void setDamageType(String damageType) {
         this.damageType = damageType;
     }
+
+    public String getItem() { return item; }
+    public void setItem(String item) { this.item = item; }
+
+    public boolean isLootable() { return lootable; }
+    public void setLootable(boolean lootable) { this.lootable = lootable; }
 
     // ==================== UTILITY METHODS ====================
 

@@ -114,6 +114,10 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **Dead entities** (#138): a killed entity **tips over** (corpse), **can't be possessed**, and a
       dead entity **can't join combat** — until the DM **`/dmentity revive <name> [hp]`** stands it back
       up. The corpse pose survives a restart.
+- [ ] **Entity kit is consistent** (#132): an entity's weapon is defined once (an attack with `item:`).
+      Possess Balin → he holds his **warhammer**; the town guard holds **longsword + crossbow + chain
+      mail + shield** and his stat block's attacks match; loot a body → its weapons/gear drop. No more
+      "has a warhammer but also doesn't."
 - [ ] **Loot the body** (#136): right-click a corpse → a clickable **[Investigation +X]** prompt → type
       your d20 → you recover every item you beat the DC on (default 5) into a **chest** (take some,
       the rest drops). The kobold's **sling is flagged non-lootable** so only the dagger is found.
