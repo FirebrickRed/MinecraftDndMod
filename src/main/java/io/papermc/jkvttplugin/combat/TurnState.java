@@ -25,6 +25,8 @@ public class TurnState {
     // Whether the pending hit was a critical. Remembered from the attack so /combat damage applies
     // the "crit vs a downed creature = 2 death-save failures" rule without a user-facing flag.
     private boolean pendingDamageCrit;
+    // The pending damage should be halved when applied (e.g. a successful save vs a save spell). (#123)
+    private boolean pendingDamageHalf;
 
     private double movementUsed;      // feet moved this turn
     private final int movementBudget; // max feet (from speed)
@@ -67,10 +69,13 @@ public class TurnState {
     public UUID getPendingDamageTargetId() { return pendingDamageTargetId; }
     public int getPendingDamageBonus() { return pendingDamageBonus; }
     public boolean isPendingDamageCrit() { return pendingDamageCrit; }
+    public boolean isPendingDamageHalf() { return pendingDamageHalf; }
+    public void setPendingDamageHalf(boolean half) { this.pendingDamageHalf = half; }
     public void clearDamagePending() {
         this.pendingDamageTargetId = null;
         this.pendingDamageBonus = 0;
         this.pendingDamageCrit = false;
+        this.pendingDamageHalf = false;
     }
 
     // ==================== MOVEMENT ====================

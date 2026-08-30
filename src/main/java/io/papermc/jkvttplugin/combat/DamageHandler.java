@@ -34,6 +34,11 @@ public class DamageHandler {
 
         target.applyDamage(finalDamage);
 
+        // Cosmetic on-hit effect for the damage type (fire → burning, cold → snowflakes, …).
+        org.bukkit.entity.Entity body = target.isPlayer() ? target.getPlayer()
+                : (target.getEntityInstance() != null ? target.getEntityInstance().getArmorStand() : null);
+        io.papermc.jkvttplugin.data.loader.DamageTypeLoader.playHitEffect(damageType, body);
+
         int hpAfter = target.getCurrentHp();
         int tempAfter = target.getTempHp();
 

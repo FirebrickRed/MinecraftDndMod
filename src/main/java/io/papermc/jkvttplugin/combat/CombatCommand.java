@@ -1531,6 +1531,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        // Halve on a successful save vs a save spell (#123).
+        if (!isOverride && attacker != null && attacker.getTurnState() != null && attacker.getTurnState().isPendingDamageHalf()) {
+            int full = damage;
+            damage = Math.max(0, damage / 2);
+            dm.sendMessage(Component.text("Saved — half damage: " + full + " → " + damage + ".", NamedTextColor.GRAY));
+        }
+
         DamageHandler.applyDamage(session, target, damage, type, crit);
         session.refreshHpDisplays(target);
 

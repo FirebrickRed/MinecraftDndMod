@@ -1,0 +1,32 @@
+# On-hit visual effects per damage type (Issue #123 follow-up). Purely cosmetic — a hit of this
+# type briefly shows the effect on the target. Extend freely.
+#   fire_ticks: <n>   -> sets the target on fire for n ticks (20 = 1 second)
+#   particle: <NAME>  -> plays a burst of that vanilla Particle at the target
+
+fire:
+  fire_ticks: 25
+  particle: FLAME
+
+cold:
+  particle: SNOWFLAKE
+
+poison:
+  particle: ITEM_SLIME
+
+acid:
+  particle: ITEM_SLIME
+
+lightning:
+  particle: ELECTRIC_SPARK
+
+necrotic:
+  particle: SMOKE
+
+radiant:
+  particle: END_ROD
+
+force:
+  particle: ENCHANTED_HIT
+
+psychic:
+  particle: WITCH

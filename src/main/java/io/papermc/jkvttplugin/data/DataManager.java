@@ -33,6 +33,7 @@ public class DataManager {
         File conditionsFolder = new File(dmContentFolder, "Conditions"); // No Dependencies
         SpellLoader.loadAllSpells(spellFolder);
         ConditionLoader.loadAllConditions(conditionsFolder);
+        DamageTypeLoader.loadAll(new File(dmContentFolder, "DamageTypes.yml"));
         WeaponLoader.loadAllWeapons(weaponFolder);
         ArmorLoader.loadAllArmors(armorFolder);
         ItemLoader.loadAllItems(itemFolder);
@@ -56,5 +57,6 @@ public class DataManager {
         ItemLoader.clear();
         EntityLoader.clear();
         ConditionLoader.clear();
+        DamageTypeLoader.clear();
     }
 }

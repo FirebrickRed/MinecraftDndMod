@@ -64,6 +64,10 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **HP at a glance** — your HP on the scoreboard/action bar; **enemy HP hidden** from players; DM sees all via `/combat status`.
 - [ ] **NPC turn** — DM sees the entity's action/move bar + its **attack list**.
 - [ ] Boats/mounts are **frozen** when it's not your turn.
+- [ ] **Damage-type visuals**: a **fire** hit briefly sets the target on fire + flame particles; cold →
+      snowflakes, poison → slime, etc. (configured in `DMContent/DamageTypes.yml`).
+- [ ] **Spell fixes**: casting a spell your character **doesn't know** is refused; a **successful save**
+      vs a half-damage spell now **auto-halves** (no manual math).
 - [ ] **Cast spells in combat** (#123): on your turn, `/combat cast fire_bolt <target> --roll <d20>`
       (tab-completes your known spells) → **attack-roll spells** (Fire Bolt) roll vs AC → damage prompt.
       **Save spells** (Poison Spray, Sacred Flame) → the *target* is prompted to roll their save

@@ -43,6 +43,10 @@ public class SpellCastHandler {
             player.sendMessage(Component.text("Your class doesn't have spellcasting.", NamedTextColor.RED));
             return false;
         }
+        if (!sheet.getKnownCantrips().contains(spell) && !sheet.getKnownSpells().contains(spell)) {
+            player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
+            return false;
+        }
         int mod = sheet.getProficiencyBonus() + sheet.getModifier(ability);
 
         if (spell.isAttackRoll()) {
@@ -132,8 +136,9 @@ public class SpellCastHandler {
 
         if (success) {
             if ("half".equalsIgnoreCase(ps.saveEffect()) && ps.damage() != null) {
-                session.broadcast(Component.text(ps.spellName() + " deals half on a save — apply half (round down).", NamedTextColor.GRAY));
+                session.broadcast(Component.text(ps.spellName() + " deals half on a save.", NamedTextColor.GRAY));
                 AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false);
+                if (damageSource.getTurnState() != null) damageSource.getTurnState().setPendingDamageHalf(true);
             } else {
                 session.broadcast(Component.text(target.getDisplayName(true) + " shrugs it off.", NamedTextColor.GRAY));
             }
