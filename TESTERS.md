@@ -80,6 +80,12 @@ Newest first. Tick these off after a build to confirm they work in-game.
       words and you're prompted to type them in chat (or `cancel`). Castable **in or out of combat**, but in
       combat only **on your turn**, where it **spends your action** (off-turn casts — including a Message
       reply — are refused); your character must **know** the spell.
+- [ ] **Opportunity attacks / reactions** (#147): **walk out of an enemy's melee reach** and that enemy
+      (if it still has its reaction) gets a **⚡ Opportunity Attack** prompt — the DM for monsters (one
+      button per melee attack), or the player for a PC — plus **[pass]**. Clicking one attacks the fleeing
+      creature and **spends that reactor's reaction** (not its action); it refreshes at the start of the
+      reactor's next turn. **Dodge/Disengage** first (`/combat action disengage`) and moving away **draws no
+      OA**. Ranged-only monsters don't get one. (Enemy = players-vs-entities for now; factions are #155.)
 - [ ] **Ritual casting in combat** (#156): `/combat cast <ritual_spell> --ritual` on your turn begins a
       **multi-turn channel** (default **10 rounds**, config `rituals.combat_rounds`, or a spell's own
       `ritual_rounds`). Each of your turns the channel **eats your action** (you can still move); the

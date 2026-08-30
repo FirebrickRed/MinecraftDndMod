@@ -111,6 +111,9 @@ public class CombatListener implements Listener {
         turnState.setMovementWarned(false); // back within range
         turnState.setMovementUsed(feetFromStart);
 
+        // Leaving an enemy's melee reach may provoke an opportunity attack (#147).
+        ReactionManager.checkOpportunityAttacks(session, tracked, event.getFrom(), event.getTo());
+
         // Refresh action bar on each block moved (keeps it visible while moving)
         session.sendActionBar(tracked);
     }

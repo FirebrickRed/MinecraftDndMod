@@ -49,7 +49,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -102,6 +102,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "cast" -> handleCast(player, args);
             case "save" -> handleSave(player, args);
             case "attack" -> handleAttack(player, args);
+            case "reaction" -> handleReaction(player, args);
             case "damage" -> handleDamage(player, args);
             case "override" -> handleDamage(player, args); // DM-only (not in PLAYER_ALLOWED): apply corrective damage anytime
             case "heal" -> handleHeal(player, args);
@@ -981,6 +982,90 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (target == null) { player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED)); return; }
         }
         SpellCastHandler.resolveSave(player, session, target, providedRoll, providedTotal);
+    }
+
+    // ==================== REACTIONS (Issue #147) ====================
+
+    /**
+     * {@code /combat reaction [<reactor>] <attack|weapon|pass> [--roll <d20>]} — take (or pass) a pending
+     * opportunity attack. A player reacting for themselves may omit the reactor name.
+     */
+    private void handleReaction(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+
+        List<String> pos = collectPositionalArgs(args, 1);
+        if (pos.isEmpty()) {
+            player.sendMessage(Component.text("Usage: /combat reaction [<reactor>] <attack|pass>", NamedTextColor.RED));
+            return;
+        }
+
+        Combatant reactor;
+        String attackName;
+        if (pos.size() == 1) {
+            // A player taking/passing their own opportunity attack: reactor is inferred.
+            reactor = findOwnCombatant(session, player.getUniqueId());
+            if (reactor == null) {
+                player.sendMessage(Component.text("Name the reactor: /combat reaction <name> <attack|pass>", NamedTextColor.RED));
+                return;
+            }
+            attackName = pos.get(0);
+        } else {
+            attackName = pos.get(pos.size() - 1);
+            String reactorName = String.join(" ", pos.subList(0, pos.size() - 1));
+            reactor = findCombatantByName(session, stripQuotes(reactorName));
+            if (reactor == null) {
+                player.sendMessage(Component.text("Reactor not found: " + reactorName, NamedTextColor.RED));
+                return;
+            }
+        }
+
+        // Only the reactor's own controller may act: a player for themselves, the DM for a creature.
+        if (reactor.isPlayer()) {
+            if (!isDM && !reactor.getId().equals(player.getUniqueId())) {
+                player.sendMessage(Component.text("That isn't your reaction to take.", NamedTextColor.RED));
+                return;
+            }
+        } else if (!isDM) {
+            player.sendMessage(Component.text("Only the DM controls that creature's reaction.", NamedTextColor.RED));
+            return;
+        }
+
+        if (!ReactionManager.hasPending(reactor)) {
+            player.sendMessage(Component.text(reactor.getDisplayName() + " has no opportunity attack to take right now.", NamedTextColor.YELLOW));
+            return;
+        }
+        if (attackName.equalsIgnoreCase("pass")) {
+            ReactionManager.clearPending(reactor);
+            session.broadcast(Component.text(reactor.getDisplayName() + " holds their reaction.", NamedTextColor.GRAY));
+            return;
+        }
+        if (!reactor.isReactionAvailable()) {
+            player.sendMessage(Component.text(reactor.getDisplayName() + " has already used its reaction this round.", NamedTextColor.YELLOW));
+            ReactionManager.clearPending(reactor);
+            return;
+        }
+        Combatant mover = ReactionManager.pendingMover(session, reactor);
+        if (mover == null || mover.isDead()) {
+            player.sendMessage(Component.text("The target is no longer available.", NamedTextColor.YELLOW));
+            ReactionManager.clearPending(reactor);
+            return;
+        }
+
+        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
+        Integer providedTotal = getFlagValueInt(args, "--total");
+
+        // Resolve as a normal attack (no action spent — it costs the reaction instead).
+        boolean resolved = reactor.isPlayer()
+                ? AttackHandler.executePlayerAttack(reactor, mover, session, player, attackName, providedRoll, providedTotal, false)
+                : AttackHandler.executeEntityAttack(reactor, mover, session, player, attackName, providedRoll, providedTotal, false);
+
+        if (resolved) {
+            ReactionManager.spendReaction(reactor);
+            session.broadcast(Component.text("⚡ " + reactor.getDisplayName() + " takes an Opportunity Attack (reaction used).", NamedTextColor.GOLD));
+            session.updateScoreboard();
+        }
     }
 
     // ==================== CONDITIONS (Issue #103) ====================
@@ -2150,6 +2235,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     if (session != null) {
                         for (Combatant c : session.getCombatants()) {
                             completions.add(c.getDisplayName());
+                        }
+                    }
+                }
+                case "reaction" -> {
+                    // Suggest combatants that currently have a pending opportunity attack, plus 'pass'.
+                    completions.add("pass");
+                    if (session != null) {
+                        for (Combatant c : session.getCombatants()) {
+                            if (ReactionManager.hasPending(c)) completions.add(c.getDisplayName());
                         }
                     }
                 }

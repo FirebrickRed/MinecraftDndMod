@@ -120,8 +120,11 @@ public class MoveToolManager {
             // Hard-cap the destination at the entity's speed — it can't move past its budget.
             Location capped = capToBudget(current, d);
             boolean wasCapped = capped != d;
+            Location fromLoc = stand.getLocation().clone();
             stand.teleport(capped);
             trackBudget(dm, session, current, capped);
+            // Leaving an enemy's reach may provoke an opportunity attack (#147).
+            io.papermc.jkvttplugin.combat.ReactionManager.checkOpportunityAttacks(session, current, fromLoc, capped);
             if (wasCapped) {
                 dm.sendActionBar(Component.text(inst.getDisplayName() + " moved as far as its speed allows.", NamedTextColor.YELLOW));
             }

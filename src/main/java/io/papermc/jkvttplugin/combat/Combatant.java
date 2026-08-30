@@ -55,6 +55,11 @@ public class Combatant {
     private String ritualSpellName;
     private int ritualRoundsLeft;
 
+    // Reaction economy (Issue #147): one reaction, spent on others' turns (e.g. an opportunity
+    // attack), refreshed at the start of this combatant's own turn. Persists across turns, unlike
+    // TurnState, which is discarded when the turn ends.
+    private boolean reactionAvailable = true;
+
     // ==================== CONSTRUCTORS ====================
 
     /**
@@ -239,6 +244,10 @@ public class Combatant {
         ritualSpellName = null;
         ritualRoundsLeft = 0;
     }
+
+    // ==================== REACTION ECONOMY (Issue #147) ====================
+    public boolean isReactionAvailable() { return reactionAvailable; }
+    public void setReactionAvailable(boolean available) { this.reactionAvailable = available; }
 
     /** CON modifier, for the ritual concentration check (players and entities). */
     public int getConstitutionModifier() {
