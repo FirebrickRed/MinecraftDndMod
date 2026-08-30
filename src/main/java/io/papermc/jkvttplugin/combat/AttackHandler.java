@@ -66,36 +66,41 @@ public class AttackHandler {
             return;
         }
 
-        // Build damage string
+        // Build damage string, then hand off to the shared resolver.
         String damageStr = buildPlayerDamageString(sheet, weapon);
         String damageType = (weapon != null) ? weapon.getDamageType() : "bludgeoning";
+        resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
+                providedRoll, providedTotal);
+    }
 
-        // Determine the d20 result and total
+    /**
+     * Shared attack resolution for players and entities (Issue #139). Given the pre-computed
+     * to-hit modifier + its breakdown text and the damage string/type, this rolls (or takes the
+     * provided roll/total), compares to AC with nat-20/nat-1 handling, doubles dice on a crit, and
+     * broadcasts the result. The two callers differ only in how they produce those inputs.
+     */
+    private static void resolveAttack(CombatSession session, Combatant attacker, Combatant target,
+                                      int attackMod, String modBreakdown, String damageStr, String damageType,
+                                      Integer providedRoll, Integer providedTotal) {
         int targetAC = target.getArmorClass();
-
         if (providedTotal != null) {
-            // --total mode: no crit detection, just compare to AC
+            // --total mode: no crit detection, just compare to AC.
             boolean hit = providedTotal >= targetAC;
             broadcastAttackResult(session, attacker, target, false,
                     providedTotal, targetAC, hit, false, false,
                     damageStr, damageType, providedTotal + " (provided total)");
         } else {
-            // Auto-roll or --roll mode
+            // Auto-roll or --roll mode.
             int d20 = (providedRoll != null) ? providedRoll : DiceRoller.rollDice(1, 20);
             int total = d20 + attackMod;
             boolean isNat20 = (d20 == 20);
             boolean isNat1 = (d20 == 1);
             boolean hit = isNat20 || (!isNat1 && total >= targetAC);
-
             String rollDetail = "d20(" + d20 + ") " + modBreakdown + " = " + total;
-
-            if (isNat20) {
-                damageStr = doubleDice(damageStr);
-            }
-
+            String finalDamage = isNat20 ? doubleDice(damageStr) : damageStr;
             broadcastAttackResult(session, attacker, target, false,
                     total, targetAC, hit, isNat20, isNat1,
-                    damageStr, damageType, rollDetail);
+                    finalDamage, damageType, rollDetail);
         }
     }
 
@@ -274,32 +279,9 @@ public class AttackHandler {
             return;
         }
 
-        String damageStr = attack.getDamage();
-        String damageType = attack.getDamageType();
-        int targetAC = target.getArmorClass();
-
-        if (providedTotal != null) {
-            boolean hit = providedTotal >= targetAC;
-            broadcastAttackResult(session, attacker, target, false,
-                    providedTotal, targetAC, hit, false, false,
-                    damageStr, damageType, providedTotal + " (provided total)");
-        } else {
-            int d20 = (providedRoll != null) ? providedRoll : DiceRoller.rollDice(1, 20);
-            int total = d20 + toHit;
-            boolean isNat20 = (d20 == 20);
-            boolean isNat1 = (d20 == 1);
-            boolean hit = isNat20 || (!isNat1 && total >= targetAC);
-
-            String rollDetail = "d20(" + d20 + ") +" + toHit + "[ToHit] = " + total;
-
-            if (isNat20) {
-                damageStr = doubleDice(damageStr);
-            }
-
-            broadcastAttackResult(session, attacker, target, false,
-                    total, targetAC, hit, isNat20, isNat1,
-                    damageStr, damageType, rollDetail);
-        }
+        // Same resolver as player attacks — the entity just sources its numbers from the stat block.
+        resolveAttack(session, attacker, target, toHit, "+" + toHit + "[ToHit]",
+                attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal);
     }
 
     /**
