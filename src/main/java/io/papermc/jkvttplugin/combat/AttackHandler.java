@@ -42,14 +42,14 @@ public class AttackHandler {
     /**
      * Execute a player character's attack against a target.
      */
-    public static void executePlayerAttack(Combatant attacker, Combatant target,
+    public static boolean executePlayerAttack(Combatant attacker, Combatant target,
                                            CombatSession session, Player player,
                                            String weaponId, Integer providedRoll,
                                            Integer providedTotal, boolean showMods) {
         CharacterSheet sheet = attacker.getCharacterSheet();
         if (sheet == null) {
             player.sendMessage(Component.text("No active character found.", NamedTextColor.RED));
-            return;
+            return false;
         }
 
         // Resolve weapon
@@ -60,16 +60,16 @@ public class AttackHandler {
         int attackMod = calculatePlayerAttackMod(sheet, weapon);
         String modBreakdown = buildPlayerModBreakdown(sheet, weapon);
 
-        // --showmods: just show the breakdown, don't attack
+        // --showmods: just show the breakdown, don't attack (and don't spend the action)
         if (showMods) {
             showAttackModifiers(player, attacker, weapon, attackMod, modBreakdown);
-            return;
+            return false;
         }
 
         // Build damage string, then hand off to the shared resolver.
         String damageStr = buildPlayerDamageString(sheet, weapon);
         String damageType = (weapon != null) ? weapon.getDamageType() : "bludgeoning";
-        resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
+        return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
                 providedRoll, providedTotal, player);
     }
 
@@ -79,15 +79,15 @@ public class AttackHandler {
      * provided roll/total), compares to AC with nat-20/nat-1 handling, doubles dice on a crit, and
      * broadcasts the result. The two callers differ only in how they produce those inputs.
      */
-    private static void resolveAttack(CombatSession session, Combatant attacker, Combatant target,
+    private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser) {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown);
         if (r == null) {
-            // Physical-roll mode with no die supplied — ask for one instead of rolling.
+            // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
             commandUser.sendMessage(Component.text("Roll your d20, then add --roll <n> (or right-click your weapon).",
                     NamedTextColor.YELLOW));
-            return;
+            return false;
         }
         int targetAC = target.getArmorClass();
         boolean hit = r.providedTotal()
@@ -97,6 +97,7 @@ public class AttackHandler {
         broadcastAttackResult(session, attacker, target, false,
                 r.total(), targetAC, hit, r.nat20(), r.nat1(),
                 finalDamage, damageType, r.breakdown());
+        return true;
     }
 
     /**
@@ -227,20 +228,20 @@ public class AttackHandler {
     /**
      * Execute an entity's attack against a target.
      */
-    public static void executeEntityAttack(Combatant attacker, Combatant target,
+    public static boolean executeEntityAttack(Combatant attacker, Combatant target,
                                            CombatSession session, Player dm,
                                            String attackName, Integer providedRoll,
                                            Integer providedTotal, boolean showMods) {
         DndEntityInstance entity = attacker.getEntityInstance();
         if (entity == null) {
             dm.sendMessage(Component.text("Entity data not found.", NamedTextColor.RED));
-            return;
+            return false;
         }
 
         List<DndAttack> attacks = entity.getTemplate().getAttacks();
         if (attacks == null || attacks.isEmpty()) {
             dm.sendMessage(Component.text(attacker.getDisplayName() + " has no attacks defined.", NamedTextColor.RED));
-            return;
+            return false;
         }
 
         // Resolve which attack to use
@@ -252,7 +253,7 @@ public class AttackHandler {
                 dm.sendMessage(Component.text("Available attacks: " +
                         String.join(", ", attacks.stream().map(DndAttack::getName).toList()),
                         NamedTextColor.YELLOW));
-                return;
+                return false;
             }
         } else {
             attack = attacks.get(0);
@@ -271,11 +272,11 @@ public class AttackHandler {
             dm.sendMessage(Component.text("Damage: " + attack.getDamage() + " " + attack.getDamageType(), NamedTextColor.GRAY));
             dm.sendMessage(Component.text("Use --roll <d20> to provide a physical roll.", NamedTextColor.DARK_GRAY));
             dm.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
-            return;
+            return false;
         }
 
         // Same resolver as player attacks — the entity just sources its numbers from the stat block.
-        resolveAttack(session, attacker, target, toHit, "+" + toHit + "[ToHit]",
+        return resolveAttack(session, attacker, target, toHit, "+" + toHit + "[ToHit]",
                 attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm);
     }
 

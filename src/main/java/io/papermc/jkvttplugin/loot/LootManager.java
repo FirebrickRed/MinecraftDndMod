@@ -122,7 +122,7 @@ public class LootManager {
         }
         int mod = sheet.getSkillBonus(check);
         String modStr = (mod >= 0 ? "+" + mod : String.valueOf(mod));
-        String cmd = "/character loot " + check.name().toLowerCase() + " ";
+        String cmd = "/character loot " + check.name().toLowerCase() + " --roll ";
         player.sendMessage(Component.text("The DM asks you to roll " + check.getDisplayName() + " — ", NamedTextColor.GOLD)
                 .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(cmd))
@@ -130,8 +130,8 @@ public class LootManager {
         dm.sendMessage(Component.text("Asked " + player.getName() + " to roll " + check.getDisplayName() + ".", NamedTextColor.GRAY));
     }
 
-    /** /loot &lt;check&gt; &lt;d20&gt;: resolve a physical roll against the pending corpse. */
-    public static void roll(Player player, String checkArg, int d20) {
+    /** {@code /character loot <check> --roll <n>|--total <n>}: resolve against the pending corpse. */
+    public static void roll(Player player, String checkArg, Integer providedRoll, Integer providedTotal) {
         UUID id = pendingCorpse.get(player.getUniqueId());
         if (id == null) {
             player.sendMessage(Component.text("Right-click a body to search it first.", NamedTextColor.RED));
@@ -140,10 +140,6 @@ public class LootManager {
         Skill check = Skill.fromString(checkArg);
         if (check == null) {
             player.sendMessage(Component.text("Unknown check: " + checkArg, NamedTextColor.RED));
-            return;
-        }
-        if (d20 < 1 || d20 > 20) {
-            player.sendMessage(Component.text("Your d20 roll must be 1–20.", NamedTextColor.RED));
             return;
         }
         if (searched.contains(key(player.getUniqueId(), id, check))) {
@@ -163,7 +159,13 @@ public class LootManager {
         }
 
         int mod = sheet.getSkillBonus(check);
-        int total = d20 + mod;
+        io.papermc.jkvttplugin.combat.RollService.RollResult r = io.papermc.jkvttplugin.combat.RollService.resolve(
+                providedRoll, providedTotal, mod, "+" + mod + "[" + check.getDisplayName() + "]");
+        if (r == null) { // physical mode, no roll supplied
+            player.sendMessage(Component.text("Add your roll: --roll <d20> (or --total <n>).", NamedTextColor.YELLOW));
+            return;
+        }
+        int total = r.total();
         searched.add(key(player.getUniqueId(), id, check));
 
         List<LootEntry> found = new ArrayList<>();
@@ -172,8 +174,7 @@ public class LootManager {
         }
         table.removeAll(found);
 
-        player.sendMessage(Component.text("🎲 " + check.getDisplayName() + ": " + d20
-                + (mod >= 0 ? " +" + mod : " " + mod) + " = " + total, NamedTextColor.AQUA));
+        player.sendMessage(Component.text("🎲 " + check.getDisplayName() + ": " + r.breakdown(), NamedTextColor.AQUA));
 
         if (found.isEmpty()) {
             player.sendMessage(Component.text("...you find nothing you can take.", NamedTextColor.GRAY));

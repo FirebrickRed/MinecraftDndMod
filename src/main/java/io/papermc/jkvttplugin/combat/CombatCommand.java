@@ -816,8 +816,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         for (java.util.Map.Entry<String, String> e : ACTIONS.entrySet()) {
             String label = Character.toUpperCase(e.getKey().charAt(0)) + e.getKey().substring(1);
             row = row.append(Component.text("[" + label + "] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                    .clickEvent(ClickEvent.runCommand("/combat action " + e.getKey()))
-                    .hoverEvent(HoverEvent.showText(Component.text(e.getValue()))));
+                    .clickEvent(ClickEvent.suggestCommand("/combat action " + e.getKey()))
+                    .hoverEvent(HoverEvent.showText(Component.text(e.getValue() + "\n(fills the command — press Enter to confirm)"))));
         }
         player.sendMessage(row);
     }
@@ -829,7 +829,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
         // Attacking spends the action itself — just point them to it (don't double-spend).
         if (name.equals("attack")) {
-            player.sendMessage(Component.text("Make your attack: right-click your weapon, or /combat attack <target> <weapon>.", NamedTextColor.YELLOW));
+            player.sendMessage(Component.text("Make your attack: right-click your weapon, or /combat attack <target> <weapon> --roll <d20>.", NamedTextColor.YELLOW));
             return;
         }
         if (state.isActionUsed()) {
@@ -1082,17 +1082,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (disadv != null) player.sendMessage(Component.text(disadv, NamedTextColor.YELLOW));
         }
 
-        // Delegate to AttackHandler based on combatant type
-        if (attacker.isPlayer()) {
-            AttackHandler.executePlayerAttack(attacker, target, session, player,
-                    weaponOrAttackName, providedRoll, providedTotal, showMods);
-        } else {
-            AttackHandler.executeEntityAttack(attacker, target, session, player,
-                    weaponOrAttackName, providedRoll, providedTotal, showMods);
-        }
+        // Delegate to AttackHandler based on combatant type. Returns false if the attack didn't
+        // actually happen (e.g. physical mode waiting on a roll) — then we DON'T spend the action.
+        boolean resolved = attacker.isPlayer()
+                ? AttackHandler.executePlayerAttack(attacker, target, session, player,
+                        weaponOrAttackName, providedRoll, providedTotal, showMods)
+                : AttackHandler.executeEntityAttack(attacker, target, session, player,
+                        weaponOrAttackName, providedRoll, providedTotal, showMods);
 
-        // Consume action + refresh action bar (skip for --showmods)
-        if (!showMods) {
+        // Consume action + refresh action bar only for a real attack.
+        if (resolved) {
             TurnState state = attacker.getTurnState();
             if (state != null) {
                 state.useAction();
@@ -1949,7 +1948,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return filterCompletions(completions, args[1]);
         }
 
-        if (args.length == 3) {
+        // (attack falls through to its own block below, which handles weapon/attack names + flags)
+        if (args.length == 3 && !args[0].equalsIgnoreCase("attack")) {
             if (args[0].equalsIgnoreCase("add") && args[1].equalsIgnoreCase("--radius")) {
                 completions.addAll(List.of("10", "20", "30", "50"));
             } else if (args[0].equalsIgnoreCase("initiative")) {

@@ -180,17 +180,20 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Only players can loot.", NamedTextColor.RED));
             return true;
         }
-        if (rest.length < 2) {
-            player.sendMessage(Component.text("Right-click a body, then use the prompt (or /character loot <check> <d20>).", NamedTextColor.RED));
+        if (rest.length < 1) {
+            player.sendMessage(Component.text("Right-click a body, then use the prompt (or /character loot <check> --roll <d20>).", NamedTextColor.RED));
             return true;
         }
-        // --roll style: a number you rolled, or dice like 1d20 for the game to roll.
-        Integer d20 = io.papermc.jkvttplugin.combat.RollService.parseRollArg(rest[1]);
-        if (d20 == null) {
-            player.sendMessage(Component.text("Your roll must be a number (e.g. 14) or dice (e.g. 1d20).", NamedTextColor.RED));
-            return true;
+        // Same --roll/--total grammar as attacks: --roll <n|dice>, or --total <n>.
+        Integer providedRoll = null, providedTotal = null;
+        for (int i = 1; i < rest.length - 1; i++) {
+            if (rest[i].equalsIgnoreCase("--roll")) {
+                providedRoll = io.papermc.jkvttplugin.combat.RollService.parseRollArg(rest[i + 1]);
+            } else if (rest[i].equalsIgnoreCase("--total")) {
+                try { providedTotal = Integer.parseInt(rest[i + 1].trim()); } catch (NumberFormatException ignored) {}
+            }
         }
-        io.papermc.jkvttplugin.loot.LootManager.roll(player, rest[0], d20);
+        io.papermc.jkvttplugin.loot.LootManager.roll(player, rest[0], providedRoll, providedTotal);
         return true;
     }
 
