@@ -989,8 +989,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 session.updateScoreboard();
             } else {
                 TurnState state = caster.getTurnState();
-                if (state != null && !state.isActionUsed()) {
-                    state.useAction();
+                if (state != null) {
+                    boolean bonusCast = spell.getCastingTime() != null && spell.getCastingTime().toLowerCase().contains("bonus");
+                    if (bonusCast) {
+                        if (!state.isBonusActionUsed()) state.useBonusAction();
+                    } else if (!state.isActionUsed()) {
+                        state.useAction();
+                    }
                     session.sendActionBar(caster);
                 }
             }
@@ -1165,6 +1170,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             head = head.append(Component.text("  (can make opportunity attacks)", NamedTextColor.GRAY));
         }
         viewer.sendMessage(head);
+
+        // Stat-block reaction abilities (free text) — DM adjudicates them (#147).
+        if (roster && c.isEntity() && c.getEntityInstance() != null) {
+            for (String r : c.getEntityInstance().getTemplate().getReactions()) {
+                viewer.sendMessage(Component.text("   ‣ " + r, NamedTextColor.GRAY));
+            }
+        }
 
         boolean actionable = false;
         // Pending opportunity attack → clickable buttons.

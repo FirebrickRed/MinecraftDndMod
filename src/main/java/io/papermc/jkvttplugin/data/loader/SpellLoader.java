@@ -118,6 +118,9 @@ public class SpellLoader {
         if (data.get("word_limit") instanceof Number wl) spell.setWordLimit(wl.intValue());
         // Ritual-in-combat per-spell channel length (#156); 0/absent = global default.
         if (data.get("ritual_rounds") instanceof Number rr) spell.setRitualRounds(rr.intValue());
+        // Healing / temporary HP (#123).
+        spell.setHealing(LoaderUtils.asString(data.get("healing"), null));
+        spell.setTempHp(LoaderUtils.asString(data.get("temp_hp"), null));
         return spell;
     }
 

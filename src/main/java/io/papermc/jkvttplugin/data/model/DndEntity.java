@@ -94,6 +94,13 @@ public class DndEntity {
      */
     private List<DndAttack> attacks;
 
+    /**
+     * Reaction abilities from the stat block (free text, like a monster's "Reactions" section — e.g.
+     * "Parry: +2 AC vs one melee attack"). Displayed in the combat reactions roster (#147); the DM
+     * adjudicates them. Any creature with a melee attack can also make opportunity attacks regardless.
+     */
+    private List<String> reactions = new ArrayList<>();
+
     // ==================== INVENTORY & EQUIPMENT ====================
 
     /**
@@ -193,6 +200,9 @@ public class DndEntity {
 
     public List<DndAttack> getAttacks() { return attacks; }
     public void setAttacks(List<DndAttack> attacks) { this.attacks = attacks; }
+
+    public List<String> getReactions() { return reactions; }
+    public void setReactions(List<String> reactions) { this.reactions = reactions != null ? reactions : new ArrayList<>(); }
 
     public List<String> getInventory() { return inventory; }
     public void setInventory(List<String> inventory) { this.inventory = inventory; }

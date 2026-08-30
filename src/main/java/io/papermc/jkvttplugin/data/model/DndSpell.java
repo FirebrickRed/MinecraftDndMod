@@ -40,6 +40,8 @@ public class DndSpell {
                                       // "speak_with_animals" (DM relays; others hear gibberish); null = not social
     private int wordLimit;            // max words the caster may send (0 = unlimited)
     private int ritualRounds;         // combat rounds to channel this as a ritual (#156); 0 = use global default
+    private String healing;           // hit points restored, e.g. "1d8" (+ spellcasting mod is added) (#123)
+    private String tempHp;            // temporary hit points granted, e.g. "5" or "1d4+4" (no mod added)
 
     public DndSpell() {}
 
@@ -200,6 +202,15 @@ public class DndSpell {
     public void setWordLimit(int wordLimit) { this.wordLimit = wordLimit; }
     public int getRitualRounds() { return ritualRounds; }
     public void setRitualRounds(int ritualRounds) { this.ritualRounds = ritualRounds; }
+    public String getHealing() { return healing; }
+    public void setHealing(String healing) { this.healing = healing; }
+    public String getTempHp() { return tempHp; }
+    public void setTempHp(String tempHp) { this.tempHp = tempHp; }
+
+    /** True if this spell restores hit points. */
+    public boolean isHealing() { return healing != null && !healing.isBlank(); }
+    /** True if this spell grants temporary hit points. */
+    public boolean grantsTempHp() { return tempHp != null && !tempHp.isBlank(); }
 
     /** True if this spell is a chat/social spell that opens a message prompt instead of rolling (#151). */
     public boolean isSocial() { return socialType != null && !socialType.isBlank(); }

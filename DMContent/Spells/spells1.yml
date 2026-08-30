@@ -36,7 +36,7 @@ spells:
     concentration: false
     ritual: false
     icon: "POTION"
-    attack_type: "touch"
+    healing: "1d8"
     higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d8 for each slot level above 1st."
 
   detect_magic:
@@ -82,6 +82,7 @@ spells:
     concentration: false
     ritual: false
     icon: "GOLDEN_APPLE"
+    healing: "1d4"
     higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d4 for each slot level above 1st."
 
   shield:

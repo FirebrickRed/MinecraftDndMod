@@ -102,6 +102,11 @@ Newest first. Tick these off after a build to confirm they work in-game.
       may **break** it — default a **CON save** (DC = max(10, half the damage), or a fixed `interrupt_dc`);
       config `rituals.interrupt` also offers `break_on_damage` / `none`. Being **downed, Stunned/Paralyzed**,
       or using `/combat cast cancel` also ends it. (House rule — RAW rituals take 10 min ≈ 100 rounds.)
+- [ ] **Healing spells** (#123): `/combat cast cure_wounds <target>` restores HP (**dice + your spellcasting
+      modifier**, no roll needed); **Healing Word** heals and correctly spends your **bonus action**, not your
+      action. Spells with `temp_hp:` grant temporary HP. (Add `healing:`/`temp_hp:` to any spell's YAML.)
+- [ ] **Reaction roster shows monster reactions** (#147): a stat block's `reactions:` list (free text, e.g.
+      "Parry: +2 AC") now appears under that creature in the DM's `/combat reactions` roster.
 - [ ] **Cast spells in combat** (#123): on your turn, `/combat cast fire_bolt <target> --roll <d20>`
       (tab-completes your known spells) → **attack-roll spells** (Fire Bolt) roll vs AC → damage prompt.
       **Save spells** (Poison Spray, Sacred Flame) → the *target* is prompted to roll their save

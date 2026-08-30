@@ -220,6 +220,14 @@ public class EntityLoader {
                 entity.setAttacks(attacks);
             }
 
+            // Reactions — free-text ability lines shown in the combat reactions roster (#147).
+            Object reactionsObj = data.get("reactions");
+            if (reactionsObj instanceof List<?> reactionsList) {
+                List<String> reactions = new ArrayList<>();
+                for (Object r : reactionsList) if (r != null) reactions.add(r.toString());
+                entity.setReactions(reactions);
+            }
+
             // Inventory — entries may be a plain id (string) or an object with loot flags
             // (item_id, qty, dc, check, lootable). The id list feeds the possession kit; the loot
             // flags feed synthesized loot when there's no explicit loot: section (Issue #136).

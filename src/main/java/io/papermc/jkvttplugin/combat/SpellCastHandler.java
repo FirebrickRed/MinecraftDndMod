@@ -49,6 +49,21 @@ public class SpellCastHandler {
         }
         int mod = sheet.getProficiencyBonus() + sheet.getModifier(ability);
 
+        // Healing / temp HP spells (Cure Wounds, Healing Word, False Life…) — no roll, applied at once.
+        if (spell.isHealing() || spell.grantsTempHp()) {
+            session.broadcast(Component.empty());
+            session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
+                    + " on " + target.getDisplayName(true) + ".", NamedTextColor.LIGHT_PURPLE));
+            if (spell.isHealing()) {
+                int amount = Math.max(1, rollAmount(spell.getHealing()) + sheet.getModifier(ability));
+                DamageHandler.applyHealing(session, target, amount);
+            }
+            if (spell.grantsTempHp()) {
+                DamageHandler.applyTempHp(session, target, Math.max(0, rollAmount(spell.getTempHp())));
+            }
+            return true;
+        }
+
         if (spell.isAttackRoll()) {
             RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, mod, "+" + mod + "[Spell]");
             if (r == null) {
@@ -265,6 +280,14 @@ public class SpellCastHandler {
             return Ability.getModifier(c.getEntityInstance().getTemplate().getAbilityScore(ability));
         }
         return 0;
+    }
+
+    /** Roll a dice expression ("1d8", "1d4+4") or read a flat number ("5"); 0 if unparseable. */
+    private static int rollAmount(String expr) {
+        if (expr == null || expr.isBlank()) return 0;
+        int rolled = io.papermc.jkvttplugin.util.DiceRoller.parseDiceRoll(expr.trim());
+        if (rolled >= 0) return rolled;
+        try { return Integer.parseInt(expr.trim()); } catch (NumberFormatException e) { return 0; }
     }
 
     private static Ability spellcastingAbility(CharacterSheet sheet) {
