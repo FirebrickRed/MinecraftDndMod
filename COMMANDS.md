@@ -19,6 +19,7 @@ prints that command's own help.
 | `/character close` | Save & close the active character sheet |
 | `/character rest short` | Short rest — recover short-rest resources |
 | `/character rest long` | Long rest — full HP, spell slots, resources |
+| `/character loot <check> <d20>` | Search a body you right-clicked (usually filled by the prompt) |
 | `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
 
 `/character` is aliased to `/char`. DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the five roots below.

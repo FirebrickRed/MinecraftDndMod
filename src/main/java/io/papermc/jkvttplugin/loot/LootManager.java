@@ -82,7 +82,7 @@ public class LootManager {
         for (Skill c : available) {
             int mod = sheet.getSkillBonus(c);
             String modStr = (mod >= 0 ? "+" + mod : String.valueOf(mod));
-            String cmd = "/loot " + c.name().toLowerCase() + " ";
+            String cmd = "/character loot " + c.name().toLowerCase() + " ";
             msg = msg.append(Component.text("[" + c.getDisplayName() + " " + modStr + "]  ",
                             NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.suggestCommand(cmd))

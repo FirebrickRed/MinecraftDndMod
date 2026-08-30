@@ -45,7 +45,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final ShortRestCommand shortRestExec = new ShortRestCommand();
     private final LongRestCommand longRestExec = new LongRestCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete", "loot");
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -103,6 +103,9 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "delete" -> {
                 return handleDelete(sender, rest);
+            }
+            case "loot" -> {
+                return handleLoot(sender, rest);
             }
             default -> {
                 sender.sendMessage(Component.text("Unknown subcommand: " + sub, NamedTextColor.RED));
@@ -165,6 +168,27 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         for (CharacterSheet sheet : chars) {
             sender.sendMessage(Component.text("  • " + sheet.getCharacterName(), NamedTextColor.WHITE));
         }
+        return true;
+    }
+
+    /** {@code /character loot <check> <d20>} — resolve a physical loot check on the body you clicked. */
+    private boolean handleLoot(CommandSender sender, String[] rest) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only players can loot.", NamedTextColor.RED));
+            return true;
+        }
+        if (rest.length < 2) {
+            player.sendMessage(Component.text("Right-click a body, then use the prompt (or /character loot <check> <d20>).", NamedTextColor.RED));
+            return true;
+        }
+        int d20;
+        try {
+            d20 = Integer.parseInt(rest[1].trim());
+        } catch (NumberFormatException e) {
+            player.sendMessage(Component.text("Your d20 roll must be a number 1–20.", NamedTextColor.RED));
+            return true;
+        }
+        io.papermc.jkvttplugin.loot.LootManager.roll(player, rest[0], d20);
         return true;
     }
 
