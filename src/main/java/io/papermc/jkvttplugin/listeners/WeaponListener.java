@@ -196,16 +196,50 @@ public class WeaponListener implements Listener {
         }
         String targetName = target.getDisplayName();
         String targetArg = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
+        double feet = (entity.getLocation() != null && target.getLocation() != null
+                && entity.getLocation().getWorld() != null
+                && entity.getLocation().getWorld().equals(target.getLocation().getWorld()))
+                ? entity.getLocation().distance(target.getLocation()) * 5.0 : -1;
+
         Component msg = Component.text("⚔ Attack ", NamedTextColor.GOLD)
                 .append(Component.text(targetName, NamedTextColor.YELLOW))
                 .append(Component.text(" as " + entity.getDisplayName() + ":", NamedTextColor.GOLD));
         for (String atk : attacks) {
             String cmd = "/combat attack " + targetArg + " " + atk + " --roll ";
-            msg = msg.append(Component.text("  [" + atk + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+            String[] status = rangeStatus(AttackHandler.resolveEntityAttack(entity, atk), feet); // {label, colorKey}
+            NamedTextColor color = switch (status[1]) {
+                case "long" -> NamedTextColor.YELLOW;
+                case "out" -> NamedTextColor.GRAY;
+                default -> NamedTextColor.GREEN;
+            };
+            msg = msg.append(Component.text("  [" + atk + "]" + status[0], color, TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.suggestCommand(cmd))
-                    .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<roll>"))));
+                    .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<roll>"
+                            + ("out".equals(status[1]) ? "\n(out of range — DM can add --force)" : "")))));
         }
         player.sendMessage(msg);
+    }
+
+    /** Range status of an attack vs the target distance: {suffix label, "in"|"long"|"out"}. */
+    private String[] rangeStatus(io.papermc.jkvttplugin.data.model.DndAttack attack, double feet) {
+        if (feet < 0 || attack == null) return new String[]{"", "in"};
+        String reach = attack.getReach();
+        java.util.List<Integer> nums = new java.util.ArrayList<>();
+        if (reach != null) {
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(reach);
+            while (m.find()) nums.add(Integer.parseInt(m.group(1)));
+        }
+        double tol = 2.5;
+        if (nums.isEmpty()) return feet <= 5 + tol ? new String[]{"", "in"} : new String[]{" (out of range)", "out"};
+        boolean ranged = reach.contains("/");
+        if (ranged) {
+            int normal = nums.get(0), longR = nums.get(nums.size() - 1);
+            if (feet <= normal + tol) return new String[]{"", "in"};
+            if (feet <= longR + tol) return new String[]{" (long — disadv)", "long"};
+            return new String[]{" (out of range)", "out"};
+        }
+        int r = nums.get(0);
+        return feet <= r + tol ? new String[]{"", "in"} : new String[]{" (out of range)", "out"};
     }
 
     private Combatant combatantForEntity(CombatSession session, Entity hit) {
