@@ -106,7 +106,8 @@ public class SpellLoader {
                 .build();
         // Combat resolution fields (#123).
         spell.setDamage(LoaderUtils.asString(data.get("damage"), null));
-        spell.setSaveEffect(LoaderUtils.asString(data.get("save_effect"), "half"));
+        // Default: cantrips deal nothing on a successful save; leveled spells deal half. Override in YAML.
+        spell.setSaveEffect(LoaderUtils.asString(data.get("save_effect"), spell.isCantrip() ? "none" : "half"));
         spell.setConditionOnFail(LoaderUtils.asString(data.get("condition_on_fail"), null));
         return spell;
     }
