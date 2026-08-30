@@ -201,7 +201,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
     private void handleRemove(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity remove <name...>|all|type <type>|radius <distance>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dmentity remove <name...>|all|dead|type <type>|radius <distance>", NamedTextColor.RED));
             sender.sendMessage(Component.text("Tip: You can remove multiple entities: /dmentity remove wolf guard Marcus", NamedTextColor.GRAY));
             return;
         }
@@ -210,6 +210,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         switch (target) {
             case "all" -> removeAll(sender);
+            case "dead" -> removeDead(sender);
             case "type" -> {
                 if (args.length < 3) {
                     sender.sendMessage(Component.text("Usage: /dmentity remove type <creature_type>", NamedTextColor.RED));
@@ -1399,6 +1400,24 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     /**
      * Remove all entities.
      */
+    /** Clear all dead bodies (#138): quick cleanup after a fight. */
+    private void removeDead(CommandSender sender) {
+        int count = 0;
+        java.util.Iterator<Map.Entry<String, DndEntityInstance>> it = spawnedEntities.entrySet().iterator();
+        while (it.hasNext()) {
+            DndEntityInstance instance = it.next().getValue();
+            if (!instance.isDead()) continue;
+            if (instance.getShop() != null) {
+                ShopPersistenceLoader.saveShop(instance.getInstanceId(), instance.getShop());
+            }
+            if (instance.getArmorStand() != null) instance.getArmorStand().remove();
+            instance.unregister();
+            it.remove();
+            count++;
+        }
+        sender.sendMessage(Component.text("✓ Cleared " + count + " corpse" + (count == 1 ? "" : "s") + ".", NamedTextColor.GREEN));
+    }
+
     private void removeAll(CommandSender sender) {
         int count = spawnedEntities.size();
         for (DndEntityInstance instance : spawnedEntities.values()) {
@@ -1593,6 +1612,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                     // Suggest entity names + special keywords
                     List<String> suggestions = new ArrayList<>();
                     suggestions.add("all");
+                    suggestions.add("dead");
                     suggestions.add("type");
                     suggestions.add("radius");
                     suggestions.addAll(spawnedEntities.values().stream()

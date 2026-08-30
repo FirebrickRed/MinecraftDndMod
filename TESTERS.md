@@ -116,7 +116,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **Entities survive a server restart** (spawn kobolds, damage one, restart → still there with same HP).
 - [ ] **Dead entities** (#138): a killed entity **tips over** (corpse), **can't be possessed**, and a
       dead entity **can't join combat** — until the DM **`/dmentity revive <name> [hp]`** stands it back
-      up. The corpse pose survives a restart.
+      up. The corpse pose survives a restart. **`/dmentity remove dead`** clears all corpses at once.
+- [ ] **Group move spreads** (#141): select several entities with the Move tool out of combat and send
+      them to one spot → they **fan out into a ring** instead of stacking on one block.
 - [ ] **Entity kit is consistent** (#132): an entity's weapon is defined once (an attack with `item:`).
       Possess Balin → he holds his **warhammer**; the town guard holds **longsword + crossbow + chain
       mail + shield** and his stat block's attacks match; loot a body → its weapons/gear drop. No more

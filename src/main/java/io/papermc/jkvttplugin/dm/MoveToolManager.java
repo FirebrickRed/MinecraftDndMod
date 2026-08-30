@@ -13,6 +13,7 @@ import org.bukkit.util.Vector;
 
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -62,9 +63,13 @@ public class MoveToolManager {
             dm.sendActionBar(Component.text("Select an entity first (right-click it), then the ground.", NamedTextColor.GRAY));
             return;
         }
+        List<ArmorStand> stands = new ArrayList<>();
+        for (ArmorStand s : sel) if (s != null && s.isValid()) stands.add(s);
         int moved = 0;
-        for (ArmorStand stand : new ArrayList<>(sel)) {
-            if (stand != null && stand.isValid() && moveOne(dm, stand, dest)) moved++;
+        for (int i = 0; i < stands.size(); i++) {
+            // Spread a group into a ring around the target so they don't stack on one block (#141).
+            Location spot = stands.size() == 1 ? dest : spreadSpot(dest, i, stands.size());
+            if (moveOne(dm, stands.get(i), spot)) moved++;
         }
         clearSelection(dm);
         if (moved > 0) {
@@ -81,6 +86,15 @@ public class MoveToolManager {
     }
 
     // ==================== INTERNAL ====================
+
+    /** A spot in a ring around {@code dest} for member {@code i} of {@code n} (so a group fans out). */
+    private static Location spreadSpot(Location dest, int i, int n) {
+        double radius = 0.9 + 0.35 * ((n - 1) / 8); // widen the ring a bit for big groups
+        double angle = 2 * Math.PI * i / n;
+        Location spot = dest.clone();
+        spot.add(radius * Math.cos(angle), 0, radius * Math.sin(angle));
+        return spot;
+    }
 
     private static boolean moveOne(Player dm, ArmorStand stand, Location dest) {
         DndEntityInstance inst = DndEntityInstance.getByArmorStand(stand);
