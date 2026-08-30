@@ -30,7 +30,9 @@ public class DataManager {
         File classFolder = new File(dmContentFolder, "Classes"); // References Spells for Spell lists
         File backgroundsFolder = new File(dmContentFolder, "Backgrounds"); // references items/tools
         File entitiesFolder = new File(dmContentFolder, "Entities"); // References Weapons/Armor/Items
+        File conditionsFolder = new File(dmContentFolder, "Conditions"); // No Dependencies
         SpellLoader.loadAllSpells(spellFolder);
+        ConditionLoader.loadAllConditions(conditionsFolder);
         WeaponLoader.loadAllWeapons(weaponFolder);
         ArmorLoader.loadAllArmors(armorFolder);
         ItemLoader.loadAllItems(itemFolder);
@@ -53,5 +55,6 @@ public class DataManager {
         ArmorLoader.clear();
         ItemLoader.clear();
         EntityLoader.clear();
+        ConditionLoader.clear();
     }
 }

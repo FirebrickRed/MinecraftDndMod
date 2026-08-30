@@ -1,0 +1,100 @@
+# D&D 5e conditions (Issue #103). Display-only: the DM interprets the effects.
+# Add your own — id -> { name, rules: [...], until_next_turn: true|false }
+
+blinded:
+  name: "Blinded"
+  rules:
+    - "Can't see; automatically fails checks requiring sight."
+    - "Attack rolls against it have advantage; its attacks have disadvantage."
+
+charmed:
+  name: "Charmed"
+  rules:
+    - "Can't attack the charmer or target them with harmful effects."
+    - "The charmer has advantage on social checks with the creature."
+
+deafened:
+  name: "Deafened"
+  rules:
+    - "Can't hear; automatically fails checks requiring hearing."
+
+frightened:
+  name: "Frightened"
+  rules:
+    - "Disadvantage on checks and attacks while the source is in line of sight."
+    - "Can't willingly move closer to the source of its fear."
+
+grappled:
+  name: "Grappled"
+  rules:
+    - "Speed becomes 0; can't benefit from bonuses to speed."
+    - "Ends if the grappler is incapacitated or the two are separated."
+
+incapacitated:
+  name: "Incapacitated"
+  rules:
+    - "Can't take actions or reactions."
+
+invisible:
+  name: "Invisible"
+  rules:
+    - "Impossible to see without special senses; counts as heavily obscured."
+    - "Attack rolls against it have disadvantage; its attacks have advantage."
+
+paralyzed:
+  name: "Paralyzed"
+  rules:
+    - "Incapacitated; can't move or speak."
+    - "Auto-fails STR and DEX saves. Attacks against it have advantage."
+    - "Any hit from within 5 ft is a critical hit."
+
+petrified:
+  name: "Petrified"
+  rules:
+    - "Turned to solid substance; incapacitated, can't move or speak, unaware."
+    - "Resistance to all damage; immune to poison and disease."
+
+poisoned:
+  name: "Poisoned"
+  rules:
+    - "Disadvantage on attack rolls and ability checks."
+
+prone:
+  name: "Prone"
+  rules:
+    - "Only movement is to crawl (half speed), or stand up (costs half your speed)."
+    - "Disadvantage on attack rolls."
+    - "Attacks against it have advantage within 5 ft, disadvantage beyond 5 ft."
+
+restrained:
+  name: "Restrained"
+  rules:
+    - "Speed 0. Disadvantage on attacks and DEX saves."
+    - "Attacks against it have advantage."
+
+stunned:
+  name: "Stunned"
+  rules:
+    - "Incapacitated, can't move, speaks falteringly."
+    - "Auto-fails STR and DEX saves. Attacks against it have advantage."
+
+unconscious:
+  name: "Unconscious"
+  rules:
+    - "Incapacitated, can't move or speak, unaware; drops what it's holding and falls prone."
+    - "Auto-fails STR and DEX saves. Attacks have advantage; hits within 5 ft are crits."
+
+# --- Action-driven, clear at the start of your next turn ---
+dodging:
+  name: "Dodging"
+  until_next_turn: true
+  rules:
+    - "Attacks against it have disadvantage (if it can see the attacker)."
+    - "Advantage on DEX saving throws."
+    - "Lost if incapacitated or if its speed drops to 0."
+
+disengaging:
+  name: "Disengaging"
+  until_next_turn: true
+  rules:
+    - "Its movement doesn't provoke opportunity attacks this turn."

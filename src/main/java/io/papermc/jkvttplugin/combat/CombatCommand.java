@@ -98,6 +98,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "action" -> handleAction(player, args);
             case "bonus" -> handleBonusAction(player, args);
             case "movement" -> handleMovement(player, args);
+            case "condition" -> handleCondition(player, args);
             case "attack" -> handleAttack(player, args);
             case "damage" -> handleDamage(player, args);
             case "override" -> handleDamage(player, args); // DM-only (not in PLAYER_ALLOWED): apply corrective damage anytime
@@ -840,8 +841,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         String who = actor.getDisplayName(true);
         Component msg = switch (name) {
             case "dash" -> { state.setDashed(true); yield Component.text(who + " Dashes — movement doubled this turn!", NamedTextColor.AQUA); }
-            case "dodge" -> Component.text(who + " takes the Dodge action (attacks against them have disadvantage).", NamedTextColor.YELLOW);
-            case "disengage" -> Component.text(who + " Disengages — no opportunity attacks from moving away.", NamedTextColor.YELLOW);
+            case "dodge" -> { actor.addCondition("dodging"); session.updateScoreboard();
+                yield Component.text(who + " takes the Dodge action (attacks against them have disadvantage).", NamedTextColor.YELLOW); }
+            case "disengage" -> { actor.addCondition("disengaging"); session.updateScoreboard();
+                yield Component.text(who + " Disengages — no opportunity attacks from moving away.", NamedTextColor.YELLOW); }
             case "help" -> Component.text(who + " takes the Help action.", NamedTextColor.YELLOW);
             case "hide" -> Component.text(who + " tries to Hide.", NamedTextColor.YELLOW);
             case "ready" -> Component.text(who + " Readies an action.", NamedTextColor.YELLOW);
@@ -874,6 +877,97 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         state.useBonusAction();
         session.broadcast(Component.text(target.getDisplayName(true) + " uses their Bonus Action.", NamedTextColor.YELLOW));
         session.sendActionBar(target);
+    }
+
+    // ==================== CONDITIONS (Issue #103) ====================
+
+    private void handleCondition(Player dm, String[] args) {
+        CombatSession session = getActiveSession(dm);
+        if (session == null) return;
+        if (args.length < 2) {
+            dm.sendMessage(Component.text("Usage: /combat condition <target> [add|remove <condition>]  |  /combat condition list", NamedTextColor.RED));
+            return;
+        }
+        if (args[1].equalsIgnoreCase("list")) {
+            dm.sendMessage(Component.text("Conditions: ", NamedTextColor.GOLD)
+                    .append(Component.text(io.papermc.jkvttplugin.data.loader.ConditionLoader.getAll().stream()
+                            .map(io.papermc.jkvttplugin.data.model.DndCondition::getName)
+                            .collect(java.util.stream.Collectors.joining(", ")), NamedTextColor.GRAY)));
+            return;
+        }
+
+        // Find an add/remove keyword; everything before it is the target name.
+        int kw = -1;
+        for (int i = 1; i < args.length; i++) {
+            if (args[i].equalsIgnoreCase("add") || args[i].equalsIgnoreCase("remove")) { kw = i; break; }
+        }
+        if (kw == -1) { // just view the target's conditions
+            Combatant target = findCombatantByName(session, joinArgs(args, 1));
+            if (target == null) { dm.sendMessage(Component.text("Combatant not found: " + joinArgs(args, 1), NamedTextColor.RED)); return; }
+            showConditions(dm, target);
+            return;
+        }
+
+        String targetName = joinArgsRange(args, 1, kw);
+        if (kw + 1 >= args.length) { dm.sendMessage(Component.text("Name a condition, e.g. /combat condition <target> add prone", NamedTextColor.RED)); return; }
+        Combatant target = findCombatantByName(session, targetName);
+        if (target == null) { dm.sendMessage(Component.text("Combatant not found: " + targetName, NamedTextColor.RED)); return; }
+
+        io.papermc.jkvttplugin.data.model.DndCondition cond = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(args[kw + 1]);
+        if (cond == null) { dm.sendMessage(Component.text("Unknown condition: " + args[kw + 1] + " (try /combat condition list)", NamedTextColor.RED)); return; }
+
+        if (args[kw].equalsIgnoreCase("add")) {
+            if (target.addCondition(cond.getId())) {
+                session.broadcast(Component.text(target.getDisplayName(true) + " is now ", NamedTextColor.YELLOW)
+                        .append(conditionText(cond)));
+            } else {
+                dm.sendMessage(Component.text(target.getDisplayName() + " already has " + cond.getName() + ".", NamedTextColor.GRAY));
+            }
+        } else {
+            if (target.removeCondition(cond.getId())) {
+                session.broadcast(Component.text(target.getDisplayName(true) + " is no longer " + cond.getName() + ".", NamedTextColor.GRAY));
+            } else {
+                dm.sendMessage(Component.text(target.getDisplayName() + " doesn't have " + cond.getName() + ".", NamedTextColor.GRAY));
+            }
+        }
+        session.updateScoreboard();
+    }
+
+    private void showConditions(Player dm, Combatant target) {
+        if (target.getConditions().isEmpty()) {
+            dm.sendMessage(Component.text(target.getDisplayName() + " has no conditions.", NamedTextColor.GRAY));
+            return;
+        }
+        Component msg = Component.text(target.getDisplayName() + "'s conditions: ", NamedTextColor.GOLD);
+        boolean first = true;
+        for (String id : target.getConditions()) {
+            io.papermc.jkvttplugin.data.model.DndCondition c = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(id);
+            if (c == null) continue;
+            if (!first) msg = msg.append(Component.text(", ", NamedTextColor.GRAY));
+            msg = msg.append(conditionText(c));
+            first = false;
+        }
+        dm.sendMessage(msg);
+    }
+
+    /** A condition name with its rules on hover. */
+    private Component conditionText(io.papermc.jkvttplugin.data.model.DndCondition c) {
+        Component rules = Component.text(c.getName(), NamedTextColor.AQUA, TextDecoration.BOLD);
+        for (String line : c.getRules()) {
+            rules = rules.append(Component.text("\n• " + line, NamedTextColor.GRAY));
+        }
+        return Component.text(c.getName(), NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                .hoverEvent(HoverEvent.showText(rules));
+    }
+
+    /** Join args[start, end) into a space-separated (quote-stripped) string. */
+    private String joinArgsRange(String[] args, int start, int end) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = start; i < end && i < args.length; i++) {
+            if (i > start) sb.append(" ");
+            sb.append(args[i]);
+        }
+        return stripQuotes(sb.toString());
     }
 
     private void handleMovement(Player player, String[] args) {
@@ -1882,7 +1976,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Subcommands
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
-                "reveal", "hide", "action", "bonus", "movement", "attack",
+                "reveal", "hide", "action", "bonus", "movement", "condition", "attack",
                 "damage", "override", "heal", "temphp", "deathsave"));
             return filterCompletions(completions, args[0]);
         }
@@ -1915,6 +2009,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 }
                 case "movement" -> {
                     completions.add("undo");
+                }
+                case "condition" -> {
+                    completions.add("list");
+                    if (session != null) for (Combatant c : session.getCombatants()) completions.add(c.getDisplayName());
                 }
                 case "initiative" -> {
                     // Suggest combatants
@@ -1954,6 +2052,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 completions.addAll(List.of("10", "20", "30", "50"));
             } else if (args[0].equalsIgnoreCase("initiative")) {
                 completions.add("set");
+            } else if (args[0].equalsIgnoreCase("condition")) {
+                completions.add("add");
+                completions.add("remove");
+                for (io.papermc.jkvttplugin.data.model.DndCondition c : io.papermc.jkvttplugin.data.loader.ConditionLoader.getAll()) {
+                    completions.add(c.getId());
+                }
             }
             return filterCompletions(completions, args[2]);
         }
@@ -1961,6 +2065,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (args.length == 4 && args[0].equalsIgnoreCase("initiative") && args[2].equalsIgnoreCase("set")) {
             completions.addAll(List.of("1", "5", "10", "15", "20", "25"));
             return filterCompletions(completions, args[3]);
+        }
+
+        // Condition name after add/remove (any depth, since the target may be multi-word).
+        if (args[0].equalsIgnoreCase("condition") && args.length >= 3
+                && (args[args.length - 2].equalsIgnoreCase("add") || args[args.length - 2].equalsIgnoreCase("remove"))) {
+            for (io.papermc.jkvttplugin.data.model.DndCondition c : io.papermc.jkvttplugin.data.loader.ConditionLoader.getAll()) {
+                completions.add(c.getId());
+            }
+            return filterCompletions(completions, args[args.length - 1]);
         }
 
         // Attack tab completion for weapon/attack names and flags

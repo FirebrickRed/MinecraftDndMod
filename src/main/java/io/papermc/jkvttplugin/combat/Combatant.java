@@ -39,6 +39,8 @@ public class Combatant {
     private boolean isHidden;  // For enemy visibility (#102)
     private boolean isUnconscious;
     private boolean isDead;
+    // Active conditions by id (Issue #103), insertion-ordered for stable display.
+    private final java.util.Set<String> conditions = new java.util.LinkedHashSet<>();
 
     // Death saves (Issue #101)
     private int deathSaveSuccesses;
@@ -173,6 +175,12 @@ public class Combatant {
 
     public boolean isUnconscious() { return isUnconscious; }
     public void setUnconscious(boolean unconscious) { isUnconscious = unconscious; }
+
+    // ==================== CONDITIONS (Issue #103) ====================
+    public java.util.Set<String> getConditions() { return conditions; }
+    public boolean addCondition(String id) { return conditions.add(id); }
+    public boolean removeCondition(String id) { return conditions.remove(id); }
+    public boolean hasCondition(String id) { return conditions.contains(id); }
 
     public boolean isDead() { return isDead; }
     public void setDead(boolean dead) { isDead = dead; }

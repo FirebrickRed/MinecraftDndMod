@@ -2,8 +2,11 @@ package io.papermc.jkvttplugin.combat;
 
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.util.DiceRoller;
+import io.papermc.jkvttplugin.data.loader.ConditionLoader;
+import io.papermc.jkvttplugin.data.model.DndCondition;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
@@ -388,6 +391,7 @@ public class CombatSession {
         if (current != null) {
             current.startNewTurn(current.getLocation());
             applyGlowEffect(current);
+            onTurnStartConditions(current); // expire Dodge/Disengage, remind of the rest (#103)
             sendActionBar(current); // show action/movement budget immediately when the turn begins
         }
 
@@ -737,6 +741,7 @@ public class CombatSession {
                     display.append(formatDeathSaves(c));
                 }
                 if (c.isDead()) display.append(" §4[DEAD]");
+                display.append(conditionTag(c)); // active conditions (#103)
 
                 // Use actual initiative as the score (shown as red number on right)
                 initiativeObjective.getScore(display.toString()).setScore(c.getInitiative());
@@ -748,6 +753,47 @@ public class CombatSession {
 
         // Apply scoreboard to all combatant players and DM
         applyScoreboardToParticipants();
+    }
+
+    /** At a creature's turn start: expire "until next turn" conditions, then remind of the rest (#103). */
+    private void onTurnStartConditions(Combatant c) {
+        if (c == null) return;
+        c.getConditions().removeIf(id -> {
+            DndCondition cond = ConditionLoader.get(id);
+            return cond != null && cond.isUntilNextTurn();
+        });
+        if (c.getConditions().isEmpty()) return;
+
+        Component msg = Component.text("⏳ " + c.getDisplayName() + " is ", NamedTextColor.LIGHT_PURPLE);
+        boolean first = true;
+        for (String id : c.getConditions()) {
+            DndCondition cond = ConditionLoader.get(id);
+            if (cond == null) continue;
+            if (!first) msg = msg.append(Component.text(", ", NamedTextColor.GRAY));
+            Component rules = Component.text(cond.getName(), NamedTextColor.AQUA);
+            for (String line : cond.getRules()) rules = rules.append(Component.text("\n• " + line, NamedTextColor.GRAY));
+            msg = msg.append(Component.text(cond.getName(), NamedTextColor.AQUA)
+                    .hoverEvent(HoverEvent.showText(rules)));
+            first = false;
+        }
+        Player controller = c.isPlayer() ? c.getPlayer() : Bukkit.getPlayer(dmId);
+        if (controller != null) controller.sendMessage(msg);
+        if (c.isPlayer()) sendToDM(msg);
+    }
+
+    /** Compact condition tag for the scoreboard, e.g. "§5[Prone,Dodging]". */
+    private String conditionTag(Combatant c) {
+        if (c.getConditions().isEmpty()) return "";
+        StringBuilder sb = new StringBuilder(" §5[");
+        boolean first = true;
+        for (String id : c.getConditions()) {
+            DndCondition cond = ConditionLoader.get(id);
+            String label = cond != null ? cond.getName() : id;
+            if (!first) sb.append(",");
+            sb.append(label.length() > 4 ? label.substring(0, 4) : label);
+            first = false;
+        }
+        return sb.append("]").toString();
     }
 
     private String formatDeathSaves(Combatant c) {

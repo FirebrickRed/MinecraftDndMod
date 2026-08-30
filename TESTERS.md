@@ -64,6 +64,11 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **HP at a glance** — your HP on the scoreboard/action bar; **enemy HP hidden** from players; DM sees all via `/combat status`.
 - [ ] **NPC turn** — DM sees the entity's action/move bar + its **attack list**.
 - [ ] Boats/mounts are **frozen** when it's not your turn.
+- [ ] **Conditions** (#103): `/combat condition <target> add prone` (tab-completes) tags a combatant;
+      it shows on the scoreboard `[Pron]` and reminds (with rules on hover) at the start of their turn.
+      `/combat condition <target>` lists theirs; `/combat condition list` shows all. **Dodge/Disengage**
+      from the action menu now apply the **Dodging/Disengaging** condition, which auto-clears at the
+      start of that creature's next turn. (Effects are DM-interpreted for now — display only.)
 - [ ] **Action menu** (#143): `/combat action` on your turn lists clickable actions (Attack, Dash,
       Dodge, Disengage, Help, Hide, Ready, Search, Use). Clicking one spends your action and announces
       it; **Dash doubles your movement** (green ring + wall both grow). `/combat action <name>` also works.
