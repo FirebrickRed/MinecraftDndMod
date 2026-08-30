@@ -57,7 +57,7 @@ DM extras: `/character create <player>` opens creation for another player; `/cha
 | `cast <ritual_spell> --ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
 | `save [target] [--roll <d20>]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
 | `condition <target> [add\|remove <cond>]` · `condition list` | DM: tag/clear conditions on a combatant (#103, #150) |
-| `reaction` | List your available reactions (pending OA + reaction spells); clicking fills the command (#147) |
+| `reaction` · `reactions` | List reactions — a player sees their own; the **DM sees a whole-table roster** (#147) |
 | `reaction [<reactor>] <attack\|pass>` | Take/pass a provoked opportunity attack (usually the ⚡ end-of-turn buttons) (#147) |
 | `finished` | **End combat & clean up** (clears glow, scoreboards, prone) — named distinctly from `endturn`, so no confirm needed |
 

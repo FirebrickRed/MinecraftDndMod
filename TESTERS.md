@@ -88,10 +88,13 @@ Newest first. Tick these off after a build to confirm they work in-game.
       **reaction isn't spent until `/combat reaction` actually resolves**. It refreshes at the start of the
       reactor's next turn. **Disengage** (`/combat action disengage`) draws no OA; ranged-only monsters
       don't get one. (Enemy = players-vs-entities for now; factions are #155.)
-- [ ] **Reactions menu** (#147): **`/combat reaction`** (no args, on or off your turn) lists what you can
-      react with — a pending opportunity attack, plus **reaction spells** you know (Hellish Rebuke, Shield…,
-      any spell whose casting time is "1 reaction"). Clicking **fills** the command but doesn't fire it, so
-      you cast it when its trigger actually happens. Other reactions (feats/features/Ready) are DM-adjudicated.
+- [ ] **Reactions menu** (#147): **`/combat reaction`** / **`/combat reactions`** (no args, on or off your
+      turn). A **player** sees their own — a pending opportunity attack, plus **reaction spells** they know
+      (Hellish Rebuke, Shield…, any spell whose casting time is "1 reaction"); clicking **fills** the command
+      but doesn't fire it. A **DM** sees a **whole-table roster**: each combatant's reaction status (ready/used),
+      their reaction spells, whether entities can make OAs, and buttons for any pending OA. Casting a reaction
+      spell off your turn spends your **reaction** (not an action). Other reactions (feats/features/Ready) are
+      DM-adjudicated.
 - [ ] **Ritual casting in combat** (#156): `/combat cast <ritual_spell> --ritual` on your turn begins a
       **multi-turn channel** (default **10 rounds**, config `rituals.combat_rounds`, or a spell's own
       `ritual_rounds`). Each of your turns the channel **eats your action** (you can still move); the

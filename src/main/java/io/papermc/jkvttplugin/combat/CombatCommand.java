@@ -49,7 +49,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction", "reactions");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -102,7 +102,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "cast" -> handleCast(player, args);
             case "save" -> handleSave(player, args);
             case "attack" -> handleAttack(player, args);
-            case "reaction" -> handleReaction(player, args);
+            case "reaction", "reactions" -> handleReaction(player, args);
             case "damage" -> handleDamage(player, args);
             case "override" -> handleDamage(player, args); // DM-only (not in PLAYER_ALLOWED): apply corrective damage anytime
             case "heal" -> handleHeal(player, args);
@@ -1103,56 +1103,91 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * {@code /combat reaction} with no args — list the caller's available reactions and how they trigger.
-     * Automated reactions (opportunity attacks, reaction spells) get clickable buttons that <em>fill</em>
-     * the command without firing; everything else is a reminder that the DM adjudicates it. (#147)
+     * {@code /combat reaction} with no args — list available reactions and how they trigger. A player sees
+     * their own; the DM sees a whole-table roster. Automated reactions (opportunity attacks, reaction
+     * spells) get clickable buttons that <em>fill</em> the command without firing. (#147)
      */
     private void showReactions(Player player, CombatSession session, boolean isDM) {
-        Combatant self = findOwnCombatant(session, player.getUniqueId());
-        boolean anything = false;
-
         player.sendMessage(Component.text("⚡ Reactions", NamedTextColor.GOLD, TextDecoration.BOLD)
-                .append(Component.text("  (one per round, refreshes at the start of your turn)", NamedTextColor.GRAY)));
+                .append(Component.text("  (one per round, refreshes at the start of a combatant's turn)", NamedTextColor.GRAY)));
 
-        // A pending opportunity attack for you.
-        if (self != null && ReactionManager.hasPending(self)) {
-            anything = true;
-            player.sendMessage(Component.text("• Opportunity Attack available:", NamedTextColor.YELLOW));
-            player.sendMessage(ReactionManager.reactionButtons(self));
-        }
-        // The DM also sees every creature currently offered an opportunity attack.
         if (isDM) {
+            // DM roster: every combatant, their reaction status, and what they can react with.
             for (Combatant c : session.getCombatants()) {
-                if (c.isEntity() && ReactionManager.hasPending(c)) {
-                    anything = true;
-                    player.sendMessage(Component.text("• " + c.getDisplayName() + " — Opportunity Attack:", NamedTextColor.YELLOW));
-                    player.sendMessage(ReactionManager.reactionButtons(c));
-                }
+                if (c.isDead()) continue;
+                showReactionLine(player, c, true);
             }
+            player.sendMessage(Component.text("Non-automated reactions (feats, class/monster features, Ready) are yours to adjudicate.", NamedTextColor.DARK_GRAY, TextDecoration.ITALIC));
+            return;
         }
-        // Reaction spells you know (casting time contains "reaction"), e.g. Hellish Rebuke, Shield.
-        if (self != null && self.getCharacterSheet() != null) {
-            CharacterSheet sheet = self.getCharacterSheet();
+
+        // Player view: just their own combatant.
+        Combatant self = findOwnCombatant(session, player.getUniqueId());
+        if (self == null) {
+            player.sendMessage(Component.text("You're not in this combat.", NamedTextColor.GRAY));
+            return;
+        }
+        if (!showReactionLine(player, self, false)) {
+            player.sendMessage(Component.text("Nothing automatic right now. Other reactions (feats, features, Ready)"
+                    + " are the DM's call — tell the DM what you're reacting to.", NamedTextColor.GRAY));
+        }
+    }
+
+    /**
+     * Print one combatant's reaction status. Returns true if anything actionable was shown.
+     * {@code roster} true = DM view (name-prefixed, shows entities' melee OA options too).
+     */
+    private boolean showReactionLine(Player viewer, Combatant c, boolean roster) {
+        boolean avail = c.isReactionAvailable();
+        String status = avail ? "§areaction ready" : "§7reaction used";
+        StringBuilder extras = new StringBuilder();
+
+        List<io.papermc.jkvttplugin.data.model.DndSpell> reactionSpells = new ArrayList<>();
+        if (c.getCharacterSheet() != null) {
+            CharacterSheet sheet = c.getCharacterSheet();
             java.util.Set<io.papermc.jkvttplugin.data.model.DndSpell> known = new java.util.LinkedHashSet<>();
             known.addAll(sheet.getKnownCantrips());
             known.addAll(sheet.getKnownSpells());
             for (io.papermc.jkvttplugin.data.model.DndSpell s : known) {
-                if (s.getCastingTime() != null && s.getCastingTime().toLowerCase().contains("reaction")) {
-                    anything = true;
-                    String fill = "/combat cast " + s.getId() + " ";
-                    player.sendMessage(Component.text("• " + s.getName() + " ", NamedTextColor.AQUA)
-                            .append(Component.text("(" + s.getCastingTime() + ") ", NamedTextColor.GRAY))
-                            .append(Component.text("[cast]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                                    .clickEvent(ClickEvent.suggestCommand(fill))
-                                    .hoverEvent(HoverEvent.showText(Component.text("Fills " + fill + "<target> — press Enter to cast when its trigger happens.")))));
-                }
+                if (s.getCastingTime() != null && s.getCastingTime().toLowerCase().contains("reaction")) reactionSpells.add(s);
             }
         }
+        boolean pendingOA = ReactionManager.hasPending(c);
 
-        if (!anything) {
-            player.sendMessage(Component.text("Nothing automatic right now. Other reactions (feats, class features,"
-                    + " Ready) are the DM's call — tell the DM what you're reacting to.", NamedTextColor.GRAY));
+        // Header line (DM sees a name prefix; a player just sees "You").
+        String who = roster ? c.getDisplayName() : "You";
+        Component head = Component.text((roster ? "• " : "") + who + " — ", NamedTextColor.YELLOW)
+                .append(Component.text(status.substring(2), avail ? NamedTextColor.GREEN : NamedTextColor.GRAY));
+        if (!reactionSpells.isEmpty()) {
+            head = head.append(Component.text("  reaction spells: " + reactionSpells.stream()
+                    .map(io.papermc.jkvttplugin.data.model.DndSpell::getName).collect(java.util.stream.Collectors.joining(", ")), NamedTextColor.AQUA));
+        } else if (roster && c.isEntity() && ReactionManager.meleeAttackFor(c) != null) {
+            head = head.append(Component.text("  (can make opportunity attacks)", NamedTextColor.GRAY));
         }
+        viewer.sendMessage(head);
+
+        boolean actionable = false;
+        // Pending opportunity attack → clickable buttons.
+        if (pendingOA && avail) {
+            actionable = true;
+            viewer.sendMessage(Component.text("   ⚡ Opportunity Attack available: ", NamedTextColor.GOLD)
+                    .append(ReactionManager.reactionButtons(c)));
+        }
+        // Reaction spells → fill-the-command buttons (only meaningful for the controller — a player for
+        // themselves; on the DM roster we skip buttons for player PCs since the DM can't cast for them).
+        if (!roster || c.isPlayer() == false) {
+            for (io.papermc.jkvttplugin.data.model.DndSpell s : reactionSpells) {
+                if (roster) break; // DM roster is informational for spells; the player casts their own
+                actionable = true;
+                String fill = "/combat cast " + s.getId() + " ";
+                viewer.sendMessage(Component.text("   • " + s.getName() + " ", NamedTextColor.AQUA)
+                        .append(Component.text("(" + s.getCastingTime() + ") ", NamedTextColor.GRAY))
+                        .append(Component.text("[cast]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                                .clickEvent(ClickEvent.suggestCommand(fill))
+                                .hoverEvent(HoverEvent.showText(Component.text("Fills " + fill + "<target> — press Enter when its trigger happens.")))));
+            }
+        }
+        return actionable || !reactionSpells.isEmpty();
     }
 
     // ==================== CONDITIONS (Issue #103) ====================
