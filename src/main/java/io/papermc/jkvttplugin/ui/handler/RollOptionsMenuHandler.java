@@ -6,10 +6,15 @@ import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
+import io.papermc.jkvttplugin.combat.RollService;
+import io.papermc.jkvttplugin.config.PluginConfig;
 import io.papermc.jkvttplugin.ui.menu.SkillsMenu;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
@@ -47,11 +52,49 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
 
         // Route based on roll action and type
         switch (action) {
-            case ROLL_NORMAL -> rollNormal(character, type, value);
-            case ROLL_ADVANTAGE -> rollAdvantage(character, type, value);
-            case ROLL_DISADVANTAGE -> rollDisadvantage(character, type, value);
+            case ROLL_NORMAL -> rollOrPrompt(player, character, type, value, RollMode.NORMAL);
+            case ROLL_ADVANTAGE -> rollOrPrompt(player, character, type, value, RollMode.ADVANTAGE);
+            case ROLL_DISADVANTAGE -> rollOrPrompt(player, character, type, value, RollMode.DISADVANTAGE);
             case SHOW_MODIFIER -> showModifier(character, type, value);
         }
+    }
+
+    /** Physical mode: prompt the player to roll in chat. Auto mode: roll it for them (as before). */
+    private static void rollOrPrompt(Player player, CharacterSheet character, String type, String value, RollMode mode) {
+        if (PluginConfig.isAutoRoll()) {
+            performRoll(character, type, value, mode);
+        } else {
+            promptSkillRoll(player, character, type, value, mode);
+        }
+    }
+
+    /** Send a clickable chat prompt asking the player to roll this check physically. */
+    public static void promptSkillRoll(Player player, CharacterSheet character, String type, String value, RollMode mode) {
+        RollInfo info = getRollInfo(character, type, value);
+        String bonusStr = info.bonus >= 0 ? "+" + info.bonus : String.valueOf(info.bonus);
+        String cmd = "/character check " + type + " " + value + " --roll ";
+        String advNote = switch (mode) {
+            case ADVANTAGE -> " (advantage — roll two, use the higher)";
+            case DISADVANTAGE -> " (disadvantage — roll two, use the lower)";
+            default -> "";
+        };
+        player.sendMessage(Component.text("🎲 Roll " + info.displayName + advNote + " — ", NamedTextColor.GOLD)
+                .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand(cmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds " + bonusStr + ".")))));
+    }
+
+    /**
+     * Resolve a physical skill/check/save roll (via RollService) and broadcast it. Returns false if
+     * physical mode still needs a die (the caller should prompt).
+     */
+    public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total) {
+        RollInfo info = getRollInfo(character, type, value);
+        RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown);
+        if (r == null) return false;
+        String dice = r.providedTotal() ? "total" : String.valueOf(r.d20());
+        broadcastRoll(character, info, r.total(), dice, null, null);
+        return true;
     }
 
     /** Roll mode for programmatic rolls outside the menu flow (Issue #61 - /check). */

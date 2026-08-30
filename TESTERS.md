@@ -80,6 +80,9 @@ Newest first. Tick these off after a build to confirm they work in-game.
       right-click prompt still fills it). Set `rolls.mode: auto` + restart → the game auto-rolls again.
 - [ ] **Smart `--roll`**: `--roll 14` = "I rolled a 14"; `--roll 1d20` = "game, roll it for me". `--total`
       = final number. Same for `/character loot` and `/combat deathsave`.
+- [ ] **Skill checks prompt to roll** (#145): in physical mode, clicking a skill on your sheet (or a DM
+      using `/dm promptcheck <you> skill <name> [adv|dis]`) sends you a **[roll]** chat prompt instead of
+      auto-rolling; type your d20 and it broadcasts. `rolls.mode: auto` keeps the old auto-roll.
 - [ ] **Players roll their own death saves** (`/combat deathsave --roll 12`); no `--crit` flag anymore
       (a crit vs a downed creature still counts double failures automatically).
 

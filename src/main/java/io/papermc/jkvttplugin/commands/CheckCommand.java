@@ -95,7 +95,14 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             else if (m.equals("dis") || m.equals("disadvantage")) mode = RollMode.DISADVANTAGE;
         }
 
-        RollOptionsMenuHandler.performRoll(sheet, rollType, value, mode);
+        // Physical mode: prompt the player to roll their own die. Auto mode: roll it for them.
+        if (io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) {
+            RollOptionsMenuHandler.performRoll(sheet, rollType, value, mode);
+        } else {
+            RollOptionsMenuHandler.promptSkillRoll(target, sheet, rollType, value, mode);
+            sender.sendMessage(Component.text("Prompted " + target.getName() + " to roll "
+                    + args[2] + (mode == RollMode.NORMAL ? "" : " (" + args[3] + ")") + ".", NamedTextColor.GRAY));
+        }
         return true;
     }
 
