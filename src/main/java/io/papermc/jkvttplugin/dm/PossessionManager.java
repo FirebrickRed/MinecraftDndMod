@@ -180,7 +180,7 @@ public class PossessionManager {
         if (session == null || session.isSetupPhase()) return false;
         io.papermc.jkvttplugin.combat.Combatant current = session.getCurrentCombatant();
         return current != null && current.isEntity() && current.getEntityInstance() != null
-                && stand.equals(current.getEntityInstance().getArmorStand());
+                && current.getEntityInstance().isBody(stand);
     }
 
     private static void clearAimHighlight(Player dm) {

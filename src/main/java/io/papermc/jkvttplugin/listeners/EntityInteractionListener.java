@@ -49,7 +49,7 @@ public class EntityInteractionListener implements Listener {
      */
     private DndEntityInstance findEntityInstance(ArmorStand armorStand) {
         for (DndEntityInstance instance : DmEntityCommand.getAllSpawnedEntities()) {
-            if (instance.getArmorStand().equals(armorStand)) {
+            if (instance.isBody(armorStand)) {
                 return instance;
             }
         }

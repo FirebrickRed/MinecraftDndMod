@@ -251,6 +251,31 @@ public class DndEntityInstance {
 
     public ArmorStand getArmorStand() { return armorStand; }
 
+    // ==================== BODY OPERATIONS (Issue #146) ====================
+    // The entity's physical body is an ArmorStand today, but callers shouldn't have to know that.
+    // These wrap the handful of things systems actually do to a body, so the body type stays here.
+
+    /** The entity's world location, or null if the body is gone. */
+    public Location getLocation() { return armorStand != null ? armorStand.getLocation() : null; }
+
+    /** Move the entity's body. */
+    public void teleport(Location loc) { if (armorStand != null) armorStand.teleport(loc); }
+
+    /** Highlight (or un-highlight) the entity. */
+    public void setGlowing(boolean glowing) { if (armorStand != null) armorStand.setGlowing(glowing); }
+
+    /** True if the given world entity IS this instance's body (identity check). */
+    public boolean isBody(org.bukkit.entity.Entity entity) { return armorStand != null && armorStand.equals(entity); }
+
+    /** True if the body still exists in the world. */
+    public boolean isBodyValid() { return armorStand != null && armorStand.isValid(); }
+
+    /** Remove the body from the world and drop this instance from the registries. */
+    public void despawn() {
+        if (armorStand != null) armorStand.remove();
+        unregister();
+    }
+
     public UUID getInstanceId() { return instanceId; }
 
     public String getDisplayName() { return displayName; }

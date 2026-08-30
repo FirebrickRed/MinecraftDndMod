@@ -59,7 +59,7 @@ public class CombatListener implements Listener {
                     Combatant current = possessedSession.getCurrentCombatant();
                     if (current != null && !current.isPlayer()
                         && current.getEntityInstance() != null
-                        && current.getEntityInstance().getArmorStand().equals(possessed)) {
+                        && current.getEntityInstance().isBody(possessed)) {
                         tracked = current;
                         session = possessedSession;
                     } else {

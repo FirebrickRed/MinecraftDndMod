@@ -183,7 +183,8 @@ public class LootManager {
     }
 
     private static void openLootChest(Player player, DndEntityInstance corpse, List<LootEntry> found) {
-        Location drop = corpse.getArmorStand() != null ? corpse.getArmorStand().getLocation() : player.getLocation();
+        Location body = corpse.getLocation();
+        Location drop = body != null ? body : player.getLocation();
         LootInventoryHolder holder = new LootInventoryHolder(drop);
         int rows = Math.max(1, Math.min(6, (found.size() + 8) / 9));
         Inventory inv = Bukkit.createInventory(holder, rows * 9,

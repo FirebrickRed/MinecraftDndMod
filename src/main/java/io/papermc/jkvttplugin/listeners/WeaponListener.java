@@ -152,7 +152,7 @@ public class WeaponListener implements Listener {
             if (c.getId().equals(self.getUniqueId())) continue;
             if (c.isPlayer() && hit.equals(c.getPlayer())) return c;
             if (c.isEntity() && c.getEntityInstance() != null
-                    && hit.equals(c.getEntityInstance().getArmorStand())) {
+                    && c.getEntityInstance().isBody(hit)) {
                 return c;
             }
         }
@@ -169,7 +169,7 @@ public class WeaponListener implements Listener {
         if (session == null || session.isSetupPhase()) return false;
         Combatant self = session.getCurrentCombatant();
         if (self == null || !self.isEntity() || self.getEntityInstance() == null
-                || !possessed.equals(self.getEntityInstance().getArmorStand())) {
+                || !self.getEntityInstance().isBody(possessed)) {
             return false; // not the possessed entity's turn
         }
 
@@ -247,7 +247,7 @@ public class WeaponListener implements Listener {
     private Combatant combatantForEntity(CombatSession session, Entity hit) {
         for (Combatant c : session.getCombatants()) {
             if (c.isPlayer() && hit.equals(c.getPlayer())) return c;
-            if (c.isEntity() && c.getEntityInstance() != null && hit.equals(c.getEntityInstance().getArmorStand())) return c;
+            if (c.isEntity() && c.getEntityInstance() != null && c.getEntityInstance().isBody(hit)) return c;
         }
         return null;
     }

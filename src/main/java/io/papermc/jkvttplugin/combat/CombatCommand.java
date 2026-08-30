@@ -910,8 +910,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 }
             } else {
                 DndEntityInstance entity = current.getEntityInstance();
-                if (entity != null && entity.getArmorStand() != null) {
-                    entity.getArmorStand().teleport(startLoc);
+                if (entity != null) {
+                    entity.teleport(startLoc);
                 }
             }
 

@@ -111,7 +111,7 @@ public class CombatSession {
         for (CombatSession session : ACTIVE_SESSIONS.values()) {
             for (Combatant c : session.getCombatants()) {
                 if (!c.isPlayer() && c.getEntityInstance() != null
-                    && c.getEntityInstance().getArmorStand().equals(armorStand)) {
+                    && c.getEntityInstance().isBody(armorStand)) {
                     return session;
                 }
             }
@@ -811,9 +811,7 @@ public class CombatSession {
             }
         } else {
             DndEntityInstance entity = combatant.getEntityInstance();
-            if (entity != null && entity.getArmorStand() != null) {
-                entity.getArmorStand().setGlowing(true);
-            }
+            if (entity != null) entity.setGlowing(true);
         }
     }
 
@@ -828,9 +826,7 @@ public class CombatSession {
             }
         } else {
             DndEntityInstance entity = combatant.getEntityInstance();
-            if (entity != null && entity.getArmorStand() != null) {
-                entity.getArmorStand().setGlowing(false);
-            }
+            if (entity != null) entity.setGlowing(false);
         }
     }
 

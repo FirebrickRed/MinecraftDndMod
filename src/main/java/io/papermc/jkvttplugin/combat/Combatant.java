@@ -236,8 +236,7 @@ public class Combatant {
             return player != null ? player.getLocation() : null;
         } else {
             DndEntityInstance entity = getEntityInstance();
-            return (entity != null && entity.getArmorStand() != null)
-                ? entity.getArmorStand().getLocation() : null;
+            return entity != null ? entity.getLocation() : null;
         }
     }
 

@@ -108,7 +108,7 @@ public class MoveToolManager {
         if (session != null && !session.isSetupPhase()) {
             Combatant current = session.getCurrentCombatant();
             boolean itsTurn = current != null && current.isEntity() && current.getEntityInstance() != null
-                    && stand.equals(current.getEntityInstance().getArmorStand());
+                    && current.getEntityInstance().isBody(stand);
             if (!itsTurn) {
                 dm.sendActionBar(Component.text("It's not " + inst.getDisplayName() + "'s turn.", NamedTextColor.RED));
                 return false;
@@ -177,6 +177,6 @@ public class MoveToolManager {
         if (s == null || s.isSetupPhase()) return false;
         Combatant cur = s.getCurrentCombatant();
         return cur != null && cur.isEntity() && cur.getEntityInstance() != null
-                && stand.equals(cur.getEntityInstance().getArmorStand());
+                && cur.getEntityInstance().isBody(stand);
     }
 }

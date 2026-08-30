@@ -185,7 +185,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         int index = 1;
         for (Map.Entry<String, DndEntityInstance> entry : spawnedEntities.entrySet()) {
             DndEntityInstance instance = entry.getValue();
-            Location loc = instance.getArmorStand().getLocation();
+            Location loc = instance.getLocation();
 
             sender.sendMessage(Component.text(index + ". ", NamedTextColor.GRAY)
                     .append(Component.text(instance.getDisplayName(), NamedTextColor.WHITE))
@@ -283,7 +283,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         if (args.length >= coordStartIndex + 3) {
             // Coordinates provided
             try {
-                Location currentLoc = instance.getArmorStand().getLocation();
+                Location currentLoc = instance.getLocation();
                 double x = parseCoordinate(args[coordStartIndex], currentLoc.getX());
                 double y = parseCoordinate(args[coordStartIndex + 1], currentLoc.getY());
                 double z = parseCoordinate(args[coordStartIndex + 2], currentLoc.getZ());
@@ -297,7 +297,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             newLocation = player.getLocation();
         }
 
-        instance.getArmorStand().teleport(newLocation);
+        instance.teleport(newLocation);
 
         sender.sendMessage(Component.text("✓ Teleported ", NamedTextColor.GREEN)
                 .append(Component.text(instance.getDisplayName(), NamedTextColor.GOLD))
@@ -1484,7 +1484,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         int count = 0;
 
         for (Map.Entry<String, DndEntityInstance> entry : spawnedEntities.entrySet()) {
-            Location entityLoc = entry.getValue().getArmorStand().getLocation();
+            Location entityLoc = entry.getValue().getLocation();
             if (entityLoc.distance(center) <= radius) {
                 // Save shop before removing (Issue #75)
                 if (entry.getValue().getShop() != null) {
