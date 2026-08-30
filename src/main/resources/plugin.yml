@@ -11,6 +11,9 @@ commands:
     description: Roll dice using XdY format (e.g., 2d6+3).
     usage: /roll <XdY[+Z]>
     permission: dnd.rolldice
+  loot:
+    description: Roll a check to search a body you right-clicked.
+    usage: /loot <check> <d20>
   combat:
     description: (DM) Combat session management commands.
     usage: /combat <start|add|remove|nextturn|endturn|finished|...>

@@ -220,17 +220,38 @@ public class EntityLoader {
                 entity.setAttacks(attacks);
             }
 
-            // Inventory
+            // Inventory — entries may be a plain id (string) or an object with loot flags
+            // (item_id, qty, dc, check, lootable). The id list feeds the possession kit; the loot
+            // flags feed synthesized loot when there's no explicit loot: section (Issue #136).
             Object inventoryObj = data.get("inventory");
             if (inventoryObj instanceof List<?> inventoryList) {
                 List<String> inventory = new ArrayList<>();
+                List<io.papermc.jkvttplugin.data.model.LootEntry> invLoot = new ArrayList<>();
                 for (Object item : inventoryList) {
-                    if (item instanceof String) {
-                        inventory.add((String) item);
+                    io.papermc.jkvttplugin.data.model.LootEntry entry = parseLootEntry(item);
+                    if (entry != null) {
+                        inventory.add(entry.getItemId());
+                        invLoot.add(entry);
                     }
                 }
                 entity.setInventory(inventory);
+                entity.setInventoryLoot(invLoot);
             }
+
+            // Explicit loot table (Issue #136)
+            Object lootObj = data.get("loot");
+            if (lootObj instanceof List<?> lootList) {
+                List<io.papermc.jkvttplugin.data.model.LootEntry> loot = new ArrayList<>();
+                for (Object item : lootList) {
+                    io.papermc.jkvttplugin.data.model.LootEntry entry = parseLootEntry(item);
+                    if (entry != null) loot.add(entry);
+                }
+                entity.setLoot(loot);
+            }
+
+            // Whole-creature loot toggle (default true)
+            Object lootableObj = data.get("lootable");
+            if (lootableObj instanceof Boolean b) entity.setLootable(b);
 
             // Visual and metadata
             entity.setModel((String) data.get("model"));
@@ -255,6 +276,32 @@ public class EntityLoader {
     /**
      * Parses attack data from YAML.
      */
+    /** Parse one loot/inventory entry: a plain id string, or an object with dc/check/lootable/qty. */
+    private static io.papermc.jkvttplugin.data.model.LootEntry parseLootEntry(Object raw) {
+        if (raw instanceof String s) {
+            return new io.papermc.jkvttplugin.data.model.LootEntry(s, 1, 5,
+                    io.papermc.jkvttplugin.data.model.enums.Skill.INVESTIGATION, true);
+        }
+        if (raw instanceof Map<?, ?> m) {
+            Object idObj = m.get("item_id");
+            if (idObj == null) idObj = m.get("id");
+            if (!(idObj instanceof String id) || id.isBlank()) return null;
+
+            int qty = m.get("qty") instanceof Number n ? n.intValue() : 1;
+            int dc = m.get("dc") instanceof Number n ? n.intValue() : 5;
+            boolean lootable = !(m.get("lootable") instanceof Boolean b) || b; // default true
+            io.papermc.jkvttplugin.data.model.enums.Skill check =
+                    io.papermc.jkvttplugin.data.model.enums.Skill.INVESTIGATION;
+            if (m.get("check") instanceof String cs) {
+                io.papermc.jkvttplugin.data.model.enums.Skill parsed =
+                        io.papermc.jkvttplugin.data.model.enums.Skill.fromString(cs);
+                if (parsed != null) check = parsed;
+            }
+            return new io.papermc.jkvttplugin.data.model.LootEntry(id, qty, dc, check, lootable);
+        }
+        return null;
+    }
+
     private static DndAttack parseAttack(Map<?, ?> data) {
         DndAttack attack = new DndAttack();
 

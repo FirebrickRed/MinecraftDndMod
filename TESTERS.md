@@ -95,6 +95,11 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **Dead entities** (#138): a killed entity **tips over** (corpse), **can't be possessed**, and a
       dead entity **can't join combat** — until the DM **`/dmentity revive <name> [hp]`** stands it back
       up. The corpse pose survives a restart.
+- [ ] **Loot the body** (#136): right-click a corpse → a clickable **[Investigation +X]** prompt → type
+      your d20 → you recover every item you beat the DC on (default 5) into a **chest** (take some,
+      the rest drops). The kobold's **sling is flagged non-lootable** so only the dagger is found.
+      A second player can search and may find items the first missed; items need a `check` (default
+      Investigation) so DMs can gate a pelt behind Nature, etc.
 - [ ] **`/character view <name>`** works for the DM on any character (no crash).
 
 ---

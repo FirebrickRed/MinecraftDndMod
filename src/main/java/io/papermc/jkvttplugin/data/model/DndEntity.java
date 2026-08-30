@@ -98,9 +98,21 @@ public class DndEntity {
 
     /**
      * List of item IDs this entity carries.
-     * Used for both shop inventory (merchants) and loot drops (defeated entities).
+     * Used for both shop inventory (merchants) and the possession kit.
      */
     private List<String> inventory;
+
+    /**
+     * Per-item loot flags derived from the {@code inventory:} entries (dc/check/lootable). Used to
+     * synthesize a loot table when there is no explicit {@code loot:} section (Issue #136).
+     */
+    private List<LootEntry> inventoryLoot = new ArrayList<>();
+
+    /** Explicit loot table, if the YAML defines a {@code loot:} section (Issue #136). */
+    private List<LootEntry> loot = new ArrayList<>();
+
+    /** Whole-creature toggle: if false, it drops nothing on death regardless of inventory/loot. */
+    private boolean lootable = true;
 
     // ==================== VISUAL ====================
 
@@ -184,6 +196,29 @@ public class DndEntity {
 
     public List<String> getInventory() { return inventory; }
     public void setInventory(List<String> inventory) { this.inventory = inventory; }
+
+    public List<LootEntry> getInventoryLoot() { return inventoryLoot; }
+    public void setInventoryLoot(List<LootEntry> inventoryLoot) { this.inventoryLoot = inventoryLoot; }
+
+    public List<LootEntry> getLoot() { return loot; }
+    public void setLoot(List<LootEntry> loot) { this.loot = loot; }
+
+    public boolean isLootable() { return lootable; }
+    public void setLootable(boolean lootable) { this.lootable = lootable; }
+
+    /**
+     * The effective loot table: the explicit {@code loot:} section if present, otherwise the
+     * lootable items synthesized from {@code inventory:}. Empty if the creature isn't lootable.
+     */
+    public List<LootEntry> getLootTable() {
+        if (!lootable) return new ArrayList<>();
+        List<LootEntry> source = (loot != null && !loot.isEmpty()) ? loot : inventoryLoot;
+        List<LootEntry> result = new ArrayList<>();
+        if (source != null) {
+            for (LootEntry e : source) if (e.isLootable()) result.add(e);
+        }
+        return result;
+    }
 
     public String getModel() { return model; }
     public void setModel(String model) { this.model = model; }

@@ -39,8 +39,9 @@ kobold:
       damage_type: bludgeoning
 
   inventory:
-    - dagger
-    - sling
+    - dagger                 # loots at DC 5 (default) via Investigation
+    - item_id: sling
+      lootable: false        # used in combat, but kobolds smash their slings — never dropped
 
   model: "kobold"
   dm_notes: "Pack tactics. Cowardly alone, dangerous in groups."
