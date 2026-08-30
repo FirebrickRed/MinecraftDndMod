@@ -207,15 +207,17 @@ public class WeaponListener implements Listener {
         for (String atk : attacks) {
             String cmd = "/combat attack " + targetArg + " " + atk + " --roll ";
             String[] status = rangeStatus(AttackHandler.resolveEntityAttack(entity, atk), feet); // {label, colorKey}
-            NamedTextColor color = switch (status[1]) {
-                case "long" -> NamedTextColor.YELLOW;
-                case "out" -> NamedTextColor.GRAY;
-                default -> NamedTextColor.GREEN;
-            };
+            if ("out".equals(status[1])) {
+                // Out of range: show it, but DON'T make it clickable — no accidental out-of-range shots.
+                msg = msg.append(Component.text("  [" + atk + "]" + status[0], NamedTextColor.GRAY)
+                        .hoverEvent(HoverEvent.showText(Component.text("Out of range — move closer, or type"
+                                + " /combat attack … --force to override."))));
+                continue;
+            }
+            NamedTextColor color = "long".equals(status[1]) ? NamedTextColor.YELLOW : NamedTextColor.GREEN;
             msg = msg.append(Component.text("  [" + atk + "]" + status[0], color, TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.suggestCommand(cmd))
-                    .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<roll>"
-                            + ("out".equals(status[1]) ? "\n(out of range — DM can add --force)" : "")))));
+                    .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<roll>"))));
         }
         player.sendMessage(msg);
     }
