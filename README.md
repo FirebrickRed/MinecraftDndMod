@@ -4,7 +4,7 @@ A Paper/Spigot plugin that turns a Minecraft server into a **virtual tabletop fo
 
 > **Status: Pre-Alpha.** Core character and combat systems work and are playable, but data formats and features are still changing. Expect rough edges.
 
-**Target platform:** PaperMC 1.21.3 · Java 21
+**Target platform:** PaperMC 1.21.8 · Java 21
 
 ---
 
@@ -102,7 +102,7 @@ See **COMMANDS.md** for the full, grouped command reference.
 
 This plugin is great for small groups (≈5–15 players). The quickest dev/playtest setup is to **self-host locally and expose it with [playit.gg](https://playit.gg)** (a tunnel — no router port-forwarding needed):
 
-1. Download **PaperMC 1.21.3** from [papermc.io](https://papermc.io) into a fresh folder.
+1. Download **PaperMC 1.21.8** from [papermc.io](https://papermc.io) into a fresh folder.
 2. Build this plugin (`gradlew build`) and copy `build/libs/jkvttplugin-*.jar` into the server's `plugins/` folder.
 3. Copy the **`DMContent/`** folder into the server root — *the plugin needs it for all D&D content.*
 4. Run the server once, set `eula=true` in `eula.txt`, then start it again.

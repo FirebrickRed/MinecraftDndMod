@@ -98,7 +98,7 @@ public class EntityLoader {
                 DndEntity entity = parseEntity(data);
                 if (entity != null && entity.getId() != null) {
                     loadedEntities.put(Util.normalize(entity.getId()), entity);
-                    LOGGER.info("  Loaded entity: " + entity.getName() + " [" + entity.getId() + "]");
+                    LOGGER.fine("  Loaded entity: " + entity.getName() + " [" + entity.getId() + "]");
                     count++;
                 }
             } else {
@@ -110,7 +110,7 @@ public class EntityLoader {
                         DndEntity entity = parseEntity(entityId, entityData);
                         if (entity != null) {
                             loadedEntities.put(Util.normalize(entityId), entity);
-                            LOGGER.info("  Loaded entity: " + entity.getName() + " [" + entity.getId() + "]");
+                            LOGGER.fine("  Loaded entity: " + entity.getName() + " [" + entity.getId() + "]");
                             count++;
                         }
                     }
