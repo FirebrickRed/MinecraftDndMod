@@ -464,6 +464,11 @@ public class Combatant {
         CharacterSheet s = getCharacterSheet();
         return s != null ? s.bonusDamageFor(rollTag) : 0;
     }
+    /** Labeled effect bonus damage, e.g. "+2[Rage]" (empty if none) — for damage breakdowns (#168). */
+    public String effectBonusDamageBreakdownFor(String rollTag) {
+        CharacterSheet s = getCharacterSheet();
+        return s != null ? s.bonusDamageBreakdownFor(rollTag) : "";
+    }
     public void markEffectsMaintained(String trigger) {
         CharacterSheet s = getCharacterSheet();
         if (s != null) s.markEffectsMaintained(trigger);

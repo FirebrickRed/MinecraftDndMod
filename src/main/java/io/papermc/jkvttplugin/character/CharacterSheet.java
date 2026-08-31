@@ -1269,6 +1269,16 @@ public class CharacterSheet {
         for (var e : activeEffects) sum += e.bonusDamageFor(rollTag);
         return sum;
     }
+    /** Labeled effect bonus damage for a swing, e.g. "+2[Rage]" (empty if none), for #168 breakdowns. */
+    public String bonusDamageBreakdownFor(String rollTag) {
+        StringBuilder sb = new StringBuilder();
+        for (var e : activeEffects) {
+            int b = e.bonusDamageFor(rollTag);
+            if (b != 0) sb.append(sb.length() > 0 ? " " : "").append(b > 0 ? "+" : "").append(b)
+                    .append("[").append(e.getSourceName()).append("]");
+        }
+        return sb.toString();
+    }
 
     // ---- duration lifecycle ----
     /** Note a maintenance trigger (e.g. "attacked", "took_damage") on all effects that need it. */

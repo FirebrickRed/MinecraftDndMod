@@ -1866,6 +1866,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // rolled as-is for DM convenience; --total is the final number with nothing added.
         int pendingBonus = (!isOverride && attacker != null && attacker.getTurnState() != null)
                 ? attacker.getTurnState().getPendingDamageBonus() : 0;
+        String pendingLabel = (!isOverride && attacker != null && attacker.getTurnState() != null)
+                ? attacker.getTurnState().getPendingDamageLabel() : "";
         int damage;
         if (rollStr != null) {
             if (rollStr.toLowerCase().contains("d")) {
@@ -1881,8 +1883,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     int rolled = Integer.parseInt(rollStr.trim());
                     damage = rolled + pendingBonus;
                     if (pendingBonus != 0) {
-                        dm.sendMessage(Component.text("Damage: " + rolled + (pendingBonus > 0 ? " +" + pendingBonus : " " + pendingBonus)
-                                + " = " + damage, NamedTextColor.GRAY));
+                        // Show the labeled breakdown ("+5[STR] +2[Rage]") so the bonus isn't a mystery (#168).
+                        String bonusShow = !pendingLabel.isEmpty() ? " " + pendingLabel
+                                : (pendingBonus > 0 ? " +" + pendingBonus : " " + pendingBonus);
+                        dm.sendMessage(Component.text("Damage: " + rolled + bonusShow + " = " + damage, NamedTextColor.GRAY));
                     }
                 } catch (NumberFormatException e) {
                     dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));

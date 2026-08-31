@@ -91,8 +91,18 @@ public class AttackHandler {
         }
         attacker.markEffectsMaintained("attacked"); // keeps Rage etc. going (#70)
 
+        // Labeled damage-bonus breakdown for clarity (#168): "+5[STR] +2[Rage]".
+        Ability dmgAbility = resolveAttackAbility(sheet, weapon);
+        int dmgAbilityMod = sheet.getModifier(dmgAbility);
+        String bonusLabel = dmgAbilityMod != 0
+                ? (dmgAbilityMod > 0 ? "+" : "") + dmgAbilityMod + "[" + dmgAbility.getAbbreviation() + "]" : "";
+        if (meleeStr) {
+            String eff = attacker.effectBonusDamageBreakdownFor("melee_str");
+            if (!eff.isEmpty()) bonusLabel = bonusLabel.isEmpty() ? eff : bonusLabel + " " + eff;
+        }
+
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, player);
+                providedRoll, providedTotal, player, bonusLabel);
     }
 
     /** Merge a flat bonus into a damage string's trailing modifier (1d8+3, +2 → 1d8+5), keeping the
@@ -117,6 +127,13 @@ public class AttackHandler {
     private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser) {
+        return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
+                providedRoll, providedTotal, commandUser, "");
+    }
+
+    private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
+                                      int attackMod, String modBreakdown, String damageStr, String damageType,
+                                      Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel) {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown);
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
@@ -129,7 +146,7 @@ public class AttackHandler {
         String finalDamage = r.nat20() ? doubleDice(damageStr) : damageStr;
         broadcastAttackResult(session, attacker, target, false,
                 r.total(), targetAC, hit, r.nat20(), r.nat1(),
-                finalDamage, damageType, r.breakdown());
+                finalDamage, damageType, r.breakdown(), bonusLabel);
         return true;
     }
 
@@ -359,6 +376,17 @@ public class AttackHandler {
                                               boolean hit, boolean isNat20, boolean isNat1,
                                               String damageStr, String damageType,
                                               String rollDetail) {
+        broadcastAttackResult(session, attacker, target, isViewerDM, total, targetAC, hit, isNat20, isNat1,
+                damageStr, damageType, rollDetail, "");
+    }
+
+    private static void broadcastAttackResult(CombatSession session,
+                                              Combatant attacker, Combatant target,
+                                              boolean isViewerDM,
+                                              int total, int targetAC,
+                                              boolean hit, boolean isNat20, boolean isNat1,
+                                              String damageStr, String damageType,
+                                              String rollDetail, String bonusLabel) {
         Component separator = Component.text("━━━ Attack Roll ━━━", NamedTextColor.GOLD, TextDecoration.BOLD);
         session.broadcast(Component.empty());
         session.broadcast(separator);
@@ -374,12 +402,12 @@ public class AttackHandler {
         // Result — attack resolves HIT/MISS only. Damage is a separate step (/combat damage).
         if (isNat20) {
             session.broadcast(Component.text("★ CRITICAL HIT! ★", NamedTextColor.GOLD, TextDecoration.BOLD));
-            promptDamage(session, attacker, target, damageStr, damageType, true);
+            promptDamage(session, attacker, target, damageStr, damageType, true, bonusLabel);
         } else if (isNat1) {
             session.broadcast(Component.text("✗ CRITICAL MISS!", NamedTextColor.DARK_RED, TextDecoration.BOLD));
         } else if (hit) {
             session.broadcast(Component.text("HIT!", NamedTextColor.GREEN, TextDecoration.BOLD));
-            promptDamage(session, attacker, target, damageStr, damageType, false);
+            promptDamage(session, attacker, target, damageStr, damageType, false, bonusLabel);
         } else {
             session.broadcast(Component.text("MISS", NamedTextColor.RED));
         }
@@ -394,6 +422,11 @@ public class AttackHandler {
      */
     static void promptDamage(CombatSession session, Combatant attacker, Combatant target,
                                      String damageStr, String damageType, boolean isCrit) {
+        promptDamage(session, attacker, target, damageStr, damageType, isCrit, "");
+    }
+
+    static void promptDamage(CombatSession session, Combatant attacker, Combatant target,
+                                     String damageStr, String damageType, boolean isCrit, String bonusLabel) {
         String name = target.getDisplayName();
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
         String typeFlag = (damageType == null || damageType.isEmpty()) ? "" : " --type " + damageType;
@@ -405,22 +438,26 @@ public class AttackHandler {
         int bonus = split[0];
         boolean hasDice = dice.toLowerCase().contains("d");
 
-        // Remember the bonus + crit on the pending-damage window so /combat damage applies them
-        // automatically — no user-facing --crit flag (crit only matters vs a downed creature).
+        // Labeled bonus for clarity (#168): "+5[STR] +2[Rage]" if we have it, else a bare "+N".
+        String bonusStr = bonus == 0 ? "" : (bonus > 0 ? " +" + bonus : " " + bonus);
+        String bonusShown = (bonusLabel != null && !bonusLabel.isEmpty()) ? " " + bonusLabel : bonusStr;
+
+        // Remember the bonus (+ its label) + crit on the pending-damage window so /combat damage
+        // applies and explains them automatically.
         if (attacker.getTurnState() != null) {
-            attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0, isCrit);
+            attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0,
+                    hasDice ? bonusShown.trim() : "", isCrit);
         }
 
         Component prompt;
         if (hasDice) {
             // Clickable: fills the command with --roll open for the player's physical damage roll.
             String cmd = "/combat damage " + quoted + typeFlag + " --roll ";
-            String bonusStr = bonus > 0 ? " +" + bonus : (bonus < 0 ? " " + bonus : "");
-            prompt = Component.text("→ Apply damage — roll " + dice + ", the game adds" + (bonus == 0 ? " nothing" : bonusStr) + ": ", NamedTextColor.YELLOW)
+            prompt = Component.text("→ Apply damage — roll " + dice + ", the game adds" + (bonus == 0 ? " nothing" : bonusShown) + ": ", NamedTextColor.YELLOW)
                     .append(Component.text("[click, then type your damage roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                             .clickEvent(ClickEvent.suggestCommand(cmd))
                             .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your " + dice + " result>"
-                                    + (bonus != 0 ? "\nThe game adds " + bonusStr.trim() + "." : "")))));
+                                    + (bonus != 0 ? "\nThe game adds" + bonusShown + "." : "")))));
         } else {
             // Flat damage (e.g. unarmed): nothing to roll — one click applies it.
             String amt = (damageStr == null || damageStr.isEmpty()) ? "1" : damageStr;

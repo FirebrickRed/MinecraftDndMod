@@ -22,6 +22,7 @@ public class TurnState {
     // The flat damage modifier for the pending hit (e.g. +3 STR). When the player supplies their
     // physically-rolled damage dice via --roll <n>, the game adds this — mirroring attack rolls.
     private int pendingDamageBonus;
+    private String pendingDamageLabel = ""; // labeled breakdown of the bonus, e.g. "+5[STR] +2[Rage]" (#168)
     // Whether the pending hit was a critical. Remembered from the attack so /combat damage applies
     // the "crit vs a downed creature = 2 death-save failures" rule without a user-facing flag.
     private boolean pendingDamageCrit;
@@ -58,22 +59,25 @@ public class TurnState {
     // ==================== PENDING DAMAGE (one damage application per hit) ====================
 
     /** Record that an attack hit {@code target}, opening a single /combat damage window. */
-    public void markAttackHit(UUID targetId) { markAttackHit(targetId, 0, false); }
-    /** As above, remembering the flat damage bonus and whether the hit was a critical. */
-    public void markAttackHit(UUID targetId, int damageBonus, boolean crit) {
+    public void markAttackHit(UUID targetId) { markAttackHit(targetId, 0, "", false); }
+    /** As above, remembering the flat damage bonus, its labeled breakdown (#168), and crit. */
+    public void markAttackHit(UUID targetId, int damageBonus, String damageBonusLabel, boolean crit) {
         this.pendingDamageTargetId = targetId;
         this.pendingDamageBonus = damageBonus;
+        this.pendingDamageLabel = damageBonusLabel == null ? "" : damageBonusLabel;
         this.pendingDamageCrit = crit;
     }
     public boolean isDamagePending() { return pendingDamageTargetId != null; }
     public UUID getPendingDamageTargetId() { return pendingDamageTargetId; }
     public int getPendingDamageBonus() { return pendingDamageBonus; }
+    public String getPendingDamageLabel() { return pendingDamageLabel; }
     public boolean isPendingDamageCrit() { return pendingDamageCrit; }
     public boolean isPendingDamageHalf() { return pendingDamageHalf; }
     public void setPendingDamageHalf(boolean half) { this.pendingDamageHalf = half; }
     public void clearDamagePending() {
         this.pendingDamageTargetId = null;
         this.pendingDamageBonus = 0;
+        this.pendingDamageLabel = "";
         this.pendingDamageCrit = false;
         this.pendingDamageHalf = false;
     }
