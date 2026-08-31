@@ -44,23 +44,20 @@ player_choices:
     title: Class Equipment 1
     choose: 1
     options:
-      - - tag: martial_weapon
-        - tag: shield
-      - - tag: martial_weapon
-        - tag: martial_weapon
+      - give: [martial_weapon, shield]
+      - give: [martial_weapon, martial_weapon]
   - id: class_equipment_2
     title: Class Equipment 2
     choose: 1
     options:
-      - - item: javelin
-          quantity: 5
-      - - tag: simple_melee_weapon
+      - javelin x5
+      - simple_melee_weapon
   - id: class_equipment_3
     title: Class Equipment 3
     choose: 1
     options:
-      - - item: priests_pack
-      - - item: explorers_pack
+      - priests_pack
+      - explorers_pack
 custom_model: paladin_icon
 multiclass_requirements:
   Charisma: 13

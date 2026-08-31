@@ -120,15 +120,15 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - item: wooden_shield
-      - - tag: simple_weapon
+      - wooden_shield
+      - simple_weapon
   - id: class_equipment_2
     title: Class Equipment 2
     type: equipment
     choose: 1
     options:
-      - - item: scimitar
-      - - tag: simple_weapon
+      - scimitar
+      - simple_weapon
 custom_model: druid_icon
 multiclass_requirements:
   Wisdom: 13

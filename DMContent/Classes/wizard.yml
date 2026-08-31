@@ -120,22 +120,22 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - item: quarterstaff
-      - - item: dagger
+      - quarterstaff
+      - dagger
   - id: class_equipment_2
     title: Spell Focus Choice
     type: equipment
     choose: 1
     options:
-      - - item: component_pouch
-      - - item: arcane_focus
+      - component_pouch
+      - arcane_focus
   - id: class_equipment_3
     title: Adventuring Gear
     type: equipment
     choose: 1
     options:
-      - - item: scholars_pack
-      - - item: explorers_pack
+      - scholars_pack
+      - explorers_pack
 custom_model: wizard_icon
 multiclass_requirements:
   Intelligence: 13

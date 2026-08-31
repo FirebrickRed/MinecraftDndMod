@@ -132,24 +132,22 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - item: light_crossbow
-        - item: bolt
-          quantity: 20
-      - - tag: simple_weapon
+      - give: [light_crossbow, bolt x20]
+      - simple_weapon
   - id: class_equipment_2
     title: Spell Focus Choice
     type: equipment
     choose: 1
     options:
-      - - item: component_pouch
-      - - item: arcane_focus
+      - component_pouch
+      - arcane_focus
   - id: class_equipment_3
     title: Adventuring Gear
     type: equipment
     choose: 1
     options:
-      - - item: dungeoneers_pack
-      - - item: explorers_pack
+      - dungeoneers_pack
+      - explorers_pack
 custom_model: sorcerer_icon
 multiclass_requirements:
   Charisma: 13

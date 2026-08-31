@@ -173,24 +173,22 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - item: scale_mail
-      - - item: leather_armor
+      - scale_mail
+      - leather_armor
   - id: class_equipment_2
     title: Primary Weapon
     type: equipment
     choose: 1
     options:
-      - - item: shortsword
-          quantity: 2
-      - - tag: simple_melee_weapon
-          quantity: 2
+      - shortsword x2
+      - simple_melee_weapon
   - id: class_equipment_3
     title: Adventuring Gear
     type: equipment
     choose: 1
     options:
-      - - item: dungeoneers_pack
-      - - item: explorers_pack
+      - dungeoneers_pack
+      - explorers_pack
 custom_model: ranger_icon
 multiclass_requirements:
   Dexterity: 13

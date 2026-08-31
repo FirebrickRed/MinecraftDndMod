@@ -163,15 +163,15 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - item: shortsword
-      - - tag: simple_weapon
+      - shortsword
+      - simple_weapon
   - id: class_equipment_2
     title: Adventuring Gear
     type: equipment
     choose: 1
     options:
-      - - item: dungeoneers_pack
-      - - item: explorers_pack
+      - dungeoneers_pack
+      - explorers_pack
 custom_model: monk_icon
 multiclass_requirements:
   Dexterity: 13

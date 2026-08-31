@@ -9,12 +9,17 @@ import io.papermc.jkvttplugin.util.Util;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Parses starting-equipment lists and equipment player-choices from YAML.
- * Split out of {@code LoaderUtils} (issue #12).
+ * Split out of {@code LoaderUtils} (issue #12); the choice format is the flatter one from #54.
  */
 public final class EquipmentParser {
+
+    /** A trailing " xN" quantity suffix on an equipment token (space-delimited, e.g. "bolt x20"). */
+    private static final Pattern QTY_SUFFIX = Pattern.compile("^(.+?)\\s+x(\\d+)$");
 
     private EquipmentParser() {}
 
@@ -53,49 +58,77 @@ public final class EquipmentParser {
         return List.of();
     }
 
+    /**
+     * Parse an equipment-choice {@code options:} list (#54). Each option is one of:
+     * <ul>
+     *   <li>a scalar string — one item or tag, with an optional {@code " xN"} quantity suffix
+     *       (e.g. {@code dagger}, {@code dagger x3}, {@code martial_weapon}). Tags are auto-detected
+     *       via {@link TagRegistry}, so no {@code tag:}/{@code item:} keys are needed.</li>
+     *   <li>a map with {@code give: [ ... ]} — a bundle given together, with an optional
+     *       {@code label:} shown in the choice menu. Each give-entry is a scalar as above.</li>
+     * </ul>
+     */
     public static List<EquipmentOption> parseEquipmentOptions(Object node) {
         List<EquipmentOption> out = new ArrayList<>();
         if (!(node instanceof List<?> raw)) return out;
 
         for (Object opt : raw) {
-            if (opt instanceof List<?> bundle) {
+            if (opt instanceof Map<?, ?> m && m.containsKey("give")) {
+                // Bundle option: give: [ ... ] with an optional label.
                 List<EquipmentOption> parts = new ArrayList<>();
-                for (Object part : bundle) {
-                    EquipmentOption p = parseEquipmentElement(part);
-                    if (p != null) {
-                        parts.add(p);
+                if (m.get("give") instanceof List<?> give) {
+                    for (Object part : give) {
+                        EquipmentOption p = parseGiveEntry(part);
+                        if (p != null) parts.add(p);
                     }
+                } else {
+                    // Allow a single scalar under give: for convenience.
+                    EquipmentOption p = parseGiveEntry(m.get("give"));
+                    if (p != null) parts.add(p);
                 }
-                if (!parts.isEmpty()) {
-                    out.add(EquipmentOption.bundle(parts));
-                }
+                if (parts.isEmpty()) continue;
+                String label = ParseUtil.asString(m.get("label"), null);
+                // A single-entry "bundle" is just that one option (carry the label if given).
+                out.add(parts.size() == 1 && label == null ? parts.get(0)
+                        : EquipmentOption.bundle(parts, label));
                 continue;
             }
-            EquipmentOption single = parseEquipmentElement(opt);
+            // Scalar option: one item or tag.
+            EquipmentOption single = parseGiveEntry(opt);
             if (single != null) out.add(single);
         }
         return out;
     }
 
-    private static EquipmentOption parseEquipmentElement(Object node) {
+    /**
+     * Parse one give-entry: a scalar {@code "id"} or {@code "id xN"} string (tag auto-detected), or a
+     * {@code {item: id, quantity: n}} / {@code {tag: id}} map (still accepted for explicitness).
+     */
+    private static EquipmentOption parseGiveEntry(Object node) {
+        if (node instanceof String s) {
+            String token = s.trim();
+            if (token.isBlank()) return null;
+
+            // Trailing " xN" = quantity (space is the delimiter, so "daggerx3" stays a literal id).
+            int qty = 1;
+            Matcher qm = QTY_SUFFIX.matcher(token);
+            if (qm.matches()) {
+                token = qm.group(1).trim();
+                qty = Integer.parseInt(qm.group(2));
+            }
+            String id = Util.normalize(token);
+            if (id.isBlank()) return null;
+            return TagRegistry.isTag(id) ? EquipmentOption.tag(id) : EquipmentOption.item(id, qty);
+        }
         if (node instanceof Map<?, ?> m) {
             if (m.containsKey("item")) {
                 String id = Util.normalize(ParseUtil.asString(m.get("item"), ""));
                 int qty = ParseUtil.asInt(m.get("quantity"), 1);
-                if (!id.isBlank()) {
-                    return EquipmentOption.item(id, qty);
-                }
+                if (!id.isBlank()) return EquipmentOption.item(id, qty);
             }
             if (m.containsKey("tag")) {
                 String tag = Util.normalize(ParseUtil.asString(m.get("tag"), ""));
-                if (!tag.isBlank()) {
-                    return EquipmentOption.tag(tag);
-                }
-            }
-        } else if (node instanceof String s) {
-            String id = Util.normalize(s);
-            if (!id.isBlank()) {
-                return EquipmentOption.item(id, 1);
+                if (!tag.isBlank()) return EquipmentOption.tag(tag);
             }
         }
         return null;

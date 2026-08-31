@@ -157,37 +157,29 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - tag: martial_melee_weapon
-        - item: shield
-      - - tag: martial_melee_weapon
-          quantity: 2
+      - give: [martial_melee_weapon, shield]
+      - martial_melee_weapon
   - id: class_equipment_2
     title: Secondary Weapon
     type: equipment
     choose: 1
     options:
-      - - item: light_crossbow
-        - item: bolt
-          quantity: 20
-      - - item: handaxe
-          quantity: 2
+      - give: [light_crossbow, bolt x20]
+      - handaxe x2
   - id: class_equipment_3
     title: Adventuring Gear
     type: equipment
     choose: 1
     options:
-      - - item: dungeoneers_pack
-      - - item: explorers_pack
+      - dungeoneers_pack
+      - explorers_pack
   - id: class_equipment_4
     title: Armor
     type: equipment
     choose: 1
-    options: 
-        - - item: chain_mail
-        - - item: leather_armor
-          - item: longbow
-          - item: arrow
-            quantity: 20
+    options:
+        - chain_mail
+        - give: [leather_armor, longbow, arrow x20]
 custom_model: fighter_icon
 multiclass_requirements:
   Strength: 13

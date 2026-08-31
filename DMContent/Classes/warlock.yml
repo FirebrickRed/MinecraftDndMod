@@ -69,30 +69,28 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - item: light_crossbow
-        - item: bolt
-          quantity: 20
-      - - tag: simple_weapon
+      - give: [light_crossbow, bolt x20]
+      - simple_weapon
   - id: class_equipment_2
     title: Spell Focus Choice
     type: equipment
     choose: 1
     options:
-      - - item: component_pouch
-      - - item: arcane_focus
+      - component_pouch
+      - arcane_focus
   - id: class_equipment_3
     title: Class Equipment 3
     type: equipment
     choose: 1
     options:
-      - - item: scholars_pack
-      - - item: dungeoneers_pack
+      - scholars_pack
+      - dungeoneers_pack
   - id: class_equipment_4
     title: Class Equipment 4
     type: equipment
     choose: 1
     options:
-      - - tag: simple_weapon
+      - simple_weapon
 custom_model: warlock_icon
 multiclass_requirements:
   Charisma: 13

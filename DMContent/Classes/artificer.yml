@@ -189,15 +189,14 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - tag: simple_weapon
-          quantity: 2
+      - simple_weapon
   - id: class_equipment_3
     title: Armor
     type: equipment
     choose: 1
     options:
-      - - item: studded_leather_armor
-      - - item: scale_mail
+      - studded_leather_armor
+      - scale_mail
 custom_model: artificer_icon
 multiclass_requirements:
   Intelligence: 13

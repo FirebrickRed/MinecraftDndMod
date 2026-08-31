@@ -27,6 +27,6 @@ noble:
       type: equipment
       choose: 1
       options:
-        - - tag: gaming_set
+        - gaming_set
   links:
     - "https://dnd5e.wikidot.com/background:noble"

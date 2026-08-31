@@ -13,23 +13,27 @@ public class EquipmentOption {
     private final String idOrTag;
     private final int quantity;
     private final List<EquipmentOption> parts;
+    private final String label; // optional display label (from YAML), null = derive from contents
 
-    private EquipmentOption(Kind k, String idOrTag, int qty, List<EquipmentOption> parts) {
+    private EquipmentOption(Kind k, String idOrTag, int qty, List<EquipmentOption> parts, String label) {
         this.kind = k;
         this.idOrTag = idOrTag;
         this.quantity = qty;
         this.parts = parts;
+        this.label = label;
     }
 
-    public static EquipmentOption item(String id, int qty) { return new EquipmentOption(Kind.ITEM, id, Math.max(1, qty), List.of()); }
+    public static EquipmentOption item(String id, int qty) { return new EquipmentOption(Kind.ITEM, id, Math.max(1, qty), List.of(), null); }
     public static EquipmentOption item(String id) { return item(id, 1); }
-    public static EquipmentOption tag(String tag) { return new EquipmentOption(Kind.TAG, tag, 0, List.of()); }
-    public static EquipmentOption bundle(List<EquipmentOption> parts) { return new EquipmentOption(Kind.BUNDLE, "", 0, new ArrayList<>(parts)); }
+    public static EquipmentOption tag(String tag) { return new EquipmentOption(Kind.TAG, tag, 0, List.of(), null); }
+    public static EquipmentOption bundle(List<EquipmentOption> parts) { return bundle(parts, null); }
+    public static EquipmentOption bundle(List<EquipmentOption> parts, String label) { return new EquipmentOption(Kind.BUNDLE, "", 0, new ArrayList<>(parts), label); }
 
     public Kind getKind() { return kind; }
     public String getIdOrTag() { return idOrTag; }
     public int getQuantity() { return quantity; }
     public List<EquipmentOption> getParts() { return parts; }
+    public String getLabel() { return label; }
 
     @Override
     public String toString() {
@@ -52,6 +56,7 @@ public class EquipmentOption {
     }
 
     public String prettyLabel() {
+        if (label != null && !label.isBlank()) return label; // DM-provided label wins
         return switch (kind) {
             case ITEM -> prettify(idOrTag) + (quantity > 1 ? " x" + quantity : "");
             case TAG -> "Any " + prettify(idOrTag);

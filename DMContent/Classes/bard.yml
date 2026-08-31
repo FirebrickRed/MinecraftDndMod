@@ -183,25 +183,25 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - item: rapier
-      - - item: longsword
-      - - tag: simple_weapon
+      - rapier
+      - longsword
+      - simple_weapon
   - id: class_equipment_2
     title: Musical Instrument
     type: equipment
     choose: 1
     options:
-      - - item: lute
-      - - item: flute
-      - - item: drum
-      - - item: lyre
+      - lute
+      - flute
+      - drum
+      - lyre
   - id: class_equipment_3
     title: Adventuring Gear
     type: equipment
     choose: 1
     options:
-      - - item: diplomats_pack
-      - - item: entertainers_pack
+      - diplomats_pack
+      - entertainers_pack
 custom_model: bard_icon
 multiclass_requirements:
   Charisma: 13

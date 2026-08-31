@@ -43,6 +43,29 @@ public class WeaponLoader {
             }
         }
         LOGGER.info("Loaded " + loadedWeapons.size() + " weapons.");
+        installWeaponTags();
+    }
+
+    /**
+     * Derive weapon tags from the loaded weapons and register them (#54). A weapon of category
+     * {@code simple}/{@code martial} and type {@code melee}/{@code ranged} joins {@code <cat>_weapon}
+     * and {@code <cat>_<type>_weapon} (e.g. martial + melee → martial_weapon and martial_melee_weapon).
+     * Homebrew weapons auto-join their tags with no hardcoding. Runs on every load/reload.
+     */
+    private static void installWeaponTags() {
+        Map<String, List<String>> tags = new java.util.HashMap<>();
+        for (Map.Entry<String, DndWeapon> entry : loadedWeapons.entrySet()) {
+            String id = entry.getKey(); // already normalized (the lookup key used everywhere)
+            DndWeapon w = entry.getValue();
+            String cat = w.getCategory() == null ? "" : Util.normalize(w.getCategory());
+            String type = w.getType() == null ? "" : Util.normalize(w.getType());
+            if (cat.isBlank()) continue;
+            tags.computeIfAbsent(cat + "_weapon", k -> new java.util.ArrayList<>()).add(id);
+            if (!type.isBlank()) {
+                tags.computeIfAbsent(cat + "_" + type + "_weapon", k -> new java.util.ArrayList<>()).add(id);
+            }
+        }
+        io.papermc.jkvttplugin.util.TagRegistry.merge(tags);
     }
 
     @SuppressWarnings("unchecked")

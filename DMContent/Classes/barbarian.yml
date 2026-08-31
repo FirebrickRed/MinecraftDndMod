@@ -160,16 +160,15 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - item: greataxe
-      - - tag: martial_melee_weapon
+      - greataxe
+      - martial_melee_weapon
   - id: class_equipment_2
     title: Starting Equipment 2
     type: equipment
     choose: 1
     options:
-      - - item: handaxe
-          quantity: 2
-      - - tag: simple_weapon
+      - handaxe x2
+      - simple_weapon
 custom_model: barbarian_icon
 multiclass_requirements:
   Strength: 13

@@ -88,25 +88,23 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - - item: rapier
-      - - item: shortsword
+      - rapier
+      - shortsword
   - id: class_equipment_2
     title: Class Equipment 2
     type: equipment
     choose: 1
     options:
-      - - item: shortbow
-        - item: arrows
-          quantity: 20
-      - - item: shortsword
+      - give: [shortbow, arrows x20]
+      - shortsword
   - id: class_equipment_3
     title: Class Equipment 3
     type: equipment
     choose: 1
     options:
-      - - item: burglars_pack
-      - - item: dungeoneers_pack
-      - - item: explorers_pack
+      - burglars_pack
+      - dungeoneers_pack
+      - explorers_pack
 custom_model: rogue_icon
 multiclass_requirements:
   Dexterity: 13
