@@ -1,0 +1,35 @@
+# Keepsakes — small sentimental items grouped by the `keepsake` tag (#54). Anything with
+# `tags: [keepsake]` shows up wherever a background (e.g. Urchin) offers a "keepsake" choice.
+# Add a homebrew keepsake by giving it the tag — no code changes.
+
+keepsake_token:
+  name: "Parents' Token"
+  type: "keepsake"
+  description: "A small token to remember your parents by."
+  material: "clay_ball"
+  tags:
+    - keepsake
+
+keepsake_locket:
+  name: "Tarnished Locket"
+  type: "keepsake"
+  description: "A locket holding a faded portrait of someone you loved."
+  material: "gold_nugget"
+  tags:
+    - keepsake
+
+keepsake_ring:
+  name: "Worn Signet Ring"
+  type: "keepsake"
+  description: "A plain ring, its crest long since worn smooth."
+  material: "iron_nugget"
+  tags:
+    - keepsake
+
+keepsake_letter:
+  name: "Creased Letter"
+  type: "keepsake"
+  description: "A letter you've read so many times the folds have gone soft."
+  material: "paper"
+  tags:
+    - keepsake

@@ -12,8 +12,6 @@ urchin:
     - item: city_map
       city: starting_city
     - pet_mouse
-    - item: keepsake_token
-      from: "parents"
     - common_clothes
     - item: money_pouch
       contents:
@@ -22,6 +20,13 @@ urchin:
         - id: dndmod:trinket
           display: "Tiny seashell"
           lore: "A small memento from your childhood"
+  player_choices:
+    - id: urchin_keepsake
+      title: Keepsake
+      type: equipment
+      choose: 1
+      options:
+        - keepsake      # any item tagged 'keepsake' (see Items/keepsakes.yml); auto-expands
   feature: "City Secrets"
 #    name: City Secrets
 #    description: "You know the secret patterns and flow to cities and can find passages others would miss."
