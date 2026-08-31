@@ -81,9 +81,26 @@ public class CharacterCreationMenu {
         for (int i = 0; i < 54; i++) inv.setItem(i, filler);
 
         String active = session.getActiveCreationTab();
+        // The Spells tab is hidden for non-spellcasters (#50). If it was somehow the active tab
+        // (e.g. the player was on it, then switched to a non-caster class), fall back to Class so
+        // we don't highlight/show a tab that no longer exists.
+        if ("spells".equals(active) && !isSpellcaster(session)) {
+            active = "class";
+        }
         renderTabs(inv, session, active);
         renderContent(inv, session, sessionId, active);
         return inv;
+    }
+
+    /**
+     * True if the selected class casts spells (has spellcasting at level 1). Racial innate spells
+     * (e.g. a Tiefling's Thaumaturgy) are granted automatically and racial cantrip *choices* live on
+     * the Choices tab, so a non-caster class hides the Spells tab without losing any of that (#50).
+     */
+    private static boolean isSpellcaster(CharacterCreationSession session) {
+        if (session.getSelectedClass() == null) return false;
+        DndClass c = ClassLoader.getClass(session.getSelectedClass());
+        return c != null && c.getSpellcastingInfo() != null;
     }
 
     // ==================== TABS (row 0) ====================
@@ -95,6 +112,8 @@ public class CharacterCreationMenu {
 
         for (int i = 0; i < TABS.length; i++) {
             String key = TABS[i];
+            // Hide the Spells tab entirely for non-spellcasters (#50) — its slot stays filler.
+            if (key.equals("spells") && !isSpellcaster(session)) continue;
             Status st = CharacterCreationHandler.tabStatus(session, key);
             boolean isActive = key.equals(active);
 
