@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.data.loader.parser.ShopParser;
 import io.papermc.jkvttplugin.data.model.DndArmor;
 import org.yaml.snakeyaml.Yaml;
 
@@ -54,7 +54,7 @@ public class ArmorLoader {
         armor.setName((String) data.get("name"));
         armor.setCategory((String) data.get("category"));
         armor.setWeight((String) data.get("weight"));
-        armor.setCost(LoaderUtils.parseCost(data.get("cost"), id));
+        armor.setCost(ShopParser.parseCost(data.get("cost"), id));
         armor.setDescription((String) data.get("description"));
         armor.setCustomModel((String) data.get("custom_model")); // optional resource-pack model
 

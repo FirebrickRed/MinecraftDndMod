@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.data.loader.parser.ShopParser;
 import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.Util;
@@ -268,7 +268,7 @@ public class EntityLoader {
             // Shop system (Issue #75)
             Object shopObj = data.get("shop");
             if (shopObj instanceof Map<?, ?> shopData) {
-                ShopConfig shop = LoaderUtils.parseShop(shopData, id);
+                ShopConfig shop = ShopParser.parseShop(shopData, id);
                 entity.setShop(shop);
             }
 

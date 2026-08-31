@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.data.loader.parser.ShopParser;
 import io.papermc.jkvttplugin.data.model.DndItem;
 import org.yaml.snakeyaml.Yaml;
 
@@ -55,7 +55,7 @@ public class ItemLoader {
         item.setDescription((String) data.get("description"));
         item.setMaterial((String) data.get("material"));         // vanilla Minecraft item
         item.setCustomModel((String) data.get("custom_model"));  // optional resource-pack model
-        item.setCost(LoaderUtils.parseCost(data.get("cost"), id));
+        item.setCost(ShopParser.parseCost(data.get("cost"), id));
         return item;
     }
 

@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.data.loader.util.ParseUtil;
 import io.papermc.jkvttplugin.data.model.DndSpell;
 import io.papermc.jkvttplugin.data.model.SpellComponents;
 import io.papermc.jkvttplugin.data.model.enums.SpellSchool;
@@ -62,31 +62,31 @@ public class SpellLoader {
 
     @SuppressWarnings("unchecked")
     private static DndSpell parseSpell(String key, Map<?, ?> data) {
-        String name = LoaderUtils.asString(data.get("name"), key);
-        int level = LoaderUtils.asInt(data.get("level"), 0);
-        SpellSchool school = SpellSchool.fromString(LoaderUtils.asString(data.get("school"), "evocation"));
+        String name = ParseUtil.asString(data.get("name"), key);
+        int level = ParseUtil.asInt(data.get("level"), 0);
+        SpellSchool school = SpellSchool.fromString(ParseUtil.asString(data.get("school"), "evocation"));
 
         // Parse classes list
-        List<String> classes = LoaderUtils.normalizeStringList(data.get("classes"));
+        List<String> classes = ParseUtil.normalizeStringList(data.get("classes"));
         // Handle legacy comma-separated string format if normalizeStringList returns empty
         if (classes.isEmpty() && data.get("classes") instanceof String classString) {
             classes = Arrays.asList(classString.split(",\\s*"));
         }
 
-        String castingTime = LoaderUtils.asString(data.get("casting_time"), "1 action");
-        String range = LoaderUtils.asString(data.get("range"), "Self");
+        String castingTime = ParseUtil.asString(data.get("casting_time"), "1 action");
+        String range = ParseUtil.asString(data.get("range"), "Self");
         SpellComponents components = parseComponents(data.get("components"));
-        String duration = LoaderUtils.asString(data.get("duration"), "Instantaneous");
-        String description = LoaderUtils.asString(data.get("description"), "");
-        boolean concentration = asBoolean(data.get("concentration"), false);
-        boolean ritual = asBoolean(data.get("ritual"), false);
+        String duration = ParseUtil.asString(data.get("duration"), "Instantaneous");
+        String description = ParseUtil.asString(data.get("description"), "");
+        boolean concentration = ParseUtil.asBoolean(data.get("concentration"), false);
+        boolean ritual = ParseUtil.asBoolean(data.get("ritual"), false);
         // Icons follow the shared convention: `material:` is the vanilla item to render; absent → a
         // level-based default (chosen in createItemStack). `custom_model:` is optional and opt-in.
-        Material material = parseMaterial(LoaderUtils.asString(data.get("material"), null)); // null → level default
-        String higherLevels = LoaderUtils.asString(data.get("higher_levels"), null);
-        String attackType = LoaderUtils.asString(data.get("attack_type"), null);
-        String saveType = LoaderUtils.asString(data.get("save_type"), null);
-        String damageType = LoaderUtils.asString(data.get("damage_type"), null);
+        Material material = parseMaterial(ParseUtil.asString(data.get("material"), null)); // null → level default
+        String higherLevels = ParseUtil.asString(data.get("higher_levels"), null);
+        String attackType = ParseUtil.asString(data.get("attack_type"), null);
+        String saveType = ParseUtil.asString(data.get("save_type"), null);
+        String damageType = ParseUtil.asString(data.get("damage_type"), null);
 
         DndSpell spell = DndSpell.builder()
                 .name(name)
@@ -107,24 +107,24 @@ public class SpellLoader {
                 .damageType(damageType)
                 .build();
         // Combat resolution fields (#123).
-        spell.setDamage(LoaderUtils.asString(data.get("damage"), null));
+        spell.setDamage(ParseUtil.asString(data.get("damage"), null));
         // Default: cantrips deal nothing on a successful save; leveled spells deal half. Override in YAML.
-        spell.setSaveEffect(LoaderUtils.asString(data.get("save_effect"), spell.isCantrip() ? "none" : "half"));
-        spell.setConditionOnFail(LoaderUtils.asString(data.get("condition_on_fail"), null));
+        spell.setSaveEffect(ParseUtil.asString(data.get("save_effect"), spell.isCantrip() ? "none" : "half"));
+        spell.setConditionOnFail(ParseUtil.asString(data.get("condition_on_fail"), null));
         // Area of effect (#149).
-        spell.setAoeShape(LoaderUtils.asString(data.get("aoe_shape"), null));
+        spell.setAoeShape(ParseUtil.asString(data.get("aoe_shape"), null));
         if (data.get("aoe_size") instanceof Number n) spell.setAoeSize(n.intValue());
-        spell.setAoeTargets(LoaderUtils.asString(data.get("aoe_targets"), "all"));
+        spell.setAoeTargets(ParseUtil.asString(data.get("aoe_targets"), "all"));
         // Social / roleplay spells (#151).
-        spell.setSocialType(LoaderUtils.asString(data.get("social_type"), null));
+        spell.setSocialType(ParseUtil.asString(data.get("social_type"), null));
         if (data.get("word_limit") instanceof Number wl) spell.setWordLimit(wl.intValue());
         // Ritual-in-combat per-spell channel length (#156); 0/absent = global default.
         if (data.get("ritual_rounds") instanceof Number rr) spell.setRitualRounds(rr.intValue());
         // Healing / temporary HP (#123).
-        spell.setHealing(LoaderUtils.asString(data.get("healing"), null));
-        spell.setTempHp(LoaderUtils.asString(data.get("temp_hp"), null));
+        spell.setHealing(ParseUtil.asString(data.get("healing"), null));
+        spell.setTempHp(ParseUtil.asString(data.get("temp_hp"), null));
         // Optional resource-pack model overlay (only applied if the pack provides it).
-        spell.setCustomModel(LoaderUtils.asString(data.get("custom_model"), null));
+        spell.setCustomModel(ParseUtil.asString(data.get("custom_model"), null));
         return spell;
     }
 
@@ -132,12 +132,12 @@ public class SpellLoader {
         if (componentsObj instanceof String componentsStr) {
             return SpellComponents.fromString(componentsStr);
         } else if (componentsObj instanceof Map<?, ?> compMap) {
-            boolean verbal = asBoolean(compMap.get("verbal"), false);
-            boolean somatic = asBoolean(compMap.get("somatic"), false);
-            boolean material = asBoolean(compMap.get("material"), false);
-            String materialDescription = LoaderUtils.asString(compMap.get("material_description"), null);
-            boolean materialConsumed = asBoolean(compMap.get("material_consumed"), false);
-            Integer materialCost = LoaderUtils.asInt(compMap.get("material_cost"), 0);
+            boolean verbal = ParseUtil.asBoolean(compMap.get("verbal"), false);
+            boolean somatic = ParseUtil.asBoolean(compMap.get("somatic"), false);
+            boolean material = ParseUtil.asBoolean(compMap.get("material"), false);
+            String materialDescription = ParseUtil.asString(compMap.get("material_description"), null);
+            boolean materialConsumed = ParseUtil.asBoolean(compMap.get("material_consumed"), false);
+            Integer materialCost = ParseUtil.asInt(compMap.get("material_cost"), 0);
             if (materialCost == 0) materialCost = null; // Treat 0 as null
 
             return new SpellComponents(verbal, somatic, material, materialDescription, materialConsumed, materialCost);
@@ -155,18 +155,6 @@ public class SpellLoader {
             LOGGER.warning("Unknown spell material '" + materialString + "' — using the level-based default.");
             return null;
         }
-    }
-
-    /**
-     * Helper method for extracting boolean values from YAML data.
-     * TODO: Consider moving this to LoaderUtils for reuse across all loaders.
-     */
-    private static boolean asBoolean(Object o, boolean def) {
-        if (o instanceof Boolean b) return b;
-        if (o instanceof String s) {
-            return Boolean.parseBoolean(s);
-        }
-        return def;
     }
 
     public static DndSpell getSpell(String spellKey) {

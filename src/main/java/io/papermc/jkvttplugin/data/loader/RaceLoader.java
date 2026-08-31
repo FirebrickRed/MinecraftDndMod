@@ -1,6 +1,11 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.data.loader.util.ParseUtil;
+import io.papermc.jkvttplugin.data.loader.parser.AbilityParser;
+import io.papermc.jkvttplugin.data.loader.parser.LanguageParser;
+import io.papermc.jkvttplugin.data.loader.parser.ChoiceParser;
+import io.papermc.jkvttplugin.data.loader.parser.InnateSpellParser;
+import io.papermc.jkvttplugin.data.loader.parser.RaceClassParser;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.enums.CreatureType;
 import org.yaml.snakeyaml.Yaml;
@@ -38,10 +43,10 @@ public class RaceLoader {
     }
 
     private static DndRace parseRace(Map<String, Object> data) {
-        LoaderUtils.SizeParseResult sizeResult = LoaderUtils.parseSize(data.get("size"));
-        LoaderUtils.LanguageParseResults langResult = LoaderUtils.parseLanguagesAndChoices(data.get("languages"));
+        RaceClassParser.SizeParseResult sizeResult = RaceClassParser.parseSize(data.get("size"));
+        LanguageParser.LanguageParseResults langResult = LanguageParser.parseLanguagesAndChoices(data.get("languages"));
         Object abilityScoresRaw = data.get("ability_scores");
-        LoaderUtils.AbilityScoreParseResult abilityScores = LoaderUtils.parseAbilityScores(abilityScoresRaw);
+        AbilityParser.AbilityScoreParseResult abilityScores = AbilityParser.parseAbilityScores(abilityScoresRaw);
 
         DndRace.Builder builder = DndRace.builder()
                 .id(normalize((String) data.getOrDefault("name", "Unknown")))
@@ -53,10 +58,10 @@ public class RaceLoader {
                 .speed((int) data.getOrDefault("speed", 30))
                 .fixedAbilityScores(abilityScores.fixedBonuses)
                 .abilityScoreChoice(abilityScores.choiceBonuses)
-                .traits(LoaderUtils.parseTraits(data.get("traits")))
+                .traits(ParseUtil.parseTraits(data.get("traits")))
                 .languages(langResult.languages)
-                .subraces(LoaderUtils.parseSubraces(data.get("subraces")))
-                .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
+                .subraces(RaceClassParser.parseSubraces(data.get("subraces")))
+                .playerChoices(ChoiceParser.parsePlayerChoices(data.get("player_choices")))
                 .icon((String) data.getOrDefault("custom_model", null)) // resource-pack model name
             // Parse new mechanical trait fields (Issue #51)
                 .swimmingSpeed((int) data.getOrDefault("swimming_speed", 0))
@@ -64,11 +69,11 @@ public class RaceLoader {
                 .climbingSpeed((int) data.getOrDefault("climbing_speed", 0))
                 .burrowingSpeed((int) data.getOrDefault("burrowing_speed", 0))
                 .darkvision((Integer) data.get("darkvision"))
-                .damageResistances(LoaderUtils.parseStringList(data.get("damage_resistances")))
-                .skillProficiencies(LoaderUtils.parseStringList(data.get("skill_proficiencies")))
-                .weaponProficiencies(LoaderUtils.parseStringList(data.get("weapon_proficiencies")))
-                .armorProficiencies(LoaderUtils.parseStringList(data.get("armor_proficiencies")))
-                .innateSpells(LoaderUtils.parseInnateSpells(data.get("innate_spells")));
+                .damageResistances(ParseUtil.parseStringList(data.get("damage_resistances")))
+                .skillProficiencies(ParseUtil.parseStringList(data.get("skill_proficiencies")))
+                .weaponProficiencies(ParseUtil.parseStringList(data.get("weapon_proficiencies")))
+                .armorProficiencies(ParseUtil.parseStringList(data.get("armor_proficiencies")))
+                .innateSpells(InnateSpellParser.parseInnateSpells(data.get("innate_spells")));
 
 
         DndRace dndRace = builder.build();

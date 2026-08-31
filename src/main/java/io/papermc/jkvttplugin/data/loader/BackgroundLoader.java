@@ -1,6 +1,9 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.data.loader.util.ParseUtil;
+import io.papermc.jkvttplugin.data.loader.parser.LanguageParser;
+import io.papermc.jkvttplugin.data.loader.parser.EquipmentParser;
+import io.papermc.jkvttplugin.data.loader.parser.ChoiceParser;
 import io.papermc.jkvttplugin.data.model.DndBackground;
 import org.yaml.snakeyaml.Yaml;
 
@@ -47,14 +50,14 @@ public class BackgroundLoader {
                 .id(key)
                 .name((String) data.getOrDefault("name", "unknown"))
                 .description((String) data.get("description"))
-                .skills(LoaderUtils.normalizeStringList(data.get("skill_proficiencies")))
-                .languages(LoaderUtils.parseLanguages(data.get("languages")))
-                .tools(LoaderUtils.normalizeStringList(data.get("tool_proficiencies")))
-                .equipment(LoaderUtils.parseEquipment((List<Object>) data.get("starting_equipment")))
+                .skills(ParseUtil.normalizeStringList(data.get("skill_proficiencies")))
+                .languages(LanguageParser.parseLanguages(data.get("languages")))
+                .tools(ParseUtil.normalizeStringList(data.get("tool_proficiencies")))
+                .equipment(EquipmentParser.parseEquipment((List<Object>) data.get("starting_equipment")))
                 .feature((String) data.get("feature"))
-                .traits(LoaderUtils.parseTraits(data.get("traits")))
-                .links(LoaderUtils.normalizeStringList(data.get("links")))
-                .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
+                .traits(ParseUtil.parseTraits(data.get("traits")))
+                .links(ParseUtil.normalizeStringList(data.get("links")))
+                .playerChoices(ChoiceParser.parsePlayerChoices(data.get("player_choices")))
                 .icon((String) data.get("custom_model")); // resource-pack model name
 
         DndBackground dndBackground = builder.build();

@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.data.model;
 
-import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.data.loader.util.ParseUtil;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.util.LoreBuilder;
 import io.papermc.jkvttplugin.util.Util;
@@ -322,7 +322,7 @@ public class DndClass {
                             String rest = key.substring(5);
                             int at = rest.indexOf('@');
                             String id = (at >= 0) ? rest.substring(0, at) : rest;
-                            int qty = (at >= 0) ? LoaderUtils.asInt(rest.substring(at + 1), 1) : 1;
+                            int qty = (at >= 0) ? ParseUtil.asInt(rest.substring(at + 1), 1) : 1;
                             return EquipmentOption.item(id, qty);
                         }
                         if (key.startsWith("tag:")) {

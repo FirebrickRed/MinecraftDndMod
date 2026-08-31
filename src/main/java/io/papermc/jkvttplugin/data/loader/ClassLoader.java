@@ -1,6 +1,9 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import io.papermc.jkvttplugin.data.loader.util.LoaderUtils;
+import io.papermc.jkvttplugin.data.loader.util.ParseUtil;
+import io.papermc.jkvttplugin.data.loader.parser.AbilityParser;
+import io.papermc.jkvttplugin.data.loader.parser.ChoiceParser;
+import io.papermc.jkvttplugin.data.loader.parser.RaceClassParser;
 import io.papermc.jkvttplugin.data.model.DndClass;
 import io.papermc.jkvttplugin.data.model.SpellcastingInfo;
 import io.papermc.jkvttplugin.data.model.SpellsPreparedFormula;
@@ -45,28 +48,28 @@ public class ClassLoader {
                 .id(normalize(name))
                 .name(name)
                 .hitDie((int) data.getOrDefault("hit_die", 6))
-                .savingThrows(LoaderUtils.parseAbilityList(data.get("saving_throws")))
+                .savingThrows(AbilityParser.parseAbilityList(data.get("saving_throws")))
 
-                .armorProficiencies(LoaderUtils.normalizeStringList(data.get("armor_proficiencies")))
-                .weaponProficiencies(LoaderUtils.normalizeStringList(data.get("weapon_proficiencies")))
-                .toolProficiencies(LoaderUtils.normalizeStringList(data.get("tool_proficiencies")))
-                .languages(LoaderUtils.normalizeStringList(data.get("languages")))
+                .armorProficiencies(ParseUtil.normalizeStringList(data.get("armor_proficiencies")))
+                .weaponProficiencies(ParseUtil.normalizeStringList(data.get("weapon_proficiencies")))
+                .toolProficiencies(ParseUtil.normalizeStringList(data.get("tool_proficiencies")))
+                .languages(ParseUtil.normalizeStringList(data.get("languages")))
 
-                .skills(LoaderUtils.normalizeStringList(data.get("skills")))
-                .startingEquipment(LoaderUtils.normalizeStringList(data.get("starting_equipment")))
+                .skills(ParseUtil.normalizeStringList(data.get("skills")))
+                .startingEquipment(ParseUtil.normalizeStringList(data.get("starting_equipment")))
 
-                .asiLevels(LoaderUtils.castList(data.get("asi_levels"), Integer.class))
-                .spellcastingAbility(LoaderUtils.extractCastingAbility(data))
+                .asiLevels(ParseUtil.castList(data.get("asi_levels"), Integer.class))
+                .spellcastingAbility(AbilityParser.extractCastingAbility(data))
                 .spellcasting(parseSpellcasting(data.get("spellcasting")))
-                .featuresByLevel(LoaderUtils.parseLevelStringListMap(data.get("features_by_level")))
-                .subclasses(LoaderUtils.parseSubclasses(data.get("subclasses"), name))
+                .featuresByLevel(ParseUtil.parseLevelStringListMap(data.get("features_by_level")))
+                .subclasses(RaceClassParser.parseSubclasses(data.get("subclasses"), name))
                 .subclassLevel((int) data.getOrDefault("subclass_level", 3))
                 .subclassTypeName((String) data.getOrDefault("subclass_type_name", "Subclass"))
-                .multiclassRequirements(LoaderUtils.castMap(data.get("multiclass_requirements"), String.class, Integer.class))
+                .multiclassRequirements(ParseUtil.castMap(data.get("multiclass_requirements"), String.class, Integer.class))
                 .classResources((List<Map<String, Object>>) data.get("class_resources"))
 
                 .allowFeats((boolean) data.getOrDefault("allow_feats", true))
-                .playerChoices(LoaderUtils.parsePlayerChoices(data.get("player_choices")))
+                .playerChoices(ChoiceParser.parsePlayerChoices(data.get("player_choices")))
                 .icon((String) data.get("custom_model")); // resource-pack model name
 
         return builder.build();
@@ -100,8 +103,8 @@ public class ClassLoader {
         spellcasting.setSpellcastingFocusType((String) map.get("spellcasting_focus_type"));
 //        spellcasting.setSpellList((String) map.get("spell_list"));
         spellcasting.setSpellcastingLevel((Integer) map.get("spellcasting_level"));
-        spellcasting.setCantripsKnownByLevel(LoaderUtils.castList(map.get("cantrips_known_by_level"), Integer.class));
-        spellcasting.setSpellsKnownByLevel(LoaderUtils.castList(map.get("spells_known_by_level"), Integer.class));
+        spellcasting.setCantripsKnownByLevel(ParseUtil.castList(map.get("cantrips_known_by_level"), Integer.class));
+        spellcasting.setSpellsKnownByLevel(ParseUtil.castList(map.get("spells_known_by_level"), Integer.class));
         spellcasting.setSlotRecovery((String) map.get("slot_recovery"));
 
         Object formulaData = map.get("spells_prepared_formula");
@@ -116,7 +119,7 @@ public class ClassLoader {
             for (Map.Entry<?, ?> entry : slotsMap.entrySet()) {
                 try {
                     Integer spellLevel = Integer.valueOf(entry.getKey().toString());
-                    List<Integer> slots = LoaderUtils.castList(entry.getValue(), Integer.class);
+                    List<Integer> slots = ParseUtil.castList(entry.getValue(), Integer.class);
                     if (slots != null) {
                         slotsByLevel.put(spellLevel, slots);
                     }
