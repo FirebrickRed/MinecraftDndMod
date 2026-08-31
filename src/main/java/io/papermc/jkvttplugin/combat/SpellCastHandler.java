@@ -331,8 +331,8 @@ public class SpellCastHandler {
     /** Roll a dice expression ("1d8", "1d4+4") or read a flat number ("5"); 0 if unparseable. */
     private static int rollAmount(String expr) {
         if (expr == null || expr.isBlank()) return 0;
-        int rolled = io.papermc.jkvttplugin.util.DiceRoller.parseDiceRoll(expr.trim());
-        if (rolled >= 0) return rolled;
+        java.util.OptionalInt rolled = io.papermc.jkvttplugin.util.DiceRoller.parseDiceRoll(expr.trim());
+        if (rolled.isPresent()) return rolled.getAsInt();
         try { return Integer.parseInt(expr.trim()); } catch (NumberFormatException e) { return 0; }
     }
 

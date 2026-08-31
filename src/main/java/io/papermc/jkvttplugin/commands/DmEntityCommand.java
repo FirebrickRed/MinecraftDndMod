@@ -1253,15 +1253,18 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
      */
     private int rollHitPoints(DndEntity template) {
         if (template.getHitDice() != null) {
-            // Roll hit dice
-            return DiceRoller.parseDiceRoll(template.getHitDice());
-        } else if (template.getHitPoints() != null) {
+            // Roll hit dice; if the expression is malformed, fall through to fixed HP / default
+            java.util.OptionalInt rolled = DiceRoller.parseDiceRoll(template.getHitDice());
+            if (rolled.isPresent()) {
+                return rolled.getAsInt();
+            }
+        }
+        if (template.getHitPoints() != null) {
             // Use fixed HP
             return template.getHitPoints();
-        } else {
-            // Default
-            return 10;
         }
+        // Default
+        return 10;
     }
 
     /**

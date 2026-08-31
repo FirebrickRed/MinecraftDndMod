@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.util;
 
+import java.util.OptionalInt;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -24,15 +25,22 @@ public class DiceRoller {
         return total;
     }
 
-    public static int parseDiceRoll(String input) {
+    /**
+     * Rolls a dice expression like {@code 2d6+3} or {@code 1d4-10}. Returns the result as an
+     * {@link OptionalInt}: {@code empty()} means the input was malformed (didn't match the dice
+     * pattern), while a present value is the rolled total — which can legitimately be zero or
+     * negative (e.g. {@code 1d4-10}). Do NOT use a sentinel like -1 to signal failure: a valid
+     * roll can equal -1, so callers must branch on {@code isPresent()}, not on the value's sign.
+     */
+    public static OptionalInt parseDiceRoll(String input) {
         Matcher matcher = DICE_PATTERN.matcher(input.toLowerCase().replace(" ", ""));
-        if (!matcher.matches()) return -1;
+        if (!matcher.matches()) return OptionalInt.empty();
 
         int numDice = matcher.group(1).isEmpty() ? 1 : Integer.parseInt(matcher.group(1));
         int sides = Integer.parseInt(matcher.group(2));
         int modifier = (matcher.group(3) != null) ? Integer.parseInt(matcher.group(3)) : 0;
         int multiplier = (matcher.group(4) != null) ? Integer.parseInt(matcher.group(4)) : 1;
 
-        return (rollDice(numDice, sides) + modifier) * multiplier;
+        return OptionalInt.of((rollDice(numDice, sides) + modifier) * multiplier);
     }
 }

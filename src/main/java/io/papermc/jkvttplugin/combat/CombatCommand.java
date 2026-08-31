@@ -1711,6 +1711,33 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
     // ==================== DAMAGE / HEAL / TEMP HP (Issue #100) ====================
 
+    /** A resolved target plus an optional trailing flat amount, shared by /combat damage and heal. */
+    private record AmountAndTarget(Combatant target, Integer flat) {}
+
+    /**
+     * Parse the "&lt;target name...&gt; [flat amount]" positional tail used by both /combat damage and
+     * /combat heal: a trailing integer positional is a flat amount, and the rest is the target name.
+     * Returns null (after messaging the DM) if the target can't be found.
+     */
+    private AmountAndTarget parseAmountAndTarget(CombatSession session, Player dm, List<String> positional) {
+        Integer flat = null;
+        if (positional.size() >= 2) {
+            String last = positional.get(positional.size() - 1);
+            try {
+                flat = Integer.parseInt(last);
+                positional = positional.subList(0, positional.size() - 1);
+            } catch (NumberFormatException ignored) { /* last token is part of the name */ }
+        }
+
+        String name = String.join(" ", positional);
+        Combatant target = findCombatantByName(session, stripQuotes(name));
+        if (target == null) {
+            dm.sendMessage(Component.text("Target not found: " + name, NamedTextColor.RED));
+            return null;
+        }
+        return new AmountAndTarget(target, flat);
+    }
+
     private void handleDamage(Player dm, String[] args) {
         CombatSession session = resolveSession(dm);
         if (session == null) return;
@@ -1753,20 +1780,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         // A trailing integer positional is a flat damage amount; the rest is the target name.
-        Integer flat = null;
-        if (positional.size() >= 2) {
-            String last = positional.get(positional.size() - 1);
-            try {
-                flat = Integer.parseInt(last);
-                positional = positional.subList(0, positional.size() - 1);
-            } catch (NumberFormatException ignored) { /* last token is part of the name */ }
-        }
-
-        Combatant target = findCombatantByName(session, stripQuotes(String.join(" ", positional)));
-        if (target == null) {
-            dm.sendMessage(Component.text("Target not found: " + String.join(" ", positional), NamedTextColor.RED));
-            return;
-        }
+        AmountAndTarget at = parseAmountAndTarget(session, dm, positional);
+        if (at == null) return;
+        Combatant target = at.target();
+        Integer flat = at.flat();
 
         // Consistent with attack rolls: --roll is what you physically rolled on the damage dice, and
         // the game adds the pending bonus (e.g. +3 STR). A dice *formula* (contains 'd') is still
@@ -1776,11 +1793,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         int damage;
         if (rollStr != null) {
             if (rollStr.toLowerCase().contains("d")) {
-                damage = DiceRoller.parseDiceRoll(rollStr);
-                if (damage < 0) {
+                OptionalInt rolled = DiceRoller.parseDiceRoll(rollStr);
+                if (rolled.isEmpty()) {
                     dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED));
                     return;
                 }
+                damage = rolled.getAsInt();
                 dm.sendMessage(Component.text("Rolled " + rollStr + " → " + damage, NamedTextColor.GRAY));
             } else {
                 try {
@@ -1833,33 +1851,28 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        Integer flat = null;
-        if (positional.size() >= 2) {
-            String last = positional.get(positional.size() - 1);
-            try {
-                flat = Integer.parseInt(last);
-                positional = positional.subList(0, positional.size() - 1);
-            } catch (NumberFormatException ignored) { /* part of the name */ }
-        }
-
-        Combatant target = findCombatantByName(session, stripQuotes(String.join(" ", positional)));
-        if (target == null) {
-            dm.sendMessage(Component.text("Target not found: " + String.join(" ", positional), NamedTextColor.RED));
-            return;
-        }
+        AmountAndTarget at = parseAmountAndTarget(session, dm, positional);
+        if (at == null) return;
+        Combatant target = at.target();
+        Integer flat = at.flat();
 
         int heal;
         if (rollStr != null) {
-            heal = DiceRoller.parseDiceRoll(rollStr);
-            if (heal < 0) {
+            if (rollStr.toLowerCase().contains("d")) {
+                OptionalInt rolled = DiceRoller.parseDiceRoll(rollStr);
+                if (rolled.isEmpty()) {
+                    dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED));
+                    return;
+                }
+                heal = rolled.getAsInt();
+                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + heal, NamedTextColor.GRAY));
+            } else {
                 try {
                     heal = Integer.parseInt(rollStr.trim());
                 } catch (NumberFormatException e) {
                     dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));
                     return;
                 }
-            } else {
-                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + heal, NamedTextColor.GRAY));
             }
         } else if (total != null) {
             heal = total;

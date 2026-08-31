@@ -21,14 +21,14 @@ public class RollDiceCommand implements CommandExecutor {
         }
 
         String rollInput = String.join("", args);
-        int result = DiceRoller.parseDiceRoll(rollInput);
+        java.util.OptionalInt result = DiceRoller.parseDiceRoll(rollInput);
 
-        if (result == -1) {
+        if (result.isEmpty()) {
             sender.sendMessage("Invalid dice format! use XdY or XdY+Z.");
             return true;
         }
 
-        sender.sendMessage("You Rolled: " + rollInput + " -> " + result);
+        sender.sendMessage("You Rolled: " + rollInput + " -> " + result.getAsInt());
         return true;
     }
 }

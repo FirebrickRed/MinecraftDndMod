@@ -32,8 +32,8 @@ public final class RollService {
     public static Integer parseRollArg(String arg) {
         if (arg == null || arg.isBlank()) return null;
         if (arg.toLowerCase().contains("d")) {
-            int rolled = DiceRoller.parseDiceRoll(arg); // game rolls the expression
-            return rolled >= 0 ? rolled : null;
+            java.util.OptionalInt rolled = DiceRoller.parseDiceRoll(arg); // game rolls the expression
+            return rolled.isPresent() ? rolled.getAsInt() : null;
         }
         try {
             return Integer.parseInt(arg.trim());
