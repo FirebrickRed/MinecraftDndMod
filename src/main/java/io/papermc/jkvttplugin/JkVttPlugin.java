@@ -92,6 +92,17 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
             int restored = io.papermc.jkvttplugin.commands.DmEntityCommand.restoreAll();
             if (restored > 0) getLogger().info("Restored " + restored + " saved D&D entities.");
         });
+
+        // Periodic auto-save (Issue #31): the clean-shutdown save covers normal restarts, but a
+        // crash would lose changes since the last save. Flush every 5 minutes as a safety net.
+        long fiveMinutes = 20L * 60 * 5; // ticks
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            try {
+                io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader.saveAllCharacters();
+            } catch (Exception e) {
+                getLogger().warning("Periodic character auto-save failed: " + e.getMessage());
+            }
+        }, fiveMinutes, fiveMinutes);
     }
 
     @EventHandler
