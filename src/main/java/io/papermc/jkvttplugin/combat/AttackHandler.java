@@ -81,8 +81,31 @@ public class AttackHandler {
         // Build damage string, then hand off to the shared resolver.
         String damageStr = buildPlayerDamageString(sheet, weapon);
         String damageType = (weapon != null) ? weapon.getDamageType() : "bludgeoning";
+
+        // Effect bonus damage on a melee STR swing (e.g. Rage, #70). Unarmed and melee weapons count.
+        boolean meleeStr = (weapon == null || !weapon.isRanged())
+                && resolveAttackAbility(sheet, weapon) == Ability.STRENGTH;
+        if (meleeStr) {
+            int bonus = attacker.effectBonusDamageFor("melee_str");
+            if (bonus > 0) damageStr = addFlatDamage(damageStr, bonus);
+        }
+        attacker.markEffectsMaintained("attacked"); // keeps Rage etc. going (#70)
+
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
                 providedRoll, providedTotal, player);
+    }
+
+    /** Merge a flat bonus into a damage string's trailing modifier (1d8+3, +2 → 1d8+5), keeping the
+     *  single-modifier form the dice parser accepts. */
+    private static String addFlatDamage(String dmg, int bonus) {
+        if (bonus == 0 || dmg == null) return dmg;
+        Matcher m = Pattern.compile("^(.*?d\\d+)\\s*([+\\-]\\s*\\d+)?\\s*$").matcher(dmg.trim());
+        if (m.matches()) {
+            int existing = (m.group(2) == null) ? 0 : Integer.parseInt(m.group(2).replaceAll("\\s", ""));
+            int total = existing + bonus;
+            return m.group(1) + (total == 0 ? "" : (total > 0 ? "+" + total : String.valueOf(total)));
+        }
+        return dmg + "+" + bonus;
     }
 
     /**

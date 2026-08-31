@@ -45,6 +45,8 @@ public class CharacterSheet {
     private DndArmor equippedShield;
 
     private List<ClassResource> classResources = new ArrayList<>();
+    // Live buffs/debuffs on this character (the Effect Engine, #70). Read by combat when resolving.
+    private final List<io.papermc.jkvttplugin.effect.ActiveEffect> activeEffects = new ArrayList<>();
 
     // Racial traits (Issue #51)
     private Set<String> weaponProficiencies = new HashSet<>();
@@ -1217,6 +1219,76 @@ public class CharacterSheet {
         return null;
     }
 
+    // ==================== ACTIVE EFFECTS (Effect Engine, #70) ====================
+
+    public List<io.papermc.jkvttplugin.effect.ActiveEffect> getActiveEffects() { return activeEffects; }
+
+    public boolean hasEffect(String sourceId) {
+        for (var e : activeEffects) if (e.getSourceId().equalsIgnoreCase(sourceId)) return true;
+        return false;
+    }
+
+    /** Attach an effect. A non-stacking effect from the same source refreshes rather than duplicating. */
+    public void addEffect(io.papermc.jkvttplugin.effect.ActiveEffect effect) {
+        if (effect == null) return;
+        if (!effect.stacks()) removeEffect(effect.getSourceId());
+        activeEffects.add(effect);
+    }
+
+    public void removeEffect(String sourceId) {
+        activeEffects.removeIf(e -> e.getSourceId().equalsIgnoreCase(sourceId));
+    }
+
+    /** Look up an authored feature by id on this character's main class (Effect Engine, #70). */
+    public io.papermc.jkvttplugin.effect.Feature getFeature(String id) {
+        if (dndClass == null || id == null) return null;
+        for (var f : dndClass.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
+        return null;
+    }
+
+    // ---- combat read sites ----
+    public boolean resistsDamage(String damageType) {
+        for (var e : activeEffects) if (e.resists(damageType)) return true;
+        return false;
+    }
+    public boolean hasAdvantageOn(String rollTag) {
+        for (var e : activeEffects) if (e.givesAdvantageOn(rollTag)) return true;
+        return false;
+    }
+    public boolean hasDisadvantageOn(String rollTag) {
+        for (var e : activeEffects) if (e.givesDisadvantageOn(rollTag)) return true;
+        return false;
+    }
+    public int bonusDamageFor(String rollTag) {
+        int sum = 0;
+        for (var e : activeEffects) sum += e.bonusDamageFor(rollTag);
+        return sum;
+    }
+
+    // ---- duration lifecycle ----
+    /** Note a maintenance trigger (e.g. "attacked", "took_damage") on all effects that need it. */
+    public void markEffectsMaintained(String trigger) {
+        for (var e : activeEffects) e.markMaintained(trigger);
+    }
+    /** Advance effect durations at this character's turn start; returns the effects that just expired. */
+    public List<io.papermc.jkvttplugin.effect.ActiveEffect> tickEffectsTurnStart() {
+        List<io.papermc.jkvttplugin.effect.ActiveEffect> ended = new ArrayList<>();
+        activeEffects.removeIf(e -> {
+            if (e.tickTurnStartAndCheckExpiry()) { ended.add(e); return true; }
+            return false;
+        });
+        return ended;
+    }
+    /** Remove effects that end on the given rest ("short"/"long"); returns the expired effects. */
+    public List<io.papermc.jkvttplugin.effect.ActiveEffect> clearEffectsOnRest(String restType) {
+        List<io.papermc.jkvttplugin.effect.ActiveEffect> ended = new ArrayList<>();
+        activeEffects.removeIf(e -> {
+            if (e.endsOnRest(restType)) { ended.add(e); return true; }
+            return false;
+        });
+        return ended;
+    }
+
     public boolean hasResource(String resourceName) {
         return getResource(resourceName) != null;
     }
@@ -1243,6 +1315,7 @@ public class CharacterSheet {
         }
 
         breakConcentration();
+        activeEffects.clear(); // a long rest ends any lingering buffs/debuffs (Effect Engine, #70)
 
         currentHealth = totalHealth;
         tempHealth = 0;

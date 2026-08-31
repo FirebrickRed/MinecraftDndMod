@@ -51,6 +51,7 @@ public class ClassLoader {
                 .hitDie((int) data.getOrDefault("hit_die", 6))
                 .savingThrows(AbilityParser.parseAbilityList(data.get("saving_throws")))
                 .primaryAbilities(AbilityParser.parseAbilityList(data.get("primary_abilities")))
+                .features(io.papermc.jkvttplugin.effect.FeatureParser.parseFeatures(data.get("features")))
 
                 .armorProficiencies(ParseUtil.normalizeStringList(data.get("armor_proficiencies")))
                 .weaponProficiencies(ParseUtil.normalizeStringList(data.get("weapon_proficiencies")))

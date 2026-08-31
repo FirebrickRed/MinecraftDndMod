@@ -23,6 +23,7 @@ public class DndClass {
 
     private List<Ability> savingThrows;
     private List<Ability> primaryAbilities;  // suggested abilities to invest in (#126)
+    private List<io.papermc.jkvttplugin.effect.Feature> features = new java.util.ArrayList<>(); // Effect Engine (#70)
 
     private List<String> armorProficiencies;
     private List<String> weaponProficiencies;
@@ -124,6 +125,13 @@ public class DndClass {
     }
     public void setPrimaryAbilities(List<Ability> primaryAbilities) {
         this.primaryAbilities = primaryAbilities;
+    }
+
+    public List<io.papermc.jkvttplugin.effect.Feature> getFeatures() {
+        return features;
+    }
+    public void setFeatures(List<io.papermc.jkvttplugin.effect.Feature> features) {
+        this.features = features != null ? features : new java.util.ArrayList<>();
     }
 
     public List<String> getArmorProficiencies() {
@@ -468,6 +476,11 @@ public class DndClass {
 
         public Builder primaryAbilities(List<Ability> primaryAbilities) {
             instance.setPrimaryAbilities(primaryAbilities);
+            return this;
+        }
+
+        public Builder features(List<io.papermc.jkvttplugin.effect.Feature> features) {
+            instance.setFeatures(features);
             return this;
         }
 

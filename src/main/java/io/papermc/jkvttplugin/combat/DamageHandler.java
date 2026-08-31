@@ -33,6 +33,7 @@ public class DamageHandler {
         int tempBefore = target.getTempHp();
 
         target.applyDamage(finalDamage);
+        if (finalDamage > 0) target.markEffectsMaintained("took_damage"); // keeps Rage etc. going (#70)
 
         // Cosmetic on-hit effect for the damage type (fire → burning, cold → snowflakes, …).
         org.bukkit.entity.Entity body = target.isPlayer() ? target.getPlayer()
@@ -74,7 +75,8 @@ public class DamageHandler {
         if (contains(target.getDamageImmunities(), type)) {
             return new AdjustedDamage(0, target.getDisplayName() + " is IMMUNE to " + type + "!");
         }
-        boolean resist = contains(target.getDamageResistances(), type);
+        // Static resistances (race/monster) OR a temporary one from an active effect (e.g. Rage, #70).
+        boolean resist = contains(target.getDamageResistances(), type) || target.resistsDamage(type);
         boolean vuln = contains(target.getDamageVulnerabilities(), type);
         if (resist && !vuln) {
             return new AdjustedDamage(damage / 2, target.getDisplayName() + " is RESISTANT to " + type + " (halved).");

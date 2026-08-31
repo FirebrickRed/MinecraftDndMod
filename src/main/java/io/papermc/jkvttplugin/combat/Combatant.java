@@ -448,6 +448,26 @@ public class Combatant {
         return 0;
     }
 
+    // ==================== ACTIVE EFFECTS (Effect Engine, #70) ====================
+    // Effects live on the character (entity effects are a later slice), read through the Combatant.
+
+    public boolean resistsDamage(String damageType) {
+        CharacterSheet s = getCharacterSheet();
+        return s != null && s.resistsDamage(damageType);
+    }
+    public int effectBonusDamageFor(String rollTag) {
+        CharacterSheet s = getCharacterSheet();
+        return s != null ? s.bonusDamageFor(rollTag) : 0;
+    }
+    public void markEffectsMaintained(String trigger) {
+        CharacterSheet s = getCharacterSheet();
+        if (s != null) s.markEffectsMaintained(trigger);
+    }
+    public java.util.List<io.papermc.jkvttplugin.effect.ActiveEffect> tickEffectsTurnStart() {
+        CharacterSheet s = getCharacterSheet();
+        return s != null ? s.tickEffectsTurnStart() : java.util.List.of();
+    }
+
     /** Apply already type-adjusted damage. Temp HP absorbs first for players. */
     public void applyDamage(int amount) {
         if (isPlayer()) {

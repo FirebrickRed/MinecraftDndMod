@@ -20,6 +20,19 @@ class_resources:
     max_by_level: [2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 999]
     recovery: long_rest
     icon: red_dye
+# Structured, usable features (Effect Engine, #70). Activate in combat with /combat use <id>.
+features:
+  - id: rage
+    name: Rage
+    activation: bonus_action
+    cost: { resource: rage, amount: 1 }
+    apply:
+      duration: { rounds: 10, maintained_by: [attacked, took_damage] }
+      effects:
+        resistance: [bludgeoning, piercing, slashing]  # halved while raging
+        advantage_on: [str_checks, str_saves]          # (wiring for adv is a later slice)
+        bonus_damage: { amount: 2, when: melee_str }    # +2 on melee STR hits
+        minecraft_effect: STRENGTH                       # red-tint feedback while active
 features_by_level:
   1:
     - name: Rage

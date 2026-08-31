@@ -50,7 +50,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction", "reactions");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction", "reactions", "use");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -103,6 +103,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "cast" -> handleCast(player, args);
             case "save" -> handleSave(player, args);
             case "attack" -> handleAttack(player, args);
+            case "use" -> handleUse(player, args);
             case "reaction", "reactions" -> handleReaction(player, args);
             case "damage" -> handleDamage(player, args);
             case "override" -> handleDamage(player, args); // DM-only (not in PLAYER_ALLOWED): apply corrective damage anytime
@@ -1359,6 +1360,70 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     }
 
     // ==================== ATTACK COMMAND (Issue #99) ====================
+
+    /** /combat use &lt;feature&gt; — activate a class/racial feature (Effect Engine, #70). This slice
+     *  supports self-buffs (e.g. Rage): spend the cost resource, apply the buff + its visual potion. */
+    private void handleUse(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+
+        Combatant actor = session.getCurrentCombatant();
+        if (actor == null) {
+            player.sendMessage(Component.text("No active turn.", NamedTextColor.RED));
+            return;
+        }
+        if (!isDM && (!actor.isPlayer() || !actor.getId().equals(player.getUniqueId()))) {
+            player.sendMessage(Component.text("It's not your turn!", NamedTextColor.RED));
+            return;
+        }
+
+        List<String> pos = collectPositionalArgs(args, 1);
+        if (pos.isEmpty()) {
+            player.sendMessage(Component.text("Usage: /combat use <feature>  (e.g. rage)", NamedTextColor.RED));
+            return;
+        }
+        String featureId = pos.get(0).toLowerCase();
+
+        CharacterSheet sheet = actor.getCharacterSheet();
+        if (sheet == null) {
+            player.sendMessage(Component.text("No active character.", NamedTextColor.RED));
+            return;
+        }
+        io.papermc.jkvttplugin.effect.Feature feature = sheet.getFeature(featureId);
+        if (feature == null) {
+            player.sendMessage(Component.text(actor.getDisplayName() + " has no usable feature '" + featureId + "'.", NamedTextColor.RED));
+            return;
+        }
+
+        // Spend the cost resource, if the feature has one.
+        if (feature.getCostResource() != null) {
+            io.papermc.jkvttplugin.data.model.ClassResource res = sheet.getResource(feature.getCostResource());
+            if (res == null) {
+                player.sendMessage(Component.text(feature.getName() + " needs a '" + feature.getCostResource()
+                        + "' resource this character doesn't have.", NamedTextColor.RED));
+                return;
+            }
+            if (!res.consume(feature.getCostAmount())) {
+                player.sendMessage(Component.text("No uses of " + res.getName() + " left.", NamedTextColor.YELLOW));
+                return;
+            }
+        }
+
+        // Apply the buff (self only for this slice) + its visual potion.
+        if (feature.hasApply()) {
+            io.papermc.jkvttplugin.effect.ActiveEffect eff = feature.getApplyTemplate().copy();
+            sheet.addEffect(eff);
+            if (eff.getMinecraftEffect() != null) {
+                org.bukkit.potion.PotionEffectType type = org.bukkit.potion.PotionEffectType.getByName(eff.getMinecraftEffect().toUpperCase());
+                if (type != null) {
+                    player.addPotionEffect(new org.bukkit.potion.PotionEffect(type, Integer.MAX_VALUE, eff.getMinecraftAmplifier(), false, false));
+                }
+            }
+        }
+
+        session.broadcast(Component.text(actor.getDisplayName() + " uses " + feature.getName() + "!", NamedTextColor.GOLD));
+    }
 
     private void handleAttack(Player player, String[] args) {
         CombatSession session = resolveSession(player);

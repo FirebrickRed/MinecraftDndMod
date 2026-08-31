@@ -424,6 +424,7 @@ public class CombatSession {
             ReactionManager.clearForMover(current.getId()); // its own OAs from last round are now moot (#147)
             applyGlowEffect(current);
             onTurnStartConditions(current); // expire Dodge/Disengage, remind of the rest (#103)
+            tickTurnStartEffects(current); // advance buff/debuff durations, expire the lapsed ones (#70)
             RitualManager.onTurnStart(this, current); // advance/complete/break a channelled ritual (#156)
             sendActionBar(current); // show action/movement budget immediately when the turn begins
         }
@@ -926,6 +927,21 @@ public class CombatSession {
         }
         if (session != null && session.scoreboard != null) {
             player.setScoreboard(session.scoreboard);
+        }
+    }
+
+    /** Advance a combatant's active-effect durations at turn start; remove & announce any that
+     *  expired, clearing their visual potion (Effect Engine, #70). */
+    private void tickTurnStartEffects(Combatant c) {
+        if (c == null) return;
+        for (var expired : c.tickEffectsTurnStart()) {
+            if (c.isPlayer() && expired.getMinecraftEffect() != null) {
+                Player p = c.getPlayer();
+                org.bukkit.potion.PotionEffectType type =
+                        org.bukkit.potion.PotionEffectType.getByName(expired.getMinecraftEffect().toUpperCase());
+                if (p != null && type != null) p.removePotionEffect(type);
+            }
+            broadcast(Component.text(c.getDisplayName() + "'s " + expired.getSourceName() + " ended.", NamedTextColor.GRAY));
         }
     }
 
