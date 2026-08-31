@@ -64,6 +64,7 @@ public class CharacterPersistenceLoader {
 
         Yaml yaml = new Yaml();
 
+        int loaded = 0;
         for (File file : files) {
             try (FileReader reader = new FileReader(file)) {
                 Map<String, Object> data = yaml.load(reader);
@@ -71,12 +72,14 @@ public class CharacterPersistenceLoader {
                 CharacterSheet sheet = deserializeCharacterSheet(data);
                 if (sheet != null) {
                     playerCharacters.computeIfAbsent(sheet.getPlayerId(), k -> new ConcurrentHashMap<>()).put(sheet.getCharacterId(), sheet);
-                    LOGGER.info("Loaded character: " + sheet.getCharacterName());
+                    LOGGER.fine("Loaded character: " + sheet.getCharacterName());
+                    loaded++;
                 }
             } catch (IOException e) {
                 LOGGER.severe("Failed to load character file " + file.getName() + ": " + e.getMessage());
             }
         }
+        LOGGER.info("Loaded " + loaded + " characters.");
     }
 
     public static void saveAllCharacters() {

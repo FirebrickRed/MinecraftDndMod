@@ -35,11 +35,12 @@ public class RaceLoader {
                 Map<String, Object> data = yaml.load(reader);
                 DndRace race = parseRace(data);
                 loadedRaces.put(race.getId(), race);
-                LOGGER.info("Loaded race: " + race.getName());
+                LOGGER.fine("Loaded race: " + race.getName());
             } catch (Exception e) {
-                System.err.println("Failed to load race from " + file.getName() + ": " + e.getMessage());
+                LOGGER.severe("Failed to load race from " + file.getName() + ": " + e.getMessage());
             }
         }
+        LOGGER.info("Loaded " + loadedRaces.size() + " races.");
     }
 
     private static DndRace parseRace(Map<String, Object> data) {

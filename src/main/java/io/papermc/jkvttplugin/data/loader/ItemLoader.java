@@ -37,13 +37,14 @@ public class ItemLoader {
                     if (entry.getValue() instanceof Map<?,?> itemData) {
                         DndItem item = parseItem(itemId, itemData);
                         loadedItems.put(normalize(itemId), item);
-                        LOGGER.info("Loaded item: " + item.getName());
+                        LOGGER.fine("Loaded item: " + item.getName());
                     }
                 }
             } catch (Exception e) {
                 LOGGER.severe("Failed to load items from " + file.getName());
             }
         }
+        LOGGER.info("Loaded " + loadedItems.size() + " items.");
     }
 
     private static DndItem parseItem(String id, Map<?, ?> data) {

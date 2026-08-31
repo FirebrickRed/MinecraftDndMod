@@ -35,11 +35,12 @@ public class ClassLoader {
                 Map<String, Object> data = yaml.load(reader);
                 DndClass dndClass = parseClass(data);
                 loadedClasses.put(dndClass.getId(), dndClass);
-                LOGGER.info("Loaded class: " + dndClass.getName());
+                LOGGER.fine("Loaded class: " + dndClass.getName());
             } catch (Exception e) {
-                System.err.println("Failed to load class from " + file.getName() + ": " + e.getMessage());
+                LOGGER.severe("Failed to load class from " + file.getName() + ": " + e.getMessage());
             }
         }
+        LOGGER.info("Loaded " + loadedClasses.size() + " classes.");
     }
 
     private static DndClass parseClass(Map<String, Object> data) {

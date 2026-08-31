@@ -36,12 +36,13 @@ public class BackgroundLoader {
                     Map<String, Object> data = (Map<String, Object>) entry.getValue();
                     DndBackground background = parseBackground(backgroundKey, data);
                     loadedBackgrounds.put(normalize(background.getName()), background);
-                    LOGGER.info("Loaded background: " + background.getName());
+                    LOGGER.fine("Loaded background: " + background.getName());
                 }
             } catch (Exception e) {
-                System.err.println("Failed to load background from " + file.getName() + ": " + e.getMessage());
+                LOGGER.severe("Failed to load background from " + file.getName() + ": " + e.getMessage());
             }
         }
+        LOGGER.info("Loaded " + loadedBackgrounds.size() + " backgrounds.");
     }
 
     private static DndBackground parseBackground(String key, Map<String, Object> data) {

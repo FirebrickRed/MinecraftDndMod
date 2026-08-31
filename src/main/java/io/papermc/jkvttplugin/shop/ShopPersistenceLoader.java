@@ -175,7 +175,7 @@ public class ShopPersistenceLoader {
                 shopConfig.setCurrency(currency);
             }
 
-            LOGGER.info("Loaded shop for entity " + entityUuid);
+            LOGGER.fine("Loaded shop for entity " + entityUuid);
             return true;
         } catch (IOException e) {
             LOGGER.severe("Failed to load shop for entity " + entityUuid + ": " + e.getMessage());

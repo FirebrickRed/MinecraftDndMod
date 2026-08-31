@@ -34,7 +34,7 @@ public class WeaponLoader {
                     if (entry.getValue() instanceof Map<?, ?> weaponData) {
                         DndWeapon weapon = parseWeapon(weaponId, weaponData);
                         loadedWeapons.put(Util.normalize(weaponId), weapon);
-                        LOGGER.info("Loaded weapon: " + weapon.getName());
+                        LOGGER.fine("Loaded weapon: " + weapon.getName());
                     }
                 }
             } catch (Exception e) {
@@ -42,6 +42,7 @@ public class WeaponLoader {
                 e.printStackTrace();
             }
         }
+        LOGGER.info("Loaded " + loadedWeapons.size() + " weapons.");
     }
 
     @SuppressWarnings("unchecked")

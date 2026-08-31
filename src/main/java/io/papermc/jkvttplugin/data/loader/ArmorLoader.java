@@ -34,7 +34,7 @@ public class ArmorLoader {
                     if (entry.getValue() instanceof Map<?, ?> armorData) {
                         DndArmor armor = parseArmor(armorId, armorData);
                         loadedArmors.put(normalize(armorId), armor);
-                        LOGGER.info("Loaded armor: " + armor.getName());
+                        LOGGER.fine("Loaded armor: " + armor.getName());
                     }
                 }
             } catch (Exception e) {
@@ -42,6 +42,7 @@ public class ArmorLoader {
                 e.printStackTrace();
             }
         }
+        LOGGER.info("Loaded " + loadedArmors.size() + " armors.");
     }
 
     private static DndArmor parseArmor(String id, Map<?, ?> data) {
