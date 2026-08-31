@@ -2,10 +2,16 @@ package io.papermc.jkvttplugin.ui.menu;
 
 import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
+import io.papermc.jkvttplugin.data.loader.ArmorLoader;
 import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
+import io.papermc.jkvttplugin.data.loader.ItemLoader;
 import io.papermc.jkvttplugin.data.loader.RaceLoader;
+import io.papermc.jkvttplugin.data.loader.WeaponLoader;
+import io.papermc.jkvttplugin.data.model.DndArmor;
 import io.papermc.jkvttplugin.data.model.DndBackground;
+import io.papermc.jkvttplugin.data.model.DndItem;
+import io.papermc.jkvttplugin.data.model.DndWeapon;
 import io.papermc.jkvttplugin.data.model.DndClass;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.DndSubClass;
@@ -586,8 +592,17 @@ public class CharacterCreationMenu {
         Material material = (selected || isResolved) ? Material.GREEN_STAINED_GLASS_PANE
                 : selectedElsewhere ? Material.LIME_STAINED_GLASS_PANE : Material.RED_STAINED_GLASS_PANE;
 
-        ItemStack item = plain(material, Component.text(choice.displayFor(optionKey)).decoration(TextDecoration.ITALIC, false));
-        List<Component> lore = new ArrayList<>();
+        // For a concrete (non-wildcard) equipment option, show the actual item — its material/model
+        // and full stat tooltip — instead of a bare-id glass pane (#169). Wildcards keep the pane
+        // because they represent a category ("any simple weapon"), not one item.
+        ItemStack real = needsDrilldown ? null : resolveConcreteItem(optionKey);
+        ItemStack item = real != null
+                ? real
+                : plain(material, Component.text(choice.displayFor(optionKey)).decoration(TextDecoration.ITALIC, false));
+        if (real != null && (selected || selectedElsewhere)) addGlint(item);
+        List<Component> existingLore = item.lore();
+        List<Component> lore = existingLore != null ? new ArrayList<>(existingLore) : new ArrayList<>();
+        if (real != null && !lore.isEmpty()) lore.add(Component.text("")); // spacer above the selection status
         if (isResolved && resolvedItem != null) {
             lore.add(Component.text("✓ " + resolvedItem.prettyLabel(), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
             lore.add(Component.text("Click to change", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
@@ -648,7 +663,18 @@ public class CharacterCreationMenu {
         int slot = 18;
         for (String sub : subKeys) {
             if (slot > 44) break;
-            ItemStack it = plain(Material.PAPER, Component.text(pc.displayFor(sub)).decoration(TextDecoration.ITALIC, false));
+            // Show the specific item with its real material/model and full stat tooltip (#169),
+            // falling back to a labeled paper only if the id matches no loaded content.
+            ItemStack real = resolveConcreteItem(sub);
+            ItemStack it = real != null
+                    ? real
+                    : plain(Material.PAPER, Component.text(pc.displayFor(sub)).decoration(TextDecoration.ITALIC, false));
+            it.editMeta(m -> {
+                List<Component> lore = m.lore() != null ? new ArrayList<>(m.lore()) : new ArrayList<>();
+                if (!lore.isEmpty()) lore.add(Component.text(""));
+                lore.add(Component.text("Click to choose this", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+                m.lore(lore);
+            });
             ItemUtil.tagAction(it, MenuAction.DRILLDOWN_PICK, choiceId + "|" + wildcardKey + "|" + sub + "|" + (returnCat == null ? "EQUIPMENT" : returnCat));
             inv.setItem(slot++, it);
         }
@@ -815,6 +841,33 @@ public class CharacterCreationMenu {
         meta.displayName(name);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /**
+     * Resolves a concrete equipment option key (e.g. "item:rapier" or "rapier") to the real
+     * item's rendered ItemStack — the vanilla material/model plus its full stat tooltip
+     * (damage, AC, cost, description) — so an equipment choice shows the item, not a bare id (#169).
+     * Returns {@code null} for wildcard keys (tag:/bundle:) or ids that match no loaded content.
+     */
+    private static ItemStack resolveConcreteItem(String optionKey) {
+        if (optionKey == null) return null;
+        String id = optionKey;
+        if (id.startsWith("item:")) id = id.substring("item:".length());
+        // Wildcards and bundles aren't a single item — leave them to the drilldown flow.
+        if (id.contains("tag:") || id.contains("bundle:") || id.isEmpty()) return null;
+
+        DndWeapon weapon = WeaponLoader.getWeapon(id);
+        if (weapon != null) return weapon.createItemStack();
+        DndArmor armor = ArmorLoader.getArmor(id);
+        if (armor != null) return armor.createItemStack();
+        DndItem item = ItemLoader.getItem(id);
+        if (item != null) return item.createItemStack();
+        return null;
+    }
+
+    /** Adds an enchant glint (hidden enchant text) to signal a selected option. */
+    private static void addGlint(ItemStack item) {
+        item.editMeta(m -> { m.addEnchant(Enchantment.UNBREAKING, 1, true); m.addItemFlags(ItemFlag.HIDE_ENCHANTS); });
     }
 
     private static int nextContentRow(int slot) {
