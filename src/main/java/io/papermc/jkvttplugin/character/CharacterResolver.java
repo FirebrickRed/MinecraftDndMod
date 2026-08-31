@@ -5,12 +5,18 @@ import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
 import org.bukkit.command.CommandSender;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * One place to turn a command's character-name argument into a {@link CharacterSheet} (Issue #53,
- * a step toward the shared name resolver of #140). Accepts either a plain {@code Name} or an
- * {@code Owner/Name} form to disambiguate when two players share a character name.
+ * One place to turn a command's target argument into a {@link CharacterSheet} (Issues #53 / #108,
+ * built on the shared name plumbing of #140). Forgiving by design so DMs don't have to guess which
+ * identity a command wants — it accepts, in order:
+ * <ol>
+ *   <li>{@code Owner/Name} — an explicit owner + character name (always unambiguous)</li>
+ *   <li>a character name (the D&D nameplate identity); duplicates across players are reported</li>
+ *   <li>a player's username — resolves to that player's character</li>
+ * </ol>
  *
  * <p>Kept command-friendly: {@link #resolveOrError} messages the sender on not-found or ambiguity
  * and returns {@code null}, so callers stay a two-liner.
@@ -43,22 +49,46 @@ public final class CharacterResolver {
             return null;
         }
 
+        // 1. A character with this name.
         List<CharacterSheet> matches = CharacterSheetManager.findAllCharactersByName(raw);
-        if (matches.isEmpty()) {
-            sender.sendMessage(Component.text("Character '" + raw + "' not found.", NamedTextColor.RED));
-            return null;
-        }
         if (matches.size() == 1) {
             return matches.get(0);
         }
-
-        // Ambiguous — list the owners and how to pick one.
-        sender.sendMessage(Component.text("Multiple characters named '" + raw + "':", NamedTextColor.RED));
-        for (CharacterSheet s : matches) {
-            sender.sendMessage(Component.text("  • " + s.getCharacterName() + " (owned by " + ownerName(s) + ")", NamedTextColor.GRAY));
+        if (matches.size() > 1) {
+            // Ambiguous character name — list the owners and how to pick one.
+            sender.sendMessage(Component.text("Multiple characters named '" + raw + "':", NamedTextColor.RED));
+            for (CharacterSheet s : matches) {
+                sender.sendMessage(Component.text("  • " + s.getCharacterName() + " (owned by " + ownerName(s) + ")", NamedTextColor.GRAY));
+            }
+            sender.sendMessage(Component.text("Use \"" + firstOwner(matches) + "/" + raw + "\" to pick one.", NamedTextColor.YELLOW));
+            return null;
         }
-        sender.sendMessage(Component.text("Use \"" + firstOwner(matches) + "/" + raw + "\" to pick one.", NamedTextColor.YELLOW));
+
+        // 2. No character by that name — treat it as a player's username and use their character.
+        //    This makes targeting forgiving: the character name OR the owning player's name both work.
+        List<CharacterSheet> byOwner = charactersOfOwnerNamed(raw);
+        if (byOwner.size() == 1) {
+            return byOwner.get(0);
+        }
+        if (byOwner.size() > 1) {
+            sender.sendMessage(Component.text(raw + " has multiple characters — name the one you mean:", NamedTextColor.RED));
+            for (CharacterSheet s : byOwner) {
+                sender.sendMessage(Component.text("  • " + s.getCharacterName(), NamedTextColor.GRAY));
+            }
+            return null;
+        }
+
+        sender.sendMessage(Component.text("No character or player named '" + raw + "'.", NamedTextColor.RED));
         return null;
+    }
+
+    /** Characters owned by the player whose name matches (case-insensitive). */
+    private static List<CharacterSheet> charactersOfOwnerNamed(String playerName) {
+        List<CharacterSheet> out = new ArrayList<>();
+        for (CharacterSheet s : CharacterSheetManager.getAllCharacters()) {
+            if (playerName.equalsIgnoreCase(ownerName(s))) out.add(s);
+        }
+        return out;
     }
 
     /** The player name that owns a character, or a short id fragment if the name is unknown. */
