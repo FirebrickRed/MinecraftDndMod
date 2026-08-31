@@ -833,9 +833,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         Component row = Component.empty();
         for (java.util.Map.Entry<String, String> e : ACTIONS.entrySet()) {
             String label = Character.toUpperCase(e.getKey().charAt(0)) + e.getKey().substring(1);
+            // Attack has its own command form (target + weapon); the rest are action markers.
+            String suggest = e.getKey().equals("attack")
+                    ? "/combat attack <target> <weapon>"
+                    : "/combat action " + e.getKey();
             row = row.append(Component.text("[" + label + "] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                    .clickEvent(ClickEvent.suggestCommand("/combat action " + e.getKey()))
-                    .hoverEvent(HoverEvent.showText(Component.text(e.getValue() + "\n(fills the command — press Enter to confirm)"))));
+                    .clickEvent(ClickEvent.suggestCommand(suggest))
+                    .hoverEvent(HoverEvent.showText(Component.text(e.getValue() + "\n(fills the command — replace the <...> parts, then press Enter)"))));
         }
         player.sendMessage(row);
     }

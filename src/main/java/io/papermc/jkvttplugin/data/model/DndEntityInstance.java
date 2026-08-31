@@ -230,6 +230,15 @@ public class DndEntityInstance {
         armorStand.setHeadPose(isDead
                 ? new org.bukkit.util.EulerAngle(Math.toRadians(90), 0, 0)
                 : new org.bukkit.util.EulerAngle(0, 0, 0));
+        // A corpse floats a nameplate so it's easy to spot and shows the loot hint (#171).
+        if (isDead) {
+            armorStand.customName(net.kyori.adventure.text.Component.text(
+                    "☠ " + displayName + " (right-click to search)",
+                    net.kyori.adventure.text.format.NamedTextColor.GRAY));
+            armorStand.setCustomNameVisible(true);
+        } else {
+            armorStand.setCustomNameVisible(false);
+        }
     }
 
     /**
