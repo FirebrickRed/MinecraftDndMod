@@ -22,6 +22,7 @@ public class DndClass {
     private int hitDie;
 
     private List<Ability> savingThrows;
+    private List<Ability> primaryAbilities;  // suggested abilities to invest in (#126)
 
     private List<String> armorProficiencies;
     private List<String> weaponProficiencies;
@@ -116,6 +117,13 @@ public class DndClass {
     }
     public void setSavingThrows(List<Ability> savingThrows) {
         this.savingThrows = savingThrows;
+    }
+
+    public List<Ability> getPrimaryAbilities() {
+        return primaryAbilities;
+    }
+    public void setPrimaryAbilities(List<Ability> primaryAbilities) {
+        this.primaryAbilities = primaryAbilities;
     }
 
     public List<String> getArmorProficiencies() {
@@ -455,6 +463,11 @@ public class DndClass {
 
         public Builder savingThrows(List<Ability> savingThrows) {
             instance.setSavingThrows(savingThrows);
+            return this;
+        }
+
+        public Builder primaryAbilities(List<Ability> primaryAbilities) {
+            instance.setPrimaryAbilities(primaryAbilities);
             return this;
         }
 

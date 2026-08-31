@@ -1,9 +1,8 @@
 name: Warlock
 hit_die: 8
 proficiency: [2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,6,6,6,6]
-primary_abilities: #ToDo: update for all classes and incourporate if wanted
-  - Strength
-  - Constitution
+primary_abilities:
+  - Charisma
 saving_throws: [Wisdom, Charisma]
 armor_proficiencies: [light_armor]
 weapon_proficiencies: [simple_weapons]

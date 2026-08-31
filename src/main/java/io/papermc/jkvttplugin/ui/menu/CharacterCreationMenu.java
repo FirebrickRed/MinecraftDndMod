@@ -248,6 +248,11 @@ public class CharacterCreationMenu {
     }
 
     private static void abilitiesPane(Inventory inv, CharacterCreationSession session) {
+        // Suggested primary abilities for the chosen class (#126) — highlight where to invest.
+        DndClass cls = session.getSelectedClass() == null ? null : ClassLoader.getClass(session.getSelectedClass());
+        java.util.Set<Ability> suggested = (cls != null && cls.getPrimaryAbilities() != null)
+                ? new java.util.HashSet<>(cls.getPrimaryAbilities()) : java.util.Collections.emptySet();
+
         Ability[] abilities = Ability.values();
         for (int i = 0; i < abilities.length; i++) {
             Ability a = abilities[i];
@@ -260,6 +265,9 @@ public class CharacterCreationMenu {
             lore.add(Component.text("Base: " + base, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
             if (racial != 0) lore.add(Component.text("Racial: " + (racial > 0 ? "+" : "") + racial, NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
             lore.add(Component.text("Total: " + total + "  (mod " + fmtMod(Ability.getModifier(total)) + ")", NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false));
+            if (suggested.contains(a)) {
+                lore.add(Component.text("★ Suggested for " + cls.getName(), NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            }
             lore.add(Component.empty());
             lore.add(Component.text("Left-click  +1", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
             lore.add(Component.text("Right-click −1", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
@@ -271,6 +279,21 @@ public class CharacterCreationMenu {
             ItemUtil.applyModel(item, a.getAbbreviation().toLowerCase() + "_icon"); // str_icon, dex_icon, ...
             ItemUtil.tagAction(item, MenuAction.ADJUST_ABILITY, a.name());
             inv.setItem(10 + i, item); // slots 10..15
+        }
+
+        // Summary hint next to the ability row (#126). Absent when the class has no primary_abilities.
+        if (!suggested.isEmpty()) {
+            StringBuilder sb = new StringBuilder();
+            for (Ability a : cls.getPrimaryAbilities()) {
+                if (sb.length() > 0) sb.append(", ");
+                sb.append(a.getAbbreviation());
+            }
+            ItemStack hint = plain(Material.SPYGLASS,
+                    Component.text("Suggested: " + sb, NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            hint.editMeta(m -> m.lore(List.of(
+                    Component.text("Best abilities for " + cls.getName() + ".", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
+                    Component.text("Put your highest scores here.", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false))));
+            inv.setItem(16, hint);
         }
 
         // Inline racial ability-bonus allocation (races with a flexible bonus — e.g. plasmoid, half-elf).

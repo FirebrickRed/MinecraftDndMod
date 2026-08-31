@@ -21,9 +21,8 @@ proficiency:
   - 6
   - 6
   - 6
-primary_abilities: #ToDo: update for all classes and incourporate if wanted
-  - Strength
-  - Constitution
+primary_abilities:
+  - Dexterity
 saving_throws:
   - Dexterity
   - Intelligence
