@@ -224,6 +224,11 @@ public class CharacterSheet {
                 abilityScores.put(ability, currentScore + bonus);
             }
         }
+
+        // RAW cap: clamp every score to 20 if enabled (#112). Default off = house rule allows >20.
+        if (io.papermc.jkvttplugin.config.PluginConfig.isAbilityScoreCap20()) {
+            abilityScores.replaceAll((a, v) -> Math.min(20, v));
+        }
     }
 
     /**

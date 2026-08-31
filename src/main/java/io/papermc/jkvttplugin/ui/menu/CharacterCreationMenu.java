@@ -259,6 +259,8 @@ public class CharacterCreationMenu {
             int base = session.getAbilityScores().getOrDefault(a, 10);
             int racial = racialTotal(session, a);
             int total = base + racial;
+            // Mirror the RAW cap in the preview so the shown Total matches the finalized score (#112).
+            if (io.papermc.jkvttplugin.config.PluginConfig.isAbilityScoreCap20()) total = Math.min(20, total);
             int amount = Math.max(1, Math.min(64, total));
 
             List<Component> lore = new ArrayList<>();

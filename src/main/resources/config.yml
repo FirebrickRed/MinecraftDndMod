@@ -34,3 +34,7 @@ abilities:
     - 3d6
     - 1d20
     - 2d20_drop_lowest
+
+  # Cap final ability scores at 20 (#112). false (default) = house rule: racial bonuses may push a
+  # score above 20. true = RAW: clamp every score to 20 after racial bonuses are applied.
+  cap_scores_at_20: false

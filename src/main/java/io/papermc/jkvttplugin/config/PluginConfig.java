@@ -24,6 +24,7 @@ public final class PluginConfig {
     private static RitualInterrupt ritualInterrupt = RitualInterrupt.CONCENTRATION_CHECK;
     private static int ritualInterruptDc = 0; // 0 = dynamic: max(10, half the damage taken)
     private static List<AbilityRollMethod> abilityRollMethods = List.of(AbilityRollMethod.values());
+    private static boolean abilityScoreCap20 = false; // false = house rule (racial bonuses may exceed 20)
 
     private PluginConfig() {}
 
@@ -53,6 +54,9 @@ public final class PluginConfig {
             }
             abilityRollMethods = methods; // may be empty = helper disabled
         }
+
+        // Ability-score cap (#112). Default false = house rule: racial bonuses may push above 20.
+        abilityScoreCap20 = cfg.getBoolean("abilities.cap_scores_at_20", false);
     }
 
     public static RollMode getRollMode() { return rollMode; }
@@ -68,4 +72,7 @@ public final class PluginConfig {
 
     /** Ability roll-reference methods to offer in creation (#59); empty means the helper is off. */
     public static List<AbilityRollMethod> getAbilityRollMethods() { return abilityRollMethods; }
+
+    /** True to clamp final ability scores to 20 (RAW); false (default) lets racial bonuses exceed 20 (#112). */
+    public static boolean isAbilityScoreCap20() { return abilityScoreCap20; }
 }
