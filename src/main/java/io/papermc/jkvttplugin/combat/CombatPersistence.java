@@ -75,6 +75,12 @@ public final class CombatPersistence {
                 cm.put("deathSaveFailures", c.getDeathSaveFailures());
                 cm.put("isStabilized", c.isStabilized());
                 cm.put("reactionAvailable", c.isReactionAvailable());
+                // Channelled ritual in progress (#156), if any — so a multi-turn cast survives a crash.
+                if (c.isChanneling()) {
+                    cm.put("ritualSpellId", c.getRitualSpellId());
+                    cm.put("ritualSpellName", c.getRitualSpellName());
+                    cm.put("ritualRoundsLeft", c.getRitualRoundsLeft());
+                }
                 combatants.add(cm);
             }
             data.put("combatants", combatants);
@@ -172,9 +178,16 @@ public final class CombatPersistence {
                 for (Object cond : condList) if (cond instanceof String s) conditions.add(s);
             }
 
-            return Combatant.fromSavedData(id, type, displayName, baseName, initiative, initiativeBonus,
+            Combatant c = Combatant.fromSavedData(id, type, displayName, baseName, initiative, initiativeBonus,
                     surprised, hidden, unconscious, dead, conditions, dsSuccess, dsFailure,
                     stabilized, reactionAvailable);
+
+            // Restore a channelled ritual in progress (#156), if one was saved.
+            if (cm.get("ritualSpellId") instanceof String ritualSpellId) {
+                String ritualSpellName = (cm.get("ritualSpellName") instanceof String s) ? s : ritualSpellId;
+                c.beginRitual(ritualSpellId, ritualSpellName, num(cm.get("ritualRoundsLeft"), 1));
+            }
+            return c;
         } catch (Exception e) {
             LOGGER.warning("Skipped a bad combatant entry while restoring combat: " + e.getMessage());
             return null;
