@@ -455,6 +455,11 @@ public class Combatant {
         CharacterSheet s = getCharacterSheet();
         return s != null && s.resistsDamage(damageType);
     }
+    /** The active-effect source of a resistance to this type (e.g. "Rage"), or null if static/none. */
+    public String resistanceSourceFor(String damageType) {
+        CharacterSheet s = getCharacterSheet();
+        return s != null ? s.resistanceSourceFor(damageType) : null;
+    }
     public int effectBonusDamageFor(String rollTag) {
         CharacterSheet s = getCharacterSheet();
         return s != null ? s.bonusDamageFor(rollTag) : 0;

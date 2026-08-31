@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.combat;
 
+import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import io.papermc.jkvttplugin.data.loader.ConditionLoader;
@@ -686,6 +687,24 @@ public class CombatSession {
             // Clear any Minecraft effects our conditions applied, so they don't linger post-combat (#103).
             for (String id : c.getConditions()) setConditionEffect(c, ConditionLoader.get(id), false);
             c.getConditions().clear();
+
+            // Active effects (buffs/debuffs) end when the fight does (#70) — most are combat-scoped.
+            // Clear them, drop their visual potions, and tell the table what wore off.
+            CharacterSheet effSheet = c.getCharacterSheet();
+            if (effSheet != null && !effSheet.getActiveEffects().isEmpty()) {
+                List<String> names = new ArrayList<>();
+                for (var e : effSheet.getActiveEffects()) {
+                    names.add(e.getSourceName());
+                    if (c.isPlayer() && e.getMinecraftEffect() != null) {
+                        Player p = c.getPlayer();
+                        var t = org.bukkit.potion.PotionEffectType.getByName(e.getMinecraftEffect().toUpperCase());
+                        if (p != null && t != null) p.removePotionEffect(t);
+                    }
+                }
+                effSheet.getActiveEffects().clear();
+                broadcast(Component.text(c.getDisplayName() + "'s effects ended with combat: "
+                        + String.join(", ", names), NamedTextColor.GRAY));
+            }
 
             if (c.isPlayer()) {
                 PLAYER_SESSIONS.remove(c.getId());

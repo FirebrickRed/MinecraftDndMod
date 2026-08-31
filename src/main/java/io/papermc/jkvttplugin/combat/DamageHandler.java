@@ -79,7 +79,9 @@ public class DamageHandler {
         boolean resist = contains(target.getDamageResistances(), type) || target.resistsDamage(type);
         boolean vuln = contains(target.getDamageVulnerabilities(), type);
         if (resist && !vuln) {
-            return new AdjustedDamage(damage / 2, target.getDisplayName() + " is RESISTANT to " + type + " (halved).");
+            String src = target.resistanceSourceFor(type);        // name the effect (e.g. Rage), if any
+            String from = (src != null) ? " (" + src + ")" : "";
+            return new AdjustedDamage(damage / 2, target.getDisplayName() + " is RESISTANT to " + type + from + " — halved.");
         }
         if (vuln && !resist) {
             return new AdjustedDamage(damage * 2, target.getDisplayName() + " is VULNERABLE to " + type + " (doubled).");

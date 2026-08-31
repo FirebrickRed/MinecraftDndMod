@@ -1251,6 +1251,11 @@ public class CharacterSheet {
         for (var e : activeEffects) if (e.resists(damageType)) return true;
         return false;
     }
+    /** Name of the first active effect granting resistance to this type (e.g. "Rage"), or null. */
+    public String resistanceSourceFor(String damageType) {
+        for (var e : activeEffects) if (e.resists(damageType)) return e.getSourceName();
+        return null;
+    }
     public boolean hasAdvantageOn(String rollTag) {
         for (var e : activeEffects) if (e.givesAdvantageOn(rollTag)) return true;
         return false;
