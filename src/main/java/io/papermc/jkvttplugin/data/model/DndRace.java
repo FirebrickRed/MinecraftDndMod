@@ -40,6 +40,10 @@ public class DndRace {
 
     // Mechanical trait implementations (Issue #51)
     private Integer darkvision;  // Vision range in feet (60, 120, etc.)
+    // Rest requirements (#160). Hours needed for a long rest (8 default; elves trance in 4), and
+    // whether sleep is required at all (Warforged don't sleep). Not yet enforced — see #45.
+    private int longRestHours = 8;
+    private boolean sleepRequired = true;
     private List<String> damageResistances = List.of();
     private List<String> skillProficiencies = List.of();
     private List<String> weaponProficiencies = List.of();
@@ -163,6 +167,19 @@ public class DndRace {
     }
     public void setDarkvision(Integer darkvision) {
         this.darkvision = darkvision;
+    }
+
+    public int getLongRestHours() {
+        return longRestHours;
+    }
+    public void setLongRestHours(int longRestHours) {
+        this.longRestHours = longRestHours;
+    }
+    public boolean isSleepRequired() {
+        return sleepRequired;
+    }
+    public void setSleepRequired(boolean sleepRequired) {
+        this.sleepRequired = sleepRequired;
     }
 
     public List<String> getDamageResistances() {
@@ -432,6 +449,15 @@ public class DndRace {
 
         public Builder speed(int speed) {
             instance.setSpeed(speed);
+            return this;
+        }
+
+        public Builder longRestHours(int longRestHours) {
+            instance.setLongRestHours(longRestHours);
+            return this;
+        }
+        public Builder sleepRequired(boolean sleepRequired) {
+            instance.setSleepRequired(sleepRequired);
             return this;
         }
 

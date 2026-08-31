@@ -10,6 +10,11 @@ ability_scores:
       - [1, 1]  # Choose two different abilities for +1 each
 size: Medium
 speed: 30
+
+# Half-elves need 6 hours for a long rest (per #160). Not enforced yet — long rests aren't
+# time-gated (see #45); this records the trait for when they are.
+rest_requirements:
+  long_rest_hours: 6
 custom_model: half_elf_icon
 
 # Display-only trait names

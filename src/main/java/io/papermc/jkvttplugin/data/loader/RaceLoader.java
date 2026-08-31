@@ -49,6 +49,14 @@ public class RaceLoader {
         Object abilityScoresRaw = data.get("ability_scores");
         AbilityParser.AbilityScoreParseResult abilityScores = AbilityParser.parseAbilityScores(abilityScoresRaw);
 
+        // Rest requirements (#160): optional { long_rest_hours, sleep_required }. Defaults 8h / true.
+        int longRestHours = 8;
+        boolean sleepRequired = true;
+        if (data.get("rest_requirements") instanceof java.util.Map<?, ?> rest) {
+            longRestHours = ParseUtil.asInt(rest.get("long_rest_hours"), 8);
+            if (rest.get("sleep_required") instanceof Boolean b) sleepRequired = b;
+        }
+
         DndRace.Builder builder = DndRace.builder()
                 .id(normalize((String) data.getOrDefault("name", "Unknown")))
                 .name((String) data.getOrDefault("name", "Unknown"))
@@ -57,6 +65,8 @@ public class RaceLoader {
                 .creatureType(CreatureType.fromString((String) data.getOrDefault("creature_type", "Humanoid")))
                 .size(sizeResult.size)
                 .speed((int) data.getOrDefault("speed", 30))
+                .longRestHours(longRestHours)
+                .sleepRequired(sleepRequired)
                 .fixedAbilityScores(abilityScores.fixedBonuses)
                 .abilityScoreChoice(abilityScores.choiceBonuses)
                 .traits(ParseUtil.parseTraits(data.get("traits")))

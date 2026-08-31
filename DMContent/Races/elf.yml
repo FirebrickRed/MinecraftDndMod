@@ -9,6 +9,12 @@ size: Medium
 speed: 30
 custom_model: elf_icon
 
+# Trance (#160): elves finish a long rest in 4 hours of meditative trance instead of 8h of sleep.
+# Not enforced mechanically yet — long rests aren't time-gated (see #45); this records the trait.
+rest_requirements:
+  long_rest_hours: 4
+  sleep_required: false
+
 # Display-only trait names
 traits:
   - Darkvision

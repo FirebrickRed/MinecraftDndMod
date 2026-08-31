@@ -54,6 +54,8 @@ public class CharacterSheet {
     private Set<String> damageResistances = new HashSet<>();
     private List<InnateSpell> innateSpells = new ArrayList<>();
     private Integer darkvision;  // Vision range in feet (60, 120, etc.), null = no darkvision
+    private int longRestHours = 8;      // Hours needed for a long rest (#160); elves trance in 4.
+    private boolean sleepRequired = true; // Warforged don't sleep. Not yet enforced — see #45.
 
     // Movement speeds
     private int speed = 30;  // Walking speed (default 30)
@@ -238,6 +240,8 @@ public class CharacterSheet {
             this.climbingSpeed = race.getClimbingSpeed();
             this.burrowingSpeed = race.getBurrowingSpeed();
             this.darkvision = race.getDarkvision();
+            this.longRestHours = race.getLongRestHours();   // #160 (not enforced yet — #45)
+            this.sleepRequired = race.isSleepRequired();
         }
 
         // Subrace can override movement speeds
@@ -888,6 +892,15 @@ public class CharacterSheet {
 
     public int getSpeed() {
         return speed; // Uses character's own speed field (set from race/subrace in applyRacialTraits)
+    }
+
+    /** Hours needed for a long rest (#160); 8 by default, 4 for elven trance. Not enforced yet (#45). */
+    public int getLongRestHours() {
+        return longRestHours;
+    }
+    /** Whether this character needs to sleep for a long rest (false for Warforged). Not enforced yet (#45). */
+    public boolean isSleepRequired() {
+        return sleepRequired;
     }
 
     public int getAbility(Ability ability) {
