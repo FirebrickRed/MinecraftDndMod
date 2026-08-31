@@ -40,6 +40,9 @@ public class PossessionManager {
     private static final Map<UUID, BukkitRunnable> followTasks = new HashMap<>();
     // The entity the DM is currently aiming at (glowing) so we can clear it when the aim changes.
     private static final Map<UUID, Entity> aimHighlight = new HashMap<>();
+    // DMs who have toggled their possessed model VISIBLE to themselves (default: hidden so it doesn't
+    // block first-person view). Press F while possessing; best viewed in third-person (F5).
+    private static final java.util.Set<UUID> selfModelVisible = new java.util.HashSet<>();
 
     public static boolean isPossessing(UUID dmId) {
         return possessedByDm.containsKey(dmId);
@@ -109,7 +112,27 @@ public class PossessionManager {
      * Used when exiting DM mode entirely (the caller then restores the real inventory).
      * @return true if the DM was possessing.
      */
+    /**
+     * Toggle whether the DM can see their own possessed model. Hidden by default (it sits at the
+     * DM's own location and would block first-person view); showing it is meant for third-person
+     * (F5), so a DM can watch their model act. No-op if not possessing.
+     */
+    public static void toggleSelfModel(Player dm) {
+        ArmorStand stand = possessedByDm.get(dm.getUniqueId());
+        if (stand == null || !stand.isValid()) return;
+        UUID id = dm.getUniqueId();
+        if (selfModelVisible.remove(id)) {
+            dm.hideEntity(JkVttPlugin.getInstance(), stand);
+            dm.sendActionBar(Component.text("Possessed model hidden from you.", NamedTextColor.GRAY));
+        } else {
+            selfModelVisible.add(id);
+            dm.showEntity(JkVttPlugin.getInstance(), stand);
+            dm.sendActionBar(Component.text("Showing your possessed model — press F5 for third-person.", NamedTextColor.GREEN));
+        }
+    }
+
     public static boolean endPossession(Player dm, boolean silent) {
+        selfModelVisible.remove(dm.getUniqueId());
         ArmorStand stand = possessedByDm.remove(dm.getUniqueId());
         BukkitRunnable task = followTasks.remove(dm.getUniqueId());
         if (task != null) task.cancel();

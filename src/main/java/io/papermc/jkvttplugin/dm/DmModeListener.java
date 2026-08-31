@@ -164,6 +164,15 @@ public class DmModeListener implements Listener {
         }
     }
 
+    /** While possessing, F (swap hands) toggles whether the DM can see their own model (F5 to view). */
+    @EventHandler
+    public void onSwapHands(org.bukkit.event.player.PlayerSwapHandItemsEvent event) {
+        if (PossessionManager.isPossessing(event.getPlayer().getUniqueId())) {
+            event.setCancelled(true);
+            PossessionManager.toggleSelfModel(event.getPlayer());
+        }
+    }
+
     private void view(Player dm, Entity target) {
         if (!DMManager.isDM(dm)) return;
 
