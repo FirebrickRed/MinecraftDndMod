@@ -1,6 +1,6 @@
 package io.papermc.jkvttplugin.commands;
 
-import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
+import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
@@ -41,20 +41,14 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /check <player> <ability|save|skill> <name> [adv|dis]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /check <player|character> <ability|save|skill> <name> [adv|dis]", NamedTextColor.RED));
             return true;
         }
 
-        Player target = Bukkit.getPlayerExact(args[0]);
-        if (target == null) {
-            sender.sendMessage(Component.text("Player not online: " + args[0], NamedTextColor.RED));
-            return true;
-        }
-        CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(target);
-        if (sheet == null) {
-            sender.sendMessage(Component.text(target.getName() + " has no active character.", NamedTextColor.RED));
-            return true;
-        }
+        // Accept either a player username or a character name (forgiving resolver, #108).
+        CharacterSheet sheet = CharacterResolver.resolveOrError(sender, args[0]);
+        if (sheet == null) return true;
+        Player target = Bukkit.getPlayer(sheet.getPlayerId()); // null if the owner is offline
 
         String category = args[1].toLowerCase();
         String rollType;
@@ -99,8 +93,12 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         if (io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) {
             RollOptionsMenuHandler.performRoll(sheet, rollType, value, mode);
         } else {
+            if (target == null) {
+                sender.sendMessage(Component.text(sheet.getCharacterName() + "'s player is offline — can't prompt a physical roll.", NamedTextColor.RED));
+                return true;
+            }
             RollOptionsMenuHandler.promptSkillRoll(target, sheet, rollType, value, mode);
-            sender.sendMessage(Component.text("Prompted " + target.getName() + " to roll "
+            sender.sendMessage(Component.text("Prompted " + sheet.getCharacterName() + " to roll "
                     + args[2] + (mode == RollMode.NORMAL ? "" : " (" + args[3] + ")") + ".", NamedTextColor.GRAY));
         }
         return true;
