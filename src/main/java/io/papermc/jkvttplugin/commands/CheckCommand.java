@@ -24,11 +24,11 @@ import java.util.List;
  * Rolls immediately for the target player's active character and broadcasts the result,
  * reusing the same roll math and output as the character-sheet roll menu.
  *
- * Usage: /check &lt;player&gt; &lt;ability|save|skill&gt; &lt;name&gt; [adv|dis]
+ * Usage: /dm check &lt;player&gt; &lt;ability|save|skill&gt; &lt;name&gt; [adv|dis]
  * Examples:
- *   /check Notch save DEX advantage
- *   /check Notch skill stealth
- *   /check Notch ability STR
+ *   /dm check Notch save DEX advantage
+ *   /dm check Notch skill stealth
+ *   /dm check Notch ability STR
  *
  * Deferred (need the party system, #42): clickable prompts and @party targeting.
  */
@@ -41,7 +41,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /check <player|character> <ability|save|skill> <name> [adv|dis]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm check <player|character> <ability|save|skill> <name> [adv|dis]", NamedTextColor.RED));
             return true;
         }
 

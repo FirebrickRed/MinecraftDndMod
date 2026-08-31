@@ -26,8 +26,8 @@ import java.util.stream.Collectors;
  * Useful for testing shops, rewarding players, and debugging.
  *
  * Usage:
- * /dmgive <player> <item_id> [amount]
- * /dmgive <item_id> [amount] - Give to self
+ * /dm give <player> <item_id> [amount]
+ * /dm give <item_id> [amount] - Give to self
  */
 public class DmGiveCommand implements CommandExecutor, TabCompleter {
 
@@ -44,7 +44,7 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Parse arguments: /dmgive <player> <item_id> [amount] OR /dmgive <item_id> [amount]
+        // Parse arguments: /dm give <player> <item_id> [amount] OR /dm give <item_id> [amount]
         Player targetPlayer;
         String itemId;
         int amount = 1;
@@ -53,7 +53,7 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
             // Check if first arg is a player name
             Player possiblePlayer = Bukkit.getPlayer(args[0]);
             if (possiblePlayer != null) {
-                // Format: /dmgive <player> <item_id> [amount]
+                // Format: /dm give <player> <item_id> [amount]
                 targetPlayer = possiblePlayer;
                 itemId = args[1];
                 if (args.length >= 3) {
@@ -65,7 +65,7 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
                     }
                 }
             } else {
-                // Format: /dmgive <item_id> [amount] (give to self)
+                // Format: /dm give <item_id> [amount] (give to self)
                 if (!(sender instanceof Player)) {
                     sender.sendMessage(Component.text("Console must specify a player name.", NamedTextColor.RED));
                     return true;
@@ -82,9 +82,9 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
                 }
             }
         } else {
-            // Format: /dmgive <item_id> (give 1 to self)
+            // Format: /dm give <item_id> (give 1 to self)
             if (!(sender instanceof Player)) {
-                sender.sendMessage(Component.text("Usage: /dmgive <player> <item_id> [amount]", NamedTextColor.RED));
+                sender.sendMessage(Component.text("Usage: /dm give <player> <item_id> [amount]", NamedTextColor.RED));
                 return true;
             }
             targetPlayer = (Player) sender;
@@ -163,14 +163,14 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
 
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(Component.text("=== DM Give Command ===", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("/dmgive <player> <item_id> [amount]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm give <player> <item_id> [amount]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Give D&D item to a player", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmgive <item_id> [amount]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm give <item_id> [amount]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Give item to yourself", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("Examples:", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("  /dmgive gold_piece 64", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("  /dmgive charlie longsword 1", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("  /dmgive silver_piece 100", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("  /dm give gold_piece 64", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("  /dm give charlie longsword 1", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("  /dm give silver_piece 100", NamedTextColor.GRAY));
     }
 
     @Override

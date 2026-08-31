@@ -102,12 +102,12 @@ The plugin loads D&D content (races, classes, spells, weapons, armor, items) fro
 
 **4. Test Player Selling (Player to Merchant):**
 ```
-/dmgive longsword 1
+/dm give longsword 1
 /dmentity trade merchant_balin
 ```
-(`/dmgive <item_id> [amount]` gives to yourself; `/dmgive <player> <item_id> [amount]`
+(`/dm give <item_id> [amount]` gives to yourself; `/dm give <player> <item_id> [amount]`
 gives to another player. The item type is auto-detected from the id — there is no
-`<item_type>` argument.)
+`<item_type>` argument. There is no standalone `/dmgive`; it lives under `/dm give`.)
 - Merchant GUI should show reverse trades (player gives item, gets currency)
 - Sell longsword to merchant for gold (50% of buy price)
 - Verify merchant's inventory increases: `/dmentity shop view merchant_balin`
