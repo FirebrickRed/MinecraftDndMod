@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
+import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.ui.menu.CharacterCreationMenu;
 import net.kyori.adventure.text.Component;
@@ -292,11 +293,8 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         }
         String name = String.join(" ", rest);
         if (name.length() >= 2 && name.startsWith("\"") && name.endsWith("\"")) name = name.substring(1, name.length() - 1);
-        CharacterSheet sheet = CharacterSheetManager.findCharacterByName(name);
-        if (sheet == null) {
-            sender.sendMessage(Component.text("No character named: " + name, NamedTextColor.RED));
-            return true;
-        }
+        CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
+        if (sheet == null) return true;
         boolean isOwn = sender instanceof Player p && sheet.getPlayerId().equals(p.getUniqueId());
         if (!isOwn && !DMManager.isDM(sender)) {
             sender.sendMessage(Component.text("You can only delete your own characters.", NamedTextColor.RED));

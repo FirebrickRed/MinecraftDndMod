@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.commands;
 
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
+import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.data.model.ClassResource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -50,12 +51,8 @@ public class ConsumeResourceCommand implements CommandExecutor, TabCompleter {
         String resourceName = String.join(" ", Arrays.copyOfRange(args, 1, resourceNameEndIndex));
 
         // Find character by name
-        CharacterSheet character = CharacterSheetManager.findCharacterByName(characterName);
-
-        if (character == null) {
-            sender.sendMessage(Component.text("Character '" + characterName + "' not found.", NamedTextColor.RED));
-            return true;
-        }
+        CharacterSheet character = CharacterResolver.resolveOrError(sender, characterName);
+        if (character == null) return true;
         List<ClassResource> resources = character.getClassResources();
 
         if (resources.isEmpty()) {

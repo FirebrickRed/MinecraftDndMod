@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.commands;
 
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
+import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.dm.DMManager;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -42,11 +43,8 @@ public class GiveSheetCommand implements CommandExecutor, TabCompleter {
         }
 
         String name = stripQuotes(String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length)));
-        CharacterSheet sheet = CharacterSheetManager.findCharacterByName(name);
-        if (sheet == null) {
-            sender.sendMessage(Component.text("No character named: " + name, NamedTextColor.RED));
-            return true;
-        }
+        CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
+        if (sheet == null) return true;
 
         ItemStack item = CharacterSheetManager.createCharacterSheetItem(sheet);
         HashMap<Integer, ItemStack> overflow = target.getInventory().addItem(item);

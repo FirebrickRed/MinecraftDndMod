@@ -253,6 +253,11 @@ public class CharacterSheetManager {
         return CharacterPersistenceLoader.findCharacterByName(characterName);
     }
 
+    /** All characters matching a name (case-insensitive) — for duplicate detection (#53). */
+    public static java.util.List<CharacterSheet> findAllCharactersByName(String characterName) {
+        return CharacterPersistenceLoader.findAllCharactersByName(characterName);
+    }
+
     /**
      * Get all character names for tab completion.
      */

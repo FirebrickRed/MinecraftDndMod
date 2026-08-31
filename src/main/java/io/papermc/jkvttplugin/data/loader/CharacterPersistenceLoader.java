@@ -139,6 +139,19 @@ public class CharacterPersistenceLoader {
         return null;
     }
 
+    /** All characters matching a name (case-insensitive). Used to detect/disambiguate duplicates (#53). */
+    public static List<CharacterSheet> findAllCharactersByName(String characterName) {
+        List<CharacterSheet> matches = new ArrayList<>();
+        for (Map<UUID, CharacterSheet> playerChars : playerCharacters.values()) {
+            for (CharacterSheet sheet : playerChars.values()) {
+                if (sheet.getCharacterName().equalsIgnoreCase(characterName)) {
+                    matches.add(sheet);
+                }
+            }
+        }
+        return matches;
+    }
+
     /**
      * Get all character names for tab completion.
      */

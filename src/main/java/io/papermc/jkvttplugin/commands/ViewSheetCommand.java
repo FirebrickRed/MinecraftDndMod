@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.commands;
 import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
+import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu;
 import net.kyori.adventure.text.Component;
@@ -81,11 +82,8 @@ public class ViewSheetCommand implements CommandExecutor, TabCompleter {
 
         // /viewsheet <characterName> (supports spaces via quotes)
         String name = stripQuotes(String.join(" ", args));
-        CharacterSheet sheet = CharacterSheetManager.findCharacterByName(name);
-        if (sheet == null) {
-            player.sendMessage(Component.text("No character named: " + name, NamedTextColor.RED));
-            return true;
-        }
+        CharacterSheet sheet = CharacterResolver.resolveOrError(player, name);
+        if (sheet == null) return true;
         ViewCharacterSheetMenu.open(player, sheet.getCharacterId());
         return true;
     }
