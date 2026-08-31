@@ -1420,6 +1420,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     player.addPotionEffect(new org.bukkit.potion.PotionEffect(type, Integer.MAX_VALUE, eff.getMinecraftAmplifier(), false, false));
                 }
             }
+            // Clear personal feedback so the player can see exactly what's active and for how long.
+            player.sendMessage(Component.text("✦ " + feature.getName() + " active", NamedTextColor.GOLD)
+                    .append(Component.text("  (" + eff.durationLabel() + ")", NamedTextColor.YELLOW)));
+            for (String line : eff.describe()) {
+                player.sendMessage(Component.text("   • " + line, NamedTextColor.GRAY));
+            }
         }
 
         session.broadcast(Component.text(actor.getDisplayName() + " uses " + feature.getName() + "!", NamedTextColor.GOLD));

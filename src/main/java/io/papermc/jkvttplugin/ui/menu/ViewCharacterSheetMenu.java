@@ -327,6 +327,22 @@ public class ViewCharacterSheetMenu {
             inventory.setItem(resourceSlot++, resourceItem);
         }
 
+        // Active effects (buffs/debuffs) — the Effect Engine (#70). What's on you right now.
+        var activeEffects = character.getActiveEffects();
+        if (!activeEffects.isEmpty() && resourceSlot < 53) {
+            ItemStack effItem = new ItemStack(Material.BLAZE_POWDER);
+            effItem.editMeta(m -> {
+                m.displayName(Component.text("Active Effects (" + activeEffects.size() + ")", NamedTextColor.LIGHT_PURPLE));
+                LoreBuilder lore = LoreBuilder.create();
+                for (var e : activeEffects) {
+                    lore.addLine(e.getSourceName() + " — " + e.durationLabel(), NamedTextColor.GOLD);
+                    for (String line : e.describe()) lore.addLine("  " + line, NamedTextColor.GRAY);
+                }
+                m.lore(lore.build());
+            });
+            inventory.setItem(resourceSlot++, effItem);
+        }
+
         // Slot 53: Close button (bottom right corner)
         ItemStack closeButton = ItemUtil.createActionItem(
                 Material.BARRIER,

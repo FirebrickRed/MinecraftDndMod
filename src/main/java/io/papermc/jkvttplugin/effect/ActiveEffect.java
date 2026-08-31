@@ -104,6 +104,26 @@ public class ActiveEffect {
         return untilRest != null && untilRest.equalsIgnoreCase(restType);
     }
 
+    // ---- display ----
+    /** Short human-readable lines describing what this effect grants (for messages / the sheet). */
+    public java.util.List<String> describe() {
+        java.util.List<String> parts = new java.util.ArrayList<>();
+        if (!resistances.isEmpty()) parts.add("Resistance to " + String.join(", ", resistances));
+        if (bonusDamage != 0) parts.add((bonusDamage > 0 ? "+" : "") + bonusDamage + " damage"
+                + (bonusDamageWhen != null ? " (" + bonusDamageWhen.replace('_', ' ') + ")" : ""));
+        if (!advantageOn.isEmpty()) parts.add("Advantage on " + String.join(", ", advantageOn).replace('_', ' '));
+        if (!disadvantageOn.isEmpty()) parts.add("Disadvantage on " + String.join(", ", disadvantageOn).replace('_', ' '));
+        return parts;
+    }
+
+    /** A short label for how long the effect lasts. */
+    public String durationLabel() {
+        if (roundsRemaining > 0) return roundsRemaining + (roundsRemaining == 1 ? " round" : " rounds");
+        if (untilRest != null) return "until " + untilRest + " rest";
+        if (untilUsed) return "until used";
+        return "until removed";
+    }
+
     // ---- getters ----
     public String getSourceId() { return sourceId; }
     public String getSourceName() { return sourceName; }
