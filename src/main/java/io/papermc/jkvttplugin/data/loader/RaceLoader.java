@@ -84,7 +84,8 @@ public class RaceLoader {
                 .skillProficiencies(ParseUtil.parseStringList(data.get("skill_proficiencies")))
                 .weaponProficiencies(ParseUtil.parseStringList(data.get("weapon_proficiencies")))
                 .armorProficiencies(ParseUtil.parseStringList(data.get("armor_proficiencies")))
-                .innateSpells(InnateSpellParser.parseInnateSpells(data.get("innate_spells")));
+                .innateSpells(InnateSpellParser.parseInnateSpells(data.get("innate_spells")))
+                .features(io.papermc.jkvttplugin.effect.FeatureParser.parseFeatures(data.get("features")));
 
 
         DndRace dndRace = builder.build();

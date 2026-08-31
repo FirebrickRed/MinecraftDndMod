@@ -56,52 +56,29 @@ damage_resistance:
     "Silver (Cold, 15 ft. cone, CON save)": cold
     "White (Cold, 15 ft. cone, CON save)": cold
 
-# Breath Weapon: Limited-use racial resource
-racial_resources:
+# Breath Weapon (Effect Engine action, #70): activate with /combat use breath_weapon on your turn.
+# Costs one use (proficiency-bonus per long rest). The shape, save, and damage type come from the
+# draconic ancestry the player picked at creation — a variant per option, resolved by `by_choice`.
+# Homebrew: add a new ancestry option + a matching variant here; no code change needed.
+features:
   - id: breath_weapon
     name: Breath Weapon
-    uses_proficiency_bonus: true  # Uses = proficiency bonus
-    recovery: long_rest
-    linked_to_choice: draconic_ancestry
-    description: "You can use your action to exhale destructive energy."
-    damage_mapping:
-      "Black (Acid, 5x30 ft. line, DEX save)":
-        damage_type: acid
-        area: "5 by 30 ft. line"
-        save: dexterity
-      "Blue (Lightning, 5x30 ft. line, DEX save)":
-        damage_type: lightning
-        area: "5 by 30 ft. line"
-        save: dexterity
-      "Brass (Fire, 5x30 ft. line, DEX save)":
-        damage_type: fire
-        area: "5 by 30 ft. line"
-        save: dexterity
-      "Bronze (Lightning, 5x30 ft. line, DEX save)":
-        damage_type: lightning
-        area: "5 by 30 ft. line"
-        save: dexterity
-      "Copper (Acid, 5x30 ft. line, DEX save)":
-        damage_type: acid
-        area: "5 by 30 ft. line"
-        save: dexterity
-      "Gold (Fire, 15 ft. cone, DEX save)":
-        damage_type: fire
-        area: "15 ft. cone"
-        save: dexterity
-      "Green (Poison, 15 ft. cone, CON save)":
-        damage_type: poison
-        area: "15 ft. cone"
-        save: constitution
-      "Red (Fire, 15 ft. cone, DEX save)":
-        damage_type: fire
-        area: "15 ft. cone"
-        save: dexterity
-      "Silver (Cold, 15 ft. cone, CON save)":
-        damage_type: cold
-        area: "15 ft. cone"
-        save: constitution
-      "White (Cold, 15 ft. cone, CON save)":
-        damage_type: cold
-        area: "15 ft. cone"
-        save: constitution
+    activation: action
+    cost: { resource: breath_weapon, amount: 1, max: proficiency_bonus, recovery: long_rest }
+    action:
+      dc_ability: constitution   # DC = 8 + proficiency bonus + CON modifier
+      save_effect: half          # a successful save takes half damage
+      damage: 2d6                # 1st-level breath damage (scales with level later, #70)
+      targets: enemies
+      by_choice: draconic_ancestry
+      variants:
+        "Black (Acid, 5x30 ft. line, DEX save)":     { shape: line, size: 30, save: dexterity,   damage_type: acid }
+        "Blue (Lightning, 5x30 ft. line, DEX save)": { shape: line, size: 30, save: dexterity,   damage_type: lightning }
+        "Brass (Fire, 5x30 ft. line, DEX save)":     { shape: line, size: 30, save: dexterity,   damage_type: fire }
+        "Bronze (Lightning, 5x30 ft. line, DEX save)": { shape: line, size: 30, save: dexterity, damage_type: lightning }
+        "Copper (Acid, 5x30 ft. line, DEX save)":    { shape: line, size: 30, save: dexterity,   damage_type: acid }
+        "Gold (Fire, 15 ft. cone, DEX save)":        { shape: cone, size: 15, save: dexterity,   damage_type: fire }
+        "Green (Poison, 15 ft. cone, CON save)":     { shape: cone, size: 15, save: constitution, damage_type: poison }
+        "Red (Fire, 15 ft. cone, DEX save)":         { shape: cone, size: 15, save: dexterity,   damage_type: fire }
+        "Silver (Cold, 15 ft. cone, CON save)":      { shape: cone, size: 15, save: constitution, damage_type: cold }
+        "White (Cold, 15 ft. cone, CON save)":       { shape: cone, size: 15, save: constitution, damage_type: cold }

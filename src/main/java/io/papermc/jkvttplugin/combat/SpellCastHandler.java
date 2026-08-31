@@ -134,7 +134,7 @@ public class SpellCastHandler {
         }
         int mod = sheet.getProficiencyBonus() + sheet.getModifier(ability);
 
-        java.util.List<Combatant> affected = creaturesInArea(caster, player, spell);
+        java.util.List<Combatant> affected = creaturesInArea(caster, player, spell.getAoeShape(), spell.getAoeSize());
         affected.removeIf(c -> c.getId().equals(caster.getId()) || c.isDead()); // the caster isn't caught in their own AoE
         // Some AoE hit only enemies or only allies (e.g. a beneficial burst); "all" is the default.
         if (!"all".equalsIgnoreCase(spell.getAoeTargets())) {
@@ -166,6 +166,41 @@ public class SpellCastHandler {
         return true;
     }
 
+    /**
+     * Generic area-save resolution (#70): project an area of {@code shape}/{@code sizeFeet} from the
+     * caster, catch the right creatures, and open a save-for-half (or save-negates) window on each.
+     * Shared by spell AoE and by feature actions such as a dragonborn's breath weapon — the caller
+     * supplies the DC and damage, so no ability is hardcoded here.
+     */
+    public static boolean castAreaSave(Combatant caster, CombatSession session, Player player,
+                                       String sourceName, String shape, double sizeFeet, String targets,
+                                       Ability saveAbility, int dc, String damage, String damageType,
+                                       String saveEffect) {
+        java.util.List<Combatant> affected = creaturesInArea(caster, player, shape, sizeFeet);
+        affected.removeIf(c -> c.getId().equals(caster.getId()) || c.isDead());
+        if (targets != null && !"all".equalsIgnoreCase(targets)) {
+            boolean wantAllies = "allies".equalsIgnoreCase(targets);
+            affected.removeIf(c -> (c.isPlayer() == caster.isPlayer()) != wantAllies);
+        }
+        for (Combatant t : affected) markAoeTarget(t);
+
+        session.broadcast(Component.empty());
+        session.broadcast(Component.text("💥 " + caster.getDisplayName(true) + " unleashes " + sourceName
+                + " (" + shape + ", " + (int) sizeFeet + " ft) — " + affected.size()
+                + " creature" + (affected.size() == 1 ? "" : "s") + " caught!", NamedTextColor.GOLD));
+
+        if (affected.isEmpty()) return true;
+
+        session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation()
+                + " save — each caught creature rolls:", NamedTextColor.GRAY));
+        for (Combatant t : affected) {
+            pendingSaves.put(t.getId(), new PendingSave(sourceName, caster.getId(), dc, saveAbility,
+                    damage, damageType, saveEffect, null));
+            promptSave(session, t, saveAbility);
+        }
+        return true;
+    }
+
     /** Flag a creature caught in an AoE with a magical particle burst so the caster sees who's hit. */
     private static void markAoeTarget(Combatant c) {
         org.bukkit.Location loc = c.getLocation();
@@ -173,15 +208,15 @@ public class SpellCastHandler {
         loc.getWorld().spawnParticle(org.bukkit.Particle.WITCH, loc.clone().add(0, 1.2, 0), 25, 0.3, 0.7, 0.3, 0.03);
     }
 
-    /** Combatants inside the spell's area. */
-    private static java.util.List<Combatant> creaturesInArea(Combatant caster, Player player, DndSpell spell) {
+    /** Combatants inside an area of the given shape/size (feet), originating from the caster. */
+    private static java.util.List<Combatant> creaturesInArea(Combatant caster, Player player, String shapeName, double sizeFeet) {
         java.util.List<Combatant> result = new java.util.ArrayList<>();
         CombatSession session = CombatSession.getSessionForPlayer(player.getUniqueId());
         if (session == null) return result;
         org.bukkit.Location origin = caster.getLocation();
         if (origin == null) return result;
-        double size = spell.getAoeSize() / 5.0; // feet → blocks
-        String shape = spell.getAoeShape().toLowerCase();
+        double size = sizeFeet / 5.0; // feet → blocks
+        String shape = shapeName.toLowerCase();
         org.bukkit.util.Vector dir = player.getEyeLocation().getDirection().setY(0).normalize();
 
         org.bukkit.Location sphereCenter = null;

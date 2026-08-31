@@ -54,6 +54,9 @@ public class CharacterSheet {
     private Set<String> toolProficiencies = new HashSet<>();
     private Set<String> languages = new HashSet<>();
     private Set<String> damageResistances = new HashSet<>();
+    // CUSTOM player-choice selections kept by choice id (e.g. draconic_ancestry -> "Red (Fire, …)").
+    // Feature actions read these to resolve their per-choice variant (breath weapon, #70).
+    private final Map<String, String> customChoices = new HashMap<>();
     private List<InnateSpell> innateSpells = new ArrayList<>();
     private Integer darkvision;  // Vision range in feet (60, 120, etc.), null = no darkvision
     private int longRestHours = 8;      // Hours needed for a long rest (#160); elves trance in 4.
@@ -525,6 +528,17 @@ public class CharacterSheet {
                     }
                 }
             }
+
+            // Handle CUSTOM choices (e.g. draconic_ancestry): remember the picked option by choice id
+            // so feature actions can resolve their per-choice variant later (breath weapon, #70).
+            if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.CUSTOM) {
+                for (Object obj : chosen) {
+                    if (obj instanceof String value) {
+                        setCustomChoice(pc.getId(), value);
+                        break; // single-pick custom choices
+                    }
+                }
+            }
         }
     }
 
@@ -579,10 +593,6 @@ public class CharacterSheet {
     }
 
     private void initializeClassResources() {
-        if (dndClass == null) {
-            return;
-        }
-
         // Create a function to get ability modifiers for resource calculations
         java.util.function.Function<String, Integer> abilityModifier = (abilityName) -> {
             try {
@@ -593,7 +603,36 @@ public class CharacterSheet {
             }
         };
 
-        classResources = dndClass.createResourcesForCharacter(getTotalLevel(), abilityModifier);
+        if (dndClass != null) {
+            classResources = dndClass.createResourcesForCharacter(getTotalLevel(), abilityModifier);
+        }
+        initializeFeatureResources();
+    }
+
+    /**
+     * Materializes the resource pools declared by authored features that grant their own (Effect
+     * Engine, #70) — e.g. a dragonborn's breath weapon (proficiency-bonus uses, long-rest recovery).
+     * Keeps a race's limited-use feature fully data-driven, no class needed.
+     */
+    private void initializeFeatureResources() {
+        for (io.papermc.jkvttplugin.effect.Feature f : getAllFeatures()) {
+            if (!f.grantsResource()) continue;
+            if (getResource(f.getCostResource()) != null) continue; // already provided (e.g. by class)
+            int max = f.isGrantedResourceByProf() ? getProficiencyBonus() : f.getGrantedResourceMax();
+            if (max <= 0) continue;
+            ClassResource.RecoveryType recovery = parseRecovery(f.getGrantedResourceRecovery());
+            classResources.add(new ClassResource(f.getCostResource(), max, recovery));
+        }
+    }
+
+    private static ClassResource.RecoveryType parseRecovery(String s) {
+        if (s == null) return ClassResource.RecoveryType.LONG_REST;
+        return switch (s.toLowerCase()) {
+            case "short_rest", "short" -> ClassResource.RecoveryType.SHORT_REST;
+            case "dawn" -> ClassResource.RecoveryType.DAWN;
+            case "none" -> ClassResource.RecoveryType.NONE;
+            default -> ClassResource.RecoveryType.LONG_REST;
+        };
     }
 
     private void grantStartingEquipment(CharacterCreationSession session) {
@@ -1239,12 +1278,34 @@ public class CharacterSheet {
         activeEffects.removeIf(e -> e.getSourceId().equalsIgnoreCase(sourceId));
     }
 
-    /** Look up an authored feature by id on this character's main class (Effect Engine, #70). */
+    /** Look up an authored feature by id across this character's class and race (Effect Engine, #70). */
     public io.papermc.jkvttplugin.effect.Feature getFeature(String id) {
-        if (dndClass == null || id == null) return null;
-        for (var f : dndClass.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
+        if (id == null) return null;
+        if (dndClass != null) {
+            for (var f : dndClass.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
+        }
+        if (race != null) {
+            for (var f : race.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
+        }
         return null;
     }
+
+    /** Every authored feature this character has, class then race (for menus/tab-completion). */
+    public List<io.papermc.jkvttplugin.effect.Feature> getAllFeatures() {
+        List<io.papermc.jkvttplugin.effect.Feature> all = new ArrayList<>();
+        if (dndClass != null) all.addAll(dndClass.getFeatures());
+        if (race != null) all.addAll(race.getFeatures());
+        return all;
+    }
+
+    /** The option this character picked for a CUSTOM choice (e.g. draconic_ancestry), or null. */
+    public String getCustomChoice(String choiceId) {
+        return choiceId == null ? null : customChoices.get(choiceId);
+    }
+    public void setCustomChoice(String choiceId, String value) {
+        if (choiceId != null && value != null) customChoices.put(choiceId, value);
+    }
+    public Map<String, String> getCustomChoices() { return customChoices; }
 
     // ---- combat read sites ----
     public boolean resistsDamage(String damageType) {

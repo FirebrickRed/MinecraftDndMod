@@ -50,6 +50,7 @@ public class DndRace {
     private List<String> armorProficiencies = List.of();
     private List<String> toolProficiencies = List.of();
     private List<InnateSpell> innateSpells = List.of();
+    private List<io.papermc.jkvttplugin.effect.Feature> features = List.of();
 
     private Map<String, DndSubRace> subraces;
     private List<ChoiceEntry> playerChoices = List.of();
@@ -222,6 +223,13 @@ public class DndRace {
     }
     public void setInnateSpells(List<InnateSpell> innateSpells) {
         this.innateSpells = innateSpells != null ? List.copyOf(innateSpells) : List.of();
+    }
+
+    public List<io.papermc.jkvttplugin.effect.Feature> getFeatures() {
+        return features;
+    }
+    public void setFeatures(List<io.papermc.jkvttplugin.effect.Feature> features) {
+        this.features = features != null ? List.copyOf(features) : List.of();
     }
 
     public Map<String, DndSubRace> getSubraces() {
@@ -548,6 +556,11 @@ public class DndRace {
 
         public Builder innateSpells(List<InnateSpell> innateSpells) {
             instance.setInnateSpells(innateSpells);
+            return this;
+        }
+
+        public Builder features(List<io.papermc.jkvttplugin.effect.Feature> features) {
+            instance.setFeatures(features);
             return this;
         }
 

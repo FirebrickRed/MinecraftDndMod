@@ -45,9 +45,21 @@ public final class FeatureParser {
 
             String costResource = null;
             int costAmount = 1;
+            int grantedMax = -1;
+            boolean grantedByProf = false;
+            String grantedRecovery = null;
             if (m.get("cost") instanceof Map<?, ?> cost) {
                 costResource = ParseUtil.asString(cost.get("resource"), null);
                 costAmount = ParseUtil.asInt(cost.get("amount"), 1);
+                // A feature may also declare the pool it spends from, so a race can grant its own
+                // limited-use feature in pure YAML: max: <int> | proficiency_bonus, recovery: <type>.
+                Object max = cost.get("max");
+                if (max instanceof String s && s.equalsIgnoreCase("proficiency_bonus")) {
+                    grantedByProf = true;
+                } else if (max != null) {
+                    grantedMax = ParseUtil.asInt(max, -1);
+                }
+                grantedRecovery = ParseUtil.asString(cost.get("recovery"), null);
             }
 
             ActiveEffect apply = null;
@@ -55,9 +67,43 @@ public final class FeatureParser {
                 apply = parseApply(id, name, applyMap);
             }
 
-            out.add(new Feature(id, name, activation, target, costResource, costAmount, apply));
+            FeatureAction action = null;
+            if (m.get("action") instanceof Map<?, ?> actionMap) {
+                action = parseAction(actionMap);
+            }
+
+            out.add(new Feature(id, name, activation, target, costResource, costAmount, apply,
+                    action, grantedMax, grantedByProf, grantedRecovery));
         }
         return out;
+    }
+
+    /** Parses an {@code action:} block (area/save/damage), including per-choice {@code variants}. */
+    private static FeatureAction parseAction(Map<?, ?> a) {
+        String byChoice = ParseUtil.asString(a.get("by_choice"), null);
+        java.util.Map<String, FeatureAction> variants = new java.util.HashMap<>();
+        if (a.get("variants") instanceof Map<?, ?> vs) {
+            for (Map.Entry<?, ?> e : vs.entrySet()) {
+                if (!(e.getValue() instanceof Map<?, ?> vm)) continue;
+                variants.put(FeatureAction.normalizeKey(String.valueOf(e.getKey())), parseActionFields(vm, null, null));
+            }
+        }
+        return parseActionFields(a, byChoice, variants);
+    }
+
+    /** Reads the shape/size/save/damage fields from an action or one of its variant maps. */
+    private static FeatureAction parseActionFields(Map<?, ?> a, String byChoice,
+                                                   java.util.Map<String, FeatureAction> variants) {
+        String shape = ParseUtil.asString(a.get("shape"), null);
+        double size = a.get("size") == null ? 0 : ParseUtil.asInt(a.get("size"), 0);
+        String dcAbility = ParseUtil.asString(a.get("dc_ability"), null);
+        String saveAbility = ParseUtil.asString(a.get("save"), null);
+        String saveEffect = ParseUtil.asString(a.get("save_effect"), null);
+        String damage = ParseUtil.asString(a.get("damage"), null);
+        String damageType = ParseUtil.asString(a.get("damage_type"), null);
+        String targets = ParseUtil.asString(a.get("targets"), null);
+        return new FeatureAction(shape, size, dcAbility, saveAbility, saveEffect, damage, damageType,
+                targets, byChoice, variants);
     }
 
     private static ActiveEffect parseApply(String featureId, String featureName, Map<?, ?> apply) {

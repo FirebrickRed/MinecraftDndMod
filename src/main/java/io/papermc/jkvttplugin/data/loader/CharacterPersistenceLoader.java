@@ -309,6 +309,12 @@ public class CharacterPersistenceLoader {
             data.put("equippedShield", sheet.getEquippedShield().getId());
         }
 
+        // CUSTOM choice selections (e.g. draconic_ancestry) so feature actions still resolve their
+        // per-choice variant after a restart (breath weapon, #70).
+        if (!sheet.getCustomChoices().isEmpty()) {
+            data.put("customChoices", new LinkedHashMap<>(sheet.getCustomChoices()));
+        }
+
         return data;
     }
 
@@ -386,6 +392,15 @@ public class CharacterPersistenceLoader {
                     if (entry.getKey() instanceof String name && entry.getValue() instanceof Number current) {
                         ClassResource resource = sheet.getResource(name);
                         if (resource != null) resource.setCurrent(current.intValue());
+                    }
+                }
+            }
+
+            // Restore CUSTOM choice selections (#70) so feature actions resolve their variant.
+            if (data.get("customChoices") instanceof Map<?, ?> ccMap) {
+                for (Map.Entry<?, ?> entry : ccMap.entrySet()) {
+                    if (entry.getKey() instanceof String id && entry.getValue() instanceof String value) {
+                        sheet.setCustomChoice(id, value);
                     }
                 }
             }

@@ -1432,6 +1432,40 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        // Action path (#70): project the area, force saves, deal damage (e.g. a breath weapon).
+        if (feature.hasAction()) {
+            io.papermc.jkvttplugin.effect.FeatureAction spec = feature.getAction();
+            if (spec.getByChoice() != null) {
+                String picked = sheet.getCustomChoice(spec.getByChoice());
+                if (picked == null) {
+                    player.sendMessage(Component.text(feature.getName() + " needs a "
+                            + spec.getByChoice().replace('_', ' ') + " choice this character never made.", NamedTextColor.RED));
+                    return;
+                }
+                spec = spec.resolveFor(picked);
+            }
+            if (!spec.isPlayable()) {
+                player.sendMessage(Component.text(feature.getName() + " has no usable area/save — check its YAML.", NamedTextColor.RED));
+                return;
+            }
+            io.papermc.jkvttplugin.data.model.enums.Ability saveAbility =
+                    io.papermc.jkvttplugin.data.model.enums.Ability.fromString(spec.getSaveAbility());
+            io.papermc.jkvttplugin.data.model.enums.Ability dcAbility =
+                    io.papermc.jkvttplugin.data.model.enums.Ability.fromString(spec.getDcAbility());
+            if (saveAbility == null || dcAbility == null) {
+                player.sendMessage(Component.text(feature.getName() + " has an invalid save/dc ability.", NamedTextColor.RED));
+                return;
+            }
+            int dc = 8 + sheet.getProficiencyBonus() + sheet.getModifier(dcAbility);
+            String label = feature.getName()
+                    + (spec.getDamageType() != null ? " (" + spec.getDamageType() + ")" : "");
+            session.broadcast(Component.text(actor.getDisplayName() + " uses " + feature.getName() + "!", NamedTextColor.GOLD));
+            SpellCastHandler.castAreaSave(actor, session, player, label, spec.getShape(), spec.getSizeFeet(),
+                    spec.getTargets(), saveAbility, dc, spec.getDamage(), spec.getDamageType(), spec.getSaveEffect());
+            if (actor.getTurnState() != null) actor.getTurnState().useAction();
+            return;
+        }
+
         session.broadcast(Component.text(actor.getDisplayName() + " uses " + feature.getName() + "!", NamedTextColor.GOLD));
     }
 
@@ -2344,7 +2378,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
                 "reveal", "hide", "action", "bonus", "movement", "condition", "cast", "save", "attack",
-                "reactions", "damage", "override", "heal", "temphp", "deathsave"));
+                "reactions", "damage", "override", "heal", "temphp", "deathsave", "use"));
             return filterCompletions(completions, args[0]);
         }
 
@@ -2395,6 +2429,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     if (session != null) {
                         for (Combatant c : session.getCombatants()) {
                             completions.add(c.getDisplayName());
+                        }
+                    }
+                }
+                case "use" -> {
+                    // Suggest the current combatant's activatable features by id (Rage, Breath Weapon, …).
+                    Combatant cur = session != null ? session.getCurrentCombatant() : null;
+                    if (cur != null && cur.getCharacterSheet() != null) {
+                        for (io.papermc.jkvttplugin.effect.Feature f : cur.getCharacterSheet().getAllFeatures()) {
+                            if (f.getActivation() != null) completions.add(f.getId());
                         }
                     }
                 }
