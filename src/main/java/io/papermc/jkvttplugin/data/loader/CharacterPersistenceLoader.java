@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.ClassResource;
+import io.papermc.jkvttplugin.data.model.DndArmor;
 import io.papermc.jkvttplugin.util.Util;
 import org.bukkit.plugin.Plugin;
 import org.yaml.snakeyaml.DumperOptions;
@@ -272,9 +273,28 @@ public class CharacterPersistenceLoader {
             data.put("currentSpellSlots", currentSpellSlots);
         }
 
-        // ToDo: Save equipped armor/shield (Issue #31)
-        // Currently equipped armor is lost on reload, causing wrong AC until re-equipped
-        // Need to add: data.put("equippedArmor", sheet.getEquippedArmor().getId());
+        // Inventory items (#31): save item id + quantity; regenerated from the loaders on load.
+        if (sheet.getEquipment() != null && !sheet.getEquipment().isEmpty()) {
+            List<Map<String, Object>> items = new ArrayList<>();
+            for (org.bukkit.inventory.ItemStack stack : sheet.getEquipment()) {
+                if (stack == null) continue;
+                String itemId = io.papermc.jkvttplugin.util.ItemUtil.getItemId(stack);
+                if (itemId == null || itemId.isBlank()) continue; // untagged item — can't be regenerated
+                Map<String, Object> entry = new LinkedHashMap<>();
+                entry.put("id", itemId);
+                entry.put("quantity", stack.getAmount());
+                items.add(entry);
+            }
+            if (!items.isEmpty()) data.put("equipment", items);
+        }
+
+        // Equipped armor/shield (#31): save ids so AC is correct on load without re-equipping.
+        if (sheet.getEquippedArmor() != null) {
+            data.put("equippedArmor", sheet.getEquippedArmor().getId());
+        }
+        if (sheet.getEquippedShield() != null) {
+            data.put("equippedShield", sheet.getEquippedShield().getId());
+        }
 
         return data;
     }
@@ -366,6 +386,27 @@ public class CharacterPersistenceLoader {
                         sheet.setSpellSlotsRemaining(level, remaining.intValue());
                     }
                 }
+            }
+
+            // Restore inventory items (#31). loadFromData does not grant starting equipment, so the
+            // equipment list is empty here — just re-add the saved items by id + quantity.
+            if (data.get("equipment") instanceof List<?> itemList) {
+                for (Object element : itemList) {
+                    if (element instanceof Map<?, ?> entry && entry.get("id") instanceof String itemId) {
+                        int quantity = parseIntOrDefault(entry.get("quantity"), 1);
+                        sheet.addEquipmentItem(itemId, quantity);
+                    }
+                }
+            }
+
+            // Re-equip saved armor/shield (#31) so AC is correct on load.
+            if (data.get("equippedArmor") instanceof String armorId) {
+                DndArmor armor = ArmorLoader.getArmor(armorId);
+                if (armor != null) sheet.equipArmor(armor);
+            }
+            if (data.get("equippedShield") instanceof String shieldId) {
+                DndArmor shield = ArmorLoader.getArmor(shieldId);
+                if (shield != null) sheet.equipShield(shield);
             }
 
             return sheet;

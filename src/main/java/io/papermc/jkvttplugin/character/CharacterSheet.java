@@ -754,6 +754,26 @@ public class CharacterSheet {
     public DndArmor getEquippedShield() {
         return equippedShield;
     }
+    public void equipShield(DndArmor shield) {
+        this.equippedShield = shield;
+        calculateArmorClass();
+    }
+    public void unequipShield() {
+        this.equippedShield = null;
+        calculateArmorClass();
+    }
+
+    /**
+     * Regenerate an inventory item from its id (via the loaders) and add it to this character's
+     * equipment at the given quantity. Used when restoring saved equipment (#31).
+     */
+    public void addEquipmentItem(String itemId, int quantity) {
+        ItemStack item = createItemFromId(itemId);
+        if (item != null) {
+            item.setAmount(Math.max(1, quantity));
+            equipment.add(item);
+        }
+    }
 
 
     // ========== GETTERS ==========
