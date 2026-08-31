@@ -59,7 +59,7 @@ public class ViewSheetCommand implements CommandExecutor, TabCompleter {
         // /viewsheet player <playerName>
         if (args[0].equalsIgnoreCase("player")) {
             if (args.length < 2) {
-                player.sendMessage(Component.text("Usage: /viewsheet player <playerName>", NamedTextColor.RED));
+                player.sendMessage(Component.text("Usage: /character view player <playerName>", NamedTextColor.RED));
                 return true;
             }
             Player target = Bukkit.getPlayerExact(args[1]);
