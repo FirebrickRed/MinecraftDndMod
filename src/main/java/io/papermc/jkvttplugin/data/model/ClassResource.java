@@ -108,6 +108,14 @@ public class ClassResource {
     }
 
     /**
+     * Sets the current uses directly, clamped to 0..max. Used when restoring saved state (#31),
+     * where max/recovery re-derive from the class but the spent amount must be reapplied.
+     */
+    public void setCurrent(int current) {
+        this.current = Math.max(0, Math.min(max, current));
+    }
+
+    /**
      * Returns a display string for this resource (e.g., "Rage: 2/3").
      */
     public String getDisplayString() {

@@ -167,8 +167,10 @@ public class CharacterSheet {
         sheet.currentHealth = currentHealth;
         sheet.totalHealth = maxHealth;
 
-        // ToDo: Load spell slots from persistence instead of resetting to max (Issue #31)
+        // Spell slots and class resources initialize to full here; the persistence loader reapplies
+        // the saved current/spent values afterward (Issue #31).
         sheet.initializeSpellSlots();
+        sheet.initializeClassResources();
 
         // ToDo: Load equipped armor from persistence (Issue #31)
         // Currently equippedArmor is null on load, so AC will be wrong if player was wearing armor
@@ -1072,6 +1074,15 @@ public class CharacterSheet {
     public int getMaxSpellSlots(int level) {
         if (level < 1 || level > 9) return 0;
         return maxSpellSlots[level - 1];
+    }
+
+    /**
+     * Sets the remaining spell slots for a level, clamped to 0..max. Used when restoring saved
+     * state (#31): initializeSpellSlots() fills to full on load, then the spent amount is reapplied.
+     */
+    public void setSpellSlotsRemaining(int level, int remaining) {
+        if (level < 1 || level > 9) return;
+        spellSlots[level - 1] = Math.max(0, Math.min(maxSpellSlots[level - 1], remaining));
     }
 
     public DndSpell getConcentratingOn() {

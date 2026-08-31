@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.data.loader;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.character.CharacterSheet;
+import io.papermc.jkvttplugin.data.model.ClassResource;
 import io.papermc.jkvttplugin.util.Util;
 import org.bukkit.plugin.Plugin;
 import org.yaml.snakeyaml.DumperOptions;
@@ -249,15 +250,42 @@ public class CharacterPersistenceLoader {
             data.put("knownCantrips", cantripKeys);
         }
 
-        // ToDo: Save spell slot consumption (Issue #31)
-        // Currently spell slots reset to full on every reload
-        // Need to add: data.put("currentSpellSlots", sheet.getCurrentSpellSlots());
+        // Class-resource spent state (#31): max/recovery/icon re-derive from the class on load, so
+        // save only the current uses (keyed by resource name).
+        if (sheet.getClassResources() != null && !sheet.getClassResources().isEmpty()) {
+            Map<String, Integer> resourceCurrent = new LinkedHashMap<>();
+            for (ClassResource resource : sheet.getClassResources()) {
+                resourceCurrent.put(resource.getName(), resource.getCurrent());
+            }
+            data.put("classResources", resourceCurrent);
+        }
+
+        // Current (remaining) spell slots per level (#31): max re-derives on load, so save only what's
+        // left. Keyed by spell level (1-9); levels with no slots are omitted.
+        Map<Integer, Integer> currentSpellSlots = new LinkedHashMap<>();
+        for (int level = 1; level <= 9; level++) {
+            if (sheet.getMaxSpellSlots(level) > 0) {
+                currentSpellSlots.put(level, sheet.getSpellSlotsRemaining(level));
+            }
+        }
+        if (!currentSpellSlots.isEmpty()) {
+            data.put("currentSpellSlots", currentSpellSlots);
+        }
 
         // ToDo: Save equipped armor/shield (Issue #31)
         // Currently equipped armor is lost on reload, causing wrong AC until re-equipped
         // Need to add: data.put("equippedArmor", sheet.getEquippedArmor().getId());
 
         return data;
+    }
+
+    /** Parse a YAML map key (Integer or String) to an int, or return def if unparseable. */
+    private static int parseIntOrDefault(Object key, int def) {
+        if (key instanceof Number n) return n.intValue();
+        if (key instanceof String s) {
+            try { return Integer.parseInt(s.trim()); } catch (NumberFormatException ignored) {}
+        }
+        return def;
     }
 
     private static CharacterSheet deserializeCharacterSheet(Map<String, Object> data) {
@@ -316,7 +344,31 @@ public class CharacterPersistenceLoader {
             int maxHealth = (Integer) data.getOrDefault("maxHealth", 1);
             int armorClass = (Integer) data.getOrDefault("armorClass", 10);
 
-            return CharacterSheet.loadFromData(characterId, playerId, characterName, raceName, subraceName, className, subclassName, backgroundName, abilities, skillProficiencies, knownSpells, knownCantrips, currentHealth, maxHealth, armorClass);
+            CharacterSheet sheet = CharacterSheet.loadFromData(characterId, playerId, characterName, raceName, subraceName, className, subclassName, backgroundName, abilities, skillProficiencies, knownSpells, knownCantrips, currentHealth, maxHealth, armorClass);
+
+            // Restore class-resource spent state (#31). loadFromData initialized resources to full;
+            // reapply the saved current uses by name (unknown/renamed resources are ignored).
+            if (data.get("classResources") instanceof Map<?, ?> resMap) {
+                for (Map.Entry<?, ?> entry : resMap.entrySet()) {
+                    if (entry.getKey() instanceof String name && entry.getValue() instanceof Number current) {
+                        ClassResource resource = sheet.getResource(name);
+                        if (resource != null) resource.setCurrent(current.intValue());
+                    }
+                }
+            }
+
+            // Restore current (remaining) spell slots (#31). Keys may load as Integer or String.
+            if (data.get("currentSpellSlots") instanceof Map<?, ?> slotMap) {
+                for (Map.Entry<?, ?> entry : slotMap.entrySet()) {
+                    int level = (entry.getKey() instanceof Number n) ? n.intValue()
+                            : parseIntOrDefault(entry.getKey(), -1);
+                    if (level >= 1 && entry.getValue() instanceof Number remaining) {
+                        sheet.setSpellSlotsRemaining(level, remaining.intValue());
+                    }
+                }
+            }
+
+            return sheet;
 
             // You could validate the loaded data against your loaders here if needed:
             // - Check if the race/class/background still exists
