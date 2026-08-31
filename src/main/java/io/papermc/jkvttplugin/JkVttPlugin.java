@@ -91,6 +91,12 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getScheduler().runTask(this, () -> {
             int restored = io.papermc.jkvttplugin.commands.DmEntityCommand.restoreAll();
             if (restored > 0) getLogger().info("Restored " + restored + " saved D&D entities.");
+
+            // Restore any combat that was active at crash/shutdown (#105) — after entities, so
+            // entity combatants can re-link to their restored instances. A clean /combat finished
+            // deletes its file, so anything left here means combat was interrupted.
+            int combats = io.papermc.jkvttplugin.combat.CombatPersistence.restoreAll();
+            if (combats > 0) getLogger().info("Restored " + combats + " interrupted combat session(s).");
         });
 
         // Periodic auto-save (Issue #31): the clean-shutdown save covers normal restarts, but a
@@ -107,6 +113,11 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onPlayerJoin(PlayerJoinEvent event) {
+        // If this player is mid-combat in a restored session (#105), re-show the combat scoreboard.
+        // A tick later so it isn't clobbered by other join-time scoreboard handling.
+        Bukkit.getScheduler().runTask(this, () ->
+                io.papermc.jkvttplugin.combat.CombatSession.reattachScoreboardOnJoin(event.getPlayer()));
+
         // Alpha testing welcome message
         event.getPlayer().sendMessage(Component.empty());
         event.getPlayer().sendMessage(

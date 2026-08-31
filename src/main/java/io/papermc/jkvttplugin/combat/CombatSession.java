@@ -81,6 +81,34 @@ public class CombatSession {
         initializeScoreboard();
     }
 
+    /**
+     * Reconstruct a session from saved data after a crash (Issue #105). Restores the combat
+     * structure (round, turn index, setup flag, combatants with their initiative/flags) without
+     * re-rolling initiative or renumbering names. Re-registers the session and its player links,
+     * and rebuilds the scoreboard. The turn-in-progress (TurnState) is not restored.
+     */
+    public CombatSession(UUID sessionId, UUID dmId, int roundNumber, int currentTurnIndex,
+                         boolean isSetupPhase, List<Combatant> restoredCombatants) {
+        this.sessionId = sessionId;
+        this.dmId = dmId;
+        this.combatants = new ArrayList<>(restoredCombatants);
+        this.nameCounters = new HashMap<>();
+        this.roundNumber = roundNumber;
+        this.isSetupPhase = isSetupPhase;
+        this.isActive = true;
+        // Clamp the turn index in case the saved list and index somehow disagree.
+        this.currentTurnIndex = (combatants.isEmpty() || currentTurnIndex < 0
+                || currentTurnIndex >= combatants.size()) ? 0 : currentTurnIndex;
+
+        ACTIVE_SESSIONS.put(sessionId, this);
+        for (Combatant c : combatants) {
+            if (c.isPlayer()) PLAYER_SESSIONS.put(c.getId(), this);
+        }
+
+        initializeScoreboard();
+        updateScoreboard();
+    }
+
     // ==================== STATIC METHODS ====================
 
     /**
@@ -277,6 +305,7 @@ public class CombatSession {
         currentTurnIndex = 0;
 
         updateScoreboard();
+        CombatPersistence.save(this); // combat left setup — snapshot so a crash keeps initiative (#105)
     }
 
     /**
@@ -327,6 +356,7 @@ public class CombatSession {
 
         updateScoreboard();
         promptDeathSaveIfNeeded(getCurrentCombatant());
+        CombatPersistence.save(this); // combat started — snapshot for crash recovery (#105)
     }
 
     /**
@@ -400,6 +430,7 @@ public class CombatSession {
 
         updateScoreboard();
         promptDeathSaveIfNeeded(getCurrentCombatant());
+        CombatPersistence.save(this); // crash-recovery snapshot on each turn advance (#105)
         return getCurrentCombatant();
     }
 
@@ -674,6 +705,7 @@ public class CombatSession {
 
         combatants.clear();
         ACTIVE_SESSIONS.remove(sessionId);
+        CombatPersistence.delete(sessionId); // clean end — drop the crash-recovery file (#105)
     }
 
     // ==================== SCOREBOARD ====================
@@ -877,6 +909,24 @@ public class CombatSession {
             suffix.append("§f");  // White color (invisible extra codes)
         }
         return suffix.toString();
+    }
+
+    /**
+     * Re-show the combat scoreboard to a player who (re)joins mid-combat — needed after a restored
+     * session (#105), since the player was offline when the session was rebuilt. No-op if they're
+     * not a participant or DM of an active session.
+     */
+    public static void reattachScoreboardOnJoin(Player player) {
+        UUID pid = player.getUniqueId();
+        CombatSession session = PLAYER_SESSIONS.get(pid);
+        if (session == null) {
+            for (CombatSession s : ACTIVE_SESSIONS.values()) {
+                if (s.dmId.equals(pid)) { session = s; break; }
+            }
+        }
+        if (session != null && session.scoreboard != null) {
+            player.setScoreboard(session.scoreboard);
+        }
     }
 
     private void applyScoreboardToParticipants() {

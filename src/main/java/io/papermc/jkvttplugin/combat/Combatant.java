@@ -103,6 +103,33 @@ public class Combatant {
         this.isStabilized = false;
     }
 
+    /**
+     * Reconstruct a combatant from saved data after a crash (Issue #105). No live Player/entity is
+     * required: the id + type are enough, and the live references resolve lazily (getPlayer/
+     * getCharacterSheet/getEntityInstance) once the player rejoins or the entity is restored (#89).
+     * TurnState is intentionally not restored — the turn-in-progress resets fresh.
+     */
+    public static Combatant fromSavedData(UUID id, CombatantType type, String displayName, String baseName,
+            int initiative, int initiativeBonus, boolean surprised, boolean hidden, boolean unconscious,
+            boolean dead, java.util.Collection<String> conditions, int deathSaveSuccesses,
+            int deathSaveFailures, boolean stabilized, boolean reactionAvailable) {
+        Combatant c = new Combatant(id, type);
+        c.displayName = displayName;
+        c.baseName = baseName;
+        c.initiative = initiative;
+        c.initiativeBonus = initiativeBonus;
+        c.isSurprised = surprised;
+        c.isHidden = hidden;
+        c.isUnconscious = unconscious;
+        c.isDead = dead;
+        if (conditions != null) c.conditions.addAll(conditions);
+        c.deathSaveSuccesses = deathSaveSuccesses;
+        c.deathSaveFailures = deathSaveFailures;
+        c.isStabilized = stabilized;
+        c.reactionAvailable = reactionAvailable;
+        return c;
+    }
+
     // ==================== INITIATIVE CALCULATION ====================
 
     /**
