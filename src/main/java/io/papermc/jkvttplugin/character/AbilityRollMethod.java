@@ -10,7 +10,8 @@ import java.util.Random;
 public enum AbilityRollMethod {
     FOUR_D6_DROP_LOWEST("4d6_drop_lowest", "4d6 drop lowest"),
     THREE_D6("3d6", "3d6 straight"),
-    ONE_D20("1d20", "1d20 per ability");
+    ONE_D20("1d20", "1d20 per ability"),
+    TWO_D20_DROP_LOWEST("2d20_drop_lowest", "2d20 keep highest");
 
     private static final Random RNG = new Random();
 
@@ -64,6 +65,13 @@ public enum AbilityRollMethod {
             case ONE_D20 -> {
                 int v = RNG.nextInt(20) + 1;
                 yield new AbilityRoll(v, "d20=" + v);
+            }
+            case TWO_D20_DROP_LOWEST -> {
+                int a = RNG.nextInt(20) + 1, b = RNG.nextInt(20) + 1;
+                int high = Math.max(a, b), low = Math.min(a, b);
+                // Show both, the dropped (lower) one in parentheses.
+                String detail = (low == a) ? "(" + a + ")," + b : a + ",(" + b + ")";
+                yield new AbilityRoll(high, detail);
             }
         };
     }
