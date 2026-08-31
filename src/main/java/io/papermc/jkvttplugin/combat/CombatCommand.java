@@ -449,7 +449,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                         .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds your " + bonusStr + " (DEX).")))));
         player.sendMessage(Component.text("   or ", NamedTextColor.GRAY)
                 .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.runCommand("/combat initiative --roll 1d20"))
+                        .clickEvent(ClickEvent.suggestCommand("/combat initiative --roll 1d20"))
                         .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20 and adds " + bonusStr + ".")))));
     }
 

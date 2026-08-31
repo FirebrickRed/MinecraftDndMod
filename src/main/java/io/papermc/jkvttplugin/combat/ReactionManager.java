@@ -144,7 +144,7 @@ public final class ReactionManager {
 
     private static Component passButton(Combatant reactor) {
         return Component.text("[pass]", NamedTextColor.GRAY, TextDecoration.UNDERLINED)
-                .clickEvent(ClickEvent.runCommand("/combat reactions " + reactor.getDisplayName() + " pass"))
+                .clickEvent(ClickEvent.suggestCommand("/combat reactions " + reactor.getDisplayName() + " pass"))
                 .hoverEvent(HoverEvent.showText(Component.text("Hold your reaction.")));
     }
 

@@ -511,7 +511,7 @@ public class CombatSession {
 
         sendToDM(Component.text("⚑ " + reason + " ", NamedTextColor.GOLD)
                 .append(Component.text("[click to finish combat]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.runCommand("/combat finished"))));
+                        .clickEvent(ClickEvent.suggestCommand("/combat finished"))));
         return true;
     }
 
