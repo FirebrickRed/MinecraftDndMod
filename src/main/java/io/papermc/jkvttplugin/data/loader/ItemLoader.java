@@ -1,7 +1,9 @@
 package io.papermc.jkvttplugin.data.loader;
 
 import io.papermc.jkvttplugin.data.loader.parser.ShopParser;
+import io.papermc.jkvttplugin.data.loader.util.ParseUtil;
 import io.papermc.jkvttplugin.data.model.DndItem;
+import io.papermc.jkvttplugin.util.TagRegistry;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -45,6 +47,23 @@ public class ItemLoader {
             }
         }
         LOGGER.info("Loaded " + loadedItems.size() + " items.");
+        installItemTags();
+    }
+
+    /**
+     * Aggregate item-grouping tags declared in item YAML ({@code tags: [gaming_set, ...]}) into the
+     * TagRegistry (#54), so groupings are data-driven — a homebrew item joins a tag just by listing
+     * it. Runs on every load/reload.
+     */
+    private static void installItemTags() {
+        Map<String, java.util.List<String>> tags = new HashMap<>();
+        for (Map.Entry<String, DndItem> entry : loadedItems.entrySet()) {
+            String id = entry.getKey(); // normalized lookup key
+            for (String tag : entry.getValue().getTags()) {
+                tags.computeIfAbsent(tag, k -> new java.util.ArrayList<>()).add(id);
+            }
+        }
+        TagRegistry.merge(tags);
     }
 
     private static DndItem parseItem(String id, Map<?, ?> data) {
@@ -57,6 +76,7 @@ public class ItemLoader {
         item.setMaterial((String) data.get("material"));         // vanilla Minecraft item
         item.setCustomModel((String) data.get("custom_model"));  // optional resource-pack model
         item.setCost(ShopParser.parseCost(data.get("cost"), id));
+        item.setTags(ParseUtil.normalizeStringList(data.get("tags"))); // item-grouping tags (#54)
         return item;
     }
 

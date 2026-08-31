@@ -1,0 +1,25 @@
+# Gaming sets — grouped by the `gaming_set` tag (#54). Anything with `tags: [gaming_set]` is offered
+# wherever a "gaming set" equipment/tool choice appears (e.g. the Noble background). Add a homebrew
+# set the same way — just give it the tag.
+
+dice_set:
+  name: "Dice Set"
+  type: "gaming_set"
+  description: "A set of dice for games of chance."
+  material: "bone"
+  tags:
+    - gaming_set
+  cost:
+    amount: 1
+    currency: silver
+
+playing_card_set:
+  name: "Playing Card Set"
+  type: "gaming_set"
+  description: "A deck of cards for games of chance and skill."
+  material: "paper"
+  tags:
+    - gaming_set
+  cost:
+    amount: 5
+    currency: silver

@@ -22,6 +22,7 @@ public class DndItem {
     private String material;     // YAML material: vanilla Minecraft item to render as
     private String customModel;  // YAML custom_model: optional resource-pack model (opt-in)
     private Cost cost;
+    private List<String> tags = new ArrayList<>(); // YAML tags: item-groupings (e.g. gaming_set) (#54)
 
     public String getId() {
         return this.id;
@@ -76,6 +77,13 @@ public class DndItem {
     }
     public void setCost(Cost cost) {
         this.cost = cost;
+    }
+
+    public List<String> getTags() {
+        return this.tags;
+    }
+    public void setTags(List<String> tags) {
+        this.tags = tags != null ? tags : new ArrayList<>();
     }
 
     public boolean isSpellcastingFocus() {

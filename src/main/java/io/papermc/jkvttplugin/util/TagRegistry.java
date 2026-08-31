@@ -46,9 +46,8 @@ public final class TagRegistry {
 
     // ----- internals -----
     private static Map<String, List<String>> defaultTags() {
-        Map<String, List<String>> m = new HashMap<>();
-        // Non-weapon groupings that can't be derived from item fields yet.
-        m.put(Util.normalize("gaming_set"), List.of("dice_set", "playing_card_set"));
-        return m;
+        // Nothing hardcoded: weapon tags derive from weapon category/type (WeaponLoader) and item
+        // groupings derive from each item's `tags:` (ItemLoader). Everything is data-driven (#54).
+        return new HashMap<>();
     }
 }
