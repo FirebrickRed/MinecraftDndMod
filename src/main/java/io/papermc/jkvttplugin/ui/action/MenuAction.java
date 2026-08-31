@@ -23,6 +23,7 @@ public enum MenuAction {
     // ===== Single-pane creation (Issue #121) =====
     SWITCH_CREATION_TAB,    // Switch the active category tab in the single-pane creation menu
     ADJUST_ABILITY,         // Left-click +1 / right-click -1 on an ability
+    ROLL_ABILITY_REFERENCE, // Roll a reference ability set (#59): left = reroll, right = switch method
     OPEN_NAME_ANVIL,        // Open the name-entry step (anvil)
     OPEN_NAME_CHAT,         // Name-entry fallback: type in chat
 

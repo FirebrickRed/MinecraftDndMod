@@ -1,7 +1,11 @@
 package io.papermc.jkvttplugin.config;
 
+import io.papermc.jkvttplugin.character.AbilityRollMethod;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Typed access to config.yml (Issue #142). For now it only carries the roll mode, but this is the
@@ -19,6 +23,7 @@ public final class PluginConfig {
     private static int ritualCombatRounds = 10;
     private static RitualInterrupt ritualInterrupt = RitualInterrupt.CONCENTRATION_CHECK;
     private static int ritualInterruptDc = 0; // 0 = dynamic: max(10, half the damage taken)
+    private static List<AbilityRollMethod> abilityRollMethods = List.of(AbilityRollMethod.values());
 
     private PluginConfig() {}
 
@@ -35,6 +40,19 @@ public final class PluginConfig {
             default -> RitualInterrupt.CONCENTRATION_CHECK;
         };
         ritualInterruptDc = Math.max(0, cfg.getInt("rituals.interrupt_dc", 0));
+
+        // Ability roll-reference methods (#59). Absent key → offer all methods; present but empty →
+        // the DM has turned the roll helper off. Unknown/duplicate entries are ignored.
+        if (!cfg.contains("abilities.roll_methods")) {
+            abilityRollMethods = List.of(AbilityRollMethod.values());
+        } else {
+            List<AbilityRollMethod> methods = new ArrayList<>();
+            for (String key : cfg.getStringList("abilities.roll_methods")) {
+                AbilityRollMethod m = AbilityRollMethod.fromKey(key);
+                if (m != null && !methods.contains(m)) methods.add(m);
+            }
+            abilityRollMethods = methods; // may be empty = helper disabled
+        }
     }
 
     public static RollMode getRollMode() { return rollMode; }
@@ -47,4 +65,7 @@ public final class PluginConfig {
     public static RitualInterrupt getRitualInterrupt() { return ritualInterrupt; }
     /** Fixed concentration DC for ritual interruption, or 0 to use the dynamic max(10, half damage). */
     public static int getRitualInterruptDc() { return ritualInterruptDc; }
+
+    /** Ability roll-reference methods to offer in creation (#59); empty means the helper is off. */
+    public static List<AbilityRollMethod> getAbilityRollMethods() { return abilityRollMethods; }
 }

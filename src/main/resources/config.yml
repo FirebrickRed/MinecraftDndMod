@@ -21,3 +21,15 @@ rituals:
   # Concentration DC used by concentration_check. 0 = the 5e default of max(10, half the damage).
   # Set a fixed number (e.g. 10) to pin a "deep concentration" DC for a specific table/encounter.
   interrupt_dc: 0
+
+# Character-creation options.
+abilities:
+  # Ability-score roll helper on the creation Abilities tab (#59). REFERENCE ONLY — the button
+  # rolls a set of six and shows the numbers so you can enter them yourself; nothing is auto-set.
+  # Left-click rerolls; right-click switches method (only when more than one is listed).
+  # Options: 4d6_drop_lowest (heroic), 3d6 (classic), 1d20 (wild house rule).
+  # List just one to lock the method (no toggle), or leave the list empty to hide the helper.
+  roll_methods:
+    - 4d6_drop_lowest
+    - 3d6
+    - 1d20

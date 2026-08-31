@@ -24,6 +24,10 @@ public class CharacterCreationSession {
 
     private EnumMap<Ability, Integer> abilityScores = new EnumMap<>(Ability.class);
     private boolean abilityAllocationVisited = false;
+    // Ability roll-reference helper (#59): the currently selected roll method and the last rolled
+    // set. Reference only — never applied to abilityScores.
+    private int abilityRollMethodIndex = 0;
+    private java.util.List<AbilityRollMethod.AbilityRoll> abilityRolls; // null until first roll
 
     // Transient UI state for the single-pane creation menu (Issue #121) — not persisted
     private String activeCreationTab = "race";
@@ -269,6 +273,12 @@ public class CharacterCreationSession {
     public void markAbilityAllocationVisited() {
         this.abilityAllocationVisited = true;
     }
+
+    // Ability roll-reference helper (#59).
+    public int getAbilityRollMethodIndex() { return abilityRollMethodIndex; }
+    public void setAbilityRollMethodIndex(int index) { this.abilityRollMethodIndex = Math.max(0, index); }
+    public java.util.List<AbilityRollMethod.AbilityRoll> getAbilityRolls() { return abilityRolls; }
+    public void setAbilityRolls(java.util.List<AbilityRollMethod.AbilityRoll> rolls) { this.abilityRolls = rolls; }
 
     public String getActiveCreationTab() {
         return activeCreationTab == null ? "race" : activeCreationTab;

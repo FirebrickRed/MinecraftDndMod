@@ -111,6 +111,28 @@ public class CharacterCreationHandler implements MenuClickHandler {
                 CharacterCreationMenu.open(player, sessionId);
             }
 
+            case ROLL_ABILITY_REFERENCE -> {
+                // Reference-only roll helper (#59): left-click rerolls, right-click switches method
+                // (when more than one is configured). Never touches the actual ability scores.
+                java.util.List<io.papermc.jkvttplugin.character.AbilityRollMethod> methods =
+                        io.papermc.jkvttplugin.config.PluginConfig.getAbilityRollMethods();
+                if (!methods.isEmpty()) {
+                    int idx = session.getAbilityRollMethodIndex();
+                    if (clickType.isRightClick() && methods.size() > 1) {
+                        idx = (idx + 1) % methods.size();
+                    }
+                    if (idx >= methods.size()) idx = 0;
+                    session.setAbilityRollMethodIndex(idx);
+
+                    io.papermc.jkvttplugin.character.AbilityRollMethod method = methods.get(idx);
+                    java.util.List<io.papermc.jkvttplugin.character.AbilityRollMethod.AbilityRoll> rolls =
+                            new java.util.ArrayList<>();
+                    for (int i = 0; i < 6; i++) rolls.add(method.rollOne());
+                    session.setAbilityRolls(rolls);
+                }
+                CharacterCreationMenu.open(player, sessionId);
+            }
+
             // Racial ability-bonus allocation — inline (Phase 2).
             case SELECT_RACIAL_BONUS_DISTRIBUTION -> {
                 session.setRacialBonusDistribution(payload);

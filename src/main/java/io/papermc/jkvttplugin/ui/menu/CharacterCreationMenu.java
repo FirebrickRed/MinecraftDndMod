@@ -296,6 +296,47 @@ public class CharacterCreationMenu {
             inv.setItem(16, hint);
         }
 
+        // Ability roll-reference helper (#59) — rolls a set of six and shows them so the player can
+        // enter their own scores; it never assigns anything. Hidden if the DM cleared the methods.
+        java.util.List<io.papermc.jkvttplugin.character.AbilityRollMethod> rollMethods =
+                io.papermc.jkvttplugin.config.PluginConfig.getAbilityRollMethods();
+        if (!rollMethods.isEmpty()) {
+            int idx = Math.min(session.getAbilityRollMethodIndex(), rollMethods.size() - 1);
+            io.papermc.jkvttplugin.character.AbilityRollMethod method = rollMethods.get(idx);
+
+            List<Component> rlore = new ArrayList<>();
+            rlore.add(Component.text("Reference only — roll for ideas, then", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            rlore.add(Component.text("set your scores with +/- yourself.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            rlore.add(Component.empty());
+            rlore.add(Component.text("Method: " + method.getDisplay(), NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+
+            java.util.List<io.papermc.jkvttplugin.character.AbilityRollMethod.AbilityRoll> rolls = session.getAbilityRolls();
+            if (rolls == null || rolls.isEmpty()) {
+                rlore.add(Component.text("Left-click to roll.", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            } else {
+                List<Integer> totals = new ArrayList<>();
+                for (var r : rolls) totals.add(r.total());
+                totals.sort(java.util.Collections.reverseOrder());
+                StringBuilder sb = new StringBuilder();
+                for (int t : totals) { if (sb.length() > 0) sb.append(", "); sb.append(t); }
+                rlore.add(Component.text("Rolled: " + sb, NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false));
+                for (var r : rolls) {
+                    rlore.add(Component.text("  " + r.detail() + " → " + r.total(), NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
+                }
+                rlore.add(Component.empty());
+                rlore.add(Component.text("Left-click: reroll", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            }
+            if (rollMethods.size() > 1) {
+                rlore.add(Component.text("Right-click: switch method", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            }
+
+            ItemStack rollBtn = plain(Material.RABBIT_FOOT,
+                    Component.text("Roll ability scores", NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
+            rollBtn.editMeta(m -> m.lore(rlore));
+            ItemUtil.tagAction(rollBtn, MenuAction.ROLL_ABILITY_REFERENCE, "");
+            inv.setItem(25, rollBtn);
+        }
+
         // Inline racial ability-bonus allocation (races with a flexible bonus — e.g. plasmoid, half-elf).
         DndRace race = session.getSelectedRace() == null ? null : RaceLoader.getRace(session.getSelectedRace());
         if (race != null && race.getAbilityScoreChoice() != null) {
