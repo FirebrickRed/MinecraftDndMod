@@ -1,0 +1,54 @@
+# Wood Woad — converted from the legacy npcs.yml (old format)
+
+id: woodwoad
+name: "Wood Woad"
+
+creature_type: plant
+size: medium
+
+hit_points: 75
+armor_class: 18
+speed: 30
+
+abilities:
+  strength: 18
+  dexterity: 12
+  constitution: 16
+  intelligence: 10
+  wisdom: 13
+  charisma: 8
+
+attacks:
+  # Multiattack: the wood woad makes two club attacks (run the attack twice).
+  # The 4d4 already includes the Magic Club's +3d4 (see traits below).
+  - name: "Club"
+    to_hit: 7
+    damage: "4d4+4"
+    damage_type: "bludgeoning"
+    reach: "5 ft"
+
+dm_notes: |
+  CR 5 (XP 1,800; PB +3). Multiattack: two club attacks.
+
+  Skills: Athletics +7, Perception +4, Stealth +4
+  Damage Vulnerabilities: fire
+  Damage Resistances: bludgeoning, piercing
+  Condition Immunities: charmed, frightened
+  Senses: darkvision 60 ft, passive Perception 14
+  Languages: Sylvan
+
+  Traits:
+   - Magic Club: In the wood woad's hand, its club is magical and deals 7 (3d4) extra
+     damage (already included in the Club attack above).
+   - Plant Camouflage: Advantage on Dexterity (Stealth) checks in terrain with ample
+     obscuring plant life.
+   - Regeneration: Regains 10 HP at the start of its turn if in contact with the ground.
+     If it takes fire damage, this trait doesn't function at the start of its next turn.
+     It dies only if it starts its turn with 0 HP and doesn't regenerate.
+   - Tree Stride: Once on each of its turns it can use 10 ft of movement to step into one
+     living tree within 5 ft and emerge from a second living tree within 60 ft.
+
+  Inventory (flavor): a magic club; a handful of strange seeds.
+
+  NOTE: skills, resistances/vulnerabilities, immunities, senses, and traits are recorded
+  here as DM notes — the entity system doesn't yet enforce them mechanically.

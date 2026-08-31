@@ -1,0 +1,42 @@
+# Ka'Reen, Hadozee Artisan — converted from the legacy npcs.yml (old format)
+
+id: kareen
+name: "Ka'Reen"
+
+creature_type: humanoid
+subtype: hadozee
+size: medium
+
+hit_points: 45
+armor_class: 16
+speed: 35
+
+abilities:
+  strength: 14
+  dexterity: 18
+  constitution: 16
+  intelligence: 12
+  wisdom: 10
+  charisma: 16
+
+attacks:
+  - name: "Cutlass Slash"
+    to_hit: 6
+    damage: "1d8+4"
+    damage_type: "slashing"
+    reach: "5 ft"
+  - name: "Flintlock Shot"
+    to_hit: 6
+    damage: "1d10+3"
+    damage_type: "piercing"
+    reach: "5 ft"   # ranged in flavor (~30/90 ft); reach kept for the current attack model
+
+dm_notes: |
+  Hadozee Artisan.
+
+  Special Abilities:
+   - Pirate's Presence: intimidates enemies within 10 ft.
+   - Agile Leap: can move 10 ft as a reaction to an attack.
+
+  NOTE: the Flintlock Shot is a ranged weapon in flavor (~30/90 ft); the current entity
+  attack model uses reach, so the range is recorded here for the DM.
