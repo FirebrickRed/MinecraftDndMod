@@ -19,7 +19,7 @@ It also grew out of a real problem at the table: some of my players (myself incl
 ## What it can do
 
 ### Character creation (5e rules, in-game menus)
-Run `/createcharacter` — or right-click your **Character Sheet** item — to open a guided, menu-driven character builder. (Right-clicking a *filled* sheet reopens it for viewing instead.)
+Run `/character create` — or right-click your **Character Sheet** item — to open a guided, menu-driven character builder. (Right-clicking a *filled* sheet reopens it for viewing instead.)
 
 - **Race & subrace** selection, with racial traits applied automatically
 - **Class & level-1 subclass** selection (e.g. Cleric Domains, Warlock Patrons, Sorcerer Origins)
@@ -42,13 +42,13 @@ Characters are saved to disk and persist across restarts.
 ### Automatic 5e mechanics
 - **Racial traits:** innate spellcasting, darkvision, movement speeds, damage resistances, proficiencies, and languages
 - **Proficiency system:** weapon, armor, tool, skill, and language proficiencies merged from race, class, subclass, and background
-- **Rest system:** `/shortrest` and `/longrest` recover HP, spell slots, and class resources per 5e rules
+- **Rest system:** `/character rest short` and `/character rest long` recover HP, spell slots, and class resources per 5e rules
 
 ### DM tools
 - **DM roles:** `/dm add|remove|list` grants DM-only powers
 - **Entity spawning:** `/dmentity` spawns and manages stat-block NPCs and monsters in the world
-- **Item granting:** `/dmgive` hands D&D weapons, armor, and items to players
-- **Hot-reload content:** `/reloadyaml` reloads all D&D data without a server restart
+- **Item granting:** `/dm give` hands D&D weapons, armor, and items to players
+- **Hot-reload content:** `/dm reload` reloads all D&D data without a server restart
 
 ### Shop & economy system
 - Native Minecraft merchant-GUI trading with a D&D currency system (gold/silver/copper/platinum/electrum)
@@ -65,7 +65,7 @@ Characters are saved to disk and persist across restarts.
 
 ## Content is data-driven (YAML)
 
-All D&D content lives in `DMContent/` as YAML — races, classes, subclasses, spells, weapons, armor, items, and backgrounds. **You can add new content without writing any Java.** Edit or add a file, run `/reloadyaml`, and it appears in-game.
+All D&D content lives in `DMContent/` as YAML — races, classes, subclasses, spells, weapons, armor, items, and backgrounds. **You can add new content without writing any Java.** Edit or add a file, run `/dm reload`, and it appears in-game.
 
 ```
 DMContent/
@@ -78,19 +78,23 @@ DMContent/
 
 ## Commands
 
+Commands are consolidated under five roots: `/character`, `/roll`, `/combat`, `/dmentity`, `/dm`.
+
 | Command | Who | What it does |
 |---|---|---|
-| `/createcharacter` | Player | Start character creation |
-| `/closesheet` | Player | Save and close the active character sheet |
-| `/shortrest` · `/longrest` | Player | Recover resources (short / long rest) |
-| `/rolldice <XdY[+Z]>` | Player | Roll dice (e.g. `2d6+3`) |
+| `/character create` | Player | Start character creation |
+| `/character view [name]` | Player | View a character sheet |
+| `/character close` | Player | Save and close the active character sheet |
+| `/character rest <short\|long>` | Player | Recover resources (short / long rest) |
+| `/roll <XdY[+Z]>` | Player | Roll dice (e.g. `2d6+3`) |
 | `/dm <add\|remove\|list>` | Op | Manage who is a DM |
 | `/dmentity <spawn\|list\|remove\|teleport\|...>` | DM | Spawn & manage NPCs/monsters; create & run shops |
-| `/dmgive <player> <item_id> [amount]` | DM | Give D&D items to a player |
-| `/combat <start\|add\|remove\|nextturn\|end\|...>` | DM | Manage a combat encounter |
-| `/rollforinitiative` | DM | Roll initiative for all combatants and begin combat |
-| `/rest <character> <short\|long>` | DM | Trigger a rest for a character |
-| `/reloadyaml` | DM/Op | Reload all YAML content |
+| `/dm give <player> <item_id> [amount]` | DM | Give D&D items to a player |
+| `/combat <start\|add\|initiative\|nextturn\|attack\|...>` | DM | Manage a combat encounter |
+| `/dm rest <character> <short\|long>` | DM | Trigger a rest for a character |
+| `/dm reload` | DM/Op | Reload all YAML content |
+
+See **COMMANDS.md** for the full, grouped command reference.
 
 ---
 

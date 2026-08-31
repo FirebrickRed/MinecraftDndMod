@@ -59,16 +59,16 @@ gradlew clean build
 - Use backslashes for file paths
 
 ### Hot Reloading Data
-The plugin loads D&D content (races, classes, spells, weapons, armor, items) from YAML files in `DMContent/`. Use `/reloadyaml` in-game to reload data without restarting the server.
+The plugin loads D&D content (races, classes, spells, weapons, armor, items) from YAML files in `DMContent/`. Use `/dm reload` in-game to reload data without restarting the server.
 
 ### Testing Character Creation
-1. Use `/createcharacter` to start the character creation flow
+1. Use `/character create` to start the character creation flow
 2. Alternatively, right-click a paper item named "Character Sheet" to open the creation menu
 3. Character data persists to `plugins/jkvttplugin/Saved/Characters/` as YAML files
 
 ### Testing Character Features
-- `/shortrest` - Recover short rest resources and innate spells
-- `/longrest` - Fully restore HP, spell slots, and all resources
+- `/character rest short` - Recover short rest resources and innate spells
+- `/character rest long` - Fully restore HP, spell slots, and all resources
 - Right-click character sheet item to view character stats
 - Click ability scores to view skills and roll checks
 - Click skills to roll with advantage/disadvantage
@@ -215,6 +215,10 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - Each content type has a dedicated loader (e.g., `RaceLoader`, `ClassLoader`, `SpellLoader`)
 - Loaders populate static registries accessible throughout the plugin
 - All loaders run on plugin startup via `JkVttPlugin.onEnable()`
+- Shared parsing lives in `data/loader/util/ParseUtil` (generic YAML→value primitives) and the
+  `data/loader/parser/` package (`AbilityParser`, `LanguageParser`, `EquipmentParser`,
+  `ChoiceParser`, `InnateSpellParser`, `ShopParser`, `RaceClassParser`) — the old monolithic
+  `LoaderUtils` was split into these (Issue #12)
 
 **Menu System:**
 - `MenuType` enum defines all menu types
@@ -277,7 +281,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - Resources defined in class YAML with recovery type (short rest, long rest, dawn)
 - Supports fixed amounts, ability modifiers, proficiency bonus, and formulas
 - Displayed in character sheet with current/max tracking
-- Recovered automatically via `/shortrest` and `/longrest` commands
+- Recovered automatically via `/character rest short` and `/character rest long` commands
 
 **Shop System (Issue #75):**
 - Native Minecraft Merchant GUI integration for D&D economy
@@ -324,8 +328,27 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 1. Create YAML in `DMContent/Classes/<classname>.yml` (see `warlock.yml` for spellcaster template)
 2. Define: `hit_die`, `proficiency`, `saving_throws`, `armor_proficiencies`, `weapon_proficiencies`, `spellcasting` (if applicable), `starting_equipment`, `features_by_level`
 3. For level 1 subclasses, add `subclass_level: 1`, `subclass_type_name`, and `subclasses` map
-4. Run `/reloadyaml` or restart server
+4. Run `/dm reload` or restart server
 5. Class will appear in `ClassSelectionMenu` automatically
+
+### Equipment choices & item tags (Issue #54)
+
+Equipment `player_choices` (`type: equipment`) use a **flat** `options:` format:
+
+```yaml
+options:
+  - greataxe                          # a lone item
+  - martial_melee_weapon              # a lone tag (auto-detected)
+  - handaxe x2                        # quantity via space-delimited 'xN' (the space matters)
+  - give: [light_crossbow, bolt x20]  # a bundle given together; add `label:` for a menu label
+```
+
+- **Tags are data-driven** — never hardcoded. Weapon tags (`simple_weapon`, `martial_weapon`,
+  `simple_melee_weapon`, `martial_melee_weapon`, …) are DERIVED from each weapon's
+  `category` (simple/martial) + `type` (melee/ranged) at load (`WeaponLoader.installWeaponTags`).
+  Item groupings come from an item's own `tags:` list (`ItemLoader.installItemTags`), e.g.
+  `gaming_set`. Add a homebrew weapon/item and it joins the right tags automatically — no code.
+- `TagRegistry` holds no hardcoded tags; `merge()` is the hook for a future DM-authored `Tags.yml`.
 
 ### Adding a New Subclass
 
@@ -338,7 +361,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
    - `proficiencies` - Armor, weapon, skill, tool
    - `languages` - Additional languages
    - `features_by_level` - Map of level → feature descriptions
-3. Run `/reloadyaml`
+3. Run `/dm reload`
 4. Subclass appears in selection menu for that class
 5. Bonus spells and proficiencies applied automatically during character creation
 
@@ -346,7 +369,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 
 1. Create or edit YAML in `DMContent/Spells/*.yml`
 2. Define: `name`, `level`, `school`, `casting_time`, `range`, `components`, `duration`, `description`, `classes` (spell list)
-3. Run `/reloadyaml`
+3. Run `/dm reload`
 4. Spell will appear in `SpellSelectionMenu` for classes that have it in their spell list
 
 ### Adding Racial Innate Spells
@@ -358,7 +381,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
    - `uses` - Number of uses (0 = unlimited for cantrips)
    - `recovery` - "long_rest", "short_rest", or "proficiency_bonus"
    - `casting_ability` - "charisma", "intelligence", or "wisdom"
-3. Run `/reloadyaml`
+3. Run `/dm reload`
 4. Innate spells applied automatically during character creation
 
 ### Debugging Character Creation
