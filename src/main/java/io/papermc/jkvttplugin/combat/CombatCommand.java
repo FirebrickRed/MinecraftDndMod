@@ -5,6 +5,7 @@ import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.util.DiceRoller;
+import io.papermc.jkvttplugin.util.NameUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -2114,9 +2115,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * Skips entities already in the given combat session.
      */
     private DndEntityInstance findEntityByName(String name, CombatSession session) {
-        String searchLower = name.toLowerCase();
-
-        // Collect IDs of entities already in combat to skip them
+        // Collect IDs of entities already in combat to skip them.
         Set<UUID> alreadyInCombat = new HashSet<>();
         if (session != null) {
             for (Combatant c : session.getCombatants()) {
@@ -2126,20 +2125,19 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        // Gather candidate live instances, then apply the shared name-match cascade (#140).
+        List<DndEntityInstance> candidates = new ArrayList<>();
         for (org.bukkit.World world : Bukkit.getWorlds()) {
             for (Entity entity : world.getEntities()) {
                 if (entity instanceof org.bukkit.entity.ArmorStand armorStand) {
                     DndEntityInstance instance = DndEntityInstance.getByArmorStand(armorStand);
                     if (instance != null && !alreadyInCombat.contains(instance.getInstanceId())) {
-                        String displayLower = instance.getDisplayName().toLowerCase();
-                        if (displayLower.equals(searchLower) || displayLower.startsWith(searchLower)) {
-                            return instance;
-                        }
+                        candidates.add(instance);
                     }
                 }
             }
         }
-        return null;
+        return NameUtil.matchByName(candidates, name, DndEntityInstance::getDisplayName);
     }
 
     /**
@@ -2147,49 +2145,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * Supports names with spaces via case-insensitive partial matching.
      */
     private Combatant findCombatantByName(CombatSession session, String name) {
-        String searchLower = name.toLowerCase().trim();
-
-        // First try exact display name match
-        for (Combatant c : session.getCombatants()) {
-            if (c.getDisplayName().equalsIgnoreCase(name)) {
-                return c;
-            }
-        }
-
-        // Try matching with flexible # formatting (e.g., "Wolf 2", "Wolf#2", "Wolf #2")
-        // Normalize both sides by removing spaces around #
-        String normalizedSearch = searchLower.replaceAll("\\s*#\\s*", "#");
-        for (Combatant c : session.getCombatants()) {
-            String normalizedDisplay = c.getDisplayName().toLowerCase().replaceAll("\\s*#\\s*", "#");
-            if (normalizedDisplay.equals(normalizedSearch)) {
-                return c;
-            }
-        }
-
-        // Try base name match (e.g., "Wolf" matches first "Wolf" combatant)
-        for (Combatant c : session.getCombatants()) {
-            if (c.getBaseName().equalsIgnoreCase(name)) {
-                return c;
-            }
-        }
-
-        // Then try starts-with match on display name
-        for (Combatant c : session.getCombatants()) {
-            if (c.getDisplayName().toLowerCase().startsWith(searchLower)) {
-                return c;
-            }
-        }
-
-        // Finally, a UNIQUE contains-match (e.g. "kobold" -> "Meepo the Kobold"). If more than
-        // one combatant contains the term it's ambiguous, so require a more specific name.
-        Combatant containsMatch = null;
-        for (Combatant c : session.getCombatants()) {
-            if (c.getDisplayName().toLowerCase().contains(searchLower)) {
-                if (containsMatch != null) return null;
-                containsMatch = c;
-            }
-        }
-        return containsMatch;
+        // Shared match cascade (#140): exact → #-normalized → base name → startsWith → unique contains.
+        return NameUtil.matchByName(session.getCombatants(), name,
+                Combatant::getDisplayName, Combatant::getBaseName);
     }
 
     // ==================== STRING HELPERS ====================
@@ -2211,13 +2169,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * Strips surrounding quotes to support "name with spaces" syntax.
      */
     private String joinArgs(String[] args, int startIndex) {
-        if (startIndex >= args.length) return "";
-        StringBuilder sb = new StringBuilder();
-        for (int i = startIndex; i < args.length; i++) {
-            if (i > startIndex) sb.append(" ");
-            sb.append(args[i]);
-        }
-        return stripQuotes(sb.toString());
+        return NameUtil.joinArgs(args, startIndex);
     }
 
     /**
@@ -2225,16 +2177,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * Strips surrounding quotes to support "name with spaces" syntax.
      */
     private String joinArgsExcludingFlags(String[] args, int startIndex) {
-        if (startIndex >= args.length) return "";
-        StringBuilder sb = new StringBuilder();
-        boolean first = true;
-        for (int i = startIndex; i < args.length; i++) {
-            if (args[i].startsWith("--")) continue;  // Skip flags
-            if (!first) sb.append(" ");
-            sb.append(args[i]);
-            first = false;
-        }
-        return stripQuotes(sb.toString());
+        return NameUtil.joinArgsExcludingFlags(args, startIndex);
     }
 
     /**
@@ -2242,16 +2185,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * Handles both "double quotes" and 'single quotes'.
      */
     private String stripQuotes(String input) {
-        if (input == null || input.length() < 2) return input;
-
-        // Check for matching surrounding quotes
-        char first = input.charAt(0);
-        char last = input.charAt(input.length() - 1);
-
-        if ((first == '"' && last == '"') || (first == '\'' && last == '\'')) {
-            return input.substring(1, input.length() - 1);
-        }
-        return input;
+        return NameUtil.stripQuotes(input);
     }
 
     private void showHelp(Player player) {
