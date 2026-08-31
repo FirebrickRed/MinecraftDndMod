@@ -1,6 +1,5 @@
 package io.papermc.jkvttplugin.listeners;
 
-import io.papermc.jkvttplugin.JkVttPlugin;
 
 import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
@@ -148,20 +147,13 @@ public class CharacterNameListener implements Listener {
     public void onPlayerJoin(PlayerJoinEvent event) {
         Player player = event.getPlayer();
 
-        JkVttPlugin.logger().fine("[CharacterNameListener] Player joined: " + player.getName());
-
         // Get player's characters
         List<CharacterSheet> characters = CharacterSheetManager.getPlayerCharacters(player.getUniqueId());
-
-        JkVttPlugin.logger().fine("[CharacterNameListener] Found " + (characters != null ? characters.size() : 0) + " characters");
 
         if (characters != null && !characters.isEmpty()) {
             // Apply the first character's name (in the future, this could be "active character")
             CharacterSheet character = characters.get(0);
-            JkVttPlugin.logger().fine("[CharacterNameListener] Applying name for character: " + character.getCharacterName());
             CharacterSheetManager.applyCharacterName(player, character);
-        } else {
-            JkVttPlugin.logger().fine("[CharacterNameListener] No characters found, skipping name application");
         }
     }
 

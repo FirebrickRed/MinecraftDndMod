@@ -1,6 +1,5 @@
 package io.papermc.jkvttplugin.character;
 
-import io.papermc.jkvttplugin.JkVttPlugin;
 
 import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
@@ -53,28 +52,23 @@ public class CharacterCreationService {
             // I guess there is not getPlayerChoices here... need to update this later
             race.contributeChoices(pending);
             race.contributeAutomaticGrants(grants);
-            JkVttPlugin.logger().fine("After race contribution: " + pending.size());
         }
         // ToDo: add player choices to Subrace
         if (subrace != null) {
             subrace.contributeChoices(pending);
             subrace.contributeAutomaticGrants(grants);
-            JkVttPlugin.logger().fine("After subrace contribution: " + pending.size());
         }
         if (dndClass != null) {
             dndClass.contributeChoices(pending);
             dndClass.contributeAutomaticGrants(grants);
-            JkVttPlugin.logger().fine("After class contribution: " + pending.size());
         }
         if (subclass != null) {
             subclass.contributeChoices(pending);
             subclass.contributeAutomaticGrants(grants);
-            JkVttPlugin.logger().fine("After subclass contribution: " + pending.size());
         }
         if (background != null) {
             background.contributeChoices(pending);
             background.contributeAutomaticGrants(grants);
-            JkVttPlugin.logger().fine("After background contribution: " + pending.size());
         }
 
         session.setPendingChoices(pending);

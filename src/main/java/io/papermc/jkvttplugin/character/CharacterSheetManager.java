@@ -61,34 +61,23 @@ public class CharacterSheetManager {
      */
     private static void finalizeSpellChoices(CharacterCreationSession session) {
         if (session.getPendingChoices() == null) {
-            JkVttPlugin.logger().fine("[CharacterSheetManager] No pending choices to finalize");
             return;
         }
 
-        JkVttPlugin.logger().fine("[CharacterSheetManager] Finalizing spell choices from " + session.getPendingChoices().size() + " pending choices");
-
         for (PendingChoice<?> pc : session.getPendingChoices()) {
-            JkVttPlugin.logger().fine("[CharacterSheetManager] Checking pending choice: " + pc.getId() + " (type: " + pc.getPlayersChoice().getType() + ")");
-
             if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.SPELL) {
                 // Get chosen spells from this pending choice
                 Set<?> chosen = pc.getChosen();
-                JkVttPlugin.logger().fine("[CharacterSheetManager] Found SPELL choice '" + pc.getId() + "' with " + chosen.size() + " selected spells");
 
                 for (Object obj : chosen) {
-                    JkVttPlugin.logger().fine("[CharacterSheetManager] Processing chosen object: " + obj + " (type: " + obj.getClass().getSimpleName() + ")");
-
                     if (obj instanceof String spellName) {
                         // Determine if it's a cantrip or leveled spell
                         DndSpell spell = SpellLoader.getSpell(spellName);
                         if (spell != null) {
-                            JkVttPlugin.logger().fine("[CharacterSheetManager] Found spell: " + spell.getName() + " (level " + spell.getLevel() + ")");
                             if (spell.getLevel() == 0) {
                                 session.addSelectedCantrip(spellName);
-                                JkVttPlugin.logger().fine("[CharacterSheetManager] Added cantrip to session: " + spellName);
                             } else {
                                 session.addSelectedSpell(spellName);
-                                JkVttPlugin.logger().fine("[CharacterSheetManager] Added spell to session: " + spellName);
                             }
                         } else {
                             JkVttPlugin.logger().warning("[CharacterSheetManager] Could not find spell in SpellLoader: " + spellName);
@@ -97,10 +86,6 @@ public class CharacterSheetManager {
                 }
             }
         }
-
-        JkVttPlugin.logger().fine("[CharacterSheetManager] Finalization complete. Session now has " +
-            session.getSelectedCantrips().size() + " cantrips and " +
-            session.getSelectedSpells().size() + " spells");
     }
 
     public static void grantStartingEquipmentToPlayer(Player player, CharacterSheet characterSheet) {
@@ -183,12 +168,8 @@ public class CharacterSheetManager {
 
         Component nameComponent = Component.text(characterName).color(NamedTextColor.GOLD);
 
-        JkVttPlugin.logger().fine("[CharacterSheetManager] Applying character name for " + player.getName());
-        JkVttPlugin.logger().fine("[CharacterSheetManager]   Character name: " + characterName);
-
         // Set display name for chat and tab list
         player.displayName(nameComponent);
-        JkVttPlugin.logger().fine("[CharacterSheetManager]   Display name set to: " + characterName);
 
         // If player is on a scoreboard team, remove them from it FIRST
         // Scoreboard teams override customName, so we must remove before setting customName
@@ -197,22 +178,14 @@ public class CharacterSheetManager {
         if (scoreboard != null) {
             org.bukkit.scoreboard.Team team = scoreboard.getPlayerTeam(player);
             if (team != null) {
-                JkVttPlugin.logger().fine("[CharacterSheetManager]   Player is on old team: " + team.getName());
-                JkVttPlugin.logger().fine("[CharacterSheetManager]   Removing player from team to use customName instead");
-
                 // Remove player from old team so customName() works
                 team.removePlayer(player);
-
-                JkVttPlugin.logger().fine("[CharacterSheetManager]   Player removed from team");
-            } else {
-                JkVttPlugin.logger().fine("[CharacterSheetManager]   Player not on any team");
             }
         }
 
         // Set custom name for overhead nameplate (must be done AFTER removing from team)
         player.customName(nameComponent);
         player.setCustomNameVisible(true);
-        JkVttPlugin.logger().fine("[CharacterSheetManager]   Custom name set to: " + characterName);
 
         // Force client to refresh player entity data (needed for Lunar Client and others)
         // Hide and immediately show the player to all online players to trigger metadata update
@@ -222,7 +195,6 @@ public class CharacterSheetManager {
                 onlinePlayer.hidePlayer(plugin, player);
                 onlinePlayer.showPlayer(plugin, player);
             }
-            JkVttPlugin.logger().fine("[CharacterSheetManager]   Forced client refresh for nameplate update");
         }
 
         // Send confirmation message to player
