@@ -309,6 +309,7 @@ public class CharacterCreationMenu {
             rlore.add(Component.text("set your scores with +/- yourself.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
             rlore.add(Component.empty());
             rlore.add(Component.text("Method: " + method.getDisplay(), NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            rlore.add(Component.text("(rolled once per ability — six scores)", NamedTextColor.DARK_AQUA).decoration(TextDecoration.ITALIC, false));
 
             java.util.List<io.papermc.jkvttplugin.character.AbilityRollMethod.AbilityRoll> rolls = session.getAbilityRolls();
             if (rolls == null || rolls.isEmpty()) {

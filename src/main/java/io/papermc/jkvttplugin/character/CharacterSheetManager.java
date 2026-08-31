@@ -16,7 +16,6 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.plugin.Plugin;
-import org.bukkit.scoreboard.Scoreboard;
 
 import java.util.*;
 
@@ -171,31 +170,11 @@ public class CharacterSheetManager {
         // Set display name for chat and tab list
         player.displayName(nameComponent);
 
-        // If player is on a scoreboard team, remove them from it FIRST
-        // Scoreboard teams override customName, so we must remove before setting customName
-        // When initiative tracker is implemented, it will create NEW teams with proper formatting
-        Scoreboard scoreboard = player.getScoreboard();
-        if (scoreboard != null) {
-            org.bukkit.scoreboard.Team team = scoreboard.getPlayerTeam(player);
-            if (team != null) {
-                // Remove player from old team so customName() works
-                team.removePlayer(player);
-            }
-        }
-
-        // Set custom name for overhead nameplate (must be done AFTER removing from team)
-        player.customName(nameComponent);
-        player.setCustomNameVisible(true);
-
-        // Force client to refresh player entity data (needed for Lunar Client and others)
-        // Hide and immediately show the player to all online players to trigger metadata update
-        Plugin plugin = org.bukkit.Bukkit.getPluginManager().getPlugin("JkVttPlugin");
-        if (plugin != null) {
-            for (org.bukkit.entity.Player onlinePlayer : org.bukkit.Bukkit.getOnlinePlayers()) {
-                onlinePlayer.hidePlayer(plugin, player);
-                onlinePlayer.showPlayer(plugin, player);
-            }
-        }
+        // NOTE: we do NOT try to set the floating overhead name. A *player's* nameplate is rendered
+        // by the client from their account profile and can't be changed by a plugin — customName()
+        // only affects non-player entities — so the old customName + team-removal + hide/show
+        // "refresh" attempt did nothing and was removed. Chat, the tab list, and the combat
+        // scoreboard carry the character name; target players by character OR username instead.
 
         // Send confirmation message to player
         player.sendMessage(Component.text("You are now known as ").color(NamedTextColor.GRAY)
@@ -207,10 +186,9 @@ public class CharacterSheetManager {
      * Call this when a player logs out or before switching characters.
      */
     public static void clearCharacterName(Player player) {
-        // Reset to default Minecraft username
+        // Reset chat/tab name to the Minecraft username. (No customName to clear — see the note in
+        // applyCharacterName: a player's overhead name isn't plugin-settable.)
         player.displayName(null);
-        player.setCustomNameVisible(false);
-        player.customName(null);
     }
 
 
