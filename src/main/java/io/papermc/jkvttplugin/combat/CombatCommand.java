@@ -1412,18 +1412,22 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Spend the cost resource, if the feature has one.
+        // Resolve the cost resource, if any. Action features (which enter an aim-and-confirm preview)
+        // only CHECK availability here and spend on confirm, so a cancelled aim costs nothing (#173);
+        // instant features (e.g. Rage) spend right away.
+        io.papermc.jkvttplugin.data.model.ClassResource costRes = null;
         if (feature.getCostResource() != null) {
-            io.papermc.jkvttplugin.data.model.ClassResource res = sheet.getResource(feature.getCostResource());
-            if (res == null) {
+            costRes = sheet.getResource(feature.getCostResource());
+            if (costRes == null) {
                 player.sendMessage(Component.text(feature.getName() + " needs a '" + feature.getCostResource()
                         + "' resource this character doesn't have.", NamedTextColor.RED));
                 return;
             }
-            if (!res.consume(feature.getCostAmount())) {
-                player.sendMessage(Component.text("No uses of " + res.getName() + " left.", NamedTextColor.YELLOW));
+            if (costRes.getCurrent() < feature.getCostAmount()) {
+                player.sendMessage(Component.text("No uses of " + costRes.getName() + " left.", NamedTextColor.YELLOW));
                 return;
             }
+            if (!feature.hasAction()) costRes.consume(feature.getCostAmount()); // instant features spend now
         }
 
         // Apply the buff (self only for this slice) + its visual potion.
@@ -1471,10 +1475,20 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             int dc = 8 + sheet.getProficiencyBonus() + sheet.getModifier(dcAbility);
             String label = feature.getName()
                     + (spec.getDamageType() != null ? " (" + spec.getDamageType() + ")" : "");
-            session.broadcast(Component.text(actor.getDisplayName() + " uses " + feature.getName() + "!", NamedTextColor.GOLD));
-            SpellCastHandler.castAreaSave(actor, session, player, label, spec.getShape(), spec.getSizeFeet(),
-                    spec.getTargets(), saveAbility, dc, spec.getDamage(), spec.getDamageType(), spec.getSaveEffect());
-            if (actor.getTurnState() != null) actor.getTurnState().useAction();
+            // Aim-and-confirm (#173): preview the area; on right-click spend the use + resolve.
+            final io.papermc.jkvttplugin.effect.FeatureAction fSpec = spec;
+            final io.papermc.jkvttplugin.data.model.ClassResource fRes = costRes;
+            final io.papermc.jkvttplugin.data.model.enums.Ability fSave = saveAbility;
+            final int fDc = dc;
+            Runnable onConfirm = () -> {
+                if (fRes != null) fRes.consume(feature.getCostAmount());
+                session.broadcast(Component.text(actor.getDisplayName() + " uses " + feature.getName() + "!", NamedTextColor.GOLD));
+                SpellCastHandler.castAreaSave(actor, session, player, label, fSpec.getShape(), fSpec.getSizeFeet(),
+                        fSpec.getTargets(), fSave, fDc, fSpec.getDamage(), fSpec.getDamageType(), fSpec.getSaveEffect());
+                if (actor.getTurnState() != null) actor.getTurnState().useAction();
+            };
+            AreaTargeting.begin(player, session, actor, label, spec.getShape(), spec.getSizeFeet(),
+                    spec.getTargets(), onConfirm);
             return;
         }
 

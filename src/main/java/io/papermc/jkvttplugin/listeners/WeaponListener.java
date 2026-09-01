@@ -41,6 +41,9 @@ public class WeaponListener implements Listener {
 
         Player player = event.getPlayer();
 
+        // Confirming an area effect (#173): this right-click fires the aim, not an attack.
+        if (io.papermc.jkvttplugin.combat.AreaTargeting.isAiming(player.getUniqueId())) return;
+
         // Possessing an entity on its turn: attack AS the entity (right-click while aiming).
         if (tryPossessedAttack(player, null)) { event.setCancelled(true); return; }
 
@@ -61,6 +64,9 @@ public class WeaponListener implements Listener {
         if (event.getHand() != EquipmentSlot.HAND) return;
 
         Player player = event.getPlayer();
+
+        // Confirming an area effect (#173): let the aim handle this right-click, not an attack.
+        if (io.papermc.jkvttplugin.combat.AreaTargeting.isAiming(player.getUniqueId())) { event.setCancelled(true); return; }
 
         // Possessing an entity on its turn: attack AS the entity (right-click the target directly).
         if (tryPossessedAttack(player, event.getRightClicked())) { event.setCancelled(true); return; }

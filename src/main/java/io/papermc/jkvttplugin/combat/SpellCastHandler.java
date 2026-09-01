@@ -116,8 +116,10 @@ public class SpellCastHandler {
     }
 
     /**
-     * Cast an area spell (#149): find every creature in the shape and resolve the spell on each.
-     * Cone/line/burst originate from the caster; sphere centers on where the caster is looking.
+     * Begin casting an area spell (#149): enter the aim-and-confirm preview (#173) so the caster can
+     * see the shape and who's caught before committing. The spell resolves only on confirm; the
+     * caller must NOT spend the action here — {@link #resolveAoeNow} does that on confirm.
+     * Returns false so the command layer skips its own action-spend (the confirm handles it).
      */
     public static boolean castAoe(Combatant caster, CombatSession session, Player player, DndSpell spell,
                                   Integer providedRoll, Integer providedTotal) {
@@ -132,6 +134,23 @@ public class SpellCastHandler {
             player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
             return false;
         }
+        Runnable onConfirm = () -> {
+            resolveAoeNow(caster, session, player, spell);
+            TurnState ts = caster.getTurnState();
+            if (ts != null && !ts.isActionUsed()) ts.useAction();
+            session.sendActionBar(caster);
+        };
+        AreaTargeting.begin(player, session, caster, spell.getName(), spell.getAoeShape(), spell.getAoeSize(),
+                spell.getAoeTargets(), onConfirm);
+        return false; // preview started; the action is spent on confirm
+    }
+
+    /** Resolve an area spell against everyone caught right now (run on aim-confirm). */
+    private static void resolveAoeNow(Combatant caster, CombatSession session, Player player, DndSpell spell) {
+        CharacterSheet sheet = caster.getCharacterSheet();
+        if (sheet == null) return;
+        Ability ability = spellcastingAbility(sheet);
+        if (ability == null) return;
         int mod = sheet.getProficiencyBonus() + sheet.getModifier(ability);
 
         java.util.List<Combatant> affected = creaturesInArea(caster, player, spell.getAoeShape(), spell.getAoeSize());
@@ -148,11 +167,11 @@ public class SpellCastHandler {
                 + " (" + spell.getAoeShape() + ", " + spell.getAoeSize() + " ft) — " + affected.size()
                 + " creature" + (affected.size() == 1 ? "" : "s") + " caught!", NamedTextColor.LIGHT_PURPLE));
 
-        if (affected.isEmpty()) return true;
+        if (affected.isEmpty()) return;
 
         if (spell.isSaveSpell()) {
             Ability saveAbility = parseAbility(spell.getSaveType());
-            if (saveAbility == null) { player.sendMessage(Component.text("Invalid save type.", NamedTextColor.RED)); return false; }
+            if (saveAbility == null) { player.sendMessage(Component.text("Invalid save type.", NamedTextColor.RED)); return; }
             int dc = 8 + mod;
             session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation() + " save — each caught creature rolls:", NamedTextColor.GRAY));
             for (Combatant t : affected) {
@@ -163,7 +182,6 @@ public class SpellCastHandler {
         } else {
             session.broadcast(Component.text("(no save defined — the DM applies the effect)", NamedTextColor.DARK_GRAY));
         }
-        return true;
     }
 
     /**
@@ -206,6 +224,11 @@ public class SpellCastHandler {
         org.bukkit.Location loc = c.getLocation();
         if (loc == null || loc.getWorld() == null) return;
         loc.getWorld().spawnParticle(org.bukkit.Particle.WITCH, loc.clone().add(0, 1.2, 0), 25, 0.3, 0.7, 0.3, 0.03);
+    }
+
+    /** Public view of who an area of {@code shape}/{@code sizeFeet} catches — used by the aim preview (#173). */
+    public static java.util.List<Combatant> combatantsInArea(Combatant caster, Player player, String shapeName, double sizeFeet) {
+        return creaturesInArea(caster, player, shapeName, sizeFeet);
     }
 
     /** Combatants inside an area of the given shape/size (feet), originating from the caster. */

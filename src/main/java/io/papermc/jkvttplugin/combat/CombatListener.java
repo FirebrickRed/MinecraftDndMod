@@ -8,8 +8,11 @@ import org.bukkit.entity.ArmorStand;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerToggleSneakEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 
 /**
@@ -18,6 +21,28 @@ import org.bukkit.event.vehicle.VehicleMoveEvent;
  * Issue #98 - Turn Management & Action Economy
  */
 public class CombatListener implements Listener {
+
+    // ==================== AREA-EFFECT AIM (Issue #173) ====================
+
+    /** Right-click fires a pending area effect (breath weapon / AoE spell). Runs before the weapon
+     *  listener so it confirms the aim instead of swinging. */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onAreaConfirm(PlayerInteractEvent event) {
+        if (!event.getAction().isRightClick()) return;
+        Player player = event.getPlayer();
+        if (AreaTargeting.isAiming(player.getUniqueId())) {
+            event.setCancelled(true);
+            AreaTargeting.confirm(player);
+        }
+    }
+
+    /** Sneak cancels a pending area effect with nothing spent. */
+    @EventHandler
+    public void onAreaCancel(PlayerToggleSneakEvent event) {
+        if (event.isSneaking() && AreaTargeting.isAiming(event.getPlayer().getUniqueId())) {
+            AreaTargeting.cancel(event.getPlayer(), true);
+        }
+    }
 
     // ==================== MOVEMENT TRACKING ====================
 
