@@ -222,7 +222,7 @@ public class AttackHandler {
      * Build a human-readable modifier breakdown string.
      * Example: "+3[STR] +2[Prof]"
      */
-    private static String buildPlayerModBreakdown(CharacterSheet sheet, DndWeapon weapon) {
+    public static String buildPlayerModBreakdown(CharacterSheet sheet, DndWeapon weapon) {
         Ability attackAbility = resolveAttackAbility(sheet, weapon);
         int abilityMod = sheet.getModifier(attackAbility);
 

@@ -112,6 +112,10 @@ public class WeaponListener implements Listener {
         CharacterSheet sheet = ctx.attacker.getCharacterSheet();
         int mod = sheet != null ? AttackHandler.calculatePlayerAttackMod(sheet, ctx.weapon) : 0;
         String modStr = (mod >= 0 ? "+" + mod : String.valueOf(mod));
+        // Show the source breakdown (e.g. "+4[STR] +2[Prof]") next to the total so the number isn't
+        // a mystery — matching how the attack result and damage prompt now label their bonuses (#168).
+        String breakdown = sheet != null ? AttackHandler.buildPlayerModBreakdown(sheet, ctx.weapon) : "";
+        String modShown = breakdown.isEmpty() ? modStr : modStr + " (" + breakdown + ")";
 
         player.sendMessage(Component.text("⚔ Attack ", NamedTextColor.GOLD)
                 .append(Component.text(targetName, NamedTextColor.YELLOW))
@@ -119,8 +123,8 @@ public class WeaponListener implements Listener {
                 .append(Component.text("[click, then type your d20 roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(rollCmd))
                         .hoverEvent(HoverEvent.showText(Component.text("Fills in: " + rollCmd + "<roll>\nThe game adds your "
-                                + modStr + " to hit.")))));
-        player.sendMessage(Component.text("   the game adds your " + modStr + " to hit — or ", NamedTextColor.GRAY)
+                                + modShown + " to hit.")))));
+        player.sendMessage(Component.text("   the game adds your " + modShown + " to hit — or ", NamedTextColor.GRAY)
                 .append(Component.text("[use --total]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(totalCmd))
                         .hoverEvent(HoverEvent.showText(Component.text("If you already added your modifiers, fill in:\n"
