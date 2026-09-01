@@ -31,6 +31,12 @@ public final class FeatureParser {
 
     private FeatureParser() {}
 
+    /** Always-on boolean primitives an {@code effects:} block may set true (the passive vocabulary). */
+    private static final List<String> BOOLEAN_FLAGS = List.of(
+            "reroll_natural_1",  // Halfling Lucky — reroll a natural 1 on a d20
+            "extra_crit_die",    // Half-Orc Savage Attacks — one extra weapon die on a melee crit
+            "endure_below_1");   // Half-Orc Relentless Endurance — drop to 1 HP instead of 0, 1×/long rest
+
     public static List<Feature> parseFeatures(Object node) {
         List<Feature> out = new ArrayList<>();
         if (!(node instanceof List<?> list)) return out;
@@ -129,7 +135,7 @@ public final class FeatureParser {
         String bonusDamageWhen = null;
         String minecraftEffect = null;
         int minecraftAmplifier = 0;
-        boolean rerollNat1 = false;
+        Set<String> flags = new HashSet<>();
         if (apply.get("effects") instanceof Map<?, ?> e) {
             resistances.addAll(ParseUtil.normalizeStringList(e.get("resistance")));
             advantageOn.addAll(ParseUtil.normalizeStringList(e.get("advantage_on")));
@@ -140,11 +146,14 @@ public final class FeatureParser {
             }
             minecraftEffect = ParseUtil.asString(e.get("minecraft_effect"), null);
             minecraftAmplifier = ParseUtil.asInt(e.get("minecraft_amplifier"), 0);
-            rerollNat1 = ParseUtil.asBoolean(e.get("reroll_natural_1"), false);
+            // Boolean passive primitives — each true key becomes a flag by its own name.
+            for (String flag : BOOLEAN_FLAGS) {
+                if (ParseUtil.asBoolean(e.get(flag), false)) flags.add(flag);
+            }
         }
 
         return new ActiveEffect(featureId, featureName, resistances, advantageOn, disadvantageOn,
-                bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, rerollNat1, stacks,
+                bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks,
                 rounds, maintainedBy, untilRest, untilUsed);
     }
 }

@@ -28,10 +28,19 @@ darkvision: 60  # 60 ft. darkvision range
 skill_proficiencies:
   - intimidation
 
-# Relentless Endurance: Drop to 1 HP instead of 0 once per long rest
-# (Requires special handling in combat system - Issue #63)
-relentless_endurance: true
-
-# Savage Attacks: Extra weapon damage die on critical hit
-# (Requires special handling in combat system - Issue #63)
-savage_attacks: true
+# Relentless Endurance & Savage Attacks (Effect Engine passives, #70). Both are always on:
+#  - endure_below_1: dropping to 0 HP (not killed outright) leaves you at 1 instead, 1×/long rest.
+#  - extra_crit_die: a melee-weapon crit rolls one extra weapon die.
+features:
+  - id: relentless_endurance
+    name: Relentless Endurance
+    activation: passive
+    apply:
+      effects:
+        endure_below_1: true
+  - id: savage_attacks
+    name: Savage Attacks
+    activation: passive
+    apply:
+      effects:
+        extra_crit_die: true

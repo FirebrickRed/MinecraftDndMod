@@ -101,8 +101,11 @@ public class AttackHandler {
             if (!eff.isEmpty()) bonusLabel = bonusLabel.isEmpty() ? eff : bonusLabel + " " + eff;
         }
 
+        // Half-Orc Savage Attacks: one extra weapon die on a melee-weapon crit (unarmed doesn't count).
+        boolean extraCritDie = weapon != null && !weapon.isRanged() && attacker.hasExtraCritDie();
+
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, player, bonusLabel);
+                providedRoll, providedTotal, player, bonusLabel, extraCritDie);
     }
 
     /** Merge a flat bonus into a damage string's trailing modifier (1d8+3, +2 → 1d8+5), keeping the
@@ -128,12 +131,13 @@ public class AttackHandler {
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser) {
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, commandUser, "");
+                providedRoll, providedTotal, commandUser, "", false);
     }
 
     private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
-                                      Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel) {
+                                      Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel,
+                                      boolean extraCritDie) {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1());
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
@@ -143,11 +147,30 @@ public class AttackHandler {
         }
         int targetAC = target.getArmorClass();
         boolean hit = RollService.hits(r, targetAC);
-        String finalDamage = r.nat20() ? doubleDice(damageStr) : damageStr;
+        // A crit doubles the weapon dice; Half-Orc Savage Attacks adds one more weapon die on top (#70).
+        String finalDamage = damageStr;
+        if (r.nat20()) {
+            finalDamage = doubleDice(damageStr);
+            if (extraCritDie) finalDamage = addOneDie(finalDamage);
+        }
         broadcastAttackResult(session, attacker, target, false,
                 r.total(), targetAC, hit, r.nat20(), r.nat1(),
                 finalDamage, damageType, r.breakdown(), bonusLabel);
         return true;
+    }
+
+    /** Add one more of the first dice group (Savage Attacks): "2d12+3" → "3d12+3". */
+    static String addOneDie(String damageStr) {
+        if (damageStr == null) return null;
+        Matcher m = DICE_COUNT_PATTERN.matcher(damageStr);
+        if (m.find()) {
+            int count = m.group(1).isEmpty() ? 1 : Integer.parseInt(m.group(1));
+            StringBuilder sb = new StringBuilder();
+            m.appendReplacement(sb, (count + 1) + "d" + m.group(2));
+            m.appendTail(sb);
+            return sb.toString();
+        }
+        return damageStr;
     }
 
     /**

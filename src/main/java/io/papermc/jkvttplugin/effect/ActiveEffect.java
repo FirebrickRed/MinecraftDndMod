@@ -24,7 +24,10 @@ public class ActiveEffect {
     private final String bonusDamageWhen;      // roll tag it applies to, e.g. "melee_str"
     private final String minecraftEffect;      // optional PotionEffectType name (visual)
     private final int minecraftAmplifier;
-    private final boolean rerollNat1;          // reroll a natural 1 on a d20 (Halfling Lucky)
+    // Boolean passive primitives, by name — e.g. "reroll_natural_1" (Lucky), "extra_crit_die"
+    // (Savage Attacks), "endure_below_1" (Relentless Endurance). Extensible without touching this
+    // constructor: a new always-on flag is just a new key both here and in FeatureParser.
+    private final Set<String> flags;
     private final boolean stacks;              // false = a second copy refreshes instead of adding
 
     // ---- duration ----
@@ -36,7 +39,7 @@ public class ActiveEffect {
 
     public ActiveEffect(String sourceId, String sourceName, Set<String> resistances, Set<String> advantageOn,
                         Set<String> disadvantageOn, int bonusDamage, String bonusDamageWhen,
-                        String minecraftEffect, int minecraftAmplifier, boolean rerollNat1, boolean stacks,
+                        String minecraftEffect, int minecraftAmplifier, Set<String> flags, boolean stacks,
                         int roundsRemaining, Set<String> maintainedBy, String untilRest, boolean untilUsed) {
         this.sourceId = sourceId;
         this.sourceName = sourceName;
@@ -47,7 +50,7 @@ public class ActiveEffect {
         this.bonusDamageWhen = bonusDamageWhen == null ? null : bonusDamageWhen.toLowerCase();
         this.minecraftEffect = minecraftEffect;
         this.minecraftAmplifier = minecraftAmplifier;
-        this.rerollNat1 = rerollNat1;
+        this.flags = lower(flags);
         this.stacks = stacks;
         this.roundsRemaining = roundsRemaining;
         this.maintainedBy = lower(maintainedBy);
@@ -64,11 +67,15 @@ public class ActiveEffect {
     /** A fresh instance of this (template) effect, to attach to a target. */
     public ActiveEffect copy() {
         return new ActiveEffect(sourceId, sourceName, resistances, advantageOn, disadvantageOn, bonusDamage,
-                bonusDamageWhen, minecraftEffect, minecraftAmplifier, rerollNat1, stacks, roundsRemaining,
+                bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks, roundsRemaining,
                 maintainedBy, untilRest, untilUsed);
     }
 
-    public boolean rerollsNat1() { return rerollNat1; }
+    /** Whether this effect carries a named boolean primitive (e.g. "reroll_natural_1"). */
+    public boolean hasFlag(String flag) { return flag != null && flags.contains(flag.toLowerCase()); }
+    public boolean rerollsNat1() { return hasFlag("reroll_natural_1"); }
+    public boolean hasExtraCritDie() { return hasFlag("extra_crit_die"); }
+    public boolean enduresBelow1() { return hasFlag("endure_below_1"); }
 
     // ---- queries (read sites) ----
     public boolean resists(String damageType) {

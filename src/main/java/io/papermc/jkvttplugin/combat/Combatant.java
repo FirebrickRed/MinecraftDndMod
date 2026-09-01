@@ -460,6 +460,11 @@ public class Combatant {
         CharacterSheet s = getCharacterSheet();
         return s != null && s.rerollsNat1();
     }
+    /** Whether this combatant adds an extra weapon die on a melee crit (Half-Orc Savage Attacks). */
+    public boolean hasExtraCritDie() {
+        CharacterSheet s = getCharacterSheet();
+        return s != null && s.hasExtraCritDie();
+    }
     /** The active-effect source of a resistance to this type (e.g. "Rage"), or null if static/none. */
     public String resistanceSourceFor(String damageType) {
         CharacterSheet s = getCharacterSheet();

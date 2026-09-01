@@ -127,8 +127,18 @@ public class DamageHandler {
             return;
         }
 
-        // Player just dropped to 0 HP: fall unconscious and begin death saves (Issue #101).
+        // Player just dropped to 0 HP: fall unconscious and begin death saves (Issue #101) — unless
+        // Half-Orc Relentless Endurance holds them at 1 HP instead (once per long rest, #70).
         if (target.getCurrentHp() <= 0 && !target.isUnconscious()) {
+            io.papermc.jkvttplugin.character.CharacterSheet sheet = target.getCharacterSheet();
+            if (sheet != null && sheet.canEndureLethalHit()) {
+                sheet.markRelentlessEnduranceUsed();
+                target.applyHealing(1 - target.getCurrentHp()); // brought to exactly 1 HP
+                session.broadcast(Component.text("✊ Relentless Endurance! " + target.getDisplayName()
+                        + " refuses to fall — holding on at 1 HP!", NamedTextColor.GOLD, TextDecoration.BOLD));
+                session.refreshHpDisplays(target);
+                return;
+            }
             target.setUnconscious(true);
             target.resetDeathSaves();
             DeathSaveHandler.applyProne(target);

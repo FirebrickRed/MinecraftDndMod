@@ -57,6 +57,8 @@ public class CharacterSheet {
     // CUSTOM player-choice selections kept by choice id (e.g. draconic_ancestry -> "Red (Fire, …)").
     // Feature actions read these to resolve their per-choice variant (breath weapon, #70).
     private final Map<String, String> customChoices = new HashMap<>();
+    // Half-Orc Relentless Endurance: once between long rests, dropping to 0 HP leaves you at 1 (#70).
+    private boolean relentlessEnduranceUsed = false;
     private List<InnateSpell> innateSpells = new ArrayList<>();
     private Integer darkvision;  // Vision range in feet (60, 120, etc.), null = no darkvision
     private int longRestHours = 8;      // Hours needed for a long rest (#160); elves trance in 4.
@@ -1347,17 +1349,27 @@ public class CharacterSheet {
         return false;
     }
     /**
-     * Whether a natural 1 on a d20 should be rerolled once (Halfling Lucky). Read from passive
-     * feature definitions directly (rest-safe, no applied effect needed) and any active effect.
+     * Whether an always-on boolean primitive (e.g. "reroll_natural_1") is granted by a passive
+     * feature (read from the definition directly, so it's rest-safe) or a live active effect.
      */
-    public boolean rerollsNat1() {
-        for (var e : activeEffects) if (e.rerollsNat1()) return true;
+    public boolean hasPassiveFlag(String flag) {
+        for (var e : activeEffects) if (e.hasFlag(flag)) return true;
         for (var f : getAllFeatures()) {
             boolean passive = f.getActivation() == null || f.getActivation().equalsIgnoreCase("passive");
-            if (passive && f.hasApply() && f.getApplyTemplate().rerollsNat1()) return true;
+            if (passive && f.hasApply() && f.getApplyTemplate().hasFlag(flag)) return true;
         }
         return false;
     }
+    /** Reroll a natural 1 on a d20 once (Halfling Lucky). */
+    public boolean rerollsNat1() { return hasPassiveFlag("reroll_natural_1"); }
+    /** Roll one extra weapon die on a melee crit (Half-Orc Savage Attacks). */
+    public boolean hasExtraCritDie() { return hasPassiveFlag("extra_crit_die"); }
+    /** Can drop to 1 HP instead of 0 (Half-Orc Relentless Endurance) — subject to its per-rest use. */
+    public boolean hasRelentlessEndurance() { return hasPassiveFlag("endure_below_1"); }
+    /** True if Relentless Endurance is available right now (has the trait and hasn't used it since a long rest). */
+    public boolean canEndureLethalHit() { return hasRelentlessEndurance() && !relentlessEnduranceUsed; }
+    /** Spend Relentless Endurance for this long-rest window. */
+    public void markRelentlessEnduranceUsed() { relentlessEnduranceUsed = true; }
     public int bonusDamageFor(String rollTag) {
         int sum = 0;
         for (var e : activeEffects) sum += e.bonusDamageFor(rollTag);
@@ -1425,6 +1437,7 @@ public class CharacterSheet {
 
         breakConcentration();
         activeEffects.clear(); // a long rest ends any lingering buffs/debuffs (Effect Engine, #70)
+        relentlessEnduranceUsed = false; // Half-Orc Relentless Endurance recharges on a long rest
 
         currentHealth = totalHealth;
         tempHealth = 0;
