@@ -506,9 +506,13 @@ public class CharacterCreationMenu {
             if (slot > 44) break;
 
             int remaining = Math.max(0, choice.getTotalChooseCount() - choice.getSelectedCount());
-            String headerText = remaining > 0
+            String title = choiceTitle(choice);
+            String progress = remaining > 0
                     ? "Choose " + remaining + " more  (" + choice.getProgressText() + ")"
                     : "All chosen  (" + choice.getProgressText() + ") ✓";
+            // Name the choice on its header so a bare "Choose 1 more" isn't a mystery (e.g. what a
+            // dragonborn's Draconic Ancestry pick is for).
+            String headerText = title != null ? title + " — " + progress : progress;
             inv.setItem(slot++, sectionHeader(headerText, choice.getStatusColor()));
 
             for (String knownKey : choice.getAlreadyKnown()) {
@@ -625,6 +629,15 @@ public class CharacterCreationMenu {
                     choice.getCategory().name() + "|" + choice.getChoiceId() + "|" + optionKey);
         }
         return item;
+    }
+
+    /** The human title for a choice (from its YAML {@code title}), or a prettified id fallback. */
+    private static String choiceTitle(MergedChoice choice) {
+        for (PendingChoice<?> pc : choice.getSourcePendingChoices()) {
+            if (pc.getTitle() != null && !pc.getTitle().isBlank()) return pc.getTitle();
+        }
+        String id = choice.getChoiceId();
+        return id != null && !id.isBlank() ? Util.prettify(id) : null;
     }
 
     private static boolean isWildcardOption(MergedChoice choice, String optionKey) {

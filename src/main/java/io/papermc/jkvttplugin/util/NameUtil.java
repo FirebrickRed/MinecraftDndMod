@@ -34,13 +34,18 @@ public final class NameUtil {
         return stripQuotes(sb.toString());
     }
 
-    /** Like {@link #joinArgs} but skips {@code --flags}. */
+    /**
+     * Joins the leading positional args (a name, possibly with spaces) and STOPS at the first
+     * {@code --flag}. Everything from the first flag on is flag-land — the flag and any value it
+     * carries (e.g. {@code --roll 1d20}) — so a value like {@code 1d20} never leaks into the name.
+     * All callers put the name before any flags, matching the command usage convention.
+     */
     public static String joinArgsExcludingFlags(String[] args, int from) {
         if (args == null || from >= args.length) return "";
         StringBuilder sb = new StringBuilder();
         boolean first = true;
         for (int i = from; i < args.length; i++) {
-            if (args[i].startsWith("--")) continue;
+            if (args[i].startsWith("--")) break; // reached the flags; the name is complete
             if (!first) sb.append(" ");
             sb.append(args[i]);
             first = false;

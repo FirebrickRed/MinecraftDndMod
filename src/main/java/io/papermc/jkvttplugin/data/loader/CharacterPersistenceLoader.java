@@ -403,6 +403,7 @@ public class CharacterPersistenceLoader {
                         sheet.setCustomChoice(id, value);
                     }
                 }
+                sheet.applyLinkedResistances(); // e.g. dragonborn ancestry -> element resistance (#51)
             }
 
             // Restore current (remaining) spell slots (#31). Keys may load as Integer or String.

@@ -125,6 +125,7 @@ public class CharacterSheet {
         sheet.loadSpells(session.getSelectedSpells(), session.getSelectedCantrips());
         sheet.loadSkillProficiencies(session);
         sheet.loadToolAndLanguageProficiencies(session);
+        sheet.applyLinkedResistances(); // now that CUSTOM choices (e.g. draconic ancestry) are known
         sheet.calculateHealth();
 
         sheet.grantStartingEquipment(session);
@@ -1310,12 +1311,32 @@ public class CharacterSheet {
     // ---- combat read sites ----
     public boolean resistsDamage(String damageType) {
         for (var e : activeEffects) if (e.resists(damageType)) return true;
-        return false;
+        return hasStaticResistance(damageType); // permanent racial/subrace resistances too
     }
-    /** Name of the first active effect granting resistance to this type (e.g. "Rage"), or null. */
+    /** Name of the source granting resistance to this type (e.g. "Rage" or "Dragonborn"), or null. */
     public String resistanceSourceFor(String damageType) {
         for (var e : activeEffects) if (e.resists(damageType)) return e.getSourceName();
+        if (hasStaticResistance(damageType)) return race != null ? race.getName() : "resistance";
         return null;
+    }
+    /** A permanent resistance from race/subrace (matched case-insensitively). */
+    private boolean hasStaticResistance(String damageType) {
+        if (damageType == null) return false;
+        for (String r : damageResistances) if (r.equalsIgnoreCase(damageType)) return true;
+        return false;
+    }
+
+    /**
+     * Resolves a resistance the race links to a CUSTOM choice (e.g. dragonborn draconic ancestry →
+     * its element) now that the choice is known, and folds it into the permanent resistances. Safe to
+     * call more than once. Must run after the character's CUSTOM choices are populated (#51/#70).
+     */
+    public void applyLinkedResistances() {
+        if (race == null || race.getLinkedResistanceChoice() == null) return;
+        String picked = getCustomChoice(race.getLinkedResistanceChoice());
+        if (picked == null) return;
+        String type = race.getLinkedResistanceMapping().get(picked.trim().toLowerCase());
+        if (type != null && !type.isBlank()) damageResistances.add(type);
     }
     public boolean hasAdvantageOn(String rollTag) {
         for (var e : activeEffects) if (e.givesAdvantageOn(rollTag)) return true;

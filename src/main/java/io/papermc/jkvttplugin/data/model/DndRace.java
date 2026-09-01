@@ -45,6 +45,10 @@ public class DndRace {
     private int longRestHours = 8;
     private boolean sleepRequired = true;
     private List<String> damageResistances = List.of();
+    // A resistance linked to a CUSTOM player choice (e.g. dragonborn draconic ancestry -> element).
+    // choiceId + a map of option name -> damage type. Resolved on the character once the choice is known.
+    private String linkedResistanceChoice = null;
+    private Map<String, String> linkedResistanceMapping = Map.of();
     private List<String> skillProficiencies = List.of();
     private List<String> weaponProficiencies = List.of();
     private List<String> armorProficiencies = List.of();
@@ -188,6 +192,13 @@ public class DndRace {
     }
     public void setDamageResistances(List<String> damageResistances) {
         this.damageResistances = damageResistances != null ? List.copyOf(damageResistances) : List.of();
+    }
+
+    public String getLinkedResistanceChoice() { return linkedResistanceChoice; }
+    public void setLinkedResistanceChoice(String choiceId) { this.linkedResistanceChoice = choiceId; }
+    public Map<String, String> getLinkedResistanceMapping() { return linkedResistanceMapping; }
+    public void setLinkedResistanceMapping(Map<String, String> mapping) {
+        this.linkedResistanceMapping = mapping != null ? Map.copyOf(mapping) : Map.of();
     }
 
     public List<String> getSkillProficiencies() {
@@ -561,6 +572,16 @@ public class DndRace {
 
         public Builder features(List<io.papermc.jkvttplugin.effect.Feature> features) {
             instance.setFeatures(features);
+            return this;
+        }
+
+        public Builder linkedResistanceChoice(String choiceId) {
+            instance.setLinkedResistanceChoice(choiceId);
+            return this;
+        }
+
+        public Builder linkedResistanceMapping(Map<String, String> mapping) {
+            instance.setLinkedResistanceMapping(mapping);
             return this;
         }
 

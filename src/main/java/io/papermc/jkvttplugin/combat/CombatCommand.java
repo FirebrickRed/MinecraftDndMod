@@ -980,8 +980,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             resolved = SpellCastHandler.castAoe(caster, session, player, spell, providedRoll, providedTotal);
         } else {
             if (args.length < 3) { player.sendMessage(Component.text("Usage: /combat cast " + args[1] + " <target> [--roll <d20>]", NamedTextColor.RED)); return; }
-            Combatant target = findCombatantByName(session, stripQuotes(joinArgsExcludingFlags(args, 2)));
-            if (target == null) { player.sendMessage(Component.text("Target not found.", NamedTextColor.RED)); return; }
+            String targetName = stripQuotes(joinArgsExcludingFlags(args, 2));
+            Combatant target = findCombatantByName(session, targetName);
+            if (target == null) {
+                player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED));
+                player.sendMessage(Component.text("In combat: ", NamedTextColor.GRAY)
+                        .append(Component.text(combatantNameList(session), NamedTextColor.YELLOW)));
+                return;
+            }
             if (target.isDead()) { player.sendMessage(Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.YELLOW)); return; }
             resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal);
         }
@@ -2261,6 +2267,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // Shared match cascade (#140): exact → #-normalized → base name → startsWith → unique contains.
         return NameUtil.matchByName(session.getCombatants(), name,
                 Combatant::getDisplayName, Combatant::getBaseName);
+    }
+
+    /** Comma-separated names of the living combatants — shown when a target name doesn't resolve. */
+    private String combatantNameList(CombatSession session) {
+        List<String> names = new ArrayList<>();
+        for (Combatant c : session.getCombatants()) {
+            if (!c.isDead()) names.add(c.getDisplayName());
+        }
+        return names.isEmpty() ? "(none)" : String.join(", ", names);
     }
 
     // ==================== STRING HELPERS ====================
