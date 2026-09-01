@@ -73,7 +73,7 @@ public class SpellCastHandler {
         }
 
         if (spell.isAttackRoll()) {
-            RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, mod, "+" + mod + "[Spell]");
+            RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, mod, "+" + mod + "[Spell]", caster.rerollsNat1());
             if (r == null) {
                 player.sendMessage(Component.text("Roll your d20: add --roll <n>.", NamedTextColor.YELLOW));
                 return false;
@@ -279,7 +279,7 @@ public class SpellCastHandler {
         }
         int bonus = saveBonus(target, ps.ability());
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
-                "+" + bonus + "[" + ps.ability().getAbbreviation() + "]");
+                "+" + bonus + "[" + ps.ability().getAbbreviation() + "]", target.rerollsNat1());
         if (r == null) {
             roller.sendMessage(Component.text("Add your roll: --roll <n>.", NamedTextColor.YELLOW));
             return;

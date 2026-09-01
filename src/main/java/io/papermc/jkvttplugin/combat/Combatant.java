@@ -455,6 +455,11 @@ public class Combatant {
         CharacterSheet s = getCharacterSheet();
         return s != null && s.resistsDamage(damageType);
     }
+    /** Whether this combatant rerolls a natural 1 on a d20 (Halfling Lucky). Entities never do. */
+    public boolean rerollsNat1() {
+        CharacterSheet s = getCharacterSheet();
+        return s != null && s.rerollsNat1();
+    }
     /** The active-effect source of a resistance to this type (e.g. "Rage"), or null if static/none. */
     public String resistanceSourceFor(String damageType) {
         CharacterSheet s = getCharacterSheet();

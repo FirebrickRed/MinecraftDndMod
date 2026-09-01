@@ -1346,6 +1346,18 @@ public class CharacterSheet {
         for (var e : activeEffects) if (e.givesDisadvantageOn(rollTag)) return true;
         return false;
     }
+    /**
+     * Whether a natural 1 on a d20 should be rerolled once (Halfling Lucky). Read from passive
+     * feature definitions directly (rest-safe, no applied effect needed) and any active effect.
+     */
+    public boolean rerollsNat1() {
+        for (var e : activeEffects) if (e.rerollsNat1()) return true;
+        for (var f : getAllFeatures()) {
+            boolean passive = f.getActivation() == null || f.getActivation().equalsIgnoreCase("passive");
+            if (passive && f.hasApply() && f.getApplyTemplate().rerollsNat1()) return true;
+        }
+        return false;
+    }
     public int bonusDamageFor(String rollTag) {
         int sum = 0;
         for (var e : activeEffects) sum += e.bonusDamageFor(rollTag);

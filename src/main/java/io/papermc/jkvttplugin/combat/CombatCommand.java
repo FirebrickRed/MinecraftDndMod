@@ -426,7 +426,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         Integer providedTotal = getFlagValueInt(args, "--total");
         int bonus = self.getInitiativeBonus();
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
-                "+" + bonus + "[DEX]");
+                "+" + bonus + "[DEX]", self.rerollsNat1()); // initiative is a DEX check → Lucky applies
         if (r == null) { // physical mode, no die supplied — prompt
             promptInitiativeRoll(player, self);
             return;
@@ -1404,6 +1404,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         io.papermc.jkvttplugin.effect.Feature feature = sheet.getFeature(featureId);
         if (feature == null) {
             player.sendMessage(Component.text(actor.getDisplayName() + " has no usable feature '" + featureId + "'.", NamedTextColor.RED));
+            return;
+        }
+        // Passive features (e.g. Halfling Lucky) are always on — there's nothing to activate.
+        if (feature.getActivation() == null || feature.getActivation().equalsIgnoreCase("passive")) {
+            player.sendMessage(Component.text(feature.getName() + " is always active — no need to use it.", NamedTextColor.YELLOW));
             return;
         }
 
@@ -2465,7 +2470,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     Combatant cur = session != null ? session.getCurrentCombatant() : null;
                     if (cur != null && cur.getCharacterSheet() != null) {
                         for (io.papermc.jkvttplugin.effect.Feature f : cur.getCharacterSheet().getAllFeatures()) {
-                            if (f.getActivation() != null) completions.add(f.getId());
+                            // Only activatable features — passives (e.g. Lucky) are always on.
+                            if (f.getActivation() != null && !f.getActivation().equalsIgnoreCase("passive")) {
+                                completions.add(f.getId());
+                            }
                         }
                     }
                 }

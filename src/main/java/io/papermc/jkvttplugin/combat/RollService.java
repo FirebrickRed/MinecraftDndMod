@@ -51,6 +51,16 @@ public final class RollService {
      *         the caller should then prompt the player to roll rather than resolving.
      */
     public static RollResult resolve(Integer providedRoll, Integer providedTotal, int modifier, String modLabel) {
+        return resolve(providedRoll, providedTotal, modifier, modLabel, false);
+    }
+
+    /**
+     * As {@link #resolve(Integer, Integer, int, String)}, but if {@code rerollNat1} is set and the d20
+     * comes up a natural 1, it's rerolled once and the new die stands (Halfling Lucky). The reroll is
+     * shown in the breakdown so it's transparent. A provided total is never rerolled (no die to see).
+     */
+    public static RollResult resolve(Integer providedRoll, Integer providedTotal, int modifier, String modLabel,
+                                     boolean rerollNat1) {
         if (providedTotal != null) {
             return new RollResult(-1, providedTotal, true, false, false, providedTotal + " (provided total)");
         }
@@ -59,7 +69,13 @@ public final class RollService {
             if (!PluginConfig.isAutoRoll()) return null; // physical mode: caller prompts for a die
             d20 = DiceRoller.rollDice(1, 20);
         }
+        String luck = "";
+        if (rerollNat1 && d20 == 1) {
+            int first = d20;
+            d20 = DiceRoller.rollDice(1, 20);
+            luck = " [Lucky: reroll of " + first + "]";
+        }
         int total = d20 + modifier;
-        return new RollResult(d20, total, false, d20 == 20, d20 == 1, "d20(" + d20 + ") " + modLabel + " = " + total);
+        return new RollResult(d20, total, false, d20 == 20, d20 == 1, "d20(" + d20 + ") " + modLabel + " = " + total + luck);
     }
 }

@@ -134,7 +134,7 @@ public class AttackHandler {
     private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel) {
-        RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown);
+        RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1());
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
             commandUser.sendMessage(Component.text("Roll your d20, then add --roll <n> (or right-click your weapon).",

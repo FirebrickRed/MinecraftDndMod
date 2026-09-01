@@ -129,6 +129,7 @@ public final class FeatureParser {
         String bonusDamageWhen = null;
         String minecraftEffect = null;
         int minecraftAmplifier = 0;
+        boolean rerollNat1 = false;
         if (apply.get("effects") instanceof Map<?, ?> e) {
             resistances.addAll(ParseUtil.normalizeStringList(e.get("resistance")));
             advantageOn.addAll(ParseUtil.normalizeStringList(e.get("advantage_on")));
@@ -139,10 +140,11 @@ public final class FeatureParser {
             }
             minecraftEffect = ParseUtil.asString(e.get("minecraft_effect"), null);
             minecraftAmplifier = ParseUtil.asInt(e.get("minecraft_amplifier"), 0);
+            rerollNat1 = ParseUtil.asBoolean(e.get("reroll_natural_1"), false);
         }
 
         return new ActiveEffect(featureId, featureName, resistances, advantageOn, disadvantageOn,
-                bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, stacks,
+                bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, rerollNat1, stacks,
                 rounds, maintainedBy, untilRest, untilUsed);
     }
 }

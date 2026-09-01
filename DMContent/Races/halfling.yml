@@ -20,8 +20,15 @@ languages:
   - Halfling
 
 # Mechanical trait implementations
-# Lucky: When you roll a 1 on attack/ability check/save, reroll and use new roll
-lucky: true
+# Lucky (Effect Engine passive, #70): reroll a natural 1 on any d20 (attack, check, save) and keep
+# the new roll. A passive feature is always on — no /combat use needed.
+features:
+  - id: lucky
+    name: Lucky
+    activation: passive
+    apply:
+      effects:
+        reroll_natural_1: true
 
 # Brave: Advantage on saving throws against being frightened
 conditional_advantages:

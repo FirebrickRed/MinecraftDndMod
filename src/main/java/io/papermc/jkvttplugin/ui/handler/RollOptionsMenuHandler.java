@@ -90,7 +90,7 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
      */
     public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total) {
         RollInfo info = getRollInfo(character, type, value);
-        RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown);
+        RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown, character.rerollsNat1());
         if (r == null) return false;
         String dice = r.providedTotal() ? "total" : String.valueOf(r.d20());
         broadcastRoll(character, info, r.total(), dice, null, null);
