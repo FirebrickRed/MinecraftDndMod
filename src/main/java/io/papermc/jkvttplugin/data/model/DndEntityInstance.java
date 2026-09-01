@@ -230,15 +230,13 @@ public class DndEntityInstance {
         armorStand.setHeadPose(isDead
                 ? new org.bukkit.util.EulerAngle(Math.toRadians(90), 0, 0)
                 : new org.bukkit.util.EulerAngle(0, 0, 0));
-        // A corpse floats a nameplate so it's easy to spot and shows the loot hint (#171).
-        if (isDead) {
-            armorStand.customName(net.kyori.adventure.text.Component.text(
-                    "☠ " + displayName + " (right-click to search)",
-                    net.kyori.adventure.text.format.NamedTextColor.GRAY));
-            armorStand.setCustomNameVisible(true);
-        } else {
-            armorStand.setCustomNameVisible(false);
-        }
+        // A corpse glows so it's easy to find and right-click to loot (#171/#172). We keep the plain
+        // name in both states — never a "(right-click to search)" nameplate — so a revive can't lose
+        // it (previously the death nameplate overwrote the entity's real name). Per-hover glow isn't
+        // possible without client packets, so the corpse simply stays outlined while dead.
+        armorStand.setGlowing(isDead);
+        armorStand.customName(net.kyori.adventure.text.Component.text(displayName));
+        armorStand.setCustomNameVisible(true);
     }
 
     /**

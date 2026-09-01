@@ -981,7 +981,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         } else {
             if (args.length < 3) { player.sendMessage(Component.text("Usage: /combat cast " + args[1] + " <target> [--roll <d20>]", NamedTextColor.RED)); return; }
             String targetName = stripQuotes(joinArgsExcludingFlags(args, 2));
-            Combatant target = findCombatantByName(session, targetName);
+            // "me"/"self"/"myself" targets the caster — many spells (e.g. Primal Savagery) target you.
+            Combatant target = isSelfWord(targetName) ? caster : findCombatantByName(session, targetName);
             if (target == null) {
                 player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED));
                 player.sendMessage(Component.text("In combat: ", NamedTextColor.GRAY)
@@ -1910,28 +1911,33 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 ? attacker.getTurnState().getPendingDamageLabel() : "";
         int damage;
         if (rollStr != null) {
+            int rolled;
             if (rollStr.toLowerCase().contains("d")) {
-                OptionalInt rolled = DiceRoller.parseDiceRoll(rollStr);
-                if (rolled.isEmpty()) {
+                // A dice formula (e.g. 1d12) — the game rolls the weapon die for you.
+                OptionalInt r = DiceRoller.parseDiceRoll(rollStr);
+                if (r.isEmpty()) {
                     dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED));
                     return;
                 }
-                damage = rolled.getAsInt();
-                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + damage, NamedTextColor.GRAY));
+                rolled = r.getAsInt();
             } else {
+                // A plain number — what you physically rolled on the weapon die.
                 try {
-                    int rolled = Integer.parseInt(rollStr.trim());
-                    damage = rolled + pendingBonus;
-                    if (pendingBonus != 0) {
-                        // Show the labeled breakdown ("+5[STR] +2[Rage]") so the bonus isn't a mystery (#168).
-                        String bonusShow = !pendingLabel.isEmpty() ? " " + pendingLabel
-                                : (pendingBonus > 0 ? " +" + pendingBonus : " " + pendingBonus);
-                        dm.sendMessage(Component.text("Damage: " + rolled + bonusShow + " = " + damage, NamedTextColor.GRAY));
-                    }
+                    rolled = Integer.parseInt(rollStr.trim());
                 } catch (NumberFormatException e) {
                     dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));
                     return;
                 }
+            }
+            // Either way, add the pending bonus the attack promised (+STR, +Rage, …) — the prompt
+            // says "the game adds +N", so it must, whether the die was typed or auto-rolled (#168).
+            damage = rolled + pendingBonus;
+            if (pendingBonus != 0) {
+                String bonusShow = !pendingLabel.isEmpty() ? " " + pendingLabel
+                        : (pendingBonus > 0 ? " +" + pendingBonus : " " + pendingBonus);
+                dm.sendMessage(Component.text("Damage: " + rolled + bonusShow + " = " + damage, NamedTextColor.GRAY));
+            } else {
+                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + damage, NamedTextColor.GRAY));
             }
         } else if (total != null) {
             damage = total;
@@ -2267,6 +2273,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // Shared match cascade (#140): exact → #-normalized → base name → startsWith → unique contains.
         return NameUtil.matchByName(session.getCombatants(), name,
                 Combatant::getDisplayName, Combatant::getBaseName);
+    }
+
+    /** Whether a target word means "the caster themselves". */
+    private boolean isSelfWord(String name) {
+        if (name == null) return false;
+        String n = name.trim();
+        return n.equalsIgnoreCase("me") || n.equalsIgnoreCase("self") || n.equalsIgnoreCase("myself");
     }
 
     /** Comma-separated names of the living combatants — shown when a target name doesn't resolve. */

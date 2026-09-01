@@ -413,6 +413,12 @@ public class DndRace {
             }
         }
 
+        // Named racial traits (e.g. Breath Weapon, Darkvision) so a race's signature abilities are
+        // visible while choosing it — not a surprise after creation.
+        if (traits != null && !traits.isEmpty()) {
+            builder.addListSection("Traits:", traits, NamedTextColor.AQUA, NamedTextColor.WHITE);
+        }
+
         // Subraces (race-specific)
         if (hasSubraces()) {
             List<String> subraceNames = subraces.values().stream()

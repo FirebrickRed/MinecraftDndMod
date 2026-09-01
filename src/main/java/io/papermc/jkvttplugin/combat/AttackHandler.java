@@ -471,11 +471,15 @@ public class AttackHandler {
             prompt = prompt.append(Component.text("  (crit — dice doubled)", NamedTextColor.GRAY));
         }
 
-        // The attacking player applies their own damage; the DM always sees it (oversight / override).
+        // The attacking player applies their own damage; the DM also sees it (oversight / override).
+        // Guard against a double message when the attacker IS the DM (a DM running their own PC).
+        boolean attackerIsDm = attacker.isPlayer() && attacker.getId().equals(session.getDmId());
         if (attacker.isPlayer() && attacker.getPlayer() != null) {
             attacker.getPlayer().sendMessage(prompt);
         }
-        session.sendToDM(prompt);
+        if (!attackerIsDm) {
+            session.sendToDM(prompt);
+        }
     }
 
     /** Extract the trailing flat bonus from a damage string like "1d8+3" → 3, "2d6-1" → -1, "1d6" → 0. */
