@@ -36,6 +36,7 @@ public class WeaponListener implements Listener {
     // Right-click air / block, then ray-trace along your look direction.
     @EventHandler
     public void onPlayerRightClick(PlayerInteractEvent event) {
+        if (event.isCancelled()) return; // e.g. an area-effect confirm already consumed this click (#173)
         if (event.getHand() != EquipmentSlot.HAND) return; // main hand only (avoids double-fire)
         if (!event.getAction().isRightClick()) return;
 
@@ -61,6 +62,7 @@ public class WeaponListener implements Listener {
     // Right-click the enemy directly (melee).
     @EventHandler
     public void onRightClickEntity(PlayerInteractAtEntityEvent event) {
+        if (event.isCancelled()) return; // an area-effect confirm already consumed this click (#173)
         if (event.getHand() != EquipmentSlot.HAND) return;
 
         Player player = event.getPlayer();

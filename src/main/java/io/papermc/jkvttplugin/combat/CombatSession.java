@@ -682,6 +682,11 @@ public class CombatSession {
         // Remove all players from session tracking, clear glows and turn state
         for (Combatant c : combatants) {
             clearGlowEffect(c);
+            // A dead entity keeps its corpse glow so the body stays easy to find and loot (#172) —
+            // clearGlowEffect above turned off the turn-indicator glow, so re-apply the death visual.
+            if (c.isEntity() && c.isDead() && c.getEntityInstance() != null) {
+                c.getEntityInstance().updateDeathVisual();
+            }
             c.clearTurnState();
             DeathSaveHandler.removeProne(c);
             // Clear any Minecraft effects our conditions applied, so they don't linger post-combat (#103).

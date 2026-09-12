@@ -35,7 +35,6 @@ public final class AreaTargeting {
     private AreaTargeting() {}
 
     private static final long PERIOD_TICKS = 4L;   // preview refresh cadence
-    private static final int TIMEOUT_TICKS = 20 * 30; // auto-cancel after 30s of indecision
 
     private static final class Pending {
         final UUID casterId;
@@ -45,7 +44,6 @@ public final class AreaTargeting {
         final String label;
         final Runnable onConfirm;
         final Set<UUID> glowing = new HashSet<>(); // entities we've toggled glow on, to restore later
-        int ticksLeft = TIMEOUT_TICKS;
         Pending(UUID casterId, CombatSession session, String shape, double sizeFeet, String label, Runnable onConfirm) {
             this.casterId = casterId;
             this.session = session;
@@ -111,13 +109,7 @@ public final class AreaTargeting {
             Player player = JkVttPlugin.getInstance().getServer().getPlayer(entry.getKey());
             Pending p = entry.getValue();
             if (player == null || !player.isOnline()) { clearGlow(p); expired.add(entry.getKey()); continue; }
-            p.ticksLeft -= PERIOD_TICKS;
-            if (p.ticksLeft <= 0) {
-                clearGlow(p);
-                player.sendMessage(Component.text("Aim timed out — nothing spent.", NamedTextColor.YELLOW));
-                expired.add(entry.getKey());
-                continue;
-            }
+            // No auto-timeout: the aim holds until the player fires (right-click) or cancels (sneak).
             drawPreview(player, p);
         }
         for (UUID id : expired) pending.remove(id);
@@ -136,20 +128,27 @@ public final class AreaTargeting {
         boolean cone = "cone".equalsIgnoreCase(p.shape);
         boolean line = "line".equalsIgnoreCase(p.shape);
         Location eye = origin.clone().add(0, 1.0, 0);
-        for (double d = 0.5; d <= lengthBlocks; d += 0.5) {
-            Location center = eye.clone().add(dir.clone().multiply(d));
-            double halfWidth = cone ? d / 2.0 : (line ? 0.5 : lengthBlocks);
-            if (cone || line) {
-                Vector perp = new Vector(-dir.getZ(), 0, dir.getX()).normalize().multiply(halfWidth);
+        Vector perpUnit = new Vector(-dir.getZ(), 0, dir.getX()).normalize();
+        if (cone || line) {
+            // The two side edges from the caster outward.
+            for (double d = 0.5; d <= lengthBlocks; d += 0.5) {
+                Location center = eye.clone().add(dir.clone().multiply(d));
+                double halfWidth = cone ? d / 2.0 : 0.5;
+                Vector perp = perpUnit.clone().multiply(halfWidth);
                 origin.getWorld().spawnParticle(Particle.DUST, center.clone().add(perp), 1, 0, 0, 0, 0, edge);
-                origin.getWorld().spawnParticle(Particle.DUST, center.clone().subtract(perp), 1, 0, 0, 0, edge);
-            } else { // burst/sphere: ring around the origin
-                for (int a = 0; a < 360; a += 30) {
-                    double rad = Math.toRadians(a);
-                    Location pt = center.clone().add(Math.cos(rad) * lengthBlocks, 0, Math.sin(rad) * lengthBlocks);
-                    origin.getWorld().spawnParticle(Particle.DUST, pt, 1, 0, 0, 0, edge);
-                    break; // one ring pass is enough per tick for burst/sphere
-                }
+                origin.getWorld().spawnParticle(Particle.DUST, center.clone().subtract(perp), 1, 0, 0, 0, 0, edge);
+            }
+            // End cap across the far edge, so the width (and reach) reads clearly — vital for a big cone.
+            double halfEnd = cone ? lengthBlocks / 2.0 : 0.5;
+            Location end = eye.clone().add(dir.clone().multiply(lengthBlocks));
+            for (double w = -halfEnd; w <= halfEnd; w += 0.5) {
+                origin.getWorld().spawnParticle(Particle.DUST, end.clone().add(perpUnit.clone().multiply(w)), 1, 0, 0, 0, 0, edge);
+            }
+        } else { // burst/sphere: a full ring around the caster
+            for (int a = 0; a < 360; a += 20) {
+                double rad = Math.toRadians(a);
+                Location pt = eye.clone().add(Math.cos(rad) * lengthBlocks, 0, Math.sin(rad) * lengthBlocks);
+                origin.getWorld().spawnParticle(Particle.DUST, pt, 1, 0, 0, 0, 0, edge);
             }
         }
 

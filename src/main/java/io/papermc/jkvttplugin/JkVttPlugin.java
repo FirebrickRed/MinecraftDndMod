@@ -197,13 +197,10 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
                 getLogger().warning("Failed to end a combat session cleanly on shutdown: " + e.getMessage());
             }
         }
-        // Despawn tracked entities so they don't become orphaned armor stands the plugin
-        // can no longer manage after restart (stopgap until entity persistence, Issue #89).
-        try {
-            DmEntityCommand.despawnAllOnShutdown();
-        } catch (Exception e) {
-            getLogger().warning("Failed to despawn entities on shutdown: " + e.getMessage());
-        }
+        // Entities are NOT despawned on shutdown: their state rides on the armor stand's persistent
+        // data (persisted just above), Minecraft saves the stands with the world, and on next boot
+        // restoreAll() + the chunk-load listener re-register them (Issue #89). Deleting them here
+        // would defeat that persistence — use /dmentity cleanup to clear genuine orphans instead.
         getLogger().info("D&D Plugin has been disabled!");
     }
 

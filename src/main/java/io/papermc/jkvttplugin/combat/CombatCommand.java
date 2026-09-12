@@ -426,7 +426,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         Integer providedTotal = getFlagValueInt(args, "--total");
         int bonus = self.getInitiativeBonus();
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
-                "+" + bonus + "[DEX]", self.rerollsNat1()); // initiative is a DEX check → Lucky applies
+                (bonus >= 0 ? "+" : "") + bonus + "[DEX]", self.rerollsNat1()); // initiative is a DEX check → Lucky applies
         if (r == null) { // physical mode, no die supplied — prompt
             promptInitiativeRoll(player, self);
             return;

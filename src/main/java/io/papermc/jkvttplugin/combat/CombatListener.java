@@ -10,6 +10,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
@@ -29,6 +30,17 @@ public class CombatListener implements Listener {
     @EventHandler(priority = EventPriority.LOWEST)
     public void onAreaConfirm(PlayerInteractEvent event) {
         if (!event.getAction().isRightClick()) return;
+        Player player = event.getPlayer();
+        if (AreaTargeting.isAiming(player.getUniqueId())) {
+            event.setCancelled(true);
+            AreaTargeting.confirm(player);
+        }
+    }
+
+    /** Same confirm, but for a right-click that lands on a creature (e.g. a nearby armor stand) —
+     *  otherwise the player would have to aim at empty space to fire. */
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onAreaConfirmEntity(PlayerInteractAtEntityEvent event) {
         Player player = event.getPlayer();
         if (AreaTargeting.isAiming(player.getUniqueId())) {
             event.setCancelled(true);
