@@ -33,7 +33,10 @@ public class DamageHandler {
         int tempBefore = target.getTempHp();
 
         target.applyDamage(finalDamage);
-        if (finalDamage > 0) target.markEffectsMaintained("took_damage"); // keeps Rage etc. going (#70)
+        if (finalDamage > 0) {
+            target.markEffectsMaintained("took_damage"); // keeps Rage etc. going (#70)
+            CombatVisuals.hurtOnDamage(target);           // flinch + hurt sound as HP actually drops (#181)
+        }
 
         // Cosmetic on-hit effect for the damage type (fire → burning, cold → snowflakes, …).
         org.bukkit.entity.Entity body = target.isPlayer() ? target.getPlayer()

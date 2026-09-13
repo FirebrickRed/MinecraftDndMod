@@ -51,6 +51,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new WeaponListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.dm.DmModeListener(), this);
         Bukkit.getPluginManager().registerEvents(new MenuClickListener(), this);
+        Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.CombatVisualsListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.CreationNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.AnvilNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.EntityChunkListener(), this);

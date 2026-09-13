@@ -104,8 +104,14 @@ public class AttackHandler {
         // Half-Orc Savage Attacks: one extra weapon die on a melee-weapon crit (unarmed doesn't count).
         boolean extraCritDie = weapon != null && !weapon.isRanged() && attacker.hasExtraCritDie();
 
+        // Cosmetic projectile flair on a hit (#181): a fired/thrown weapon sends an arrow/trident.
+        String projectile = null;
+        if (weapon != null && (weapon.isRanged() || weapon.hasProperty("thrown"))) {
+            projectile = weapon.getId() != null && weapon.getId().toLowerCase().contains("trident") ? "trident" : "arrow";
+        }
+
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, player, bonusLabel, extraCritDie);
+                providedRoll, providedTotal, player, bonusLabel, extraCritDie, projectile);
     }
 
     /** Merge a flat bonus into a damage string's trailing modifier (1d8+3, +2 → 1d8+5), keeping the
@@ -131,13 +137,13 @@ public class AttackHandler {
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser) {
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, commandUser, "", false);
+                providedRoll, providedTotal, commandUser, "", false, null);
     }
 
     private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel,
-                                      boolean extraCritDie) {
+                                      boolean extraCritDie, String projectileVisual) {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1());
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
@@ -156,6 +162,8 @@ public class AttackHandler {
         broadcastAttackResult(session, attacker, target, false,
                 r.total(), targetAC, hit, r.nat20(), r.nat1(),
                 finalDamage, damageType, r.breakdown(), bonusLabel);
+        // On a hit with a ranged/thrown weapon, send a cosmetic projectile at the target (#181).
+        if (hit) CombatVisuals.projectileOnHit(attacker, target, projectileVisual);
         return true;
     }
 
