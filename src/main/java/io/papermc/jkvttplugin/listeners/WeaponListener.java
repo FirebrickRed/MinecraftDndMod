@@ -51,6 +51,11 @@ public class WeaponListener implements Listener {
         AttackContext ctx = contextFor(player);
         if (ctx == null) return;
 
+        // This is a managed combat weapon: right-click aims/targets, it never performs the vanilla
+        // action. Cancel so a bow/crossbow doesn't actually draw or loose an arrow — you're only
+        // selecting a target; the attack roll and damage are handled by the command flow.
+        event.setCancelled(true);
+
         Combatant target = traceTarget(player, ctx, (int) Math.ceil(rangeBlocks(ctx.weapon)));
         if (target == null) {
             player.sendActionBar(Component.text("No target in your line of sight — look at your enemy.", NamedTextColor.RED));

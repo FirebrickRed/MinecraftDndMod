@@ -403,8 +403,7 @@ public class DndRace {
 
         // Ability Score Choices (player choices - not automatic grants)
         if (abilityScoreChoice != null) {
-            builder.blankLine()
-                   .addLine("Ability Score Choice:", NamedTextColor.GOLD);
+            builder.addLine("Ability Score Choice:", NamedTextColor.GOLD);
             for (List<Integer> distribution : abilityScoreChoice.getDistributions()) {
                 String distText = distribution.stream()
                         .map(n -> "+" + n)

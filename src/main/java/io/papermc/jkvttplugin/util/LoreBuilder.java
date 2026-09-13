@@ -73,7 +73,8 @@ public class LoreBuilder {
             return this;
         }
 
-        blankLine();
+        // No leading blank line: the colored header is enough separation, and content-heavy races
+        // (e.g. dwarf) otherwise overflow the screen vertically (playtest feedback).
 
         // Add header
         lore.add(Component.text(header).color(headerColor));

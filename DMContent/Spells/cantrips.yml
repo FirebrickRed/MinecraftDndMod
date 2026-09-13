@@ -115,6 +115,7 @@ spells:
     material: "END_ROD"
     attack_type: "ranged_spell_attack"
     damage_type: "force"
+    damage: "1d10"
     higher_levels: "The spell creates more than one beam when you reach higher levels: two beams at 5th level, three beams at 11th level, and four beams at 17th level."
 
   minor_illusion:
