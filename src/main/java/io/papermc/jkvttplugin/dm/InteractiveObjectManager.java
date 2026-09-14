@@ -69,9 +69,12 @@ public final class InteractiveObjectManager {
     public static void save() {
         if (file == null) return;
         YamlConfiguration yaml = new YamlConfiguration();
+        // Index-based sections (o0, o1, …) so a world name with '.'/':'/'_' can never corrupt the path;
+        // the real location key rides inside each entry.
+        int i = 0;
         for (Map.Entry<String, Obj> e : objects.entrySet()) {
-            String path = e.getKey().replace(':', '_'); // ':' is a YAML path separator — encode it
-            yaml.set(path + ".rawKey", e.getKey());
+            String path = "o" + (i++);
+            yaml.set(path + ".key", e.getKey());
             yaml.set(path + ".locked", e.getValue().locked);
             yaml.set(path + ".hidden", e.getValue().hidden);
             yaml.set(path + ".description", e.getValue().description);
@@ -89,7 +92,7 @@ public final class InteractiveObjectManager {
         if (file == null || !file.exists()) return;
         YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
         for (String path : yaml.getKeys(false)) {
-            String rawKey = yaml.getString(path + ".rawKey");
+            String rawKey = yaml.getString(path + ".key");
             if (rawKey == null) continue;
             Obj o = new Obj();
             o.locked = yaml.getBoolean(path + ".locked", false);
