@@ -42,7 +42,7 @@ public class SpellCastHandler {
 
     /** @return true if the spell actually resolved (so the action is spent). */
     public static boolean cast(Combatant caster, Combatant target, CombatSession session, Player player,
-                               DndSpell spell, Integer providedRoll, Integer providedTotal) {
+                               DndSpell spell, Integer providedRoll, Integer providedTotal, boolean forceAuto) {
         CharacterSheet sheet = caster.getCharacterSheet();
         if (sheet == null) {
             player.sendMessage(Component.text("Only characters cast spells this way (an entity's spells are attacks — use /combat attack).", NamedTextColor.RED));
@@ -83,7 +83,13 @@ public class SpellCastHandler {
         }
 
         if (spell.isAttackRoll()) {
-            RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, mod, (mod >= 0 ? "+" : "") + mod + "[Spell]", caster.rerollsNat1());
+            Advantage advantage = caster.attackAdvantageAgainst(target); // spell attacks get condition adv/dis too (#103)
+            if (advantage != Advantage.NONE) {
+                player.sendMessage(Component.text("↯ You have " + advantage.label() + " on this spell attack.",
+                        advantage.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
+            }
+            RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, mod,
+                    (mod >= 0 ? "+" : "") + mod + "[Spell]", caster.rerollsNat1(), advantage, forceAuto);
             if (r == null) {
                 player.sendMessage(Component.text("Roll your d20: add --roll <n>.", NamedTextColor.YELLOW));
                 return false;
@@ -344,7 +350,7 @@ public class SpellCastHandler {
 
     /** Resolve a pending save for {@code target}. Players roll their own; the DM rolls for entities. */
     public static void resolveSave(Player roller, CombatSession session, Combatant target,
-                                   Integer providedRoll, Integer providedTotal) {
+                                   Integer providedRoll, Integer providedTotal, boolean forceAuto) {
         PendingSave ps = pendingSaves.get(target.getId());
         if (ps == null) {
             roller.sendMessage(Component.text(target.getDisplayName() + " has no pending save.", NamedTextColor.RED));
@@ -358,7 +364,7 @@ public class SpellCastHandler {
                     + advantage.label() + ".", advantage.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
         }
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
-                (bonus >= 0 ? "+" : "") + bonus + "[" + ps.ability().getAbbreviation() + "]", target.rerollsNat1(), advantage);
+                (bonus >= 0 ? "+" : "") + bonus + "[" + ps.ability().getAbbreviation() + "]", target.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
             roller.sendMessage(Component.text("Add your roll: --roll <n>.", NamedTextColor.YELLOW));
             return;

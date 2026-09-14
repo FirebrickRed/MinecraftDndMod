@@ -25,6 +25,51 @@ public final class RollService {
     }
 
     /**
+     * How a d20 action gets its die, parsed from the command (#183). New keywords are the preferred
+     * form; the legacy {@code --roll}/{@code --total} flags are still accepted as aliases:
+     *   - {@code autoRoll}            → the game rolls it (applying any advantage). ({@code --roll 1d20})
+     *   - {@code manualRoll <n>}      → you rolled n; the game adds your modifiers. ({@code --roll 14})
+     *   - {@code total <n>}           → a final total; nothing is added. ({@code --total 22})
+     * {@code providedRoll}/{@code providedTotal} are null unless supplied; {@code forceAuto} means the
+     * player explicitly asked the game to roll (so it rolls even in physical-dice mode).
+     */
+    public record RollInput(Integer providedRoll, Integer providedTotal, boolean forceAuto) {
+        public boolean isEmpty() { return providedRoll == null && providedTotal == null && !forceAuto; }
+    }
+
+    /** The bare words that supply a roll, so positional parsing knows to stop at them. */
+    public static boolean isRollKeyword(String token) {
+        if (token == null) return false;
+        String t = token.toLowerCase();
+        return t.equals("autoroll") || t.equals("manualroll") || t.equals("total")
+                || t.equals("--roll") || t.equals("--total");
+    }
+
+    /** Parse roll input (new keywords + legacy flags) from a command's args. */
+    public static RollInput parseInput(String[] args) {
+        Integer providedRoll = null, providedTotal = null;
+        boolean forceAuto = false;
+        for (int i = 0; i < args.length; i++) {
+            String a = args[i].toLowerCase();
+            String next = (i + 1 < args.length) ? args[i + 1] : null;
+            switch (a) {
+                case "autoroll" -> forceAuto = true; // optional trailing dice (e.g. 2d20) is ignored — advantage is auto-detected
+                case "manualroll", "--roll" -> {
+                    if (next != null) {
+                        if (next.toLowerCase().contains("d")) forceAuto = true; // a dice expression → let the game roll
+                        else { try { providedRoll = Integer.parseInt(next.trim()); } catch (NumberFormatException ignored) {} }
+                    }
+                }
+                case "total", "--total" -> {
+                    if (next != null) { try { providedTotal = Integer.parseInt(next.trim()); } catch (NumberFormatException ignored) {} }
+                }
+                default -> {}
+            }
+        }
+        return new RollInput(providedRoll, providedTotal, forceAuto);
+    }
+
+    /**
      * Interpret a {@code --roll} value. A plain number ("12") is the die the player rolled; a dice
      * expression ("1d20") is one the game rolls for them. Returns the resulting die value, or null
      * when the argument is empty or unparseable (the caller distinguishes those by the raw string).
@@ -72,6 +117,20 @@ public final class RollService {
      */
     public static RollResult resolve(Integer providedRoll, Integer providedTotal, int modifier, String modLabel,
                                      boolean rerollNat1, Advantage advantage) {
+        return resolve(providedRoll, providedTotal, modifier, modLabel, rerollNat1, advantage, false);
+    }
+
+    /** Resolve a roll straight from parsed {@link RollInput} (carries the forceAuto intent). */
+    public static RollResult resolve(RollInput input, int modifier, String modLabel, boolean rerollNat1, Advantage advantage) {
+        return resolve(input.providedRoll(), input.providedTotal(), modifier, modLabel, rerollNat1, advantage, input.forceAuto());
+    }
+
+    /**
+     * As above, plus {@code forceAuto}: when the player explicitly asked the game to roll
+     * ({@code autoRoll}), it rolls even in physical-dice mode instead of returning null to prompt.
+     */
+    public static RollResult resolve(Integer providedRoll, Integer providedTotal, int modifier, String modLabel,
+                                     boolean rerollNat1, Advantage advantage, boolean forceAuto) {
         if (providedTotal != null) {
             return new RollResult(-1, providedTotal, true, false, false, providedTotal + " (provided total)");
         }
@@ -80,7 +139,7 @@ public final class RollService {
         Integer d20 = providedRoll;
         String advNote = "";
         if (d20 == null) {
-            if (!PluginConfig.isAutoRoll()) return null; // physical mode: caller prompts for a die
+            if (!forceAuto && !PluginConfig.isAutoRoll()) return null; // physical mode: caller prompts for a die
             if (advantage == Advantage.NONE) {
                 d20 = DiceRoller.rollDice(1, 20);
             } else {

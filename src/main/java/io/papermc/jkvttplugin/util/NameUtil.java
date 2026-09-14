@@ -46,6 +46,9 @@ public final class NameUtil {
         boolean first = true;
         for (int i = from; i < args.length; i++) {
             if (args[i].startsWith("--")) break; // reached the flags; the name is complete
+            // Bare roll keywords (autoRoll / manualRoll / total) also end the name (#183).
+            String lower = args[i].toLowerCase();
+            if (lower.equals("autoroll") || lower.equals("manualroll") || lower.equals("total")) break;
             if (!first) sb.append(" ");
             sb.append(args[i]);
             first = false;

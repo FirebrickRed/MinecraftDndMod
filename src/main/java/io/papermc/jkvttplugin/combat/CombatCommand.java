@@ -422,11 +422,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
-        Integer providedTotal = getFlagValueInt(args, "--total");
+        RollService.RollInput roll = RollService.parseInput(args);
         int bonus = self.getInitiativeBonus();
-        RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
-                (bonus >= 0 ? "+" : "") + bonus + "[DEX]", self.rerollsNat1()); // initiative is a DEX check → Lucky applies
+        RollService.RollResult r = RollService.resolve(roll.providedRoll(), roll.providedTotal(), bonus,
+                (bonus >= 0 ? "+" : "") + bonus + "[DEX]", self.rerollsNat1(), Advantage.NONE, roll.forceAuto()); // initiative is a DEX check → Lucky applies
         if (r == null) { // physical mode, no die supplied — prompt
             promptInitiativeRoll(player, self);
             return;
@@ -971,8 +970,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
-        Integer providedTotal = getFlagValueInt(args, "--total");
+        RollService.RollInput roll = RollService.parseInput(args);
+        Integer providedRoll = roll.providedRoll();
+        Integer providedTotal = roll.providedTotal();
 
         boolean resolved;
         if (spell.isAoe()) {
@@ -1006,7 +1006,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (spell.isMarkSpell()) {
                 resolved = SpellCastHandler.castMark(caster, target, session, player, spell, choice);
             } else {
-                resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal);
+                resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal, roll.forceAuto());
             }
         }
 
@@ -1036,8 +1036,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         CombatSession session = resolveSession(player);
         if (session == null) return;
         boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
-        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
-        Integer providedTotal = getFlagValueInt(args, "--total");
+        RollService.RollInput roll = RollService.parseInput(args);
         String targetName = joinArgsExcludingFlags(args, 1);
 
         Combatant target;
@@ -1049,7 +1048,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             target = findCombatantByName(session, stripQuotes(targetName));
             if (target == null) { player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED)); return; }
         }
-        SpellCastHandler.resolveSave(player, session, target, providedRoll, providedTotal);
+        SpellCastHandler.resolveSave(player, session, target, roll.providedRoll(), roll.providedTotal(), roll.forceAuto());
     }
 
     // ==================== REACTIONS (Issue #147) ====================
@@ -1122,13 +1121,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
-        Integer providedTotal = getFlagValueInt(args, "--total");
+        RollService.RollInput rRoll = RollService.parseInput(args);
+        Integer providedRoll = rRoll.providedRoll();
+        Integer providedTotal = rRoll.providedTotal();
 
         // Resolve as a normal attack (no action spent — it costs the reaction instead).
         boolean resolved = reactor.isPlayer()
-                ? AttackHandler.executePlayerAttack(reactor, mover, session, player, attackName, providedRoll, providedTotal, false)
-                : AttackHandler.executeEntityAttack(reactor, mover, session, player, attackName, providedRoll, providedTotal, false);
+                ? AttackHandler.executePlayerAttack(reactor, mover, session, player, attackName, providedRoll, providedTotal, false, rRoll.forceAuto())
+                : AttackHandler.executeEntityAttack(reactor, mover, session, player, attackName, providedRoll, providedTotal, false, rRoll.forceAuto());
 
         if (resolved) {
             ReactionManager.spendReaction(reactor);
@@ -1546,15 +1546,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Parse flags. --roll takes a number (you rolled it) or dice like 1d20 (the game rolls it).
+        // Parse the roll input: manualRoll <n> (you rolled it), autoRoll (game rolls), total <n>.
         boolean showMods = hasFlag(args, "--showmods");
-        String rollArg = getFlagValue(args, "--roll");
-        Integer providedRoll = RollService.parseRollArg(rollArg);
-        if (rollArg != null && !rollArg.isBlank() && providedRoll == null) {
-            player.sendMessage(Component.text("Invalid --roll: " + rollArg + " — use a number (e.g. 14) or dice (e.g. 1d20).", NamedTextColor.RED));
-            return;
-        }
-        Integer providedTotal = getFlagValueInt(args, "--total");
+        RollService.RollInput roll = RollService.parseInput(args);
+        Integer providedRoll = roll.providedRoll();
+        Integer providedTotal = roll.providedTotal();
 
         // A d20 result must be 1-20; reject out-of-range values.
         if (providedRoll != null && (providedRoll < 1 || providedRoll > 20)) {
@@ -1667,9 +1663,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // actually happen (e.g. physical mode waiting on a roll) — then we DON'T spend the action.
         boolean resolved = attacker.isPlayer()
                 ? AttackHandler.executePlayerAttack(attacker, target, session, player,
-                        weaponOrAttackName, providedRoll, providedTotal, showMods)
+                        weaponOrAttackName, providedRoll, providedTotal, showMods, roll.forceAuto())
                 : AttackHandler.executeEntityAttack(attacker, target, session, player,
-                        weaponOrAttackName, providedRoll, providedTotal, showMods);
+                        weaponOrAttackName, providedRoll, providedTotal, showMods, roll.forceAuto());
 
         // Consume action + refresh action bar only for a real attack.
         if (resolved) {
@@ -1840,6 +1836,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private List<String> collectPositionalArgs(String[] args, int startIndex) {
         List<String> positional = new ArrayList<>();
         for (int i = startIndex; i < args.length; i++) {
+            // The roll input (autoRoll / manualRoll <n> / total <n>) always follows the positionals,
+            // so stop here — otherwise "manualRoll"/"8" would be mistaken for a target/amount (#183).
+            if (RollService.isRollKeyword(args[i])) break;
             if (args[i].startsWith("--")) {
                 // Check if this is a flag with an attached value (e.g., --roll20)
                 // or a standalone flag like --showmods
@@ -2085,8 +2084,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (session == null) return;
 
         boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
-        // Players roll their own death saves (trust-based); --roll is a number or dice (e.g. 1d20).
-        Integer providedRoll = RollService.parseRollArg(getFlagValue(args, "--roll"));
+        // Players roll their own death saves (trust-based): manualRoll <n>, or autoRoll / nothing to auto-roll.
+        Integer providedRoll = RollService.parseInput(args).providedRoll();
         List<String> positional = collectPositionalArgs(args, 1);
 
         // DM may roll for a named downed player; otherwise you roll for yourself.

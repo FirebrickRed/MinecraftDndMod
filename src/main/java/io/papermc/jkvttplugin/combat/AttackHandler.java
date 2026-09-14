@@ -45,7 +45,7 @@ public class AttackHandler {
     public static boolean executePlayerAttack(Combatant attacker, Combatant target,
                                            CombatSession session, Player player,
                                            String weaponId, Integer providedRoll,
-                                           Integer providedTotal, boolean showMods) {
+                                           Integer providedTotal, boolean showMods, boolean forceAuto) {
         CharacterSheet sheet = attacker.getCharacterSheet();
         if (sheet == null) {
             player.sendMessage(Component.text("No active character found.", NamedTextColor.RED));
@@ -111,7 +111,7 @@ public class AttackHandler {
         }
 
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, player, bonusLabel, extraCritDie, projectile);
+                providedRoll, providedTotal, player, bonusLabel, extraCritDie, projectile, forceAuto);
     }
 
     /** Merge a flat bonus into a damage string's trailing modifier (1d8+3, +2 → 1d8+5), keeping the
@@ -137,13 +137,13 @@ public class AttackHandler {
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser) {
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, commandUser, "", false, null);
+                providedRoll, providedTotal, commandUser, "", false, null, false);
     }
 
     private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel,
-                                      boolean extraCritDie, String projectileVisual) {
+                                      boolean extraCritDie, String projectileVisual, boolean forceAuto) {
         // Advantage/disadvantage from conditions (#103): auto-applied when the game rolls, and the
         // roller is reminded either way (a physical roll or provided total is trusted as-is).
         Advantage advantage = attacker.attackAdvantageAgainst(target);
@@ -156,7 +156,7 @@ public class AttackHandler {
                 commandUser.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));
             }
         }
-        RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1(), advantage);
+        RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
             commandUser.sendMessage(Component.text("Roll your d20, then add --roll <n> (or right-click your weapon).",
@@ -345,7 +345,7 @@ public class AttackHandler {
     public static boolean executeEntityAttack(Combatant attacker, Combatant target,
                                            CombatSession session, Player dm,
                                            String attackName, Integer providedRoll,
-                                           Integer providedTotal, boolean showMods) {
+                                           Integer providedTotal, boolean showMods, boolean forceAuto) {
         DndEntityInstance entity = attacker.getEntityInstance();
         if (entity == null) {
             dm.sendMessage(Component.text("Entity data not found.", NamedTextColor.RED));
@@ -391,7 +391,7 @@ public class AttackHandler {
 
         // Same resolver as player attacks — the entity just sources its numbers from the stat block.
         return resolveAttack(session, attacker, target, toHit, "+" + toHit + "[ToHit]",
-                attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm);
+                attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm, "", false, null, forceAuto);
     }
 
     /**
