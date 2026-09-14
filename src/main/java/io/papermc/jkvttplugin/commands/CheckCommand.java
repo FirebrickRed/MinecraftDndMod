@@ -18,19 +18,21 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 /**
- * DM-prompted checks with optional advantage/disadvantage (Issue #61, MVP scope).
- * Rolls immediately for the target player's active character and broadcasts the result,
- * reusing the same roll math and output as the character-sheet roll menu.
+ * DM-called checks, resolved <b>DM-first</b> (#186). The DM calls for a check; the target player is
+ * prompted to roll their own die; the result comes back to the <b>DM</b> (with success/fail vs a
+ * private DC) plus a <b>[Share with players]</b> button — the table sees nothing until the DM shares.
+ * The player never sees the DC. Reuses the sheet roll math (advantage/disadvantage, Lucky, …).
  *
- * Usage: /dm check &lt;player&gt; &lt;ability|save|skill&gt; &lt;name&gt; [adv|dis]
+ * Usage: /dm check &lt;player&gt; &lt;ability|save|skill&gt; &lt;name&gt; [dc &lt;n&gt;] [adv|dis]
+ *        /dm check share &lt;token&gt;   (the [Share] button)
  * Examples:
+ *   /dm check Notch skill stealth dc 15
  *   /dm check Notch save DEX advantage
- *   /dm check Notch skill stealth
- *   /dm check Notch ability STR
  *
- * Deferred (need the party system, #42): clickable prompts and @party targeting.
+ * Deferred: contested checks (A vs B, incl. NPCs), multi-target/all, passive/group (#186).
  */
 public class CheckCommand implements CommandExecutor, TabCompleter {
 
@@ -40,8 +42,15 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Only a DM can prompt checks.", NamedTextColor.RED));
             return true;
         }
+        // [Share with players] button from a DM-first check result (#186).
+        if (args.length >= 2 && args[0].equalsIgnoreCase("share")) {
+            String msg = io.papermc.jkvttplugin.dm.CheckManager.takeShare(args[1]);
+            if (msg != null) Bukkit.broadcast(Component.text("🎲 " + msg, NamedTextColor.YELLOW));
+            else sender.sendMessage(Component.text("That roll was already shared or has expired.", NamedTextColor.GRAY));
+            return true;
+        }
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /dm check <player|character> <ability|save|skill> <name> [adv|dis]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm check <player|character> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
             return true;
         }
 
@@ -83,24 +92,30 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         }
 
         RollMode mode = RollMode.NORMAL;
-        if (args.length >= 4) {
-            String m = args[3].toLowerCase();
-            if (m.equals("adv") || m.equals("advantage")) mode = RollMode.ADVANTAGE;
-            else if (m.equals("dis") || m.equals("disadvantage")) mode = RollMode.DISADVANTAGE;
+        Integer dc = null;
+        for (int i = 3; i < args.length; i++) {
+            String a = args[i].toLowerCase();
+            if (a.equals("adv") || a.equals("advantage")) mode = RollMode.ADVANTAGE;
+            else if (a.equals("dis") || a.equals("disadvantage")) mode = RollMode.DISADVANTAGE;
+            else if (a.equals("dc") && i + 1 < args.length) {
+                try { dc = Integer.parseInt(args[i + 1]); } catch (NumberFormatException ignored) {}
+            }
         }
 
-        // Physical mode: prompt the player to roll their own die. Auto mode: roll it for them.
-        if (io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) {
-            RollOptionsMenuHandler.performRoll(sheet, rollType, value, mode);
-        } else {
-            if (target == null) {
-                sender.sendMessage(Component.text(sheet.getCharacterName() + "'s player is offline — can't prompt a physical roll.", NamedTextColor.RED));
-                return true;
-            }
-            RollOptionsMenuHandler.promptSkillRoll(target, sheet, rollType, value, mode);
-            sender.sendMessage(Component.text("Prompted " + sheet.getCharacterName() + " to roll "
-                    + args[2] + (mode == RollMode.NORMAL ? "" : " (" + args[3] + ")") + ".", NamedTextColor.GRAY));
+        if (target == null) {
+            sender.sendMessage(Component.text(sheet.getCharacterName() + "'s player is offline — can't prompt a check.", NamedTextColor.RED));
+            return true;
         }
+        // DM-first (#186): register the pending check (with the private DC), then prompt the player to
+        // roll. When they roll, the result comes back to the DM with a [Share with players] button —
+        // the table sees nothing until the DM shares it. The player never sees the DC.
+        UUID dmId = (sender instanceof Player dm) ? dm.getUniqueId() : null;
+        io.papermc.jkvttplugin.dm.CheckManager.register(target.getUniqueId(), dmId, dc, args[2]);
+        RollOptionsMenuHandler.promptSkillRoll(target, sheet, rollType, value, mode);
+        sender.sendMessage(Component.text("Called a " + args[2] + " check from " + sheet.getCharacterName()
+                + (dc != null ? " (DC " + dc + ", private)" : "")
+                + (mode == RollMode.NORMAL ? "" : " with " + mode.name().toLowerCase())
+                + " — the result comes back to you to share.", NamedTextColor.GRAY));
         return true;
     }
 

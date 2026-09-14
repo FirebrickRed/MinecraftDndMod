@@ -93,9 +93,46 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown,
                 character.rerollsNat1(), io.papermc.jkvttplugin.combat.Advantage.NONE, forceAuto);
         if (r == null) return false;
+        // A DM-called check (#186) reports to the DM first — not the whole table.
+        io.papermc.jkvttplugin.dm.CheckManager.Pending pending =
+                io.papermc.jkvttplugin.dm.CheckManager.takePending(character.getPlayerId());
+        if (pending != null) {
+            reportDmCheck(character, info, r.total(), pending);
+            return true;
+        }
         String dice = r.providedTotal() ? "total" : String.valueOf(r.d20());
         broadcastRoll(character, info, r.total(), dice, null, null);
         return true;
+    }
+
+    /** Report a DM-called check to the DM (with success/fail vs the private DC) + a Share button. */
+    private static void reportDmCheck(CharacterSheet character, RollInfo info, int total,
+                                      io.papermc.jkvttplugin.dm.CheckManager.Pending p) {
+        String rollerName = character.getCharacterName();
+        // The roller sees their own number (never the DC).
+        Player owner = Bukkit.getPlayer(character.getPlayerId());
+        if (owner != null) {
+            owner.sendMessage(Component.text("You rolled " + info.displayName + ": " + total
+                    + " — sent to the DM.", NamedTextColor.GRAY));
+        }
+        String shareText = rollerName + " rolled " + info.displayName + ": " + total;
+        String token = io.papermc.jkvttplugin.dm.CheckManager.stashShare(shareText);
+        Component verdict = Component.empty();
+        if (p.dc() != null) {
+            boolean success = total >= p.dc();
+            verdict = Component.text(success ? "  ✔ SUCCESS" : "  ✘ FAIL",
+                            success ? NamedTextColor.GREEN : NamedTextColor.RED)
+                    .append(Component.text(" (DC " + p.dc() + ")", NamedTextColor.DARK_GRAY));
+        }
+        Component dmMsg = Component.text("🎲 " + shareText, NamedTextColor.GOLD)
+                .append(verdict)
+                .append(Component.text("  "))
+                .append(Component.text("[Share with players]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand("/dm check share " + token))
+                        .hoverEvent(HoverEvent.showText(Component.text("Announce this roll to the table."))));
+        Player dm = Bukkit.getPlayer(p.dmId());
+        if (dm != null) dm.sendMessage(dmMsg);
+        else Bukkit.broadcast(Component.text("🎲 " + shareText, NamedTextColor.YELLOW)); // DM offline → announce
     }
 
     /** Roll mode for programmatic rolls outside the menu flow (Issue #61 - /check). */

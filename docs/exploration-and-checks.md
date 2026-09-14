@@ -53,7 +53,11 @@ each option routing through the DM per principles 2–3.
 The roller layer everything hangs off. Sketch:
 - `/dm check <player…|all> [dc <n>] [<skill/ability>] [adv|dis]` — prompts the named players (or all)
   with a clickable *"roll <skill>"* button; the DM sees each roll and a **success/fail vs DC** verdict.
-- **Contested:** `/dm check <A> vs <B>` (Stealth vs Perception, Deception vs Insight).
+- **Contested:** `/dm check <A> <skillA> vs <B> <skillB>` — prompts **both** to roll (their own skills), compares
+  totals, reports the winner to the DM. A **player can initiate** ("I think they're lying — can I Insight
+  them?"): the DM sets it up, and the *other* participant is prompted to roll the opposing skill
+  (Insight vs Deception). Works the same when one side is an **NPC/entity** (fill in its name; the DM
+  rolls for it). Skills need not match (Insight vs Deception, Stealth vs Perception, Athletics vs Athletics).
 - **Passive:** compare a hidden thing's DC against players' passive Perception automatically.
 - Reuses the existing sheet roller (`RollOptionsMenuHandler.resolvePhysical`) — advantage/disadvantage,
   Lucky, etc. all already work.
@@ -72,12 +76,19 @@ broadcasting them to the table.
 - **Submenus / category items** — instead of 3–4 combat items cluttering the DM hotbar, one **Combat**
   item opens a combat-tools menu; likewise an **Exploration** menu, etc. Keeps DM mode tidy as it grows.
 
-## Open questions / decisions
+## Decisions & open questions
 
-- Failure/retry rules per interaction (retry allowed? forcing breaks the lock / makes noise?).
-- Reveal state tracking: once a hidden thing is shared, is it revealed globally or per-player?
-- Tool proficiency: lockpicking/traps assume Thieves' Tools proficiency — factor into the bonus.
-- Who may attempt: only the interacting player, or anyone in reach? Help action → advantage.
+- **Retry rules — case by case, the DM decides.** The game shouldn't hard-code "one attempt"; give the
+  DM the call (retry, or only by forcing it — which breaks the lock / makes noise).
+- **Reveal state — DM → the player → others.** The DM reveals a hidden thing to a *specific player*;
+  that player then chooses whether to reveal it to the rest of the table. (Two-step share.)
+- **Help & Guidance.** A second player often chimes in "can I help?" — the Help action grants advantage,
+  and Guidance adds +1d4. The check flow should let the DM fold in a helper.
+- **Tool proficiency.** Lockpicking/trap-disarm assume **Thieves' Tools** proficiency — factor it into
+  the bonus (it's easy to forget at the table, so the game should handle it).
+- **DM escape hatch.** The DM can always just say yes/no and skip the roll. This overlaps the DM-override
+  rework (#175) — which also wants an easy, clear "a player botched their combat round; let them redo it."
+- Who may attempt: only the interacting player, or anyone in reach?
 - Persistence: annotations save per world + coordinates across restarts (mirror the shop persistence).
 
 ## Relationship to the roadmap
