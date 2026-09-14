@@ -17,18 +17,27 @@ public final class CheckManager {
     private CheckManager() {}
 
     /** A check the DM has called for and is waiting on. {@code dc} is null for an ungraded roll. */
-    public record Pending(UUID dmId, Integer dc, String label) {}
+    public record Pending(UUID dmId, Integer dc, String label, io.papermc.jkvttplugin.combat.Advantage advantage) {}
 
     private static final Map<UUID, Pending> pending = new HashMap<>();   // roller's player id -> pending
     private static final Map<String, String> shareable = new HashMap<>(); // share token -> plain message
     private static int counter = 0;
 
-    public static void register(UUID rollerPlayerId, UUID dmId, Integer dc, String label) {
-        if (rollerPlayerId != null) pending.put(rollerPlayerId, new Pending(dmId, dc, label));
+    public static void register(UUID rollerPlayerId, UUID dmId, Integer dc, String label,
+                                io.papermc.jkvttplugin.combat.Advantage advantage) {
+        if (rollerPlayerId != null) {
+            pending.put(rollerPlayerId, new Pending(dmId, dc, label,
+                    advantage == null ? io.papermc.jkvttplugin.combat.Advantage.NONE : advantage));
+        }
     }
 
     public static boolean hasPending(UUID rollerPlayerId) {
         return rollerPlayerId != null && pending.containsKey(rollerPlayerId);
+    }
+
+    /** Look at the pending check without clearing it (the roll math needs its advantage first). */
+    public static Pending peekPending(UUID rollerPlayerId) {
+        return rollerPlayerId == null ? null : pending.get(rollerPlayerId);
     }
 
     /** Take (and clear) the pending check for this roller, or null if none. */

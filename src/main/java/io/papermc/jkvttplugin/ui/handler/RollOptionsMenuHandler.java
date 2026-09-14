@@ -72,16 +72,26 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
     public static void promptSkillRoll(Player player, CharacterSheet character, String type, String value, RollMode mode) {
         RollInfo info = getRollInfo(character, type, value);
         String bonusStr = info.bonus >= 0 ? "+" + info.bonus : String.valueOf(info.bonus);
-        String cmd = "/character check " + type + " " + value + " manualRoll ";
+        String manualCmd = "/character check " + type + " " + value + " manualRoll ";
+        String autoCmd = "/character check " + type + " " + value + " autoRoll";
         String advNote = switch (mode) {
-            case ADVANTAGE -> " (advantage — roll two, use the higher)";
-            case DISADVANTAGE -> " (disadvantage — roll two, use the lower)";
+            case ADVANTAGE -> " (advantage)";
+            case DISADVANTAGE -> " (disadvantage)";
+            default -> "";
+        };
+        String advHover = switch (mode) {
+            case ADVANTAGE -> "\nAdvantage: the game rolls two d20 and keeps the higher.";
+            case DISADVANTAGE -> "\nDisadvantage: the game rolls two d20 and keeps the lower.";
             default -> "";
         };
         player.sendMessage(Component.text("🎲 Roll " + info.displayName + advNote + " — ", NamedTextColor.GOLD)
                 .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(cmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds " + bonusStr + ".")))));
+                        .clickEvent(ClickEvent.suggestCommand(manualCmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd + "<your d20> — the game adds " + bonusStr + "." + advHover))))
+                .append(Component.text("  ", NamedTextColor.GRAY))
+                .append(Component.text("[or let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand(autoCmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20" + (mode == RollMode.NORMAL ? "" : " (" + mode.name().toLowerCase() + ", 2d20)") + " and adds " + bonusStr + ".")))));
     }
 
     /**
@@ -90,13 +100,17 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
      */
     public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total, boolean forceAuto) {
         RollInfo info = getRollInfo(character, type, value);
-        RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown,
-                character.rerollsNat1(), io.papermc.jkvttplugin.combat.Advantage.NONE, forceAuto);
-        if (r == null) return false;
-        // A DM-called check (#186) reports to the DM first — not the whole table.
+        // A DM-called check (#186) may carry advantage/disadvantage — apply it to the roll (so autoRoll
+        // actually rolls 2d20 and keeps the right one), and report DM-first instead of broadcasting.
         io.papermc.jkvttplugin.dm.CheckManager.Pending pending =
-                io.papermc.jkvttplugin.dm.CheckManager.takePending(character.getPlayerId());
+                io.papermc.jkvttplugin.dm.CheckManager.peekPending(character.getPlayerId());
+        io.papermc.jkvttplugin.combat.Advantage advantage = pending != null
+                ? pending.advantage() : io.papermc.jkvttplugin.combat.Advantage.NONE;
+        RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown,
+                character.rerollsNat1(), advantage, forceAuto);
+        if (r == null) return false;
         if (pending != null) {
+            io.papermc.jkvttplugin.dm.CheckManager.takePending(character.getPlayerId());
             reportDmCheck(character, info, r.total(), pending);
             return true;
         }

@@ -58,6 +58,15 @@ The roller layer everything hangs off. Sketch:
   them?"): the DM sets it up, and the *other* participant is prompted to roll the opposing skill
   (Insight vs Deception). Works the same when one side is an **NPC/entity** (fill in its name; the DM
   rolls for it). Skills need not match (Insight vs Deception, Stealth vs Perception, Athletics vs Athletics).
+  - **The responder picks their approach.** When B is Insight-checked, B chooses how they answer —
+    *[Honest]* (no contest, or Insight vs their passive), *[Lie → roll Deception]*, *[Persuade → roll
+    Persuasion]*, *[Intimidate → Intimidation]*. Real player agency; the DM sees the outcome, players don't.
+
+- **Instant vs persistent checks.** Some checks resolve immediately (pick a lock now → success/fail).
+  Others **persist**: a **Stealth** roll becomes a held value that later gets compared to each watcher's
+  **passive Perception** as the party moves or a creature gets a chance to notice — it doesn't "resolve"
+  at roll time. For now the DM can call Stealth ungraded (no DC) and note the number; a real *hidden
+  status* that auto-checks passive Perception over time is part of the exploration epic (#185).
 - **Passive:** compare a hidden thing's DC against players' passive Perception automatically.
 - Reuses the existing sheet roller (`RollOptionsMenuHandler.resolvePhysical`) — advantage/disadvantage,
   Lucky, etc. all already work.

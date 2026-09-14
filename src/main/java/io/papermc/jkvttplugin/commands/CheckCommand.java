@@ -110,7 +110,12 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         // roll. When they roll, the result comes back to the DM with a [Share with players] button —
         // the table sees nothing until the DM shares it. The player never sees the DC.
         UUID dmId = (sender instanceof Player dm) ? dm.getUniqueId() : null;
-        io.papermc.jkvttplugin.dm.CheckManager.register(target.getUniqueId(), dmId, dc, args[2]);
+        io.papermc.jkvttplugin.combat.Advantage adv = switch (mode) {
+            case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
+            case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
+            default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
+        };
+        io.papermc.jkvttplugin.dm.CheckManager.register(target.getUniqueId(), dmId, dc, args[2], adv);
         RollOptionsMenuHandler.promptSkillRoll(target, sheet, rollType, value, mode);
         sender.sendMessage(Component.text("Called a " + args[2] + " check from " + sheet.getCharacterName()
                 + (dc != null ? " (DC " + dc + ", private)" : "")
