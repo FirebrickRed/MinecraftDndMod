@@ -188,49 +188,36 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (rest.length < 1) {
-            player.sendMessage(Component.text("Right-click a body, then use the prompt (or /character loot <check> --roll <d20>).", NamedTextColor.RED));
+            player.sendMessage(Component.text("Right-click a body, then use the prompt (or /character loot <check> manualRoll <d20>).", NamedTextColor.RED));
             return true;
         }
-        // Same --roll/--total grammar as attacks: --roll <n|dice>, or --total <n>.
-        Integer providedRoll = null, providedTotal = null;
-        for (int i = 1; i < rest.length - 1; i++) {
-            if (rest[i].equalsIgnoreCase("--roll")) {
-                providedRoll = io.papermc.jkvttplugin.combat.RollService.parseRollArg(rest[i + 1]);
-            } else if (rest[i].equalsIgnoreCase("--total")) {
-                try { providedTotal = Integer.parseInt(rest[i + 1].trim()); } catch (NumberFormatException ignored) {}
-            }
-        }
-        io.papermc.jkvttplugin.loot.LootManager.roll(player, rest[0], providedRoll, providedTotal);
+        // Same roll grammar as combat: manualRoll <n> / autoRoll / total <n> (#183).
+        io.papermc.jkvttplugin.combat.RollService.RollInput roll = io.papermc.jkvttplugin.combat.RollService.parseInput(rest);
+        io.papermc.jkvttplugin.loot.LootManager.roll(player, rest[0], roll.providedRoll(), roll.providedTotal(), roll.forceAuto());
         return true;
     }
 
-    /** {@code /character check <TYPE> <VALUE> [--roll n | --total n]} — resolve a physical skill/ability/save roll (#145). */
+    /** {@code /character check <TYPE> <VALUE> [manualRoll <n> | autoRoll | total <n>]} — resolve a skill/ability/save roll (#145). */
     private boolean handleCheck(CommandSender sender, String[] rest) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(Component.text("Only players can roll checks.", NamedTextColor.RED));
             return true;
         }
         if (rest.length < 2) {
-            player.sendMessage(Component.text("Click a skill on your sheet, or /character check <type> <value> --roll <n>.", NamedTextColor.RED));
+            player.sendMessage(Component.text("Click a skill on your sheet, or /character check <type> <value> manualRoll <n>.", NamedTextColor.RED));
             return true;
         }
         String type = rest[0].toUpperCase();
         String value = rest[1].toUpperCase();
-        Integer roll = null, total = null;
-        for (int i = 2; i < rest.length - 1; i++) {
-            if (rest[i].equalsIgnoreCase("--roll")) {
-                roll = io.papermc.jkvttplugin.combat.RollService.parseRollArg(rest[i + 1]);
-            } else if (rest[i].equalsIgnoreCase("--total")) {
-                try { total = Integer.parseInt(rest[i + 1].trim()); } catch (NumberFormatException ignored) {}
-            }
-        }
+        io.papermc.jkvttplugin.combat.RollService.RollInput input = io.papermc.jkvttplugin.combat.RollService.parseInput(rest);
         CharacterSheet sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
         if (sheet == null) {
             player.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));
             return true;
         }
-        if (!io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.resolvePhysical(sheet, type, value, roll, total)) {
-            player.sendMessage(Component.text("Provide your roll: --roll <your d20>.", NamedTextColor.YELLOW));
+        if (!io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.resolvePhysical(sheet, type, value,
+                input.providedRoll(), input.providedTotal(), input.forceAuto())) {
+            player.sendMessage(Component.text("Provide your roll: 'manualRoll <your d20>', or 'autoRoll'.", NamedTextColor.YELLOW));
         }
         return true;
     }

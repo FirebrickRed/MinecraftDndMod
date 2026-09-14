@@ -72,7 +72,7 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
     public static void promptSkillRoll(Player player, CharacterSheet character, String type, String value, RollMode mode) {
         RollInfo info = getRollInfo(character, type, value);
         String bonusStr = info.bonus >= 0 ? "+" + info.bonus : String.valueOf(info.bonus);
-        String cmd = "/character check " + type + " " + value + " --roll ";
+        String cmd = "/character check " + type + " " + value + " manualRoll ";
         String advNote = switch (mode) {
             case ADVANTAGE -> " (advantage — roll two, use the higher)";
             case DISADVANTAGE -> " (disadvantage — roll two, use the lower)";
@@ -88,9 +88,10 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
      * Resolve a physical skill/check/save roll (via RollService) and broadcast it. Returns false if
      * physical mode still needs a die (the caller should prompt).
      */
-    public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total) {
+    public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total, boolean forceAuto) {
         RollInfo info = getRollInfo(character, type, value);
-        RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown, character.rerollsNat1());
+        RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown,
+                character.rerollsNat1(), io.papermc.jkvttplugin.combat.Advantage.NONE, forceAuto);
         if (r == null) return false;
         String dice = r.providedTotal() ? "total" : String.valueOf(r.d20());
         broadcastRoll(character, info, r.total(), dice, null, null);

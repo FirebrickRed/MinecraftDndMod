@@ -131,7 +131,7 @@ public class LootManager {
     }
 
     /** {@code /character loot <check> --roll <n>|--total <n>}: resolve against the pending corpse. */
-    public static void roll(Player player, String checkArg, Integer providedRoll, Integer providedTotal) {
+    public static void roll(Player player, String checkArg, Integer providedRoll, Integer providedTotal, boolean forceAuto) {
         UUID id = pendingCorpse.get(player.getUniqueId());
         if (id == null) {
             player.sendMessage(Component.text("Right-click a body to search it first.", NamedTextColor.RED));
@@ -160,9 +160,10 @@ public class LootManager {
 
         int mod = sheet.getSkillBonus(check);
         io.papermc.jkvttplugin.combat.RollService.RollResult r = io.papermc.jkvttplugin.combat.RollService.resolve(
-                providedRoll, providedTotal, mod, "+" + mod + "[" + check.getDisplayName() + "]");
+                providedRoll, providedTotal, mod, "+" + mod + "[" + check.getDisplayName() + "]",
+                false, io.papermc.jkvttplugin.combat.Advantage.NONE, forceAuto);
         if (r == null) { // physical mode, no roll supplied
-            player.sendMessage(Component.text("Add your roll: --roll <d20> (or --total <n>).", NamedTextColor.YELLOW));
+            player.sendMessage(Component.text("Add your roll: 'manualRoll <d20>', or 'autoRoll'.", NamedTextColor.YELLOW));
             return;
         }
         int total = r.total();
