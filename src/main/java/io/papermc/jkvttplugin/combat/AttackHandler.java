@@ -26,10 +26,10 @@ import java.util.regex.Pattern;
 /**
  * Handles attack roll logic for the combat system (Issue #99).
  *
- * Supports three input modes:
- * - Auto-roll: system rolls d20 and adds modifiers
- * - --roll N: player provides physical d20 result, system adds modifiers
- * - --total N: player provides final total, compared directly to AC
+ * Supports three input modes (#183):
+ * - autoRoll: the game rolls the d20 (with advantage) and adds modifiers
+ * - manualRoll N: player provides their physical d20 result, the game adds modifiers
+ * - total N: player provides a final total, compared directly to AC
  *
  * Damage dice are rolled and displayed on hit, but NOT applied to HP (Issue #100).
  */

@@ -408,7 +408,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         dm.sendMessage(Component.text(combatant.getDisplayName() + " initiative: " + oldInit + " → " + newInit, NamedTextColor.GREEN));
     }
 
-    /** A player (or DM) rolls their own initiative during setup (#114): /combat initiative [--roll n | --total n]. */
+    /** A player (or DM) rolls their own initiative during setup (#114): /combat initiative [manualRoll n | autoRoll | total n]. */
     private void handleSelfInitiative(Player player, String[] args) {
         CombatSession session = resolveSession(player);
         if (session == null) return;
@@ -1054,7 +1054,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     // ==================== REACTIONS (Issue #147) ====================
 
     /**
-     * {@code /combat reaction [<reactor>] <attack|weapon|pass> [--roll <d20>]} — take (or pass) a pending
+     * {@code /combat reaction [<reactor>] <attack|weapon|pass> [manualRoll <d20> | autoRoll]} — take (or pass) a pending
      * opportunity attack. A player reacting for themselves may omit the reactor name.
      */
     private void handleReaction(Player player, String[] args) {
