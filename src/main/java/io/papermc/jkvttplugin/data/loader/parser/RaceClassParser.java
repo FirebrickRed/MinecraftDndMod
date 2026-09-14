@@ -163,7 +163,7 @@ public final class RaceClassParser {
      * Parses conditional advantages from YAML.
      * Format: [{type: "saving_throw", condition: "poison", description: "..."}, ...]
      */
-    private static List<Map<String, String>> parseConditionalAdvantages(Object input) {
+    public static List<Map<String, String>> parseConditionalAdvantages(Object input) {
         if (!(input instanceof List<?> list)) return List.of();
 
         List<Map<String, String>> result = new ArrayList<>();

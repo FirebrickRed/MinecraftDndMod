@@ -1301,6 +1301,25 @@ public class CharacterSheet {
         return all;
     }
 
+    /** Conditional advantages from race + subclass, e.g. [{type: saving_throw, condition: poison}] (#103/#174). */
+    public List<Map<String, String>> getAllConditionalAdvantages() {
+        List<Map<String, String>> all = new ArrayList<>();
+        if (race != null && race.getConditionalAdvantages() != null) all.addAll(race.getConditionalAdvantages());
+        if (subclass != null && subclass.getConditionalAdvantages() != null) all.addAll(subclass.getConditionalAdvantages());
+        return all;
+    }
+
+    /** True if a conditional advantage grants advantage on saving throws against any of {@code tags}. */
+    public boolean hasSaveAdvantageVs(Set<String> tags) {
+        if (tags == null || tags.isEmpty()) return false;
+        for (Map<String, String> ca : getAllConditionalAdvantages()) {
+            if (!"saving_throw".equalsIgnoreCase(ca.getOrDefault("type", ""))) continue;
+            String cond = ca.getOrDefault("condition", "").toLowerCase();
+            if (!cond.isEmpty() && tags.contains(cond)) return true;
+        }
+        return false;
+    }
+
     /** The option this character picked for a CUSTOM choice (e.g. draconic_ancestry), or null. */
     public String getCustomChoice(String choiceId) {
         return choiceId == null ? null : customChoices.get(choiceId);

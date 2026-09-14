@@ -85,7 +85,8 @@ public class RaceLoader {
                 .weaponProficiencies(ParseUtil.parseStringList(data.get("weapon_proficiencies")))
                 .armorProficiencies(ParseUtil.parseStringList(data.get("armor_proficiencies")))
                 .innateSpells(InnateSpellParser.parseInnateSpells(data.get("innate_spells")))
-                .features(io.papermc.jkvttplugin.effect.FeatureParser.parseFeatures(data.get("features")));
+                .features(io.papermc.jkvttplugin.effect.FeatureParser.parseFeatures(data.get("features")))
+                .conditionalAdvantages(io.papermc.jkvttplugin.data.loader.parser.RaceClassParser.parseConditionalAdvantages(data.get("conditional_advantages")));
 
         // A resistance linked to a CUSTOM choice (e.g. draconic ancestry -> element). Resolved on the
         // character once the ancestry is chosen; data-driven, so any race can link a resistance (#51).

@@ -27,7 +27,17 @@ public class SpellCastHandler {
 
     /** A saving throw a target still owes from a save spell. */
     private record PendingSave(String spellName, UUID casterId, int dc, Ability ability,
-                               String damage, String damageType, String saveEffect, String conditionOnFail) {}
+                               String damage, String damageType, String saveEffect, String conditionOnFail,
+                               java.util.Set<String> saveTags) {}
+
+    /** What a save is "against" — drives conditional advantages (e.g. Dwarf vs poison, Gnome vs magic). */
+    private static java.util.Set<String> saveTagsFor(DndSpell spell) {
+        java.util.Set<String> tags = new java.util.HashSet<>();
+        tags.add("magic"); // every spell save is against magic
+        if (spell.getDamageType() != null && !spell.getDamageType().isBlank()) tags.add(spell.getDamageType().toLowerCase());
+        if (spell.getConditionOnFail() != null && !spell.getConditionOnFail().isBlank()) tags.add(spell.getConditionOnFail().toLowerCase());
+        return tags;
+    }
     private static final Map<UUID, PendingSave> pendingSaves = new HashMap<>();
 
     /** @return true if the spell actually resolved (so the action is spent). */
@@ -112,7 +122,7 @@ public class SpellCastHandler {
             session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
                     + " at " + target.getDisplayName(true) + " — DC " + dc + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
             pendingSaves.put(target.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
-                    spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail()));
+                    spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell)));
             promptSave(session, target, saveAbility);
             return true;
         }
@@ -183,7 +193,7 @@ public class SpellCastHandler {
             session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation() + " save — each caught creature rolls:", NamedTextColor.GRAY));
             for (Combatant t : affected) {
                 pendingSaves.put(t.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
-                        spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail()));
+                        spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell)));
                 promptSave(session, t, saveAbility);
             }
         } else {
@@ -218,9 +228,11 @@ public class SpellCastHandler {
 
         session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation()
                 + " save — each caught creature rolls:", NamedTextColor.GRAY));
+        java.util.Set<String> tags = damageType != null && !damageType.isBlank()
+                ? java.util.Set.of(damageType.toLowerCase()) : java.util.Set.of();
         for (Combatant t : affected) {
             pendingSaves.put(t.getId(), new PendingSave(sourceName, caster.getId(), dc, saveAbility,
-                    damage, damageType, saveEffect, null));
+                    damage, damageType, saveEffect, null, tags));
             promptSave(session, t, saveAbility);
         }
         return true;
@@ -308,8 +320,14 @@ public class SpellCastHandler {
             return;
         }
         int bonus = saveBonus(target, ps.ability());
+        // Advantage/disadvantage on the save from conditions + racial conditional advantages (#103/#174).
+        Advantage advantage = target.saveAdvantage(ps.ability(), ps.saveTags());
+        if (advantage != Advantage.NONE) {
+            roller.sendMessage(Component.text("↯ " + target.getDisplayName() + " rolls this save with "
+                    + advantage.label() + ".", advantage.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
+        }
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
-                (bonus >= 0 ? "+" : "") + bonus + "[" + ps.ability().getAbbreviation() + "]", target.rerollsNat1());
+                (bonus >= 0 ? "+" : "") + bonus + "[" + ps.ability().getAbbreviation() + "]", target.rerollsNat1(), advantage);
         if (r == null) {
             roller.sendMessage(Component.text("Add your roll: --roll <n>.", NamedTextColor.YELLOW));
             return;

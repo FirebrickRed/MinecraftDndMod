@@ -55,6 +55,9 @@ public class DndRace {
     private List<String> toolProficiencies = List.of();
     private List<InnateSpell> innateSpells = List.of();
     private List<io.papermc.jkvttplugin.effect.Feature> features = List.of();
+    // Conditional advantages, e.g. [{type: saving_throw, condition: poison}] (dwarf, elf Fey Ancestry,
+    // gnome Cunning, halfling Brave). Applied to matching rolls at combat time (#103/#174).
+    private List<Map<String, String>> conditionalAdvantages = List.of();
 
     private Map<String, DndSubRace> subraces;
     private List<ChoiceEntry> playerChoices = List.of();
@@ -241,6 +244,11 @@ public class DndRace {
     }
     public void setFeatures(List<io.papermc.jkvttplugin.effect.Feature> features) {
         this.features = features != null ? List.copyOf(features) : List.of();
+    }
+
+    public List<Map<String, String>> getConditionalAdvantages() { return conditionalAdvantages; }
+    public void setConditionalAdvantages(List<Map<String, String>> conditionalAdvantages) {
+        this.conditionalAdvantages = conditionalAdvantages != null ? List.copyOf(conditionalAdvantages) : List.of();
     }
 
     public Map<String, DndSubRace> getSubraces() {
@@ -577,6 +585,11 @@ public class DndRace {
 
         public Builder features(List<io.papermc.jkvttplugin.effect.Feature> features) {
             instance.setFeatures(features);
+            return this;
+        }
+
+        public Builder conditionalAdvantages(List<Map<String, String>> ca) {
+            instance.setConditionalAdvantages(ca);
             return this;
         }
 

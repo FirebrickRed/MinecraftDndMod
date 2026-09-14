@@ -501,6 +501,22 @@ public class Combatant {
         return notes;
     }
 
+    /**
+     * Net advantage/disadvantage on a saving throw of {@code ability} against a save carrying
+     * {@code tags} (e.g. "magic", "poison", "frightened"). Conditions can impose disadvantage on
+     * specific ability saves; racial/subclass conditional advantages grant advantage vs a tag.
+     */
+    public Advantage saveAdvantage(io.papermc.jkvttplugin.data.model.enums.Ability ability, java.util.Set<String> tags) {
+        Advantage adv = Advantage.NONE;
+        String abil = ability == null ? "" : ability.name().toLowerCase();
+        for (io.papermc.jkvttplugin.data.model.DndCondition c : myConditions()) {
+            if (c.getSaveDisadvantage().contains(abil)) adv = adv.with(false);
+        }
+        CharacterSheet s = getCharacterSheet();
+        if (s != null && s.hasSaveAdvantageVs(tags)) adv = adv.with(true);
+        return adv;
+    }
+
     /** The loaded conditions this combatant currently has (skips ids with no definition). */
     private java.util.List<io.papermc.jkvttplugin.data.model.DndCondition> myConditions() {
         java.util.List<io.papermc.jkvttplugin.data.model.DndCondition> out = new java.util.ArrayList<>();
