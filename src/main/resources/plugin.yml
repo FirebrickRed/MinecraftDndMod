@@ -22,5 +22,5 @@ commands:
     # non-op DMs work. A plugin.yml permission would default to op-only and block them.
   dm:
     description: DM role management and DM admin tools.
-    usage: /dm <add|remove|list|give|check|rest|resource|reload|mode>
+    usage: /dm <add|remove|list|give|check|object|rest|resource|reload|mode>
     permission-message: Only server operators can manage DMs.

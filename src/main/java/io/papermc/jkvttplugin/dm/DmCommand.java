@@ -33,13 +33,14 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     // Folded DM-admin tools (Issue #122). Each delegates to its original executor.
     private final DmGiveCommand giveExec = new DmGiveCommand();
     private final CheckCommand checkExec = new CheckCommand();
+    private final ObjectCommand objectExec = new ObjectCommand();
     private final RestCommand restExec = new RestCommand();
     private final RestoreResourceCommand restoreExec = new RestoreResourceCommand();
     private final ConsumeResourceCommand consumeExec = new ConsumeResourceCommand();
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "promptcheck", "lootprompt", "rest", "resource", "reload", "mode", "animalreply");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "object", "lootprompt", "rest", "resource", "reload", "mode", "animalreply");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -55,7 +56,8 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "add" -> handleAdd(sender, args);
             case "remove" -> handleRemove(sender, args);
             case "give" -> delegateDm(sender, command, label, args, giveExec);
-            case "promptcheck" -> delegateDm(sender, command, label, args, checkExec);
+            case "check", "promptcheck" -> delegateDm(sender, command, label, args, checkExec);
+            case "object" -> delegateDm(sender, command, label, args, objectExec);
             case "rest" -> delegateDm(sender, command, label, args, restExec);
             case "reload" -> delegateDm(sender, command, label, args, reloadExec);
             case "resource" -> handleResource(sender, command, label, args);
@@ -261,7 +263,9 @@ public class DmCommand implements CommandExecutor, TabCompleter {
         if (DMManager.isDM(sender)) {
             sender.sendMessage(Component.text("DM tools:", NamedTextColor.GOLD));
             sender.sendMessage(Component.text("/dm give <player> <item_id> [amount]", NamedTextColor.AQUA));
-            sender.sendMessage(Component.text("/dm promptcheck <player> <ability|save|skill> <name> [adv|dis]", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm check <player> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm check <A> <skillA> vs <B> <skillB>   (contested)", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm object <lock|hide|reveal|desc|clear|info>   (look at a block)", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm rest <character> <short|long>", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm resource <restore|consume> <character> ...", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm reload", NamedTextColor.AQUA)
@@ -313,7 +317,8 @@ public class DmCommand implements CommandExecutor, TabCompleter {
                     }
                     return List.of();
                 }
-                case "promptcheck" -> { return checkExec.onTabComplete(sender, command, label, sub); }
+                case "check", "promptcheck" -> { return checkExec.onTabComplete(sender, command, label, sub); }
+                case "object" -> { return objectExec.onTabComplete(sender, command, label, sub); }
                 case "rest" -> { return restExec.onTabComplete(sender, command, label, sub); }
                 case "resource" -> {
                     if (args.length == 2) {
