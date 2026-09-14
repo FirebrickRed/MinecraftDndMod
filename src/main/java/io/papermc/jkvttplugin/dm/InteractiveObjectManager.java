@@ -27,6 +27,12 @@ public final class InteractiveObjectManager {
         public boolean locked;
         public boolean hidden;   // players don't get the interaction until the DM reveals it
         public String description = "";
+        // Trap (#185): armed until disarmed. On interaction the DM is offered spot/disarm/trigger.
+        public boolean trapped;
+        public boolean disarmed;
+        public String trapDamage = "";   // dice, e.g. "2d10"
+        public String trapSave = "";     // ability the victim saves with, e.g. "dexterity"
+        public int trapDc;               // reference DC (spot / disarm / save); the DM can adjust per check
     }
 
     private static final Map<String, Obj> objects = new HashMap<>(); // "world:x:y:z" -> obj
@@ -78,6 +84,11 @@ public final class InteractiveObjectManager {
             yaml.set(path + ".locked", e.getValue().locked);
             yaml.set(path + ".hidden", e.getValue().hidden);
             yaml.set(path + ".description", e.getValue().description);
+            yaml.set(path + ".trapped", e.getValue().trapped);
+            yaml.set(path + ".disarmed", e.getValue().disarmed);
+            yaml.set(path + ".trapDamage", e.getValue().trapDamage);
+            yaml.set(path + ".trapSave", e.getValue().trapSave);
+            yaml.set(path + ".trapDc", e.getValue().trapDc);
         }
         try {
             file.getParentFile().mkdirs();
@@ -98,6 +109,11 @@ public final class InteractiveObjectManager {
             o.locked = yaml.getBoolean(path + ".locked", false);
             o.hidden = yaml.getBoolean(path + ".hidden", false);
             o.description = yaml.getString(path + ".description", "");
+            o.trapped = yaml.getBoolean(path + ".trapped", false);
+            o.disarmed = yaml.getBoolean(path + ".disarmed", false);
+            o.trapDamage = yaml.getString(path + ".trapDamage", "");
+            o.trapSave = yaml.getString(path + ".trapSave", "");
+            o.trapDc = yaml.getInt(path + ".trapDc", 0);
             objects.put(rawKey, o);
         }
         LOGGER.info("Loaded " + objects.size() + " interactive objects.");

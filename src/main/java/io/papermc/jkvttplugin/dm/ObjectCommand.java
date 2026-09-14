@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class ObjectCommand implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("lock", "unlock", "hide", "reveal", "desc", "clear", "info");
+    private static final List<String> SUBS = List.of("lock", "unlock", "hide", "reveal", "desc", "trap", "disarm", "arm", "clear", "info");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -74,6 +74,32 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
                 InteractiveObjectManager.save();
                 dm.sendMessage(Component.text("Set description: \"" + o.description + "\"", NamedTextColor.GREEN));
             }
+            case "trap" -> {
+                if (args.length < 2) { dm.sendMessage(Component.text("Usage: /dm object trap <damage> [save] [dc]   e.g. trap 2d10 dex 13", NamedTextColor.RED)); return true; }
+                InteractiveObjectManager.Obj o = InteractiveObjectManager.getOrCreate(block.getLocation());
+                o.trapped = true;
+                o.disarmed = false;
+                o.trapDamage = args[1];
+                o.trapSave = args.length > 2 ? args[2].toLowerCase() : "dexterity";
+                if (args.length > 3) { try { o.trapDc = Integer.parseInt(args[3]); } catch (NumberFormatException ignored) {} }
+                InteractiveObjectManager.save();
+                dm.sendMessage(Component.text("🪤 Trapped the " + prettyBlock + " — " + o.trapDamage + " "
+                        + o.trapSave + " save" + (o.trapDc > 0 ? " (DC " + o.trapDc + ")" : "") + ".", NamedTextColor.GREEN));
+            }
+            case "disarm" -> {
+                InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
+                if (o == null || !o.trapped) { dm.sendMessage(Component.text("That " + prettyBlock + " isn't trapped.", NamedTextColor.GRAY)); return true; }
+                o.disarmed = true;
+                InteractiveObjectManager.save();
+                dm.sendMessage(Component.text("Disarmed the trap on the " + prettyBlock + ".", NamedTextColor.GREEN));
+            }
+            case "arm" -> {
+                InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
+                if (o == null || !o.trapped) { dm.sendMessage(Component.text("That " + prettyBlock + " isn't trapped.", NamedTextColor.GRAY)); return true; }
+                o.disarmed = false;
+                InteractiveObjectManager.save();
+                dm.sendMessage(Component.text("Re-armed the trap on the " + prettyBlock + ".", NamedTextColor.GREEN));
+            }
             case "clear" -> {
                 boolean removed = InteractiveObjectManager.remove(block.getLocation());
                 dm.sendMessage(removed ? Component.text("Cleared the annotation on the " + prettyBlock + ".", NamedTextColor.GREEN)
@@ -82,8 +108,10 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
             case "info" -> {
                 InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
                 if (o == null) { dm.sendMessage(notAnnotated(prettyBlock)); return true; }
+                String trap = o.trapped ? ("trap[" + o.trapDamage + " " + o.trapSave + (o.trapDc > 0 ? " DC " + o.trapDc : "")
+                        + (o.disarmed ? ", disarmed" : ", armed") + "] ") : "";
                 dm.sendMessage(Component.text(prettyBlock + ": "
-                        + (o.locked ? "locked " : "") + (o.hidden ? "hidden " : "")
+                        + (o.locked ? "locked " : "") + (o.hidden ? "hidden " : "") + trap
                         + (o.description.isEmpty() ? "" : "\"" + o.description + "\""), NamedTextColor.AQUA));
             }
             default -> dm.sendMessage(Component.text("Unknown: " + sub + ". Use " + String.join("/", SUBS) + ".", NamedTextColor.RED));

@@ -35,10 +35,19 @@ public class InteractiveObjectListener implements Listener {
         Player player = event.getPlayer();
         // DMs annotate/inspect via /dm object; let their clicks fall through to normal behavior.
         if (DMManager.isDM(player)) return;
-        // Hidden: players don't perceive the interaction until the DM reveals it.
-        if (o.hidden) return;
+
+        boolean armedTrap = o.trapped && !o.disarmed;
+        // Hidden objects are inert to players — EXCEPT a live trap, which a blundering player springs.
+        if (o.hidden && !armedTrap) return;
 
         String prettyBlock = ObjectCommand.pretty(block.getType().name());
+
+        if (armedTrap) {
+            event.setCancelled(true);
+            player.sendMessage(Component.text("You reach toward the " + prettyBlock + "…", NamedTextColor.GRAY));
+            notifyTrap(player, prettyBlock, block.getLocation(), o);
+            return;
+        }
 
         if (o.locked) {
             event.setCancelled(true); // no vanilla open — it's locked
@@ -65,5 +74,30 @@ public class InteractiveObjectListener implements Listener {
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (DMManager.isDM(p)) p.sendMessage(msg);
         }
+    }
+
+    /** Tell every online DM that a player sprang a live trap, with spot / disarm / trigger buttons. */
+    private void notifyTrap(Player player, String prettyBlock, Location loc, InteractiveObjectManager.Obj o) {
+        String where = loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ();
+        String dc = o.trapDc > 0 ? " dc " + o.trapDc : " ";
+        String save = o.trapSave.isEmpty() ? "dexterity" : o.trapSave;
+        Component header = Component.text("🪤 " + player.getName() + " is at a trapped " + prettyBlock
+                + " (" + where + ") — fires " + o.trapDamage + " on a failed " + save + " save"
+                + (o.trapDc > 0 ? " (DC " + o.trapDc + ")" : "") + ".", NamedTextColor.GOLD);
+        Component buttons = Component.text("  ", NamedTextColor.GRAY)
+                .append(trapButton("[Perception]", "/dm check " + player.getName() + " skill perception" + dc, "Did they notice the trap?"))
+                .append(Component.text(" "))
+                .append(trapButton("[Disarm]", "/dm check " + player.getName() + " skill sleight_of_hand" + dc, "Try to disarm it (then /dm object disarm on a success)"))
+                .append(Component.text(" "))
+                .append(trapButton("[Trigger]", "/dm check " + player.getName() + " save " + save + dc, "It goes off — call the save, then apply " + o.trapDamage + " on a fail"));
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (DMManager.isDM(p)) { p.sendMessage(header); p.sendMessage(buttons); }
+        }
+    }
+
+    private static Component trapButton(String label, String cmd, String hover) {
+        return Component.text(label, NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.suggestCommand(cmd))
+                .hoverEvent(HoverEvent.showText(Component.text(hover)));
     }
 }

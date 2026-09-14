@@ -69,6 +69,24 @@ On a success, reveal it so they can interact:
 /dm object lock                 # (optional) now it's a discovered-but-stuck passage
 ```
 
+## 3b. Trap (dart trap, hidden)
+
+Look at the block that hides the trap (a pressure plate, a chest, a wall panel) and:
+
+```
+/dm object trap 2d10 dex 13     # 2d10 damage, DEX save, reference DC 13
+/dm object hide                 # players don't see it coming (optional)
+/dm object info                 # "…: hidden trap[2d10 dex DC 13, armed]"
+```
+
+When a player right-clicks it, they feel nothing special — but every DM gets:
+> 🪤 <Player> is at a trapped Chest (x,y,z) — fires 2d10 on a failed dexterity save (DC 13).
+> `[Perception]` `[Disarm]` `[Trigger]`
+
+You decide: `[Perception]` (did they notice?), `[Disarm]` (they try — then `/dm object disarm` on a
+success), or `[Trigger]` (it goes off — the button calls the player's DEX save; apply the 2d10 on a
+fail — via `/combat damage` if you're in combat, or narrate it out of combat for now).
+
 ## 4. Skill checks on their own (no object)
 
 ```

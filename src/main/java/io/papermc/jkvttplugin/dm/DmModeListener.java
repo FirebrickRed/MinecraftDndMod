@@ -95,25 +95,32 @@ public class DmModeListener implements Listener {
     private void showObjectMenu(Player player, org.bukkit.block.Block block) {
         InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
         String name = ObjectCommand.pretty(block.getType().name());
+        boolean locked = o != null && o.locked;
+        boolean hidden = o != null && o.hidden;
+        boolean trapped = o != null && o.trapped;
+        String trapStr = trapped ? "trap[" + o.trapDamage + (o.disarmed ? ", disarmed" : ", armed") + "] " : "";
         String status = (o == null) ? "unannotated"
-                : ((o.locked ? "locked " : "") + (o.hidden ? "hidden " : "")
+                : ((locked ? "locked " : "") + (hidden ? "hidden " : "") + trapStr
                    + (o.description.isEmpty() ? "" : "\"" + o.description + "\"")).trim();
         player.sendMessage(Component.text("🔧 " + name + " — " + (status.isEmpty() ? "annotated" : status), NamedTextColor.GOLD));
 
-        boolean locked = o != null && o.locked;
-        boolean hidden = o != null && o.hidden;
         Component opts = Component.text("  ", NamedTextColor.GRAY)
                 .append(button(locked ? "[Unlock]" : "[Lock]", "/dm object " + (locked ? "unlock" : "lock"),
                         locked ? "Remove the lock" : "Mark it locked"))
                 .append(Component.text(" "))
                 .append(button(hidden ? "[Reveal]" : "[Hide]", "/dm object " + (hidden ? "reveal" : "hide"),
-                        hidden ? "Let players interact with it" : "Hide it from players until revealed"))
-                .append(Component.text(" "))
+                        hidden ? "Let players interact with it" : "Hide it from players until revealed"));
+        if (trapped) {
+            opts = opts.append(Component.text(" "))
+                    .append(button(o.disarmed ? "[Arm]" : "[Disarm]", "/dm object " + (o.disarmed ? "arm" : "disarm"),
+                            o.disarmed ? "Re-arm the trap" : "Disarm the trap"));
+        }
+        opts = opts.append(Component.text(" "))
                 .append(button("[Clear]", "/dm object clear", "Remove the annotation"))
                 .append(Component.text(" "))
                 .append(button("[Info]", "/dm object info", "Show its annotation"));
         player.sendMessage(opts);
-        player.sendMessage(Component.text("  (set a description with /dm object desc <text> while looking at it)", NamedTextColor.DARK_GRAY));
+        player.sendMessage(Component.text("  (describe: /dm object desc <text>  ·  trap: /dm object trap <dmg> [save] [dc]  — while looking at it)", NamedTextColor.DARK_GRAY));
     }
 
     private static Component button(String label, String cmd, String hover) {
