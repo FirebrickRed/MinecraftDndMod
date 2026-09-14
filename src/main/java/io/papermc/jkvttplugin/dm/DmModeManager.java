@@ -38,6 +38,7 @@ public class DmModeManager {
     public static final String TOOL_ADD = "combat_add";
     public static final String TOOL_INITIATIVE = "combat_initiative";
     public static final String TOOL_MOVE = "move";
+    public static final String TOOL_OBJECT = "object";
     public static final String TOOL_EXIT = "exit";
 
     private static final Set<UUID> inDmMode = new HashSet<>();
@@ -156,6 +157,9 @@ public class DmModeManager {
         player.getInventory().setItem(5, tool(Material.LEATHER_BOOTS, TOOL_MOVE, "Move",
                 "Right-click entities to select them (they glow)", "then right-click the ground to send them there",
                 "(in combat: only on that entity's turn, counts vs speed)"));
+        player.getInventory().setItem(6, tool(Material.TRIPWIRE_HOOK, TOOL_OBJECT, "Annotate Object",
+                "Right-click a block (chest, door, wall…) to mark it", "locked / hidden / add a description",
+                "(players then interact through you — /dm object commands too)"));
         player.getInventory().setItem(8, tool(Material.BARRIER, TOOL_EXIT, "Exit DM Mode",
                 "Right-click to leave DM mode", "(gives your normal inventory back)"));
     }

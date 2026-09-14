@@ -10,6 +10,11 @@ Reload content first if you edited YAML: `/dm reload`.
 
 ## 1. Locked chest (the MVP)
 
+Two ways to annotate — pick either:
+- **Tool:** enter DM mode (`/dm mode`) and use the **Annotate Object** tool (slot 7, a tripwire hook) —
+  right-click the block for a clickable `[Lock] [Hide] [Reveal] [Clear] [Info]` menu.
+- **Commands:** the `/dm object …` forms below (work whether or not you're in DM mode).
+
 As the DM, place a chest and look at it, then:
 
 ```

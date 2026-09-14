@@ -77,7 +77,43 @@ public class DmModeListener implements Listener {
             } else {
                 MoveToolManager.moveSelectionTo(player, dest.getLocation().add(0.5, 1, 0.5));
             }
+        } else if (DmModeManager.TOOL_OBJECT.equals(tool)) {
+            org.bukkit.block.Block b = event.getClickedBlock();
+            if (b == null) b = player.getTargetBlockExact(6);
+            if (b == null) player.sendActionBar(Component.text("Right-click a block to annotate it.", NamedTextColor.GRAY));
+            else showObjectMenu(player, b);
         }
+    }
+
+    /** A clickable annotation menu for the block the DM clicked with the Annotate Object tool (#185/#187). */
+    private void showObjectMenu(Player player, org.bukkit.block.Block block) {
+        InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
+        String name = ObjectCommand.pretty(block.getType().name());
+        String status = (o == null) ? "unannotated"
+                : ((o.locked ? "locked " : "") + (o.hidden ? "hidden " : "")
+                   + (o.description.isEmpty() ? "" : "\"" + o.description + "\"")).trim();
+        player.sendMessage(Component.text("🔧 " + name + " — " + (status.isEmpty() ? "annotated" : status), NamedTextColor.GOLD));
+
+        boolean locked = o != null && o.locked;
+        boolean hidden = o != null && o.hidden;
+        Component opts = Component.text("  ", NamedTextColor.GRAY)
+                .append(button(locked ? "[Unlock]" : "[Lock]", "/dm object " + (locked ? "unlock" : "lock"),
+                        locked ? "Remove the lock" : "Mark it locked"))
+                .append(Component.text(" "))
+                .append(button(hidden ? "[Reveal]" : "[Hide]", "/dm object " + (hidden ? "reveal" : "hide"),
+                        hidden ? "Let players interact with it" : "Hide it from players until revealed"))
+                .append(Component.text(" "))
+                .append(button("[Clear]", "/dm object clear", "Remove the annotation"))
+                .append(Component.text(" "))
+                .append(button("[Info]", "/dm object info", "Show its annotation"));
+        player.sendMessage(opts);
+        player.sendMessage(Component.text("  (set a description with /dm object desc <text> while looking at it)", NamedTextColor.DARK_GRAY));
+    }
+
+    private static Component button(String label, String cmd, String hover) {
+        return Component.text(label, NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                .clickEvent(net.kyori.adventure.text.event.ClickEvent.runCommand(cmd))
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(hover)));
     }
 
     @EventHandler
