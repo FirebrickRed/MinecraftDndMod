@@ -24,6 +24,7 @@ public class TurnState {
     private int pendingDamageBonus;
     private String pendingDamageLabel = ""; // labeled breakdown of the bonus, e.g. "+5[STR] +2[Rage]" (#168)
     private String pendingDamageType = "";  // the hit's damage type, so /combat damage needs no 'type' (#183)
+    private String pendingDamageDice = "";  // the hit's damage dice, so 'autoRoll' needs no dice typed (#183)
     // Whether the pending hit was a critical. Remembered from the attack so /combat damage applies
     // the "crit vs a downed creature = 2 death-save failures" rule without a user-facing flag.
     private boolean pendingDamageCrit;
@@ -74,6 +75,8 @@ public class TurnState {
     public String getPendingDamageLabel() { return pendingDamageLabel; }
     public String getPendingDamageType() { return pendingDamageType; }
     public void setPendingDamageType(String type) { this.pendingDamageType = type == null ? "" : type; }
+    public String getPendingDamageDice() { return pendingDamageDice; }
+    public void setPendingDamageDice(String dice) { this.pendingDamageDice = dice == null ? "" : dice; }
     public boolean isPendingDamageCrit() { return pendingDamageCrit; }
     public boolean isPendingDamageHalf() { return pendingDamageHalf; }
     public void setPendingDamageHalf(boolean half) { this.pendingDamageHalf = half; }
@@ -82,6 +85,7 @@ public class TurnState {
         this.pendingDamageBonus = 0;
         this.pendingDamageLabel = "";
         this.pendingDamageType = "";
+        this.pendingDamageDice = "";
         this.pendingDamageCrit = false;
         this.pendingDamageHalf = false;
     }

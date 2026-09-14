@@ -512,17 +512,25 @@ public class AttackHandler {
             attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0,
                     hasDice ? bonusShown.trim() : "", isCrit);
             attacker.getTurnState().setPendingDamageType(damageType); // so /combat damage needs no 'type' (#183)
+            attacker.getTurnState().setPendingDamageDice(hasDice ? dice : ""); // so 'autoRoll' needs no dice (#183)
         }
 
         Component prompt;
         if (hasDice) {
-            // Clickable: fills the command for the player to type their physical damage roll.
-            String cmd = "/combat damage " + quoted + " manualRoll ";
+            // Clickable: fills the command for the player to type their physical damage roll, plus an
+            // autoRoll option that rolls the remembered dice for them (no dice to type).
+            String manualCmd = "/combat damage " + quoted + " manualRoll ";
+            String autoCmd = "/combat damage " + quoted + " autoRoll";
             prompt = Component.text("→ Apply damage — roll " + dice + ", the game adds" + (bonus == 0 ? " nothing" : bonusShown) + ": ", NamedTextColor.YELLOW)
                     .append(Component.text("[click, then type your damage roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                            .clickEvent(ClickEvent.suggestCommand(cmd))
-                            .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your " + dice + " result>"
-                                    + (bonus != 0 ? "\nThe game adds" + bonusShown + "." : "")))));
+                            .clickEvent(ClickEvent.suggestCommand(manualCmd))
+                            .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd + "<your " + dice + " result>"
+                                    + (bonus != 0 ? "\nThe game adds" + bonusShown + "." : "")))))
+                    .append(Component.text("  ", NamedTextColor.GRAY))
+                    .append(Component.text("[or let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                            .clickEvent(ClickEvent.runCommand(autoCmd))
+                            .hoverEvent(HoverEvent.showText(Component.text("The game rolls " + dice
+                                    + (bonus != 0 ? " and adds" + bonusShown : "") + " for you."))));
         } else {
             // Flat damage (e.g. unarmed): nothing to roll — one click applies it.
             String amt = (damageStr == null || damageStr.isEmpty()) ? "1" : damageStr;

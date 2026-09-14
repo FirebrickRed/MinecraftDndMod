@@ -71,7 +71,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 
 **Damage roll** (`/combat damage`, `heal`, `override`): `manualRoll <n>` (the number you rolled on the damage dice) · `autoRoll <dice>` (the game rolls those dice, e.g. `autoRoll 2d6`) · `total <n>` · a bare `<amount>` for flat damage. The **damage type is automatic** (taken from the hit); add `type <slashing|fire|…>` only to override it. Crit carries over from the attack — no flag.
 
-**Other attack options:** `--showmods` (show modifiers, don't attack) · `--force` (DM override in specific cases).
+**Other attack options:** `showMods` (show your to-hit breakdown without attacking) · `--force` (DM override, reworking later).
 
 ### Entities & items — `/dmentity <subcommand>`
 | Subcommand | What it does |

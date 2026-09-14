@@ -1547,7 +1547,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         // Parse the roll input: manualRoll <n> (you rolled it), autoRoll (game rolls), total <n>.
-        boolean showMods = hasFlag(args, "--showmods");
+        boolean showMods = hasFlag(args, "showMods");
         RollService.RollInput roll = RollService.parseInput(args);
         Integer providedRoll = roll.providedRoll();
         Integer providedTotal = roll.providedTotal();
@@ -1558,7 +1558,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Action economy check (skip for --showmods)
+        // Action economy check (skip for showMods)
         if (!showMods) {
             TurnState state = attacker.getTurnState();
             if (state == null) {
@@ -1634,7 +1634,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         // Range check: are you close enough to swing / within weapon/attack range?
-        // (--showmods previews modifiers, and a DM may bypass with --force.)
+        // (showMods previews modifiers, and a DM may bypass with --force.)
         boolean force = hasFlag(args, "--force") && isDM;
         if (!showMods && !force) {
             String rangeError;
@@ -1846,10 +1846,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private List<String> collectPositionalArgs(String[] args, int startIndex) {
         List<String> positional = new ArrayList<>();
         for (int i = startIndex; i < args.length; i++) {
-            // The roll input (autoRoll / manualRoll <n> / total <n>) and a trailing 'type <t>' always
-            // follow the positionals, so stop here — otherwise "manualRoll"/"8"/"type" would be
-            // mistaken for a target/amount (#183).
-            if (RollService.isRollKeyword(args[i]) || args[i].equalsIgnoreCase("type")) break;
+            // The roll input (autoRoll / manualRoll <n> / total <n>), a trailing 'type <t>', and the
+            // valueless 'showMods' all follow the positionals, so stop here — otherwise
+            // "manualRoll"/"8"/"type"/"showMods" would be mistaken for a target/amount (#183).
+            if (RollService.isRollKeyword(args[i]) || args[i].equalsIgnoreCase("type")
+                    || args[i].equalsIgnoreCase("showMods")) break;
             if (args[i].startsWith("--")) {
                 // Check if this is a flag with an attached value (e.g., --roll20)
                 // or a standalone flag like --showmods
@@ -1928,8 +1929,24 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // Damage roll: manualRoll <n> (you rolled it) / autoRoll <dice> (game rolls) / total <n>.
-        String rollStr = valueAfterAny(args, "manualroll", "autoroll");
+        // Damage roll: manualRoll <n> (you rolled it) / autoRoll [dice] (game rolls) / total <n>.
+        // For autoRoll the game rolls the damage dice: use the dice you gave, else the ones remembered
+        // from the hit that opened this window — so a normal hit needs nothing typed after 'autoRoll'.
+        String pendingDice = (!isOverride && attacker != null && attacker.getTurnState() != null)
+                ? attacker.getTurnState().getPendingDamageDice() : "";
+        String rollStr;
+        if (hasFlag(args, "autoRoll")) {
+            String given = valueAfterAny(args, "autoroll");
+            rollStr = (given != null && given.toLowerCase().contains("d")) ? given
+                    : (pendingDice != null && pendingDice.toLowerCase().contains("d")) ? pendingDice : null;
+            if (rollStr == null) {
+                dm.sendMessage(Component.text("autoRoll needs the damage dice — e.g. 'autoRoll 2d6'.", NamedTextColor.RED));
+                dm.sendMessage(Component.text("(No dice were remembered for this hit; type the dice, or use 'manualRoll <n>'.)", NamedTextColor.GRAY));
+                return;
+            }
+        } else {
+            rollStr = valueAfterAny(args, "manualroll"); // the number you physically rolled (dice tolerated)
+        }
         Integer total = getFlagValueInt(args, "total");
         // Damage type: no need to type it — default to the type of the hit that opened this window.
         // 'type <t>' still overrides (e.g. a rider of a different type, like the Hex necrotic die).
@@ -2433,6 +2450,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - Let the game roll (with adv/dis)", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat attack <target> [weapon] total <N>", NamedTextColor.YELLOW)
             .append(Component.text(" - Provide final total, nothing added", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat attack <target> [weapon] showMods", NamedTextColor.YELLOW)
+            .append(Component.text(" - Show your to-hit breakdown, don't attack", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat damage <target> [amt | manualRoll <n> | autoRoll <dice>]", NamedTextColor.RED)
             .append(Component.text(" - Apply damage (type is auto)", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat override <target> [amt | manualRoll <n>]", NamedTextColor.RED)
@@ -2619,9 +2638,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 return completions;
             }
 
-            // If typing a legacy flag (--showmods / --force remain; roll input is now bare keywords)
+            // If typing a legacy flag (--force remains until DM overrides are reworked)
             if (lastArg.startsWith("--")) {
-                completions.addAll(List.of("--showmods", "--force"));
+                completions.addAll(List.of("--force"));
                 return filterCompletions(completions, lastArg);
             }
 
@@ -2650,7 +2669,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 completions.addAll(choices);
             } else {
                 // Weapon chosen — now the roll input makes sense (new keywords, plus legacy flags).
-                completions.addAll(List.of("manualRoll", "autoRoll", "total", "--showmods", "--force"));
+                completions.addAll(List.of("manualRoll", "autoRoll", "total", "showMods", "--force"));
             }
             return filterCompletions(completions, lastArg);
         }
