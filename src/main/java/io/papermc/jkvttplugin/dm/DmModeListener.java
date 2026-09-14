@@ -43,6 +43,12 @@ public class DmModeListener implements Listener {
 
         if (DmModeManager.TOOL_EXIT.equals(tool)) {
             DmModeManager.exit(player);
+        } else if (DmModeManager.TOOL_PAGE_COMBAT.equals(tool)) {
+            DmModeManager.giveCombatPage(player);
+        } else if (DmModeManager.TOOL_PAGE_EXPLORE.equals(tool)) {
+            DmModeManager.giveExplorePage(player);
+        } else if (DmModeManager.TOOL_BACK.equals(tool)) {
+            DmModeManager.giveTools(player);
         } else if (DmModeManager.TOOL_VIEW.equals(tool)) {
             RayTraceResult hit = player.rayTraceEntities(10);
             if (hit != null && hit.getHitEntity() != null) {

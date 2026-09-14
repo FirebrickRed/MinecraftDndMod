@@ -40,6 +40,10 @@ public class DmModeManager {
     public static final String TOOL_MOVE = "move";
     public static final String TOOL_OBJECT = "object";
     public static final String TOOL_EXIT = "exit";
+    // Category navigation (#187): the top level shows categories; each opens a page of tools + a Back.
+    public static final String TOOL_PAGE_COMBAT = "page_combat";
+    public static final String TOOL_PAGE_EXPLORE = "page_explore";
+    public static final String TOOL_BACK = "page_back";
 
     private static final Set<UUID> inDmMode = new HashSet<>();
 
@@ -140,28 +144,57 @@ public class DmModeManager {
 
     // ==================== DM TOOLS ====================
 
+    /** Top level: category items (+ the always-handy View and Exit). */
     public static void giveTools(Player player) {
         PossessionManager.clearWornGear(player); // drop any possessed entity's armor when back on the toolbar
+        clearHotbar(player);
         player.getInventory().setItem(0, tool(Material.SPYGLASS, TOOL_VIEW, "View",
                 "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
-        player.getInventory().setItem(1, tool(Material.LEAD, TOOL_POSSESS, "Possess",
-                "Right-click an entity → control it", "(you go invisible, it follows you; sneak to stop)"));
-        player.getInventory().setItem(2, tool(Material.IRON_SWORD, TOOL_START, "Start Combat",
+        player.getInventory().setItem(2, tool(Material.IRON_SWORD, TOOL_PAGE_COMBAT, "Combat Tools",
+                "Right-click to open the combat toolbar", "(Start, Add/Remove, Initiative, Possess, Move)"));
+        player.getInventory().setItem(4, tool(Material.TRIPWIRE_HOOK, TOOL_PAGE_EXPLORE, "Exploration Tools",
+                "Right-click to open the exploration toolbar", "(Annotate Object, …)"));
+        player.getInventory().setItem(8, tool(Material.BARRIER, TOOL_EXIT, "Exit DM Mode",
+                "Right-click to leave DM mode", "(gives your normal inventory back)"));
+    }
+
+    /** Combat page: the encounter/entity-control tools + Back. */
+    public static void giveCombatPage(Player player) {
+        clearHotbar(player);
+        player.getInventory().setItem(0, tool(Material.IRON_SWORD, TOOL_START, "Start Combat",
                 "Right-click to begin a combat encounter", "Right-click again to cancel it (before initiative)",
                 "(then add combatants and roll initiative)"));
         // NB: not a NAME_TAG — vanilla would stamp the tool's name onto the clicked mob.
-        player.getInventory().setItem(3, tool(Material.BOOK, TOOL_ADD, "Add / Remove Combatant",
+        player.getInventory().setItem(1, tool(Material.BOOK, TOOL_ADD, "Add / Remove Combatant",
                 "Right-click a player or entity to add them (they glow)", "Right-click again to remove them"));
-        player.getInventory().setItem(4, tool(Material.CLOCK, TOOL_INITIATIVE, "Roll for Initiative",
+        player.getInventory().setItem(2, tool(Material.CLOCK, TOOL_INITIATIVE, "Roll for Initiative",
                 "Right-click to roll initiative", "(begins turns for everyone added)"));
-        player.getInventory().setItem(5, tool(Material.LEATHER_BOOTS, TOOL_MOVE, "Move",
+        player.getInventory().setItem(3, tool(Material.LEAD, TOOL_POSSESS, "Possess",
+                "Right-click an entity → control it", "(you go invisible, it follows you; sneak to stop)"));
+        player.getInventory().setItem(4, tool(Material.LEATHER_BOOTS, TOOL_MOVE, "Move",
                 "Right-click entities to select them (they glow)", "then right-click the ground to send them there",
                 "(in combat: only on that entity's turn, counts vs speed)"));
-        player.getInventory().setItem(6, tool(Material.TRIPWIRE_HOOK, TOOL_OBJECT, "Annotate Object",
+        player.getInventory().setItem(6, tool(Material.SPYGLASS, TOOL_VIEW, "View",
+                "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
+        player.getInventory().setItem(8, tool(Material.ARROW, TOOL_BACK, "◀ Back",
+                "Right-click to return to the tool categories"));
+    }
+
+    /** Exploration page: world-annotation and check tools + Back. */
+    public static void giveExplorePage(Player player) {
+        clearHotbar(player);
+        player.getInventory().setItem(0, tool(Material.TRIPWIRE_HOOK, TOOL_OBJECT, "Annotate Object",
                 "Right-click a block (chest, door, wall…) to mark it", "locked / hidden / add a description",
                 "(players then interact through you — /dm object commands too)"));
-        player.getInventory().setItem(8, tool(Material.BARRIER, TOOL_EXIT, "Exit DM Mode",
-                "Right-click to leave DM mode", "(gives your normal inventory back)"));
+        player.getInventory().setItem(2, tool(Material.SPYGLASS, TOOL_VIEW, "View",
+                "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
+        player.getInventory().setItem(8, tool(Material.ARROW, TOOL_BACK, "◀ Back",
+                "Right-click to return to the tool categories"));
+    }
+
+    /** Clear the hotbar (slots 0-8) before laying out a page — the real inventory is safely stashed. */
+    private static void clearHotbar(Player player) {
+        for (int i = 0; i <= 8; i++) player.getInventory().setItem(i, null);
     }
 
     private static ItemStack tool(Material material, String toolId, String name, String... loreLines) {
