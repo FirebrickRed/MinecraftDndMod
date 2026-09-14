@@ -86,8 +86,15 @@ public class SpellCastHandler {
             session.broadcast(Component.text("Spell attack: " + r.breakdown() + " vs AC " + ac, NamedTextColor.GRAY));
             if (hit) {
                 session.broadcast(Component.text(r.nat20() ? "★ CRITICAL HIT! ★" : "HIT!", NamedTextColor.GREEN, TextDecoration.BOLD));
-                String dmg = r.nat20() ? AttackHandler.doubleDice(spell.getDamage()) : spell.getDamage();
-                if (dmg != null) AttackHandler.promptDamage(session, caster, target, dmg, spell.getDamageType(), r.nat20());
+                String base = spell.getDamage();
+                String dmg = (base != null && r.nat20()) ? AttackHandler.doubleDice(base) : base;
+                // Always open the damage step on a hit — even if the spell defines no fixed damage
+                // (variable/misconfigured), the caster gets an editable prompt instead of a dead-end
+                // where "/combat damage" reports "no attack hit to apply damage for".
+                if (dmg == null) {
+                    session.broadcast(Component.text("(no fixed damage on this spell — enter the amount)", NamedTextColor.DARK_GRAY));
+                }
+                AttackHandler.promptDamage(session, caster, target, dmg == null ? "" : dmg, spell.getDamageType(), r.nat20());
             } else {
                 session.broadcast(Component.text("MISS", NamedTextColor.RED));
             }
