@@ -39,18 +39,20 @@ The player is prompted to roll (they click **[type your d20]** or **[let the gam
 comes back to **you** privately with SUCCESS/FAIL vs the DC and a **[Share with players]** button.
 Click it to announce the outcome, then narrate the chest opening (or not).
 
-**Add loot** (given on a successful open). Look at the chest and stock it:
+**The contents.** For a **real chest**, just put the items in the chest the normal Minecraft way —
+`locked` only blocks the vanilla open. When the player succeeds, jump to them (click the **(x, y, z)**
+in the notification) and:
+
+```
+/dm object unlock               # now right-clicking opens the real chest with its real contents
+```
+
+`/dm object loot` / `give` is for blocks with **no container** — a false wall, a statue, a body tile —
+where you define what's found and hand it over:
 
 ```
 /dm object loot longsword
 /dm object loot gold_piece x25
-/dm object info                 # "…: locked loot[longsword, gold_piece x25] \"…\""
-```
-
-When the player succeeds, jump to them (click the **(x, y, z)** in the notification), look at the
-chest, and hand it over:
-
-```
 /dm object give <Player>        # they receive the loot; overflow drops at their feet
 ```
 
