@@ -91,7 +91,7 @@ public class SpellCastHandler {
             RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, mod,
                     (mod >= 0 ? "+" : "") + mod + "[Spell]", caster.rerollsNat1(), advantage, forceAuto);
             if (r == null) {
-                player.sendMessage(Component.text("Roll your d20: add --roll <n>.", NamedTextColor.YELLOW));
+                player.sendMessage(Component.text("Roll your d20: type 'manualRoll <n>', or 'autoRoll'.", NamedTextColor.YELLOW));
                 return false;
             }
             int ac = target.getArmorClass();
@@ -332,18 +332,22 @@ public class SpellCastHandler {
 
     /** Send the target's controller a clickable prompt to roll the pending save. */
     private static void promptSave(CombatSession session, Combatant target, Ability ability) {
-        String cmd = "/combat save --roll ";
+        String cmd = "/combat save manualRoll ";
         Component prompt = Component.text("🛡 Roll a " + ability.getAbbreviation() + " saving throw — ", NamedTextColor.GOLD)
                 .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(cmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds your save bonus."))));
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds your save bonus."))))
+                .append(Component.text("  ", NamedTextColor.GRAY))
+                .append(Component.text("[or let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand("/combat save autoRoll"))
+                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls the save (with advantage/disadvantage)."))));
         if (target.isPlayer() && target.getPlayer() != null) {
             target.getPlayer().sendMessage(prompt);
         } else {
             // Entity: the DM rolls the save for it.
             session.sendToDM(Component.text("Roll " + target.getDisplayName(true) + "'s save: ", NamedTextColor.GOLD)
                     .append(Component.text("[click, then type the d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                            .clickEvent(ClickEvent.suggestCommand("/combat save " + quoted(target.getDisplayName()) + " --roll "))
+                            .clickEvent(ClickEvent.suggestCommand("/combat save " + quoted(target.getDisplayName()) + " manualRoll "))
                             .hoverEvent(HoverEvent.showText(Component.text("Rolls the save for the entity.")))));
         }
     }
@@ -366,7 +370,7 @@ public class SpellCastHandler {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
                 (bonus >= 0 ? "+" : "") + bonus + "[" + ps.ability().getAbbreviation() + "]", target.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
-            roller.sendMessage(Component.text("Add your roll: --roll <n>.", NamedTextColor.YELLOW));
+            roller.sendMessage(Component.text("Add your roll: 'manualRoll <n>', or 'autoRoll'.", NamedTextColor.YELLOW));
             return;
         }
         pendingSaves.remove(target.getId());

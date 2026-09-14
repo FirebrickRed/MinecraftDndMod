@@ -138,7 +138,7 @@ public final class ReactionManager {
     private static Component attackButton(Combatant reactor, String attackName) {
         String base = "/combat reactions " + reactor.getDisplayName() + " " + attackName.toLowerCase().replace(" ", "_");
         return Component.text("[" + attackName + "] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                .clickEvent(ClickEvent.suggestCommand(base + " --roll "))
+                .clickEvent(ClickEvent.suggestCommand(base + " manualRoll "))
                 .hoverEvent(HoverEvent.showText(Component.text("Attack with " + attackName + " — fills the command, then type your d20 roll.")));
     }
 

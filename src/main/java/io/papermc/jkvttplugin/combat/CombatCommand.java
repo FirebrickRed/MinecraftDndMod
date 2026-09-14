@@ -441,14 +441,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private void promptInitiativeRoll(Player player, Combatant combatant) {
         int bonus = combatant.getInitiativeBonus();
         String bonusStr = bonus >= 0 ? "+" + bonus : String.valueOf(bonus);
-        String cmd = "/combat initiative --roll ";
+        String cmd = "/combat initiative manualRoll ";
         player.sendMessage(Component.text("⚔ Roll for initiative — ", NamedTextColor.GOLD)
                 .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(cmd))
                         .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds your " + bonusStr + " (DEX).")))));
         player.sendMessage(Component.text("   or ", NamedTextColor.GRAY)
                 .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand("/combat initiative --roll 1d20"))
+                        .clickEvent(ClickEvent.runCommand("/combat initiative autoRoll"))
                         .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20 and adds " + bonusStr + ".")))));
     }
 
@@ -850,7 +850,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
         // Attacking spends the action itself — just point them to it (don't double-spend).
         if (name.equals("attack")) {
-            player.sendMessage(Component.text("Make your attack: right-click your weapon, or /combat attack <target> <weapon> --roll <d20>.", NamedTextColor.YELLOW));
+            player.sendMessage(Component.text("Make your attack: right-click your weapon, or /combat attack <target> <weapon> manualRoll <d20>.", NamedTextColor.YELLOW));
             return;
         }
         if (state.isActionUsed()) {
@@ -921,7 +921,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         boolean myTurn = isDM || (current != null && current.isPlayer() && current.getId().equals(player.getUniqueId()));
 
         if (args.length < 2) {
-            player.sendMessage(Component.text("Usage: /combat cast <spell> [target] [--roll <d20>]  |  /combat cast <ritual> --ritual  |  /combat cast cancel", NamedTextColor.RED));
+            player.sendMessage(Component.text("Usage: /combat cast <spell> [target] [manualRoll <d20> | autoRoll]  |  /combat cast <ritual> --ritual  |  /combat cast cancel", NamedTextColor.RED));
             return;
         }
         // Ritual cancel / channel management only apply on your own turn.
@@ -979,7 +979,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Area spell — aim (cone/line/burst from you, sphere where you look); no named target.
             resolved = SpellCastHandler.castAoe(caster, session, player, spell, providedRoll, providedTotal);
         } else {
-            if (args.length < 3) { player.sendMessage(Component.text("Usage: /combat cast " + args[1] + " <target> [--roll <d20>]", NamedTextColor.RED)); return; }
+            if (args.length < 3) { player.sendMessage(Component.text("Usage: /combat cast " + args[1] + " <target> [manualRoll <d20> | autoRoll]", NamedTextColor.RED)); return; }
             List<String> pos = collectPositionalArgs(args, 2);
 
             // A cast-time choice (Hex: "ability") is the trailing token; the rest is the target name.
@@ -1796,6 +1796,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         return null;
     }
 
+    /** The value following the first of the given keywords/flags (e.g. manualRoll/autoRoll/--roll). */
+    private String valueAfterAny(String[] args, String... keywords) {
+        for (int i = 0; i < args.length - 1; i++) {
+            for (String k : keywords) {
+                if (args[i].equalsIgnoreCase(k)) return args[i + 1];
+            }
+        }
+        return null;
+    }
+
     /**
      * Get the integer value after a flag (e.g., --roll 14 → 14).
      * Also handles attached values like --roll14 → 14.
@@ -1836,9 +1846,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private List<String> collectPositionalArgs(String[] args, int startIndex) {
         List<String> positional = new ArrayList<>();
         for (int i = startIndex; i < args.length; i++) {
-            // The roll input (autoRoll / manualRoll <n> / total <n>) always follows the positionals,
-            // so stop here — otherwise "manualRoll"/"8" would be mistaken for a target/amount (#183).
-            if (RollService.isRollKeyword(args[i])) break;
+            // The roll input (autoRoll / manualRoll <n> / total <n>) and a trailing 'type <t>' always
+            // follow the positionals, so stop here — otherwise "manualRoll"/"8"/"type" would be
+            // mistaken for a target/amount (#183).
+            if (RollService.isRollKeyword(args[i]) || args[i].equalsIgnoreCase("type")) break;
             if (args[i].startsWith("--")) {
                 // Check if this is a flag with an attached value (e.g., --roll20)
                 // or a standalone flag like --showmods
@@ -1917,9 +1928,18 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        String rollStr = getFlagValue(args, "--roll");
-        Integer total = getFlagValueInt(args, "--total");
-        String type = getFlagValue(args, "--type");
+        // Damage roll: manualRoll <n> (you rolled it) / autoRoll <dice> (game rolls) / total <n>,
+        // with the legacy --roll/--total as aliases.
+        String rollStr = valueAfterAny(args, "manualroll", "autoroll", "--roll");
+        Integer total = getFlagValueInt(args, "total");
+        if (total == null) total = getFlagValueInt(args, "--total");
+        // Damage type: no need to type it — default to the type of the hit that opened this window.
+        // 'type <t>' / '--type <t>' still overrides (e.g. a rider of a different type).
+        String type = valueAfterAny(args, "type", "--type");
+        if (type == null && !isOverride && attacker != null && attacker.getTurnState() != null) {
+            String pending = attacker.getTurnState().getPendingDamageType();
+            if (pending != null && !pending.isBlank()) type = pending;
+        }
         // Crit comes from the attack that opened this damage window, not a flag (matters only vs a
         // downed creature: a critical hit while they're down is 2 death-save failures, not 1).
         boolean crit = !isOverride && attacker != null && attacker.getTurnState() != null
@@ -1927,7 +1947,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         List<String> positional = collectPositionalArgs(args, 1);
         if (positional.isEmpty()) {
-            dm.sendMessage(Component.text("Usage: /combat damage <target> [amount] [--roll <dice>] [--total <n>] [--type <type>]", NamedTextColor.RED));
+            dm.sendMessage(Component.text("Usage: /combat damage <target> [amount | manualRoll <n> | autoRoll <dice> | total <n>]  (type is auto)", NamedTextColor.RED));
             return;
         }
 
@@ -1979,7 +1999,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         } else if (flat != null) {
             damage = flat;
         } else {
-            dm.sendMessage(Component.text("Provide an amount, --roll <dice>, or --total <n>.", NamedTextColor.RED));
+            dm.sendMessage(Component.text("Provide an amount, manualRoll <n>, autoRoll <dice>, or total <n>.", NamedTextColor.RED));
             return;
         }
 
@@ -2008,7 +2028,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         List<String> positional = collectPositionalArgs(args, 1);
         if (positional.isEmpty()) {
-            dm.sendMessage(Component.text("Usage: /combat heal <target> [amount] [--roll <dice>] [--total <n>]", NamedTextColor.RED));
+            dm.sendMessage(Component.text("Usage: /combat heal <target> [amount | manualRoll <n> | autoRoll <dice> | total <n>]", NamedTextColor.RED));
             return;
         }
 
@@ -2040,7 +2060,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         } else if (flat != null) {
             heal = flat;
         } else {
-            dm.sendMessage(Component.text("Provide an amount, --roll <dice>, or --total <n>.", NamedTextColor.RED));
+            dm.sendMessage(Component.text("Provide an amount, manualRoll <n>, autoRoll <dice>, or total <n>.", NamedTextColor.RED));
             return;
         }
 
@@ -2409,21 +2429,21 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - Mark bonus action used", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat attack <target> [weapon]", NamedTextColor.GREEN)
             .append(Component.text(" - Attack a target", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat attack <target> --showmods", NamedTextColor.YELLOW)
-            .append(Component.text(" - Show modifier breakdown", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat attack <target> --roll <d20>", NamedTextColor.YELLOW)
-            .append(Component.text(" - Provide physical d20", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat attack <target> --total <N>", NamedTextColor.YELLOW)
-            .append(Component.text(" - Provide final total", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat damage <target> [amt|--roll <dice>] [--type <t>]", NamedTextColor.RED)
-            .append(Component.text(" - Apply damage (your turn, or DM)", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat override <target> [amt|--roll <dice>]", NamedTextColor.RED)
+        player.sendMessage(Component.text("/combat attack <target> [weapon] manualRoll <d20>", NamedTextColor.YELLOW)
+            .append(Component.text(" - You rolled it; game adds mods", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat attack <target> [weapon] autoRoll", NamedTextColor.YELLOW)
+            .append(Component.text(" - Let the game roll (with adv/dis)", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat attack <target> [weapon] total <N>", NamedTextColor.YELLOW)
+            .append(Component.text(" - Provide final total, nothing added", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat damage <target> [amt | manualRoll <n> | autoRoll <dice>]", NamedTextColor.RED)
+            .append(Component.text(" - Apply damage (type is auto)", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat override <target> [amt | manualRoll <n>]", NamedTextColor.RED)
             .append(Component.text(" - DM: apply corrective damage anytime", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat heal <target> [amt|--roll <dice>]", NamedTextColor.GREEN)
+        player.sendMessage(Component.text("/combat heal <target> [amt | manualRoll <n>]", NamedTextColor.GREEN)
             .append(Component.text(" - Restore HP (DM)", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat temphp <target> <amt>", NamedTextColor.AQUA)
             .append(Component.text(" - Grant temporary HP (DM)", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat deathsave [--roll <d20>]", NamedTextColor.DARK_RED)
+        player.sendMessage(Component.text("/combat deathsave [manualRoll <d20>]", NamedTextColor.DARK_RED)
             .append(Component.text(" - Roll a death saving throw when down", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat movement [undo]", NamedTextColor.YELLOW)
             .append(Component.text(" - Check/undo movement", NamedTextColor.GRAY)));
@@ -2596,8 +2616,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             String lastArg = args[args.length - 1];
             String prevArg = args[args.length - 2];
 
-            // After --roll or --total, don't suggest anything
-            if (prevArg.equalsIgnoreCase("--roll") || prevArg.equalsIgnoreCase("--total")) {
+            // After a value-taking roll keyword/flag, don't suggest anything
+            if (RollService.isRollKeyword(prevArg) && !prevArg.equalsIgnoreCase("autoRoll")) {
                 return completions;
             }
 
@@ -2628,11 +2648,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
 
             if (!weaponChosen) {
-                // Still choosing the weapon — offer weapons/attacks only, NOT flags (no --roll yet).
+                // Still choosing the weapon — offer weapons/attacks only, not the roll keywords yet.
                 completions.addAll(choices);
             } else {
-                // Weapon chosen — now the roll flags make sense.
-                completions.addAll(List.of("--showmods", "--roll", "--total", "--force"));
+                // Weapon chosen — now the roll input makes sense (new keywords, plus legacy flags).
+                completions.addAll(List.of("manualRoll", "autoRoll", "total", "--showmods", "--force"));
             }
             return filterCompletions(completions, lastArg);
         }
@@ -2643,21 +2663,22 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             String lastArg = args[args.length - 1];
             String prevArg = args[args.length - 2];
 
-            if (prevArg.equalsIgnoreCase("--roll") || prevArg.equalsIgnoreCase("--total")) {
+            if ((RollService.isRollKeyword(prevArg) && !prevArg.equalsIgnoreCase("autoRoll"))) {
                 return completions;
             }
-            if (prevArg.equalsIgnoreCase("--type")) {
+            if (prevArg.equalsIgnoreCase("type") || prevArg.equalsIgnoreCase("--type")) {
                 completions.addAll(List.of("slashing", "piercing", "bludgeoning", "fire", "cold",
                     "lightning", "acid", "poison", "necrotic", "radiant", "psychic", "thunder", "force"));
                 return filterCompletions(completions, lastArg);
             }
-            if (lastArg.startsWith("--")) {
+            // Offer the roll keywords once a target is named (damage/override/heal take a roll; damage adds type).
+            if (args.length >= 3 && !RollService.isRollKeyword(lastArg)) {
                 if (args[0].equalsIgnoreCase("damage") || args[0].equalsIgnoreCase("override")) {
-                    completions.addAll(List.of("--roll", "--total", "--type"));
+                    completions.addAll(List.of("manualRoll", "autoRoll", "total", "type"));
                 } else if (args[0].equalsIgnoreCase("heal")) {
-                    completions.addAll(List.of("--roll", "--total"));
+                    completions.addAll(List.of("manualRoll", "autoRoll", "total"));
                 }
-                return filterCompletions(completions, lastArg);
+                if (!completions.isEmpty()) return filterCompletions(completions, lastArg);
             }
         }
 

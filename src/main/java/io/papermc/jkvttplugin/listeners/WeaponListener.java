@@ -119,8 +119,10 @@ public class WeaponListener implements Listener {
     private void promptAttack(Player player, AttackContext ctx, Combatant target) {
         String targetName = target.getDisplayName();
         String targetArg = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
-        String rollCmd = "/combat attack " + targetArg + " " + ctx.weaponId + " --roll ";
-        String totalCmd = "/combat attack " + targetArg + " " + ctx.weaponId + " --total ";
+        String base = "/combat attack " + targetArg + " " + ctx.weaponId + " ";
+        String manualCmd = base + "manualRoll ";
+        String autoCmd = base + "autoRoll";
+        String totalCmd = base + "total ";
 
         CharacterSheet sheet = ctx.attacker.getCharacterSheet();
         int mod = sheet != null ? AttackHandler.calculatePlayerAttackMod(sheet, ctx.weapon) : 0;
@@ -133,16 +135,18 @@ public class WeaponListener implements Listener {
         player.sendMessage(Component.text("⚔ Attack ", NamedTextColor.GOLD)
                 .append(Component.text(targetName, NamedTextColor.YELLOW))
                 .append(Component.text(" with " + ctx.weapon.getName() + " — ", NamedTextColor.GOLD))
-                .append(Component.text("[click, then type your d20 roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(rollCmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills in: " + rollCmd + "<roll>\nThe game adds your "
+                .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand(manualCmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd + "<your d20>\nThe game adds your "
                                 + modShown + " to hit.")))));
         player.sendMessage(Component.text("   the game adds your " + modShown + " to hit — or ", NamedTextColor.GRAY)
-                .append(Component.text("[use --total]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand(autoCmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20 (with advantage/disadvantage) and adds " + modShown + "."))))
+                .append(Component.text(" / ", NamedTextColor.DARK_GRAY))
+                .append(Component.text("[type a final total]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(totalCmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("If you already added your modifiers, fill in:\n"
-                                + totalCmd + "<your final total>"))))
-                .append(Component.text(" if you know your modifiers.", NamedTextColor.GRAY)));
+                        .hoverEvent(HoverEvent.showText(Component.text("If you already added your modifiers: " + totalCmd + "<your final total>")))));
     }
 
     /** The combatant the player is looking at within {@code maxDistance} blocks, or null. */

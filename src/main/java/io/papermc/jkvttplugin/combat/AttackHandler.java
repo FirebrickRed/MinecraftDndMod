@@ -159,7 +159,7 @@ public class AttackHandler {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
-            commandUser.sendMessage(Component.text("Roll your d20, then add --roll <n> (or right-click your weapon).",
+            commandUser.sendMessage(Component.text("Roll your d20, then add 'manualRoll <n>' — or 'autoRoll' to let the game roll (or right-click your weapon).",
                     NamedTextColor.YELLOW));
             return false;
         }
@@ -193,7 +193,7 @@ public class AttackHandler {
         String type = sheet.getMarkDamageType();
         String name = target.getDisplayName();
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
-        String cmd = "/combat damage " + quoted + " --roll " + rider + (type != null ? " --type " + type : "");
+        String cmd = "/combat damage " + quoted + " autoRoll " + rider + (type != null ? " type " + type : "");
         commandUser.sendMessage(Component.text("✦ Mark: +" + rider + (type != null ? " " + type : "") + " — ", NamedTextColor.DARK_PURPLE)
                 .append(Component.text("[click to apply the rider]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(cmd))
@@ -384,7 +384,7 @@ public class AttackHandler {
                 dm.sendMessage(Component.text("Reach: " + attack.getReach(), NamedTextColor.GRAY));
             }
             dm.sendMessage(Component.text("Damage: " + attack.getDamage() + " " + attack.getDamageType(), NamedTextColor.GRAY));
-            dm.sendMessage(Component.text("Use --roll <d20> to provide a physical roll.", NamedTextColor.DARK_GRAY));
+            dm.sendMessage(Component.text("Type 'manualRoll <d20>' to provide a roll, or 'autoRoll' to let the game roll.", NamedTextColor.DARK_GRAY));
             dm.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
             return false;
         }
@@ -493,10 +493,10 @@ public class AttackHandler {
                                      String damageStr, String damageType, boolean isCrit, String bonusLabel) {
         String name = target.getDisplayName();
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
-        String typeFlag = (damageType == null || damageType.isEmpty()) ? "" : " --type " + damageType;
+        // The damage type is auto-grabbed from this hit by /combat damage — no 'type' needed (#183).
 
         // Split "1d8+3" into the dice you physically roll ("1d8") and the flat bonus (3). This mirrors
-        // attack rolls: you roll the dice, the game adds the known modifier via --roll <your result>.
+        // attack rolls: you roll the dice, the game adds the known modifier via manualRoll <your result>.
         int[] split = splitDamageBonus(damageStr);
         String dice = damageStr == null ? "" : damageStr.replaceAll("[+-]\\s*\\d+\\s*$", "").trim();
         int bonus = split[0];
@@ -511,12 +511,13 @@ public class AttackHandler {
         if (attacker.getTurnState() != null) {
             attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0,
                     hasDice ? bonusShown.trim() : "", isCrit);
+            attacker.getTurnState().setPendingDamageType(damageType); // so /combat damage needs no 'type' (#183)
         }
 
         Component prompt;
         if (hasDice) {
-            // Clickable: fills the command with --roll open for the player's physical damage roll.
-            String cmd = "/combat damage " + quoted + typeFlag + " --roll ";
+            // Clickable: fills the command for the player to type their physical damage roll.
+            String cmd = "/combat damage " + quoted + " manualRoll ";
             prompt = Component.text("→ Apply damage — roll " + dice + ", the game adds" + (bonus == 0 ? " nothing" : bonusShown) + ": ", NamedTextColor.YELLOW)
                     .append(Component.text("[click, then type your damage roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                             .clickEvent(ClickEvent.suggestCommand(cmd))
@@ -525,7 +526,7 @@ public class AttackHandler {
         } else {
             // Flat damage (e.g. unarmed): nothing to roll — one click applies it.
             String amt = (damageStr == null || damageStr.isEmpty()) ? "1" : damageStr;
-            String cmd = "/combat damage " + quoted + " " + amt + typeFlag;
+            String cmd = "/combat damage " + quoted + " " + amt;
             prompt = Component.text("→ Apply damage (" + amt + "): ", NamedTextColor.YELLOW)
                     .append(Component.text("[click to apply]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                             .clickEvent(ClickEvent.suggestCommand(cmd))
@@ -585,7 +586,7 @@ public class AttackHandler {
             }
         }
 
-        player.sendMessage(Component.text("Use --roll <d20> to provide a physical roll.", NamedTextColor.DARK_GRAY));
+        player.sendMessage(Component.text("Type 'manualRoll <d20>' to provide a roll, or 'autoRoll' to let the game roll.", NamedTextColor.DARK_GRAY));
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
     }
 
