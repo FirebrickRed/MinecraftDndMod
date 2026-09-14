@@ -62,6 +62,24 @@ The roller layer everything hangs off. Sketch:
     *[Honest]* (no contest, or Insight vs their passive), *[Lie → roll Deception]*, *[Persuade → roll
     Persuasion]*, *[Intimidate → Intimidation]*. Real player agency; the DM sees the outcome, players don't.
 
+### Player-chooses-skill (future direction — build with the tool, #187)
+
+Preferred long-term flow for both single and contested checks: the DM calls a check **without naming
+the skill** — `/dm check <A> vs <B>`, or `/dm check <player>` — and each player is prompted with a
+**skill picker**: *"Which skill? [Stealth] [Insight] [Deception] …"*. Clicking one fills the roll
+command (with the right skill) for the player to then `autoRoll` / `manualRoll` and send. This keeps
+the DM's typing minimal and lets players choose their approach.
+
+The DM **can still ask for a specific skill** (there are real cases for it). To keep that low-effort,
+it belongs in the **DM annotation/check tool (#187)** — click a target, pick the skill from a menu —
+rather than a long command. And even a DM-specified check can offer the player alternatives:
+*"The DM asked for Perception — [roll it], or suggest another: [Investigation] [Insight] …"* in case
+the DM reconsiders.
+
+**Decision:** leave the current commands as-is (`/dm check <A> <skillA> vs <B> <skillB>`, DM-specified
+skill) and revisit the skill-picker + player-chooses-skill flow **together with the tool (#187)**, so
+the command and tool stay in sync.
+
 - **Instant vs persistent checks.** Some checks resolve immediately (pick a lock now → success/fail).
   Others **persist**: a **Stealth** roll becomes a held value that later gets compared to each watcher's
   **passive Perception** as the party moves or a creature gets a chance to notice — it doesn't "resolve"
