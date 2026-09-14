@@ -63,10 +63,11 @@ public class InteractiveObjectListener implements Listener {
 
     /** Tell every online DM that a player is at a locked object, with a button to call a check. */
     private void notifyDms(Player player, String prettyBlock, Location loc) {
-        String where = loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ();
         String callCmd = "/dm check " + player.getName() + " skill ";
         Component msg = Component.text("🔒 " + player.getName() + " is trying to open a locked "
-                        + prettyBlock + " (" + where + ") — ", NamedTextColor.GOLD)
+                        + prettyBlock + " ", NamedTextColor.GOLD)
+                .append(clickableCoords(loc))
+                .append(Component.text(" — ", NamedTextColor.GOLD))
                 .append(Component.text("[call a check]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(callCmd))
                         .hoverEvent(HoverEvent.showText(Component.text("Fills /dm check " + player.getName()
@@ -76,14 +77,23 @@ public class InteractiveObjectListener implements Listener {
         }
     }
 
+    /** A clickable "(x, y, z)" that teleports the DM there. */
+    static Component clickableCoords(Location loc) {
+        String w = loc.getWorld() != null ? loc.getWorld().getName() : "world";
+        int x = loc.getBlockX(), y = loc.getBlockY(), z = loc.getBlockZ();
+        return Component.text("(" + x + ", " + y + ", " + z + ")", NamedTextColor.YELLOW, TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.runCommand("/dm tp " + w + " " + x + " " + y + " " + z))
+                .hoverEvent(HoverEvent.showText(Component.text("Teleport here")));
+    }
+
     /** Tell every online DM that a player sprang a live trap, with spot / disarm / trigger buttons. */
     private void notifyTrap(Player player, String prettyBlock, Location loc, InteractiveObjectManager.Obj o) {
-        String where = loc.getBlockX() + ", " + loc.getBlockY() + ", " + loc.getBlockZ();
         String dc = o.trapDc > 0 ? " dc " + o.trapDc : " ";
         String save = o.trapSave.isEmpty() ? "dexterity" : o.trapSave;
-        Component header = Component.text("🪤 " + player.getName() + " is at a trapped " + prettyBlock
-                + " (" + where + ") — fires " + o.trapDamage + " on a failed " + save + " save"
-                + (o.trapDc > 0 ? " (DC " + o.trapDc + ")" : "") + ".", NamedTextColor.GOLD);
+        Component header = Component.text("🪤 " + player.getName() + " is at a trapped " + prettyBlock + " ", NamedTextColor.GOLD)
+                .append(clickableCoords(loc))
+                .append(Component.text(" — fires " + o.trapDamage + " on a failed " + save + " save"
+                        + (o.trapDc > 0 ? " (DC " + o.trapDc + ")" : "") + ".", NamedTextColor.GOLD));
         Component buttons = Component.text("  ", NamedTextColor.GRAY)
                 .append(trapButton("[Perception]", "/dm check " + player.getName() + " skill perception" + dc, "Did they notice the trap?"))
                 .append(Component.text(" "))

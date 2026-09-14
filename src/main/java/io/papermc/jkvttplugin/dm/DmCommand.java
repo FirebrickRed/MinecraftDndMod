@@ -58,6 +58,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "give" -> delegateDm(sender, command, label, args, giveExec);
             case "check", "promptcheck" -> delegateDm(sender, command, label, args, checkExec);
             case "object" -> delegateDm(sender, command, label, args, objectExec);
+            case "tp", "goto" -> handleTp(sender, args);
             case "rest" -> delegateDm(sender, command, label, args, restExec);
             case "reload" -> delegateDm(sender, command, label, args, reloadExec);
             case "resource" -> handleResource(sender, command, label, args);
@@ -68,6 +69,29 @@ public class DmCommand implements CommandExecutor, TabCompleter {
         }
 
         return true;
+    }
+
+    /** /dm tp <world> <x> <y> <z> — jump the DM to a spot (used by clickable coords in notifications). */
+    private void handleTp(CommandSender sender, String[] args) {
+        if (!DMManager.isDM(sender) || !(sender instanceof Player dm)) {
+            sender.sendMessage(Component.text("Only a DM can use this.", NamedTextColor.RED));
+            return;
+        }
+        if (args.length < 5) {
+            dm.sendMessage(Component.text("Usage: /dm tp <world> <x> <y> <z>", NamedTextColor.RED));
+            return;
+        }
+        org.bukkit.World world = Bukkit.getWorld(args[1]);
+        if (world == null) { dm.sendMessage(Component.text("Unknown world: " + args[1], NamedTextColor.RED)); return; }
+        try {
+            double x = Double.parseDouble(args[2]) + 0.5;
+            double y = Double.parseDouble(args[3]) + 1;
+            double z = Double.parseDouble(args[4]) + 0.5;
+            dm.teleport(new org.bukkit.Location(world, x, y, z));
+            dm.sendMessage(Component.text("→ Teleported to " + args[2] + ", " + args[3] + ", " + args[4] + ".", NamedTextColor.GRAY));
+        } catch (NumberFormatException e) {
+            dm.sendMessage(Component.text("Invalid coordinates.", NamedTextColor.RED));
+        }
     }
 
     /** /dm lootprompt <player> <check> — call a specific loot check for a player searching a body (#144). */
