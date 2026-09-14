@@ -25,11 +25,10 @@ public final class RollService {
     }
 
     /**
-     * How a d20 action gets its die, parsed from the command (#183). New keywords are the preferred
-     * form; the legacy {@code --roll}/{@code --total} flags are still accepted as aliases:
-     *   - {@code autoRoll}            → the game rolls it (applying any advantage). ({@code --roll 1d20})
-     *   - {@code manualRoll <n>}      → you rolled n; the game adds your modifiers. ({@code --roll 14})
-     *   - {@code total <n>}           → a final total; nothing is added. ({@code --total 22})
+     * How a d20 action gets its die, parsed from the command (#183):
+     *   - {@code autoRoll}            → the game rolls it (applying any advantage).
+     *   - {@code manualRoll <n>}      → you rolled n; the game adds your modifiers.
+     *   - {@code total <n>}           → a final total; nothing is added.
      * {@code providedRoll}/{@code providedTotal} are null unless supplied; {@code forceAuto} means the
      * player explicitly asked the game to roll (so it rolls even in physical-dice mode).
      */
@@ -41,11 +40,10 @@ public final class RollService {
     public static boolean isRollKeyword(String token) {
         if (token == null) return false;
         String t = token.toLowerCase();
-        return t.equals("autoroll") || t.equals("manualroll") || t.equals("total")
-                || t.equals("--roll") || t.equals("--total");
+        return t.equals("autoroll") || t.equals("manualroll") || t.equals("total");
     }
 
-    /** Parse roll input (new keywords + legacy flags) from a command's args. */
+    /** Parse roll input (autoRoll / manualRoll &lt;n&gt; / total &lt;n&gt;) from a command's args. */
     public static RollInput parseInput(String[] args) {
         Integer providedRoll = null, providedTotal = null;
         boolean forceAuto = false;
@@ -54,13 +52,13 @@ public final class RollService {
             String next = (i + 1 < args.length) ? args[i + 1] : null;
             switch (a) {
                 case "autoroll" -> forceAuto = true; // optional trailing dice (e.g. 2d20) is ignored — advantage is auto-detected
-                case "manualroll", "--roll" -> {
+                case "manualroll" -> {
                     if (next != null) {
                         if (next.toLowerCase().contains("d")) forceAuto = true; // a dice expression → let the game roll
                         else { try { providedRoll = Integer.parseInt(next.trim()); } catch (NumberFormatException ignored) {} }
                     }
                 }
-                case "total", "--total" -> {
+                case "total" -> {
                     if (next != null) { try { providedTotal = Integer.parseInt(next.trim()); } catch (NumberFormatException ignored) {} }
                 }
                 default -> {}

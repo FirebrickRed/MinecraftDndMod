@@ -1928,14 +1928,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // Damage roll: manualRoll <n> (you rolled it) / autoRoll <dice> (game rolls) / total <n>,
-        // with the legacy --roll/--total as aliases.
-        String rollStr = valueAfterAny(args, "manualroll", "autoroll", "--roll");
+        // Damage roll: manualRoll <n> (you rolled it) / autoRoll <dice> (game rolls) / total <n>.
+        String rollStr = valueAfterAny(args, "manualroll", "autoroll");
         Integer total = getFlagValueInt(args, "total");
-        if (total == null) total = getFlagValueInt(args, "--total");
         // Damage type: no need to type it — default to the type of the hit that opened this window.
-        // 'type <t>' / '--type <t>' still overrides (e.g. a rider of a different type).
-        String type = valueAfterAny(args, "type", "--type");
+        // 'type <t>' still overrides (e.g. a rider of a different type, like the Hex necrotic die).
+        String type = valueAfterAny(args, "type");
         if (type == null && !isOverride && attacker != null && attacker.getTurnState() != null) {
             String pending = attacker.getTurnState().getPendingDamageType();
             if (pending != null && !pending.isBlank()) type = pending;
@@ -2023,8 +2021,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         CombatSession session = resolveSession(dm);
         if (session == null) return;
 
-        String rollStr = getFlagValue(args, "--roll");
-        Integer total = getFlagValueInt(args, "--total");
+        String rollStr = valueAfterAny(args, "manualroll", "autoroll");
+        Integer total = getFlagValueInt(args, "total");
 
         List<String> positional = collectPositionalArgs(args, 1);
         if (positional.isEmpty()) {
@@ -2621,9 +2619,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 return completions;
             }
 
-            // If typing a flag
+            // If typing a legacy flag (--showmods / --force remain; roll input is now bare keywords)
             if (lastArg.startsWith("--")) {
-                completions.addAll(List.of("--showmods", "--roll", "--total", "--force"));
+                completions.addAll(List.of("--showmods", "--force"));
                 return filterCompletions(completions, lastArg);
             }
 
@@ -2666,7 +2664,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if ((RollService.isRollKeyword(prevArg) && !prevArg.equalsIgnoreCase("autoRoll"))) {
                 return completions;
             }
-            if (prevArg.equalsIgnoreCase("type") || prevArg.equalsIgnoreCase("--type")) {
+            if (prevArg.equalsIgnoreCase("type")) {
                 completions.addAll(List.of("slashing", "piercing", "bludgeoning", "fire", "cold",
                     "lightning", "acid", "poison", "necrotic", "radiant", "psychic", "thunder", "force"));
                 return filterCompletions(completions, lastArg);
