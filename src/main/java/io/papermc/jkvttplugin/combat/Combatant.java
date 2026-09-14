@@ -465,6 +465,57 @@ public class Combatant {
         CharacterSheet s = getCharacterSheet();
         return s != null && s.hasExtraCritDie();
     }
+
+    // ==================== ADVANTAGE / DISADVANTAGE (conditions #103) ====================
+
+    /**
+     * Net advantage/disadvantage for an attack roll by THIS combatant against {@code target}, from
+     * conditions on both sides (my own attacks, and attacks made against the target). Situational
+     * bits (prone melee-vs-ranged, frightened line-of-sight) are left to {@link #attackReminders} so
+     * the game doesn't silently guess.
+     */
+    public Advantage attackAdvantageAgainst(Combatant target) {
+        Advantage adv = Advantage.NONE;
+        for (io.papermc.jkvttplugin.data.model.DndCondition c : myConditions()) {
+            adv = fold(adv, c.getSelfAttack());
+        }
+        if (target != null) {
+            for (io.papermc.jkvttplugin.data.model.DndCondition c : target.myConditions()) {
+                adv = fold(adv, c.getIncomingAttack());
+            }
+        }
+        return adv;
+    }
+
+    /** Situational adv/dis notes for an attack by this combatant vs {@code target} (conditions can't auto-decide). */
+    public java.util.List<String> attackReminders(Combatant target) {
+        java.util.List<String> notes = new java.util.ArrayList<>();
+        for (io.papermc.jkvttplugin.data.model.DndCondition c : myConditions()) {
+            for (String r : c.getReminders()) notes.add(c.getName() + " (you): " + r);
+        }
+        if (target != null) {
+            for (io.papermc.jkvttplugin.data.model.DndCondition c : target.myConditions()) {
+                for (String r : c.getReminders()) notes.add(c.getName() + " (" + target.getDisplayName() + "): " + r);
+            }
+        }
+        return notes;
+    }
+
+    /** The loaded conditions this combatant currently has (skips ids with no definition). */
+    private java.util.List<io.papermc.jkvttplugin.data.model.DndCondition> myConditions() {
+        java.util.List<io.papermc.jkvttplugin.data.model.DndCondition> out = new java.util.ArrayList<>();
+        for (String id : getConditions()) {
+            var c = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(id);
+            if (c != null) out.add(c);
+        }
+        return out;
+    }
+
+    private static Advantage fold(Advantage adv, String value) {
+        if ("advantage".equalsIgnoreCase(value)) return adv.with(true);
+        if ("disadvantage".equalsIgnoreCase(value)) return adv.with(false);
+        return adv;
+    }
     /** The active-effect source of a resistance to this type (e.g. "Rage"), or null if static/none. */
     public String resistanceSourceFor(String damageType) {
         CharacterSheet s = getCharacterSheet();

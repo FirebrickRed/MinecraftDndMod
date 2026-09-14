@@ -61,13 +61,34 @@ public final class RollService {
      */
     public static RollResult resolve(Integer providedRoll, Integer providedTotal, int modifier, String modLabel,
                                      boolean rerollNat1) {
+        return resolve(providedRoll, providedTotal, modifier, modLabel, rerollNat1, Advantage.NONE);
+    }
+
+    /**
+     * As above, applying advantage/disadvantage. When the game auto-rolls, this rolls TWO d20 and
+     * keeps the higher (advantage) or lower (disadvantage), showing both dice. A single provided roll
+     * is used as-is (the player already accounted for adv/dis when they physically rolled), and a
+     * provided total is likewise trusted — the caller is expected to have reminded the player.
+     */
+    public static RollResult resolve(Integer providedRoll, Integer providedTotal, int modifier, String modLabel,
+                                     boolean rerollNat1, Advantage advantage) {
         if (providedTotal != null) {
             return new RollResult(-1, providedTotal, true, false, false, providedTotal + " (provided total)");
         }
+        if (advantage == null) advantage = Advantage.NONE;
+
         Integer d20 = providedRoll;
+        String advNote = "";
         if (d20 == null) {
             if (!PluginConfig.isAutoRoll()) return null; // physical mode: caller prompts for a die
-            d20 = DiceRoller.rollDice(1, 20);
+            if (advantage == Advantage.NONE) {
+                d20 = DiceRoller.rollDice(1, 20);
+            } else {
+                int a = DiceRoller.rollDice(1, 20);
+                int b = DiceRoller.rollDice(1, 20);
+                d20 = advantage.isAdvantage() ? Math.max(a, b) : Math.min(a, b);
+                advNote = " [" + advantage.label() + ": " + a + "/" + b + "]";
+            }
         }
         String luck = "";
         if (rerollNat1 && d20 == 1) {
@@ -76,6 +97,7 @@ public final class RollService {
             luck = " [Lucky: reroll of " + first + "]";
         }
         int total = d20 + modifier;
-        return new RollResult(d20, total, false, d20 == 20, d20 == 1, "d20(" + d20 + ") " + modLabel + " = " + total + luck);
+        return new RollResult(d20, total, false, d20 == 20, d20 == 1,
+                "d20(" + d20 + ") " + modLabel + " = " + total + advNote + luck);
     }
 }

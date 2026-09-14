@@ -144,7 +144,19 @@ public class AttackHandler {
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel,
                                       boolean extraCritDie, String projectileVisual) {
-        RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1());
+        // Advantage/disadvantage from conditions (#103): auto-applied when the game rolls, and the
+        // roller is reminded either way (a physical roll or provided total is trusted as-is).
+        Advantage advantage = attacker.attackAdvantageAgainst(target);
+        if (commandUser != null) {
+            if (advantage != Advantage.NONE) {
+                commandUser.sendMessage(Component.text("↯ You have " + advantage.label() + " on this attack.",
+                        advantage.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
+            }
+            for (String note : attacker.attackReminders(target)) {
+                commandUser.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));
+            }
+        }
+        RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1(), advantage);
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
             commandUser.sendMessage(Component.text("Roll your d20, then add --roll <n> (or right-click your weapon).",

@@ -59,6 +59,23 @@ public class ConditionLoader {
         if (data.get("minecraft_effect_amplifier") instanceof Number amp) c.setMinecraftEffectAmplifier(amp.intValue());
         if (data.get("no_movement") instanceof Boolean nm) c.setNoMovement(nm);
         if (data.get("no_actions") instanceof Boolean na) c.setNoActions(na);
+
+        // Advantage/disadvantage this condition imposes (#103).
+        if (data.get("roll_effects") instanceof Map<?, ?> re) {
+            if (re.get("self_attack") instanceof String s) c.setSelfAttack(s.toLowerCase());
+            if (re.get("self_check") instanceof String s) c.setSelfCheck(s.toLowerCase());
+            if (re.get("incoming_attack") instanceof String s) c.setIncomingAttack(s.toLowerCase());
+            if (re.get("save_disadvantage") instanceof List<?> sd) {
+                List<String> abilities = new ArrayList<>();
+                for (Object o : sd) if (o != null) abilities.add(o.toString().toLowerCase());
+                c.setSaveDisadvantage(abilities);
+            }
+        }
+        if (data.get("reminders") instanceof List<?> rem) {
+            List<String> notes = new ArrayList<>();
+            for (Object o : rem) if (o != null) notes.add(o.toString());
+            c.setReminders(notes);
+        }
         return c;
     }
 

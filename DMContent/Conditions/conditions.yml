@@ -1,0 +1,155 @@
+# D&D 5e conditions (Issue #103). Data-driven: `rules` are shown to the table; the mechanical keys
+# are enforced by the plugin. `roll_effects` drives advantage/disadvantage automatically where it's
+# unambiguous; `reminders` cover the situational parts the game shouldn't silently decide.
+#
+# roll_effects keys (values: advantage | disadvantage):
+#   self_attack     — the bearer's own attack rolls
+#   self_check      — the bearer's own ability checks
+#   incoming_attack — attack rolls made against the bearer
+#   save_disadvantage: [ability, …] — abilities the bearer rolls saves at disadvantage on
+
+blinded:
+  name: Blinded
+  minecraft_effect: BLINDNESS
+  rules:
+    - "Can't see; automatically fails any check that requires sight."
+    - "Attack rolls against you have advantage; your attack rolls have disadvantage."
+  roll_effects:
+    self_attack: disadvantage
+    incoming_attack: advantage
+
+charmed:
+  name: Charmed
+  rules:
+    - "Can't attack the charmer or target them with harmful abilities/spells."
+    - "The charmer has advantage on social ability checks to interact with you."
+  reminders:
+    - "You can't attack whoever charmed you — the DM adjudicates the target."
+
+deafened:
+  name: Deafened
+  rules:
+    - "Can't hear; automatically fails any check that requires hearing."
+
+frightened:
+  name: Frightened
+  rules:
+    - "Disadvantage on ability checks and attack rolls while the source of fear is in line of sight."
+    - "Can't willingly move closer to the source of the fear."
+  roll_effects:
+    self_attack: disadvantage
+    self_check: disadvantage
+  reminders:
+    - "Only while the source of fear is in your line of sight."
+
+grappled:
+  name: Grappled
+  no_movement: true
+  rules:
+    - "Speed becomes 0; can't benefit from any bonus to speed."
+    - "Ends if the grappler is incapacitated or moved out of reach."
+
+incapacitated:
+  name: Incapacitated
+  no_actions: true
+  rules:
+    - "Can't take actions or reactions."
+
+invisible:
+  name: Invisible
+  minecraft_effect: INVISIBILITY
+  rules:
+    - "Impossible to see without special sense; heavily obscured for hiding."
+    - "Attack rolls against you have disadvantage; your attack rolls have advantage."
+  roll_effects:
+    self_attack: advantage
+    incoming_attack: disadvantage
+
+poisoned:
+  name: Poisoned
+  rules:
+    - "Disadvantage on attack rolls and ability checks."
+  roll_effects:
+    self_attack: disadvantage
+    self_check: disadvantage
+
+prone:
+  name: Prone
+  minecraft_effect: SLOWNESS
+  minecraft_effect_amplifier: 4
+  rules:
+    - "Your only movement option is to crawl, or to stand up (costs half your speed)."
+    - "Disadvantage on attack rolls."
+    - "Attacks against you have advantage if the attacker is within 5 ft; otherwise disadvantage."
+  roll_effects:
+    self_attack: disadvantage
+  reminders:
+    - "Attacks against a prone creature: advantage in melee (within 5 ft), disadvantage at range."
+
+restrained:
+  name: Restrained
+  no_movement: true
+  rules:
+    - "Speed becomes 0."
+    - "Disadvantage on attack rolls; attacks against you have advantage."
+    - "Disadvantage on Dexterity saving throws."
+  roll_effects:
+    self_attack: disadvantage
+    incoming_attack: advantage
+    save_disadvantage: [dexterity]
+
+stunned:
+  name: Stunned
+  no_movement: true
+  no_actions: true
+  minecraft_effect: SLOWNESS
+  minecraft_effect_amplifier: 6
+  rules:
+    - "Incapacitated, can't move, and can speak only falteringly."
+    - "Automatically fails Strength and Dexterity saving throws."
+    - "Attack rolls against you have advantage."
+  roll_effects:
+    incoming_attack: advantage
+  reminders:
+    - "Automatically fails Strength and Dexterity saving throws."
+
+paralyzed:
+  name: Paralyzed
+  no_movement: true
+  no_actions: true
+  minecraft_effect: SLOWNESS
+  minecraft_effect_amplifier: 9
+  rules:
+    - "Incapacitated, can't move or speak."
+    - "Automatically fails Strength and Dexterity saving throws."
+    - "Attack rolls against you have advantage; any hit from within 5 ft is a critical hit."
+  roll_effects:
+    incoming_attack: advantage
+  reminders:
+    - "Automatically fails Strength and Dexterity saving throws."
+    - "Any attack that hits from within 5 ft is a critical hit."
+
+unconscious:
+  name: Unconscious
+  no_movement: true
+  no_actions: true
+  rules:
+    - "Incapacitated, can't move or speak, unaware of surroundings; drops what it's holding and falls prone."
+    - "Automatically fails Strength and Dexterity saving throws."
+    - "Attack rolls against you have advantage; any hit from within 5 ft is a critical hit."
+  roll_effects:
+    incoming_attack: advantage
+  reminders:
+    - "Automatically fails Strength and Dexterity saving throws."
+    - "Any attack that hits from within 5 ft is a critical hit."
+
+dodging:
+  name: Dodging
+  until_next_turn: true
+  rules:
+    - "Until your next turn, attacks against you have disadvantage (if you can see the attacker)."
+    - "You make Dexterity saving throws with advantage."
+  roll_effects:
+    incoming_attack: disadvantage
+  reminders:
+    - "Only against attackers you can see; you also have advantage on Dexterity saves."
