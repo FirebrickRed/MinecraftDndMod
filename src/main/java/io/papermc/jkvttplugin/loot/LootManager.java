@@ -203,19 +203,7 @@ public class LootManager {
 
     /** Resolve a loot entry to an ItemStack (weapons, armor, items, and currency are all covered). */
     private static ItemStack createLootItem(LootEntry entry) {
-        ItemStack stack = null;
-        DndWeapon w = WeaponLoader.getWeapon(entry.getItemId());
-        if (w != null) stack = w.createItemStack();
-        if (stack == null) {
-            DndArmor a = ArmorLoader.getArmor(entry.getItemId());
-            if (a != null) stack = a.createItemStack();
-        }
-        if (stack == null) {
-            DndItem i = ItemLoader.getItem(entry.getItemId());
-            if (i != null) stack = i.createItemStack();
-        }
-        if (stack != null) stack.setAmount(Math.max(1, Math.min(64, entry.getQty())));
-        return stack;
+        return io.papermc.jkvttplugin.util.ItemUtil.itemFromId(entry.getItemId(), entry.getQty()); // shared resolver (#185)
     }
 
     private static CharacterSheet sheetOf(Player player) {

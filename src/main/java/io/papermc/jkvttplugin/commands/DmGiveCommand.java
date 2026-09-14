@@ -134,31 +134,7 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
      * @return The ItemStack, or null if not found
      */
     private ItemStack resolveItem(String itemId, int amount) {
-        // Check weapons
-        DndWeapon weapon = WeaponLoader.getWeapon(itemId);
-        if (weapon != null) {
-            ItemStack stack = weapon.createItemStack();
-            stack.setAmount(amount);
-            return stack;
-        }
-
-        // Check armor
-        DndArmor armor = ArmorLoader.getArmor(itemId);
-        if (armor != null) {
-            ItemStack stack = armor.createItemStack();
-            stack.setAmount(amount);
-            return stack;
-        }
-
-        // Check general items
-        DndItem item = ItemLoader.getItem(itemId);
-        if (item != null) {
-            ItemStack stack = item.createItemStack();
-            stack.setAmount(amount);
-            return stack;
-        }
-
-        return null;
+        return io.papermc.jkvttplugin.util.ItemUtil.itemFromId(itemId, amount); // shared resolver (#185)
     }
 
     private void sendHelp(CommandSender sender) {

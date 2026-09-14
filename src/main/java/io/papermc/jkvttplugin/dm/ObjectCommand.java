@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class ObjectCommand implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("lock", "unlock", "hide", "reveal", "desc", "trap", "disarm", "arm", "clear", "info");
+    private static final List<String> SUBS = List.of("lock", "unlock", "hide", "reveal", "desc", "trap", "disarm", "arm", "loot", "give", "clear", "info");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -100,6 +100,52 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
                 InteractiveObjectManager.save();
                 dm.sendMessage(Component.text("Re-armed the trap on the " + prettyBlock + ".", NamedTextColor.GREEN));
             }
+            case "loot" -> {
+                if (args.length >= 2 && args[1].equalsIgnoreCase("clear")) {
+                    InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
+                    if (o != null) { o.loot.clear(); InteractiveObjectManager.save(); }
+                    dm.sendMessage(Component.text("Cleared the loot on the " + prettyBlock + ".", NamedTextColor.GREEN));
+                } else if (args.length >= 2) {
+                    String id = args[1].toLowerCase();
+                    int amt = 1;
+                    if (args.length >= 3 && args[2].toLowerCase().startsWith("x")) {
+                        try { amt = Integer.parseInt(args[2].substring(1)); } catch (NumberFormatException ignored) {}
+                    }
+                    if (io.papermc.jkvttplugin.util.ItemUtil.itemFromId(id, amt) == null) {
+                        dm.sendMessage(Component.text("Unknown item id: " + id, NamedTextColor.RED)); return true;
+                    }
+                    InteractiveObjectManager.Obj o = InteractiveObjectManager.getOrCreate(block.getLocation());
+                    o.loot.add(amt > 1 ? id + " x" + amt : id);
+                    InteractiveObjectManager.save();
+                    dm.sendMessage(Component.text("Added " + id + (amt > 1 ? " x" + amt : "") + " to the "
+                            + prettyBlock + " (" + o.loot.size() + " entr" + (o.loot.size() == 1 ? "y" : "ies") + ").", NamedTextColor.GREEN));
+                } else {
+                    dm.sendMessage(Component.text("Usage: /dm object loot <item_id> [xN]  |  /dm object loot clear", NamedTextColor.RED));
+                }
+            }
+            case "give" -> {
+                if (args.length < 2) { dm.sendMessage(Component.text("Usage: /dm object give <player>  (while looking at the object)", NamedTextColor.RED)); return true; }
+                InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
+                if (o == null || o.loot.isEmpty()) { dm.sendMessage(Component.text("No loot on that " + prettyBlock + ".", NamedTextColor.GRAY)); return true; }
+                org.bukkit.entity.Player target = org.bukkit.Bukkit.getPlayerExact(args[1]);
+                if (target == null) { dm.sendMessage(Component.text("Player not online: " + args[1], NamedTextColor.RED)); return true; }
+                int given = 0;
+                for (String entry : o.loot) {
+                    String[] parts = entry.split(" ");
+                    int amt = 1;
+                    if (parts.length > 1 && parts[1].toLowerCase().startsWith("x")) {
+                        try { amt = Integer.parseInt(parts[1].substring(1)); } catch (NumberFormatException ignored) {}
+                    }
+                    org.bukkit.inventory.ItemStack s = io.papermc.jkvttplugin.util.ItemUtil.itemFromId(parts[0], amt);
+                    if (s != null) {
+                        target.getInventory().addItem(s).values().forEach(left -> target.getWorld().dropItemNaturally(target.getLocation(), left));
+                        given++;
+                    }
+                }
+                dm.sendMessage(Component.text("Gave " + target.getName() + " the loot from the " + prettyBlock
+                        + " (" + given + " stack" + (given == 1 ? "" : "s") + ").", NamedTextColor.GREEN));
+                target.sendMessage(Component.text("You loot the " + prettyBlock + "!", NamedTextColor.GOLD));
+            }
             case "clear" -> {
                 boolean removed = InteractiveObjectManager.remove(block.getLocation());
                 dm.sendMessage(removed ? Component.text("Cleared the annotation on the " + prettyBlock + ".", NamedTextColor.GREEN)
@@ -110,8 +156,9 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
                 if (o == null) { dm.sendMessage(notAnnotated(prettyBlock)); return true; }
                 String trap = o.trapped ? ("trap[" + o.trapDamage + " " + o.trapSave + (o.trapDc > 0 ? " DC " + o.trapDc : "")
                         + (o.disarmed ? ", disarmed" : ", armed") + "] ") : "";
+                String loot = o.loot.isEmpty() ? "" : ("loot[" + String.join(", ", o.loot) + "] ");
                 dm.sendMessage(Component.text(prettyBlock + ": "
-                        + (o.locked ? "locked " : "") + (o.hidden ? "hidden " : "") + trap
+                        + (o.locked ? "locked " : "") + (o.hidden ? "hidden " : "") + trap + loot
                         + (o.description.isEmpty() ? "" : "\"" + o.description + "\""), NamedTextColor.AQUA));
             }
             default -> dm.sendMessage(Component.text("Unknown: " + sub + ". Use " + String.join("/", SUBS) + ".", NamedTextColor.RED));

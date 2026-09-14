@@ -33,6 +33,7 @@ public final class InteractiveObjectManager {
         public String trapDamage = "";   // dice, e.g. "2d10"
         public String trapSave = "";     // ability the victim saves with, e.g. "dexterity"
         public int trapDc;               // reference DC (spot / disarm / save); the DM can adjust per check
+        public java.util.List<String> loot = new java.util.ArrayList<>(); // item ids, e.g. "longsword", "gold_piece x10"
     }
 
     private static final Map<String, Obj> objects = new HashMap<>(); // "world:x:y:z" -> obj
@@ -89,6 +90,7 @@ public final class InteractiveObjectManager {
             yaml.set(path + ".trapDamage", e.getValue().trapDamage);
             yaml.set(path + ".trapSave", e.getValue().trapSave);
             yaml.set(path + ".trapDc", e.getValue().trapDc);
+            yaml.set(path + ".loot", e.getValue().loot);
         }
         try {
             file.getParentFile().mkdirs();
@@ -114,6 +116,7 @@ public final class InteractiveObjectManager {
             o.trapDamage = yaml.getString(path + ".trapDamage", "");
             o.trapSave = yaml.getString(path + ".trapSave", "");
             o.trapDc = yaml.getInt(path + ".trapDc", 0);
+            o.loot = new java.util.ArrayList<>(yaml.getStringList(path + ".loot"));
             objects.put(rawKey, o);
         }
         LOGGER.info("Loaded " + objects.size() + " interactive objects.");

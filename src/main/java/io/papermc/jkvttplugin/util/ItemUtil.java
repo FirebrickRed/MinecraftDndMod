@@ -24,6 +24,27 @@ public class ItemUtil {
     private ItemUtil() {}
 
     /**
+     * Resolve a D&D content id (weapon, armor, or general item) to its ItemStack, or null if unknown.
+     * The one place item-id → ItemStack lives, shared by /dm give, corpse loot, and chest loot (#185).
+     */
+    public static ItemStack itemFromId(String id, int amount) {
+        if (id == null) return null;
+        ItemStack stack = null;
+        io.papermc.jkvttplugin.data.model.DndWeapon w = io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(id);
+        if (w != null) stack = w.createItemStack();
+        if (stack == null) {
+            io.papermc.jkvttplugin.data.model.DndArmor a = io.papermc.jkvttplugin.data.loader.ArmorLoader.getArmor(id);
+            if (a != null) stack = a.createItemStack();
+        }
+        if (stack == null) {
+            io.papermc.jkvttplugin.data.model.DndItem i = io.papermc.jkvttplugin.data.loader.ItemLoader.getItem(id);
+            if (i != null) stack = i.createItemStack();
+        }
+        if (stack != null) stack.setAmount(Math.max(1, Math.min(64, amount)));
+        return stack;
+    }
+
+    /**
      * Applies a resource-pack item model to an item, if a model name is provided.
      *
      * <p>This is the single place the plugin sets a custom {@code item_model}. When

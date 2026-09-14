@@ -39,7 +39,22 @@ The player is prompted to roll (they click **[type your d20]** or **[let the gam
 comes back to **you** privately with SUCCESS/FAIL vs the DC and a **[Share with players]** button.
 Click it to announce the outcome, then narrate the chest opening (or not).
 
-Remove the annotation anytime: look at the block → `/dm object clear`.
+**Add loot** (given on a successful open). Look at the chest and stock it:
+
+```
+/dm object loot longsword
+/dm object loot gold_piece x25
+/dm object info                 # "…: locked loot[longsword, gold_piece x25] \"…\""
+```
+
+When the player succeeds, jump to them (click the **(x, y, z)** in the notification), look at the
+chest, and hand it over:
+
+```
+/dm object give <Player>        # they receive the loot; overflow drops at their feet
+```
+
+Remove the annotation anytime: look at the block → `/dm object clear` (or `/dm object loot clear` for just the loot).
 
 ## 2. Locked door — identical, on a door
 
