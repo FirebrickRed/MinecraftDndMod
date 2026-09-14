@@ -500,7 +500,8 @@ Consolidated into 5 base commands (Issue #122): `/character`, `/roll`, `/combat`
 classes remain and are delegated to from CharacterCommand / DmCommand).
 - **Character (any player):** `/character <create|view|list|close|rest|give>` (alias `/char`); `create <player>` and `give <player> <name>` are DM-only.
 - **Roll:** `/roll <XdY[+Z]>` (alias of the old `/rolldice`).
-- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `finished`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.
+- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `finished`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`, `cast`, `save`, `use`, `condition`, `reactions`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.
+  - **Roll input (#183):** a d20 action takes one bare keyword — `autoRoll` (game rolls, applies advantage → 2d20), `manualRoll <n>` (you rolled it, game adds mods), or `total <n>` (final, nothing added). Damage uses `manualRoll <n>` / `autoRoll <dice>` / a flat `<amount>`; the **damage type is automatic** (`type <t>` overrides). There is **no** `--roll`/`--total`/`--type` — those aliases were removed. `RollService.parseInput`/`RollInput` is the one parser; `RollService.resolve(...)` applies reroll (Lucky) + advantage. The out-of-combat `/character check|save|loot` roller is separate (`RollOptionsMenuHandler`).
 - **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `teleport`, `info`, `trade`, `spawngroup`, `cleanup`, `shop <create|add|restock|view>`.
 - **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
 
@@ -516,7 +517,7 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 - ❌ Feats
 - ❌ Conditional spell application (Genie patron, Lunar Sorcery)
 - ❌ Conditional advantages application
-- ⚠️ Combat system — core is implemented (initiative, turn/action economy, attack rolls, damage/healing, temp HP, death saves; Issues #97–#101). Remaining: conditions (#103), enemy-visibility polish (#102), combat crash recovery/persistence (#105/#89), minor follow-ups (#109). NOTE: much of the combat code is currently in the working tree uncommitted.
+- ⚠️ Combat system — largely implemented: initiative, turn/action economy, attack/spell rolls, damage/healing, temp HP, death saves (#97–#101); conditions with advantage/disadvantage (#103); the Effect Engine (#70: active buffs like Rage, the breath-weapon action path, passive features like Lucky/Savage/Relentless, resistances); AoE aim preview (#173); Hex (#178); and the autoRoll/manualRoll/total command redesign (#183). Remaining/rough edges: enemy-visibility polish (#102), combat crash recovery (#105), the action-economy menu (#176), and assorted spell mechanics (#182). Much of this is committed but largely un-playtested.
 - ❌ Equipment management (equip/unequip in-game)
 - ❌ Persistence of player-chosen tool/language proficiencies (Issue #17)
 

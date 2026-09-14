@@ -20,7 +20,7 @@ prints that command's own help.
 | `/character rest short` | Short rest — recover short-rest resources |
 | `/character rest long` | Long rest — full HP, spell slots, resources |
 | `/character loot <check> <d20>` | Search a body you right-clicked (usually filled by the prompt) |
-| `/character check <type> <value> [--roll n]` | Resolve a skill/ability/save roll (usually filled by the sheet prompt) |
+| `/character check <type> <value> [manualRoll <n> \| autoRoll]` | Resolve a skill/ability/save roll (usually filled by the sheet prompt) |
 | `/character cast <spell> [target] [message…]` | Cast a chat/social spell — Message, Speak with Animals (#151) |
 | `/character reply <message…>` | Free reply to the last Message/Sending you received (usually the **[reply]** button) |
 | `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
@@ -50,12 +50,12 @@ DM extras: `/character create <player>` opens creation for another player; `/cha
 | `attack <target> [weapon] [flags]` | **Hit check only** — resolves HIT/MISS/CRIT; on a hit it prompts you with the `/combat damage` command to run |
 | `damage <target> [amount] [flags]` | Apply damage — a **player on their own turn**, or the **DM** anytime |
 | `override <target> [amount] [flags]` | **DM-only:** apply corrective/extra damage anytime (e.g. a forgotten modifier) |
-| `heal <target> [amount] [--roll <dice>] [--total <n>]` | Restore HP |
+| `heal <target> [amount \| manualRoll <n> \| autoRoll <dice> \| total <n>]` | Restore HP |
 | `temphp <target> <amount>` | Grant temporary HP |
-| `deathsave [<player>] [--roll <d20>]` | Roll a death save (DM may roll for a downed player) |
-| `cast <spell> [target] [--roll <d20>]` | Cast a combat spell — attack-roll or save; AoE spells aim (no target) (#123, #149) |
+| `deathsave [<player>] [manualRoll <d20> \| autoRoll]` | Roll a death save (DM may roll for a downed player) |
+| `cast <spell> [target] [manualRoll <d20> \| autoRoll \| total <n>]` | Cast a combat spell — attack-roll or save; AoE spells aim (no target) (#123, #149) |
 | `cast <ritual_spell> --ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
-| `save [target] [--roll <d20>]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
+| `save [target] [manualRoll <d20> \| autoRoll]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
 | `condition <target> [add\|remove <cond>]` · `condition list` | DM: tag/clear conditions on a combatant (#103, #150) |
 | `reactions` | List reactions — a player sees their own; the **DM sees a whole-table roster** (#147) |
 | `reactions [<reactor>] <attack\|pass>` | Take/pass a provoked opportunity attack (usually the ⚡ end-of-turn buttons) (#147) |
@@ -63,8 +63,15 @@ DM extras: `/character create <player>` opens creation for another player; `/cha
 
 Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combatants, starts Round 1).
 
-**Attack flags:** `--showmods` (show modifiers, don't attack) · `--roll <1-20>` (your physical d20 face) · `--total <n>` (final number, mods already added)
-**Damage flags:** `--roll <dice>` (e.g. `2d6+3`) · `--total <n>` · `--type <slashing|fire|…>` · `--crit`
+**Roll input** (attack / cast / save / initiative / deathsave — a d20 action). Pick one, as a bare keyword (no `--`):
+- `autoRoll` — the game rolls your d20 for you, applying any advantage/disadvantage (rolls 2d20 and keeps the right one). Works even in physical-dice mode.
+- `manualRoll <n>` — you physically rolled `n` (1–20); the game adds your modifiers.
+- `total <n>` — a final total you already worked out; nothing is added.
+- Give nothing in physical-dice mode and you get a clickable prompt; in auto-roll mode the game rolls.
+
+**Damage roll** (`/combat damage`, `heal`, `override`): `manualRoll <n>` (the number you rolled on the damage dice) · `autoRoll <dice>` (the game rolls those dice, e.g. `autoRoll 2d6`) · `total <n>` · a bare `<amount>` for flat damage. The **damage type is automatic** (taken from the hit); add `type <slashing|fire|…>` only to override it. Crit carries over from the attack — no flag.
+
+**Other attack options:** `--showmods` (show modifiers, don't attack) · `--force` (DM override in specific cases).
 
 ### Entities & items — `/dmentity <subcommand>`
 | Subcommand | What it does |
