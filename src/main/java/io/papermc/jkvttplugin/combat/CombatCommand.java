@@ -1547,7 +1547,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         // Parse the roll input: manualRoll <n> (you rolled it), autoRoll (game rolls), total <n>.
-        boolean showMods = hasFlag(args, "showMods");
+        boolean showMods = hasFlag(args, "showModifiers");
         RollService.RollInput roll = RollService.parseInput(args);
         Integer providedRoll = roll.providedRoll();
         Integer providedTotal = roll.providedTotal();
@@ -1847,10 +1847,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         List<String> positional = new ArrayList<>();
         for (int i = startIndex; i < args.length; i++) {
             // The roll input (autoRoll / manualRoll <n> / total <n>), a trailing 'type <t>', and the
-            // valueless 'showMods' all follow the positionals, so stop here — otherwise
-            // "manualRoll"/"8"/"type"/"showMods" would be mistaken for a target/amount (#183).
+            // valueless 'showModifiers' all follow the positionals, so stop here — otherwise
+            // "manualRoll"/"8"/"type"/"showModifiers" would be mistaken for a target/amount (#183).
             if (RollService.isRollKeyword(args[i]) || args[i].equalsIgnoreCase("type")
-                    || args[i].equalsIgnoreCase("showMods")) break;
+                    || args[i].equalsIgnoreCase("showModifiers")) break;
             if (args[i].startsWith("--")) {
                 // Check if this is a flag with an attached value (e.g., --roll20)
                 // or a standalone flag like --showmods
@@ -2450,7 +2450,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - Let the game roll (with adv/dis)", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat attack <target> [weapon] total <N>", NamedTextColor.YELLOW)
             .append(Component.text(" - Provide final total, nothing added", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat attack <target> [weapon] showMods", NamedTextColor.YELLOW)
+        player.sendMessage(Component.text("/combat attack <target> [weapon] showModifiers", NamedTextColor.YELLOW)
             .append(Component.text(" - Show your to-hit breakdown, don't attack", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat damage <target> [amt | manualRoll <n> | autoRoll <dice>]", NamedTextColor.RED)
             .append(Component.text(" - Apply damage (type is auto)", NamedTextColor.GRAY)));
@@ -2669,7 +2669,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 completions.addAll(choices);
             } else {
                 // Weapon chosen — now the roll input makes sense (new keywords, plus legacy flags).
-                completions.addAll(List.of("manualRoll", "autoRoll", "total", "showMods", "--force"));
+                completions.addAll(List.of("manualRoll", "autoRoll", "total", "showModifiers", "--force"));
             }
             return filterCompletions(completions, lastArg);
         }
