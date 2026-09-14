@@ -111,7 +111,12 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         if (r == null) return false;
         if (pending != null) {
             io.papermc.jkvttplugin.dm.CheckManager.takePending(character.getPlayerId());
-            reportDmCheck(character, info, r.total(), pending);
+            if (pending.contestId() != null) {
+                reportContest(character, info, r.total(), pending);
+            } else {
+                io.papermc.jkvttplugin.dm.CheckManager.recordActive(character.getPlayerId(), info.displayName, r.total());
+                reportDmCheck(character, info, r.total(), pending);
+            }
             return true;
         }
         String dice = r.providedTotal() ? "total" : String.valueOf(r.d20());
@@ -147,6 +152,38 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         Player dm = Bukkit.getPlayer(p.dmId());
         if (dm != null) dm.sendMessage(dmMsg);
         else Bukkit.broadcast(Component.text("🎲 " + shareText, NamedTextColor.YELLOW)); // DM offline → announce
+    }
+
+    /** Record one side of a contested check; when both sides are in, report the winner to the DM (#186). */
+    private static void reportContest(CharacterSheet character, RollInfo info, int total,
+                                      io.papermc.jkvttplugin.dm.CheckManager.Pending p) {
+        Player owner = Bukkit.getPlayer(character.getPlayerId());
+        if (owner != null) {
+            owner.sendMessage(Component.text("You rolled " + info.displayName + ": " + total
+                    + " — sent to the DM.", NamedTextColor.GRAY));
+        }
+        io.papermc.jkvttplugin.dm.CheckManager.Contest done =
+                io.papermc.jkvttplugin.dm.CheckManager.recordContestRoll(p.contestId(), character.getPlayerId(), total);
+        Player dm = Bukkit.getPlayer(p.dmId());
+        if (done == null) { // still waiting on the other side
+            if (dm != null) dm.sendMessage(Component.text(character.getCharacterName() + " rolled "
+                    + info.displayName + ": " + total + " — waiting on the other side…", NamedTextColor.GRAY));
+            return;
+        }
+        var a = done.sides.get(0);
+        var b = done.sides.get(1);
+        String result;
+        if (a.total > b.total) result = a.name + " wins — " + a.label + " " + a.total + " vs " + b.label + " " + b.total;
+        else if (b.total > a.total) result = b.name + " wins — " + b.label + " " + b.total + " vs " + a.label + " " + a.total;
+        else result = "Tie (" + a.total + " vs " + b.total + ") — DM decides";
+        String token = io.papermc.jkvttplugin.dm.CheckManager.stashShare(result);
+        Component msg = Component.text("⚔ Contested: " + result, NamedTextColor.GOLD)
+                .append(Component.text("  "))
+                .append(Component.text("[Share with players]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand("/dm check share " + token))
+                        .hoverEvent(HoverEvent.showText(Component.text("Announce the contest result to the table."))));
+        if (dm != null) dm.sendMessage(msg);
+        else Bukkit.broadcast(Component.text("⚔ " + result, NamedTextColor.YELLOW));
     }
 
     /** Roll mode for programmatic rolls outside the menu flow (Issue #61 - /check). */

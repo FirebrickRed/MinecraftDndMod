@@ -27,12 +27,11 @@ import java.util.UUID;
  * The player never sees the DC. Reuses the sheet roll math (advantage/disadvantage, Lucky, …).
  *
  * Usage: /dm check &lt;player&gt; &lt;ability|save|skill&gt; &lt;name&gt; [dc &lt;n&gt;] [adv|dis]
+ *        /dm check &lt;A&gt; &lt;skillA&gt; vs &lt;B&gt; &lt;skillB&gt;   (contested — both roll, DM sees the winner)
+ *        /dm check clear &lt;player&gt; [skill|all]  ·  /dm check active &lt;player&gt;   (held checks, e.g. Stealth)
  *        /dm check share &lt;token&gt;   (the [Share] button)
- * Examples:
- *   /dm check Notch skill stealth dc 15
- *   /dm check Notch save DEX advantage
  *
- * Deferred: contested checks (A vs B, incl. NPCs), multi-target/all, passive/group (#186).
+ * Deferred: contested with an NPC side, the responder-picks-approach menu, multi-target/all (#186).
  */
 public class CheckCommand implements CommandExecutor, TabCompleter {
 
@@ -49,8 +48,64 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             else sender.sendMessage(Component.text("That roll was already shared or has expired.", NamedTextColor.GRAY));
             return true;
         }
+        // Clear a lingering/held check (e.g. an old Stealth value). Not gated to any skill.
+        if (args.length >= 2 && args[0].equalsIgnoreCase("clear")) {
+            CharacterSheet s = CharacterResolver.resolveOrError(sender, args[1]);
+            if (s == null) return true;
+            String skill = (args.length >= 3 && !args[2].equalsIgnoreCase("all")) ? args[2] : null;
+            boolean cleared = io.papermc.jkvttplugin.dm.CheckManager.clearActive(s.getPlayerId(), skill);
+            sender.sendMessage(Component.text(cleared
+                    ? "Cleared " + (skill == null ? "all held checks" : skill) + " for " + s.getCharacterName() + "."
+                    : "Nothing held to clear for " + s.getCharacterName() + ".", NamedTextColor.GRAY));
+            return true;
+        }
+        // List a player's held check values (the DM's running board).
+        if (args.length >= 2 && args[0].equalsIgnoreCase("active")) {
+            CharacterSheet s = CharacterResolver.resolveOrError(sender, args[1]);
+            if (s == null) return true;
+            var held = io.papermc.jkvttplugin.dm.CheckManager.activeFor(s.getPlayerId());
+            if (held.isEmpty()) sender.sendMessage(Component.text("No held checks for " + s.getCharacterName() + ".", NamedTextColor.GRAY));
+            else {
+                sender.sendMessage(Component.text(s.getCharacterName() + "'s held checks:", NamedTextColor.GOLD));
+                held.forEach((k, v) -> sender.sendMessage(Component.text("  " + k + ": " + v, NamedTextColor.GRAY)));
+            }
+            return true;
+        }
+        // Contested: /dm check <A> <skillA> vs <B> <skillB> — both roll, DM sees the winner.
+        int vsIdx = -1;
+        for (int i = 0; i < args.length; i++) if (args[i].equalsIgnoreCase("vs")) { vsIdx = i; break; }
+        if (vsIdx == 2 && args.length >= vsIdx + 3) {
+            CharacterSheet aSheet = CharacterResolver.resolveOrError(sender, args[0]);
+            if (aSheet == null) return true;
+            CharacterSheet bSheet = CharacterResolver.resolveOrError(sender, args[vsIdx + 1]);
+            if (bSheet == null) return true;
+            Skill aSkill = resolveSkill(args[1]);
+            Skill bSkill = resolveSkill(args[vsIdx + 2]);
+            if (aSkill == null || bSkill == null) {
+                sender.sendMessage(Component.text("Contested checks use skill names, e.g. /dm check Zek insight vs Yeek deception.", NamedTextColor.RED));
+                return true;
+            }
+            Player aP = Bukkit.getPlayer(aSheet.getPlayerId());
+            Player bP = Bukkit.getPlayer(bSheet.getPlayerId());
+            if (aP == null || bP == null) {
+                sender.sendMessage(Component.text("Both players must be online for a contested check (NPC support is coming).", NamedTextColor.RED));
+                return true;
+            }
+            UUID dmId = (sender instanceof Player dm) ? dm.getUniqueId() : null;
+            io.papermc.jkvttplugin.dm.CheckManager.registerContest(dmId,
+                    aSheet.getPlayerId(), aSheet.getCharacterName(), aSkill.getDisplayName(),
+                    bSheet.getPlayerId(), bSheet.getCharacterName(), bSkill.getDisplayName());
+            RollOptionsMenuHandler.promptSkillRoll(aP, aSheet, "SKILL", aSkill.name(), RollMode.NORMAL);
+            RollOptionsMenuHandler.promptSkillRoll(bP, bSheet, "SKILL", bSkill.name(), RollMode.NORMAL);
+            sender.sendMessage(Component.text("Contested: " + aSheet.getCharacterName() + " (" + aSkill.getDisplayName()
+                    + ") vs " + bSheet.getCharacterName() + " (" + bSkill.getDisplayName()
+                    + ") — the winner comes back to you to share.", NamedTextColor.GRAY));
+            return true;
+        }
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /dm check <player|character> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm check <player> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("       /dm check <A> <skillA> vs <B> <skillB>   (contested)", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("       /dm check clear <player> [skill|all]  ·  /dm check active <player>", NamedTextColor.GRAY));
             return true;
         }
 
@@ -160,18 +215,28 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
 
         switch (args.length) {
             case 1 -> {
+                out.addAll(List.of("clear", "active"));
                 for (Player p : Bukkit.getOnlinePlayers()) out.add(p.getName());
             }
-            case 2 -> out.addAll(List.of("ability", "save", "skill"));
+            case 2 -> {
+                if (args[0].equalsIgnoreCase("clear") || args[0].equalsIgnoreCase("active")) {
+                    for (Player p : Bukkit.getOnlinePlayers()) out.add(p.getName());
+                } else {
+                    out.addAll(List.of("ability", "save", "skill"));
+                    for (Skill s : Skill.values()) out.add(s.name().toLowerCase()); // contested: <A> <skillA> vs …
+                }
+            }
             case 3 -> {
                 String cat = args[1].toLowerCase();
                 if (cat.equals("skill")) {
                     for (Skill s : Skill.values()) out.add(s.name().toLowerCase());
-                } else {
+                } else if (cat.equals("ability") || cat.equals("save")) {
                     out.addAll(List.of("str", "dex", "con", "int", "wis", "cha"));
+                } else {
+                    out.add("vs"); // contested continuation
                 }
             }
-            case 4 -> out.addAll(List.of("adv", "dis"));
+            case 4 -> out.addAll(List.of("dc", "adv", "dis"));
             default -> { /* no suggestions */ }
         }
         return filter(out, args[args.length - 1]);

@@ -71,6 +71,14 @@ The roller layer everything hangs off. Sketch:
 - Reuses the existing sheet roller (`RollOptionsMenuHandler.resolvePhysical`) — advantage/disadvantage,
   Lucky, etc. all already work.
 - Per principle 1: results surface to the DM with a **[Share]** control.
+- **Held checks:** a resolved single check is remembered as a lingering value (Stealth, etc.).
+  `/dm check active <player>` lists them; `/dm check clear <player> [skill|all]` clears them. Not gated
+  to any skill — play evolves.
+
+**Built so far (#186):** single DM-first checks (DC, adv/dis via the autoRoll/2d20 path), the `share`
+button, held-check `active`/`clear`, and **contested** (`/dm check <A> <skillA> vs <B> <skillB>`,
+player-vs-player). **Next:** contested with an NPC side (DM rolls for it), the responder-picks-approach
+menu, and multi-target/`all`.
 
 ## DM-mode active-check log
 
