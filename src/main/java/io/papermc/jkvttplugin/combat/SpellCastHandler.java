@@ -133,6 +133,37 @@ public class SpellCastHandler {
     }
 
     /**
+     * Cast a mark/curse spell (Hex, Hunter's Mark — #178). Entities can't hold effects, so the mark
+     * lives on the CASTER: while they concentrate, they deal the rider damage on hits against the
+     * marked target, and (Hex) the target has disadvantage on checks with the chosen ability.
+     */
+    public static boolean castMark(Combatant caster, Combatant target, CombatSession session, Player player,
+                                   DndSpell spell, Ability choice) {
+        CharacterSheet sheet = caster.getCharacterSheet();
+        if (sheet == null) { player.sendMessage(Component.text("Only characters cast this spell.", NamedTextColor.RED)); return false; }
+
+        if (sheet.isConcentrating() && sheet.getConcentratingOn() != spell) {
+            session.broadcast(Component.text(caster.getDisplayName(true) + "'s concentration on "
+                    + sheet.getConcentratingOn().getName() + " ends.", NamedTextColor.GRAY));
+        }
+        sheet.setConcentratingOn(spell);
+        String abilityName = choice != null ? choice.name().toLowerCase() : null;
+        sheet.setSpellMark(target.getId(), spell.getMarkDamage(), spell.getDamageType(), abilityName);
+
+        session.broadcast(Component.empty());
+        session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " marks " + target.getDisplayName(true)
+                + " with " + spell.getName() + "!", NamedTextColor.LIGHT_PURPLE));
+        String dtype = spell.getDamageType() != null ? " " + spell.getDamageType() : "";
+        session.broadcast(Component.text("+" + spell.getMarkDamage() + dtype + " on every hit against "
+                + target.getDisplayName(true) + " while concentrating.", NamedTextColor.GRAY));
+        if (choice != null) {
+            session.broadcast(Component.text(target.getDisplayName(true) + " has disadvantage on "
+                    + choice.name().charAt(0) + choice.name().substring(1).toLowerCase() + " checks.", NamedTextColor.GRAY));
+        }
+        return true;
+    }
+
+    /**
      * Begin casting an area spell (#149): enter the aim-and-confirm preview (#173) so the caster can
      * see the shape and who's caught before committing. The spell resolves only on confirm; the
      * caller must NOT spend the action here — {@link #resolveAoeNow} does that on confirm.

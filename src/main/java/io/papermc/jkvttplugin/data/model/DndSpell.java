@@ -33,6 +33,10 @@ public class DndSpell {
     private String damage;            // dice, e.g. "1d10" (cantrips add no ability modifier)
     private String saveEffect;        // on a successful save: "half" or "none" (default "half")
     private String conditionOnFail;   // a condition id (#103) applied to the target on a failed save
+    // Mark/curse spells (Hex, Hunter's Mark — #178): the caster marks a target and, while
+    // concentrating, deals rider damage on hits and (Hex) imposes a chosen effect.
+    private String castChoice;        // a choice made at cast time: "ability" (Hex) | "damage_type" | null
+    private String markDamage;        // rider dice dealt on the caster's hits vs the marked target, e.g. "1d6"
     private String aoeShape;          // "sphere"/"cone"/"line"/"burst" — an area spell (#149); null = single target
     private int aoeSize;              // area size in feet (radius for sphere, length for cone/line)
     private String aoeTargets = "all"; // who the area affects: "all" | "enemies" | "allies"
@@ -192,6 +196,12 @@ public class DndSpell {
 
     public String getConditionOnFail() { return conditionOnFail; }
     public void setConditionOnFail(String conditionOnFail) { this.conditionOnFail = conditionOnFail; }
+
+    public String getCastChoice() { return castChoice; }
+    public void setCastChoice(String castChoice) { this.castChoice = castChoice; }
+    public String getMarkDamage() { return markDamage; }
+    public void setMarkDamage(String markDamage) { this.markDamage = markDamage; }
+    public boolean isMarkSpell() { return markDamage != null && !markDamage.isBlank(); }
 
     public String getAoeShape() { return aoeShape; }
     public void setAoeShape(String aoeShape) { this.aoeShape = aoeShape; }

@@ -980,7 +980,20 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             resolved = SpellCastHandler.castAoe(caster, session, player, spell, providedRoll, providedTotal);
         } else {
             if (args.length < 3) { player.sendMessage(Component.text("Usage: /combat cast " + args[1] + " <target> [--roll <d20>]", NamedTextColor.RED)); return; }
-            String targetName = stripQuotes(joinArgsExcludingFlags(args, 2));
+            List<String> pos = collectPositionalArgs(args, 2);
+
+            // A cast-time choice (Hex: "ability") is the trailing token; the rest is the target name.
+            io.papermc.jkvttplugin.data.model.enums.Ability choice = null;
+            if ("ability".equalsIgnoreCase(spell.getCastChoice())) {
+                if (!pos.isEmpty()) {
+                    io.papermc.jkvttplugin.data.model.enums.Ability maybe =
+                            io.papermc.jkvttplugin.data.model.enums.Ability.fromString(pos.get(pos.size() - 1));
+                    if (maybe != null) { choice = maybe; pos = pos.subList(0, pos.size() - 1); }
+                }
+                if (choice == null) { promptAbilityChoice(player, args[1], spell.getName(), stripQuotes(String.join(" ", pos))); return; }
+            }
+
+            String targetName = stripQuotes(String.join(" ", pos));
             // "me"/"self"/"myself" targets the caster — many spells (e.g. Primal Savagery) target you.
             Combatant target = isSelfWord(targetName) ? caster : findCombatantByName(session, targetName);
             if (target == null) {
@@ -990,7 +1003,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 return;
             }
             if (target.isDead()) { player.sendMessage(Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.YELLOW)); return; }
-            resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal);
+            if (spell.isMarkSpell()) {
+                resolved = SpellCastHandler.castMark(caster, target, session, player, spell, choice);
+            } else {
+                resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal);
+            }
         }
 
         if (resolved) {
@@ -2299,6 +2316,22 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (name == null) return false;
         String n = name.trim();
         return n.equalsIgnoreCase("me") || n.equalsIgnoreCase("self") || n.equalsIgnoreCase("myself");
+    }
+
+    /** Prompt the caster to choose an ability for a cast-choice spell (Hex), as clickable options. */
+    private void promptAbilityChoice(Player player, String spellToken, String spellName, String targetName) {
+        String tgt = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
+        player.sendMessage(Component.text("Choose an ability for " + spellName + " on " + targetName
+                + " (the target has disadvantage on checks with it):", NamedTextColor.LIGHT_PURPLE));
+        Component line = Component.text("  ", NamedTextColor.GRAY);
+        for (io.papermc.jkvttplugin.data.model.enums.Ability a : io.papermc.jkvttplugin.data.model.enums.Ability.values()) {
+            String cmd = "/combat cast " + spellToken + " " + tgt + " " + a.name().toLowerCase();
+            line = line.append(Component.text("[" + a.getAbbreviation() + "]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                    .clickEvent(ClickEvent.runCommand(cmd))
+                    .hoverEvent(HoverEvent.showText(Component.text("Cast " + spellName + " — disadvantage on " + a.name() + " checks"))))
+                    .append(Component.text(" ", NamedTextColor.GRAY));
+        }
+        player.sendMessage(line);
     }
 
     /** Comma-separated names of the living combatants — shown when a target name doesn't resolve. */

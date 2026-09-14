@@ -175,8 +175,29 @@ public class AttackHandler {
                 r.total(), targetAC, hit, r.nat20(), r.nat1(),
                 finalDamage, damageType, r.breakdown(), bonusLabel);
         // On a hit with a ranged/thrown weapon, send a cosmetic projectile at the target (#181).
-        if (hit) CombatVisuals.projectileOnHit(attacker, target, projectileVisual);
+        if (hit) {
+            CombatVisuals.projectileOnHit(attacker, target, projectileVisual);
+            remindMarkRider(attacker, target, commandUser); // Hex / Hunter's Mark rider (#178)
+        }
         return true;
+    }
+
+    /** If the attacker has marked this target (Hex / Hunter's Mark), remind them to apply the rider
+     *  damage as a separate, correctly-typed roll (the dice parser takes one die + one modifier). */
+    private static void remindMarkRider(Combatant attacker, Combatant target, Player commandUser) {
+        if (commandUser == null) return;
+        CharacterSheet sheet = attacker.getCharacterSheet();
+        if (sheet == null) return;
+        String rider = sheet.markRiderAgainst(target.getId());
+        if (rider == null) return;
+        String type = sheet.getMarkDamageType();
+        String name = target.getDisplayName();
+        String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
+        String cmd = "/combat damage " + quoted + " --roll " + rider + (type != null ? " --type " + type : "");
+        commandUser.sendMessage(Component.text("✦ Mark: +" + rider + (type != null ? " " + type : "") + " — ", NamedTextColor.DARK_PURPLE)
+                .append(Component.text("[click to apply the rider]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand(cmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Apply " + rider + (type != null ? " " + type : "") + " from your mark, after the weapon damage.")))));
     }
 
     /** Add one more of the first dice group (Savage Attacks): "2d12+3" → "3d12+3". */

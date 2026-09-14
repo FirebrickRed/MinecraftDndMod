@@ -111,6 +111,8 @@ public class SpellLoader {
         // Default: cantrips deal nothing on a successful save; leveled spells deal half. Override in YAML.
         spell.setSaveEffect(ParseUtil.asString(data.get("save_effect"), spell.isCantrip() ? "none" : "half"));
         spell.setConditionOnFail(ParseUtil.asString(data.get("condition_on_fail"), null));
+        spell.setCastChoice(ParseUtil.asString(data.get("cast_choice"), null));
+        spell.setMarkDamage(ParseUtil.asString(data.get("mark_damage"), null));
         // Area of effect (#149).
         spell.setAoeShape(ParseUtil.asString(data.get("aoe_shape"), null));
         if (data.get("aoe_size") instanceof Number n) spell.setAoeSize(n.intValue());

@@ -1181,6 +1181,32 @@ public class CharacterSheet {
 
     public void breakConcentration() {
         concentratingOn = null;
+        clearSpellMark(); // Hex/Hunter's Mark end when concentration does
+    }
+
+    // ---- Spell mark (Hex / Hunter's Mark, #178) ----
+    // Entities can't hold effects, so a mark lives on the CASTER: who they've marked, the rider
+    // damage on their hits, and (Hex) the ability the target has disadvantage on checks with.
+    private java.util.UUID markTargetId;
+    private String markDamage;              // rider dice, e.g. "1d6"
+    private String markDamageType;          // e.g. "necrotic"
+    private String markCheckDisadvantageAbility; // ability name (Hex's chosen ability), or null
+
+    public void setSpellMark(java.util.UUID targetId, String damage, String damageType, String disadvantageAbility) {
+        this.markTargetId = targetId;
+        this.markDamage = damage;
+        this.markDamageType = damageType;
+        this.markCheckDisadvantageAbility = disadvantageAbility;
+    }
+    public void clearSpellMark() {
+        markTargetId = null; markDamage = null; markDamageType = null; markCheckDisadvantageAbility = null;
+    }
+    public java.util.UUID getMarkTargetId() { return markTargetId; }
+    public String getMarkDamageType() { return markDamageType; }
+    public String getMarkCheckDisadvantageAbility() { return markCheckDisadvantageAbility; }
+    /** The rider damage dice the caster adds when hitting {@code target}, or null if it isn't marked. */
+    public String markRiderAgainst(java.util.UUID target) {
+        return target != null && target.equals(markTargetId) ? markDamage : null;
     }
 
     public boolean hasSpellSlot(int level) {

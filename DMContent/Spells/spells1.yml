@@ -579,6 +579,8 @@ spells:
     ritual: false
     material: "WITHER_SKELETON_SKULL"
     damage_type: "necrotic"
+    cast_choice: "ability"      # choose one ability; the target has disadvantage on checks with it (#178)
+    mark_damage: "1d6"          # +1d6 necrotic whenever you hit the hexed target
     higher_levels: "When you cast this spell using a spell slot of 3rd or 4th level, you can maintain your concentration on the spell for up to 8 hours. When you use a spell slot of 5th level or higher, you can maintain your concentration on the spell for up to 24 hours."
 
   hellish_rebuke:
