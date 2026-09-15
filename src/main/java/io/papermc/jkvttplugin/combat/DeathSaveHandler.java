@@ -5,6 +5,7 @@ import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
+import org.bukkit.entity.Pose;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 
@@ -67,21 +68,35 @@ public class DeathSaveHandler {
 
     // ==================== PRONE EFFECT ====================
 
-    /** Apply a prone-like effect (heavy slowness) to a downed player. */
+    /**
+     * Down a player: mechanically immobile, and visibly lying on the ground (#120/#180).
+     *
+     * <p>Slowness 255 is the rules-correct part — a creature at 0 HP can't move. The pose is the
+     * part the table reads at a glance. {@code setPose(SWIMMING, fixed)} is the crawl/prone pose,
+     * and {@code fixed} keeps it until we clear it rather than the next tick overwriting it.
+     *
+     * <p>Paper's own note on {@code setPose} is that a player "might see a different pose
+     * client-side" — pose is client-authoritative for your own body. So the downed player may
+     * still see themselves upright while everyone else sees them prone. That's the half that
+     * matters here: they're unconscious, the rest of the table is the audience.
+     */
     public static void applyProne(Combatant combatant) {
         if (!combatant.isPlayer()) return;
         Player player = combatant.getPlayer();
         if (player != null) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, Integer.MAX_VALUE, 255, false, false));
+            player.setPose(Pose.SWIMMING, true);
         }
     }
 
-    /** Remove the prone effect when a player is revived or combat ends. */
+    /** Stand a player back up when they're revived or combat ends. */
     public static void removeProne(Combatant combatant) {
         if (!combatant.isPlayer()) return;
         Player player = combatant.getPlayer();
         if (player != null) {
             player.removePotionEffect(PotionEffectType.SLOWNESS);
+            // Hand the pose back to the client rather than pinning them upright.
+            player.setPose(Pose.STANDING, false);
         }
     }
 }
