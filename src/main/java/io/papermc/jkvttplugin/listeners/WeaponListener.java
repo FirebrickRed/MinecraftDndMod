@@ -42,6 +42,30 @@ public class WeaponListener implements Listener {
     /** Guards against a single physical click producing two prompts (see {@link #promptAttack}). */
     private final java.util.Map<java.util.UUID, Long> lastPrompt = new java.util.HashMap<>();
 
+    /**
+     * The reliable left-click signal. {@code PlayerInteractEvent(LEFT_CLICK_AIR)} isn't fired when
+     * the swing lands on an entity, and {@code EntityDamageByEntityEvent} doesn't fire at all when
+     * the attacker can't damage the target — with {@code pvp=false} that's every player target, and
+     * it's why attacking a glowing player while possessing an NPC did nothing. An arm swing always
+     * fires, so trace from here and let the other two handle their own jobs.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onArmSwing(org.bukkit.event.player.PlayerAnimationEvent event) {
+        if (event.getAnimationType() != org.bukkit.event.player.PlayerAnimationType.ARM_SWING) return;
+
+        Player player = event.getPlayer();
+        if (io.papermc.jkvttplugin.combat.AreaTargeting.isAiming(player.getUniqueId())) return;
+
+        if (tryPossessedAttack(player, null)) return;
+
+        AttackContext ctx = contextFor(player);
+        if (ctx == null) return;
+        Combatant target = traceTarget(player, ctx, (int) Math.ceil(rangeBlocks(ctx.weapon)));
+        if (target != null) promptAttack(player, ctx, target);
+        // No target found: stay quiet. Unlike a deliberate LEFT_CLICK_AIR, an arm swing fires
+        // constantly (mining, gesturing), so "no target in sight" here would be pure noise.
+    }
+
     // Left-click air / block, then ray-trace along your look direction.
     @EventHandler
     public void onPlayerLeftClick(PlayerInteractEvent event) {
@@ -93,7 +117,12 @@ public class WeaponListener implements Listener {
 
         String heldId = ItemUtil.getItemId(player.getInventory().getItemInMainHand());
         DndWeapon held = heldId != null ? WeaponLoader.getWeapon(heldId) : null;
-        if (held != null && held.isRanged()) event.setCancelled(true);
+        if (held == null || !held.isRanged()) return;
+
+        // Deny only the ITEM's use (drawing the bow), never the block's. Cancelling the whole event
+        // also blocks opening a chest, flipping a lever or using a door while a bow is in hand —
+        // which is exactly what a playtest caught: players holding a shortbow couldn't open chests.
+        event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
     }
 
     /**

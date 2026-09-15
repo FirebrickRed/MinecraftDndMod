@@ -152,6 +152,11 @@ public class DmModeManager {
                 "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
         player.getInventory().setItem(2, tool(Material.IRON_SWORD, TOOL_PAGE_COMBAT, "Combat Tools",
                 "Right-click to open the combat toolbar", "(Start, Add/Remove, Initiative, Possess, Move)"));
+        // Possess is also on the combat page, but it isn't only a combat action — a DM puppets an
+        // NPC to walk it into a room or play a shopkeeper just as often as to fight. Reaching it
+        // shouldn't mean opening the combat toolbar first.
+        player.getInventory().setItem(6, tool(Material.LEAD, TOOL_POSSESS, "Possess",
+                "Right-click an entity to control it", "Right-click again (or Exit) to let go"));
         player.getInventory().setItem(4, tool(Material.TRIPWIRE_HOOK, TOOL_PAGE_EXPLORE, "Exploration Tools",
                 "Right-click to open the exploration toolbar", "(Annotate Object, …)"));
         player.getInventory().setItem(8, tool(Material.BARRIER, TOOL_EXIT, "Exit DM Mode",
