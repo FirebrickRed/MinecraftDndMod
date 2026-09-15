@@ -17,7 +17,7 @@ import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.PlayerInteractAtEntityEvent;
+import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
@@ -26,34 +26,43 @@ import org.bukkit.util.RayTraceResult;
 import java.util.List;
 
 /**
- * Right-click-to-attack (Issue #115). On your turn in combat, right-click while holding a weapon:
- * either aim at your target (right-click air) or right-click the enemy directly. You get a
- * clickable message that pre-fills {@code /combat attack <target> <weapon> --roll } so you only add
- * your physical d20 roll; the game adds your attack modifiers. The command still works standalone.
+ * Left-click-to-attack (#189, replacing the right-click of #115). On your turn in combat,
+ * left-click while holding a weapon: either aim at your target (left-click air) or left-click the
+ * enemy directly. You get a clickable message that pre-fills {@code /combat attack <target>
+ * <weapon> manualRoll } so you only add your physical d20 roll; the game adds your attack
+ * modifiers. The command still works standalone.
+ *
+ * <p>Attack moved off right-click because right-click was carrying three meanings at once — attack
+ * aim, area-effect confirm (#173) and spell focus. It now means "use" consistently, and left-click
+ * is what players' hands already do to attack. Right-click with a managed weapon is still
+ * suppressed on your turn so a bow doesn't loose a real arrow.
  */
 public class WeaponListener implements Listener {
 
-    // Right-click air / block, then ray-trace along your look direction.
+    /** Guards against a single physical click producing two prompts (see {@link #promptAttack}). */
+    private final java.util.Map<java.util.UUID, Long> lastPrompt = new java.util.HashMap<>();
+
+    // Left-click air / block, then ray-trace along your look direction.
     @EventHandler
-    public void onPlayerRightClick(PlayerInteractEvent event) {
-        if (event.isCancelled()) return; // e.g. an area-effect confirm already consumed this click (#173)
+    public void onPlayerLeftClick(PlayerInteractEvent event) {
+        if (event.isCancelled()) return;
         if (event.getHand() != EquipmentSlot.HAND) return; // main hand only (avoids double-fire)
-        if (!event.getAction().isRightClick()) return;
+        if (!event.getAction().isLeftClick()) return;
 
         Player player = event.getPlayer();
 
-        // Confirming an area effect (#173): this right-click fires the aim, not an attack.
+        // Mid-aim for an area effect (#173): right-click confirms it; don't also swing.
         if (io.papermc.jkvttplugin.combat.AreaTargeting.isAiming(player.getUniqueId())) return;
 
-        // Possessing an entity on its turn: attack AS the entity (right-click while aiming).
+        // Possessing an entity on its turn: attack AS the entity (left-click while aiming).
         if (tryPossessedAttack(player, null)) { event.setCancelled(true); return; }
 
         AttackContext ctx = contextFor(player);
         if (ctx == null) return;
 
-        // This is a managed combat weapon: right-click aims/targets, it never performs the vanilla
-        // action. Cancel so a bow/crossbow doesn't actually draw or loose an arrow — you're only
-        // selecting a target; the attack roll and damage are handled by the command flow.
+        // Managed combat weapon on your turn: this click selects a target, it never performs the
+        // vanilla action. Cancel so we don't start breaking the block we happen to be facing
+        // (and so creative mode doesn't shatter it outright).
         event.setCancelled(true);
 
         Combatant target = traceTarget(player, ctx, (int) Math.ceil(rangeBlocks(ctx.weapon)));
@@ -64,26 +73,48 @@ public class WeaponListener implements Listener {
         promptAttack(player, ctx, target);
     }
 
-    // Right-click the enemy directly (melee).
+    /**
+     * Right-click no longer attacks, but a bow or crossbow would otherwise draw and loose a real
+     * arrow on your turn. Keep suppressing the vanilla action without prompting anything.
+     */
     @EventHandler
-    public void onRightClickEntity(PlayerInteractAtEntityEvent event) {
-        if (event.isCancelled()) return; // an area-effect confirm already consumed this click (#173)
+    public void onPlayerRightClick(PlayerInteractEvent event) {
+        if (event.isCancelled()) return; // e.g. an area-effect confirm already consumed this click (#173)
         if (event.getHand() != EquipmentSlot.HAND) return;
+        if (!event.getAction().isRightClick()) return;
 
         Player player = event.getPlayer();
-
-        // Confirming an area effect (#173): let the aim handle this right-click, not an attack.
-        if (io.papermc.jkvttplugin.combat.AreaTargeting.isAiming(player.getUniqueId())) { event.setCancelled(true); return; }
-
-        // Possessing an entity on its turn: attack AS the entity (right-click the target directly).
-        if (tryPossessedAttack(player, event.getRightClicked())) { event.setCancelled(true); return; }
+        if (io.papermc.jkvttplugin.combat.AreaTargeting.isAiming(player.getUniqueId())) return;
 
         AttackContext ctx = contextFor(player);
         if (ctx == null) return;
+        if (ctx.weapon.isRanged()) event.setCancelled(true);
+    }
 
-        Combatant target = combatantFor(ctx.session, event.getRightClicked(), player);
-        if (target == null) return; // clicked something that isn't a combatant — ignore
-        event.setCancelled(true); // don't also try to manipulate the armor stand
+    /**
+     * Left-click the enemy directly. This arrives as real Minecraft damage, so it is always
+     * cancelled for a combatant — otherwise a punch would chip away at (or in creative, instantly
+     * delete) the armor stand the enemy is rendered on.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onLeftClickEntity(EntityDamageByEntityEvent event) {
+        if (!(event.getDamager() instanceof Player player)) return;
+
+        // Possessing an entity on its turn: attack AS the entity (left-click the target directly).
+        if (tryPossessedAttack(player, event.getEntity())) { event.setCancelled(true); return; }
+
+        CombatSession session = CombatSession.getSessionForPlayer(player.getUniqueId());
+        if (session == null || session.isSetupPhase()) return;
+
+        Combatant target = combatantFor(session, event.getEntity(), player);
+        if (target == null) return; // hit something that isn't a combatant — leave vanilla alone
+
+        // Cancel whether or not it's their turn: combatants are never damaged by a physical hit,
+        // only by the /combat damage step.
+        event.setCancelled(true);
+
+        AttackContext ctx = contextFor(player);
+        if (ctx == null) return; // not their turn, or not holding a weapon — nothing to prompt
         promptAttack(player, ctx, target);
     }
 
@@ -104,7 +135,7 @@ public class WeaponListener implements Listener {
         if (session == null || session.isSetupPhase()) return null;
         Combatant attacker = session.getCurrentCombatant();
         if (attacker == null || !attacker.isPlayer() || !attacker.getId().equals(player.getUniqueId())) {
-            return null; // not your turn — let the normal right-click happen
+            return null; // not your turn — let the vanilla click happen
         }
         return new AttackContext(session, attacker, weapon, weaponId);
     }
@@ -117,6 +148,13 @@ public class WeaponListener implements Listener {
     }
 
     private void promptAttack(Player player, AttackContext ctx, Combatant target) {
+        // One physical left-click can surface as both a PlayerInteractEvent and an
+        // EntityDamageByEntityEvent depending on what it lands on; only prompt once (#167).
+        long now = System.currentTimeMillis();
+        Long previous = lastPrompt.get(player.getUniqueId());
+        if (previous != null && now - previous < 200) return;
+        lastPrompt.put(player.getUniqueId(), now);
+
         String targetName = target.getDisplayName();
         String targetArg = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
         String base = "/combat attack " + targetArg + " " + ctx.weaponId + " ";
@@ -226,7 +264,7 @@ public class WeaponListener implements Listener {
                 .append(Component.text(targetName, NamedTextColor.YELLOW))
                 .append(Component.text(" as " + entity.getDisplayName() + ":", NamedTextColor.GOLD));
         for (String atk : attacks) {
-            String cmd = "/combat attack " + targetArg + " " + atk + " --roll ";
+            String cmd = "/combat attack " + targetArg + " " + atk + " manualRoll ";
             String[] status = rangeStatus(AttackHandler.resolveEntityAttack(entity, atk), feet); // {label, colorKey}
             if ("out".equals(status[1])) {
                 // Out of range: show it, but DON'T make it clickable — no accidental out-of-range shots.
