@@ -192,8 +192,10 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - All model application goes through one helper: `ItemUtil.applyModel(item, modelName)`
   (namespace constant: `ItemUtil.RESOURCE_PACK_NAMESPACE`). Never call `setItemModel` directly.
   Vanilla base materials go through `Util.parseMaterial(name, fallback)`.
-- Note: a class-*resource* still uses a nested `icon:` (a Material name for the sheet display) —
-  that's a separate concept from content icons and is unchanged.
+- **There is no `icon:` key.** Everything that renders as a Minecraft item uses `material:`
+  (+ optional `custom_model:`) — content items, entity attacks (`PossessionManager` hotbar), and
+  class resources alike. `icon:` was the old spelling for the last two; loaders still read it so
+  existing homebrew keeps its art, but they log a deprecation warning telling you to rename it.
 - Fixed game concepts use hardcoded models: ability tiles resolve to `<abbr>_icon`
   (`str_icon`, `dex_icon`, …). Other fixed UI icons (Back arrow, tabs) are vanilla until
   their pack textures exist; a house-rule/UI-icon override config is future work (#104).

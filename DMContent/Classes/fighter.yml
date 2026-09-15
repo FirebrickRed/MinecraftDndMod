@@ -20,15 +20,15 @@ class_resources:
   - name: Second Wind
     max_by_level: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
     recovery: short_rest
-    icon: potion
+    material: potion
   - name: Action Surge
     max_by_level: [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 2, 2, 2, 2]
     recovery: short_rest
-    icon: clock
+    material: clock
   - name: Indomitable
     max_by_level: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3]
     recovery: long_rest
-    icon: iron_ingot
+    material: iron_ingot
 features_by_level:
   1:
     - name: Fighting Style

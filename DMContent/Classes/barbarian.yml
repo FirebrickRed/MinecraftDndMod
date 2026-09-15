@@ -19,7 +19,7 @@ class_resources:
   - name: Rage
     max_by_level: [2, 2, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 6, 6, 6, 999]
     recovery: long_rest
-    icon: red_dye
+    material: red_dye
 # Structured, usable features (Effect Engine, #70). Activate in combat with /combat use <id>.
 features:
   - id: rage

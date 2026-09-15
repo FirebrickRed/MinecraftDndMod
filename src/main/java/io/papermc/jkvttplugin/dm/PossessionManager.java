@@ -246,11 +246,11 @@ public class PossessionManager {
         }
     }
 
-    /** A named hotbar placeholder for a natural/spell attack (icon from YAML, default BONE). */
+    /** A named hotbar placeholder for a natural/spell attack (YAML `material:`, default BONE). */
     private static ItemStack naturalAttackIcon(io.papermc.jkvttplugin.data.model.DndAttack attack) {
         org.bukkit.Material mat = org.bukkit.Material.BONE;
-        if (attack.getIcon() != null) {
-            org.bukkit.Material parsed = org.bukkit.Material.matchMaterial(attack.getIcon());
+        if (attack.getMaterial() != null) {
+            org.bukkit.Material parsed = org.bukkit.Material.matchMaterial(attack.getMaterial());
             if (parsed != null) mat = parsed;
         }
         ItemStack item = new ItemStack(mat);

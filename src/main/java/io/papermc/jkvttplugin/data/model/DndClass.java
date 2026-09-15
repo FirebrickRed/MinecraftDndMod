@@ -273,7 +273,14 @@ public class DndClass {
         for (Map<String, Object> def : classResources) {
             String name = (String) def.get("name");
             String recovery = (String) def.get("recovery");
-            String icon = (String) def.get("icon");  // Optional icon field
+            // The vanilla item this resource shows as on the sheet. `icon:` was the old spelling —
+            // still read so existing homebrew doesn't silently lose its art, but warned about.
+            String icon = (String) def.get("material");
+            if (icon == null && def.get("icon") instanceof String legacyIcon) {
+                icon = legacyIcon;
+                org.bukkit.Bukkit.getLogger().warning("[jkvtt] Class resource '" + name
+                        + "': `icon:` is deprecated — rename it to `material:`.");
+            }
 
             // Determine max value
             int max = 0;

@@ -57,10 +57,10 @@ public class DndAttack {
     private boolean lootable = true;
 
     /**
-     * Optional hotbar icon (a vanilla Material name) for a natural/spell attack that has no {@link #item}
+     * Optional vanilla Material name (YAML `material:`) for a natural/spell attack that has no {@link #item}
      * — e.g. a wolf's Bite or a sorcerer's Fire Bolt — so a possessing DM has something to right-click.
      */
-    private String icon;
+    private String material;
 
     // ==================== CONSTRUCTORS ====================
 
@@ -128,8 +128,9 @@ public class DndAttack {
     public boolean isLootable() { return lootable; }
     public void setLootable(boolean lootable) { this.lootable = lootable; }
 
-    public String getIcon() { return icon; }
-    public void setIcon(String icon) { this.icon = icon; }
+    /** The vanilla Material this attack renders as (YAML `material:`), for the possession hotbar. */
+    public String getMaterial() { return material; }
+    public void setMaterial(String material) { this.material = material; }
 
     // ==================== UTILITY METHODS ====================
 
