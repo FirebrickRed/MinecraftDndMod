@@ -43,5 +43,10 @@ combat:
   # Ammunition (#128). When true, a weapon with the `ammunition` property spends one round of the
   # ammunition named in its own YAML (`ammunition: arrow` on the shortbow) per shot, and refuses to
   # fire when empty. Set false if you'd rather not track it at the table.
-  # Thrown weapons (javelin, handaxe, dagger) are unaffected by this setting — see #128.
+  # Thrown weapons (javelin, handaxe, dagger) are unaffected by this setting — see #192.
+  #
+  # Spent rounds land where the projectile came down and can be picked back up (#191). Whether one
+  # survives is the item's own `recovery_chance:` — 50% for arrows and bolts (RAW recovers about
+  # half), 75% for lead sling bullets, 25% for blowgun needles, 100% for a thrown weapon. Tune it
+  # per item in its YAML rather than here, so homebrew ammo sets its own odds.
   track_ammunition: true

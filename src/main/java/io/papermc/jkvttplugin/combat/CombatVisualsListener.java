@@ -21,9 +21,15 @@ public class CombatVisualsListener implements Listener {
 
     @EventHandler
     public void onCosmeticLand(ProjectileHitEvent event) {
-        if (CombatVisuals.isCosmetic(event.getEntity())) {
-            event.setCancelled(true);       // don't embed in the block/entity
-            event.getEntity().remove();     // vanish on impact
-        }
+        if (!CombatVisuals.isCosmetic(event.getEntity())) return;
+
+        // Leave the spent round wherever it actually came down (#191) — so a shot over a wall is
+        // genuinely awkward to get back. Read the location before removing the projectile.
+        String dropId = event.getEntity().getPersistentDataContainer()
+                .get(CombatVisuals.DROP_KEY, org.bukkit.persistence.PersistentDataType.STRING);
+        if (dropId != null) AmmoRecovery.dropSpent(event.getEntity().getLocation(), dropId);
+
+        event.setCancelled(true);       // don't embed in the block/entity
+        event.getEntity().remove();     // vanish on impact
     }
 }

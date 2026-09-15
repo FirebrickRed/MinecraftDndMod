@@ -29,6 +29,7 @@ public class DndWeapon {
     private String material;    // YAML material: vanilla Minecraft item to render as (base + fallback)
     private String ammunition;  // YAML ammunition: the item id this weapon fires (#128)
     private int reach;          // YAML reach: melee reach in feet; 0 = unset, meaning the default 5
+    private int recoveryChance = -1; // YAML recovery_chance: % odds of surviving recovery (#191); -1 = unset
 
     public DndWeapon() {}
 
@@ -52,6 +53,14 @@ public class DndWeapon {
      */
     public int getReachFeet() { return reach > 0 ? reach : 5; }
     public void setReach(int reach) { this.reach = reach; }
+
+    /**
+     * Percent chance this weapon survives being recovered after it was thrown (#191). Defaults to
+     * 100: a thrown javelin is lying right there, not "half recovered" like a volley of arrows.
+     * A fragile homebrew throwable can lower it.
+     */
+    public int getRecoveryChance() { return recoveryChance >= 0 ? recoveryChance : 100; }
+    public void setRecoveryChance(int recoveryChance) { this.recoveryChance = recoveryChance; }
 
     /** True if this weapon strikes beyond a normal 5 ft melee (glaive, halberd, whip …). */
     public boolean hasReach() { return getReachFeet() > 5; }

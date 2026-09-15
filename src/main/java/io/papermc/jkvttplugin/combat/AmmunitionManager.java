@@ -35,6 +35,15 @@ public final class AmmunitionManager {
         return (ammo == null || ammo.isBlank()) ? null : ammo;
     }
 
+    /**
+     * The item id this shot leaves on the battlefield, or null if it leaves nothing — so the
+     * projectile knows what to drop where it lands (#191). Same rules as consumption: a weapon that
+     * doesn't spend a round doesn't drop one either.
+     */
+    public static String spentRoundId(DndWeapon weapon) {
+        return requiredAmmo(weapon);
+    }
+
     /** True if the player can make this shot — either the weapon needs nothing, or they have some. */
     public static boolean hasAmmo(Player player, DndWeapon weapon) {
         String ammo = requiredAmmo(weapon);

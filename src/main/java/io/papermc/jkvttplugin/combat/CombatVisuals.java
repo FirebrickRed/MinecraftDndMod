@@ -29,6 +29,8 @@ public final class CombatVisuals {
 
     /** Marks a projectile as ours-and-cosmetic so the listener cancels its damage and cleans it up. */
     public static final NamespacedKey COSMETIC_KEY = new NamespacedKey("jkvtt", "cosmetic_projectile");
+    /** The ammunition id this projectile leaves on the ground where it lands (#191). */
+    public static final NamespacedKey DROP_KEY = new NamespacedKey("jkvtt", "projectile_drop");
     private static final long PROJECTILE_LIFETIME_TICKS = 40L;
 
     /**
@@ -36,6 +38,18 @@ public final class CombatVisuals {
      * No-op when {@code projectile} is null (a melee attack) or either body is missing.
      */
     public static void projectileOnHit(Combatant attacker, Combatant target, String projectile) {
+        launch(attacker, target, projectile, null, true);
+    }
+
+    /**
+     * Launch the cosmetic projectile, optionally carrying an item id to drop where it lands (#191).
+     *
+     * <p>{@code hit} steers the aim: a hit flies straight at the target, a miss is nudged off course
+     * so it scatters past them. That's what makes recovery physical — a missed shot can end up over
+     * a wall or off a ledge, and getting it back is the player's problem.
+     */
+    public static void launch(Combatant attacker, Combatant target, String projectile,
+                              String dropItemId, boolean hit) {
         if (projectile == null || attacker == null || target == null) return;
         if (attacker.getId().equals(target.getId())) return;
         Location from = attacker.getLocation();
@@ -45,7 +59,14 @@ public final class CombatVisuals {
         Location origin = from.clone().add(0, 1.2, 0);
         Vector velocity = to.clone().add(0, 1.0, 0).toVector().subtract(origin.toVector());
         if (velocity.lengthSquared() < 1.0E-4) return;
-        velocity.normalize().multiply(2.8);
+        velocity.normalize();
+        if (!hit) {
+            // Scatter a miss: enough to visibly go wide, not so much it flies backwards.
+            java.util.concurrent.ThreadLocalRandom rng = java.util.concurrent.ThreadLocalRandom.current();
+            velocity.add(new Vector(rng.nextDouble(-0.25, 0.25),
+                    rng.nextDouble(-0.05, 0.30), rng.nextDouble(-0.25, 0.25))).normalize();
+        }
+        velocity.multiply(2.8);
 
         Class<? extends AbstractArrow> type = "trident".equalsIgnoreCase(projectile) ? Trident.class : Arrow.class;
         AbstractArrow proj = origin.getWorld().spawn(origin, type);
@@ -55,6 +76,10 @@ public final class CombatVisuals {
         proj.setPersistent(false);
         proj.setPickupStatus(AbstractArrow.PickupStatus.DISALLOWED);
         proj.getPersistentDataContainer().set(COSMETIC_KEY, PersistentDataType.BYTE, (byte) 1);
+        // Remember what to leave on the ground when this lands (#191).
+        if (dropItemId != null && !dropItemId.isBlank()) {
+            proj.getPersistentDataContainer().set(DROP_KEY, PersistentDataType.STRING, dropItemId);
+        }
 
         // Fail-safe cleanup in case it never collides (missed the hitbox, flew off, etc.).
         JkVttPlugin.getInstance().getServer().getScheduler().runTaskLater(

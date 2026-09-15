@@ -117,7 +117,8 @@ public class AttackHandler {
         }
 
         boolean resolved = resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, player, bonusLabel, extraCritDie, projectile, forceAuto);
+                providedRoll, providedTotal, player, bonusLabel, extraCritDie, projectile, forceAuto,
+                AmmunitionManager.spentRoundId(weapon));
         if (resolved) AmmunitionManager.consume(player, weapon);
         return resolved;
     }
@@ -145,13 +146,14 @@ public class AttackHandler {
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser) {
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, commandUser, "", false, null, false);
+                providedRoll, providedTotal, commandUser, "", false, null, false, null);
     }
 
     private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel,
-                                      boolean extraCritDie, String projectileVisual, boolean forceAuto) {
+                                      boolean extraCritDie, String projectileVisual, boolean forceAuto,
+                                      String spentAmmoId) {
         // Advantage/disadvantage from conditions (#103): auto-applied when the game rolls, and the
         // roller is reminded either way (a physical roll or provided total is trusted as-is).
         Advantage advantage = attacker.attackAdvantageAgainst(target);
@@ -182,9 +184,10 @@ public class AttackHandler {
         broadcastAttackResult(session, attacker, target, false,
                 r.total(), targetAC, hit, r.nat20(), r.nat1(),
                 finalDamage, damageType, r.breakdown(), bonusLabel);
-        // On a hit with a ranged/thrown weapon, send a cosmetic projectile at the target (#181).
+        // Send the cosmetic projectile (#181) — on a miss too, so the spent round it carries lands
+        // somewhere scattered rather than neatly at the target's feet (#191).
+        CombatVisuals.launch(attacker, target, projectileVisual, spentAmmoId, hit);
         if (hit) {
-            CombatVisuals.projectileOnHit(attacker, target, projectileVisual);
             remindMarkRider(attacker, target, commandUser); // Hex / Hunter's Mark rider (#178)
         }
         return true;
@@ -401,7 +404,7 @@ public class AttackHandler {
         // including whether its attack throws a cosmetic projectile (#181).
         return resolveAttack(session, attacker, target, toHit, "+" + toHit + "[ToHit]",
                 attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm, "", false,
-                CombatVisuals.projectileFor(attack), forceAuto);
+                CombatVisuals.projectileFor(attack), forceAuto, null); // monsters do not track ammo
     }
 
     /**

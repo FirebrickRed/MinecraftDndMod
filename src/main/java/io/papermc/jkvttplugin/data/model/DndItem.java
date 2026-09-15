@@ -23,6 +23,7 @@ public class DndItem {
     private String customModel;  // YAML custom_model: optional resource-pack model (opt-in)
     private Cost cost;
     private List<String> tags = new ArrayList<>(); // YAML tags: item-groupings (e.g. gaming_set) (#54)
+    private int recoveryChance = -1; // YAML recovery_chance: % odds of surviving being picked up (#191); -1 = unset
 
     public String getId() {
         return this.id;
@@ -78,6 +79,17 @@ public class DndItem {
     public void setCost(Cost cost) {
         this.cost = cost;
     }
+
+    /**
+     * Percent chance this item survives when recovered off the battlefield (#191).
+     * Unset defaults to 50% for ammunition (RAW: you get about half your arrows back) and 100%
+     * for anything else, since only ammunition is expected to break.
+     */
+    public int getRecoveryChance() {
+        if (recoveryChance >= 0) return recoveryChance;
+        return (tags != null && tags.contains("ammunition")) ? 50 : 100;
+    }
+    public void setRecoveryChance(int recoveryChance) { this.recoveryChance = recoveryChance; }
 
     public List<String> getTags() {
         return this.tags;

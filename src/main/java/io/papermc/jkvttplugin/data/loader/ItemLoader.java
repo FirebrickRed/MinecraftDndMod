@@ -77,6 +77,7 @@ public class ItemLoader {
         item.setCustomModel((String) data.get("custom_model"));  // optional resource-pack model
         item.setCost(ShopParser.parseCost(data.get("cost"), id));
         item.setTags(ParseUtil.normalizeStringList(data.get("tags"))); // item-grouping tags (#54)
+        if (data.get("recovery_chance") instanceof Number rc) item.setRecoveryChance(rc.intValue()); // #191
         return item;
     }
 
