@@ -4,7 +4,7 @@ rolls:
   # How d20 rolls resolve when a player doesn't supply their own result.
   #   physical = players roll their real dice; the game prompts them to enter the number
   #   auto     = the game rolls the d20 for the player
-  # Either way, players may always type their own result (--roll) or a final total (--total).
+  # Either way, players may always type their own result (manualRoll <n>) or a final total (total <n>).
   mode: physical
 
 # Ritual casting during combat (#156). By the book a ritual adds 10 minutes (~100 rounds),
@@ -38,3 +38,10 @@ abilities:
   # Cap final ability scores at 20 (#112). false (default) = house rule: racial bonuses may push a
   # score above 20. true = RAW: clamp every score to 20 after racial bonuses are applied.
   cap_scores_at_20: false
+
+combat:
+  # Ammunition (#128). When true, a weapon with the `ammunition` property spends one round of the
+  # ammunition named in its own YAML (`ammunition: arrow` on the shortbow) per shot, and refuses to
+  # fire when empty. Set false if you'd rather not track it at the table.
+  # Thrown weapons (javelin, handaxe, dagger) are unaffected by this setting — see #128.
+  track_ammunition: true

@@ -25,6 +25,7 @@ public final class PluginConfig {
     private static int ritualInterruptDc = 0; // 0 = dynamic: max(10, half the damage taken)
     private static List<AbilityRollMethod> abilityRollMethods = List.of(AbilityRollMethod.values());
     private static boolean abilityScoreCap20 = false; // false = house rule (racial bonuses may exceed 20)
+    private static boolean trackAmmunition = true;    // bows consume arrows (#128)
 
     private PluginConfig() {}
 
@@ -57,7 +58,14 @@ public final class PluginConfig {
 
         // Ability-score cap (#112). Default false = house rule: racial bonuses may push above 20.
         abilityScoreCap20 = cfg.getBoolean("abilities.cap_scores_at_20", false);
+
+        // Ammunition tracking (#128). Default true — running dry is a real tactical beat; a DM who
+        // does not want the bookkeeping turns it off.
+        trackAmmunition = cfg.getBoolean("combat.track_ammunition", true);
     }
+
+    /** True when ranged weapons must spend ammunition to fire (#128). */
+    public static boolean isTrackAmmunition() { return trackAmmunition; }
 
     public static RollMode getRollMode() { return rollMode; }
 

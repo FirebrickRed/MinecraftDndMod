@@ -1,0 +1,51 @@
+# Ammunition (#128). Weapons with the `ammunition` property name what they fire via their own
+# `ammunition:` key — e.g. the shortbow declares `ammunition: arrow`. Nothing here is hardcoded in
+# Java: add a homebrew weapon that fires `ammunition: pebble`, add a `pebble` item with the
+# `ammunition` tag, and it works.
+#
+# Class starting equipment already hands out `arrow x20` and `bolt x20` (fighter.yml, cleric.yml,
+# ranger.yml) — those ids resolved to nothing until this file existed.
+
+arrow:
+  name: "Arrow"
+  type: "ammunition"
+  description: "A flight arrow, fletched and sharp. Fired from a bow."
+  material: "arrow"
+  tags:
+    - ammunition
+  cost:
+    amount: 5
+    currency: copper
+
+bolt:
+  name: "Crossbow Bolt"
+  type: "ammunition"
+  description: "A short, heavy quarrel for a crossbow."
+  material: "arrow"
+  tags:
+    - ammunition
+  cost:
+    amount: 5
+    currency: copper
+
+sling_bullet:
+  name: "Sling Bullet"
+  type: "ammunition"
+  description: "A smooth lead shot, heavier than it looks."
+  material: "iron_nugget"
+  tags:
+    - ammunition
+  cost:
+    amount: 1
+    currency: copper
+
+blowgun_needle:
+  name: "Blowgun Needle"
+  type: "ammunition"
+  description: "A slender dart, often used to deliver poison."
+  material: "iron_nugget"
+  tags:
+    - ammunition
+  cost:
+    amount: 1
+    currency: copper

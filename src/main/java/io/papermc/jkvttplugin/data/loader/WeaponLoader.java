@@ -87,6 +87,7 @@ public class WeaponLoader {
         weapon.setCost(ShopParser.parseCost(data.get("cost"), id));
         weapon.setDescription((String) data.get("description"));
         weapon.setMaterial((String) data.get("material"));         // vanilla Minecraft item
+        weapon.setAmmunition((String) data.get("ammunition")); // item id this weapon fires (#128)
         weapon.setCustomModel((String) data.get("custom_model"));  // optional resource-pack model
 
         // Parse properties

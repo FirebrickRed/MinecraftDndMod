@@ -27,8 +27,20 @@ public class DndWeapon {
     private String description;
     private String customModel; // YAML custom_model: optional resource-pack model (opt-in, when pack art exists)
     private String material;    // YAML material: vanilla Minecraft item to render as (base + fallback)
+    private String ammunition;  // YAML ammunition: the item id this weapon fires (#128)
 
     public DndWeapon() {}
+
+    /**
+     * The item id this weapon fires, from YAML {@code ammunition:} (#128) — e.g. {@code arrow} for
+     * a shortbow. Null when the weapon needs none. Data-driven on purpose: a homebrew weapon can
+     * fire a homebrew item without any Java change.
+     */
+    public String getAmmunition() { return ammunition; }
+    public void setAmmunition(String ammunition) { this.ammunition = ammunition; }
+
+    /** True if this weapon must consume ammunition to make a ranged attack. */
+    public boolean usesAmmunition() { return hasProperty("ammunition"); }
 
     public String getMaterial() { return material; }
     public void setMaterial(String material) { this.material = material; }

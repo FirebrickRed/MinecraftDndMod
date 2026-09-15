@@ -107,8 +107,19 @@ public class AttackHandler {
         // Cosmetic projectile flair on a hit (#181): a fired/thrown weapon sends an arrow/trident.
         String projectile = CombatVisuals.projectileFor(weapon);
 
-        return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
+        // Ammunition (#128): refuse the shot up front if they're empty, so nothing else happens
+        // first. A round is only spent once the attack actually resolves below — resolveAttack
+        // returns false while it's still waiting on the player's d20, and that must not cost an
+        // arrow (nor does it spend the action, for the same reason).
+        if (!AmmunitionManager.hasAmmo(player, weapon)) {
+            AmmunitionManager.warnEmpty(player, weapon);
+            return false;
+        }
+
+        boolean resolved = resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
                 providedRoll, providedTotal, player, bonusLabel, extraCritDie, projectile, forceAuto);
+        if (resolved) AmmunitionManager.consume(player, weapon);
+        return resolved;
     }
 
     /** Merge a flat bonus into a damage string's trailing modifier (1d8+3, +2 → 1d8+5), keeping the
@@ -156,7 +167,7 @@ public class AttackHandler {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
-            commandUser.sendMessage(Component.text("Roll your d20, then add 'manualRoll <n>' — or 'autoRoll' to let the game roll (or right-click your weapon).",
+            commandUser.sendMessage(Component.text("Roll your d20, then add 'manualRoll <n>' — or 'autoRoll' to let the game roll (or left-click your target).",
                     NamedTextColor.YELLOW));
             return false;
         }

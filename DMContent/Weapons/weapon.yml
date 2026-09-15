@@ -65,6 +65,7 @@ light_crossbow:
   damage: "1d8"
   damage_type: "piercing"
   properties: ["ammunition", "loading", "two-handed"]
+  ammunition: bolt
   range:
     normal: 80
     long: 320
@@ -82,6 +83,7 @@ shortbow:
   damage: "1d6"
   damage_type: "piercing"
   properties: ["ammunition", "two-handed"]
+  ammunition: arrow
   range: "80/320"
   weight: "2 lb"
   cost:
@@ -154,6 +156,7 @@ longbow:
   damage: "1d8"
   damage_type: "piercing"
   properties: ["ammunition", "heavy", "two-handed"]
+  ammunition: arrow
   range: "150/600"
   weight: "2 lb"
   cost:
@@ -226,6 +229,7 @@ sling:
   damage: "1d4"
   damage_type: "bludgeoning"
   properties: ["ammunition"]
+  ammunition: sling_bullet
   range: "30/120"
   weight: "0 lb"
   cost:
@@ -269,6 +273,7 @@ hand_crossbow:
   damage: "1d6"
   damage_type: "piercing"
   properties: ["ammunition", "light", "loading"]
+  ammunition: bolt
   range: "30/120"
   weight: "3 lb"
   cost:
