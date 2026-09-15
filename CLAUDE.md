@@ -56,6 +56,28 @@ gradlew clean build
 - I develop on Windows
 - Always use Windows-compatible commands and paths
 - Use PowerShell or Command Prompt syntax
+
+### ⚠️ Temporary code goes in the cleanup register (#193)
+
+**If you add code that is meant to be removed later, add it to issue #193 in the same change
+that introduces it.** That's a living document listing every bit of scaffolding, migration
+shim, and unverified tuning constant in the repo. Equally: **when you finish work that
+retires an entry, tick it off #193** — the register is only useful if it shrinks as well as grows.
+
+This covers:
+- **Playtest scaffolding** — "this is new, tell us if it looks wrong" notices, debug output
+- **Migration shims** — a loader accepting an old YAML key so existing homebrew doesn't break
+- **Tuning values that are guesses** — magic numbers that need eyes on a running server
+- **Stubs** that print "not yet implemented" (and make sure `COMMANDS.md` says so too)
+
+Every entry must name **what removes it** — a ticket, a date, or an event ("after the first
+playtest"). An entry with no exit condition isn't temporary, it's just code.
+
+The register exists because one session added a playtest message, two deprecation shims and
+four tuned constants, none with an owner. That's how a codebase accretes permanent
+"temporary" code. Also worth knowing: a stale comment that asserts something *false* is worse
+than no comment — one claiming equipped armor wasn't persisted (it was, and had been for a
+while) sent a whole debugging session down the wrong path.
 - Use backslashes for file paths
 
 ### Hot Reloading Data
