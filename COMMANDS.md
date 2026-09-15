@@ -48,6 +48,12 @@ DM extras: `/character create <player>` opens creation for another player; `/cha
 | `action [target]` · `bonus [target]` | Mark Action / Bonus Action used |
 | `movement [undo]` | Check / undo movement this turn |
 | `attack <target> [weapon] [flags]` | **Hit check only** — resolves HIT/MISS/CRIT; on a hit it prompts you with the `/combat damage` command to run |
+
+> **Left-click to attack (#189).** On your turn, holding a weapon: **left-click the enemy**, or
+> left-click while looking at them, and the game hands you the filled-in `/combat attack` command.
+> The click only *prompts* — you still choose your roll mode. Right-click means "use" (spell focus,
+> area-effect confirm), never attack.
+
 | `damage <target> [amount] [flags]` | Apply damage — a **player on their own turn**, or the **DM** anytime |
 | `override <target> [amount] [flags]` | **DM-only:** apply corrective/extra damage anytime (e.g. a forgotten modifier) |
 | `heal <target> [amount \| manualRoll <n> \| autoRoll <dice> \| total <n>]` | Restore HP |
@@ -114,11 +120,14 @@ DM role management lives under `/dm add\|remove\|list` (see above). `/dm add`/`r
 
 ## ⚠️ Operational notes
 
-**There is no combat crash-recovery yet.** If the server stops mid-encounter, the
-combat session, HP changes, and spawned-entity stats are lost, and glowing NPCs stay
-glowing. **Before stopping the server:**
+**Combat, entities, and character HP persist across a restart.** Combat sessions snapshot to
+`Saved/CombatSessions/*.yml` and restore on boot (#105); spawned-entity HP and dead/corpse state
+ride on the armor stand's persistent data (#89); and character HP, temp HP, spell slots, and
+resources save to disk **on every change** and at **each combat turn advance** — no timed autosave
+(#31). What a hard crash still loses: the **in-progress combat turn** (it resets fresh), and any
+stray turn-indicator glow on armor stands. So before a planned stop it's tidiest to:
 1. `/combat finished` (clears glow, scoreboards, prone)
 2. `/dmentity remove <name>` for NPCs you don't want lingering
-3. `/character rest long` or `/character close` to persist player HP (no auto-save on shutdown)
 
-Tracked in issues #105 (combat auto-save), #89 (entity persistence), #31 (character auto-save).
+Issues #105 (combat auto-save), #89 (entity persistence), #31 (character auto-save) are done;
+the remaining gap is mid-turn state and startup glow-scrub.
