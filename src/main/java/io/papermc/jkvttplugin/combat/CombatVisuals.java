@@ -38,7 +38,7 @@ public final class CombatVisuals {
      * No-op when {@code projectile} is null (a melee attack) or either body is missing.
      */
     public static void projectileOnHit(Combatant attacker, Combatant target, String projectile) {
-        launch(attacker, target, projectile, null, true);
+        launch(attacker, target, projectile, null, true, 0);
     }
 
     /**
@@ -49,7 +49,7 @@ public final class CombatVisuals {
      * a wall or off a ledge, and getting it back is the player's problem.
      */
     public static void launch(Combatant attacker, Combatant target, String projectile,
-                              String dropItemId, boolean hit) {
+                              String dropItemId, boolean hit, int maxRangeFeet) {
         if (projectile == null || attacker == null || target == null) return;
         if (attacker.getId().equals(target.getId())) return;
         Location from = attacker.getLocation();
@@ -81,9 +81,23 @@ public final class CombatVisuals {
             proj.getPersistentDataContainer().set(DROP_KEY, PersistentDataType.STRING, dropItemId);
         }
 
-        // Fail-safe cleanup in case it never collides (missed the hitbox, flew off, etc.).
+        // A shot that hits nothing stops at the edge of the weapon's range rather than flying on:
+        // 2.8 blocks/tick over the 40-tick cap is 112 blocks (560 ft), far past any real long range.
+        // Crucially the spent round still drops at that point, so a miss into open air lands in the
+        // field ahead of you instead of vanishing.
+        long lifetime = PROJECTILE_LIFETIME_TICKS;
+        if (maxRangeFeet > 0) {
+            long ticksToRange = (long) Math.ceil((maxRangeFeet / 5.0) / 2.8);
+            lifetime = Math.max(3L, Math.min(PROJECTILE_LIFETIME_TICKS, ticksToRange));
+        }
         JkVttPlugin.getInstance().getServer().getScheduler().runTaskLater(
-                JkVttPlugin.getInstance(), () -> { if (proj.isValid()) proj.remove(); }, PROJECTILE_LIFETIME_TICKS);
+                JkVttPlugin.getInstance(), () -> {
+                    if (!proj.isValid()) return;
+                    if (dropItemId != null && !dropItemId.isBlank()) {
+                        AmmoRecovery.dropSpent(proj.getLocation(), dropItemId);
+                    }
+                    proj.remove();
+                }, lifetime);
     }
 
     /**

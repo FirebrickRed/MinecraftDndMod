@@ -78,6 +78,21 @@ public final class AmmunitionManager {
         player.sendMessage(left == 0
                 ? Component.text("That was your last " + displayName(ammo) + ".", NamedTextColor.RED)
                 : Component.text(left + " " + displayName(ammo) + " left.", NamedTextColor.DARK_GRAY));
+
+        playtestNotice(player);
+    }
+
+    /**
+     * One-off nudge that the ammo visuals are new and unverified (#191). Once per player per server
+     * run — the point is to get eyes on it during the first session, not to nag all campaign.
+     */
+    private static final java.util.Set<java.util.UUID> noticed = new java.util.HashSet<>();
+
+    private static void playtestNotice(Player player) {
+        if (!noticed.add(player.getUniqueId())) return;
+        player.sendMessage(Component.text("ℹ Ammunition is newly added and still being visually tested — "
+                + "spent rounds land where the shot comes down and can be picked back up. "
+                + "Tell the DM if anything looks wonky.", NamedTextColor.DARK_AQUA));
     }
 
     /** First inventory slot holding this ammunition, or -1. */

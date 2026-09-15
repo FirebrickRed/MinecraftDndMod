@@ -74,8 +74,13 @@ public class WeaponListener implements Listener {
     }
 
     /**
-     * Right-click no longer attacks, but a bow or crossbow would otherwise draw and loose a real
-     * arrow on your turn. Keep suppressing the vanilla action without prompting anything.
+     * Right-click never attacks, but our ranged weapons are real Minecraft bows and crossbows and
+     * our arrows are real arrows — so a draw would loose an actual vanilla arrow.
+     *
+     * <p>This is suppressed <b>always</b>, not just on your turn. Off-turn and out of combat, a
+     * vanilla shot silently spends a tracked D&D arrow (#128) and leaves an untracked vanilla one
+     * on the ground, laundering ammunition out of the system. Shots go through {@code /combat
+     * attack}; there is no legitimate vanilla use of these weapons.
      */
     @EventHandler
     public void onPlayerRightClick(PlayerInteractEvent event) {
@@ -86,9 +91,9 @@ public class WeaponListener implements Listener {
         Player player = event.getPlayer();
         if (io.papermc.jkvttplugin.combat.AreaTargeting.isAiming(player.getUniqueId())) return;
 
-        AttackContext ctx = contextFor(player);
-        if (ctx == null) return;
-        if (ctx.weapon.isRanged()) event.setCancelled(true);
+        String heldId = ItemUtil.getItemId(player.getInventory().getItemInMainHand());
+        DndWeapon held = heldId != null ? WeaponLoader.getWeapon(heldId) : null;
+        if (held != null && held.isRanged()) event.setCancelled(true);
     }
 
     /**
