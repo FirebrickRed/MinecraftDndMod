@@ -36,7 +36,6 @@ public class CharacterPersistenceLoader {
         loadAllCharacters();
     }
 
-    // ToDo: fix saving character to yaml file
     public static void saveCharacter(CharacterSheet sheet) {
         File characterFile = new File(dataFolder, sheet.getCharacterId().toString() + ".yml");
 
@@ -56,7 +55,6 @@ public class CharacterPersistenceLoader {
         }
     }
 
-    // ToDo: actually load saved characters somewhere smh
     public static void loadAllCharacters() {
         File[] files = dataFolder.listFiles((dir, name) -> name.endsWith(".yml"));
         if (files == null || files.length == 0) {

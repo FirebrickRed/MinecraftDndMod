@@ -200,13 +200,4 @@ public class ShopPersistenceLoader {
             }
         }
     }
-
-    /**
-     * Saves all active shops.
-     * Called on server shutdown.
-     */
-    public static void saveAllShops() {
-        // TODO: Implement when we have entity instance tracking
-        // Will iterate through all spawned entities and save their shops
-    }
 }

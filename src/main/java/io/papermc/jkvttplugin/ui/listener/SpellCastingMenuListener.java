@@ -77,7 +77,7 @@ public class SpellCastingMenuListener implements Listener {
         // Close inventory after casting (consistent UX)
         player.closeInventory();
 
-        // ToDo: Implement actual spell effects when spell system is built
+        // ToDo: Out-of-combat spell effects (#152). In-combat casting resolves through /combat cast.
     }
 
     private void handleSpellCast(Player player, CharacterSheet sheet, String payload) {
@@ -149,7 +149,7 @@ public class SpellCastingMenuListener implements Listener {
         // Close inventory after casting (consistent UX with cantrips)
         player.closeInventory();
 
-        // ToDo: Implement actual spell effects when spell system is built
+        // ToDo: Out-of-combat spell effects (#152). In-combat casting resolves through /combat cast.
     }
 
     private void handleSlotSelection(Player player, CharacterSheet sheet, String levelStr) {

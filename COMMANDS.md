@@ -83,7 +83,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | Subcommand | What it does |
 |---|---|
 | `spawn <entityId>` | Spawn an entity (from `DMContent/Entities/`) |
-| `spawngroup <groupId>` | Spawn a predefined group |
+| `spawngroup <groupId>` | ⚠️ **Not implemented** — prints a notice (#79) |
 | `list` | List spawned entities |
 | `remove <name>` | Despawn an entity |
 | `revive <name> [hp]` | Bring a dead entity back (default full HP) |
