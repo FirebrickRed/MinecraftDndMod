@@ -80,6 +80,14 @@ public class DndWeapon {
         // Add damage info
         lore.add(Component.text("Damage: " + damage + " " + damageType, NamedTextColor.GRAY));
 
+        // Which ability you add to the attack roll (#184). Deliberately static: the playtest
+        // confusion was "what do I add?", not "what's my total?" — and a static line needs no
+        // per-wielder rewriting, so it can't go stale, split stacks, or follow a dropped weapon
+        // to the next player. `/combat attack … showModifiers` still gives the live number.
+        Ability primary = getPrimaryAbility();
+        String toHitAbility = primary != null ? primary.getAbbreviation() : "STR or DEX";
+        lore.add(Component.text("To hit: " + toHitAbility + " + proficiency", NamedTextColor.GRAY));
+
         // Add properties
         if (properties != null && !properties.isEmpty()) {
             StringBuilder props = new StringBuilder("Properties: ");
