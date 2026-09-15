@@ -38,6 +38,12 @@ public class TurnState {
 
     private final Location turnStartLocation;  // for /combat movement undo
 
+    // Gear the combatant started the turn with, and which reminders we've already given (#190).
+    private String turnStartWeaponId;
+    private boolean objectInteractionUsed;
+    private boolean secondSwapWarned;
+    private boolean shieldChangeWarned;
+
     public TurnState(int speed, Location startLocation) {
         this.actionUsed = false;
         this.bonusActionUsed = false;
@@ -57,6 +63,25 @@ public class TurnState {
     public boolean isActionUsed() { return actionUsed; }
     public boolean isBonusActionUsed() { return bonusActionUsed; }
     public boolean isReactionUsed() { return reactionUsed; }
+
+    // ==================== GEAR CHANGES (#190) ====================
+
+    /**
+     * The weapon in hand when this turn began. Drawing or stowing a weapon is your one free object
+     * interaction per turn, and strapping on a shield costs an Action — but tables hand-wave both
+     * constantly, so we only ever remind. Nothing here is enforced or auto-consumed.
+     */
+    public String getTurnStartWeaponId() { return turnStartWeaponId; }
+    public void setTurnStartWeaponId(String weaponId) { this.turnStartWeaponId = weaponId; }
+
+    public boolean isObjectInteractionUsed() { return objectInteractionUsed; }
+    public void markObjectInteractionUsed() { this.objectInteractionUsed = true; }
+
+    public boolean isSecondSwapWarned() { return secondSwapWarned; }
+    public void markSecondSwapWarned() { this.secondSwapWarned = true; }
+
+    public boolean isShieldChangeWarned() { return shieldChangeWarned; }
+    public void markShieldChangeWarned() { this.shieldChangeWarned = true; }
 
     // ==================== PENDING DAMAGE (one damage application per hit) ====================
 

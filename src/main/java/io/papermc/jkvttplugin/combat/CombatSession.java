@@ -433,7 +433,23 @@ public class CombatSession {
         updateScoreboard();
         promptDeathSaveIfNeeded(getCurrentCombatant());
         CombatPersistence.save(this); // crash-recovery snapshot on each turn advance (#105)
+        persistPlayerSheets();        // flush player HP/slots/resources spent this turn (#31)
         return getCurrentCombatant();
+    }
+
+    /**
+     * Save every online player combatant's sheet (#31). Called at each turn advance so class
+     * resources spent in combat (Rage, Ki, …) are flushed even though they don't route through
+     * the sheet's own auto-saving HP/slot mutators.
+     */
+    private void persistPlayerSheets() {
+        for (Combatant c : combatants) {
+            if (!c.isPlayer()) continue;
+            CharacterSheet sheet = c.getCharacterSheet();
+            if (sheet != null) {
+                io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader.saveCharacter(sheet);
+            }
+        }
     }
 
     /**

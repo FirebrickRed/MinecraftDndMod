@@ -278,14 +278,19 @@ public class CharacterSheetManager {
         return item;
     }
 
+    /**
+     * The "work-in-progress" paper handed out when creation starts. Right-clicking it re-opens the
+     * player's in-progress creation menu (see {@link CharacterSheetItemListener}), so closing the
+     * menu isn't destructive. It's swapped for the real sheet when creation completes.
+     */
     public static ItemStack createBlankCharacterSheetItem() {
         ItemStack item = new ItemStack(Material.PAPER);
         ItemMeta meta = item.getItemMeta();
 
-        meta.displayName(Component.text("Character Sheet").color(NamedTextColor.YELLOW));
+        meta.displayName(Component.text("Create Character").color(NamedTextColor.YELLOW));
 
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("Right-click to create a new character").color(NamedTextColor.GRAY));
+        lore.add(Component.text("Right-click to resume creating your character").color(NamedTextColor.GRAY));
 
         meta.lore(lore);
 
@@ -293,6 +298,31 @@ public class CharacterSheetManager {
 
         item.setItemMeta(meta);
         return item;
+    }
+
+    /**
+     * Give the player the "Create Character" paper unless they already hold one, so starting (or
+     * re-entering) creation never stacks duplicates. Overflow drops at their feet.
+     */
+    public static void giveCreationPaperIfAbsent(Player player) {
+        for (ItemStack stack : player.getInventory().getContents()) {
+            if (isBlankCharacterSheet(stack)) return; // already has one
+        }
+        Map<Integer, ItemStack> overflow = player.getInventory().addItem(createBlankCharacterSheetItem());
+        overflow.values().forEach(left -> player.getWorld().dropItemNaturally(player.getLocation(), left));
+    }
+
+    /**
+     * Remove every "Create Character" paper from the player's inventory — called when creation
+     * completes, so the WIP paper is replaced by the finished character sheet.
+     */
+    public static void removeCreationPapers(Player player) {
+        ItemStack[] contents = player.getInventory().getContents();
+        for (int i = 0; i < contents.length; i++) {
+            if (isBlankCharacterSheet(contents[i])) {
+                player.getInventory().setItem(i, null);
+            }
+        }
     }
 
 

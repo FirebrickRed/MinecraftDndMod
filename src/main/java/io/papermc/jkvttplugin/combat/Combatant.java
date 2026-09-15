@@ -322,6 +322,13 @@ public class Combatant {
     public void startNewTurn(Location location) {
         this.turnState = new TurnState(getSpeed(), location);
         this.rolledDeathSaveThisTurn = false;
+
+        // Remember what they came into the turn holding, so a mid-turn weapon swap can be measured
+        // against it rather than against the previous swap (#190).
+        if (isPlayer() && getPlayer() != null) {
+            this.turnState.setTurnStartWeaponId(
+                    GearChangeNotifier.heldWeaponId(getPlayer().getInventory().getItemInMainHand()));
+        }
     }
 
     // Tracks whether this combatant has already made its one death save this turn (Issue #101).

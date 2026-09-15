@@ -73,6 +73,7 @@ public class CharacterPersistenceLoader {
 
                 CharacterSheet sheet = deserializeCharacterSheet(data);
                 if (sheet != null) {
+                    sheet.setSavable(true); // now live — future mutations auto-save (#31)
                     playerCharacters.computeIfAbsent(sheet.getPlayerId(), k -> new ConcurrentHashMap<>()).put(sheet.getCharacterId(), sheet);
                     LOGGER.fine("Loaded character: " + sheet.getCharacterName());
                     loaded++;
@@ -93,6 +94,7 @@ public class CharacterPersistenceLoader {
     }
 
     public static void storeCharacterInMemory(CharacterSheet sheet) {
+        sheet.setSavable(true); // now live — future mutations auto-save (#31)
         playerCharacters.computeIfAbsent(sheet.getPlayerId(), k -> new ConcurrentHashMap<>()).put(sheet.getCharacterId(), sheet);
     }
 

@@ -72,6 +72,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                         return true;
                     }
                     CharacterCreationSession session = CharacterCreationService.start(target.getUniqueId());
+                    CharacterSheetManager.giveCreationPaperIfAbsent(target);
                     CharacterCreationMenu.open(target, session.getSessionId());
                     sender.sendMessage(Component.text("Opened character creation for " + target.getName() + ".", NamedTextColor.GREEN));
                     return true;

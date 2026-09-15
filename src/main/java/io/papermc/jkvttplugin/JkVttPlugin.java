@@ -55,11 +55,10 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         io.papermc.jkvttplugin.dm.InteractiveObjectManager.init(this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.dm.InteractiveObjectListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.CreationNameListener(), this);
-        Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.AnvilNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.EntityChunkListener(), this);
-        Bukkit.getPluginManager().registerEvents(new CharacterNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new SpellFocusListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArmorEquipListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.GearChangeNotifier(), this);
         Bukkit.getPluginManager().registerEvents(new SpellCastingMenuListener(), this);
         // EntityInteractionListener removed - use /dmentity info command instead
         Bukkit.getPluginManager().registerEvents(new StatBlockMenuListener(), this);
@@ -102,16 +101,10 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
             if (combats > 0) getLogger().info("Restored " + combats + " interrupted combat session(s).");
         });
 
-        // Periodic auto-save (Issue #31): the clean-shutdown save covers normal restarts, but a
-        // crash would lose changes since the last save. Flush every 5 minutes as a safety net.
-        long fiveMinutes = 20L * 60 * 5; // ticks
-        Bukkit.getScheduler().runTaskTimer(this, () -> {
-            try {
-                io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader.saveAllCharacters();
-            } catch (Exception e) {
-                getLogger().warning("Periodic character auto-save failed: " + e.getMessage());
-            }
-        }, fiveMinutes, fiveMinutes);
+        // Character saving is event-driven (#31): CharacterSheet flushes to disk on every
+        // state change (HP, temp HP, spell slots, rests), combat also saves player sheets at
+        // each turn advance, and the resource commands save on change. No timed autosave — a
+        // crash loses at most the in-progress combat turn. onDisable() still does a final flush.
     }
 
     @EventHandler

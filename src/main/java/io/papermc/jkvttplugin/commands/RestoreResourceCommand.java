@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.commands;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.character.CharacterResolver;
+import io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader;
 import io.papermc.jkvttplugin.data.model.ClassResource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -63,6 +64,7 @@ public class RestoreResourceCommand implements CommandExecutor, TabCompleter {
             }
 
             if (restoredCount > 0) {
+                CharacterPersistenceLoader.saveCharacter(character);
                 sender.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
                         .append(Component.text("Restored all resources for ", NamedTextColor.WHITE))
                         .append(Component.text(character.getCharacterName(), NamedTextColor.YELLOW))
@@ -102,6 +104,7 @@ public class RestoreResourceCommand implements CommandExecutor, TabCompleter {
         int restored = targetResource.getCurrent() - before;
 
         if (restored > 0) {
+            CharacterPersistenceLoader.saveCharacter(character);
             sender.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
                     .append(Component.text("Restored ", NamedTextColor.WHITE))
                     .append(Component.text(targetResource.getName(), NamedTextColor.YELLOW))

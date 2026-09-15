@@ -391,6 +391,8 @@ public class CharacterCreationHandler implements MenuClickHandler {
         try {
             CharacterSheet sheet = CharacterSheetManager.createCharacterFromSession(player, session);
             ActiveCharacterTracker.setActiveCharacter(player, sheet.getCharacterId());
+            // Swap the WIP "Create Character" paper for the finished character sheet.
+            CharacterSheetManager.removeCreationPapers(player);
             ItemStack item = CharacterSheetManager.createCharacterSheetItem(sheet);
             player.getInventory().addItem(item);
             CharacterCreationService.removeSession(player.getUniqueId());

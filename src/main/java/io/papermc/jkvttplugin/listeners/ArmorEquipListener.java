@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.listeners;
 
 import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
 import io.papermc.jkvttplugin.character.CharacterSheet;
+import io.papermc.jkvttplugin.combat.GearChangeNotifier;
 import io.papermc.jkvttplugin.data.loader.ArmorLoader;
 import io.papermc.jkvttplugin.data.model.DndArmor;
 import io.papermc.jkvttplugin.util.ItemUtil;
@@ -103,6 +104,8 @@ public class ArmorEquipListener implements Listener {
         if (shield != null && !shield.isShield()) shield = null;
         if (!sameArmor(shield, sheet.getEquippedShield())) {
             if (shield == null) sheet.unequipShield(); else sheet.equipShield(shield);
+            // AC is already updated; this only tells them what it cost if they're mid-turn (#190).
+            GearChangeNotifier.notifyShieldChange(player, shield != null);
         }
     }
 

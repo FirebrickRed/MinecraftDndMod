@@ -40,6 +40,7 @@ public class CharacterSheetItemListener implements Listener {
         }
 
         CharacterCreationSession session = CharacterCreationService.start(player.getUniqueId());
+        CharacterSheetManager.giveCreationPaperIfAbsent(player);
         player.sendMessage("Starting character creation...");
         CharacterCreationMenu.open(player, session.getSessionId());
     }
@@ -52,11 +53,6 @@ public class CharacterSheetItemListener implements Listener {
         }
 
         CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
-//        if (character == null) {
-//            CharacterSheetManager.loadCharacterSheet(player);
-//            character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
-//        }
-
         if (character == null) {
             player.sendMessage("Character not found. The character sheet may be corrupted.");
             return;

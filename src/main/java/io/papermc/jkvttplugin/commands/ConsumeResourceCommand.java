@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.commands;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.character.CharacterResolver;
+import io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader;
 import io.papermc.jkvttplugin.data.model.ClassResource;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -80,6 +81,7 @@ public class ConsumeResourceCommand implements CommandExecutor, TabCompleter {
         boolean success = targetResource.consume(amount);
 
         if (success) {
+            CharacterPersistenceLoader.saveCharacter(character);
             sender.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
                     .append(Component.text("Consumed ", NamedTextColor.WHITE))
                     .append(Component.text(amount + "x ", NamedTextColor.YELLOW))

@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.commands;
 
 import io.papermc.jkvttplugin.character.CharacterCreationService;
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
+import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.ui.menu.CharacterCreationMenu;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -17,6 +18,9 @@ public class CreateCharacterCommand implements CommandExecutor {
         }
 
         CharacterCreationSession session = CharacterCreationService.start(player.getUniqueId());
+        // Hand out the "Create Character" paper so closing the menu isn't destructive — they can
+        // right-click it to resume. It's swapped for the real sheet when creation completes.
+        CharacterSheetManager.giveCreationPaperIfAbsent(player);
         CharacterCreationMenu.open(player, session.getSessionId());
         return true;
     }
