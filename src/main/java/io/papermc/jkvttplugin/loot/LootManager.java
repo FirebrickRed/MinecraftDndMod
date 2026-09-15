@@ -122,11 +122,17 @@ public class LootManager {
         }
         int mod = sheet.getSkillBonus(check);
         String modStr = (mod >= 0 ? "+" + mod : String.valueOf(mod));
-        String cmd = "/character loot " + check.name().toLowerCase() + " --roll ";
+        String base = "/character loot " + check.name().toLowerCase() + " ";
+        String manualCmd = base + "manualRoll ";
+        String autoCmd = base + "autoRoll";
         player.sendMessage(Component.text("The DM asks you to roll " + check.getDisplayName() + " — ", NamedTextColor.GOLD)
                 .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(cmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds " + modStr + ".")))));
+                        .clickEvent(ClickEvent.suggestCommand(manualCmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd + "<your d20> — the game adds " + modStr + "."))))
+                .append(Component.text(" / ", NamedTextColor.DARK_GRAY))
+                .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand(autoCmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20 and adds " + modStr + ".")))));
         dm.sendMessage(Component.text("Asked " + player.getName() + " to roll " + check.getDisplayName() + ".", NamedTextColor.GRAY));
     }
 

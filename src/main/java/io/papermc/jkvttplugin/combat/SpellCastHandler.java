@@ -414,14 +414,22 @@ public class SpellCastHandler {
         return 0;
     }
 
-    /** Prompt a caster to roll their healing dice (physical mode); fills the cast command with --roll. */
+    /** Prompt a caster to roll their healing dice (physical mode). */
     private static void promptHealingRoll(Player player, Combatant target, DndSpell spell) {
-        String cmd = "/combat cast " + spell.getId() + " " + quoted(target.getDisplayName()) + " --roll ";
+        String base = "/combat cast " + spell.getId() + " " + quoted(target.getDisplayName()) + " ";
+        String manualCmd = base + "manualRoll ";
+        String autoCmd = base + "autoRoll";
         player.sendMessage(Component.text("💚 Roll " + spell.getName() + " (" + spell.getHealing() + ") on "
                 + target.getDisplayName() + " — ", NamedTextColor.GREEN)
                 .append(Component.text("[click, then type your roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(cmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<healing roll> — the game adds your spellcasting modifier.")))));
+                        .clickEvent(ClickEvent.suggestCommand(manualCmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd
+                                + "<your " + spell.getHealing() + " result> — the game adds your spellcasting modifier."))))
+                .append(Component.text(" / ", NamedTextColor.DARK_GRAY))
+                .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand(autoCmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls " + spell.getHealing()
+                                + " and adds your spellcasting modifier.")))));
     }
 
     /** Range error for a single-target spell, or null if in range / unknown. Touch=5 ft, Self=self only. */
