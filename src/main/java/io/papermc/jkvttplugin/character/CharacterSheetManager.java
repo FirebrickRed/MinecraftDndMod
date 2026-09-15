@@ -7,8 +7,10 @@ import io.papermc.jkvttplugin.data.loader.SpellLoader;
 import io.papermc.jkvttplugin.data.model.DndSpell;
 import io.papermc.jkvttplugin.data.model.PendingChoice;
 import io.papermc.jkvttplugin.data.model.PlayersChoice;
+import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -203,8 +205,76 @@ public class CharacterSheetManager {
     }
 
     /** Permanently delete a character (removes it from memory and deletes its YAML file). */
+    /**
+     * Delete a character and clear its gear out of the owner's inventory.
+     *
+     * <p>Deleting used to remove only the YAML, leaving the sheet paper, weapons, armor and ammo
+     * behind as items pointing at a character that no longer exists. That matters most during
+     * playtesting, where characters are made and scrapped constantly and the leftovers pile up.
+     *
+     * <p>Removal is targeted, not a wipe: the sheet item is matched by its {@code character_id},
+     * and gear by the ids this character actually recorded — so a second character's belongings
+     * are left alone.
+     */
     public static void deleteCharacter(UUID playerId, UUID characterId) {
+        CharacterSheet sheet = CharacterPersistenceLoader.getCharacter(playerId, characterId);
+        Player owner = Bukkit.getPlayer(playerId);
+        if (owner != null) clearCharacterItems(owner, characterId, sheet);
+
         CharacterPersistenceLoader.removeCharacter(playerId, characterId);
+    }
+
+    /** Strip this character's sheet item and recorded gear from the player's inventory. */
+    private static void clearCharacterItems(Player player, UUID characterId, CharacterSheet sheet) {
+        // How many of each item id this character was carrying — we remove up to that many, so a
+        // stack shared with another character isn't emptied.
+        Map<String, Integer> owed = new HashMap<>();
+        if (sheet != null) {
+            for (ItemStack stack : sheet.getEquipment()) {
+                String id = ItemUtil.getItemId(stack);
+                if (id != null) owed.merge(id, stack.getAmount(), Integer::sum);
+            }
+        }
+
+        ItemStack[] contents = player.getInventory().getContents();
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack stack = contents[i];
+            if (stack == null) continue;
+
+            // This character's own sheet paper, and any leftover creation paper.
+            if (characterId.equals(getCharacterIdFromItem(stack)) || isBlankCharacterSheet(stack)) {
+                player.getInventory().setItem(i, null);
+                continue;
+            }
+
+            String id = ItemUtil.getItemId(stack);
+            Integer remaining = id != null ? owed.get(id) : null;
+            if (remaining == null || remaining <= 0) continue;
+
+            int take = Math.min(remaining, stack.getAmount());
+            owed.put(id, remaining - take);
+            if (take >= stack.getAmount()) player.getInventory().setItem(i, null);
+            else stack.setAmount(stack.getAmount() - take);
+        }
+
+        // Worn armor and shield are outside the main contents loop above.
+        clearWornIfOwed(player, owed);
+    }
+
+    /** Armor slots aren't covered by getContents() iteration order, so clear them explicitly. */
+    private static void clearWornIfOwed(Player player, Map<String, Integer> owed) {
+        ItemStack chest = player.getInventory().getChestplate();
+        String chestId = ItemUtil.getItemId(chest);
+        if (chestId != null && owed.getOrDefault(chestId, 0) > 0) {
+            owed.merge(chestId, -1, Integer::sum);
+            player.getInventory().setChestplate(null);
+        }
+        ItemStack off = player.getInventory().getItemInOffHand();
+        String offId = ItemUtil.getItemId(off);
+        if (offId != null && owed.getOrDefault(offId, 0) > 0) {
+            owed.merge(offId, -1, Integer::sum);
+            player.getInventory().setItemInOffHand(null);
+        }
     }
 
     public static List<CharacterSheet> getAllCharacters() {

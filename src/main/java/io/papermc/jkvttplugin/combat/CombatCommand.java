@@ -2031,6 +2031,26 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         Combatant target = at.target();
         Integer flat = at.flat();
 
+        // The pending window belongs to the creature that was actually hit. Naming a different one
+        // used to apply that hit's damage to whoever you typed — a confirmed playtest bug where a
+        // player hit Meepo, typed "/combat damage Yeek", and Yeek took the damage. Refuse rather
+        // than guess; /combat override remains the DM's way to correct HP on anyone.
+        if (!isOverride && attacker != null && attacker.getTurnState() != null) {
+            UUID hitId = attacker.getTurnState().getPendingDamageTargetId();
+            if (hitId != null && !hitId.equals(target.getId())) {
+                Combatant actual = null;
+                for (Combatant c : session.getCombatants()) if (c.getId().equals(hitId)) { actual = c; break; }
+                String actualName = actual != null ? actual.getDisplayName() : "your target";
+                dm.sendMessage(Component.text("✗ Your attack hit " + actualName + ", not "
+                        + target.getDisplayName() + " — damage goes to the creature you hit.", NamedTextColor.RED));
+                String quoted = actualName.contains(" ") ? "\"" + actualName + "\"" : actualName;
+                dm.sendMessage(Component.text("   [apply it to " + actualName + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand("/combat damage " + quoted + " "))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: /combat damage " + quoted))));
+                return;
+            }
+        }
+
         // Consistent with attack rolls: --roll is what you physically rolled on the damage dice, and
         // the game adds the pending bonus (e.g. +3 STR). A dice *formula* (contains 'd') is still
         // rolled as-is for DM convenience; --total is the final number with nothing added.
