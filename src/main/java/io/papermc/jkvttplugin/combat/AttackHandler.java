@@ -105,10 +105,7 @@ public class AttackHandler {
         boolean extraCritDie = weapon != null && !weapon.isRanged() && attacker.hasExtraCritDie();
 
         // Cosmetic projectile flair on a hit (#181): a fired/thrown weapon sends an arrow/trident.
-        String projectile = null;
-        if (weapon != null && (weapon.isRanged() || weapon.hasProperty("thrown"))) {
-            projectile = weapon.getId() != null && weapon.getId().toLowerCase().contains("trident") ? "trident" : "arrow";
-        }
+        String projectile = CombatVisuals.projectileFor(weapon);
 
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
                 providedRoll, providedTotal, player, bonusLabel, extraCritDie, projectile, forceAuto);
@@ -389,9 +386,11 @@ public class AttackHandler {
             return false;
         }
 
-        // Same resolver as player attacks — the entity just sources its numbers from the stat block.
+        // Same resolver as player attacks — the entity just sources its numbers from the stat block,
+        // including whether its attack throws a cosmetic projectile (#181).
         return resolveAttack(session, attacker, target, toHit, "+" + toHit + "[ToHit]",
-                attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm, "", false, null, forceAuto);
+                attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm, "", false,
+                CombatVisuals.projectileFor(attack), forceAuto);
     }
 
     /**

@@ -61,6 +61,53 @@ public final class CombatVisuals {
                 JkVttPlugin.getInstance(), () -> { if (proj.isValid()) proj.remove(); }, PROJECTILE_LIFETIME_TICKS);
     }
 
+    /**
+     * Which cosmetic projectile a weapon should throw, or null if it isn't a ranged/thrown weapon.
+     *
+     * <p>Keyed off the weapon's vanilla {@code material:} — the item the player actually sees in
+     * hand — so a thrown javelin (which renders as a {@code TRIDENT}) flies as a trident. The
+     * previous check looked for "trident" in the weapon *id*, and no weapon has that in its id, so
+     * it was dead code and every thrown weapon fired an arrow.
+     */
+    public static String projectileFor(io.papermc.jkvttplugin.data.model.DndWeapon weapon) {
+        if (weapon == null) return null;
+        if (!weapon.isRanged() && !weapon.hasProperty("thrown")) return null;
+        String material = weapon.getMaterial();
+        return (material != null && material.equalsIgnoreCase("TRIDENT")) ? "trident" : "arrow";
+    }
+
+    /**
+     * Which cosmetic projectile an entity's stat-block attack should throw, or null for melee.
+     *
+     * <p>Only attacks with an {@code item:} throw anything. A spell attack declares {@code icon:}
+     * and no item (the kobold sorcerer's Fire Bolt), and firing an arrow for a Fire Bolt would look
+     * worse than firing nothing — spell visuals want their own treatment.
+     */
+    public static String projectileFor(io.papermc.jkvttplugin.data.model.DndAttack attack) {
+        if (attack == null) return null;
+        String itemId = attack.getItem();
+        if (itemId == null || itemId.isBlank()) return null; // spell or natural attack — nothing thrown
+        if (!isRangedReach(attack.getReach())) return null;
+        // Reuse the weapon's own art where the item resolves; fall back to an arrow if the stat
+        // block names an item we don't have loaded.
+        String fromWeapon = projectileFor(io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(itemId));
+        return fromWeapon != null ? fromWeapon : "arrow";
+    }
+
+    /**
+     * Is this stat-block reach a ranged attack?
+     *
+     * <p>Two shapes appear in content: a normal/long pair ("80/320 ft.") and a single distance
+     * ("120 ft."). Melee reach is 5 or 10 ft, so a lone distance beyond that is a shot — checking
+     * only for the "/" would miss the single-distance form.
+     */
+    private static boolean isRangedReach(String reach) {
+        if (reach == null) return false;
+        if (reach.contains("/")) return true;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(reach);
+        return m.find() && Integer.parseInt(m.group(1)) > 10;
+    }
+
     /** True if this projectile is one of our cosmetic ones (so it must never deal damage). */
     public static boolean isCosmetic(Entity entity) {
         return entity != null && entity.getPersistentDataContainer().has(COSMETIC_KEY, PersistentDataType.BYTE);
