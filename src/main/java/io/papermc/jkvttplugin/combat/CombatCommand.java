@@ -11,6 +11,8 @@ import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import io.papermc.jkvttplugin.data.loader.WeaponLoader;
+import io.papermc.jkvttplugin.util.ItemUtil;
 import io.papermc.jkvttplugin.data.model.DndWeapon;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
@@ -1582,28 +1584,32 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         String weaponOrAttackName;
 
         if (attacker.isPlayer()) {
-            // Players MUST name a weapon: the last token is the weapon (or 'fist'), the rest is the target.
-            if (positionalArgs.size() < 2) {
-                player.sendMessage(Component.text("Name your weapon: /combat attack <target> <weapon>", NamedTextColor.RED));
-                player.sendMessage(Component.text("Tab-complete to see your weapons, or type 'unarmed' for an unarmed strike.", NamedTextColor.GRAY));
+            // The weapon is the LAST token — but only when that token really is one of the
+            // player's weapons. Otherwise treat every token as the target's name, which keeps
+            // multi-word targets working ("/combat attack Kobold Scout") and lets us offer a
+            // clickable weapon picker instead of a dead-end "name your weapon" error.
+            List<String> owned = AttackHandler.getWeaponIdsInInventory(player);
+            String lastToken = positionalArgs.get(positionalArgs.size() - 1);
+            boolean lastIsWeapon = positionalArgs.size() >= 2
+                    && (lastToken.equalsIgnoreCase("unarmed") || owned.contains(lastToken.toLowerCase()));
+
+            if (!lastIsWeapon) {
+                String targetName = stripQuotes(String.join(" ", positionalArgs));
+                target = findCombatantByName(session, targetName);
+                if (target == null) {
+                    player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED));
+                    return;
+                }
+                promptWeaponChoice(player, target, owned);
                 return;
             }
-            weaponOrAttackName = positionalArgs.get(positionalArgs.size() - 1);
+
+            weaponOrAttackName = lastToken.equalsIgnoreCase("unarmed") ? "unarmed" : lastToken.toLowerCase();
             String targetName = String.join(" ", positionalArgs.subList(0, positionalArgs.size() - 1));
             target = findCombatantByName(session, stripQuotes(targetName));
             if (target == null) {
                 player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED));
                 return;
-            }
-            // Validate the weapon: 'unarmed' or an item actually in the player's inventory.
-            if (weaponOrAttackName.equalsIgnoreCase("unarmed")) {
-                weaponOrAttackName = "unarmed";
-            } else if (!AttackHandler.getWeaponIdsInInventory(player).contains(weaponOrAttackName.toLowerCase())) {
-                player.sendMessage(Component.text("You don't have a weapon called '" + weaponOrAttackName + "'.", NamedTextColor.RED));
-                player.sendMessage(Component.text("Tab-complete to see your weapons, or use 'unarmed'.", NamedTextColor.GRAY));
-                return;
-            } else {
-                weaponOrAttackName = weaponOrAttackName.toLowerCase();
             }
         } else {
             // Entities (DM-controlled) keep the flexible match; the attack name is optional.
@@ -1900,6 +1906,42 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return null;
         }
         return new AmountAndTarget(target, flat);
+    }
+
+    /**
+     * Offer the player's weapons as clickable buttons when they named a target but no weapon.
+     * Playtest note: "he wasn't being prompted to use a weapon" — telling someone to tab-complete
+     * is a dead end when we already know both the target and everything they're carrying.
+     */
+    private void promptWeaponChoice(Player player, Combatant target, List<String> owned) {
+        String targetName = target.getDisplayName();
+        String targetArg = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
+
+        player.sendMessage(Component.text("⚔ Attack ", NamedTextColor.GOLD)
+                .append(Component.text(targetName, NamedTextColor.YELLOW))
+                .append(Component.text(" with which weapon?", NamedTextColor.GOLD)));
+
+        Component row = Component.text("   ", NamedTextColor.GRAY);
+        String heldId = ItemUtil.getItemId(player.getInventory().getItemInMainHand());
+        for (String weaponId : owned) {
+            DndWeapon weapon = WeaponLoader.getWeapon(weaponId);
+            if (weapon == null) continue;
+            boolean held = weaponId.equalsIgnoreCase(heldId);
+            // The weapon in hand is the likely pick, so make it visually obvious.
+            row = row.append(Component.text("[" + weapon.getName() + (held ? " ✋" : "") + "] ",
+                            held ? NamedTextColor.GREEN : NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                    .clickEvent(ClickEvent.runCommand("/combat attack " + targetArg + " " + weaponId))
+                    .hoverEvent(HoverEvent.showText(Component.text(weapon.getDamage() + " " + weapon.getDamageType()
+                            + (held ? "\n(in your hand)" : "")))));
+        }
+        row = row.append(Component.text("[Unarmed] ", NamedTextColor.GRAY, TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.runCommand("/combat attack " + targetArg + " unarmed"))
+                .hoverEvent(HoverEvent.showText(Component.text("An unarmed strike."))));
+        player.sendMessage(row);
+
+        if (owned.isEmpty()) {
+            player.sendMessage(Component.text("   (No weapons found in your inventory.)", NamedTextColor.DARK_GRAY));
+        }
     }
 
     private void handleDamage(Player dm, String[] args) {
