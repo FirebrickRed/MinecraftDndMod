@@ -62,8 +62,12 @@ gradlew clean build
 The plugin loads D&D content (races, classes, spells, weapons, armor, items) from YAML files in `DMContent/`. Use `/dm reload` in-game to reload data without restarting the server.
 
 ### Testing Character Creation
-1. Use `/character create` to start the character creation flow
-2. Alternatively, right-click a paper item named "Character Sheet" to open the creation menu
+1. Use `/character create` to start the character creation flow. This also hands the player a
+   **"Create Character"** paper — right-clicking it re-opens the in-progress creation menu, so
+   closing out isn't destructive. On completion the paper is swapped for the real Character Sheet.
+2. `CharacterSheetManager.giveCreationPaperIfAbsent` / `removeCreationPapers` manage that paper;
+   `CreationNameListener` handles the in-chat name step. (The old `CharacterNameListener` and
+   `AnvilNameListener` were dead iterations and have been removed.)
 3. Character data persists to `plugins/jkvttplugin/Saved/Characters/` as YAML files
 
 ### Testing Character Features
@@ -235,9 +239,15 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - Spellbook UI shows all known spells with spell slots by level
 
 **Equipment System:**
-- Weapons/armor/items have custom NBT data for identification
-- `WeaponListener` handles weapon interactions (showing attack modifiers)
+- Weapons/armor/items have custom NBT data for identification — all via the shared `item_id` tag
+  (`ItemUtil.getItemId`). There is no `armor_id`/`weapon_id` key; anything reading one is a bug.
+- `WeaponListener` handles weapon interactions and the **left-click attack prompt** (#189)
 - `CharacterSheet` auto-equips armor/shields during character creation if proficient
+- **Live equip tracking (#31):** `ArmorEquipListener` re-reads the chestplate and off-hand slots on
+  any event that could change them (click, drag, off-hand swap key, right-click-to-equip, drop,
+  join, respawn) and updates `equippedArmor`/`equippedShield`, which recalculates AC and persists.
+  Body armor is the chestplate slot (`LEATHER_`/`CHAINMAIL_`/`IRON_CHESTPLATE` by category), a
+  shield is the off-hand (vanilla `SHIELD`) — real Minecraft items in real slots.
 - Equipment choices during character creation handled via `PendingChoice` system
 
 **Racial Traits System (Issue #51):**
@@ -502,6 +512,8 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
 - **Roll:** `/roll <XdY[+Z]>` (alias of the old `/rolldice`).
 - **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `finished`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`, `cast`, `save`, `use`, `condition`, `reactions`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.
   - **Roll input (#183):** a d20 action takes one bare keyword — `autoRoll` (game rolls, applies advantage → 2d20), `manualRoll <n>` (you rolled it, game adds mods), or `total <n>` (final, nothing added). Damage uses `manualRoll <n>` / `autoRoll <dice>` / a flat `<amount>`; the **damage type is automatic** (`type <t>` overrides). There is **no** `--roll`/`--total`/`--type` — those aliases were removed. `RollService.parseInput`/`RollInput` is the one parser; `RollService.resolve(...)` applies reroll (Lucky) + advantage. The out-of-combat `/character check|save|loot` roller is separate (`RollOptionsMenuHandler`).
+  - **Attacking (#189):** on your turn, holding a weapon, **left-click** the enemy (or left-click while looking at them) and `WeaponListener` hands you the filled-in `/combat attack`. The click only *prompts* — the roll still goes through the command. **Right-click never attacks**; it means "use" (spell focus, area-effect confirm #173), and is suppressed only for ranged weapons so a bow does not loose a real arrow. Left-clicking a combatant is always cancelled so a punch never damages the armor stand they are rendered on.
+  - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
 - **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `teleport`, `info`, `trade`, `spawngroup`, `cleanup`, `shop <create|add|restock|view>`.
 - **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
 
@@ -517,7 +529,7 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 - ❌ Feats
 - ❌ Conditional spell application (Genie patron, Lunar Sorcery)
 - ❌ Conditional advantages application
-- ⚠️ Combat system — largely implemented: initiative, turn/action economy, attack/spell rolls, damage/healing, temp HP, death saves (#97–#101); conditions with advantage/disadvantage (#103); the Effect Engine (#70: active buffs like Rage, the breath-weapon action path, passive features like Lucky/Savage/Relentless, resistances); AoE aim preview (#173); Hex (#178); and the autoRoll/manualRoll/total command redesign (#183). Remaining/rough edges: enemy-visibility polish (#102), combat crash recovery (#105), the action-economy menu (#176), and assorted spell mechanics (#182). Much of this is committed but largely un-playtested.
+- ⚠️ Combat system — largely implemented: initiative, turn/action economy, attack/spell rolls, damage/healing, temp HP, death saves (#97–#101); conditions with advantage/disadvantage (#103); the Effect Engine (#70: active buffs like Rage, the breath-weapon action path, passive features like Lucky/Savage/Relentless, resistances); AoE aim preview (#173); Hex (#178); and the autoRoll/manualRoll/total command redesign (#183). Remaining/rough edges: enemy-visibility polish (#102), the action-economy menu (#176), and assorted spell mechanics (#182). Combat crash recovery (#105) is largely done — sessions restore on boot; only the in-progress turn resets and stray turn-glow isn't scrubbed at startup. Much of this is committed but largely un-playtested.
 - ❌ Equipment management (equip/unequip in-game)
 - ❌ Persistence of player-chosen tool/language proficiencies (Issue #17)
 
@@ -527,7 +539,14 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 - Equipment inventory management
 - NPC interaction system
 - Encounter builder
-- Persist current spell slots and equipped armor (Issue #31)
+- Issue #188: [Epic] Magic items & attunement — magic item schema (`+N`, charges, recharge),
+  attunement tracking with a chest-style GUI, bonuses gated on being attuned. Deliberately scoped
+  *before* level-up (#153): we have shops, chests and loot with no treasure to put in them.
+  Attunement is a **short** rest in RAW (DMG 138), with `attunement.time` per item for the
+  artifact exceptions.
+- ~~Persist equipped armor~~ **done** (#31): equipped armor/shield save and restore, and
+  `ArmorEquipListener` now tracks them live. Current HP, temp HP, spell slots and class resources
+  persist event-driven — `CharacterSheet` flushes to disk on every change, plus a save per combat turn.
 
 ## Notes
 

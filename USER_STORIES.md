@@ -16,7 +16,11 @@ fine — just note "I didn't know what this meant" and move on.
    download a resource pack, say **yes** — that's what makes the fancy icons show up.
 2. **Open character creation** one of two ways:
    - Type **`/character create`** in chat (or the short version **`/char create`**), **or**
-   - Right-click the paper item named **"Character Sheet"** in your hotbar.
+   - Right-click the paper item named **"Create Character"** in your hotbar.
+
+   Starting creation hands you that **"Create Character"** paper. If you close the menu, right-click
+   the paper to pick up exactly where you left off — closing it never loses your progress. When you
+   finish, the paper is swapped for your real **Character Sheet**.
 3. A menu opens. The **top row** is your navigation — one button per step:
    **Race · Class · Background · Abilities · Choices · Spells · Name**, and a **bed** in
    the top-right corner that says **Finish**.
@@ -99,3 +103,21 @@ Jot down anything, even one-word reactions. A few prompts:
 7. **Would you want to play a game with the character you made?**
 
 Screenshots of anything confusing or broken are gold. Thank you! 🙏
+
+Interesting, when I shut down the server the kobolds I spawned are gone... that is supposed to haappen right?
+my brother also has a handaxe, greataxe, and javelin, but only fist and javelin appear. maybe we should switch fist to unarmed.
+when attacking an entity he does /combat attack Meepo he wasn't being prompted to use a weapon (javelin or unarmed)
+with needing to choose a weapon we should not prompt a --roll or anything until after the weapon is chosen.
+
+### Triage of the notes above
+
+- **Kobolds gone after shutdown** — known, tracked in #166 (entities don't persist across shutdown).
+- **Weapon choice on `/combat attack <target>`** — still open. Worth a ticket of its own: the
+  command should list the attacker's usable weapons and not prompt for a roll until one is picked.
+- **`--roll`** — gone. #183 replaced it with the bare keywords `autoRoll` / `manualRoll <n>` /
+  `total <n>`. Any prompt still emitting `--roll` is a bug (one such prompt, for possessed
+  entities, was fixed in `9ce3c05`).
+- **Attacking now has a click path (#189):** on your turn, holding a weapon, **left-click** the
+  enemy and the game fills in the command for you — which sidesteps the "which weapon?" problem
+  entirely for the held weapon. Note this was **right-click** in the build the first playtester
+  used; it changed deliberately, so say so at the table.
