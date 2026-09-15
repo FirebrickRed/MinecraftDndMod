@@ -193,7 +193,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         // Same roll grammar as combat: manualRoll <n> / autoRoll / total <n> (#183).
-        io.papermc.jkvttplugin.combat.RollService.RollInput roll = io.papermc.jkvttplugin.combat.RollService.parseInput(rest);
+        io.papermc.jkvttplugin.combat.RollService.RollInput roll = io.papermc.jkvttplugin.combat.RollService.parseInput(rest, player);
         io.papermc.jkvttplugin.loot.LootManager.roll(player, rest[0], roll.providedRoll(), roll.providedTotal(), roll.forceAuto());
         return true;
     }
@@ -210,7 +210,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         }
         String type = rest[0].toUpperCase();
         String value = rest[1].toUpperCase();
-        io.papermc.jkvttplugin.combat.RollService.RollInput input = io.papermc.jkvttplugin.combat.RollService.parseInput(rest);
+        io.papermc.jkvttplugin.combat.RollService.RollInput input = io.papermc.jkvttplugin.combat.RollService.parseInput(rest, player);
         CharacterSheet sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
         if (sheet == null) {
             player.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));

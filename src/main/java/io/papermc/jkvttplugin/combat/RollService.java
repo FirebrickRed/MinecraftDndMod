@@ -2,14 +2,22 @@ package io.papermc.jkvttplugin.combat;
 
 import io.papermc.jkvttplugin.config.PluginConfig;
 import io.papermc.jkvttplugin.util.DiceRoller;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import org.bukkit.command.CommandSender;
 
 /**
  * The one place a d20 action (attack, check, save, death save, loot) turns inputs into a result
- * (Issue #142). Three modes, keeping today's flag names:
- *   - a provided TOTAL  → used as-is, nothing added ({@code --total}).
- *   - a provided ROLL   → that die + the modifier ({@code --roll}).
- *   - neither           → PHYSICAL config: the caller must prompt for a die (returns {@code null});
- *                         AUTO config: the game rolls the die itself.
+ * (Issue #142). Three modes, spelled as bare keywords since #183:
+ *   - {@code total <n>}       → used as-is, nothing added.
+ *   - {@code manualRoll <n>}  → that die + the modifier.
+ *   - {@code autoRoll}        → the game rolls the die (advantage applied automatically).
+ *   - none of the above       → PHYSICAL config: the caller must prompt for a die (returns
+ *                               {@code null}); AUTO config: the game rolls the die itself.
+ *
+ * <p>The old {@code --roll} / {@code --total} / {@code --type} flags are gone. They used to be
+ * ignored silently, which let three prompts ship a command whose roll argument was quietly
+ * discarded — see {@link #parseInput(String[], CommandSender)}, which now rejects them loudly.
  */
 public final class RollService {
 
@@ -43,12 +51,32 @@ public final class RollService {
         return t.equals("autoroll") || t.equals("manualroll") || t.equals("total");
     }
 
-    /** Parse roll input (autoRoll / manualRoll &lt;n&gt; / total &lt;n&gt;) from a command's args. */
+    /**
+     * Flags still parsed somewhere in {@code /combat}. Anything else starting with {@code --} is
+     * dead syntax — either a stale prompt or a player's muscle memory from before #183.
+     */
+    private static final java.util.Set<String> LIVE_FLAGS = java.util.Set.of("--force", "--hidden", "--radius");
+
+    /** Parse without diagnostics. Prefer the {@code CommandSender} overload so stale syntax is caught. */
     public static RollInput parseInput(String[] args) {
+        return parseInput(args, null);
+    }
+
+    /**
+     * As {@link #parseInput(String[])}, but tells {@code who} when the input carries removed
+     * syntax instead of dropping it on the floor.
+     *
+     * <p>Only unknown {@code --flags} are reported. Supplying no roll keyword at all is a
+     * perfectly normal path — the caller prompts for a roll mode — so that isn't an error, and
+     * {@code /combat damage <target> <amount>} legitimately takes a bare number.
+     */
+    public static RollInput parseInput(String[] args, CommandSender who) {
         Integer providedRoll = null, providedTotal = null;
         boolean forceAuto = false;
+        java.util.List<String> stale = new java.util.ArrayList<>();
         for (int i = 0; i < args.length; i++) {
             String a = args[i].toLowerCase();
+            if (a.startsWith("--") && !LIVE_FLAGS.contains(a)) stale.add(args[i]);
             String next = (i + 1 < args.length) ? args[i + 1] : null;
             switch (a) {
                 case "autoroll" -> forceAuto = true; // optional trailing dice (e.g. 2d20) is ignored — advantage is auto-detected
@@ -64,7 +92,27 @@ public final class RollService {
                 default -> {}
             }
         }
+        if (who != null && !stale.isEmpty()) warnStaleSyntax(who, stale);
         return new RollInput(providedRoll, providedTotal, forceAuto);
+    }
+
+    /**
+     * Say plainly that the input used syntax that no longer exists, rather than silently ignoring
+     * it and resolving the roll some other way. If this fires from a prompt the player *clicked*,
+     * the prompt is the bug — so the message says so and asks them to report it.
+     */
+    private static void warnStaleSyntax(CommandSender who, java.util.List<String> stale) {
+        who.sendMessage(Component.text("⚠ Removed syntax: " + String.join(", ", stale), NamedTextColor.RED));
+        who.sendMessage(Component.text("Rolls now use bare keywords — ", NamedTextColor.YELLOW)
+                .append(Component.text("manualRoll <n>", NamedTextColor.WHITE))
+                .append(Component.text(" (you rolled it) · ", NamedTextColor.YELLOW))
+                .append(Component.text("autoRoll", NamedTextColor.WHITE))
+                .append(Component.text(" (game rolls) · ", NamedTextColor.YELLOW))
+                .append(Component.text("total <n>", NamedTextColor.WHITE))
+                .append(Component.text(" (final number).", NamedTextColor.YELLOW)));
+        who.sendMessage(Component.text("Your roll was NOT applied — run the command again. "
+                + "If you got this from clicking a prompt, that prompt is out of date: please report it.",
+                NamedTextColor.GRAY));
     }
 
     /**

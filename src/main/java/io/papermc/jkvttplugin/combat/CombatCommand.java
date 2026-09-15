@@ -424,7 +424,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        RollService.RollInput roll = RollService.parseInput(args);
+        RollService.RollInput roll = RollService.parseInput(args, player);
         int bonus = self.getInitiativeBonus();
         RollService.RollResult r = RollService.resolve(roll.providedRoll(), roll.providedTotal(), bonus,
                 (bonus >= 0 ? "+" : "") + bonus + "[DEX]", self.rerollsNat1(), Advantage.NONE, roll.forceAuto()); // initiative is a DEX check → Lucky applies
@@ -972,7 +972,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        RollService.RollInput roll = RollService.parseInput(args);
+        RollService.RollInput roll = RollService.parseInput(args, player);
         Integer providedRoll = roll.providedRoll();
         Integer providedTotal = roll.providedTotal();
 
@@ -1038,7 +1038,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         CombatSession session = resolveSession(player);
         if (session == null) return;
         boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
-        RollService.RollInput roll = RollService.parseInput(args);
+        RollService.RollInput roll = RollService.parseInput(args, player);
         String targetName = joinArgsExcludingFlags(args, 1);
 
         Combatant target;
@@ -1123,7 +1123,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        RollService.RollInput rRoll = RollService.parseInput(args);
+        RollService.RollInput rRoll = RollService.parseInput(args, player);
         Integer providedRoll = rRoll.providedRoll();
         Integer providedTotal = rRoll.providedTotal();
 
@@ -1550,7 +1550,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         // Parse the roll input: manualRoll <n> (you rolled it), autoRoll (game rolls), total <n>.
         boolean showMods = hasFlag(args, "showModifiers");
-        RollService.RollInput roll = RollService.parseInput(args);
+        RollService.RollInput roll = RollService.parseInput(args, player);
         Integer providedRoll = roll.providedRoll();
         Integer providedTotal = roll.providedTotal();
 
@@ -2177,7 +2177,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
         // Players roll their own death saves (trust-based): manualRoll <n>, or autoRoll / nothing to auto-roll.
-        Integer providedRoll = RollService.parseInput(args).providedRoll();
+        Integer providedRoll = RollService.parseInput(args, player).providedRoll();
         List<String> positional = collectPositionalArgs(args, 1);
 
         // DM may roll for a named downed player; otherwise you roll for yourself.
