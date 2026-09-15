@@ -1695,7 +1695,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return null; // can't determine positions — don't block the attack
         }
         double feet = a.distance(t) * 5.0;
-        double reach = (weapon != null && weapon.hasProperty("reach")) ? 10.0 : 5.0;
+        // The weapon's own reach in feet — so a homebrew 15 ft polearm reaches 15 ft, rather than
+        // everything with the Reach property being pinned at 10.
+        double reach = weapon != null ? weapon.getReachFeet() : 5.0;
         double tolerance = 2.5;
 
         boolean canThrowOrShoot = weapon != null && (weapon.isRanged() || weapon.hasProperty("thrown"));

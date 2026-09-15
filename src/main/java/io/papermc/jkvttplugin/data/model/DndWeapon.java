@@ -28,6 +28,7 @@ public class DndWeapon {
     private String customModel; // YAML custom_model: optional resource-pack model (opt-in, when pack art exists)
     private String material;    // YAML material: vanilla Minecraft item to render as (base + fallback)
     private String ammunition;  // YAML ammunition: the item id this weapon fires (#128)
+    private int reach;          // YAML reach: melee reach in feet; 0 = unset, meaning the default 5
 
     public DndWeapon() {}
 
@@ -41,6 +42,19 @@ public class DndWeapon {
 
     /** True if this weapon must consume ammunition to make a ranged attack. */
     public boolean usesAmmunition() { return hasProperty("ammunition"); }
+
+    /**
+     * How far this weapon can strike in melee, in feet. Defaults to 5 when the YAML says nothing,
+     * so every weapon written before {@code reach:} existed keeps its normal reach.
+     *
+     * <p>Distinct from {@link #getNormalRange()}: reach is how far you can stab, range is how far a
+     * ranged or thrown weapon travels. A thrown weapon has both.
+     */
+    public int getReachFeet() { return reach > 0 ? reach : 5; }
+    public void setReach(int reach) { this.reach = reach; }
+
+    /** True if this weapon strikes beyond a normal 5 ft melee (glaive, halberd, whip …). */
+    public boolean hasReach() { return getReachFeet() > 5; }
 
     public String getMaterial() { return material; }
     public void setMaterial(String material) { this.material = material; }
@@ -106,6 +120,11 @@ public class DndWeapon {
             props.append(String.join(", ", properties.stream()
                     .map(Util::prettify).toArray(String[]::new)));
             lore.add(Component.text(props.toString(), NamedTextColor.GRAY));
+        }
+
+        // Reach, when it's beyond a normal melee swing — the whole point of a glaive.
+        if (hasReach()) {
+            lore.add(Component.text("Reach: " + getReachFeet() + " ft", NamedTextColor.GRAY));
         }
 
         // Add range for ranged weapons

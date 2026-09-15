@@ -140,10 +140,15 @@ public class WeaponListener implements Listener {
         return new AttackContext(session, attacker, weapon, weaponId);
     }
 
+    /**
+     * How far the aim ray-trace reaches, in blocks (1 block = 5 ft). Melee uses the weapon's own
+     * reach, so a glaive can target at 10 ft where a dagger can't — the 3-block floor keeps
+     * ordinary melee aiming forgiving.
+     */
     private static double rangeBlocks(DndWeapon weapon) {
         double r = weapon.isRanged()
                 ? Math.min((weapon.getLongRange() > 0 ? weapon.getLongRange() : weapon.getNormalRange()) / 5.0, 60.0)
-                : 3.0;
+                : weapon.getReachFeet() / 5.0;
         return Math.max(3.0, r);
     }
 

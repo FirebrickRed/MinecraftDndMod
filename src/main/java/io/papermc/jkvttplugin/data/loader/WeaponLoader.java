@@ -88,6 +88,7 @@ public class WeaponLoader {
         weapon.setDescription((String) data.get("description"));
         weapon.setMaterial((String) data.get("material"));         // vanilla Minecraft item
         weapon.setAmmunition((String) data.get("ammunition")); // item id this weapon fires (#128)
+        if (data.get("reach") instanceof Number reach) weapon.setReach(reach.intValue()); // melee reach in feet
         weapon.setCustomModel((String) data.get("custom_model"));  // optional resource-pack model
 
         // Parse properties

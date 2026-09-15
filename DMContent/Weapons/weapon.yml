@@ -295,3 +295,86 @@ warhammer:
     currency: gold
   description: "A heavy two-handed-capable hammer. 1d10 when wielded with two hands."
   material: MACE
+
+# ── Reach weapons ────────────────────────────────────────────────────────────────────────────
+# The `reach:` key is the weapon's melee reach in feet. Omit it and a melee weapon is 5 ft — so
+# every existing weapon keeps working untouched. The Reach property in 5e adds 5 ft, giving these
+# 10 ft; homebrew can put any number here (a 15 ft polearm is just `reach: 15`).
+#
+# This is distinct from `range:`, which is how far a RANGED or THROWN weapon travels (normal/long).
+# A weapon can have both: reach is how far you can stab, range is how far you can throw.
+
+glaive:
+  name: "Glaive"
+  category: "martial"
+  type: "melee"
+  damage: "1d10"
+  damage_type: "slashing"
+  properties: ["heavy", "reach", "two-handed"]
+  reach: 10
+  weight: "6 lb"
+  cost:
+    amount: 20
+    currency: gold
+  description: "A long polearm with a single-edged blade. Strikes at 10 feet."
+  material: IRON_AXE
+
+halberd:
+  name: "Halberd"
+  category: "martial"
+  type: "melee"
+  damage: "1d10"
+  damage_type: "slashing"
+  properties: ["heavy", "reach", "two-handed"]
+  reach: 10
+  weight: "6 lb"
+  cost:
+    amount: 20
+    currency: gold
+  description: "An axe blade and spike on a long haft. Strikes at 10 feet."
+  material: IRON_AXE
+
+pike:
+  name: "Pike"
+  category: "martial"
+  type: "melee"
+  damage: "1d10"
+  damage_type: "piercing"
+  properties: ["heavy", "reach", "two-handed"]
+  reach: 10
+  weight: "18 lb"
+  cost:
+    amount: 5
+    currency: gold
+  description: "An enormous spear. Unwieldy up close, deadly at 10 feet."
+  material: TRIDENT
+
+lance:
+  name: "Lance"
+  category: "martial"
+  type: "melee"
+  damage: "1d12"
+  damage_type: "piercing"
+  properties: ["reach", "special"]
+  reach: 10
+  weight: "6 lb"
+  cost:
+    amount: 10
+    currency: gold
+  description: "A cavalry lance. Disadvantage against targets within 5 feet, and it needs two hands unless you're mounted."
+  material: TRIDENT
+
+whip:
+  name: "Whip"
+  category: "martial"
+  type: "melee"
+  damage: "1d4"
+  damage_type: "slashing"
+  properties: ["finesse", "reach"]
+  reach: 10
+  weight: "3 lb"
+  cost:
+    amount: 2
+    currency: gold
+  description: "A braided leather lash. Light damage, but it keeps enemies at 10 feet."
+  material: LEAD
