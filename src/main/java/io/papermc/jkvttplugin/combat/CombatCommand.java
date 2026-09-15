@@ -1913,6 +1913,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * Playtest note: "he wasn't being prompted to use a weapon" — telling someone to tab-complete
      * is a dead end when we already know both the target and everything they're carrying.
      */
+    /**
+     * The command a weapon button fills in. Trailing space on purpose: pressing Enter as-is runs
+     * the attack (which then asks for a roll mode), but the cursor is already positioned to append
+     * "manualRoll 14" for anyone who rolled a physical die.
+     */
+    private static String weaponCommand(String targetArg, String weaponId) {
+        return "/combat attack " + targetArg + " " + weaponId + " ";
+    }
+
     private void promptWeaponChoice(Player player, Combatant target, List<String> owned) {
         String targetName = target.getDisplayName();
         String targetArg = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
@@ -1930,14 +1939,20 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // The weapon in hand is the likely pick, so make it visually obvious.
             row = row.append(Component.text("[" + weapon.getName() + (held ? " ✋" : "") + "] ",
                             held ? NamedTextColor.GREEN : NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                    .clickEvent(ClickEvent.runCommand("/combat attack " + targetArg + " " + weaponId))
+                    .clickEvent(ClickEvent.suggestCommand(weaponCommand(targetArg, weaponId)))
                     .hoverEvent(HoverEvent.showText(Component.text(weapon.getDamage() + " " + weapon.getDamageType()
-                            + (held ? "\n(in your hand)" : "")))));
+                            + (held ? "\n(in your hand)" : "")
+                            + "\n\nFills your chat box — press Enter to pick your roll mode,"
+                            + "\nor add 'manualRoll <your d20>' if you rolled a real die."))));
         }
         row = row.append(Component.text("[Unarmed] ", NamedTextColor.GRAY, TextDecoration.UNDERLINED)
-                .clickEvent(ClickEvent.runCommand("/combat attack " + targetArg + " unarmed"))
-                .hoverEvent(HoverEvent.showText(Component.text("An unarmed strike."))));
+                .clickEvent(ClickEvent.suggestCommand(weaponCommand(targetArg, "unarmed")))
+                .hoverEvent(HoverEvent.showText(Component.text("An unarmed strike."
+                        + "\n\nFills your chat box — press Enter to pick your roll mode,"
+                        + "\nor add 'manualRoll <your d20>' if you rolled a real die."))));
         player.sendMessage(row);
+        player.sendMessage(Component.text("   Clicking fills the command — press Enter to confirm, or add your own d20 roll first.",
+                NamedTextColor.DARK_GRAY));
 
         if (owned.isEmpty()) {
             player.sendMessage(Component.text("   (No weapons found in your inventory.)", NamedTextColor.DARK_GRAY));
