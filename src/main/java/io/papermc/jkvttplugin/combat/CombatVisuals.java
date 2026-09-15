@@ -87,19 +87,29 @@ public final class CombatVisuals {
         if (attack == null) return null;
         String itemId = attack.getItem();
         if (itemId == null || itemId.isBlank()) return null; // spell or natural attack — nothing thrown
-        if (!isRangedReach(attack.getReach())) return null;
-        // Reuse the weapon's own art where the item resolves; fall back to an arrow if the stat
-        // block names an item we don't have loaded.
-        String fromWeapon = projectileFor(io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(itemId));
-        return fromWeapon != null ? fromWeapon : "arrow";
+
+        // Prefer the weapon's own data: it already knows whether it's ranged or thrown, and what it
+        // renders as. That keeps homebrew working — a custom weapon needs no code, just its YAML.
+        io.papermc.jkvttplugin.data.model.DndWeapon weapon =
+                io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(itemId);
+        if (weapon != null) return projectileFor(weapon);
+
+        // The stat block names an item we don't have loaded — all we can go on is the reach.
+        return isRangedReach(attack.getReach()) ? "arrow" : null;
     }
 
     /**
-     * Is this stat-block reach a ranged attack?
+     * Is this stat-block reach a ranged attack? Last-resort guess, used only when the attack names
+     * an item we can't resolve — {@link #projectileFor(io.papermc.jkvttplugin.data.model.DndAttack)}
+     * asks the weapon itself first.
      *
      * <p>Two shapes appear in content: a normal/long pair ("80/320 ft.") and a single distance
-     * ("120 ft."). Melee reach is 5 or 10 ft, so a lone distance beyond that is a shot — checking
-     * only for the "/" would miss the single-distance form.
+     * ("120 ft."). Checking only for the "/" would miss the second, so a lone distance past normal
+     * melee reach counts as ranged.
+     *
+     * <p>Caveat for homebrew: a melee attack with reach beyond 10 ft (a giant's club, say) would be
+     * read as ranged here. That only bites if the weapon is also missing from the loaders, and the
+     * cost is a stray cosmetic arrow — but it's why the weapon lookup comes first.
      */
     private static boolean isRangedReach(String reach) {
         if (reach == null) return false;
