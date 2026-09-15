@@ -40,6 +40,11 @@ public class CharacterSheet {
     private int tempHealth;
     private int armorClass;
 
+    // Event-driven persistence (#31): once a sheet is live (created or loaded), any state-changing
+    // mutator flushes it straight to disk — no timed autosave. Stays false while the sheet is being
+    // built/deserialized so partial state isn't written mid-construction.
+    private transient boolean savable = false;
+
     private List<ItemStack> equipment = new ArrayList<>();
     private DndArmor equippedArmor;
     private DndArmor equippedShield;
@@ -182,13 +187,8 @@ public class CharacterSheet {
         sheet.initializeSpellSlots();
         sheet.initializeClassResources();
 
-        // ToDo: Load equipped armor from persistence (Issue #31)
-        // Currently equippedArmor is null on load, so AC will be wrong if player was wearing armor
-        // For now, recalculate AC from base stats (will be correct once armor is re-equipped)
-        // When implementing Issue #31:
-        // 1. Save equippedArmor.getId() and equippedShield.getId() to YAML
-        // 2. Load armor/shield references from ArmorLoader in loadFromData()
-        // 3. Remove armorClass parameter entirely and always calculate from equipped gear
+        // Base AC from stats. The persistence loader re-equips the saved armor/shield immediately
+        // after this, which recalculates AC properly (#31).
         sheet.calculateArmorClass();
 
         return sheet;
@@ -798,10 +798,12 @@ public class CharacterSheet {
     public void equipArmor(DndArmor armor) {
         this.equippedArmor = armor;
         calculateArmorClass();
+        persist();
     }
     public void unequipArmor() {
         this.equippedArmor = null;
         calculateArmorClass();
+        persist();
     }
 
     public DndArmor getEquippedShield() {
@@ -810,10 +812,12 @@ public class CharacterSheet {
     public void equipShield(DndArmor shield) {
         this.equippedShield = shield;
         calculateArmorClass();
+        persist();
     }
     public void unequipShield() {
         this.equippedShield = null;
         calculateArmorClass();
+        persist();
     }
 
     /**
@@ -887,11 +891,29 @@ public class CharacterSheet {
     // ==================== Combat HP (Issue #100) ====================
 
     /**
+     * Mark this sheet as live so future mutations auto-save. Called by the persistence layer once
+     * the sheet has been created or loaded into memory; before that, mutators don't touch disk.
+     */
+    public void setSavable(boolean savable) {
+        this.savable = savable;
+    }
+
+    /**
+     * Flush this sheet to disk immediately (#31). No-op until the sheet is live (see {@link #savable}),
+     * so construction/deserialization don't write partial state. This replaces the old 5-minute timer:
+     * every state-changing mutator below calls it, so a crash loses nothing but the in-progress turn.
+     */
+    private void persist() {
+        if (savable) CharacterPersistenceLoader.saveCharacter(this);
+    }
+
+    /**
      * Heal this character, never exceeding max HP. Ignores non-positive amounts.
      */
     public void heal(int amount) {
         if (amount <= 0) return;
         currentHealth = Math.min(totalHealth, currentHealth + amount);
+        persist();
     }
 
     /**
@@ -900,6 +922,7 @@ public class CharacterSheet {
     public void setTemporaryHp(int amount) {
         if (amount < 0) return;
         tempHealth = Math.max(tempHealth, amount);
+        persist();
     }
 
     /**
@@ -925,6 +948,7 @@ public class CharacterSheet {
 
         // Any remaining damage reduces current HP, never below 0 (MVP: no negative HP).
         currentHealth = Math.max(0, currentHealth - damage);
+        persist();
     }
 
     /**
@@ -1130,6 +1154,7 @@ public class CharacterSheet {
 
     public void gainTempHealth(int tempHP) {
         tempHealth = Math.max(tempHealth, tempHP);
+        persist();
     }
 
 //    public int getTotalLevel() {
@@ -1163,8 +1188,10 @@ public class CharacterSheet {
      * state (#31): initializeSpellSlots() fills to full on load, then the spent amount is reapplied.
      */
     public void setSpellSlotsRemaining(int level, int remaining) {
+        // (persist() below is a no-op during load, when this is called to reapply spent slots.)
         if (level < 1 || level > 9) return;
         spellSlots[level - 1] = Math.max(0, Math.min(maxSpellSlots[level - 1], remaining));
+        persist();
     }
 
     public DndSpell getConcentratingOn() {
@@ -1218,6 +1245,7 @@ public class CharacterSheet {
         if (level < 1 || level > 9) return;
         if (spellSlots[level - 1] > 0) {
             spellSlots[level - 1] -= 1;
+            persist();
         }
     }
 
@@ -1486,6 +1514,7 @@ public class CharacterSheet {
 
         currentHealth = totalHealth;
         tempHealth = 0;
+        persist();
     }
 
     public void shortRest() {
@@ -1506,5 +1535,6 @@ public class CharacterSheet {
 
         // Warlocks recover Pact Magic slots on short rest
         // ToDo: Implement when Warlock-specific slot recovery is added
+        persist();
     }
 }
