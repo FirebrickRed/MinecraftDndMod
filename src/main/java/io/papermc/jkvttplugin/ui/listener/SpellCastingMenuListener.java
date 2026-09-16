@@ -66,6 +66,10 @@ public class SpellCastingMenuListener implements Listener {
             return;
         }
 
+        // In combat, hand off to /combat cast so the spell actually resolves (attack/save/damage) —
+        // don't consume anything here, the cast flow owns slots and concentration (#196).
+        if (routeToCombatCast(player, cantrip)) return;
+
         // Handle concentration
         handleConcentration(player, sheet, cantrip);
 
@@ -101,6 +105,10 @@ public class SpellCastingMenuListener implements Listener {
             player.sendMessage(Component.text("Spell not found: " + spellName, NamedTextColor.RED));
             return;
         }
+
+        // In combat, hand off to /combat cast (see handleCantripCast). Slot/concentration are the
+        // cast flow's job, so nothing is consumed here.
+        if (routeToCombatCast(player, spell)) return;
 
         // Check if this is an innate spell
         InnateSpell innateSpell = sheet.getAvailableInnateSpells().stream()
@@ -150,6 +158,34 @@ public class SpellCastingMenuListener implements Listener {
         player.closeInventory();
 
         // ToDo: Out-of-combat spell effects (#152). In-combat casting resolves through /combat cast.
+    }
+
+    /**
+     * If the player is in an active combat, close the menu and fill the {@code /combat cast}
+     * command in chat so the real cast flow resolves the spell (attack roll, save, damage) — the
+     * spellbook alone only consumed a slot and printed a message (#196). Returns true if it routed.
+     *
+     * <p>A targeted spell fills with a trailing space for the target name (tab-completes to
+     * combatants); a self / AoE spell fills the whole command ready to send. Nothing is consumed
+     * here — {@code /combat cast} owns slots and concentration, so routing can't double-spend.
+     */
+    private boolean routeToCombatCast(Player player, DndSpell spell) {
+        io.papermc.jkvttplugin.combat.CombatSession session =
+                io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(player.getUniqueId());
+        if (session == null || session.isSetupPhase()) return false; // out of combat → #152 path
+
+        player.closeInventory();
+        boolean needsTarget = !spell.isAoe()
+                && !(spell.getRange() != null && spell.getRange().equalsIgnoreCase("Self"));
+        String cmd = "/combat cast " + spell.getId() + (needsTarget ? " " : "");
+        player.sendMessage(Component.text("✨ Cast " + spell.getName() + " — ", NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text(needsTarget ? "[click, then name your target]" : "[click to cast]",
+                        NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                        .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))
+                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(
+                                needsTarget ? "Fills: " + cmd + "<target> — then pick your roll mode."
+                                            : "Fills: " + cmd + " — press Enter to cast.")))));
+        return true;
     }
 
     private void handleSlotSelection(Player player, CharacterSheet sheet, String levelStr) {
