@@ -56,6 +56,17 @@ public class SpellLoader {
                         }
                         spells.put(id, spell);
                         LOGGER.fine("Loaded spell: " + spell.getName());
+
+                        // A spell that declares a damage TYPE but no damage DICE is almost certainly
+                        // missing its dice (the Frostbite bug → "Apply damage (1)"). A condition-only
+                        // save spell (Hold Person) has neither, so it isn't flagged. See
+                        // docs/authoring-spells.md.
+                        if (spell.getDamageType() != null && !spell.getDamageType().isBlank()
+                                && (spell.getDamage() == null || spell.getDamage().isBlank())) {
+                            LOGGER.warning("Spell '" + id + "' (" + file.getName() + ") has damage_type '"
+                                    + spell.getDamageType() + "' but no damage dice — add a `damage:` value,"
+                                    + " or remove damage_type if it deals no damage.");
+                        }
                     } catch (Exception e) {
                         LOGGER.severe("Failed to load spell: " + spellKey + " from " + file.getName() + ": " + e.getMessage());
                     }

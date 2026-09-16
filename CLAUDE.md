@@ -401,10 +401,17 @@ options:
 
 ### Adding a New Spell
 
-1. Create or edit YAML in `DMContent/Spells/*.yml`
-2. Define: `name`, `level`, `school`, `casting_time`, `range`, `components`, `duration`, `description`, `classes` (spell list)
-3. Run `/dm reload`
-4. Spell will appear in `SpellSelectionMenu` for classes that have it in their spell list
+**Full guide: `docs/authoring-spells.md`** — the spell shapes (attack / save / AoE / healing /
+social / utility), every YAML field, which shapes aren't supported yet (multi-beam, attack-then-AoE,
+smites), and the load-time validation. Quick version:
+
+1. Create or edit YAML in `DMContent/Spells/*.yml` (any file; ids must be unique across all of them)
+2. Define the common fields (`name`, `level`, `school`, `casting_time`, `range`, `components`,
+   `duration`, `description`, `classes`) plus the fields for its shape
+3. A damaging spell **must** have `damage:` (dice) — declaring only `damage_type:` triggers a
+   load warning and the "Apply damage (1)" bug
+4. Run `/dm reload` and read the console — a clean load is silent; warnings list anything malformed
+5. Spell appears in `SpellSelectionMenu` for classes that have it in their spell list
 
 ### Adding Racial Innate Spells
 
