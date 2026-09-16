@@ -126,6 +126,29 @@ public class WeaponListener implements Listener {
     }
 
     /**
+     * Last line of defence: no D&D bow or crossbow ever looses a real arrow.
+     *
+     * <p>Suppressing the right-click covers the ordinary case, but not every one — a shot from the
+     * off-hand skips the main-hand-only guard, and a crossbow loaded earlier fires without a fresh
+     * interact. A playtest found the worst version of that leak: a crossbow killed a real player in
+     * combat. This fires for every bow and crossbow shot however it was triggered, so Minecraft can
+     * never deal damage the D&D layer didn't decide.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onShootBow(org.bukkit.event.entity.EntityShootBowEvent event) {
+        String bowId = ItemUtil.getItemId(event.getBow());
+        if (bowId == null) return;
+        DndWeapon weapon = WeaponLoader.getWeapon(bowId);
+        if (weapon == null || !weapon.isRanged()) return;
+
+        event.setCancelled(true);
+        if (event.getEntity() instanceof Player shooter) {
+            shooter.sendActionBar(Component.text(weapon.getName()
+                    + " fires through /combat attack — left-click your target.", NamedTextColor.GRAY));
+        }
+    }
+
+    /**
      * Left-click the enemy directly. This arrives as real Minecraft damage, so it is always
      * cancelled for a combatant — otherwise a punch would chip away at (or in creative, instantly
      * delete) the armor stand the enemy is rendered on.
