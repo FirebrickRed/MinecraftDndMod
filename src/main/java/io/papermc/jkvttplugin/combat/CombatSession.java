@@ -281,6 +281,33 @@ public class CombatSession {
     }
 
     /**
+     * Find a combatant in this session by id (a player UUID, or an entity's instance id).
+     */
+    public Combatant getCombatantById(UUID id) {
+        if (id == null) return null;
+        for (Combatant c : combatants) {
+            if (id.equals(c.getId())) {
+                return c;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Rename a combatant mid-fight (#194). The base name is what the duplicate numbering works from,
+     * so it has to change too — otherwise the renamed creature keeps answering to its old "#2" tag.
+     * Re-runs the numbering, refreshes the tracker, and saves so a crash doesn't restore the old name.
+     */
+    public void renameCombatant(Combatant combatant, String newName) {
+        if (combatant == null || newName == null || newName.isBlank()) return;
+        combatant.setBaseName(newName);
+        combatant.setDisplayName(newName);
+        rebuildEntityDisplayNames();
+        updateScoreboard();
+        CombatPersistence.save(this);
+    }
+
+    /**
      * Mark a combatant as surprised.
      */
     public void markSurprised(Combatant combatant) {

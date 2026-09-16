@@ -538,7 +538,8 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
   - **Roll input (#183):** a d20 action takes one bare keyword — `autoRoll` (game rolls, applies advantage → 2d20), `manualRoll <n>` (you rolled it, game adds mods), or `total <n>` (final, nothing added). Damage uses `manualRoll <n>` / `autoRoll <dice>` / a flat `<amount>`; the **damage type is automatic** (`type <t>` overrides). There is **no** `--roll`/`--total`/`--type` — those aliases were removed. `RollService.parseInput`/`RollInput` is the one parser; `RollService.resolve(...)` applies reroll (Lucky) + advantage. The out-of-combat `/character check|save|loot` roller is separate (`RollOptionsMenuHandler`).
   - **Attacking (#189):** on your turn, holding a weapon, **left-click** the enemy (or left-click while looking at them) and `WeaponListener` hands you the filled-in `/combat attack`. The click only *prompts* — the roll still goes through the command. **Right-click never attacks**; it means "use" (spell focus, area-effect confirm #173), and is suppressed only for ranged weapons so a bow does not loose a real arrow. Left-clicking a combatant is always cancelled so a punch never damages the armor stand they are rendered on.
   - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
-- **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `teleport`, `info`, `trade`, `cleanup`, `shop <create|add|restock|view>`. (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
+- **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <create|add|restock|view>`. (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
+  - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dmentity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).
 - **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
 
 **DM authorization:** a "DM" is an op, a holder of the `jkvtt.dm` permission node, OR a
@@ -563,6 +564,11 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 - Equipment inventory management
 - NPC interaction system
 - Encounter builder
+- Issue #194: [Epic] Live entity instances — a spawned entity is a thin wrapper over a *shared*
+  template (only name/HP/dead/shop are per-instance), so you can't arm one guard differently from
+  its siblings. Per-instance overrides for AC, abilities, attacks and gear; a `/dmentity edit` GUI;
+  and an alias/reveal model to replace the binary `???` hidden flag (supersedes that half of #102).
+  `/dmentity rename` is the first slice, already landed.
 - Issue #188: [Epic] Magic items & attunement — magic item schema (`+N`, charges, recharge),
   attunement tracking with a chest-style GUI, bonuses gated on being attuned. Deliberately scoped
   *before* level-up (#153): we have shops, chests and loot with no treasure to put in them.

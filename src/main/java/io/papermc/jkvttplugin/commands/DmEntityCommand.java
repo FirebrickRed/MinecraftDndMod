@@ -1,6 +1,8 @@
 package io.papermc.jkvttplugin.commands;
 
 
+import io.papermc.jkvttplugin.combat.Combatant;
+import io.papermc.jkvttplugin.combat.CombatSession;
 import io.papermc.jkvttplugin.data.loader.ArmorLoader;
 import io.papermc.jkvttplugin.data.loader.EntityLoader;
 import io.papermc.jkvttplugin.data.loader.ItemLoader;
@@ -78,6 +80,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "spawn" -> handleSpawn(sender, args);
             case "list" -> handleList(sender, args);
             case "remove" -> handleRemove(sender, args);
+            case "rename" -> handleRename(sender, args);
             case "revive" -> handleRevive(sender, args);
             case "teleport" -> handleTeleport(sender, args);
             case "info" -> handleInfo(sender, args);
@@ -335,6 +338,90 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         // Open stat block menu
         EntityStatBlockMenu.open(player, instance);
+    }
+
+    // ==================== RENAME SUBCOMMAND (#194) ====================
+
+    /**
+     * Rename a spawned entity. A display name is a per-instance snapshot taken at spawn, so editing
+     * {@code name:} in the YAML and reloading only affects creatures spawned afterwards — one already
+     * standing in the world needs this. Remove-and-respawn is not an equivalent workaround: that rolls
+     * a fresh instance id and abandons the shop stock, HP and loot state keyed to the old one.
+     *
+     * Either name may be quoted, and an unquoted new name runs to the end of the line, so both work:
+     *   /dmentity rename "The Kindler" "Alira the Kindler"
+     *   /dmentity rename Kindler Alira the Kindler
+     */
+    private void handleRename(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /dmentity rename <current name> <new name>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Quote a name that has spaces: /dmentity rename \"The Kindler\" \"Alira the Kindler\"", NamedTextColor.GRAY));
+            return;
+        }
+
+        String currentName;
+        int newNameStart;
+        CommandUtil.QuotedStringResult quoted = CommandUtil.parseQuotedString(args, 1);
+        if (quoted != null) {
+            currentName = quoted.getValue();
+            newNameStart = quoted.getNextIndex();
+        } else {
+            currentName = args[1];
+            newNameStart = 2;
+        }
+
+        if (newNameStart >= args.length) {
+            sender.sendMessage(Component.text("Give the new name too: /dmentity rename <current name> <new name>", NamedTextColor.RED));
+            return;
+        }
+
+        CommandUtil.QuotedStringResult quotedNew = CommandUtil.parseQuotedString(args, newNameStart);
+        String newName = (quotedNew != null
+                ? quotedNew.getValue()
+                : String.join(" ", Arrays.copyOfRange(args, newNameStart, args.length))).trim();
+
+        if (newName.isEmpty()) {
+            sender.sendMessage(Component.text("The new name can't be blank.", NamedTextColor.RED));
+            return;
+        }
+
+        DndEntityInstance instance = findEntity(currentName);
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + currentName, NamedTextColor.RED));
+            return;
+        }
+
+        String oldName = instance.getDisplayName();
+        if (oldName.equals(newName)) {
+            sender.sendMessage(Component.text(oldName + " is already called that.", NamedTextColor.YELLOW));
+            return;
+        }
+
+        // Re-key the tracking map. It's keyed on the lowercased display name, so leaving the old key
+        // in place would have /dmentity info|teleport|trade answering to a name nobody can see.
+        spawnedEntities.values().removeIf(e -> e == instance);
+        spawnedEntities.put(generateTrackingKey(newName), instance);
+
+        instance.rename(newName);
+
+        // Keep an in-progress fight in step: the initiative tracker addresses creatures by name.
+        boolean inCombat = false;
+        CombatSession session = CombatSession.getSessionForEntity(instance.getArmorStand());
+        if (session != null) {
+            Combatant combatant = session.getCombatantById(instance.getInstanceId());
+            if (combatant != null) {
+                session.renameCombatant(combatant, newName);
+                inCombat = true;
+            }
+        }
+
+        sender.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
+                .append(Component.text(oldName, NamedTextColor.GRAY))
+                .append(Component.text(" is now ", NamedTextColor.GREEN))
+                .append(Component.text(newName, NamedTextColor.GOLD)));
+        if (inCombat) {
+            sender.sendMessage(Component.text("Initiative tracker updated.", NamedTextColor.GRAY));
+        }
     }
 
     // ==================== REVIVE SUBCOMMAND (#138) ====================
@@ -1555,6 +1642,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("  - List all spawned entities", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity remove <name...>|all|type <type>|radius <distance>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Remove one or more entities (supports multiple names)", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("/dmentity rename <current name> <new name>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  - Rename a spawned entity (keeps its HP, shop and loot)", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity revive <name> [hp]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Bring a dead entity back (default full HP)", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dmentity teleport <name> [x y z]", NamedTextColor.YELLOW));
@@ -1579,7 +1668,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             // Subcommands
-            return List.of("spawn", "list", "remove", "revive", "teleport", "info", "trade", "shop", "spawngroup", "cleanup").stream()
+            return List.of("spawn", "list", "remove", "rename", "revive", "teleport", "info", "trade", "shop", "spawngroup", "cleanup").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -1607,6 +1696,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                             .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
                             .collect(Collectors.toList());
 
+                case "rename":
                 case "teleport":
                 case "info":
                 case "trade":

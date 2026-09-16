@@ -286,7 +286,22 @@ public class DndEntityInstance {
     public UUID getInstanceId() { return instanceId; }
 
     public String getDisplayName() { return displayName; }
-    public void setDisplayName(String displayName) { this.displayName = displayName; }
+
+    /**
+     * Rename this instance (#194). The display name is per-instance state, not template state: the
+     * YAML `name:` is read once at spawn, so a name the party only learns mid-campaign — or an alias
+     * that drops when an NPC is unmasked — lives here, not in the file. Updates the nameplate and the
+     * saved copy on the body; the caller re-keys whatever lookup maps hold the old name.
+     */
+    public void rename(String newName) {
+        if (newName == null || newName.isBlank()) return;
+        this.displayName = newName;
+        if (armorStand != null && armorStand.isValid()) {
+            armorStand.customName(net.kyori.adventure.text.Component.text(displayName));
+            armorStand.setCustomNameVisible(true);
+        }
+        persist();
+    }
 
     public int getCurrentHp() { return currentHp; }
     public void setCurrentHp(int currentHp) { this.currentHp = Math.max(0, Math.min(maxHp, currentHp)); persist(); }

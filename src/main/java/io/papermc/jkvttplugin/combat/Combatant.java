@@ -185,6 +185,7 @@ public class Combatant {
     public String getDisplayName() { return displayName; }
     public void setDisplayName(String displayName) { this.displayName = displayName; }
     public String getBaseName() { return baseName != null ? baseName : displayName; }
+    public void setBaseName(String baseName) { this.baseName = baseName; }
 
     /**
      * Get display name respecting hidden status.

@@ -86,6 +86,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `spawngroup <groupId>` | ⚠️ **Not implemented** — prints a notice (#79) |
 | `list` | List spawned entities |
 | `remove <name>` | Despawn an entity |
+| `rename <current> <new>` | Rename a spawned entity, keeping its HP, shop stock and loot (quote names with spaces) |
 | `revive <name> [hp]` | Bring a dead entity back (default full HP) |
 | `teleport <name>` | Teleport an entity to you |
 | `info <name>` | Show an entity's stat block |
