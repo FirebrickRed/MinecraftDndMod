@@ -2420,8 +2420,20 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      */
     private Combatant findCombatantByName(CombatSession session, String name) {
         // Shared match cascade (#140): exact → #-normalized → base name → startsWith → unique contains.
-        return NameUtil.matchByName(session.getCombatants(), name,
+        Combatant match = NameUtil.matchByName(session.getCombatants(), name,
                 Combatant::getDisplayName, Combatant::getBaseName);
+        if (match != null) return match;
+
+        // A player combatant is stored under its CHARACTER name, but the DM (and the DM-mode Add
+        // tool) often refers to it by the Minecraft account name — "/combat remove <MCName>" used to
+        // fail with "Combatant not found". Fall back to matching an online player's name.
+        for (Combatant c : session.getCombatants()) {
+            if (c.isPlayer() && c.getPlayer() != null
+                    && c.getPlayer().getName().equalsIgnoreCase(name)) {
+                return c;
+            }
+        }
+        return null;
     }
 
     /** Whether a target word means "the caster themselves". */

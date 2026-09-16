@@ -61,10 +61,12 @@ public final class CombatVisuals {
         if (velocity.lengthSquared() < 1.0E-4) return;
         velocity.normalize();
         if (!hit) {
-            // Scatter a miss: enough to visibly go wide, not so much it flies backwards.
+            // Scatter a miss: enough to visibly go wide, not so much it sails off absurdly.
+            // Halved after the first playtest — ±0.25 sent misses "super super wide" past a
+            // small target like a kobold. (#191 tuning; see #193.)
             java.util.concurrent.ThreadLocalRandom rng = java.util.concurrent.ThreadLocalRandom.current();
-            velocity.add(new Vector(rng.nextDouble(-0.25, 0.25),
-                    rng.nextDouble(-0.05, 0.30), rng.nextDouble(-0.25, 0.25))).normalize();
+            velocity.add(new Vector(rng.nextDouble(-0.12, 0.12),
+                    rng.nextDouble(-0.05, 0.15), rng.nextDouble(-0.12, 0.12))).normalize();
         }
         velocity.multiply(2.8);
 

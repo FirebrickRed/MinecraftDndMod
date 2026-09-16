@@ -31,6 +31,18 @@ import java.util.stream.Collectors;
 /** Drives the DM-mode tools (Issue #85 redesign): the View tool, the Exit tool, and crash recovery. */
 public class DmModeListener implements Listener {
 
+    // A single right-click on an entity fires both PlayerInteractEvent and PlayerInteractAtEntityEvent,
+    // which ran the tool twice — the Add tool toggled add-then-remove ("Added X" then "not found"),
+    // and Possess re-possessed. Ignore a second tool action within this window.
+    private final java.util.Map<UUID, Long> lastToolAction = new java.util.HashMap<>();
+    private static final long TOOL_DEBOUNCE_MS = 200;
+
+    private boolean toolDebounced(Player player) {
+        long now = System.currentTimeMillis();
+        Long prev = lastToolAction.put(player.getUniqueId(), now);
+        return prev != null && now - prev < TOOL_DEBOUNCE_MS;
+    }
+
     @EventHandler
     public void onInteract(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) return;
@@ -57,6 +69,7 @@ public class DmModeListener implements Listener {
                 player.sendActionBar(Component.text("Look at a player or entity to view them.", NamedTextColor.GRAY));
             }
         } else if (DmModeManager.TOOL_POSSESS.equals(tool)) {
+            if (toolDebounced(player)) return; // this click already handled via the entity event
             RayTraceResult hit = player.rayTraceEntities(10);
             if (hit != null && hit.getHitEntity() instanceof ArmorStand stand) {
                 PossessionManager.possess(player, stand);
@@ -68,6 +81,7 @@ public class DmModeListener implements Listener {
         } else if (DmModeManager.TOOL_INITIATIVE.equals(tool)) {
             player.performCommand("combat rollforinitiative");
         } else if (DmModeManager.TOOL_ADD.equals(tool)) {
+            if (toolDebounced(player)) return; // this click already handled via the entity event
             RayTraceResult hit = player.rayTraceEntities(10);
             if (hit != null && hit.getHitEntity() != null) {
                 toggleCombatant(player, hit.getHitEntity());
@@ -139,9 +153,11 @@ public class DmModeListener implements Listener {
             view(player, event.getRightClicked());
         } else if (DmModeManager.TOOL_POSSESS.equals(tool) && event.getRightClicked() instanceof ArmorStand stand) {
             event.setCancelled(true);
+            if (toolDebounced(player)) return;
             PossessionManager.possess(player, stand);
         } else if (DmModeManager.TOOL_ADD.equals(tool)) {
             event.setCancelled(true);
+            if (toolDebounced(player)) return;
             toggleCombatant(player, event.getRightClicked());
         } else if (DmModeManager.TOOL_START.equals(tool)) {
             event.setCancelled(true);

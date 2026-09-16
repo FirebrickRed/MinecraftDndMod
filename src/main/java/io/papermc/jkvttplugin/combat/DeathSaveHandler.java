@@ -85,6 +85,9 @@ public class DeathSaveHandler {
         Player player = combatant.getPlayer();
         if (player != null) {
             player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, Integer.MAX_VALUE, 255, false, false));
+            // Slowness stops walking but not jumping — a downed player could still hop around. A very
+            // high Jump Boost amplifier underflows to "can't leave the ground", pinning them down.
+            player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, Integer.MAX_VALUE, 200, false, false));
             player.setPose(Pose.SWIMMING, true);
         }
     }
@@ -95,6 +98,7 @@ public class DeathSaveHandler {
         Player player = combatant.getPlayer();
         if (player != null) {
             player.removePotionEffect(PotionEffectType.SLOWNESS);
+            player.removePotionEffect(PotionEffectType.JUMP_BOOST);
             // Hand the pose back to the client rather than pinning them upright.
             player.setPose(Pose.STANDING, false);
         }

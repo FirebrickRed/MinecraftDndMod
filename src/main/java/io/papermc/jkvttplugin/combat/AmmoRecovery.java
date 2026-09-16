@@ -49,6 +49,10 @@ public final class AmmoRecovery implements Listener {
 
         Item dropped = where.getWorld().dropItem(where, stack);
         dropped.setCanMobPickup(false); // it's the party's to recover, not a zombie's
+        // Don't let it despawn mid-fight: a playtest lost a bolt to the ~5-minute vanilla timer, and
+        // combat can run far longer than that. Tradeoff: un-recovered ammo lingers — acceptable since
+        // it's recoverable, but worth cleaning up on combat end later (#193).
+        dropped.setWillAge(false);
     }
 
     /**
