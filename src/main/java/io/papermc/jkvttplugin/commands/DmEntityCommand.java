@@ -348,9 +348,13 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
      * standing in the world needs this. Remove-and-respawn is not an equivalent workaround: that rolls
      * a fresh instance id and abandons the shop stock, HP and loot state keyed to the old one.
      *
-     * Either name may be quoted, and an unquoted new name runs to the end of the line, so both work:
-     *   /dmentity rename "The Kindler" "Alira the Kindler"
-     *   /dmentity rename Kindler Alira the Kindler
+     * Quoting is never wrong. Unquoted works when the split is unambiguous — one word on each side,
+     * or an old name that exactly matches something spawned — and is refused otherwise rather than
+     * guessed at, since a rename that renamed the wrong creature looks just like one that worked:
+     *   /dmentity rename "The Kindler" "Alira the Kindler"   always
+     *   /dmentity rename Kindler Fluffy                      one word each side
+     *   /dmentity rename The Kindler Alira the Kindler       "The Kindler" is spawned, so it resolves
+     *   /dmentity rename The Kindlr Alira the Kindler        typo — refused, asks for quotes
      */
     private void handleRename(CommandSender sender, String[] args) {
         if (args.length < 3) {
@@ -366,18 +370,29 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             currentName = quoted.getValue();
             newNameStart = quoted.getNextIndex();
         } else {
-            // Unquoted: the split between the two names is ambiguous, so take the LONGEST run of
-            // words that exactly names a creature standing in the world and let the rest be the new
-            // name. Without this, `rename The Kindler Alira the Kindler` would match "The Kindler"
-            // off the single word "The" (findEntity matches on prefix) and rename her to
-            // "Kindler Alira the Kindler". Falls back to one word, which is the common case.
+            // Unquoted, so we have to find the split ourselves. Two cases are safe and the third is
+            // not, and the third refuses rather than guesses — a rename that quietly renames the
+            // wrong creature, or eats half the new name, looks identical to one that worked.
             int split = -1;
             for (int end = args.length - 1; end >= 2; end--) {
+                // Longest run of words that EXACTLY names something standing in the world. Not a
+                // guess: if "The Kindler" is a creature, that's what the DM meant by those words.
                 if (findEntityExact(String.join(" ", Arrays.copyOfRange(args, 1, end))) != null) {
                     split = end;
                     break;
                 }
             }
+            if (split < 0 && args.length > 3) {
+                // Nothing matched and there's more than one word on each side — usually a typo in
+                // the current name. Guessing here means falling back to args[1] and letting
+                // findEntity's prefix match take over, which is how `rename The Kindlr Alira the
+                // Kindler` ends up renaming "The Kindler" to "Kindlr Alira the Kindler".
+                sender.sendMessage(Component.text("Can't tell where the old name ends and the new one begins.", NamedTextColor.RED));
+                sender.sendMessage(Component.text("Quote them: /dmentity rename \"<current name>\" \"<new name>\"", NamedTextColor.YELLOW));
+                sendSpawnedNames(sender);
+                return;
+            }
+            // One word each side: unambiguous, and prefix matching can't eat into the new name.
             currentName = split > 0 ? String.join(" ", Arrays.copyOfRange(args, 1, split)) : args[1];
             newNameStart = split > 0 ? split : 2;
         }
@@ -400,15 +415,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         DndEntityInstance instance = findEntity(currentName);
         if (instance == null) {
             sender.sendMessage(Component.text("Entity not found: " + currentName, NamedTextColor.RED));
-            // Spaced names are the usual culprit, so show what's actually standing there to copy from.
-            String spawned = spawnedEntities.values().stream()
-                    .map(DndEntityInstance::getDisplayName)
-                    .limit(8)
-                    .collect(Collectors.joining(", "));
-            if (!spawned.isEmpty()) {
-                sender.sendMessage(Component.text("Spawned: " + spawned, NamedTextColor.GRAY));
-                sender.sendMessage(Component.text("Quote a name with spaces, or let it run unquoted — both work.", NamedTextColor.DARK_GRAY));
-            }
+            sendSpawnedNames(sender);
             return;
         }
 
@@ -443,6 +450,22 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         if (inCombat) {
             sender.sendMessage(Component.text("Initiative tracker updated.", NamedTextColor.GRAY));
         }
+    }
+
+    /**
+     * Echo the names actually standing in the world. Shown whenever a name lookup fails, because the
+     * usual cause is a spaced name split the wrong way and the fix is seeing the exact string.
+     */
+    private void sendSpawnedNames(CommandSender sender) {
+        if (spawnedEntities.isEmpty()) {
+            sender.sendMessage(Component.text("Nothing is spawned right now.", NamedTextColor.GRAY));
+            return;
+        }
+        String spawned = spawnedEntities.values().stream()
+                .map(DndEntityInstance::getDisplayName)
+                .limit(8)
+                .collect(Collectors.joining(", "));
+        sender.sendMessage(Component.text("Spawned: " + spawned, NamedTextColor.GRAY));
     }
 
     // ==================== REVIVE SUBCOMMAND (#138) ====================
