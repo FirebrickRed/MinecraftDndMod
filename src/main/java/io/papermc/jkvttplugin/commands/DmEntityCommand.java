@@ -366,8 +366,20 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             currentName = quoted.getValue();
             newNameStart = quoted.getNextIndex();
         } else {
-            currentName = args[1];
-            newNameStart = 2;
+            // Unquoted: the split between the two names is ambiguous, so take the LONGEST run of
+            // words that exactly names a creature standing in the world and let the rest be the new
+            // name. Without this, `rename The Kindler Alira the Kindler` would match "The Kindler"
+            // off the single word "The" (findEntity matches on prefix) and rename her to
+            // "Kindler Alira the Kindler". Falls back to one word, which is the common case.
+            int split = -1;
+            for (int end = args.length - 1; end >= 2; end--) {
+                if (findEntityExact(String.join(" ", Arrays.copyOfRange(args, 1, end))) != null) {
+                    split = end;
+                    break;
+                }
+            }
+            currentName = split > 0 ? String.join(" ", Arrays.copyOfRange(args, 1, split)) : args[1];
+            newNameStart = split > 0 ? split : 2;
         }
 
         if (newNameStart >= args.length) {
@@ -388,6 +400,15 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         DndEntityInstance instance = findEntity(currentName);
         if (instance == null) {
             sender.sendMessage(Component.text("Entity not found: " + currentName, NamedTextColor.RED));
+            // Spaced names are the usual culprit, so show what's actually standing there to copy from.
+            String spawned = spawnedEntities.values().stream()
+                    .map(DndEntityInstance::getDisplayName)
+                    .limit(8)
+                    .collect(Collectors.joining(", "));
+            if (!spawned.isEmpty()) {
+                sender.sendMessage(Component.text("Spawned: " + spawned, NamedTextColor.GRAY));
+                sender.sendMessage(Component.text("Quote a name with spaces, or let it run unquoted — both work.", NamedTextColor.DARK_GRAY));
+            }
             return;
         }
 
@@ -1464,6 +1485,21 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
         sender.sendMessage(Component.text("✓ Removed " + removed + " orphaned D&D entity stand(s).", NamedTextColor.GREEN));
         sender.sendMessage(Component.text("(Stands spawned before this feature have no marker — use /kill for those once.)", NamedTextColor.GRAY));
+    }
+
+    /**
+     * Find a spawned entity whose display name matches exactly (case-insensitive). Unlike
+     * {@link #findEntity} this does no prefix matching — used where a wrong guess would be silent,
+     * such as deciding where an unquoted rename splits current name from new name.
+     */
+    private DndEntityInstance findEntityExact(String name) {
+        if (name == null || name.isBlank()) return null;
+        for (DndEntityInstance instance : spawnedEntities.values()) {
+            if (name.equalsIgnoreCase(instance.getDisplayName())) {
+                return instance;
+            }
+        }
+        return null;
     }
 
     /**

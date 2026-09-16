@@ -156,8 +156,10 @@ public class EntityLoader {
             String id = idOverride != null ? idOverride : (String) data.get("id");
             entity.setId(id);
 
-            // Basic identification
-            entity.setName((String) data.get("name"));
+            // Basic identification. A missing name isn't fatal: fall back to a readable form of the
+            // id, so a two-line stub entity still spawns (a nameplate can't be given null).
+            String declaredName = (String) data.get("name");
+            entity.setName(declaredName != null && !declaredName.isBlank() ? declaredName : prettifyId(id));
 
             Object randomNamesObj = data.get("random_names");
             if (randomNamesObj instanceof List<?> namesList) {
@@ -175,19 +177,31 @@ public class EntityLoader {
             entity.setSubtype((String) data.get("subtype"));
             entity.setSize((String) data.get("size"));
 
-            // HP system: hitDice > hitPoints > default
+            // HP system: hitDice > hitPoints > default. A key that's present but unusable (a blank
+            // value, or dice written into hit_points) would otherwise fall through to the default
+            // in silence, which reads in-game as "the plugin ignored my stat block".
             if (data.get("hit_dice") instanceof String hitDice) {
                 entity.setHitDice(hitDice);
             } else if (data.get("hit_points") instanceof Integer hitPoints) {
                 entity.setHitPoints(hitPoints);
+            } else if (data.containsKey("hit_points") || data.containsKey("hit_dice")) {
+                Object raw = data.containsKey("hit_dice") ? data.get("hit_dice") : data.get("hit_points");
+                LOGGER.warning("[" + id + "] hit_points must be a whole number and hit_dice a string like \"7d8+14\""
+                        + " — got '" + raw + "'. Falling back to 10 HP.");
             }
 
             // AC and speed
             if (data.get("armor_class") instanceof Integer ac) {
                 entity.setArmorClass(ac);
+            } else if (data.containsKey("armor_class")) {
+                LOGGER.warning("[" + id + "] armor_class must be a whole number — got '" + data.get("armor_class")
+                        + "'. Falling back to AC 10.");
             }
             if (data.get("speed") instanceof Integer speed) {
                 entity.setSpeed(speed);
+            } else if (data.containsKey("speed")) {
+                LOGGER.warning("[" + id + "] speed must be a whole number of feet — got '" + data.get("speed")
+                        + "'. Falling back to 30.");
             }
 
             // Abilities: Parse from string keys to Ability enum
@@ -285,6 +299,21 @@ public class EntityLoader {
     /**
      * Parses attack data from YAML.
      */
+    /**
+     * Turn an id into a readable name — "alira_the_kindler" becomes "Alira The Kindler". Used only
+     * when an entity omits {@code name:}; anything that cares about presentation should set one.
+     */
+    private static String prettifyId(String id) {
+        if (id == null || id.isBlank()) return "Unnamed";
+        StringBuilder out = new StringBuilder();
+        for (String word : id.split("[_\s-]+")) {
+            if (word.isEmpty()) continue;
+            if (!out.isEmpty()) out.append(' ');
+            out.append(Character.toUpperCase(word.charAt(0))).append(word.substring(1));
+        }
+        return out.isEmpty() ? "Unnamed" : out.toString();
+    }
+
     /** Parse one loot/inventory entry: a plain id string, or an object with dc/check/lootable/qty. */
     private static io.papermc.jkvttplugin.data.model.LootEntry parseLootEntry(Object raw) {
         if (raw instanceof String s) {

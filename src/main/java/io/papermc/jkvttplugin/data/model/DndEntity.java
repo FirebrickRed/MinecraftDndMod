@@ -37,7 +37,7 @@ public class DndEntity {
      * If more entities are spawned than names available, reuse names.
      */
     // ToDo: add prefix's and suffixs for name generation
-    private List<String> randomNames;
+    private List<String> randomNames = new ArrayList<>();
 
     // ==================== D&D STAT BLOCK ====================
 
@@ -45,7 +45,7 @@ public class DndEntity {
      * Creature type (e.g., "humanoid", "beast", "dragon", "undead")
      * Used for spell targeting and resistances.
      */
-    private String creatureType;
+    private String creatureType = "humanoid";
 
     /**
      * Subtype (e.g., "human", "elf", "goblinoid")
@@ -54,9 +54,9 @@ public class DndEntity {
     private String subtype;
 
     /**
-     * Size category: tiny, small, medium, large, huge, gargantuan
+     * Size category: tiny, small, medium, large, huge, gargantuan. Drives the possession scale.
      */
-    private String size;
+    private String size = "medium";
 
     /**
      * Fixed hit points (optional).
@@ -71,20 +71,21 @@ public class DndEntity {
     private String hitDice;
 
     /**
-     * Armor Class (AC) - target number to hit this entity.
+     * Armor Class (AC) - target number to hit this entity. Defaults to 10 — an unarmored creature
+     * with no DEX bonus. At 0 (the bare int default) every attack in the game hits automatically.
      */
-    private int armorClass;
+    private int armorClass = 10;
 
     /**
-     * Movement speed in feet (standard is 30).
+     * Movement speed in feet. Defaults to the standard 30.
      */
-    private int speed;
+    private int speed = 30;
 
     /**
      * The six D&D ability scores.
      * Map of Ability enum -> score value (typically 1-30, average 10).
      */
-    private Map<Ability, Integer> abilities;
+    private Map<Ability, Integer> abilities = new HashMap<>();
 
     // ==================== COMBAT ====================
 
@@ -92,7 +93,7 @@ public class DndEntity {
      * List of attacks this entity can make.
      * Stubbed for now - full combat implementation in later issues.
      */
-    private List<DndAttack> attacks;
+    private List<DndAttack> attacks = new ArrayList<>();
 
     /**
      * Reaction abilities from the stat block (free text, like a monster's "Reactions" section — e.g.
@@ -107,7 +108,7 @@ public class DndEntity {
      * List of item IDs this entity carries.
      * Used for both shop inventory (merchants) and the possession kit.
      */
-    private List<String> inventory;
+    private List<String> inventory = new ArrayList<>();
 
     /**
      * Per-item loot flags derived from the {@code inventory:} entries (dc/check/lootable). Used to
@@ -172,16 +173,16 @@ public class DndEntity {
     public void setName(String name) { this.name = name; }
 
     public List<String> getRandomNames() { return randomNames; }
-    public void setRandomNames(List<String> randomNames) { this.randomNames = randomNames; }
+    public void setRandomNames(List<String> randomNames) { this.randomNames = randomNames != null ? randomNames : new ArrayList<>(); }
 
     public String getCreatureType() { return creatureType; }
-    public void setCreatureType(String creatureType) { this.creatureType = creatureType; }
+    public void setCreatureType(String creatureType) { this.creatureType = (creatureType != null && !creatureType.isBlank()) ? creatureType : "humanoid"; }
 
     public String getSubtype() { return subtype; }
     public void setSubtype(String subtype) { this.subtype = subtype; }
 
     public String getSize() { return size; }
-    public void setSize(String size) { this.size = size; }
+    public void setSize(String size) { this.size = (size != null && !size.isBlank()) ? size : "medium"; }
 
     public Integer getHitPoints() { return hitPoints; }
     public void setHitPoints(Integer hitPoints) { this.hitPoints = hitPoints; }
@@ -196,16 +197,16 @@ public class DndEntity {
     public void setSpeed(int speed) { this.speed = speed; }
 
     public Map<Ability, Integer> getAbilities() { return abilities; }
-    public void setAbilities(Map<Ability, Integer> abilities) { this.abilities = abilities; }
+    public void setAbilities(Map<Ability, Integer> abilities) { this.abilities = abilities != null ? abilities : new HashMap<>(); }
 
     public List<DndAttack> getAttacks() { return attacks; }
-    public void setAttacks(List<DndAttack> attacks) { this.attacks = attacks; }
+    public void setAttacks(List<DndAttack> attacks) { this.attacks = attacks != null ? attacks : new ArrayList<>(); }
 
     public List<String> getReactions() { return reactions; }
     public void setReactions(List<String> reactions) { this.reactions = reactions != null ? reactions : new ArrayList<>(); }
 
     public List<String> getInventory() { return inventory; }
-    public void setInventory(List<String> inventory) { this.inventory = inventory; }
+    public void setInventory(List<String> inventory) { this.inventory = inventory != null ? inventory : new ArrayList<>(); }
 
     public List<LootEntry> getInventoryLoot() { return inventoryLoot; }
     public void setInventoryLoot(List<LootEntry> inventoryLoot) { this.inventoryLoot = inventoryLoot; }

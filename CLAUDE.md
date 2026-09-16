@@ -418,6 +418,36 @@ options:
 3. Run `/dm reload`
 4. Innate spells applied automatically during character creation
 
+### Adding an Entity (NPC / monster)
+
+**Only `id:` is required.** Every other field has a working default, so a one-line file spawns,
+fights and can be looted — fill the stat block in when the creature earns one.
+
+```yaml
+id: alira          # the ONLY required field. Permanent: it's written into every spawned
+                   # armor stand's PDC and looked up on restore, so changing it orphans
+                   # anything already standing in the world. Pick a name-free id.
+```
+
+Defaults when a key is absent: `name:` → the id, prettified (`alira_the_kindler` → "Alira The
+Kindler") · `creature_type:` humanoid · `size:` medium · HP 10 · `armor_class:` 10 · `speed:` 30 ·
+every ability score 10 · no attacks, inventory or loot. A creature with no `attacks:` simply has
+nothing to swing — it still takes damage, dies and drops loot.
+
+Worth setting early: `name:` (what the party sees) and `hit_points:`/`armor_class:` (defaults make
+a 10/10 punching bag). `model:` is a resource-pack model name — **only set it if the texture
+exists**, or the NPC renders as a purple placeholder; absent means an invisible stand with a
+floating nameplate.
+
+**Watch the types.** `hit_points:` takes a whole number and `hit_dice:` a quoted dice string —
+`hit_points: 7d8+2` is a string, not a number, and silently falls back to 10 HP. Same for a blank
+`armor_class:`. The loader now warns on both at startup / `/dm reload`; check the console if a
+creature feels wrong.
+
+A file can hold one entity (with `id:` at the root) or many (root keys are the ids). See
+`DMContent/Entities/town/town_guard.yml` for a full stat block and `balin_blacksmith.yml` for a
+merchant with a shop.
+
 ### Debugging Character Creation
 
 - Character creation sessions are logged when created/destroyed
