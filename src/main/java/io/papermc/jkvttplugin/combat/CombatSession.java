@@ -721,6 +721,7 @@ public class CombatSession {
         isActive = false;
         stopMovementRing();
         ReactionManager.clearAll(); // drop any pending opportunity attacks (#147)
+        AmmoRecovery.startDespawnTimers(); // spent ammo now begins its ~5-min pickup window (#191)
 
         // Remove all players from session tracking, clear glows and turn state
         for (Combatant c : combatants) {

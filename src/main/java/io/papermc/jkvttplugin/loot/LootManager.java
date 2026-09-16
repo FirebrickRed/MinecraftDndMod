@@ -131,7 +131,7 @@ public class LootManager {
                         .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd + "<your d20> — the game adds " + modStr + "."))))
                 .append(Component.text(" / ", NamedTextColor.DARK_GRAY))
                 .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.runCommand(autoCmd))
+                        .clickEvent(ClickEvent.suggestCommand(autoCmd))
                         .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20 and adds " + modStr + ".")))));
         dm.sendMessage(Component.text("Asked " + player.getName() + " to roll " + check.getDisplayName() + ".", NamedTextColor.GRAY));
     }

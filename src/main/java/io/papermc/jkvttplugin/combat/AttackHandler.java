@@ -542,7 +542,7 @@ public class AttackHandler {
                                     + (bonus != 0 ? "\nThe game adds" + bonusShown + "." : "")))))
                     .append(Component.text("  ", NamedTextColor.GRAY))
                     .append(Component.text("[or let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                            .clickEvent(ClickEvent.runCommand(autoCmd))
+                            .clickEvent(ClickEvent.suggestCommand(autoCmd))
                             .hoverEvent(HoverEvent.showText(Component.text("The game rolls " + dice
                                     + (bonus != 0 ? " and adds" + bonusShown : "") + " for you."))));
         } else {

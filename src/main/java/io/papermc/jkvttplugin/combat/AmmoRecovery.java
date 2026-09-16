@@ -56,6 +56,24 @@ public final class AmmoRecovery implements Listener {
     }
 
     /**
+     * When combat ends, let spent ammo start its despawn clock (#191). During the fight it doesn't
+     * age (a long combat shouldn't lose your arrows), but once the fight is over players get the
+     * ordinary ~5-minute window to sweep the battlefield before it clears itself — matching RAW's
+     * "take a minute after the battle" without leaving arrows on the ground forever.
+     */
+    public static void startDespawnTimers() {
+        for (org.bukkit.World world : org.bukkit.Bukkit.getWorlds()) {
+            for (Item item : world.getEntitiesByClass(Item.class)) {
+                if (item.getItemStack().hasItemMeta()
+                        && item.getItemStack().getItemMeta().getPersistentDataContainer()
+                            .has(SPENT_KEY, PersistentDataType.BYTE)) {
+                    item.setWillAge(true);
+                }
+            }
+        }
+    }
+
+    /**
      * Roll whether a piece of spent ammunition survives being picked up. A failure destroys it with
      * a short message, so the player learns the arrow existed and then didn't.
      */

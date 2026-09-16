@@ -90,7 +90,7 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
                         .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd + "<your d20> — the game adds " + bonusStr + "." + advHover))))
                 .append(Component.text("  ", NamedTextColor.GRAY))
                 .append(Component.text("[or let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.runCommand(autoCmd))
+                        .clickEvent(ClickEvent.suggestCommand(autoCmd))
                         .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20" + (mode == RollMode.NORMAL ? "" : " (" + mode.name().toLowerCase() + ", 2d20)") + " and adds " + bonusStr + ".")))));
     }
 

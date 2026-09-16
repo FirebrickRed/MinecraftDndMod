@@ -261,7 +261,7 @@ public class WeaponListener implements Listener {
                                 + modShown + " to hit.")))));
         player.sendMessage(Component.text("   the game adds your " + modShown + " to hit — or ", NamedTextColor.GRAY)
                 .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.runCommand(autoCmd))
+                        .clickEvent(ClickEvent.suggestCommand(autoCmd))
                         .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20 (with advantage/disadvantage) and adds " + modShown + "."))))
                 .append(Component.text(" / ", NamedTextColor.DARK_GRAY))
                 .append(Component.text("[type a final total]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)

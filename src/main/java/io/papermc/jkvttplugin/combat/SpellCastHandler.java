@@ -339,7 +339,7 @@ public class SpellCastHandler {
                         .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds your save bonus."))))
                 .append(Component.text("  ", NamedTextColor.GRAY))
                 .append(Component.text("[or let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.runCommand("/combat save autoRoll"))
+                        .clickEvent(ClickEvent.suggestCommand("/combat save autoRoll"))
                         .hoverEvent(HoverEvent.showText(Component.text("The game rolls the save (with advantage/disadvantage)."))));
         if (target.isPlayer() && target.getPlayer() != null) {
             target.getPlayer().sendMessage(prompt);
@@ -427,7 +427,7 @@ public class SpellCastHandler {
                                 + "<your " + spell.getHealing() + " result> — the game adds your spellcasting modifier."))))
                 .append(Component.text(" / ", NamedTextColor.DARK_GRAY))
                 .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.runCommand(autoCmd))
+                        .clickEvent(ClickEvent.suggestCommand(autoCmd))
                         .hoverEvent(HoverEvent.showText(Component.text("The game rolls " + spell.getHealing()
                                 + " and adds your spellcasting modifier.")))));
     }
