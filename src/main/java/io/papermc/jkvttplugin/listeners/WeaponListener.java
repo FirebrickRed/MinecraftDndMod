@@ -252,6 +252,18 @@ public class WeaponListener implements Listener {
         String breakdown = sheet != null ? AttackHandler.buildPlayerModBreakdown(sheet, ctx.weapon) : "";
         String modShown = breakdown.isEmpty() ? modStr : modStr + " (" + breakdown + ")";
 
+        // Surface advantage/disadvantage HERE, as the command is offered — not after the roll
+        // resolves — so the player knows before they commit (#189 playtest). It's known now: it
+        // depends only on the attacker's and target's conditions, which the resolve step reads too.
+        io.papermc.jkvttplugin.combat.Advantage adv = ctx.attacker.attackAdvantageAgainst(target);
+        if (adv != io.papermc.jkvttplugin.combat.Advantage.NONE) {
+            player.sendMessage(Component.text("↯ You have " + adv.label() + " on this attack.",
+                    adv.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
+        }
+        for (String note : ctx.attacker.attackReminders(target)) {
+            player.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));
+        }
+
         player.sendMessage(Component.text("⚔ Attack ", NamedTextColor.GOLD)
                 .append(Component.text(targetName, NamedTextColor.YELLOW))
                 .append(Component.text(" with " + ctx.weapon.getName() + " — ", NamedTextColor.GOLD))
