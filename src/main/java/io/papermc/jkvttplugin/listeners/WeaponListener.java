@@ -149,6 +149,26 @@ public class WeaponListener implements Listener {
     }
 
     /**
+     * A crossbow consumes its bolt when it's <b>loaded</b>, not when it fires — so cancelling the
+     * shot (above) can't give the bolt back, and a playtest saw a crossbow spend a bolt and fire in
+     * combat anyway. Refusing the load is the real fix: no charge, no consumption, no projectile.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onLoadCrossbow(io.papermc.paper.event.entity.EntityLoadCrossbowEvent event) {
+        String bowId = ItemUtil.getItemId(event.getCrossbow());
+        if (bowId == null) return;
+        DndWeapon weapon = WeaponLoader.getWeapon(bowId);
+        if (weapon == null || !weapon.isRanged()) return;
+
+        event.setCancelled(true);
+        event.setConsumeItem(false); // belt-and-suspenders: the bolt stays in the quiver
+        if (event.getEntity() instanceof Player shooter) {
+            shooter.sendActionBar(Component.text(weapon.getName()
+                    + " fires through /combat attack — left-click your target.", NamedTextColor.GRAY));
+        }
+    }
+
+    /**
      * Left-click the enemy directly. This arrives as real Minecraft damage, so it is always
      * cancelled for a combatant — otherwise a punch would chip away at (or in creative, instantly
      * delete) the armor stand the enemy is rendered on.

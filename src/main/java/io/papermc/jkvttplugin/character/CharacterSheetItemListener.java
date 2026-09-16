@@ -22,6 +22,14 @@ public class CharacterSheetItemListener implements Listener {
 
         if (!CharacterSheetManager.isCharacterSheetItem(item)) return;
 
+        // Players carry the sheet as their main interface, so they're holding it when they walk up
+        // to a chest or a door. Right-clicking an interactable block should use the BLOCK, not pop
+        // the sheet — otherwise you can never open a container while the sheet is in hand, which a
+        // playtest hit as "chests won't open". Let vanilla have those clicks; the sheet still opens
+        // on an air-click or a plain block.
+        org.bukkit.block.Block clicked = event.getClickedBlock();
+        if (clicked != null && clicked.getType().isInteractable()) return;
+
         event.setCancelled(true);
 
         if (CharacterSheetManager.isBlankCharacterSheet(item)) {
