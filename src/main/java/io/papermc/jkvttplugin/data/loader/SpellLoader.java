@@ -44,8 +44,17 @@ public class SpellLoader {
 
                     try {
                         DndSpell spell = parseSpell(spellKey, spellData);
-                        spell.setId(spellKey.toLowerCase());  // Set the spell ID
-                        spells.put(spellKey.toLowerCase(), spell);
+                        String id = spellKey.toLowerCase();
+                        spell.setId(id);
+                        // Warn on a duplicate id: two files defining the same spell silently let
+                        // whichever loads last win, which is how frostbite ended up an attack instead
+                        // of a save. Keep the first, skip the rest, and say so.
+                        if (spells.containsKey(id)) {
+                            LOGGER.warning("Duplicate spell id '" + id + "' in " + file.getName()
+                                    + " — keeping the earlier definition, ignoring this one.");
+                            continue;
+                        }
+                        spells.put(id, spell);
                         LOGGER.fine("Loaded spell: " + spell.getName());
                     } catch (Exception e) {
                         LOGGER.severe("Failed to load spell: " + spellKey + " from " + file.getName() + ": " + e.getMessage());

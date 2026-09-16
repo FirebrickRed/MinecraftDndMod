@@ -13,6 +13,7 @@ spells:
     ritual: false
     material: "WIND_CHARGE"
     save_type: "Constitution"
+    damage: "1d6"
     damage_type: "cold"
     higher_levels: "The spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
 
@@ -160,6 +161,7 @@ spells:
     ritual: false
     material: "CAMPFIRE"
     save_type: "Dexterity"
+    damage: "1d8"
     damage_type: "fire"
     higher_levels: "This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
 
@@ -221,6 +223,7 @@ spells:
     ritual: false
     material: "SPIDER_EYE"
     save_type: "Constitution"
+    damage: "1d6"
     damage_type: "poison"
     higher_levels: "This spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
 
@@ -394,6 +397,7 @@ spells:
     ritual: false
     material: "TNT"
     save_type: "Constitution"
+    damage: "1d6"
     damage_type: "thunder"
     higher_levels: "The spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
 

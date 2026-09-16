@@ -1,1 +1,12 @@
-id: alira_the_keeper
+id: alira
+name: "The Kindler"
+
+creature_type: humanoid
+subtype: aetherborn
+size: medium
+
+hit_points: "7d8+14"
+armor_class: 14
+speed: 30
+
+model: alira
