@@ -39,6 +39,7 @@ public class DmModeManager {
     public static final String TOOL_INITIATIVE = "combat_initiative";
     public static final String TOOL_MOVE = "move";
     public static final String TOOL_OBJECT = "object";
+    public static final String TOOL_SPAWN = "spawn";
     public static final String TOOL_EXIT = "exit";
     // Category navigation (#187): the top level shows categories; each opens a page of tools + a Back.
     public static final String TOOL_PAGE_COMBAT = "page_combat";
@@ -193,6 +194,8 @@ public class DmModeManager {
                 "(players then interact through you — /dm object commands too)"));
         player.getInventory().setItem(2, tool(Material.SPYGLASS, TOOL_VIEW, "View",
                 "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
+        player.getInventory().setItem(4, tool(Material.EGG, TOOL_SPAWN, "Spawn Entity",
+                "Right-click to pick an entity to spawn", "(it appears where you stand — use Move to place it)"));
         player.getInventory().setItem(8, tool(Material.ARROW, TOOL_BACK, "◀ Back",
                 "Right-click to return to the tool categories"));
     }

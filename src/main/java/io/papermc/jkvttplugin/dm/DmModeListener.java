@@ -9,6 +9,8 @@ import io.papermc.jkvttplugin.data.model.DndEntity;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
@@ -102,7 +104,35 @@ public class DmModeListener implements Listener {
             if (b == null) b = player.getTargetBlockExact(6);
             if (b == null) player.sendActionBar(Component.text("Right-click a block to annotate it.", NamedTextColor.GRAY));
             else showObjectMenu(player, b);
+        } else if (DmModeManager.TOOL_SPAWN.equals(tool)) {
+            showSpawnMenu(player);
         }
+    }
+
+    /** A clickable chat list of every loaded entity; clicking fills /dmentity spawn for that id (#20). */
+    private void showSpawnMenu(Player player) {
+        java.util.List<io.papermc.jkvttplugin.data.model.DndEntity> entities =
+                new java.util.ArrayList<>(io.papermc.jkvttplugin.data.loader.EntityLoader.getAllEntities());
+        if (entities.isEmpty()) {
+            player.sendActionBar(Component.text("No entities are loaded (check DMContent/Entities/).", NamedTextColor.RED));
+            return;
+        }
+        entities.sort(java.util.Comparator.comparing(e -> e.getName() == null ? e.getId() : e.getName()));
+
+        player.sendMessage(Component.text("🥚 Spawn which entity? ", NamedTextColor.GOLD)
+                .append(Component.text("(appears where you stand — Move to reposition)", NamedTextColor.GRAY)));
+        Component row = Component.text("   ", NamedTextColor.GRAY);
+        for (io.papermc.jkvttplugin.data.model.DndEntity e : entities) {
+            String label = e.getName() != null ? e.getName() : e.getId();
+            // Fill the command (trailing space) so the DM can add a custom name before Enter, and
+            // spawn happens on Enter rather than firing the instant they browse the list.
+            String cmd = "/dmentity spawn " + e.getId() + " ";
+            row = row.append(Component.text("[" + label + "] ", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                    .clickEvent(ClickEvent.suggestCommand(cmd))
+                    .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "\nAdd a name, or press Enter to spawn "
+                            + label + " where you stand."))));
+        }
+        player.sendMessage(row);
     }
 
     /** A clickable annotation menu for the block the DM clicked with the Annotate Object tool (#185/#187). */
