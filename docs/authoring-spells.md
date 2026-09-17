@@ -161,6 +161,32 @@ are ignored — but the extra mechanic simply won't fire until the code exists.
 
 ---
 
+## Case sensitivity & formatting
+
+Confirmed against the code — you don't have to match any particular case:
+
+| Field | Case? | Notes |
+|---|---|---|
+| `save_type` | insensitive, trimmed | Must be the **full** word — `dexterity`, not `dex`. |
+| `damage_type` | insensitive | Resistance/immunity matching is case-insensitive (`cold` = `Cold`). |
+| `save_effect` | insensitive | `half` / `none`. |
+| `range` | insensitive, trimmed | `Self`/`self`, `Touch`/`touch`, and `60 feet` / `60 ft` / `60 Feet` all work — the first number is taken, spacing ignored. |
+| `casting_time` | insensitive | Only the substring `reaction` is checked (to allow off-turn casting). |
+| `classes` | insensitive **as a YAML list** | `[ "Wizard", "SORCERER" ]` is normalised to lowercase. The inline comma-string form (`classes: "Wizard, Sorcerer"`) is **not** normalised — always use the list form. Class names must be full (`wizard`). |
+| `school`, `components`, `duration`, `description` | n/a | Display text only; not read mechanically. Write them however reads best. |
+| `aoe_shape`, `aoe_targets`, `cast_choice`, `social_type` | insensitive | Fixed keyword sets (see each shape). |
+
+**`cast_choice` is not a value — it's a *kind of choice*.** It only takes `ability` or `damage_type`,
+and it only does something on a **mark spell** (has `mark_damage`, i.e. Hex / Hunter's Mark): it makes
+the game ask the caster to pick, then imposes **disadvantage** on the marked target's checks with that
+ability. So:
+
+- `cast_choice: charisma` does **nothing** — `charisma` isn't one of the two valid values, so the
+  branch is skipped. (For Friends/Animal Friendship, this would not grant advantage.)
+- **There is no "grant advantage on a check" mechanic yet.** Friends (advantage on CHA checks vs a
+  target) and similar can't be modelled — author them as UTILITY spells (common fields + description)
+  and let the DM adjudicate, until a check-advantage effect exists (#182).
+
 ## Validation (what `/dm reload` checks)
 
 The loader logs a warning (it never refuses to load) when a spell looks incomplete:
@@ -171,3 +197,8 @@ The loader logs a warning (it never refuses to load) when a spell looks incomple
 
 Read the console after a reload; a clean load prints nothing. This is the list to work from when
 filling in damage — not a manual reread of every spell.
+
+List of spells that will need tweaking in the future:
+Acid Splash
+Blade ward
+chill touch
