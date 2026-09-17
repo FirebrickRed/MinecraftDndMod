@@ -50,3 +50,9 @@ combat:
   # half), 75% for lead sling bullets, 25% for blowgun needles, 100% for a thrown weapon. Tune it
   # per item in its YAML rather than here, so homebrew ammo sets its own odds.
   track_ammunition: true
+
+  # Thrown weapons (#192). When true, throwing a javelin/handaxe/dagger/dart removes it from your
+  # inventory and drops it by the target (hit or miss) to pick back up. Stabbing with it in melee
+  # keeps it in hand. The game infers throw-vs-stab from range; the attack prompt offers an override.
+  # false = the weapon never leaves your hand (BG-style infinite). Separate from track_ammunition.
+  track_thrown_weapons: true

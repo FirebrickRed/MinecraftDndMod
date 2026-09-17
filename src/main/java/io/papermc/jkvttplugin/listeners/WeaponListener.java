@@ -279,6 +279,22 @@ public class WeaponListener implements Listener {
                 .append(Component.text("[type a final total]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(totalCmd))
                         .hoverEvent(HoverEvent.showText(Component.text("If you already added your modifiers: " + totalCmd + "<your final total>")))));
+
+        // Throwable weapon (#192): say which way it'll go by default and offer the override, since
+        // throwing at an adjacent enemy (or stabbing at range, futile) is the player's call.
+        if (ctx.weapon.hasProperty("thrown")) {
+            boolean willThrow = io.papermc.jkvttplugin.combat.ThrownWeaponManager.isThrow(
+                    ctx.weapon, ctx.attacker, target, io.papermc.jkvttplugin.combat.ThrownWeaponManager.Mode.AUTO);
+            String altWord = willThrow ? "stab" : "throw";
+            String altCmd = base + altWord + " manualRoll ";
+            player.sendMessage(Component.text("   " + (willThrow ? "⤳ Will be thrown (leaves your hand) — " : "🗡 Melee — ")
+                            , willThrow ? NamedTextColor.AQUA : NamedTextColor.GRAY)
+                    .append(Component.text("[" + altWord + " instead]", NamedTextColor.YELLOW, TextDecoration.UNDERLINED)
+                            .clickEvent(ClickEvent.suggestCommand(altCmd))
+                            .hoverEvent(HoverEvent.showText(Component.text(willThrow
+                                    ? "Keep it in hand and stab (it won't leave your inventory)."
+                                    : "Throw it instead — it lands by the target and you pick it up later.")))));
+        }
     }
 
     /** The combatant the player is looking at within {@code maxDistance} blocks, or null. */

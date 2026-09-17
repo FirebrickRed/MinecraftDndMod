@@ -26,6 +26,7 @@ public final class PluginConfig {
     private static List<AbilityRollMethod> abilityRollMethods = List.of(AbilityRollMethod.values());
     private static boolean abilityScoreCap20 = false; // false = house rule (racial bonuses may exceed 20)
     private static boolean trackAmmunition = true;    // bows consume arrows (#128)
+    private static boolean trackThrownWeapons = true; // a thrown weapon leaves your hand (#192)
 
     private PluginConfig() {}
 
@@ -62,10 +63,14 @@ public final class PluginConfig {
         // Ammunition tracking (#128). Default true — running dry is a real tactical beat; a DM who
         // does not want the bookkeeping turns it off.
         trackAmmunition = cfg.getBoolean("combat.track_ammunition", true);
+        trackThrownWeapons = cfg.getBoolean("combat.track_thrown_weapons", true);
     }
 
     /** True when ranged weapons must spend ammunition to fire (#128). */
     public static boolean isTrackAmmunition() { return trackAmmunition; }
+
+    /** True when a thrown weapon leaves the thrower's hand and lands in the world (#192). */
+    public static boolean isTrackThrownWeapons() { return trackThrownWeapons; }
 
     public static RollMode getRollMode() { return rollMode; }
 

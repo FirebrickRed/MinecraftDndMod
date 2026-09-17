@@ -1583,6 +1583,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         Combatant target;
         String weaponOrAttackName;
 
+        // A throwable weapon can be stabbed or thrown; strip an optional "throw"/"stab" token so it
+        // doesn't get mistaken for the weapon or the target name (#192). Default is AUTO (by range).
+        ThrownWeaponManager.Mode throwMode = ThrownWeaponManager.Mode.AUTO;
+        for (java.util.Iterator<String> it = positionalArgs.iterator(); it.hasNext(); ) {
+            String tok = it.next();
+            if (tok.equalsIgnoreCase("throw")) { throwMode = ThrownWeaponManager.Mode.THROW; it.remove(); }
+            else if (tok.equalsIgnoreCase("stab")) { throwMode = ThrownWeaponManager.Mode.STAB; it.remove(); }
+        }
+
         if (attacker.isPlayer()) {
             // The weapon is the LAST token — but only when that token really is one of the
             // player's weapons. Otherwise treat every token as the target's name, which keeps
@@ -1679,6 +1688,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (state != null) {
                 state.useAction();
                 session.sendActionBar(attacker);
+            }
+
+            // A thrown weapon leaves the hand and lands by the target — hit or miss (#192). Only for
+            // players, and only when this was actually a throw (by range, or an explicit throw/stab).
+            if (attacker.isPlayer() && !"unarmed".equalsIgnoreCase(weaponOrAttackName)) {
+                DndWeapon w = io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(weaponOrAttackName);
+                if (ThrownWeaponManager.isThrow(w, attacker, target, throwMode)) {
+                    ThrownWeaponManager.applyThrow(player, w, target);
+                }
             }
         }
     }
