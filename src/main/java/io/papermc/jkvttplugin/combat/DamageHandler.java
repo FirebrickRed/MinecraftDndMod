@@ -7,12 +7,19 @@ import net.kyori.adventure.text.format.TextDecoration;
 import java.util.Set;
 
 /**
- * Handles HP changes during combat (Issue #100): damage application with
- * resistance/vulnerability/immunity, temporary HP, healing, and the death /
- * unconscious triggers that hand off to the death-save system (Issue #101).
+ * Handles HP changes (Issue #100): damage application with resistance/vulnerability/immunity,
+ * temporary HP, healing, and the death / unconscious triggers that hand off to the death-save
+ * system (Issue #101).
  *
  * All amounts passed in are the raw pre-resistance numbers; this class applies
  * the damage type adjustment, then routes to the Combatant HP methods.
+ *
+ * <p><b>The session is optional.</b> A trap in a corridor, a potion after the fight and a DM
+ * correction all change HP with no combat running, and they should behave exactly like the same
+ * thing mid-fight — same resistances, same downing, same persistence. Pass {@code null} for
+ * {@code session} and the combat-only parts (turn/HP displays, ritual interruption, the
+ * "is the fight over?" offer) are skipped, while the messages go to the affected player and the
+ * DMs instead of the table. {@link CombatTargets} builds the {@link Combatant} either way.
  */
 public class DamageHandler {
 
@@ -46,25 +53,27 @@ public class DamageHandler {
         int hpAfter = target.getCurrentHp();
         int tempAfter = target.getTempHp();
 
-        session.broadcast(Component.empty());
-        session.broadcast(Component.text("━━━ Damage ━━━", NamedTextColor.RED, TextDecoration.BOLD));
+        say(session, target, Component.empty());
+        say(session, target, Component.text("━━━ Damage ━━━", NamedTextColor.RED, TextDecoration.BOLD));
         String typeLabel = (damageType != null && !damageType.isEmpty()) ? " " + damageType : "";
-        session.broadcast(Component.text(target.getDisplayName() + " takes " + finalDamage + typeLabel + " damage!", NamedTextColor.WHITE));
+        say(session, target, Component.text(target.getDisplayName() + " takes " + finalDamage + typeLabel + " damage!", NamedTextColor.WHITE));
         if (adj.note() != null) {
-            session.broadcast(Component.text(adj.note(), NamedTextColor.AQUA));
+            say(session, target, Component.text(adj.note(), NamedTextColor.AQUA));
         }
         if (tempBefore > 0 && tempAfter < tempBefore) {
-            session.broadcast(Component.text("Temp HP absorbed " + (tempBefore - tempAfter)
+            say(session, target, Component.text("Temp HP absorbed " + (tempBefore - tempAfter)
                     + " (" + tempBefore + " → " + tempAfter + ")", NamedTextColor.GRAY));
         }
-        session.broadcast(Component.text("HP: " + hpBefore + " → " + hpAfter + " / " + target.getMaxHp(), NamedTextColor.GRAY));
+        say(session, target, Component.text("HP: " + hpBefore + " → " + hpAfter + " / " + target.getMaxHp(), NamedTextColor.GRAY));
 
         handleDeathTriggers(session, target, wasUnconscious, finalDamage, wasCrit);
-        RitualManager.onDamage(session, target, finalDamage); // may break a channelled ritual (#156)
-        session.broadcast(Component.text("━━━━━━━━━━━━━━", NamedTextColor.RED));
+        if (session != null) {
+            RitualManager.onDamage(session, target, finalDamage); // may break a channelled ritual (#156)
+        }
+        say(session, target, Component.text("━━━━━━━━━━━━━━", NamedTextColor.RED));
 
         // If that drop decided the fight, let the DM wrap it up (one-click /combat finished).
-        session.offerEndIfDecided();
+        if (session != null) session.offerEndIfDecided();
     }
 
     /**
@@ -106,7 +115,7 @@ public class DamageHandler {
         if (target.isEntity()) {
             if (target.getCurrentHp() <= 0 && !target.isDead()) {
                 target.setDead(true);
-                session.broadcast(Component.text(target.getDisplayName() + " is defeated!",
+                say(session, target, Component.text(target.getDisplayName() + " is defeated!",
                         NamedTextColor.DARK_RED, TextDecoration.BOLD));
             }
             return;
@@ -117,14 +126,14 @@ public class DamageHandler {
             if (damageDealt > 0) {
                 int fails = wasCrit ? 2 : 1;
                 target.addDeathSaveFailure(fails);
-                session.broadcast(Component.text(target.getDisplayName() + " takes damage while down — "
+                say(session, target, Component.text(target.getDisplayName() + " takes damage while down — "
                         + fails + " death save failure" + (fails > 1 ? "s" : "") + "!", NamedTextColor.DARK_RED));
                 if (target.isDead()) {
                     DeathSaveHandler.removeProne(target);
-                    session.broadcast(Component.text(target.getDisplayName() + " has died.",
+                    say(session, target, Component.text(target.getDisplayName() + " has died.",
                             NamedTextColor.DARK_RED, TextDecoration.BOLD));
                 } else {
-                    session.broadcast(deathSaveTally(target));
+                    say(session, target, deathSaveTally(target));
                 }
             }
             return;
@@ -137,17 +146,20 @@ public class DamageHandler {
             if (sheet != null && sheet.canEndureLethalHit()) {
                 sheet.markRelentlessEnduranceUsed();
                 target.applyHealing(1 - target.getCurrentHp()); // brought to exactly 1 HP
-                session.broadcast(Component.text("✊ Relentless Endurance! " + target.getDisplayName()
+                say(session, target, Component.text("✊ Relentless Endurance! " + target.getDisplayName()
                         + " refuses to fall — holding on at 1 HP!", NamedTextColor.GOLD, TextDecoration.BOLD));
-                session.refreshHpDisplays(target);
+                if (session != null) session.refreshHpDisplays(target);
                 return;
             }
             target.setUnconscious(true);
             target.resetDeathSaves();
             DeathSaveHandler.applyProne(target);
-            session.broadcast(Component.text(target.getDisplayName() + " falls unconscious!",
+            say(session, target, Component.text(target.getDisplayName() + " falls unconscious!",
                     NamedTextColor.DARK_RED, TextDecoration.BOLD));
-            session.broadcast(Component.text("Death saving throws begin on their turn.", NamedTextColor.GRAY));
+            say(session, target, Component.text(session != null
+                    ? "Death saving throws begin on their turn."
+                    : "Out of combat: start a fight, or the DM calls death saves with /combat deathsave.",
+                    NamedTextColor.GRAY));
         }
     }
 
@@ -158,7 +170,7 @@ public class DamageHandler {
 
         // A dead entity can't be healed back (5e: needs revivify, not hit points).
         if (target.isEntity() && target.getCurrentHp() <= 0) {
-            session.broadcast(Component.text(target.getDisplayName() + " is dead and cannot be healed.", NamedTextColor.GRAY));
+            say(session, target, Component.text(target.getDisplayName() + " is dead and cannot be healed.", NamedTextColor.GRAY));
             return;
         }
 
@@ -167,19 +179,19 @@ public class DamageHandler {
         target.applyHealing(amount);
         int after = target.getCurrentHp();
 
-        session.broadcast(Component.empty());
-        session.broadcast(Component.text("━━━ Healing ━━━", NamedTextColor.GREEN, TextDecoration.BOLD));
-        session.broadcast(Component.text(target.getDisplayName() + " heals " + (after - before) + " HP.", NamedTextColor.WHITE));
-        session.broadcast(Component.text("HP: " + before + " → " + after + " / " + target.getMaxHp(), NamedTextColor.GRAY));
+        say(session, target, Component.empty());
+        say(session, target, Component.text("━━━ Healing ━━━", NamedTextColor.GREEN, TextDecoration.BOLD));
+        say(session, target, Component.text(target.getDisplayName() + " heals " + (after - before) + " HP.", NamedTextColor.WHITE));
+        say(session, target, Component.text("HP: " + before + " → " + after + " / " + target.getMaxHp(), NamedTextColor.GRAY));
 
         if (wasDown && after > 0) {
             target.setUnconscious(false);
             target.resetDeathSaves();
             DeathSaveHandler.removeProne(target);
-            session.broadcast(Component.text(target.getDisplayName() + " regains consciousness!",
+            say(session, target, Component.text(target.getDisplayName() + " regains consciousness!",
                     NamedTextColor.GREEN, TextDecoration.BOLD));
         }
-        session.broadcast(Component.text("━━━━━━━━━━━━━━", NamedTextColor.GREEN));
+        say(session, target, Component.text("━━━━━━━━━━━━━━", NamedTextColor.GREEN));
     }
 
     // ==================== TEMPORARY HP ====================
@@ -188,14 +200,31 @@ public class DamageHandler {
         if (amount < 0) amount = 0;
         boolean granted = target.grantTempHp(amount);
         if (!granted) {
-            session.broadcast(Component.text(target.getDisplayName() + " cannot gain temporary HP.", NamedTextColor.GRAY));
+            say(session, target, Component.text(target.getDisplayName() + " cannot gain temporary HP.", NamedTextColor.GRAY));
             return;
         }
-        session.broadcast(Component.text(target.getDisplayName() + " gains " + amount
+        say(session, target, Component.text(target.getDisplayName() + " gains " + amount
                 + " temporary HP (now " + target.getTempHp() + ").", NamedTextColor.AQUA));
     }
 
     // ==================== SHARED DISPLAY (reused by Issue #101) ====================
+
+    /**
+     * Send a line to whoever should see this HP change: the whole table during combat, otherwise the
+     * affected player plus every online DM (so a trap or a potion still leaves a trail).
+     */
+    private static void say(CombatSession session, Combatant target, Component message) {
+        if (session != null) {
+            session.broadcast(message);
+            return;
+        }
+        org.bukkit.entity.Player affected = target.isPlayer() ? target.getPlayer() : null;
+        if (affected != null && affected.isOnline()) affected.sendMessage(message);
+        for (org.bukkit.entity.Player online : org.bukkit.Bukkit.getOnlinePlayers()) {
+            if (online.equals(affected)) continue;
+            if (io.papermc.jkvttplugin.dm.DMManager.isDM(online)) online.sendMessage(message);
+        }
+    }
 
     /** Render a combatant's death-save progress as filled/empty pips. */
     public static Component deathSaveTally(Combatant c) {

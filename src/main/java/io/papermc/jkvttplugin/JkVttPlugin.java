@@ -58,6 +58,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.EntityChunkListener(), this);
         Bukkit.getPluginManager().registerEvents(new SpellFocusListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArmorEquipListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.ConsumableListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.GearChangeNotifier(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.AmmoRecovery(), this);
         Bukkit.getPluginManager().registerEvents(new SpellCastingMenuListener(), this);
@@ -207,6 +208,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
 
     /** Convenience accessor for the plugin logger from static/utility classes. */
     public static java.util.logging.Logger logger() {
-        return instance.getLogger();
+        // Fall back to a plain logger when the plugin isn't enabled (e.g. loaders run from a test/harness).
+        return instance != null ? instance.getLogger() : java.util.logging.Logger.getLogger("JkVttPlugin");
     }
 }

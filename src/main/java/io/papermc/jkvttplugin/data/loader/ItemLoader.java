@@ -78,6 +78,7 @@ public class ItemLoader {
         item.setCost(ShopParser.parseCost(data.get("cost"), id));
         item.setTags(ParseUtil.normalizeStringList(data.get("tags"))); // item-grouping tags (#54)
         if (data.get("recovery_chance") instanceof Number rc) item.setRecoveryChance(rc.intValue()); // #191
+        item.setHealing(ParseUtil.asString(data.get("healing"), null)); // a potion: drinkable for HP
         return item;
     }
 

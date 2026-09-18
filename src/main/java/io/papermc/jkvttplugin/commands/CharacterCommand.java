@@ -46,7 +46,8 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final ShortRestCommand shortRestExec = new ShortRestCommand();
     private final LongRestCommand longRestExec = new LongRestCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete", "loot", "check", "cast", "reply");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete", "loot", "check", "cast", "drink", "reply");
+    private final DrinkCommand drinkExec = new DrinkCommand();
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
@@ -114,6 +115,9 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "cast" -> {
                 return handleCast(sender, rest);
+            }
+            case "drink" -> {
+                return drinkExec.onCommand(sender, cmd, label, rest);
             }
             case "reply" -> {
                 return handleReply(sender, rest);

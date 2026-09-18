@@ -24,6 +24,7 @@ public class DndItem {
     private Cost cost;
     private List<String> tags = new ArrayList<>(); // YAML tags: item-groupings (e.g. gaming_set) (#54)
     private int recoveryChance = -1; // YAML recovery_chance: % odds of surviving being picked up (#191); -1 = unset
+    private String healing;      // YAML healing: dice restored when drunk, e.g. "2d4+2" (potions)
 
     public String getId() {
         return this.id;
@@ -44,6 +45,19 @@ public class DndItem {
     }
     public void setType(String type) {
         this.type = type;
+    }
+
+    /** Healing dice for a drinkable item (potion), e.g. "2d4+2"; null for everything else. */
+    public String getHealing() {
+        return healing;
+    }
+    public void setHealing(String healing) {
+        this.healing = healing;
+    }
+
+    /** True if this item can be drunk to restore HP (`/character drink`). */
+    public boolean isDrinkable() {
+        return healing != null && !healing.isBlank();
     }
 
     public String getFocusType() {

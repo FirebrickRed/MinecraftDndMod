@@ -38,9 +38,10 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final RestoreResourceCommand restoreExec = new RestoreResourceCommand();
     private final ConsumeResourceCommand consumeExec = new ConsumeResourceCommand();
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
+    private final HpCommand hpExec = new HpCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "object", "lootprompt", "rest", "resource", "reload", "mode", "animalreply");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "hp", "object", "lootprompt", "rest", "resource", "reload", "mode", "animalreply");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -57,6 +58,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "remove" -> handleRemove(sender, args);
             case "give" -> delegateDm(sender, command, label, args, giveExec);
             case "check", "promptcheck" -> delegateDm(sender, command, label, args, checkExec);
+            case "hp" -> delegateDm(sender, command, label, args, hpExec);
             case "object" -> delegateDm(sender, command, label, args, objectExec);
             case "tp", "goto" -> handleTp(sender, args);
             case "rest" -> delegateDm(sender, command, label, args, restExec);
@@ -342,6 +344,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
                     return List.of();
                 }
                 case "check", "promptcheck" -> { return checkExec.onTabComplete(sender, command, label, sub); }
+                case "hp" -> { return hpExec.onTabComplete(sender, command, label, sub); }
                 case "object" -> { return objectExec.onTabComplete(sender, command, label, sub); }
                 case "rest" -> { return restExec.onTabComplete(sender, command, label, sub); }
                 case "resource" -> {
