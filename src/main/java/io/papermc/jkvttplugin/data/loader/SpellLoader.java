@@ -61,8 +61,10 @@ public class SpellLoader {
                         // missing its dice (the Frostbite bug → "Apply damage (1)"). A condition-only
                         // save spell (Hold Person) has neither, so it isn't flagged. See
                         // docs/authoring-spells.md.
+                        // A mark spell (Hex) carries its dice in mark_damage instead, so it's fine.
                         if (spell.getDamageType() != null && !spell.getDamageType().isBlank()
-                                && (spell.getDamage() == null || spell.getDamage().isBlank())) {
+                                && (spell.getDamage() == null || spell.getDamage().isBlank())
+                                && !spell.isMarkSpell()) {
                             LOGGER.warning("Spell '" + id + "' (" + file.getName() + ") has damage_type '"
                                     + spell.getDamageType() + "' but no damage dice — add a `damage:` value,"
                                     + " or remove damage_type if it deals no damage.");
@@ -128,6 +130,7 @@ public class SpellLoader {
                 .build();
         // Combat resolution fields (#123).
         spell.setDamage(ParseUtil.asString(data.get("damage"), null));
+        spell.setAutoHit(ParseUtil.asBoolean(data.get("auto_hit"), false)); // Magic Missile: hits without a roll
         // Default: cantrips deal nothing on a successful save; leveled spells deal half. Override in YAML.
         spell.setSaveEffect(ParseUtil.asString(data.get("save_effect"), spell.isCantrip() ? "none" : "half"));
         spell.setConditionOnFail(ParseUtil.asString(data.get("condition_on_fail"), null));

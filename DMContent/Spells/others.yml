@@ -41,7 +41,11 @@ spells:
     ritual: false
     material: "LIGHTNING_ROD"
     save_type: "Dexterity"
+    damage: "8d6"
     damage_type: "lightning"
+    save_effect: "half"
+    aoe_shape: "line"
+    aoe_size: 100
     higher_levels: "When you cast this spell using a spell slot of 4th level or higher, the damage increases by 1d6 for each slot level above 3rd."
 
   counterspell:
@@ -72,7 +76,6 @@ spells:
     concentration: true
     ritual: false
     material: "ELYTRA"
-    attack_type: "touch"
     higher_levels: "When you cast this spell using a spell slot of 4th level or higher, you can target one additional creature for each slot level above 3rd."
 
   mental_prison:
@@ -89,7 +92,9 @@ spells:
     ritual: false
     material: "IRON_BARS"
     save_type: "Intelligence"
+    damage: "5d10"   # RAW 5d10 on a success too (then the spell ends) — the engine can only do half/none
     damage_type: "psychic"
+    save_effect: "half"
 
     # Additional Warlock-specific spells
   hunger_of_hadar:
@@ -104,8 +109,8 @@ spells:
     description: "You open a gateway to the dark between the stars, a region infested with unknown horrors. A 20-foot-radius sphere of blackness and bitter cold appears, centered on a point within range and lasting for the duration. This void is filled with a cacophony of soft whispers and slurping noises that can be heard up to 30 feet away."
     concentration: true
     ritual: false
-    material: "END_PORTAL"
-    save_type: "Dexterity"
+    material: "SCULK"   # END_PORTAL is a block, not an item — it can't render
+    damage: "2d6"   # 2d6 cold at the start of a turn inside; 2d6 acid on a failed DEX save at the end — DM applies
     damage_type: "cold"
 
   synaptic_static:
@@ -123,3 +128,7 @@ spells:
     material: "LIGHTNING_ROD"
     save_type: "Intelligence"
     damage_type: "psychic"
+    damage: "8d6"
+    save_effect: "half"
+    aoe_shape: "sphere"
+    aoe_size: 20

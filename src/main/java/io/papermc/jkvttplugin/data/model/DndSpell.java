@@ -31,6 +31,7 @@ public class DndSpell {
     private String damageType;
     // Combat resolution (Issue #123):
     private String damage;            // dice, e.g. "1d10" (cantrips add no ability modifier)
+    private boolean autoHit;          // Magic Missile: no attack roll, no save — it just hits (#182)
     private String saveEffect;        // on a successful save: "half" or "none" (default "half")
     private String conditionOnFail;   // a condition id (#103) applied to the target on a failed save
     // Mark/curse spells (Hex, Hunter's Mark — #178): the caster marks a target and, while
@@ -190,6 +191,10 @@ public class DndSpell {
 
     public String getDamage() { return damage; }
     public void setDamage(String damage) { this.damage = damage; }
+
+    /** True if the spell hits automatically — no attack roll and no saving throw (Magic Missile). */
+    public boolean isAutoHit() { return autoHit; }
+    public void setAutoHit(boolean autoHit) { this.autoHit = autoHit; }
 
     public String getSaveEffect() { return saveEffect; }
     public void setSaveEffect(String saveEffect) { this.saveEffect = saveEffect; }

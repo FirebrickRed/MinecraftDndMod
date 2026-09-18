@@ -26,9 +26,13 @@ public class SpellComponents {
             return new SpellComponents(false, false, false, null, false, null);
         }
 
-        boolean verbal = componentString.contains("V");
-        boolean somatic = componentString.contains("S");
-        boolean material = componentString.contains("M");
+        // Read the V/S/M letters only from the part before "(" — the material description can contain
+        // capitals of its own ("M (a pinch of Sulfur)" must not also count as somatic).
+        int paren = componentString.indexOf('(');
+        String letters = (paren >= 0 ? componentString.substring(0, paren) : componentString).toUpperCase();
+        boolean verbal = letters.contains("V");
+        boolean somatic = letters.contains("S");
+        boolean material = letters.contains("M");
 
         String materialDesc = null;
         if (material) {

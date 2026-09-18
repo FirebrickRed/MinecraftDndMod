@@ -1,59 +1,82 @@
+# CANTRIPS — alphabetical.
+# Field reference: docs/authoring-spells.md. Cantrip damage is dice only (no ability modifier added),
+# and a cantrip save deals nothing on a success unless you set save_effect.
+# Component materials go inside `components:` — "V, S, M (a bit of fleece)". The top-level `material:` is the Minecraft item.
+
 spells:
-  frostbite:
-    name: "Frostbite"
+  acid_splash:
+    name: "Acid Splash"
     level: 0
-    school: "evocation"
-    classes: [ "druid", "sorcerer", "warlock", "wizard", "artificer" ]
+    school: "conjuration"
+    classes: ["artificer", "sorcerer", "wizard"]
     casting_time: "1 action"
     range: "60 feet"
     components: "V, S"
     duration: "Instantaneous"
-    description: "You cause numbing frost to form on one creature that you can see within range. The target must make a Constitution saving throw. On a failed save, the target takes 1d6 cold damage, and it has disadvantage on the next weapon attack roll it makes before the end of its next turn."
-    concentration: false
-    ritual: false
-    material: "WIND_CHARGE"
-    save_type: "Constitution"
-    damage: "1d6"
-    damage_type: "cold"
-    higher_levels: "The spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
-
-  fire_bolt:
-    name: "Fire Bolt"
-    level: 0
-    school: "evocation"
-    classes: [ "wizard", "sorcerer", "eldritch_knight", "arcane_trickster" ]
-    casting_time: "1 action"
-    range: "120 feet"
-    components: "V, S"
-    duration: "Instantaneous"
-    description: "You hurl a mote of fire at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 fire damage. A flammable object hit by this spell ignites if it isn't being worn or carried."
+    description: "You hurl a bubble of acid. Choose one creature you can see within range, or choose two creatures you can see within range that are within 5 feet of each other. A target must succeed on a Dexterity saving throw or take 1d6 acid damage."
     concentration: false
     ritual: false
     material: "FIRE_CHARGE"
-    attack_type: "ranged_spell_attack"
-    damage_type: "fire"
-    damage: "1d10"
-    higher_levels: "This spell's damage increases by 1d10 when you reach 5th level (2d10), 11th level (3d10), and 17th level (4d10)."
+    save_type: "Dexterity"
+    damage_type: "acid"
+    damage: "1d6"
+    save_effect: "none"
+    # can choose a second if within 5 feet. maybe make it an aoe spell and add to aoe_target one additional?
+    higher_levels: "This spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
 
-  mage_hand:
-    name: "Mage Hand"
+  blade_ward:
+    name: "Blade Ward"
     level: 0
-    school: "conjuration"
-    classes: [ "wizard", "sorcerer", "bard", "warlock", "eldritch_knight", "arcane_trickster" ]
+    school: "abjuration"
+    classes: ["bard", "sorcerer", "warlock", "wizard"]
     casting_time: "1 action"
-    range: "30 feet"
+    range: "Self"
     components: "V, S"
-    duration: "1 minute"
-    description: "A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action. The hand vanishes if it is ever more than 30 feet away from you or if you cast this spell again."
+    duration: "1 round"
+    description: "You extend your hand and trace a sigil of warding in the air. Until the end of your next turn, you have resistance against bludgeoning, piercing, and slashing damage dealt by weapon attacks."
     concentration: false
     ritual: false
-    material: "GHAST_SPAWN_EGG"
+    material: "SHIELD"
+
+  booming_blade:
+    name: "Booming Blade"
+    level: 0
+    school: "evocation"
+    classes: ["artificer", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "Self (5-foot radius)"
+    components: "S, M (a melee weapon worth at least 1 sp)"
+    duration: "1 round"
+    description: "You brandish the weapon used in the spell’s casting and make a melee attack with it against one creature within 5 feet of you. On a hit, the target suffers the weapon attack’s normal effects and then becomes sheathed in booming energy until the start of your next turn. If the target willingly moves 5 feet or more before then, the target takes 1d8 thunder damage, and the spell ends."
+    concentration: false
+    ritual: false
+    material: "WIND_CHARGE"
+    # A weapon attack + rider: attack with /combat attack, the DM applies the thunder if it moves (#182).
+    higher_levels: "At 5th level, the melee attack deals an extra 1d8 thunder damage to the target on a hit, and the damage the target takes for moving increases to 2d8. Both damage rolls increase by 1d8 at 11th level (2d8 and 3d8) and again at 17th level (3d8 and 4d8)."
+
+  chill_touch:
+    name: "Chill Touch"
+    level: 0
+    school: "necromancy"
+    classes: ["sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S"
+    duration: "1 round"
+    description: "You create a ghostly, skeletal hand in the space of a creature within range. Make a ranged spell attack against the creature to assail it with the chill of the grave. On a hit, the target takes 1d8 necrotic damage, and it can't regain hit points until the start of your next turn."
+    concentration: false
+    ritual: false
+    material: "BONE"
+    attack_type: "ranged_spell_attack"
+    damage: "1d8"
+    damage_type: "necrotic"
+    higher_levels: "This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
 
   control_flames:
     name: "Control Flames"
     level: 0
     school: "transmutation"
-    classes: [ "druid", "sorcerer", "wizard" ]
+    classes: ["druid", "sorcerer", "wizard"]
     casting_time: "1 action"
     range: "60 feet"
     components: "S"
@@ -63,95 +86,11 @@ spells:
     ritual: false
     material: "FIRE_CHARGE"
 
-  poison_spray:
-    name: "Poison Spray"
-    level: 0
-    school: "conjuration"
-    classes: [ "artificer", "druid", "sorcerer", "warlock", "wizard" ]
-    casting_time: "1 action"
-    range: "10 feet"
-    components: "V, S"
-    duration: "Instantaneous"
-    description: "You extend your hand toward a creature you can see within range and project a puff of noxious gas from your palm. The creature must succeed on a Constitution saving throw or take 1d12 poison damage."
-    concentration: false
-    ritual: false
-    material: "SPIDER_EYE"
-    save_type: "Constitution"
-    damage_type: "poison"
-    damage: "1d12"
-    save_effect: "none"
-    higher_levels: "This spell's damage increases by 1d12 when you reach 5th level (2d12), 11th level (3d12), and 17th level (4d12)."
-
-  sacred_flame:
-    name: "Sacred Flame"
-    level: 0
-    school: "evocation"
-    classes: [ "cleric" ]
-    casting_time: "1 action"
-    range: "60 feet"
-    components: "V, S"
-    duration: "Instantaneous"
-    description: "Flame-like radiance descends on a creature that you can see within range. The target must succeed on a Dexterity saving throw or take 1d8 radiant damage. The target gains no benefit from cover for this saving throw."
-    concentration: false
-    ritual: false
-    material: "TORCH"
-    save_type: "Dexterity"
-    damage_type: "radiant"
-    damage: "1d8"
-    save_effect: "none"
-    higher_levels: "The spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
-
-  eldritch_blast:
-    name: "Eldritch Blast"
-    level: 0
-    school: "evocation"
-    classes: [ "warlock" ]
-    casting_time: "1 action"
-    range: "120 feet"
-    components: "V, S"
-    duration: "Instantaneous"
-    description: "A beam of crackling energy streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 force damage."
-    concentration: false
-    ritual: false
-    material: "END_ROD"
-    attack_type: "ranged_spell_attack"
-    damage_type: "force"
-    damage: "1d10"
-    higher_levels: "The spell creates more than one beam when you reach higher levels: two beams at 5th level, three beams at 11th level, and four beams at 17th level."
-
-  minor_illusion:
-    name: "Minor Illusion"
-    level: 0
-    school: "illusion"
-    classes: [ "bard", "sorcerer", "warlock", "wizard" ]
-    casting_time: "1 action"
-    range: "30 feet"
-    components: "S, M"
-    duration: "1 minute"
-    description: "You create a sound or an image of an object within range that lasts for the duration. The illusion also ends if you dismiss it as an action or cast this spell again."
-    concentration: false
-    ritual: false
-    material: "GLASS"
-
-  prestidigitation:
-    name: "Prestidigitation"
-    level: 0
-    school: "transmutation"
-    classes: [ "bard", "sorcerer", "warlock", "wizard" ]
-    casting_time: "1 action"
-    range: "10 feet"
-    components: "V, S"
-    duration: "Up to 1 hour"
-    description: "This spell is a minor magical trick that novice spellcasters use for practice. You create one of several minor effects within range."
-    concentration: false
-    ritual: false
-    material: "PRISMARINE_SHARD"
-
   create_bonfire:
     name: "Create Bonfire"
     level: 0
     school: "conjuration"
-    classes: ["druid", "sorcerer", "warlock", "wizard"]
+    classes: ["artificer", "druid", "sorcerer", "warlock", "wizard"]
     casting_time: "1 action"
     range: "60 feet"
     components: "V, S"
@@ -164,6 +103,20 @@ spells:
     damage: "1d8"
     damage_type: "fire"
     higher_levels: "This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
+
+  dancing_lights:
+    name: "Dancing Lights"
+    level: 0
+    school: "evocation"
+    classes: ["artificer", "bard", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S, M (a bit of phosphorus or wychwood, or a glowworm)"
+    duration: "1 minute"
+    description: "You create up to four torch-sized lights within range, making them appear as torches, lanterns, or glowing orbs that hover in the air for the duration. You can also combine the four lights into one glowing vaguely humanoid form of Medium size."
+    concentration: true
+    ritual: false
+    material: "GLOWSTONE_DUST"
 
   druidcraft:
     name: "Druidcraft"
@@ -179,11 +132,110 @@ spells:
     ritual: false
     material: "VINE"
 
+  eldritch_blast:
+    name: "Eldritch Blast"
+    level: 0
+    school: "evocation"
+    classes: ["warlock"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "A beam of crackling energy streaks toward a creature within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 force damage."
+    concentration: false
+    ritual: false
+    material: "END_ROD"
+    attack_type: "ranged_spell_attack"
+    damage_type: "force"
+    damage: "1d10"
+    higher_levels: "The spell creates more than one beam when you reach higher levels: two beams at 5th level, three beams at 11th level, and four beams at 17th level."
+
+  encode_thoughts:
+    name: "Encode Thoughts"
+    level: 0
+    school: "enchantment"
+    classes: []   # no class list yet — nobody can pick it until one is added
+    casting_time: "1 action"
+    range: "Self"
+    components: "S"
+    duration: "8 hours"
+    description: "You pull a memory, an idea, or a message from your mind and transform it into a tangible string of glowing energy called a thought strand, which persists for the duration or until you cast this spell again. The thought strand appears in an unoccupied space within 5 feet of you as a Tiny, weightless, semisolid object that can be held and carried like a ribbon. It is otherwise stationary. If you cast this spell while concentrating on a spell or an ability that allows you to read or manipulate the thoughts of others (such as detect thoughts or modify memory), you can transform the thoughts or memories you read, rather than your own, into a thought strand. Casting this spell while holding a thought strand allows you to instantly receive whatever memory, idea, or message the thought strand contains. (Casting detect thoughts on the strand has the same effect.)"
+    concentration: false
+    ritual: false
+    material: "WIND_CHARGE"
+
+  fire_bolt:
+    name: "Fire Bolt"
+    level: 0
+    school: "evocation"
+    classes: ["artificer", "wizard", "sorcerer", "eldritch_knight", "arcane_trickster"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You hurl a mote of fire at a creature or object within range. Make a ranged spell attack against the target. On a hit, the target takes 1d10 fire damage. A flammable object hit by this spell ignites if it isn't being worn or carried."
+    concentration: false
+    ritual: false
+    material: "FIRE_CHARGE"
+    attack_type: "ranged_spell_attack"
+    damage_type: "fire"
+    damage: "1d10"
+    higher_levels: "This spell's damage increases by 1d10 when you reach 5th level (2d10), 11th level (3d10), and 17th level (4d10)."
+
+  friends:
+    name: "Friends"
+    level: 0
+    school: "enchantment"
+    classes: ["bard", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "S, M (a small amount of makeup applied to the face as this spell is cast)"
+    duration: "1 minute"
+    description: "For the duration, you have advantage on all Charisma checks directed at one creature of your choice that isn't hostile toward you. When the spell ends, the creature realizes that you used magic to influence its mood and becomes hostile toward you."
+    concentration: true
+    ritual: false
+    material: "PINK_TULIP"
+    # No "advantage on checks" effect exists yet (#182) — the DM grants it (e.g. `/dm check … adv`).
+
+  frostbite:
+    name: "Frostbite"
+    level: 0
+    school: "evocation"
+    classes: ["artificer", "druid", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You cause numbing frost to form on one creature that you can see within range. The target must make a Constitution saving throw. On a failed save, the target takes 1d6 cold damage, and it has disadvantage on the next weapon attack roll it makes before the end of its next turn."
+    concentration: false
+    ritual: false
+    material: "WIND_CHARGE"
+    save_type: "Constitution"
+    damage: "1d6"
+    damage_type: "cold"
+    higher_levels: "The spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
+
+  green_flame_blade:
+    name: "Green-Flame Blade"
+    level: 0
+    school: "evocation"
+    classes: ["artificer", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "Self (5-foot radius)"
+    components: "S, M (a melee weapon worth at least 1 sp)"
+    duration: "Instantaneous"
+    description: "You brandish the weapon used in the spell’s casting and make a melee attack with it against one creature within 5 feet of you. On a hit, the target suffers the weapon attack’s normal effects, and you can cause green fire to leap from the target to a different creature of your choice that you can see within 5 feet of it. The second creature takes fire damage equal to your spellcasting ability modifier."
+    concentration: false
+    ritual: false
+    material: "WIND_CHARGE"
+    # A weapon attack + rider: attack with /combat attack, the DM applies the leaping fire (#182).
+    higher_levels: "At 5th level, the melee attack deals an extra 1d8 fire damage to the target on a hit, and the fire damage to the second creature increases to 1d8 + your spellcasting ability modifier. Both damage rolls increase by 1d8 at 11th level (2d8 and 2d8) and 17th level (3d8 and 3d8)."
+
   guidance:
     name: "Guidance"
     level: 0
     school: "divination"
-    classes: ["druid", "cleric", "artificer"]
+    classes: ["artificer", "cleric", "druid"]
     casting_time: "1 action"
     range: "Touch"
     components: "V, S"
@@ -192,7 +244,6 @@ spells:
     concentration: true
     ritual: false
     material: "COMPASS"
-    attack_type: "touch"
 
   gust:
     name: "Gust"
@@ -216,7 +267,7 @@ spells:
     classes: ["druid", "sorcerer", "warlock", "wizard"]
     casting_time: "1 action"
     range: "30 feet"
-    components: "V, S, M"
+    components: "V, S, M (a living flea)"
     duration: "Instantaneous"
     description: "You cause a cloud of mites, fleas, and other parasites to appear momentarily on one creature you can see within range. The target must succeed on a Constitution saving throw, or it takes 1d6 poison damage and moves 5 feet in a random direction if it can move and its speed is at least 5 feet."
     concentration: false
@@ -227,11 +278,57 @@ spells:
     damage_type: "poison"
     higher_levels: "This spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
 
+  light:
+    name: "Light"
+    level: 0
+    school: "evocation"
+    classes: ["artificer", "bard", "cleric", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, M (a firefly or phosphorescent moss)"
+    duration: "1 hour"
+    description: "You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds bright light in a 20-foot radius and dim light for an additional 20 feet. The light can be colored as you like."
+    concentration: false
+    ritual: false
+    material: "TORCH"
+
+  lightning_lure:
+    name: "Lightning Lure"
+    level: 0
+    school: "evocation"
+    classes: ["artificer", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "15 feet"   # RAW "Self (15-foot radius)", but a Self range can only target yourself
+    components: "V"
+    duration: "Instantaneous"
+    description: "A lash of lightning snaps toward one creature you can see within 15 feet. It must succeed on a Strength saving throw or be pulled up to 10 feet straight toward you, then take 1d8 lightning damage if it ends within 5 feet of you."
+    concentration: false
+    ritual: false
+    material: "LEAD"
+    save_type: "Strength"
+    damage: "1d8"   # RAW only if the pull leaves it within 5 feet of you — DM's call
+    damage_type: "lightning"
+    higher_levels: "This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
+
+  mage_hand:
+    name: "Mage Hand"
+    level: 0
+    school: "conjuration"
+    classes: ["artificer", "wizard", "sorcerer", "bard", "warlock", "eldritch_knight", "arcane_trickster"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S"
+    duration: "1 minute"
+    description: "A spectral, floating hand appears at a point you choose within range. The hand lasts for the duration or until you dismiss it as an action. The hand vanishes if it is ever more than 30 feet away from you or if you cast this spell again."
+    concentration: false
+    ritual: false
+    material: "GHAST_SPAWN_EGG"
+
   magic_stone:
     name: "Magic Stone"
     level: 0
     school: "transmutation"
-    classes: ["druid", "warlock", "artificer"]
+    classes: ["artificer", "druid", "warlock"]
     casting_time: "1 bonus action"
     range: "Touch"
     components: "V, S"
@@ -241,22 +338,70 @@ spells:
     ritual: false
     material: "COBBLESTONE"
     attack_type: "ranged_spell_attack"
+    damage: "1d6"   # RAW adds your spellcasting modifier — cantrips don't add it automatically, so type e.g. `total 7`
     damage_type: "bludgeoning"
 
   mending:
     name: "Mending"
     level: 0
     school: "transmutation"
-    classes: ["druid", "cleric", "bard", "sorcerer", "wizard", "artificer"]
+    classes: ["artificer", "bard", "cleric", "druid", "sorcerer", "wizard"]
     casting_time: "1 minute"
     range: "Touch"
-    components: "V, S, M"
+    components: "V, S, M (two lodestones)"
     duration: "Instantaneous"
     description: "This spell repairs a single break or tear in an object you touch, such as a broken chain link, two halves of a broken key, a torn cloak, or a leaking wineskin. As long as the break or tear is no larger than 1 foot in any dimension, you mend it, leaving no trace of the former damage."
     concentration: false
     ritual: false
     material: "IRON_INGOT"
-    attack_type: "touch"
+
+  message:
+    name: "Message"
+    level: 0
+    school: "transmutation"
+    classes: ["artificer", "bard", "druid", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S, M (a short piece of copper wire)"
+    duration: "1 round"
+    description: "You point your finger toward a creature within range and whisper a message. The target (and only the target) hears the message and can reply in a whisper that only you can hear."
+    concentration: false
+    ritual: false
+    material: "PAPER"
+    social_type: "message"
+    word_limit: 25
+
+  mind_sliver:
+    name: "Mind Sliver"
+    level: 0
+    school: "enchantment"
+    classes: ["sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V"
+    duration: "1 round"
+    description: "You drive a spike of psychic energy into the mind of a creature you can see. It must succeed on an Intelligence saving throw or take 1d6 psychic damage and subtract a d4 from the next saving throw it makes before the end of your next turn."
+    concentration: false
+    ritual: false
+    material: "AMETHYST_SHARD"
+    save_type: "Intelligence"
+    damage: "1d6"
+    damage_type: "psychic"
+    higher_levels: "This spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
+
+  minor_illusion:
+    name: "Minor Illusion"
+    level: 0
+    school: "illusion"
+    classes: ["bard", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "S, M (a bit of fleece)"
+    duration: "1 minute"
+    description: "You create a sound or an image of an object within range that lasts for the duration. The illusion also ends if you dismiss it as an action or cast this spell again."
+    concentration: false
+    ritual: false
+    material: "GLASS"
 
   mold_earth:
     name: "Mold Earth"
@@ -272,13 +417,46 @@ spells:
     ritual: false
     material: "DIRT"
 
+  poison_spray:
+    name: "Poison Spray"
+    level: 0
+    school: "conjuration"
+    classes: ["artificer", "druid", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "10 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You extend your hand toward a creature you can see within range and project a puff of noxious gas from your palm. The creature must succeed on a Constitution saving throw or take 1d12 poison damage."
+    concentration: false
+    ritual: false
+    material: "SPIDER_EYE"
+    save_type: "Constitution"
+    damage_type: "poison"
+    damage: "1d12"
+    save_effect: "none"
+    higher_levels: "This spell's damage increases by 1d12 when you reach 5th level (2d12), 11th level (3d12), and 17th level (4d12)."
+
+  prestidigitation:
+    name: "Prestidigitation"
+    level: 0
+    school: "transmutation"
+    classes: ["artificer", "bard", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "10 feet"
+    components: "V, S"
+    duration: "Up to 1 hour"
+    description: "This spell is a minor magical trick that novice spellcasters use for practice. You create one of several minor effects within range."
+    concentration: false
+    ritual: false
+    material: "PRISMARINE_SHARD"
+
   primal_savagery:
     name: "Primal Savagery"
     level: 0
     school: "transmutation"
     classes: ["druid"]
     casting_time: "1 action"
-    range: "Self"
+    range: "Touch"   # RAW "Self", but "Self" means you can only target yourself — the attack reaches 5 ft
     components: "S"
     duration: "Instantaneous"
     description: "You channel primal magic to cause your teeth or fingernails to sharpen, ready to deliver a corrosive attack. Make a melee spell attack against one creature within 5 feet of you. On a hit, the target takes 1d10 acid damage. After you make the attack, your teeth or fingernails return to normal."
@@ -286,6 +464,7 @@ spells:
     ritual: false
     material: "BONE"
     attack_type: "melee_spell_attack"
+    damage: "1d10"
     damage_type: "acid"
     higher_levels: "The spell's damage increases by 1d10 when you reach 5th level (2d10), 11th level (3d10), and 17th level (4d10)."
 
@@ -295,7 +474,7 @@ spells:
     school: "conjuration"
     classes: ["druid"]
     casting_time: "1 action"
-    range: "Self"
+    range: "30 feet"
     components: "V, S"
     duration: "10 minutes"
     description: "A flickering flame appears in your hand. The flame remains there for the duration and harms neither you nor your equipment. The flame sheds bright light in a 10-foot radius and dim light for an additional 10 feet. The spell ends if you dismiss it as an action or if you cast it again. You can also attack with the flame, although doing so ends the spell. When you cast this spell, or as an action on a later turn, you can hurl the flame at a creature within 30 feet of you. Make a ranged spell attack. On a hit, the target takes 1d8 fire damage."
@@ -303,23 +482,79 @@ spells:
     ritual: false
     material: "TORCH"
     attack_type: "ranged_spell_attack"
+    damage: "1d8"
     damage_type: "fire"
+    higher_levels: "This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
+
+  ray_of_frost:
+    name: "Ray of Frost"
+    level: 0
+    school: "evocation"
+    classes: ["artificer", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "A frigid beam of blue-white light streaks toward a creature. Make a ranged spell attack; on a hit it takes 1d8 cold damage and its speed is reduced by 10 feet until the start of your next turn."
+    concentration: false
+    ritual: false
+    material: "SNOWBALL"
+    attack_type: "ranged_spell_attack"
+    damage: "1d8"
+    damage_type: "cold"
     higher_levels: "This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
 
   resistance:
     name: "Resistance"
     level: 0
     school: "abjuration"
-    classes: ["druid", "cleric", "artificer"]
+    classes: ["artificer", "cleric", "druid"]
     casting_time: "1 action"
     range: "Touch"
-    components: "V, S, M"
+    components: "V, S, M (a miniature cloak)"
     duration: "1 minute"
     description: "You touch one willing creature. Once before the spell ends, the target can roll a d4 and add the number rolled to one saving throw of its choice. The spell then ends."
     concentration: true
     ritual: false
     material: "SHIELD"
-    attack_type: "touch"
+
+  sacred_flame:
+    name: "Sacred Flame"
+    level: 0
+    school: "evocation"
+    classes: ["cleric"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "Flame-like radiance descends on a creature that you can see within range. The target must succeed on a Dexterity saving throw or take 1d8 radiant damage. The target gains no benefit from cover for this saving throw."
+    concentration: false
+    ritual: false
+    material: "TORCH"
+    save_type: "Dexterity"
+    damage_type: "radiant"
+    damage: "1d8"
+    save_effect: "none"
+    higher_levels: "The spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
+
+  sapping_sting:
+    name: "Sapping Sting"
+    level: 0
+    school: "necromancy"
+    classes: ["wizard"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You sap the vitality of one creature you can see. It must succeed on a Constitution saving throw or take 1d4 necrotic damage and fall prone."
+    concentration: false
+    ritual: false
+    material: "BLACK_DYE"
+    save_type: "Constitution"
+    damage: "1d4"
+    damage_type: "necrotic"
+    condition_on_fail: "prone"
+    higher_levels: "This spell's damage increases by 1d4 when you reach 5th level (2d4), 11th level (3d4), and 17th level (4d4)."
 
   shape_water:
     name: "Shape Water"
@@ -342,20 +577,38 @@ spells:
     classes: ["druid"]
     casting_time: "1 bonus action"
     range: "Touch"
-    components: "V, S, M"
+    components: "V, S, M (mistletoe, a shamrock leaf, and a club or quarterstaff)"
     duration: "1 minute"
     description: "The wood of a club or quarterstaff you are holding is imbued with nature's power. For the duration, you can use your spellcasting ability instead of Strength for the attack and damage rolls of melee attacks using that weapon, and the weapon's damage die becomes a d8. The spell ends if you cast it again or if you let go of the weapon."
     concentration: false
     ritual: false
     material: "STICK"
+    # A buff on your weapon, not a spell attack: attack with /combat attack and use `total <n>` for the
+    # d8 + spellcasting modifier until weapon buffs are automated (#182).
+
+  shocking_grasp:
+    name: "Shocking Grasp"
+    level: 0
+    school: "evocation"
+    classes: ["artificer", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "Lightning springs from your hand. Make a melee spell attack against a creature you touch, with advantage if it wears metal armor. On a hit it takes 1d8 lightning damage and can't take reactions until the start of its next turn."
+    concentration: false
+    ritual: false
+    material: "COPPER_INGOT"
     attack_type: "melee_spell_attack"
-    damage_type: "bludgeoning"
+    damage: "1d8"
+    damage_type: "lightning"
+    higher_levels: "This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
 
   spare_the_dying:
     name: "Spare the Dying"
     level: 0
     school: "necromancy"
-    classes: ["druid", "cleric", "artificer"]
+    classes: ["artificer", "cleric", "druid"]
     casting_time: "1 action"
     range: "Touch"
     components: "V, S"
@@ -364,22 +617,56 @@ spells:
     concentration: false
     ritual: false
     material: "GOLDEN_APPLE"
-    attack_type: "touch"
+
+  sword_burst:
+    name: "Sword Burst"
+    level: 0
+    school: "conjuration"
+    classes: ["artificer", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "Self (5-foot radius)"
+    components: "V"
+    duration: "Instantaneous"
+    description: "You create a momentary circle of spectral blades that sweep around you. Each other creature within 5 feet of you must succeed on a Dexterity saving throw or take 1d6 force damage."
+    concentration: false
+    ritual: false
+    material: "IRON_SWORD"
+    save_type: "Dexterity"
+    damage: "1d6"
+    damage_type: "force"
+    aoe_shape: "burst"
+    aoe_size: 5
+    higher_levels: "This spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
+
+  thaumaturgy:
+    name: "Thaumaturgy"
+    level: 0
+    school: "transmutation"
+    classes: ["cleric"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V"
+    duration: "Up to 1 minute"
+    description: "You manifest a minor wonder, a sign of supernatural power: your voice booms three times louder, flames flicker or change color, harmless tremors shake the ground, an instantaneous sound rings out, an unlocked door or window flies open or slams shut, or your eyes change appearance. You can have up to three one-minute effects active at once."
+    concentration: false
+    ritual: false
+    material: "SOUL_TORCH"
 
   thorn_whip:
     name: "Thorn Whip"
     level: 0
     school: "transmutation"
-    classes: ["druid", "artificer"]
+    classes: ["artificer", "druid"]
     casting_time: "1 action"
     range: "30 feet"
-    components: "V, S, M"
+    components: "V, S, M (the stem of a plant with thorns)"
     duration: "Instantaneous"
     description: "You create a long, vine-like whip covered in thorns that lashes out at your command toward a creature in range. Make a melee spell attack against the target. If the attack hits, the creature takes 1d6 piercing damage, and if the creature is Large or smaller, you pull the creature up to 10 feet closer to you."
     concentration: false
     ritual: false
     material: "VINE"
     attack_type: "melee_spell_attack"
+    damage: "1d6"
     damage_type: "piercing"
     higher_levels: "This spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
 
@@ -387,9 +674,9 @@ spells:
     name: "Thunderclap"
     level: 0
     school: "evocation"
-    classes: ["druid", "bard", "sorcerer", "warlock", "wizard", "artificer"]
+    classes: ["artificer", "bard", "druid", "sorcerer", "warlock", "wizard"]
     casting_time: "1 action"
-    range: "5 feet"
+    range: "Self (5-foot radius)"
     components: "S"
     duration: "Instantaneous"
     description: "You create a burst of thunderous sound that can be heard up to 100 feet away. Each creature within range, other than you, must make a Constitution saving throw or take 1d6 thunder damage."
@@ -399,58 +686,33 @@ spells:
     save_type: "Constitution"
     damage: "1d6"
     damage_type: "thunder"
+    aoe_shape: "burst"   # everyone within 5 feet of you, not a single target
+    aoe_size: 5
     higher_levels: "The spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."
 
-  blade_ward:
-    name: "Blade Ward"
-    level: 0
-    school: "abjuration"
-    classes: [ "bard", "sorcerer", "warlock", "wizard" ]
-    casting_time: "1 action"
-    range: "Self"
-    components: "V, S"
-    duration: "1 round"
-    description: "You extend your hand and trace a sigil of warding in the air. Until the end of your next turn, you have resistance against bludgeoning, piercing, and slashing damage dealt by weapon attacks."
-    concentration: false
-    ritual: false
-    material: "SHIELD"
-
-  chill_touch:
-    name: "Chill Touch"
+  toll_the_dead:
+    name: "Toll the Dead"
     level: 0
     school: "necromancy"
-    classes: [ "sorcerer", "warlock", "wizard" ]
+    classes: ["cleric", "warlock", "wizard"]
     casting_time: "1 action"
-    range: "120 feet"
+    range: "60 feet"
     components: "V, S"
-    duration: "1 round"
-    description: "You create a ghostly, skeletal hand in the space of a creature within range. Make a ranged spell attack against the creature to assail it with the chill of the grave. On a hit, the target takes 1d8 necrotic damage, and it can't regain hit points until the start of your next turn."
+    duration: "Instantaneous"
+    description: "You point at one creature you can see and the sound of a dolorous bell fills the air around it. It must succeed on a Wisdom saving throw or take 1d8 necrotic damage — or 1d12 necrotic damage if it is already missing any of its hit points."
     concentration: false
     ritual: false
-    material: "BONE"
-    attack_type: "ranged_spell_attack"
+    material: "BELL"
+    save_type: "Wisdom"
+    damage: "1d8"   # 1d12 if the target is already hurt — override the dice on the damage prompt
     damage_type: "necrotic"
-    higher_levels: "This spell's damage increases by 1d8 when you reach 5th level (2d8), 11th level (3d8), and 17th level (4d8)."
-
-  friends:
-    name: "Friends"
-    level: 0
-    school: "enchantment"
-    classes: [ "bard", "sorcerer", "warlock", "wizard" ]
-    casting_time: "1 action"
-    range: "Self"
-    components: "S, M"
-    duration: "1 minute"
-    description: "For the duration, you have advantage on all Charisma checks directed at one creature of your choice that isn't hostile toward you. When the spell ends, the creature realizes that you used magic to influence its mood and becomes hostile toward you."
-    concentration: true
-    ritual: false
-    material: "PINK_TULIP"
+    higher_levels: "This spell's damage increases by one die when you reach 5th level (2d8 or 2d12), 11th level (3d8 or 3d12), and 17th level (4d8 or 4d12)."
 
   true_strike:
     name: "True Strike"
     level: 0
     school: "divination"
-    classes: [ "bard", "sorcerer", "warlock", "wizard" ]
+    classes: ["bard", "sorcerer", "warlock", "wizard"]
     casting_time: "1 action"
     range: "30 feet"
     components: "S"
@@ -460,56 +722,11 @@ spells:
     ritual: false
     material: "ARROW"
 
-  message:
-    name: "Message"
-    level: 0
-    school: "transmutation"
-    classes: [ "druid", "bard", "sorcerer", "wizard", "artificer" ]
-    casting_time: "1 action"
-    range: "120 feet"
-    components: "V, S, M"
-    duration: "1 round"
-    description: "You point your finger toward a creature within range and whisper a message. The target (and only the target) hears the message and can reply in a whisper that only you can hear."
-    concentration: false
-    ritual: false
-    social_type: "message"
-    word_limit: 25
-    material: "PAPER"
-
-  light:
-    name: "Light"
-    level: 0
-    school: "evocation"
-    classes: [ "bard", "cleric", "sorcerer", "wizard", "artificer" ]
-    casting_time: "1 action"
-    range: "Touch"
-    components: "V, M"
-    duration: "1 hour"
-    description: "You touch one object that is no larger than 10 feet in any dimension. Until the spell ends, the object sheds bright light in a 20-foot radius and dim light for an additional 20 feet. The light can be colored as you like."
-    concentration: false
-    ritual: false
-    material: "TORCH"
-    attack_type: "touch"
-
-  dancing_lights:
-    name: "Dancing Lights"
-    level: 0
-    school: "evocation"
-    classes: [ "bard", "sorcerer", "wizard", "artificer" ]
-    casting_time: "1 action"
-    range: "120 feet"
-    components: "V, S, M"
-    duration: "1 minute"
-    description: "You create up to four torch-sized lights within range, making them appear as torches, lanterns, or glowing orbs that hover in the air for the duration. You can also combine the four lights into one glowing vaguely humanoid form of Medium size."
-    concentration: true
-    ritual: false
-    material: "GLOWSTONE_DUST"
-
   vicious_mockery:
     name: "Vicious Mockery"
     level: 0
     school: "enchantment"
-    classes: [ "bard" ]
+    classes: ["bard"]
     casting_time: "1 action"
     range: "60 feet"
     components: "V"
@@ -519,5 +736,27 @@ spells:
     ritual: false
     material: "BOOK"
     save_type: "Wisdom"
+    damage: "1d4"
     damage_type: "psychic"
     higher_levels: "This spell's damage increases by 1d4 when you reach 5th level (2d4), 11th level (3d4), and 17th level (4d4)."
+
+  word_of_radiance:
+    name: "Word of Radiance"
+    level: 0
+    school: "evocation"
+    classes: ["cleric"]
+    casting_time: "1 action"
+    range: "Self (5-foot radius)"
+    components: "V, M (a holy symbol)"
+    duration: "Instantaneous"
+    description: "You utter a divine word, and burning radiance erupts from you. Each creature of your choice within 5 feet of you must succeed on a Constitution saving throw or take 1d6 radiant damage."
+    concentration: false
+    ritual: false
+    material: "SHROOMLIGHT"
+    save_type: "Constitution"
+    damage: "1d6"
+    damage_type: "radiant"
+    aoe_shape: "burst"
+    aoe_size: 5
+    aoe_targets: "enemies"   # "creatures of your choice" — enemies is the usual pick
+    higher_levels: "This spell's damage increases by 1d6 when you reach 5th level (2d6), 11th level (3d6), and 17th level (4d6)."

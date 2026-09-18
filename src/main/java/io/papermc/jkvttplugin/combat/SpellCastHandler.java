@@ -82,6 +82,16 @@ public class SpellCastHandler {
             return true;
         }
 
+        // Auto-hit spells (Magic Missile): no attack roll, no save — straight to the damage step.
+        if (spell.isAutoHit()) {
+            session.broadcast(Component.empty());
+            session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
+                    + " at " + target.getDisplayName(true) + " — it hits automatically.", NamedTextColor.LIGHT_PURPLE));
+            AttackHandler.promptDamage(session, caster, target, spell.getDamage() == null ? "" : spell.getDamage(),
+                    spell.getDamageType(), false);
+            return true;
+        }
+
         if (spell.isAttackRoll()) {
             Advantage advantage = caster.attackAdvantageAgainst(target); // spell attacks get condition adv/dis too (#103)
             if (advantage != Advantage.NONE) {

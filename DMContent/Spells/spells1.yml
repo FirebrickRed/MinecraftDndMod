@@ -1,4 +1,782 @@
+# 1ST-LEVEL SPELLS — alphabetical.
+# Sources: PHB, Xanathar's (XGE), Tasha's (TCE, incl. its optional expanded class lists and the
+# artificer), Strixhaven (Silvery Barbs), Wildemount (Gift of Alacrity, Magnify Gravity).
+# Field reference + which shapes resolve automatically: docs/authoring-spells.md
+#
+# Conventions used here:
+#  - `material:` (top level) is the vanilla Minecraft item the spell renders as.
+#  - Component materials go INSIDE `components:` — "V, S, M (a pinch of sand)" (a YAML comment
+#    after the string is NOT read — the description has to be in the parentheses).
+#  - Riders (smites, Hail of Thorns, Divine Favor…) carry `damage:` for reference but have no
+#    attack/save field, so casting them just announces — the DM adds the damage on the hit (#182).
+#  - A touch-range buff must NOT have `attack_type` — any attack_type makes the caster roll to hit.
+
 spells:
+  absorb_elements:
+    name: "Absorb Elements"
+    level: 1
+    school: "abjuration"
+    classes: ["artificer", "druid", "ranger", "sorcerer", "wizard"]
+    casting_time: "1 reaction"
+    range: "Self"
+    components: "S"
+    duration: "1 round"
+    description: "The spell captures some of the incoming energy, lessening its effect on you and storing it for your next melee attack. You have resistance to the triggering damage type until the start of your next turn. Also, the first time you hit with a melee attack on your next turn, the target takes an extra 1d6 damage of the triggering type, and the spell ends."
+    concentration: false
+    ritual: false
+    material: "SHIELD"
+    damage: "1d6"   # rider on your next melee hit, of the absorbed type — DM applies (#182)
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the extra damage increases by 1d6 for each slot level above 1st."
+
+  alarm:
+    name: "Alarm"
+    level: 1
+    school: "abjuration"
+    classes: ["artificer", "ranger", "wizard"]
+    casting_time: "1 minute"
+    range: "30 feet"
+    components: "V, S, M (a tiny bell and a piece of fine silver wire)"
+    duration: "8 hours"
+    description: "You ward a door, a window, or an area no larger than a 20-foot cube. Until the spell ends, you are alerted whenever a Tiny or larger creature touches or enters the warded area; you can name creatures that won't set it off. Choose a mental alarm (a ping in your mind that wakes you if you're asleep) or an audible one (a hand bell heard within 60 feet for 10 seconds)."
+    concentration: false
+    ritual: true
+    material: "BELL"
+
+  animal_friendship:
+    name: "Animal Friendship"
+    level: 1
+    school: "enchantment"
+    classes: ["bard", "druid", "ranger"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S, M (a morsel of food)"
+    duration: "24 hours"
+    description: "This spell lets you convince a beast that you mean it no harm. Choose a beast that you can see within range. It must see and hear you. If the beast's Intelligence is 4 or higher, the spell fails. Otherwise, the beast must succeed on a Wisdom saving throw or be charmed by you for the spell's duration."
+    concentration: false
+    ritual: false
+    material: "BONE"
+    save_type: "Wisdom"
+    condition_on_fail: "charmed"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can affect one additional beast for each slot level above 1st."
+
+  armor_of_agathys:
+    name: "Armor of Agathys"
+    level: 1
+    school: "abjuration"
+    classes: ["warlock"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "V, S, M (a cup of water)"
+    duration: "1 hour"
+    description: "Spectral frost wraps around you and you gain 5 temporary hit points. While you still have any of them, a creature that hits you with a melee attack takes 5 cold damage. The spell ends early once those temporary hit points are gone."
+    concentration: false
+    ritual: false
+    material: "PACKED_ICE"
+    temp_hp: "5"    # the 5 cold retaliation damage isn't automated — DM applies it
+    higher_levels: "For each slot level above 1st, both the temporary hit points and the cold damage increase by 5."
+
+  arms_of_hadar:
+    name: "Arms of Hadar"
+    level: 1
+    school: "conjuration"
+    classes: ["warlock"]
+    casting_time: "1 action"
+    range: "Self (10-foot radius)"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You invoke the power of Hadar, the Dark Hunger. Tendrils of dark energy erupt from you and batter all creatures within 10 feet of you. Each creature in that area must make a Strength saving throw. On a failed save, a target takes 2d6 necrotic damage and can't take reactions until its next turn."
+    concentration: false
+    ritual: false
+    material: "WITHER_SKELETON_SKULL"
+    save_type: "Strength"
+    damage: "2d6"
+    damage_type: "necrotic"
+    save_effect: "half"
+    aoe_shape: "burst"
+    aoe_size: 10
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st."
+
+  bane:
+    name: "Bane"
+    level: 1
+    school: "enchantment"
+    classes: ["bard", "cleric"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S, M (a drop of blood)"
+    duration: "1 minute"
+    description: "Up to three creatures you can see within range must make Charisma saving throws. Until the spell ends, each one that fails subtracts a d4 from its attack rolls and saving throws."
+    concentration: true
+    ritual: false
+    material: "FERMENTED_SPIDER_EYE"
+    save_type: "Charisma"   # the -1d4 isn't automated yet (#182) — the save is; the DM tracks the penalty
+    higher_levels: "You can target one additional creature for each slot level above 1st."
+
+  beast_bond:
+    name: "Beast Bond"
+    level: 1
+    school: "divination"
+    classes: ["druid", "ranger"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S, M (a bit of fur wrapped in a cloth)"
+    duration: "10 minutes"
+    description: "You establish a telepathic link with one beast you touch that is friendly to you or charmed by you. The spell fails if the beast's Intelligence score is 4 or higher. Until the spell ends, the link is active while you and the beast are within line of sight of each other."
+    concentration: true
+    ritual: false
+    material: "BONE"
+
+  bless:
+    name: "Bless"
+    level: 1
+    school: "enchantment"
+    classes: ["cleric", "paladin"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S, M (a sprinkling of holy water)"
+    duration: "1 minute"
+    description: "You bless up to three creatures of your choice within range. Whenever a target makes an attack roll or a saving throw before the spell ends, the target can roll a d4 and add the number rolled to the attack roll or saving throw."
+    concentration: true
+    ritual: false
+    material: "GOLDEN_APPLE"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st."
+
+  burning_hands:
+    name: "Burning Hands"
+    level: 1
+    school: "evocation"
+    classes: ["sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Self (15-foot cone)"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "A thin sheet of flame shoots from your outstretched fingertips. Each creature in a 15-foot cone must make a Dexterity saving throw, taking 3d6 fire damage on a failure or half as much on a success. Unattended flammable objects in the area catch fire."
+    concentration: false
+    ritual: false
+    material: "BLAZE_POWDER"
+    save_type: "Dexterity"
+    damage: "3d6"
+    damage_type: "fire"
+    save_effect: "half"
+    aoe_shape: "cone"
+    aoe_size: 15
+    higher_levels: "The damage increases by 1d6 for each slot level above 1st."
+
+  catapult:
+    name: "Catapult"
+    level: 1
+    school: "transmutation"
+    classes: ["artificer", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "S"
+    duration: "Instantaneous"
+    description: "Choose an unattended object weighing 1 to 5 pounds within range and hurl it up to 90 feet in a straight line. A creature in its path must make a Dexterity saving throw or take 3d8 bludgeoning damage, stopping the object. On a success, the object passes by harmlessly."
+    concentration: false
+    ritual: false
+    material: "FLINT"
+    save_type: "Dexterity"
+    damage: "3d8"
+    damage_type: "bludgeoning"
+    save_effect: "none"
+    higher_levels: "The maximum object weight increases by 5 pounds and the damage by 1d8 for each slot level above 1st."
+
+  cause_fear:
+    name: "Cause Fear"
+    level: 1
+    school: "necromancy"
+    classes: ["warlock", "wizard"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V"
+    duration: "1 minute"
+    description: "You awaken the sense of mortality in one creature you can see within range. A construct or an undead is immune to this effect. The target must succeed on a Wisdom saving throw or become frightened of you until the spell ends."
+    concentration: true
+    ritual: false
+    material: "WITHER_SKELETON_SKULL"
+    save_type: "Wisdom"
+    condition_on_fail: "frightened"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st. The creatures must be within 30 feet of each other when you target them."
+
+  ceremony:
+    name: "Ceremony"
+    level: 1
+    school: "abjuration"
+    classes: ["cleric", "paladin"]
+    casting_time: "1 hour"
+    range: "Touch"
+    components:
+      verbal: true
+      somatic: true
+      material: true
+      material_description: "25 gp worth of powdered silver, which the spell consumes"
+      material_consumed: true
+      material_cost: 25
+    duration: "Instantaneous"
+    description: "You perform one religious rite: Atonement, Bless Water, Coming of Age, Dedication, Funeral Rite, or Wedding. Each has its own small blessing — for example, a Wedding grants the couple +2 AC while within 30 feet of each other for 7 days, and a Coming of Age lets a young person add a d4 to one ability check within 24 hours."
+    concentration: false
+    ritual: true
+    material: "CANDLE"
+
+  chaos_bolt:
+    name: "Chaos Bolt"
+    level: 1
+    school: "evocation"
+    classes: ["sorcerer"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You hurl a wavering mote of chaotic energy. Make a ranged spell attack; on a hit the target takes 2d8 + 1d6 damage. One of the d8s decides the damage type (1 acid, 2 cold, 3 fire, 4 force, 5 lightning, 6 poison, 7 psychic, 8 thunder). If both d8s match, the bolt leaps to another creature within 30 feet and you make a new attack roll."
+    concentration: false
+    ritual: false
+    material: "AMETHYST_CLUSTER"
+    attack_type: "ranged_spell_attack"
+    damage: "2d8"          # + 1d6 (the dice parser takes one dice group) and the type is rolled —
+    damage_type: "force"   # override with `type <t>` on /combat damage
+    higher_levels: "Each target takes an extra 1d6 damage of the rolled type for each slot level above 1st."
+
+  charm_person:
+    name: "Charm Person"
+    level: 1
+    school: "enchantment"
+    classes: ["bard", "druid", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S"
+    duration: "1 hour"
+    description: "You attempt to charm a humanoid you can see within range. It must make a Wisdom saving throw, and it does so with advantage if you or your companions are fighting it. If it fails the saving throw, it is charmed by you until the spell ends or until you or your companions do anything harmful to it."
+    concentration: false
+    ritual: false
+    material: "PINK_TULIP"
+    save_type: "Wisdom"
+    condition_on_fail: "charmed"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st. The creatures must be within 30 feet of each other when you target them."
+
+  chromatic_orb:
+    name: "Chromatic Orb"
+    level: 1
+    school: "evocation"
+    classes: ["sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "90 feet"
+    components:
+      verbal: true
+      somatic: true
+      material: true
+      material_description: "a diamond worth at least 50 gp"
+      material_consumed: false
+      material_cost: 50
+    duration: "Instantaneous"
+    description: "You hurl a 4-inch sphere of energy at a creature you can see. Choose acid, cold, fire, lightning, poison, or thunder, then make a ranged spell attack. On a hit, the target takes 3d8 damage of the chosen type."
+    concentration: false
+    ritual: false
+    material: "DIAMOND"
+    attack_type: "ranged_spell_attack"
+    damage: "3d8"
+    damage_type: "fire"   # caster chooses — override with `type <t>` on /combat damage
+    higher_levels: "The damage increases by 1d8 for each slot level above 1st."
+
+  color_spray:
+    name: "Color Spray"
+    level: 1
+    school: "illusion"
+    classes: ["bard", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Self (15-foot cone)"
+    components: "V, S, M (a pinch of powder or sand colored red, yellow, and blue)"
+    duration: "1 round"
+    description: "A dazzling spray of light flashes from your hand. Roll 6d10: that total is how many hit points of creatures the spell can affect. Starting with the creature in the 15-foot cone with the lowest current hit points, each creature is blinded until the end of your next turn, subtracting its hit points from the total. Unconscious creatures and those that can't see are ignored."
+    concentration: false
+    ritual: false
+    material: "LIGHT_BLUE_DYE"
+    higher_levels: "Roll an additional 2d10 for each slot level above 1st."
+
+  command:
+    name: "Command"
+    level: 1
+    school: "enchantment"
+    classes: ["bard", "cleric", "paladin"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V"
+    duration: "1 round"
+    description: "You speak a one-word command to a creature you can see within range. The target must succeed on a Wisdom saving throw or follow the command on its next turn. The spell has no effect if the target is undead, if it doesn't understand your language, or if your command is directly harmful to it."
+    concentration: false
+    ritual: false
+    material: "BOOK"
+    save_type: "Wisdom"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can affect one additional creature for each slot level above 1st. The creatures must be within 30 feet of each other when you target them."
+
+  compelled_duel:
+    name: "Compelled Duel"
+    level: 1
+    school: "enchantment"
+    classes: ["paladin"]
+    casting_time: "1 bonus action"
+    range: "30 feet"
+    components: "V"
+    duration: "1 minute"
+    description: "You attempt to compel a creature into a duel. One creature that you can see within range must make a Wisdom saving throw. On a failed save, the creature is drawn to you, compelled by your divine demand."
+    concentration: true
+    ritual: false
+    material: "IRON_SWORD"
+    save_type: "Wisdom"
+
+  comprehend_languages:
+    name: "Comprehend Languages"
+    level: 1
+    school: "divination"
+    classes: ["bard", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "V, S, M (a pinch of soot and salt)"
+    duration: "1 hour"
+    description: "For the duration, you understand the literal meaning of any spoken language you hear, and of any written language you see while touching the surface it's written on (about a minute per page). It doesn't decode secret messages or symbols like glyphs that aren't part of a language."
+    concentration: false
+    ritual: true
+    material: "WRITABLE_BOOK"
+
+  create_or_destroy_water:
+    name: "Create or Destroy Water"
+    level: 1
+    school: "transmutation"
+    classes: ["cleric", "druid"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S, M (a drop of water if creating water, or a few grains of sand if destroying it)"
+    duration: "Instantaneous"
+    description: "You either create or destroy water. Create Water: You create up to 10 gallons of clean water within range in an open container. Alternatively, the water falls as rain in a 30-foot cube within range, extinguishing exposed flames in the area. Destroy Water: You destroy up to 10 gallons of water in an open container within range. Alternatively, you destroy fog in a 30-foot cube within range."
+    concentration: false
+    ritual: false
+    material: "WATER_BUCKET"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you create or destroy 10 additional gallons of water, or the size of the cube increases by 5 feet, for each slot level above 1st."
+
+  cure_wounds:
+    name: "Cure Wounds"
+    level: 1
+    school: "evocation"
+    classes: ["artificer", "bard", "cleric", "druid", "paladin", "ranger"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier."
+    concentration: false
+    ritual: false
+    material: "POTION"
+    healing: "1d8"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d8 for each slot level above 1st."
+
+  detect_evil_and_good:
+    name: "Detect Evil and Good"
+    level: 1
+    school: "divination"
+    classes: ["cleric", "paladin"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "V, S"
+    duration: "10 minutes"
+    description: "For the duration, you know if there is an aberration, celestial, elemental, fey, fiend, or undead within 30 feet of you, as well as where the creature is located. Similarly, you know if there is a place or object within 30 feet of you that has been magically consecrated or desecrated."
+    concentration: true
+    ritual: false
+    material: "ENDER_EYE"
+
+  detect_magic:
+    name: "Detect Magic"
+    level: 1
+    school: "divination"
+    classes: ["artificer", "bard", "cleric", "druid", "paladin", "ranger", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "V, S"
+    duration: "10 minutes"
+    description: "For the duration, you sense the presence of magic within 30 feet of you. If you sense magic in this way, you can use your action to see a faint aura around any visible creature or object in the area that bears magic, and you learn its school of magic, if any."
+    concentration: true
+    ritual: true
+    material: "ENDER_EYE"
+
+  detect_poison_and_disease:
+    name: "Detect Poison and Disease"
+    level: 1
+    school: "divination"
+    classes: ["cleric", "druid", "paladin", "ranger"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "V, S, M (a yew leaf)"
+    duration: "10 minutes"
+    description: "For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you. You also identify the kind of poison, poisonous creature, or disease in each case."
+    concentration: true
+    ritual: true
+    material: "SPIDER_EYE"
+
+  disguise_self:
+    name: "Disguise Self"
+    level: 1
+    school: "illusion"
+    classes: ["artificer", "bard", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "V, S"
+    duration: "1 hour"
+    description: "You make yourself, including your clothes and gear, look different until the spell ends or you dismiss it. You can seem up to a foot shorter or taller and appear thinner or heavier, but your basic body shape stays the same. The illusion doesn't hold up to touch. A creature can use its action to make an Intelligence (Investigation) check against your spell save DC to see through it."
+    concentration: false
+    ritual: false
+    material: "LEATHER_HELMET"
+
+  dissonant_whispers:
+    name: "Dissonant Whispers"
+    level: 1
+    school: "enchantment"
+    classes: ["bard"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V"
+    duration: "Instantaneous"
+    description: "You whisper a discordant melody that only one creature of your choice within range can hear, wracking it with terrible pain. The target must make a Wisdom saving throw. On a failed save, it takes 3d6 psychic damage and must immediately use its reaction, if available, to move as far as its speed allows away from you."
+    concentration: false
+    ritual: false
+    material: "NOTE_BLOCK"
+    save_type: "Wisdom"
+    damage: "3d6"
+    damage_type: "psychic"
+    save_effect: "half"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st."
+
+  divine_favor:
+    name: "Divine Favor"
+    level: 1
+    school: "evocation"
+    classes: ["paladin"]
+    casting_time: "1 bonus action"
+    range: "Self"
+    components: "V, S"
+    duration: "1 minute"
+    description: "Your prayer empowers you with divine radiance. Until the spell ends, your weapon attacks deal an extra 1d4 radiant damage on a hit."
+    concentration: true
+    ritual: false
+    material: "GOLDEN_SWORD"
+    damage: "1d4"   # rider on every weapon hit — DM applies (#182)
+    damage_type: "radiant"
+
+  earth_tremor:
+    name: "Earth Tremor"
+    level: 1
+    school: "evocation"
+    classes: ["bard", "druid", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Self (10-foot radius)"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You cause a tremor in the ground within range. Each creature other than you in that area must make a Dexterity saving throw. On a failed save, a creature takes 1d6 bludgeoning damage and is knocked prone. If the ground in that area is loose earth or stone, it becomes difficult terrain until cleared, with each 5-foot-diameter portion requiring at least 1 minute to clear by hand."
+    concentration: false
+    ritual: false
+    material: "COBBLESTONE"
+    save_type: "Dexterity"
+    damage: "1d6"
+    damage_type: "bludgeoning"
+    save_effect: "none"
+    condition_on_fail: "prone"
+    aoe_shape: "burst"
+    aoe_size: 10
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st."
+
+  ensnaring_strike:
+    name: "Ensnaring Strike"
+    level: 1
+    school: "conjuration"
+    classes: ["ranger"]
+    casting_time: "1 bonus action"
+    range: "Self"
+    components: "V"
+    duration: "1 minute"
+    description: "The next time you hit a creature with a weapon attack before the spell ends, thorny vines wrap it. It must succeed on a Strength saving throw (Large or bigger creatures have advantage) or be restrained until the spell ends, taking 1d6 piercing damage at the start of each of its turns. A restrained creature, or one touching it, can use its action on a Strength check against your spell save DC to break free."
+    concentration: true
+    ritual: false
+    material: "VINE"
+    damage: "1d6"   # rider on your next hit — DM calls the save and applies (#182)
+    damage_type: "piercing"
+    higher_levels: "The damage increases by 1d6 for each slot level above 1st."
+
+  entangle:
+    name: "Entangle"
+    level: 1
+    school: "conjuration"
+    classes: ["druid", "ranger"]
+    casting_time: "1 action"
+    range: "90 feet"
+    components: "V, S"
+    duration: "1 minute"
+    description: "Grasping weeds and vines sprout from the ground in a 20-foot square starting from a point within range. For the duration, these plants turn the ground in the area into difficult terrain. A creature in the area when you cast the spell must succeed on a Strength saving throw or be restrained by the entangling plants until the spell ends."
+    concentration: true
+    ritual: false
+    material: "VINE"
+    save_type: "Strength"
+    condition_on_fail: "restrained"
+    aoe_shape: "sphere"   # a 20-foot square, approximated as a 10-foot-radius area
+    aoe_size: 10
+
+  expeditious_retreat:
+    name: "Expeditious Retreat"
+    level: 1
+    school: "transmutation"
+    classes: ["artificer", "sorcerer", "warlock", "wizard"]
+    casting_time: "1 bonus action"
+    range: "Self"
+    components: "V, S"
+    duration: "10 minutes"
+    description: "You can take the Dash action as a bonus action when you cast this spell, and again as a bonus action on each of your turns until the spell ends."
+    concentration: true
+    ritual: false
+    material: "SUGAR"
+
+  faerie_fire:
+    name: "Faerie Fire"
+    level: 1
+    school: "evocation"
+    classes: ["artificer", "bard", "druid"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V"
+    duration: "1 minute"
+    description: "Each object in a 20-foot cube within range is outlined in blue, green, or violet light. Any creature in the area when the spell is cast is also outlined in light if it fails a Dexterity saving throw. For the duration, objects and affected creatures shed dim light in a 10-foot radius."
+    concentration: true
+    ritual: false
+    material: "GLOW_INK_SAC"
+    save_type: "Dexterity"   # advantage on attacks vs outlined creatures isn't automated yet (#182)
+    aoe_shape: "sphere"      # a 20-foot cube, approximated as a 10-foot-radius area
+    aoe_size: 10
+
+  false_life:
+    name: "False Life"
+    level: 1
+    school: "necromancy"
+    classes: ["artificer", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "V, S, M (a small amount of alcohol or distilled spirits)"
+    duration: "1 hour"
+    description: "Bolstering yourself with a necromantic facsimile of life, you gain 1d4 + 4 temporary hit points for the duration."
+    concentration: false
+    ritual: false
+    material: "TOTEM_OF_UNDYING"
+    temp_hp: "1d4+4"
+    higher_levels: "You gain 5 additional temporary hit points for each slot level above 1st."
+
+  feather_fall:
+    name: "Feather Fall"
+    level: 1
+    school: "transmutation"
+    classes: ["artificer", "bard", "sorcerer", "wizard"]
+    casting_time: "1 reaction"
+    range: "60 feet"
+    components: "V, M (a small feather or piece of down)"
+    duration: "1 minute"
+    description: "Cast when you or a creature within 60 feet falls. Choose up to five falling creatures within range; each one's rate of descent slows to 60 feet per round until the spell ends. A creature that lands before the spell ends takes no falling damage and lands on its feet."
+    concentration: false
+    ritual: false
+    material: "FEATHER"
+
+  find_familiar:
+    name: "Find Familiar"
+    level: 1
+    school: "conjuration"
+    classes: ["wizard"]
+    casting_time: "1 hour"
+    range: "10 feet"
+    components:
+      verbal: true
+      somatic: true
+      material: true
+      material_description: "10 gp worth of charcoal, incense, and herbs, consumed by fire in a brass brazier"
+      material_consumed: true
+      material_cost: 10
+    duration: "Instantaneous"
+    description: "You gain the service of a familiar, a spirit that takes an animal form you choose (bat, cat, crab, frog, hawk, lizard, octopus, owl, poisonous snake, fish, rat, raven, sea horse, spider, or weasel). It acts independently, can't attack, and you can see and hear through its senses as an action. It can deliver your touch spells. If it drops to 0 hit points it vanishes until you cast this spell again."
+    concentration: false
+    ritual: true
+    material: "CAT_SPAWN_EGG"
+
+  fog_cloud:
+    name: "Fog Cloud"
+    level: 1
+    school: "conjuration"
+    classes: ["druid", "ranger", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S"
+    duration: "1 hour"
+    description: "You create a 20-foot-radius sphere of fog centered on a point within range. The sphere spreads around corners, and its area is heavily obscured. It lasts for the duration or until a wind of moderate or greater speed (at least 10 miles per hour) disperses it."
+    concentration: true
+    ritual: false
+    material: "GRAY_DYE"
+    higher_levels: "The radius of the fog increases by 20 feet for each slot level above 1st."
+
+  gift_of_alacrity:
+    name: "Gift of Alacrity"
+    level: 1
+    school: "divination"
+    classes: ["wizard"]
+    casting_time: "1 minute"
+    range: "Touch"
+    components: "V, S"
+    duration: "8 hours"
+    description: "You touch a willing creature. For the duration, the target can add 1d8 to its initiative rolls."
+    concentration: false
+    ritual: false
+    material: "CLOCK"
+
+  goodberry:
+    name: "Goodberry"
+    level: 1
+    school: "transmutation"
+    classes: ["druid", "ranger"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S, M (a sprig of mistletoe)"
+    duration: "Instantaneous"
+    description: "Up to ten berries appear in your hand and are infused with magic for the duration. A creature can use its action to eat one berry. Eating a berry restores 1 hit point, and the berry provides enough nourishment to sustain a creature for one day."
+    concentration: false
+    ritual: false
+    material: "SWEET_BERRIES"
+
+  grease:
+    name: "Grease"
+    level: 1
+    school: "conjuration"
+    classes: ["artificer", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V, S, M (a bit of pork rind or butter)"
+    duration: "1 minute"
+    description: "Slick grease covers the ground in a 10-foot square centered on a point within range, making it difficult terrain for the duration. Each creature standing in it when it appears must succeed on a Dexterity saving throw or fall prone. A creature that enters the area or ends its turn there must also succeed on the save or fall prone."
+    concentration: false
+    ritual: false
+    material: "SLIME_BALL"
+    save_type: "Dexterity"
+    condition_on_fail: "prone"
+    aoe_shape: "sphere"   # a 10-foot square, approximated as a 5-foot-radius area
+    aoe_size: 5
+
+  guiding_bolt:
+    name: "Guiding Bolt"
+    level: 1
+    school: "evocation"
+    classes: ["cleric"]
+    casting_time: "1 action"
+    range: "120 feet"
+    components: "V, S"
+    duration: "1 round"
+    description: "A flash of light streaks toward a creature of your choice within range. Make a ranged spell attack against the target. On a hit, the target takes 4d6 radiant damage, and the next attack roll made against this target before the end of your next turn has advantage."
+    concentration: false
+    ritual: false
+    material: "SPECTRAL_ARROW"
+    attack_type: "ranged_spell_attack"
+    damage: "4d6"
+    damage_type: "radiant"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st."
+
+  hail_of_thorns:
+    name: "Hail of Thorns"
+    level: 1
+    school: "conjuration"
+    classes: ["ranger"]
+    casting_time: "1 bonus action"
+    range: "Self"
+    components: "V"
+    duration: "1 minute"
+    description: "The next time you hit a creature with a ranged weapon attack before the spell ends, a rain of thorns sprouts from your ammunition. The target and each creature within 5 feet of it make a Dexterity saving throw, taking 1d10 piercing damage on a failure or half as much on a success."
+    concentration: true
+    ritual: false
+    material: "CACTUS"
+    damage: "1d10"   # rider on your next ranged hit — DM calls the saves and applies (#182)
+    damage_type: "piercing"
+    higher_levels: "The damage increases by 1d10 for each slot level above 1st (to a maximum of 6d10)."
+
+  healing_word:
+    name: "Healing Word"
+    level: 1
+    school: "evocation"
+    classes: ["bard", "cleric", "druid"]
+    casting_time: "1 bonus action"
+    range: "60 feet"
+    components: "V"
+    duration: "Instantaneous"
+    description: "A creature of your choice that you can see within range regains hit points equal to 1d4 + your spellcasting ability modifier. This spell has no effect on undead or constructs."
+    concentration: false
+    ritual: false
+    material: "GOLDEN_APPLE"
+    healing: "1d4"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d4 for each slot level above 1st."
+
+  hellish_rebuke:
+    name: "Hellish Rebuke"
+    level: 1
+    school: "evocation"
+    classes: ["warlock"]
+    casting_time: "1 reaction"
+    range: "60 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "You point your finger, and the creature that damaged you is momentarily surrounded by hellish flames. The creature must make a Dexterity saving throw. It takes 2d10 fire damage on a failed save, or half as much damage on a successful one."
+    concentration: false
+    ritual: false
+    material: "FIRE_CHARGE"
+    save_type: "Dexterity"
+    damage: "2d10"
+    damage_type: "fire"
+    save_effect: "half"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d10 for each slot level above 1st."
+
+  heroism:
+    name: "Heroism"
+    level: 1
+    school: "enchantment"
+    classes: ["bard", "paladin"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S"
+    duration: "1 minute"
+    description: "A willing creature you touch is imbued with bravery. Until the spell ends, the creature is immune to being frightened and gains temporary hit points equal to your spellcasting ability modifier at the start of each of its turns."
+    concentration: true
+    ritual: false
+    material: "GOLDEN_APPLE"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st."
+
+  hex:
+    name: "Hex"
+    level: 1
+    school: "enchantment"
+    classes: ["warlock"]
+    casting_time: "1 bonus action"
+    range: "90 feet"
+    components: "V, S, M (the petrified eye of a newt)"
+    duration: "1 hour"
+    description: "You place a curse on a creature that you can see within range. Until the spell ends, you deal an extra 1d6 necrotic damage to the target whenever you hit it with an attack. Also, choose one ability when you cast the spell. The target has disadvantage on ability checks made with the chosen ability."
+    concentration: true
+    ritual: false
+    material: "WITHER_SKELETON_SKULL"
+    damage_type: "necrotic"
+    cast_choice: "ability"      # choose one ability; the target has disadvantage on checks with it (#178)
+    mark_damage: "1d6"          # +1d6 necrotic whenever you hit the hexed target
+    higher_levels: "When you cast this spell using a spell slot of 3rd or 4th level, you can maintain your concentration on the spell for up to 8 hours. When you use a spell slot of 5th level or higher, you can maintain your concentration on the spell for up to 24 hours."
+
+  hunters_mark:
+    name: "Hunter's Mark"
+    level: 1
+    school: "divination"
+    classes: ["ranger"]
+    casting_time: "1 bonus action"
+    range: "90 feet"
+    components: "V"
+    duration: "1 hour"
+    description: "You mark a creature you can see as your quarry. Until the spell ends, you deal an extra 1d6 damage to it whenever you hit it with a weapon attack, and you have advantage on Wisdom (Perception) and Wisdom (Survival) checks to find it. If it drops to 0 hit points, you can move the mark to a new creature as a bonus action on a later turn."
+    concentration: true
+    ritual: false
+    material: "TARGET"
+    mark_damage: "1d6"   # +1d6 on every hit vs the marked target (same machinery as Hex)
+    higher_levels: "With a 3rd- or 4th-level slot you can concentrate for up to 8 hours; with a 5th-level slot or higher, up to 24 hours."
+
   ice_knife:
     name: "Ice Knife"
     level: 1
@@ -19,39 +797,105 @@ spells:
     ritual: false
     material: "WIND_CHARGE"
     attack_type: "ranged_spell_attack"
-    save_type: "Dexterity"
-    damage_type: "cold"
+    damage: "1d10"
+    damage_type: "piercing"
+    # The 2d6 cold Dexterity-save splash (hit or miss) isn't automated yet — attack-then-area, #182/#197.
     higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the cold damage increases by 1d6 for each slot level above 1st."
 
-  cure_wounds:
-    name: "Cure Wounds"
+  identify:
+    name: "Identify"
     level: 1
-    school: "evocation"
-    classes: ["bard", "cleric", "druid", "paladin", "ranger"]
+    school: "divination"
+    classes: ["artificer", "bard", "wizard"]
+    casting_time: "1 minute"
+    range: "Touch"
+    components: "V, S, M (a pearl worth at least 100 gp and an owl feather)"
+    duration: "Instantaneous"
+    description: "You touch an object and learn its magical properties: how to use it, whether it needs attunement, and how many charges it has. You also learn which spells, if any, are affecting it and which spells created it. Touching a creature instead reveals the spells currently affecting it."
+    concentration: false
+    ritual: true
+    material: "AMETHYST_SHARD"
+
+  illusory_script:
+    name: "Illusory Script"
+    level: 1
+    school: "illusion"
+    classes: ["bard", "warlock", "wizard"]
+    casting_time: "1 minute"
+    range: "Touch"
+    components:
+      verbal: false
+      somatic: true
+      material: true
+      material_description: "a lead-based ink worth at least 10 gp, which the spell consumes"
+      material_consumed: true
+      material_cost: 10
+    duration: "10 days"
+    description: "You write on parchment or paper and infuse it with illusion. To you and creatures you choose it reads normally; to everyone else it looks like unintelligible writing, or a different message you pick. The spell ends if dispelled. Truesight reveals the hidden message."
+    concentration: false
+    ritual: true
+    material: "INK_SAC"
+
+  inflict_wounds:
+    name: "Inflict Wounds"
+    level: 1
+    school: "necromancy"
+    classes: ["cleric"]
     casting_time: "1 action"
     range: "Touch"
     components: "V, S"
     duration: "Instantaneous"
-    description: "A creature you touch regains a number of hit points equal to 1d8 + your spellcasting ability modifier."
+    description: "Make a melee spell attack against a creature you can reach. On a hit, the target takes 3d10 necrotic damage."
     concentration: false
     ritual: false
-    material: "POTION"
-    healing: "1d8"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d8 for each slot level above 1st."
+    material: "WITHER_ROSE"
+    attack_type: "melee_spell_attack"
+    damage: "3d10"
+    damage_type: "necrotic"
+    higher_levels: "The damage increases by 1d10 for each slot level above 1st."
 
-  detect_magic:
-    name: "Detect Magic"
+  jump:
+    name: "Jump"
     level: 1
-    school: "divination"
-    classes: ["bard", "cleric", "druid", "paladin", "ranger", "sorcerer", "wizard"]
+    school: "transmutation"
+    classes: ["artificer", "druid", "ranger", "sorcerer", "wizard"]
     casting_time: "1 action"
-    range: "Self"
-    components: "V, S"
-    duration: "10 minutes"
-    description: "For the duration, you sense the presence of magic within 30 feet of you. If you sense magic in this way, you can use your action to see a faint aura around any visible creature or object in the area that bears magic, and you learn its school of magic, if any."
-    concentration: true
-    ritual: true
-    material: "ENDER_EYE"
+    range: "Touch"
+    components: "V, S, M (a grasshopper's hind leg)"
+    duration: "1 minute"
+    description: "You touch a creature. The creature's jump distance is tripled until the spell ends."
+    concentration: false
+    ritual: false
+    material: "RABBIT_FOOT"
+
+  longstrider:
+    name: "Longstrider"
+    level: 1
+    school: "transmutation"
+    classes: ["artificer", "bard", "druid", "ranger", "wizard"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S, M (a pinch of dirt)"
+    duration: "1 hour"
+    description: "You touch a creature. The target's speed increases by 10 feet until the spell ends."
+    concentration: false
+    ritual: false
+    material: "LEATHER_BOOTS"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st."
+
+  mage_armor:
+    name: "Mage Armor"
+    level: 1
+    school: "abjuration"
+    classes: ["sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S, M (a piece of cured leather)"
+    duration: "8 hours"
+    description: "You touch a willing creature who isn't wearing armor. Until the spell ends, its base AC becomes 13 + its Dexterity modifier. The spell ends if the target dons armor or you dismiss it as an action."
+    concentration: false
+    ritual: false
+    material: "RABBIT_HIDE"   # the AC change isn't applied to the sheet yet — DM/player tracks it
 
   magic_missile:
     name: "Magic Missile"
@@ -66,24 +910,108 @@ spells:
     concentration: false
     ritual: false
     material: "ARROW"
+    auto_hit: true    # no attack roll, no save — casting goes straight to the damage step
+    damage: "3d4+3"   # all three darts on ONE target; splitting them between targets is still manual
     damage_type: "force"
     higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the spell creates one more dart for each slot level above 1st."
 
-  healing_word:
-    name: "Healing Word"
+  magnify_gravity:
+    name: "Magnify Gravity"
     level: 1
-    school: "evocation"
-    classes: ["bard", "cleric", "druid"]
-    casting_time: "1 bonus action"
+    school: "transmutation"
+    classes: ["wizard"]
+    casting_time: "1 action"
     range: "60 feet"
-    components: "V"
-    duration: "Instantaneous"
-    description: "A creature of your choice that you can see within range regains hit points equal to 1d4 + your spellcasting ability modifier. This spell has no effect on undead or constructs."
+    components: "V, S"
+    duration: "1 round"
+    description: "Gravity crushes down in a 10-foot-radius sphere centered on a point within range. Each creature there makes a Constitution saving throw, taking 2d8 force damage on a failure or half as much on a success. Until the end of your next turn, the area is difficult terrain, and a creature that failed can't lift objects that aren't worn or carried unless it succeeds on a Strength check."
     concentration: false
     ritual: false
-    material: "GOLDEN_APPLE"
-    healing: "1d4"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the healing increases by 1d4 for each slot level above 1st."
+    material: "ANVIL"
+    save_type: "Constitution"
+    damage: "2d8"
+    damage_type: "force"
+    save_effect: "half"
+    aoe_shape: "sphere"
+    aoe_size: 10
+    higher_levels: "The damage increases by 1d8 for each slot level above 1st."
+
+  protection_from_evil_and_good:
+    name: "Protection from Evil and Good"
+    level: 1
+    school: "abjuration"
+    classes: ["cleric", "druid", "paladin", "warlock", "wizard"]
+    casting_time: "1 action"
+    range: "Touch"
+    components: "V, S, M (holy water or powdered silver and iron, which the spell consumes)"
+    duration: "10 minutes"
+    description: "Until the spell ends, one willing creature you touch is protected against certain types of creatures: aberrations, celestials, elementals, fey, fiends, and undead. The protection grants several benefits: creatures of those types have disadvantage on attack rolls against the target, the target also can't be charmed, frightened, or possessed by them."
+    concentration: true
+    ritual: false
+    material: "SHIELD"
+
+  purify_food_and_drink:
+    name: "Purify Food and Drink"
+    level: 1
+    school: "transmutation"
+    classes: ["artificer", "cleric", "druid", "paladin"]
+    casting_time: "1 action"
+    range: "10 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "All nonmagical food and drink within a 5-foot-radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease."
+    concentration: false
+    ritual: true
+    material: "BREAD"
+
+  ray_of_sickness:
+    name: "Ray of Sickness"
+    level: 1
+    school: "necromancy"
+    classes: ["sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V, S"
+    duration: "Instantaneous"
+    description: "A ray of sickening green energy lashes toward a creature. Make a ranged spell attack; on a hit, the target takes 2d8 poison damage and must make a Constitution saving throw or be poisoned until the end of your next turn."
+    concentration: false
+    ritual: false
+    material: "POISONOUS_POTATO"
+    attack_type: "ranged_spell_attack"
+    damage: "2d8"   # the follow-up Constitution save (poisoned) isn't automated — DM calls it
+    damage_type: "poison"
+    higher_levels: "The damage increases by 1d8 for each slot level above 1st."
+
+  sanctuary:
+    name: "Sanctuary"
+    level: 1
+    school: "abjuration"
+    classes: ["artificer", "cleric"]
+    casting_time: "1 bonus action"
+    range: "30 feet"
+    components: "V, S, M (a small silver mirror)"
+    duration: "1 minute"
+    description: "You ward a creature within range. Until the spell ends, any creature that targets the warded creature with an attack or a harmful spell must first make a Wisdom saving throw; on a failure it must choose a new target or lose the attack or spell. Area effects aren't stopped. The spell ends if the warded creature attacks, casts a spell that affects an enemy, or deals damage."
+    concentration: false
+    ritual: false
+    material: "WHITE_BANNER"
+
+  searing_smite:
+    name: "Searing Smite"
+    level: 1
+    school: "evocation"
+    classes: ["paladin", "ranger"]
+    casting_time: "1 bonus action"
+    range: "Self"
+    components: "V"
+    duration: "1 minute"
+    description: "The next time you hit a creature with a melee weapon attack during the spell's duration, your weapon flares with white-hot intensity, and the attack deals an extra 1d6 fire damage to the target and causes the target to ignite in flames."
+    concentration: true
+    ritual: false
+    material: "FIRE_CHARGE"
+    damage: "1d6"   # rider on your next melee hit — DM applies (#182). Burning: 1d6 fire each turn until a CON save.
+    damage_type: "fire"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the initial extra damage dealt by the attack increases by 1d6 for each slot level above 1st."
 
   shield:
     name: "Shield"
@@ -98,6 +1026,160 @@ spells:
     concentration: false
     ritual: false
     material: "SHIELD"
+
+  shield_of_faith:
+    name: "Shield of Faith"
+    level: 1
+    school: "abjuration"
+    classes: ["cleric", "paladin"]
+    casting_time: "1 bonus action"
+    range: "60 feet"
+    components: "V, S, M (a small parchment with a bit of holy text written on it)"
+    duration: "10 minutes"
+    description: "A shimmering field surrounds a creature of your choice within range, granting it a +2 bonus to AC for the duration."
+    concentration: true
+    ritual: false
+    material: "SHIELD"   # the +2 AC isn't applied to the sheet yet — DM/player tracks it
+
+  silent_image:
+    name: "Silent Image"
+    level: 1
+    school: "illusion"
+    classes: ["bard", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "60 feet"
+    components: "V, S, M (a bit of fleece)"
+    duration: "10 minutes"
+    description: "You create a purely visual illusion of an object, a creature, or some other phenomenon no larger than a 15-foot cube. It makes no sound, smell, or temperature. You can use your action to move it within range. Physical contact reveals it as an illusion, and a creature can use its action to make an Intelligence (Investigation) check against your spell save DC to see through it."
+    concentration: true
+    ritual: false
+    material: "PAINTING"
+
+  silvery_barbs:
+    name: "Silvery Barbs"
+    level: 1
+    school: "enchantment"
+    classes: ["bard", "sorcerer", "wizard"]
+    casting_time: "1 reaction"
+    range: "60 feet"
+    components: "V"
+    duration: "Instantaneous"
+    description: "You magically distract the triggering creature and turn its momentary uncertainty into encouragement for another creature. The triggering creature must reroll the d20 and use the lower roll. You can then choose a different creature you can see within range (you can choose yourself). The chosen creature has advantage on the next attack roll, ability check, or saving throw it makes within 1 minute."
+    concentration: false
+    ritual: false
+    material: "LIGHT_GRAY_DYE"
+
+  sleep:
+    name: "Sleep"
+    level: 1
+    school: "enchantment"
+    classes: ["bard", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "90 feet"
+    components: "V, S, M (a pinch of fine sand, rose petals, or a cricket)"
+    duration: "1 minute"
+    description: "This spell sends creatures into a magical slumber. Roll 5d8; the total is how many hit points of creatures this spell can affect. Creatures within 20 feet of a point you choose within range are affected in ascending order of their current hit points."
+    concentration: false
+    ritual: false
+    material: "WHITE_BED"
+    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, roll an additional 2d8 for each slot level above 1st."
+
+  snare:
+    name: "Snare"
+    level: 1
+    school: "abjuration"
+    classes: ["artificer", "druid", "ranger", "wizard"]
+    casting_time: "1 minute"
+    range: "Touch"
+    components: "S, M (25 feet of rope, which the spell consumes)"
+    duration: "8 hours"
+    description: "As you cast this spell, you use the rope to create a circle with a 5-foot radius on the ground or the floor. When you finish casting, the rope disappears and the circle becomes a magic trap. This trap is nearly invisible, requiring a successful Intelligence (Investigation) check against your spell save DC to be discerned."
+    concentration: false
+    ritual: false
+    material: "STRING"
+    # The trap's Dexterity save happens later, when something steps in — DM calls it with /dm check.
+
+  speak_with_animals:
+    name: "Speak with Animals"
+    level: 1
+    school: "divination"
+    classes: ["bard", "druid", "ranger"]
+    casting_time: "1 action"
+    range: "Self"
+    components: "V, S"
+    duration: "10 minutes"
+    description: "You gain the ability to comprehend and verbally communicate with beasts for the duration. The knowledge and awareness of many beasts is limited by their intelligence, but at minimum, beasts can give you information about nearby locations and monsters, including whatever they can perceive or have perceived within the past day."
+    concentration: false
+    ritual: true
+    material: "PARROT_SPAWN_EGG"
+    social_type: "speak_with_animals"
+
+  tashas_caustic_brew:
+    name: "Tasha's Caustic Brew"
+    level: 1
+    school: "evocation"
+    classes: ["artificer", "sorcerer", "wizard"]
+    casting_time: "1 action"
+    range: "Self (30-foot line)"
+    components: "V, S, M (a bit of rotten food)"
+    duration: "1 minute"
+    description: "A 30-foot-long, 5-foot-wide stream of acid sprays from you. Each creature in the line makes a Dexterity saving throw or is coated in acid until the spell ends or it uses its action to scrape it off. A coated creature takes 2d4 acid damage at the start of each of its turns."
+    concentration: true
+    ritual: false
+    material: "SUSPICIOUS_STEW"
+    save_type: "Dexterity"
+    damage: "2d4"   # RAW the 2d4 lands at the start of each of its turns; the first tick is applied here
+    damage_type: "acid"
+    save_effect: "none"
+    aoe_shape: "line"
+    aoe_size: 30
+    higher_levels: "The damage increases by 2d4 for each slot level above 1st."
+
+  tashas_hideous_laughter:
+    name: "Tasha's Hideous Laughter"
+    level: 1
+    school: "enchantment"
+    classes: ["bard", "wizard"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S, M (tiny tarts and a feather that is waved in the air)"
+    duration: "1 minute"
+    description: "A creature you can see within range makes a Wisdom saving throw (creatures with Intelligence 4 or lower are unaffected). On a failure it falls prone, helpless with laughter, and is incapacitated and unable to stand for the duration. It repeats the save at the end of each of its turns, and whenever it takes damage (with advantage), ending the spell on a success."
+    concentration: true
+    ritual: false
+    material: "CAKE"
+    save_type: "Wisdom"
+    condition_on_fail: "prone"   # also incapacitated RAW — add it with /combat condition if needed
+
+  tensers_floating_disk:
+    name: "Tenser's Floating Disk"
+    level: 1
+    school: "conjuration"
+    classes: ["wizard"]
+    casting_time: "1 action"
+    range: "30 feet"
+    components: "V, S, M (a drop of mercury)"
+    duration: "1 hour"
+    description: "A flat, 3-foot-diameter disk of force hovers 3 feet off the ground and holds up to 500 pounds. It stays within 20 feet of you, following as you move. It can cross uneven ground and climb stairs but can't rise more than 10 feet in one step. If you move more than 100 feet away, the spell ends and anything on it falls."
+    concentration: false
+    ritual: true
+    material: "HEAVY_WEIGHTED_PRESSURE_PLATE"
+
+  thunderous_smite:
+    name: "Thunderous Smite"
+    level: 1
+    school: "evocation"
+    classes: ["paladin"]
+    casting_time: "1 bonus action"
+    range: "Self"
+    components: "V"
+    duration: "1 minute"
+    description: "The first time you hit with a melee weapon attack during this spell's duration, your weapon rings with thunder that is audible within 300 feet of you, and the attack deals an extra 2d6 thunder damage to the target. Additionally, if the target is a creature, it must succeed on a Strength saving throw or be pushed 10 feet away from you and knocked prone."
+    concentration: true
+    ritual: false
+    material: "TNT"
+    damage: "2d6"   # rider on your next melee hit — DM applies and calls the Strength save (#182)
+    damage_type: "thunder"
 
   thunderwave:
     name: "Thunderwave"
@@ -120,423 +1202,43 @@ spells:
     aoe_size: 15
     higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d8 for each slot level above 1st."
 
-  sleep:
-    name: "Sleep"
+  unseen_servant:
+    name: "Unseen Servant"
     level: 1
-    school: "enchantment"
-    classes: ["bard", "sorcerer", "wizard"]
+    school: "conjuration"
+    classes: ["bard", "warlock", "wizard"]
     casting_time: "1 action"
-    range: "90 feet"
-    components: "V, S, M"
-    duration: "1 minute"
-    description: "This spell sends creatures into a magical slumber. Roll 5d8; the total is how many hit points of creatures this spell can affect. Creatures within 20 feet of a point you choose within range are affected in ascending order of their current hit points."
+    range: "60 feet"
+    components: "V, S, M (a piece of string and a bit of wood)"
+    duration: "1 hour"
+    description: "An invisible, mindless force appears and performs simple tasks at your command: fetching things, cleaning, mending, folding clothes, lighting fires, serving food, and pouring wine. It has AC 10, 1 hit point, Strength 2, and can't attack. As a bonus action you can mentally command it to move up to 15 feet and interact with an object."
     concentration: false
-    ritual: false
-    material: "WHITE_BED"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, roll an additional 2d8 for each slot level above 1st."
+    ritual: true
+    material: "LEAD"
 
-  guiding_bolt:
-    name: "Guiding Bolt"
+  witch_bolt:
+    name: "Witch Bolt"
     level: 1
     school: "evocation"
-    classes: ["cleric"]
+    classes: ["sorcerer", "warlock", "wizard"]
     casting_time: "1 action"
-    range: "120 feet"
-    components: "V, S"
-    duration: "1 round"
-    description: "A flash of light streaks toward a creature of your choice within range. Make a ranged spell attack against the target. On a hit, the target takes 4d6 radiant damage, and the next attack roll made against this target before the end of your next turn has advantage."
-    concentration: false
+    range: "30 feet"
+    components: "V, S, M (a twig from a tree that has been struck by lightning)"
+    duration: "1 minute"
+    description: "A beam of crackling blue energy lances toward a creature within range. Make a ranged spell attack; on a hit the target takes 1d12 lightning damage. On each of your later turns, you can use your action to deal 1d12 lightning damage to the target automatically. The spell ends if you use your action for anything else, or if the target moves out of range or gets total cover from you."
+    concentration: true
     ritual: false
-    material: "SPECTRAL_ARROW"
+    material: "LIGHTNING_ROD"
     attack_type: "ranged_spell_attack"
-    damage_type: "radiant"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st."
-
-  faerie_fire:
-    name: "Faerie Fire"
-    level: 1
-    school: "evocation"
-    classes: ["bard", "druid"]
-    casting_time: "1 action"
-    range: "60 feet"
-    components: "V"
-    duration: "1 minute"
-    description: "Each object in a 20-foot cube within range is outlined in blue, green, or violet light. Any creature in the area when the spell is cast is also outlined in light if it fails a Dexterity saving throw. For the duration, objects and affected creatures shed dim light in a 10-foot radius."
-    concentration: true
-    ritual: false
-    material: "GLOW_INK_SAC"
-    save_type: "Dexterity"
-
-  absorb_elements:
-    name: "Absorb Elements"
-    level: 1
-    school: "abjuration"
-    classes: [ "druid", "ranger", "sorcerer", "wizard", "artificer" ]
-    casting_time: "1 reaction"
-    range: "Self"
-    components: "S"
-    duration: "1 round"
-    description: "The spell captures some of the incoming energy, lessening its effect on you and storing it for your next melee attack. You have resistance to the triggering damage type until the start of your next turn. Also, the first time you hit with a melee attack on your next turn, the target takes an extra 1d6 damage of the triggering type, and the spell ends."
-    concentration: false
-    ritual: false
-    material: "SHIELD"
-    damage_type: "varies"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the extra damage increases by 1d6 for each slot level above 1st."
-
-  animal_friendship:
-    name: "Animal Friendship"
-    level: 1
-    school: "enchantment"
-    classes: [ "druid", "bard", "ranger" ]
-    casting_time: "1 action"
-    range: "30 feet"
-    components: "V, S, M"
-    duration: "24 hours"
-    description: "This spell lets you convince a beast that you mean it no harm. Choose a beast that you can see within range. It must see and hear you. If the beast's Intelligence is 4 or higher, the spell fails. Otherwise, the beast must succeed on a Wisdom saving throw or be charmed by you for the spell's duration."
-    concentration: false
-    ritual: false
-    material: "BONE"
-    save_type: "Wisdom"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can affect one additional beast for each slot level above 1st."
-
-  beast_bond:
-    name: "Beast Bond"
-    level: 1
-    school: "divination"
-    classes: [ "druid", "ranger" ]
-    casting_time: "1 action"
-    range: "Touch"
-    components: "V, S, M"
-    duration: "10 minutes"
-    description: "You establish a telepathic link with one beast you touch that is friendly to you or charmed by you. The spell fails if the beast's Intelligence score is 4 or higher. Until the spell ends, the link is active while you and the beast are within line of sight of each other."
-    concentration: true
-    ritual: false
-    material: "BONE"
-    attack_type: "touch"
-
-  charm_person:
-    name: "Charm Person"
-    level: 1
-    school: "enchantment"
-    classes: [ "druid", "bard", "sorcerer", "warlock", "wizard" ]
-    casting_time: "1 action"
-    range: "30 feet"
-    components: "V, S"
-    duration: "1 hour"
-    description: "You attempt to charm a humanoid you can see within range. It must make a Wisdom saving throw, and it does so with advantage if you or your companions are fighting it. If it fails the saving throw, it is charmed by you until the spell ends or until you or your companions do anything harmful to it."
-    concentration: false
-    ritual: false
-    material: "PINK_TULIP"
-    save_type: "Wisdom"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st. The creatures must be within 30 feet of each other when you target them."
-
-  create_or_destroy_water:
-    name: "Create or Destroy Water"
-    level: 1
-    school: "transmutation"
-    classes: [ "druid", "cleric" ]
-    casting_time: "1 action"
-    range: "30 feet"
-    components: "V, S, M"
-    duration: "Instantaneous"
-    description: "You either create or destroy water. Create Water: You create up to 10 gallons of clean water within range in an open container. Alternatively, the water falls as rain in a 30-foot cube within range, extinguishing exposed flames in the area. Destroy Water: You destroy up to 10 gallons of water in an open container within range. Alternatively, you destroy fog in a 30-foot cube within range."
-    concentration: false
-    ritual: false
-    material: "WATER_BUCKET"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you create or destroy 10 additional gallons of water, or the size of the cube increases by 5 feet, for each slot level above 1st."
-
-  detect_poison_and_disease:
-    name: "Detect Poison and Disease"
-    level: 1
-    school: "divination"
-    classes: [ "druid", "cleric", "paladin", "ranger" ]
-    casting_time: "1 action"
-    range: "Self"
-    components: "V, S, M"
-    duration: "10 minutes"
-    description: "For the duration, you can sense the presence and location of poisons, poisonous creatures, and diseases within 30 feet of you. You also identify the kind of poison, poisonous creature, or disease in each case."
-    concentration: true
-    ritual: true
-    material: "SPIDER_EYE"
-
-  earth_tremor:
-    name: "Earth Tremor"
-    level: 1
-    school: "evocation"
-    classes: [ "druid", "bard", "sorcerer", "wizard" ]
-    casting_time: "1 action"
-    range: "10 feet"
-    components: "V, S"
-    duration: "Instantaneous"
-    description: "You cause a tremor in the ground within range. Each creature other than you in that area must make a Dexterity saving throw. On a failed save, a creature takes 1d6 bludgeoning damage and is knocked prone. If the ground in that area is loose earth or stone, it becomes difficult terrain until cleared, with each 5-foot-diameter portion requiring at least 1 minute to clear by hand."
-    concentration: false
-    ritual: false
-    material: "COBBLESTONE"
-    save_type: "Dexterity"
-    damage_type: "bludgeoning"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st."
-
-  entangle:
-    name: "Entangle"
-    level: 1
-    school: "conjuration"
-    classes: [ "druid" ]
-    casting_time: "1 action"
-    range: "90 feet"
-    components: "V, S"
-    duration: "1 minute"
-    description: "Grasping weeds and vines sprout from the ground in a 20-foot square starting from a point within range. For the duration, these plants turn the ground in the area into difficult terrain. A creature in the area when you cast the spell must succeed on a Strength saving throw or be restrained by the entangling plants until the spell ends."
-    concentration: true
-    ritual: false
-    material: "VINE"
-    save_type: "Strength"
-
-  fog_cloud:
-    name: "Fog Cloud"
-    level: 1
-    school: "conjuration"
-    classes: [ "druid", "ranger", "sorcerer", "wizard" ]
-    casting_time: "1 action"
-    range: "120 feet"
-    components: "V, S"
-    duration: "1 hour"
-    description: "You create a 20-foot-radius sphere of fog centered on a point within range. The sphere spreads around corners, and its area is heavily obscured. It lasts for the duration or until a wind of moderate or greater speed (at least 10 miles per hour) disperses it."
-    concentration: true
-    ritual: false
-    material: "GRAY_DYE"
-
-  goodberry:
-    name: "Goodberry"
-    level: 1
-    school: "transmutation"
-    classes: [ "druid", "ranger" ]
-    casting_time: "1 action"
-    range: "Touch"
-    components: "V, S, M"
-    duration: "Instantaneous"
-    description: "Up to ten berries appear in your hand and are infused with magic for the duration. A creature can use its action to eat one berry. Eating a berry restores 1 hit point, and the berry provides enough nourishment to sustain a creature for one day."
-    concentration: false
-    ritual: false
-    material: "SWEET_BERRIES"
-
-  jump:
-    name: "Jump"
-    level: 1
-    school: "transmutation"
-    classes: [ "druid", "ranger", "sorcerer", "wizard", "artificer" ]
-    casting_time: "1 action"
-    range: "Touch"
-    components: "V, S, M"
-    duration: "1 minute"
-    description: "You touch a creature. The creature's jump distance is tripled until the spell ends."
-    concentration: false
-    ritual: false
-    material: "RABBIT_FOOT"
-    attack_type: "touch"
-
-  longstrider:
-    name: "Longstrider"
-    level: 1
-    school: "transmutation"
-    classes: [ "druid", "bard", "ranger", "wizard", "artificer" ]
-    casting_time: "1 action"
-    range: "Touch"
-    components: "V, S, M"
-    duration: "1 hour"
-    description: "You touch a creature. The target's speed increases by 10 feet until the spell ends."
-    concentration: false
-    ritual: false
-    material: "LEATHER_BOOTS"
-    attack_type: "touch"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st."
-
-  purify_food_and_drink:
-    name: "Purify Food and Drink"
-    level: 1
-    school: "transmutation"
-    classes: [ "druid", "cleric", "paladin", "artificer" ]
-    casting_time: "1 action"
-    range: "10 feet"
-    components: "V, S"
-    duration: "Instantaneous"
-    description: "All nonmagical food and drink within a 5-foot-radius sphere centered on a point of your choice within range is purified and rendered free of poison and disease."
-    concentration: false
-    ritual: true
-    material: "BREAD"
-
-  snare:
-    name: "Snare"
-    level: 1
-    school: "abjuration"
-    classes: [ "druid", "ranger", "wizard", "artificer" ]
-    casting_time: "1 minute"
-    range: "Touch"
-    components: "S, M"
-    duration: "8 hours"
-    description: "As you cast this spell, you use the rope to create a circle with a 5-foot radius on the ground or the floor. When you finish casting, the rope disappears and the circle becomes a magic trap. This trap is nearly invisible, requiring a successful Intelligence (Investigation) check against your spell save DC to be discerned."
-    concentration: false
-    ritual: false
-    material: "STRING"
-    save_type: "Dexterity"
-
-  speak_with_animals:
-    name: "Speak with Animals"
-    level: 1
-    school: "divination"
-    classes: [ "druid", "bard", "ranger" ]
-    casting_time: "1 action"
-    range: "Self"
-    components: "V, S"
-    duration: "10 minutes"
-    description: "You gain the ability to comprehend and verbally communicate with beasts for the duration. The knowledge and awareness of many beasts is limited by their intelligence, but at minimum, beasts can give you information about nearby locations and monsters, including whatever they can perceive or have perceived within the past day."
-    concentration: false
-    ritual: true
-    material: "PARROT_SPAWN_EGG"
-    social_type: "speak_with_animals"
-
-  bless:
-    name: "Bless"
-    level: 1
-    school: "enchantment"
-    classes: [ "cleric", "paladin" ]
-    casting_time: "1 action"
-    range: "30 feet"
-    components: "V, S, M"
-    duration: "1 minute"
-    description: "You bless up to three creatures of your choice within range. Whenever a target makes an attack roll or a saving throw before the spell ends, the target can roll a d4 and add the number rolled to the attack roll or saving throw."
-    concentration: true
-    ritual: false
-    material: "GOLDEN_APPLE"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st."
-
-  command:
-    name: "Command"
-    level: 1
-    school: "enchantment"
-    classes: [ "cleric", "paladin" ]
-    casting_time: "1 action"
-    range: "60 feet"
-    components: "V"
-    duration: "1 round"
-    description: "You speak a one-word command to a creature you can see within range. The target must succeed on a Wisdom saving throw or follow the command on its next turn. The spell has no effect if the target is undead, if it doesn't understand your language, or if your command is directly harmful to it."
-    concentration: false
-    ritual: false
-    material: "BOOK"
-    save_type: "Wisdom"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can affect one additional creature for each slot level above 1st. The creatures must be within 30 feet of each other when you target them."
-
-  compelled_duel:
-    name: "Compelled Duel"
-    level: 1
-    school: "enchantment"
-    classes: [ "paladin" ]
-    casting_time: "1 bonus action"
-    range: "30 feet"
-    components: "V"
-    duration: "1 minute"
-    description: "You attempt to compel a creature into a duel. One creature that you can see within range must make a Wisdom saving throw. On a failed save, the creature is drawn to you, compelled by your divine demand."
-    concentration: true
-    ritual: false
-    material: "IRON_SWORD"
-    save_type: "Wisdom"
-
-  detect_evil_and_good:
-    name: "Detect Evil and Good"
-    level: 1
-    school: "divination"
-    classes: [ "cleric", "paladin" ]
-    casting_time: "1 action"
-    range: "Self"
-    components: "V, S"
-    duration: "10 minutes"
-    description: "For the duration, you know if there is an aberration, celestial, elemental, fey, fiend, or undead within 30 feet of you, as well as where the creature is located. Similarly, you know if there is a place or object within 30 feet of you that has been magically consecrated or desecrated."
-    concentration: true
-    ritual: false
-    material: "ENDER_EYE"
-
-  divine_favor:
-    name: "Divine Favor"
-    level: 1
-    school: "evocation"
-    classes: [ "paladin" ]
-    casting_time: "1 bonus action"
-    range: "Self"
-    components: "V, S"
-    duration: "1 minute"
-    description: "Your prayer empowers you with divine radiance. Until the spell ends, your weapon attacks deal an extra 1d4 radiant damage on a hit."
-    concentration: true
-    ritual: false
-    material: "GOLDEN_SWORD"
-    damage_type: "radiant"
-
-  heroism:
-    name: "Heroism"
-    level: 1
-    school: "enchantment"
-    classes: [ "bard", "paladin" ]
-    casting_time: "1 action"
-    range: "Touch"
-    components: "V, S"
-    duration: "1 minute"
-    description: "A willing creature you touch is imbued with bravery. Until the spell ends, the creature is immune to being frightened and gains temporary hit points equal to your spellcasting ability modifier at the start of each of its turns."
-    concentration: true
-    ritual: false
-    material: "GOLDEN_APPLE"
-    attack_type: "touch"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st."
-
-  protection_from_evil_and_good:
-    name: "Protection from Evil and Good"
-    level: 1
-    school: "abjuration"
-    classes: [ "cleric", "druid", "paladin", "warlock", "wizard" ]
-    casting_time: "1 action"
-    range: "Touch"
-    components: "V, S, M"
-    duration: "10 minutes"
-    description: "Until the spell ends, one willing creature you touch is protected against certain types of creatures: aberrations, celestials, elementals, fey, fiends, and undead. The protection grants several benefits: creatures of those types have disadvantage on attack rolls against the target, the target also can't be charmed, frightened, or possessed by them."
-    concentration: true
-    ritual: false
-    material: "SHIELD"
-    attack_type: "touch"
-
-  searing_smite:
-    name: "Searing Smite"
-    level: 1
-    school: "evocation"
-    classes: [ "paladin", "ranger" ]
-    casting_time: "1 bonus action"
-    range: "Self"
-    components: "V"
-    duration: "1 minute"
-    description: "The next time you hit a creature with a melee weapon attack during the spell's duration, your weapon flares with white-hot intensity, and the attack deals an extra 1d6 fire damage to the target and causes the target to ignite in flames."
-    concentration: true
-    ritual: false
-    material: "FIRE_CHARGE"
-    damage_type: "fire"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the initial extra damage dealt by the attack increases by 1d6 for each slot level above 1st."
-
-  thunderous_smite:
-    name: "Thunderous Smite"
-    level: 1
-    school: "evocation"
-    classes: [ "paladin" ]
-    casting_time: "1 bonus action"
-    range: "Self"
-    components: "V"
-    duration: "1 minute"
-    description: "The first time you hit with a melee weapon attack during this spell's duration, your weapon rings with thunder that is audible within 300 feet of you, and the attack deals an extra 2d6 thunder damage to the target. Additionally, if the target is a creature, it must succeed on a Strength saving throw or be pushed 10 feet away from you and knocked prone."
-    concentration: true
-    ritual: false
-    material: "TNT"
-    damage_type: "thunder"
-    save_type: "Strength"
+    damage: "1d12"   # the automatic 1d12 on later turns isn't automated — DM applies it
+    damage_type: "lightning"
+    higher_levels: "The initial damage increases by 1d12 for each slot level above 1st."
 
   wrathful_smite:
     name: "Wrathful Smite"
     level: 1
     school: "evocation"
-    classes: [ "paladin" ]
+    classes: ["paladin"]
     casting_time: "1 bonus action"
     range: "Self"
     components: "V"
@@ -545,119 +1247,21 @@ spells:
     concentration: true
     ritual: false
     material: "WITHER_SKELETON_SKULL"
+    damage: "1d6"   # rider on your next melee hit — DM applies and calls the Wisdom save (#182)
     damage_type: "psychic"
-    save_type: "Wisdom"
 
-  arms_of_hadar:
-    name: "Arms of Hadar"
+  zephyr_strike:
+    name: "Zephyr Strike"
     level: 1
-    school: "conjuration"
-    classes: [ "warlock" ]
-    casting_time: "1 action"
-    range: "Self (10-foot radius)"
-    components: "V, S"
-    duration: "Instantaneous"
-    description: "You invoke the power of Hadar, the Dark Hunger. Tendrils of dark energy erupt from you and batter all creatures within 10 feet of you. Each creature in that area must make a Strength saving throw. On a failed save, a target takes 2d6 necrotic damage and can't take reactions until its next turn."
-    concentration: false
-    ritual: false
-    material: "WITHER_SKELETON_SKULL"
-    save_type: "Strength"
-    damage_type: "necrotic"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st."
-
-  hex:
-    name: "Hex"
-    level: 1
-    school: "enchantment"
-    classes: [ "warlock" ]
+    school: "transmutation"
+    classes: ["ranger"]
     casting_time: "1 bonus action"
-    range: "90 feet"
-    components: "V, S, M"
-    duration: "1 hour"
-    description: "You place a curse on a creature that you can see within range. Until the spell ends, you deal an extra 1d6 necrotic damage to the target whenever you hit it with an attack. Also, choose one ability when you cast the spell. The target has disadvantage on ability checks made with the chosen ability."
-    concentration: true
-    ritual: false
-    material: "WITHER_SKELETON_SKULL"
-    damage_type: "necrotic"
-    cast_choice: "ability"      # choose one ability; the target has disadvantage on checks with it (#178)
-    mark_damage: "1d6"          # +1d6 necrotic whenever you hit the hexed target
-    higher_levels: "When you cast this spell using a spell slot of 3rd or 4th level, you can maintain your concentration on the spell for up to 8 hours. When you use a spell slot of 5th level or higher, you can maintain your concentration on the spell for up to 24 hours."
-
-  hellish_rebuke:
-    name: "Hellish Rebuke"
-    level: 1
-    school: "evocation"
-    classes: [ "warlock" ]
-    casting_time: "1 reaction"
-    range: "60 feet"
-    components: "V, S"
-    duration: "Instantaneous"
-    description: "You point your finger, and the creature that damaged you is momentarily surrounded by hellish flames. The creature must make a Dexterity saving throw. It takes 2d10 fire damage on a failed save, or half as much damage on a successful one."
-    concentration: false
-    ritual: false
-    material: "FIRE_CHARGE"
-    save_type: "Dexterity"
-    damage_type: "fire"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d10 for each slot level above 1st."
-
-  dissonant_whispers:
-    name: "Dissonant Whispers"
-    level: 1
-    school: "enchantment"
-    classes: [ "bard" ]
-    casting_time: "1 action"
-    range: "60 feet"
-    components: "V"
-    duration: "Instantaneous"
-    description: "You whisper a discordant melody that only one creature of your choice within range can hear, wracking it with terrible pain. The target must make a Wisdom saving throw. On a failed save, it takes 3d6 psychic damage and must immediately use its reaction, if available, to move as far as its speed allows away from you."
-    concentration: false
-    ritual: false
-    material: "NOTE_BLOCK"
-    save_type: "Wisdom"
-    damage_type: "psychic"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, the damage increases by 1d6 for each slot level above 1st."
-
-  silvery_barbs:
-    name: "Silvery Barbs"
-    level: 1
-    school: "enchantment"
-    classes: [ "bard", "sorcerer", "wizard" ]
-    casting_time: "1 reaction"
-    range: "60 feet"
-    components: "V"
-    duration: "Instantaneous"
-    description: "You magically distract the triggering creature and turn its momentary uncertainty into encouragement for another creature. The triggering creature must reroll the d20 and use the lower roll. You can then choose a different creature you can see within range (you can choose yourself). The chosen creature has advantage on the next attack roll, ability check, or saving throw it makes within 1 minute."
-    concentration: false
-    ritual: false
-    material: "SILVER_DYE"
-
-  gift_of_alacrity:
-    name: "Gift of Alacrity"
-    level: 1
-    school: "divination"
-    classes: [ "wizard" ]
-    casting_time: "1 minute"
-    range: "Touch"
-    components: "V, S"
-    duration: "8 hours"
-    description: "You touch a willing creature. For the duration, the target can add 1d8 to its initiative rolls."
-    concentration: false
-    ritual: false
-    material: "CLOCK"
-    attack_type: "touch"
-
-  cause_fear:
-    name: "Cause Fear"
-    level: 1
-    school: "necromancy"
-    classes: [ "warlock", "wizard" ]
-    casting_time: "1 action"
-    range: "60 feet"
+    range: "Self"
     components: "V"
     duration: "1 minute"
-    description: "You awaken the sense of mortality in one creature you can see within range. A construct or an undead is immune to this effect. The target must succeed on a Wisdom saving throw or become frightened of you until the spell ends."
+    description: "You move like the wind. Until the spell ends, your movement doesn't provoke opportunity attacks. Once before the spell ends, you can give yourself advantage on one weapon attack roll on your turn; that attack deals an extra 1d8 force damage on a hit, and your walking speed increases by 30 feet until the end of that turn."
     concentration: true
     ritual: false
-    material: "WITHER_SKELETON_SKULL"
-    save_type: "Wisdom"
-    higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st. The creatures must be within 30 feet of each other when you target them."
+    material: "WIND_CHARGE"
+    damage: "1d8"   # one-time rider on the empowered hit — DM applies (#182)
+    damage_type: "force"
