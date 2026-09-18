@@ -1,20 +1,20 @@
+# Gear goes under `starting_equipment:` (plain ids, "id xN" for a quantity). Coin is gold_piece —
+# e.g. "gold_piece x15" for the classic belt pouch of 15 gp. Every id must exist in Items/Weapons/Armor
+# (Items/adventuring_gear.yml holds the background keepsakes).
+
 acolyte:
   name: Acolyte
   description: ""
   skill_proficiencies:
     - insight
     - religion
-  equipment:
+  starting_equipment:
     - holy_symbol
     - prayer_book
     - vestments
     - common_clothes
-    - item: sticks_of_incense
-      amount: 5
-    - item: money_pouch
-      contents:
-        - id: minecraft:gold_nugget
-          amount: 15
+    - sticks_of_incense x5
+    - gold_piece x15
   feature: "Shelter of the Faithful"
   traits: [acolyte]
   player_choices:
@@ -32,16 +32,13 @@ anthropologist:
   skill_proficiencies:
     - insight
     - religion
-  equipment:
+  starting_equipment:
     - diary
     - bottle_of_ink
     - ink_pen
     - travelers_clothes
     - trinket
-    - item: money_pouch
-      contents:
-        - id: minecraft:gold_nugget
-          amount: 10
+    - gold_piece x10
   player_choices:
     - id: background_language
       title: Background Language
@@ -60,26 +57,22 @@ archaeologist:
   skill_proficiencies:
     - history
     - survival
-  equipment:
-    - item: wooden_case
-      contents:
-        - id: map_to_ruin_or_dungeon
+  starting_equipment:
+    - wooden_case
+    - map_to_ruin_or_dungeon   # kept inside the wooden case
     - bullseye_lantern
     - miners_pick
     - travelers_clothes
     - shovel
     - two_person_tent
     - trinket
-    - item: money_pouch
-      contents:
-        - id: minecraft:gold_nugget
-          amount: 25
+    - gold_piece x25
   player_choices:
     - id: background_tool_proficiencies
       title: Background Tool Proficiencies
-      type: equipment
+      type: tool
       choose: 1
-      options: [cartographers_tools, navigators_tools]
+      options: ["cartographer's tools", "navigator's tools"]
     - id: background_language
       title: Background Language
       type: language
@@ -97,14 +90,11 @@ athlete:
     - athletics
   tool_proficiencies:
     - vehicles(land)
-  equipment:
+  starting_equipment:
     - leather_ball
     - lucky_charm
     - travelers_clothes
-    - item: money_pouch
-      contents:
-        - id: minecraft:gold_nugget
-          amount: 10
+    - gold_piece x10
   player_choices:
     - id: background_language
       title: Background Language
@@ -119,19 +109,15 @@ charlatan:
   name: Charlatan
   description: ""
   skill_proficiencies:
-    - desception
+    - deception
     - sleight_of_hand
   tool_proficiencies:
     - disguise_kit
     - forgery_kit
-  equipment:
+  starting_equipment:
     - fine_clothes
     - disguise_kit
-    - item: money_pouch
-      contents:
-        - id: minecraft:gold_nugget
-          amount: 15
+    - gold_piece x15
   feature: ""
   traits: [false_identity]
   links: ["https://dnd5e.wikidot.com/background:charlatan"]
-

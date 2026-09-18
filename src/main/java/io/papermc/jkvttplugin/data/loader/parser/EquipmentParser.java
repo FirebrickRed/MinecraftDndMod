@@ -34,7 +34,9 @@ public final class EquipmentParser {
                 Map<?, ?> map = (Map<?, ?>) entry;
                 Object itemObj = map.get("item");
                 if (itemObj instanceof String) {
-                    result.add((String) itemObj);
+                    // {item: rations, amount: 10} is the long form of "rations x10".
+                    int qty = ParseUtil.asInt(map.get("amount"), ParseUtil.asInt(map.get("quantity"), 1));
+                    result.add(qty > 1 ? itemObj + " x" + qty : (String) itemObj);
                 } else {
                     io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[EquipmentParser] Equipment entry object missing valid 'item' key: " + entry);
                 }
@@ -98,6 +100,11 @@ public final class EquipmentParser {
             if (single != null) out.add(single);
         }
         return out;
+    }
+
+    /** Parse one fixed starting-equipment token ({@code "gold_piece x15"}), same rules as a give-entry. */
+    public static EquipmentOption parseStartingEntry(String token) {
+        return parseGiveEntry(token);
     }
 
     /**

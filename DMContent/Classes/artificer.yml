@@ -151,26 +151,7 @@ features_by_level:
       description: Your understanding of magic items is unmatched. You gain a +1 bonus to all saving throws per magic item you are currently attuned to. If you're reduced to 0 hit points but not killed outright, you can use your reaction to end one of your artificer infusions, causing you to drop to 1 hit point instead.
 starting_equipment:
   - light_crossbow
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
-  - dart
+  - bolt x20        # the light crossbow needs ammunition (was 20 darts)
   - thieves_tools
   - dungeoneers_pack
 player_choices:

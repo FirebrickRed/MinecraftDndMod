@@ -1,9 +1,14 @@
+# Spellcasting focuses. `focus_type` must match a class's `spellcasting_focus_type` exactly
+# (arcane_focus: sorcerer/warlock/wizard · holy_symbol: cleric/paladin · druidic_focus: druid/ranger).
+# `component` works for every class. Bard instruments: musical_instruments.yml · artificer: thieves_tools.
+# `material:` is a vanilla item — add `custom_model:` only once the resource pack has a texture for it.
+
 arcane_focus:
   name: "Arcane Focus"
   type: "spellcasting_focus"
   focus_type: "arcane_focus"
   description: "A crystal orb used to channel arcane magic"
-  material: "arcane_focus"
+  material: "HEART_OF_THE_SEA"
   cost:
     amount: 10
     currency: gold
@@ -13,7 +18,7 @@ component_pouch:
   type: "spellcasting_focus"
   focus_type: "component"
   description: "A small pouch containing spell components"
-  material: "component_pouch"
+  material: "BUNDLE"
   cost:
     amount: 25
     currency: gold
@@ -21,9 +26,9 @@ component_pouch:
 holy_symbol:
   name: "Holy Symbol"
   type: "spellcasting_focus"
-  focus_type: "divine_focus"
+  focus_type: "holy_symbol"   # was divine_focus, which no class uses — clerics/paladins couldn't cast with it
   description: "A sacred symbol of your deity"
-  material: "holy_symbol"
+  material: "GOLD_NUGGET"
   cost:
     amount: 5
     currency: gold
@@ -33,7 +38,7 @@ druidic_focus:
   type: "spellcasting_focus"
   focus_type: "druidic_focus"
   description: "A wooden staff or totem imbued with nature's power"
-  material: "druidic_focus"
+  material: "OAK_SAPLING"
   cost:
     amount: 15
     currency: gold

@@ -642,11 +642,8 @@ public class CharacterSheet {
         List<ItemStack> startingItems = new ArrayList<>();
 
         if (dndClass != null && dndClass.getStartingEquipment() != null) {
-            for (String itemId : dndClass.getStartingEquipment()) {
-                ItemStack item = createItemFromId(itemId);
-                if (item != null) {
-                    startingItems.add(item);
-                }
+            for (String entry : dndClass.getStartingEquipment()) {
+                startingItems.addAll(createItemsFromStartingEntry(entry));
             }
         }
 
@@ -658,11 +655,8 @@ public class CharacterSheet {
         if (background != null) {
             List<String> bgEquipment = background.getStartingEquipment();
             if (bgEquipment != null) {
-                for (String itemId : bgEquipment) {
-                    ItemStack item = createItemFromId(itemId);
-                    if (item != null) {
-                        startingItems.add(item);
-                    }
+                for (String entry : bgEquipment) {
+                    startingItems.addAll(createItemsFromStartingEntry(entry));
                 }
             }
         }
@@ -702,18 +696,28 @@ public class CharacterSheet {
         return items;
     }
 
+    /** A fixed starting-equipment entry: a plain id, or "id xN" for a quantity (e.g. "gold_piece x15"). */
+    private List<ItemStack> createItemsFromStartingEntry(String entry) {
+        EquipmentOption option = io.papermc.jkvttplugin.data.loader.parser.EquipmentParser.parseStartingEntry(entry);
+        return option == null ? List.of() : createItemsFromEquipmentOption(option);
+    }
+
     private List<ItemStack> createItemsFromEquipmentOption(EquipmentOption option) {
         List<ItemStack> items = new ArrayList<>();
 
         switch (option.getKind()) {
             case ITEM -> {
                 String itemId = option.getIdOrTag();
-                int quantity = option.getQuantity();
+                int remaining = option.getQuantity();
 
-                ItemStack item = createItemFromId(itemId);
-                if (item != null) {
-                    item.setAmount(quantity);
+                // Split quantities past the stack size (e.g. 20 torches) into several stacks.
+                while (remaining > 0) {
+                    ItemStack item = createItemFromId(itemId);
+                    if (item == null) break;
+                    int amount = Math.min(remaining, item.getMaxStackSize());
+                    item.setAmount(amount);
                     items.add(item);
+                    remaining -= amount;
                 }
             }
             case TAG -> {

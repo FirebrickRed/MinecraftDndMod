@@ -7,16 +7,12 @@ wildspacer:
   tool_proficiencies:
     - navigators_tools
     - vehicles_space
-  equipment:
+  starting_equipment:
     - belaying_pin
     - grappling_hook
     - travelers_clothes
-    - item: rations
-      amount: 10
-    - item: money_pouch
-      contents:
-        - id: minecraft:gold_nugget
-          amount: 10
+    - rations x10
+    - gold_piece x10
   feature: "Wildspace Adaptation"
 #    name: Wildspace Adaptation
 #    description: "You have advantage on saving throws to avoid being stunned or disoriented in zero gravity."

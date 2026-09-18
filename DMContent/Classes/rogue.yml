@@ -95,7 +95,7 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - give: [shortbow, arrows x20]
+      - give: [shortbow, arrow x20]
       - shortsword
   - id: class_equipment_3
     title: Class Equipment 3

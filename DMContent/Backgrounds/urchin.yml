@@ -9,17 +9,11 @@ urchin:
     - thieves_tools
   starting_equipment:
     - small_knife
-    - item: city_map
-      city: starting_city
+    - city_map
     - pet_mouse
     - common_clothes
-    - item: money_pouch
-      contents:
-        - id: minecraft:gold_nugget
-          amount: 10
-        - id: dndmod:trinket
-          display: "Tiny seashell"
-          lore: "A small memento from your childhood"
+    - gold_piece x10
+    # The "token to remember your parents by" is the Keepsake choice below.
   player_choices:
     - id: urchin_keepsake
       title: Keepsake

@@ -82,16 +82,20 @@ shop:
         currency: gold
       stock: 8
 
-    - item_id: chainmail
+    # A trade slot holds at most 64 coins (#94), so big prices go in platinum (1 pp = 10 gp).
+    - item_id: chain_mail
       price:
-        amount: 75  # Currency defaults to gold if omitted
+        amount: 8     # 80 gp — RAW is 75 gp, which can't be paid in whole platinum
+        currency: platinum
       stock: 3
 
-    - item_id: plate_armor
-      price:
-        amount: 1500
-        currency: gold
-      stock: 1
+    # Plate (1,500 gp = 150 pp) is over the 64-coin limit even in platinum, so it's off the shelf
+    # until #94 lands. Uncomment once big prices work:
+    # - item_id: plate
+    #   price:
+    #     amount: 150
+    #     currency: platinum
+    #   stock: 1
 
     # Consumables (cheap copper-priced items)
     - item_id: whetstone
@@ -106,5 +110,5 @@ shop:
     - greatsword
     - dagger
     - leather_armor
-    - chainmail
-    - plate_armor
+    - chain_mail
+    # - plate    # sells back for 75 pp, also over the 64-coin limit (#94)

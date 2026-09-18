@@ -1,0 +1,93 @@
+# Musical instruments — the bard's spellcasting focus. Each is a spellcasting_focus with
+# focus_type: musical_instrument (matching bard.yml's spellcasting_focus_type), and carries the
+# `musical_instrument` tag so an equipment choice can offer "any instrument".
+
+bagpipes:
+  name: "Bagpipes"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A bag and drone pipes; loud enough to be heard across a battlefield."
+  material: "LEATHER"
+  tags: [musical_instrument]
+  cost: { amount: 30, currency: gold }
+
+drum:
+  name: "Drum"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A hand drum of stretched hide."
+  material: "NOTE_BLOCK"
+  tags: [musical_instrument]
+  cost: { amount: 6, currency: gold }
+
+dulcimer:
+  name: "Dulcimer"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A stringed instrument played with small hammers."
+  material: "OAK_PLANKS"
+  tags: [musical_instrument]
+  cost: { amount: 25, currency: gold }
+
+flute:
+  name: "Flute"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A simple wooden flute."
+  material: "BAMBOO"
+  tags: [musical_instrument]
+  cost: { amount: 2, currency: gold }
+
+horn:
+  name: "Horn"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A curved horn with a bright, carrying call."
+  material: "GOAT_HORN"
+  tags: [musical_instrument]
+  cost: { amount: 3, currency: gold }
+
+lute:
+  name: "Lute"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A pear-shaped stringed instrument, favorite of traveling bards."
+  material: "NOTE_BLOCK"
+  tags: [musical_instrument]
+  cost: { amount: 35, currency: gold }
+
+lyre:
+  name: "Lyre"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A small harp-like instrument held in the crook of the arm."
+  material: "STRING"
+  tags: [musical_instrument]
+  cost: { amount: 30, currency: gold }
+
+pan_flute:
+  name: "Pan Flute"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A row of reed pipes bound side by side."
+  material: "SUGAR_CANE"
+  tags: [musical_instrument]
+  cost: { amount: 12, currency: gold }
+
+shawm:
+  name: "Shawm"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A double-reed woodwind with a piercing tone."
+  material: "BAMBOO"
+  tags: [musical_instrument]
+  cost: { amount: 2, currency: gold }
+
+viol:
+  name: "Viol"
+  type: "spellcasting_focus"
+  focus_type: "musical_instrument"
+  description: "A bowed string instrument played upright."
+  material: "STICK"
+  tags: [musical_instrument]
+  cost: { amount: 30, currency: gold }
