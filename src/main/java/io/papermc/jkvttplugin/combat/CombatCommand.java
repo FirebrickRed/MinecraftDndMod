@@ -563,14 +563,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         Combatant previous = session.getCurrentCombatant();
-        // A held attack has to finish before the turn does, or its damage is lost with the turn
-        // state (#195). One speed bump, not a wall: 'skip all' closes it.
-        if (previous != null && ReactionWindow.isBlocking(previous.getId())) {
+        // Backstop for a mover who stopped moving by ending their turn: offer anything they
+        // provoked before the turn advances (#147).
+        if (previous != null) ReactionManager.offerProvoked(session, previous);
+        // Nothing held may outlive the turn: a held attack's damage lives on the turn state, and a
+        // provoked strike would land on someone who is no longer moving. One speed bump, not a
+        // wall — 'skip all' closes it.
+        if (previous != null && ReactionWindow.isHolding(previous.getId())) {
             ReactionWindow.explainBlock(dm, previous.getId());
             return;
         }
-        // Surface any opportunity attacks the ending combatant provoked, before the turn advances (#147).
-        if (previous != null) ReactionManager.resolveAtTurnEnd(session, previous);
         Combatant next = session.nextTurn();
 
         if (previous != null) {
@@ -625,13 +627,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // A held attack has to finish before the turn does (#195) — see handleNextTurn.
-        if (ReactionWindow.isBlocking(combatant.getId())) {
+        // Offer anything they provoked, then refuse to end the turn while it's unanswered (#147/#195).
+        ReactionManager.offerProvoked(session, combatant);
+        if (ReactionWindow.isHolding(combatant.getId())) {
             ReactionWindow.explainBlock(player, combatant.getId());
             return;
         }
-        // Surface any opportunity attacks the ending combatant provoked, before the turn advances (#147).
-        ReactionManager.resolveAtTurnEnd(session, combatant);
         Combatant next = session.endTurn(combatant);
         session.sendToDM(Component.text(combatant.getDisplayName(true) + "'s turn ended by DM.", NamedTextColor.YELLOW));
         session.sendToPlayers(Component.text(combatant.getDisplayName(false) + "'s turn ended.", NamedTextColor.YELLOW));
@@ -826,6 +827,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("You're channelling " + actor.getRitualSpellName() + " — /combat cast cancel to stop.", NamedTextColor.RED));
             return;
         }
+        if (turnHeld(player, actor)) return;
 
         String name = args.length >= 2 ? args[1].toLowerCase() : null;
         if (name == null) {
@@ -833,27 +835,105 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage(Component.text(actor.getDisplayName() + " has already used their Action.", NamedTextColor.YELLOW));
                 return;
             }
-            showActionMenu(player);
+            showActionMenu(player, actor);
             return;
         }
         performAction(player, session, actor, state, name);
     }
 
     /** Clickable list of the standard actions (#143). */
-    private void showActionMenu(Player player) {
-        player.sendMessage(Component.text("Choose your action:", NamedTextColor.GOLD, TextDecoration.BOLD));
+    private void showActionMenu(Player player, Combatant actor) {
+        player.sendMessage(Component.text("⚔ Actions for " + actor.getDisplayName(), NamedTextColor.GOLD, TextDecoration.BOLD));
+
+        // What this character can actually do first — their weapon, their spells, their features.
+        // The generic list follows, because Dodge and Help are always on the table.
+        CharacterSheet sheet = actor.getCharacterSheet();
+        if (sheet != null) {
+            showCharacterActions(player, sheet);
+        }
+
+        player.sendMessage(Component.text("Anyone, any turn:", NamedTextColor.GRAY));
         Component row = Component.empty();
         for (java.util.Map.Entry<String, String> e : ACTIONS.entrySet()) {
+            if (e.getKey().equals("attack")) continue; // covered by the weapon buttons above
             String label = Character.toUpperCase(e.getKey().charAt(0)) + e.getKey().substring(1);
-            // Attack has its own command form (target + weapon); the rest are action markers.
-            String suggest = e.getKey().equals("attack")
-                    ? "/combat attack <target> <weapon>"
-                    : "/combat action " + e.getKey();
+            String suggest = "/combat action " + e.getKey();
             row = row.append(Component.text("[" + label + "] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.suggestCommand(suggest))
-                    .hoverEvent(HoverEvent.showText(Component.text(e.getValue() + "\n(fills the command — replace the <...> parts, then press Enter)"))));
+                    .hoverEvent(HoverEvent.showText(Component.text(e.getValue() + "\n(fills the command — press Enter)"))));
         }
         player.sendMessage(row);
+    }
+
+    /**
+     * The Action half of #176: what this particular character can spend their Action on — the weapon
+     * in their hands, the spells that cost an Action, and any Action-activated feature. Everything
+     * fills a command rather than firing it, matching the bonus-action list and the attack prompt.
+     *
+     * <p>Only things the engine can actually resolve are listed. Help, Hide, Ready and Search stay in
+     * the generic row below because they're still announcements the DM adjudicates.
+     */
+    private void showCharacterActions(Player player, CharacterSheet sheet) {
+        // The weapon in hand (or the off-hand one), as a ready-to-aim attack.
+        for (org.bukkit.inventory.ItemStack held : new org.bukkit.inventory.ItemStack[]{
+                player.getInventory().getItemInMainHand(), player.getInventory().getItemInOffHand()}) {
+            io.papermc.jkvttplugin.data.model.DndWeapon w =
+                    io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(
+                            io.papermc.jkvttplugin.util.ItemUtil.getItemId(held));
+            if (w == null) continue;
+            String cmd = "/combat attack <target> " + w.getId();
+            player.sendMessage(Component.text("  ", NamedTextColor.GRAY)
+                    .append(Component.text("[Attack: " + w.getName() + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                            .clickEvent(ClickEvent.suggestCommand(cmd))
+                            .hoverEvent(HoverEvent.showText(Component.text(w.getDamage() + " " + w.getDamageType()
+                                    + "\nOr just left-click them — that fills this in for you."))))
+                    .append(Component.text("  " + w.getDamage() + " " + w.getDamageType(), NamedTextColor.DARK_GRAY)));
+        }
+
+        // Features activated as an Action (a breath weapon, say).
+        for (io.papermc.jkvttplugin.effect.Feature f : sheet.getAllFeatures()) {
+            if (f.getActivation() == null || !f.getActivation().equalsIgnoreCase("action")) continue;
+            String cmd = "/combat use " + f.getId();
+            String costNote = "";
+            if (f.getCostResource() != null) {
+                io.papermc.jkvttplugin.data.model.ClassResource res = sheet.getResource(f.getCostResource());
+                if (res != null) costNote = " (" + res.getCurrent() + "/" + res.getMax() + " " + res.getName() + ")";
+            }
+            player.sendMessage(Component.text("  ", NamedTextColor.GRAY)
+                    .append(Component.text("[" + f.getName() + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                            .clickEvent(ClickEvent.suggestCommand(cmd))
+                            .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd))))
+                    .append(Component.text(costNote, NamedTextColor.DARK_GRAY)));
+        }
+
+        // Spells that cost an Action. Cantrips are free to cast, so they're never greyed out.
+        java.util.Set<io.papermc.jkvttplugin.data.model.DndSpell> known = new java.util.LinkedHashSet<>();
+        known.addAll(sheet.getKnownCantrips());
+        known.addAll(sheet.getKnownSpells());
+        Component spellRow = Component.empty();
+        int shown = 0;
+        for (io.papermc.jkvttplugin.data.model.DndSpell s : known) {
+            String time = s.getCastingTime();
+            // An Action cast is the default; skip the ones that cost something else.
+            if (time != null && (time.toLowerCase().contains("bonus") || time.toLowerCase().contains("reaction"))) continue;
+            if (shown++ >= 12) break; // a long spell list belongs in the spellbook, not a chat row
+            io.papermc.jkvttplugin.character.SpellCost cost = io.papermc.jkvttplugin.character.SpellCost.of(sheet, s);
+            String cmd = "/combat cast " + s.getId() + (s.isAoe() ? "" : " ");
+            spellRow = spellRow.append(Component.text("[" + s.getName() + "] ",
+                            cost.available() ? NamedTextColor.AQUA : NamedTextColor.DARK_GRAY, TextDecoration.UNDERLINED)
+                    .clickEvent(ClickEvent.suggestCommand(cmd))
+                    .hoverEvent(HoverEvent.showText(Component.text(cost.available()
+                            ? "Fills: " + cmd + (s.isAoe() ? "" : "<target>")
+                                + (s.getLevel() > 0 ? "\nLevel " + s.getLevel() + " · "
+                                    + sheet.getSpellSlotsRemaining(s.getLevel()) + " slots left" : "\nCantrip")
+                            : cost.unavailableReason(s)))));
+        }
+        if (shown > 0) {
+            player.sendMessage(Component.text("  Cast: ", NamedTextColor.GRAY).append(spellRow));
+            if (known.size() > shown) {
+                player.sendMessage(Component.text("  (…the rest are in your spellbook)", NamedTextColor.DARK_GRAY));
+            }
+        }
     }
 
     private void performAction(Player player, CombatSession session, Combatant actor, TurnState state, String name) {
@@ -917,6 +997,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text(target.getDisplayName() + " is channelling " + target.getRitualSpellName() + " — /combat cast cancel to stop.", NamedTextColor.RED));
             return;
         }
+
+        if (turnHeld(player, target)) return;
 
         if (state.isBonusActionUsed()) {
             player.sendMessage(Component.text(target.getDisplayName() + " has already used their Bonus Action.", NamedTextColor.YELLOW));
@@ -1085,6 +1167,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text(caster.getDisplayName() + " can't act — " + caster.actionBlockingCondition() + ".", NamedTextColor.RED));
             return;
         }
+        // A reaction cast is exempt: casting off-turn is often how you ANSWER a window, and
+        // blocking it would deadlock the very thing that closes it.
+        if (!spendReaction && turnHeld(player, caster)) return;
 
         // A leveled spell needs a slot (or an innate use). This was never checked in combat — the
         // spellbook menu consumed the slot, and routing to /combat cast skipped it, so a 1st-level
@@ -1305,6 +1390,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
         Combatant mover = ReactionManager.pendingMover(session, reactor);
+        if (mover == null) mover = ReactionWindow.opportunityTarget(reactor);
         if (mover == null || mover.isDead()) {
             player.sendMessage(Component.text("The target is no longer available.", NamedTextColor.YELLOW));
             ReactionManager.clearPending(reactor);
@@ -1324,6 +1410,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             ReactionManager.spendReaction(reactor);
             session.broadcast(Component.text("⚡ " + reactor.getDisplayName() + " takes an Opportunity Attack (reaction used).", NamedTextColor.GOLD));
             session.updateScoreboard();
+            // Releases the mover's turn once everyone provoked has answered (#195). Note this runs
+            // after the attack: if it hit and the mover can react, that opens its own window.
+            ReactionWindow.answer(reactor, "strikes");
         }
     }
 
@@ -1596,6 +1685,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        if (turnHeld(player, actor)) return;
+
         List<String> pos = collectPositionalArgs(args, 1);
         if (pos.isEmpty()) {
             player.sendMessage(Component.text("Usage: /combat use <feature>  (e.g. rage)", NamedTextColor.RED));
@@ -1702,6 +1793,17 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         session.broadcast(Component.text(actor.getDisplayName() + " uses " + feature.getName() + "!", NamedTextColor.GOLD));
     }
 
+    /**
+     * True — and says so — when this combatant's turn is on hold because they walked out of
+     * someone's reach and the opportunity attack hasn't been answered (#195). A strike that lands
+     * after they've already acted isn't an interruption, and it may drop them before they act.
+     */
+    private boolean turnHeld(Player player, Combatant actor) {
+        if (!ReactionWindow.holdsTurnOf(actor)) return false;
+        ReactionWindow.explainBlock(player, actor.getId());
+        return true;
+    }
+
     private void handleAttack(Player player, String[] args) {
         CombatSession session = resolveSession(player);
         if (session == null) return;
@@ -1735,6 +1837,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("You're channelling " + attacker.getRitualSpellName() + " — /combat cast cancel to stop.", NamedTextColor.RED));
             return;
         }
+        if (turnHeld(player, attacker)) return;
 
         // Parse the roll input: manualRoll <n> (you rolled it), autoRoll (game rolls), total <n>.
         boolean showMods = hasFlag(args, "showModifiers");

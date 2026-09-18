@@ -55,7 +55,7 @@ Ordered by how likely each is to bite, with a cost estimate. None needs new syst
 | 5 | ~~No adventuring gear~~ | | **Fixed:** `Items/adventuring_gear.yml` (tools, all class packs, torch, rope, rations, potion of healing, clothing, background keepsakes) and `Items/musical_instruments.yml`. Backgrounds used `equipment:`, which is ignored, so they gave **no gear at all**. Now `starting_equipment:` with `gold_piece x15`-style quantities. A potion still needs #1 to heal. | done |
 | 6 | ~~Level-1 damaging spells with no `damage:`~~ (#197) | | **Fixed:** all 1st-level spells and cantrips (PHB/XGE/TCE) are authored alphabetically, with dice. Magic Missile, Ice Knife's splash, multi-ray and smites are still DM-applied (#182). | done |
 | 7 | **Contested check vs an NPC doesn't work.** `/dm check A insight vs balin deception` → "Both players must be online". | The one-shot script (Act I) uses exactly this. | Doc fix (done in the script): run the player's Insight as an ungraded check and roll Balin's Deception with `/roll 1d20+1`. | done |
-| 8 | ~~Reactions are unreliable~~ (#195) | | **Fixed:** a hit on someone who could react opens a `ReactionWindow` — broadcast to the whole table, and it **holds `/combat damage`** until they cast, `/combat reactions pass`, or the DM runs `/combat reactions skip <who|all>`. Shield's `ac_bonus: 5` is real AC and re-checks the triggering attack. (The roll-keyword complaint in the ticket was already stale — reactions have used `RollService` for a while.) Opportunity attacks still don't block; they're offered at end of move. | done |
+| 8 | ~~Reactions are unreliable~~ (#195) | | **Fixed:** a hit on someone who could react opens a `ReactionWindow` — broadcast to the whole table, and it **holds `/combat damage`** until they cast, `/combat reactions pass`, or the DM runs `/combat reactions skip <who|all>`. Shield's `ac_bonus: 5` is real AC and re-checks the triggering attack. **Opportunity attacks use the same window** — offered a second after the mover stops, holding the mover's turn until answered. (The roll-keyword complaint in the ticket was already stale.) | done |
 | 9 | ~~Boats bypass the turn freeze~~ (#198) | | **Fixed:** `VehicleEnterEvent` is cancelled for a combatant in an active fight, and everyone aboard is dismounted when initiative is rolled. The per-tick vehicle pin stays as a backstop. "No vehicles in combat" is now a rule, not a race. | done |
 
 **Server config** (already known, easy to forget on a fresh server): `allow-flight=true`,
@@ -88,6 +88,14 @@ Put these on the playtest checklist rather than treating them as open work:
   damage, (e) `/combat reactions skip all` works when the player has wandered off, (f) `/combat
   nextturn` is blocked while one is open. Then check a crit still lands through a Shield, and that
   Shield's +5 drops at the start of that wizard's next turn.
+- **Opportunity attacks (2026-09-18, #147/#195)**: walk a player out of a kobold's reach and **stop**.
+  A second later the DM should get the swing buttons and the player's turn should refuse to attack,
+  cast or end. Then: step out and straight back in (no window at all); walk past two enemies (both
+  asked, one window); Disengage first (nothing provokes); `/combat reactions skip all` when the DM
+  wants to wave it off. Watch for the case where the kobold's OA *hits* a wizard with Shield — that
+  should open a second window, holding the kobold's damage.
+- **`/combat action` (2026-09-18, #176)**: run it holding a weapon, as a caster with slots spent,
+  and as a dragonborn (the breath weapon should be listed with its uses).
 - **Spell slots actually spent (2026-09-18)**: cast a 1st-level spell in combat and watch the slot
   count fall. It never did before — `/combat cast` spent nothing at all.
 - **`/combat bonusAction` (2026-09-18, #176)**: run it as a cleric (Healing Word should be listed
@@ -109,7 +117,7 @@ Put these on the playtest checklist rather than treating them as open work:
 | ~~Content validation at load~~ | **Done:** `ContentValidator` checks kits, shops, loot, materials, focuses and spell fields on every reload. | done |
 | **Hit dice** (#52) | Short rests heal nothing today. A DM can hand-wave it with Need #1. | ~half day |
 | **Out-of-combat casting** (#152) | **Partly done:** clicking a spell out of combat fills `/character cast`, which announces it to everyone nearby + the DMs, spends the slot, sets concentration, and hands the DM a filled-in `/dm hp` for damage/healing. It does *not* resolve rolls, saves or areas — still #152. | rest: ~half day |
-| ~~`/combat bonus` lists bonus actions~~ (#176) | **Done:** `/combat bonusAction` with no argument lists bonus-action spells (with slots), `activation: bonus_action` features, and an off-hand attack when dual-wielding. `/combat action`'s own menu is still generic — the rest of #176. | done |
+| ~~Action economy menus~~ (#176) | **Done:** `/combat bonusAction` lists bonus-action spells (with slots), `activation: bonus_action` features and an off-hand attack when dual-wielding; `/combat action` lists the held weapon, Action-cost spells and Action features, then the generic Dodge/Help/… row. Ready is still an announcement (#157). | done |
 | **Racial traits on the sheet** (#65) | Darkvision, resistances and innate spells aren't shown. Players ask "do I have darkvision?". | ~1–2 h |
 | **Spell item right-click casts** (#179) | Spellbook and focus work; a bare spell item does nothing. | ~2 h |
 | **Contested checks vs NPCs** (#186) | Removes the Need #7 workaround. | ~2 h |

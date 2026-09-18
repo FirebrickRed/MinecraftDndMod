@@ -595,8 +595,15 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     pass`, or the DM's `/combat reactions skip <who|all>`. When it closes, a reaction that raised the
     target's AC gets the hit re-checked (Shield turns a hit into a miss; a crit still lands). Ending
     the turn is blocked too, since the held damage lives on the attacker's `TurnState`. The window
-    needs no timers because the attack→damage seam is already two commands. Opportunity attacks are
-    the other half (`ReactionManager`, #147) and do NOT block — they're offered at the end of a move.
+    needs no timers because the attack→damage seam is already two commands.
+  - **Opportunity attacks are the same window (#147/#195):** `ReactionManager` detects leaving reach
+    per block moved but offers nothing mid-step; it re-arms a **settle** check (1s of standing still,
+    via a per-mover ticket rather than polling) and then opens a `LEFT_REACH` window that holds the
+    **mover's turn** — attack, cast, use, action, bonusAction and endturn all wait (`turnHeld`). A
+    reaction cast is exempt, since casting off-turn is often how a window gets answered. Stepping
+    back into reach before anyone is asked un-provokes it silently. A provocation now lives exactly
+    as long as its window, which fixes the old bug where `pending` was only cleared on the mover's
+    next turn and a round-1 OA could still be fired in round 3.
   - **A spell's AC bonus is data (#147):** `ac_bonus:` in a spell's YAML (Shield 5, Shield of Faith 2)
     becomes `Combatant.grantTempAc`, added on top of `getBaseArmorClass()` and dropped at the start of
     that combatant's next turn. Don't hardcode a spell name to move AC.
@@ -609,7 +616,9 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     actually do — bonus-action spells, features with `activation: bonus_action`, an off-hand attack
     when dual-wielding — each filling a command rather than firing it. `bonusAction used` is the
     "anything else" escape hatch that just marks it spent. There is **no `/combat bonus`** — the
-    short alias was removed so there's one spelling to learn and to document.
+    short alias was removed so there's one spelling to learn and to document. `/combat action` with
+    no argument is character-aware the same way (held weapon, Action-cost spells, Action features),
+    with the generic Dodge/Disengage/Help/Hide/Ready/Search row after it.
   - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
 - **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
   - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dmentity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).

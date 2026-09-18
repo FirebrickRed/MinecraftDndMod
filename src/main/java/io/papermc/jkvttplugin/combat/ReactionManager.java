@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.combat;
 
+import io.papermc.jkvttplugin.JkVttPlugin;
 import io.papermc.jkvttplugin.data.model.DndAttack;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -10,6 +11,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -20,12 +22,17 @@ import java.util.regex.Pattern;
 /**
  * Reactions (Issue #147) — for now, opportunity attacks.
  *
- * <p>When a combatant moves out of an enemy's melee reach (without Disengaging), we <b>warn</b> that an
- * opportunity attack is available — but we do not fire anything mid-move (you might step out and back).
- * The decision surfaces at the mover's <b>end of turn</b>: the reactor's controller (DM for a creature,
- * the player for a PC) gets a clickable prompt, framed by whether the mover actually ended out of reach,
- * and always the DM's call. The attack costs the reactor its <b>reaction</b> (not its action) and only
- * once {@code /combat reaction} actually resolves. Reactions refresh at the start of the reactor's turn.
+ * <p>When a combatant moves out of an enemy's melee reach (without Disengaging), the provocation is
+ * noted but nothing is offered mid-move — you might step out and back, and that shouldn't provoke.
+ * It surfaces when the mover <b>settles</b> (a second of standing still, or their turn ending), as a
+ * {@link ReactionWindow} that <b>holds the mover's turn</b> until every provoked creature has swung
+ * or passed. Holding matters: a strike that lands after the mover has already attacked isn't an
+ * interruption, and it may well drop them before they act at all.
+ *
+ * <p>The attack costs the reactor its <b>reaction</b> (not its action), and only once
+ * {@code /combat reactions} actually resolves. Reactions refresh at the start of the reactor's turn.
+ * A provocation now lives exactly as long as its window, so it can't be fired a round later — which
+ * it could, when {@code pending} was only cleared on the mover's next turn.
  *
  * <p>Side note (#155): "enemy" is currently players-vs-entities. Factions will refine who provokes whom.
  */
@@ -44,8 +51,14 @@ public final class ReactionManager {
     // ==================== DETECTION ====================
 
     /**
-     * After {@code mover} steps from {@code from} to {@code to}, offer an opportunity attack to every
-     * enemy whose melee reach it just left. Cheap enough to call on each block of movement.
+     * After {@code mover} steps from {@code from} to {@code to}, note an opportunity attack for every
+     * enemy whose melee reach it just left — and drop one again if the mover steps back in. Cheap
+     * enough to call on each block of movement.
+     *
+     * <p>Nothing is offered mid-step. Provocations are collected while the mover walks and surfaced
+     * when they <b>settle</b> ({@link #SETTLE_TICKS} of standing still), which is what stops a
+     * step-out-and-back from provoking while still keeping the strike attached to the moment it
+     * happened. The mover's turn is then held by a {@link ReactionWindow} until it's answered.
      */
     public static void checkOpportunityAttacks(CombatSession session, Combatant mover, Location from, Location to) {
         if (session == null || mover == null || from == null || to == null) return;
@@ -60,7 +73,6 @@ public final class ReactionManager {
             if (enemy.isDead() || enemy.isUnconscious()) continue;
             if (enemy.cannotAct()) continue;             // Incapacitated/Stunned/… can't react
             if (!enemy.isReactionAvailable()) continue;
-            if (pending.containsKey(enemy.getId())) continue; // already provoked this turn
 
             Location eLoc = enemy.getLocation();
             if (eLoc == null || eLoc.getWorld() == null || !eLoc.getWorld().equals(to.getWorld())) continue;
@@ -71,58 +83,80 @@ public final class ReactionManager {
             double reachBlocks = meleeReachBlocks(enemy, oaAttack);
             double fromDist = eLoc.distance(from);
             double toDist = eLoc.distance(to);
-            // Left reach: was inside, now outside. Record it and warn — decided at end of turn.
-            if (fromDist <= reachBlocks && toDist > reachBlocks) {
-                warn(session, enemy, mover);
+            boolean alreadyNoted = pending.containsKey(enemy.getId());
+
+            if (!alreadyNoted && fromDist <= reachBlocks && toDist > reachBlocks) {
+                note(session, enemy, mover);
+            } else if (alreadyNoted && toDist <= reachBlocks && !ReactionWindow.isAwaiting(enemy)) {
+                // Stepped back inside before anyone was asked — un-provoke it, silently.
+                pending.remove(enemy.getId());
             }
         }
+        scheduleSettle(session, mover);
     }
 
-    /** Record a provoked-but-undecided OA and warn both sides. No prompt, no reaction spent yet. */
-    private static void warn(CombatSession session, Combatant reactor, Combatant mover) {
-        Player controller = reactor.isEntity() ? Bukkit.getPlayer(session.getDmId()) : reactor.getPlayer();
-        if (controller == null) return; // no one to react (offline / no DM)
-        pending.put(reactor.getId(), new PendingOA(reactor.getId(), mover.getId()));
+    // ==================== SETTLE ====================
 
+    /** How long the mover must stand still before their provocations are offered (1 second). */
+    private static final long SETTLE_TICKS = 20L;
+
+    /** Per-mover move counter: a settle check only fires if nothing moved since it was scheduled. */
+    private static final Map<UUID, Integer> moveTicket = new ConcurrentHashMap<>();
+
+    /** Note a provoked-but-unoffered opportunity attack, and warn the mover it's coming. */
+    private static void note(CombatSession session, Combatant reactor, Combatant mover) {
+        pending.put(reactor.getId(), new PendingOA(reactor.getId(), mover.getId()));
         Player moverPlayer = mover.isPlayer() ? mover.getPlayer() : null;
         if (moverPlayer != null) {
             moverPlayer.sendActionBar(Component.text("⚠ Leaving " + reactor.getDisplayName()
-                    + "'s reach — opportunity attack decided at end of turn.", NamedTextColor.GOLD));
+                    + "'s reach — stop moving and they get a swing.", NamedTextColor.GOLD));
         }
-        controller.sendMessage(Component.text("⚠ " + mover.getDisplayName() + " is leaving " + reactor.getDisplayName()
-                + "'s reach — you'll be offered an opportunity attack when their turn ends.", NamedTextColor.GRAY));
     }
 
     /**
-     * Called when {@code mover}'s turn ends: surface a decision for each opportunity attack it provoked.
-     * Framed by whether the mover actually ended out of reach, but always the reactor/DM's call to fire.
+     * (Re)arm the settle check for this mover. Every step bumps the ticket, so only the check armed
+     * by the <em>last</em> step actually opens the window — that's the "stopped moving" test, with
+     * no per-tick polling.
      */
-    public static void resolveAtTurnEnd(CombatSession session, Combatant mover) {
+    private static void scheduleSettle(CombatSession session, Combatant mover) {
+        int ticket = moveTicket.merge(mover.getId(), 1, Integer::sum);
+        JkVttPlugin.getInstance().getServer().getScheduler().runTaskLater(
+                JkVttPlugin.getInstance(),
+                () -> {
+                    Integer latest = moveTicket.get(mover.getId());
+                    if (latest == null || latest != ticket) return; // they kept moving
+                    offerProvoked(session, mover);
+                },
+                SETTLE_TICKS);
+    }
+
+    /**
+     * Open the window for everything {@code mover} has provoked and not yet been asked about.
+     * Also the backstop at end of turn, for a mover who stopped moving by ending their turn.
+     */
+    static void offerProvoked(CombatSession session, Combatant mover) {
         if (session == null || mover == null || pending.isEmpty()) return;
+        if (mover.isDead()) return;
+        List<Combatant> reactors = new ArrayList<>();
         for (Combatant reactor : session.getCombatants()) {
             PendingOA p = pending.get(reactor.getId());
             if (p == null || !p.moverId().equals(mover.getId())) continue;
+            if (ReactionWindow.isAwaiting(reactor)) continue; // already asked
             if (reactor.isDead() || reactor.isUnconscious() || reactor.cannotAct() || !reactor.isReactionAvailable()) {
                 pending.remove(reactor.getId());
                 continue;
             }
+            // Whoever would have to answer has to be here to answer it.
             Player controller = reactor.isEntity() ? Bukkit.getPlayer(session.getDmId()) : reactor.getPlayer();
             if (controller == null) { pending.remove(reactor.getId()); continue; }
-
-            boolean outOfReach = !withinReach(reactor, mover);
-            Component header = outOfReach
-                    ? Component.text("⚡ Opportunity Attack — ", NamedTextColor.GOLD, TextDecoration.BOLD)
-                        .append(Component.text(reactor.getDisplayName() + " can strike " + mover.getDisplayName()
-                                + ", who left its reach. Fire it?", NamedTextColor.YELLOW))
-                    : Component.text("⚡ " + reactor.getDisplayName() + " — ", NamedTextColor.GRAY)
-                        .append(Component.text(mover.getDisplayName() + " ended back within reach, so normally no OA. "
-                                + "Force it only if you rule it provoked:", NamedTextColor.GRAY));
-            controller.sendMessage(header);
-            controller.sendMessage(reactionButtons(reactor));
+            // They stepped back into reach in the end — no opportunity attack.
+            if (withinReach(reactor, mover)) { pending.remove(reactor.getId()); continue; }
+            reactors.add(reactor);
         }
+        if (!reactors.isEmpty()) ReactionWindow.openForOpportunity(session, mover, reactors);
     }
 
-    /** The attack/pass buttons for a reactor's pending OA (used at end of turn and in the reactions menu). */
+    /** The attack/pass buttons for a reactor's provoked OA (used by the reaction window and the roster). */
     static Component reactionButtons(Combatant reactor) {
         Component buttons = Component.empty();
         if (reactor.isEntity()) {
@@ -170,6 +204,7 @@ public final class ReactionManager {
     /** Drop every pending opportunity attack (e.g. when combat ends). */
     public static void clearAll() {
         pending.clear();
+        moveTicket.clear();
     }
 
     /** Drop opportunity attacks provoked by {@code moverId} — called when that mover acts again. */

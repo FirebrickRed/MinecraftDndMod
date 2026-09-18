@@ -49,7 +49,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `nextturn` · `turn <name>` · `endturn` | Advance / jump / end a turn |
 | `status` | Show the initiative order |
 | `reveal <name>` · `hide <name>` | Toggle hidden-entity visibility |
-| `action` · `action <dash\|dodge\|disengage\|help\|hide\|ready\|…>` | No argument: a clickable menu of standard actions. With a name: take that action |
+| `action` · `action <dash|dodge|disengage|help|hide|ready|…>` | No argument: **what this character can spend their Action on** — the weapon in their hands, Action-cost spells with their slots, Action-activated features — then the generic row (Dodge, Disengage, Help, Hide, Ready, Search). With a name: take that action (#176) |
 | `bonusAction` | No argument: **what this character can do with it** — bonus-action spells (with slots left), features like Rage, an off-hand attack when dual-wielding. Everything fills a command rather than firing it (#176) |
 | `bonusAction used [target]` | Mark the Bonus Action spent, for anything the engine doesn't model |
 | `use <feature>` | Activate a class/racial feature, e.g. `use rage` (Effect Engine, #70) |
@@ -76,6 +76,13 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 > left-click while looking at them, and the game hands you the filled-in `/combat attack` command.
 > The click only *prompts* — you still choose your roll mode. Right-click means "use" (spell focus,
 > area-effect confirm), never attack.
+
+> **Opportunity attacks hold the mover's turn (#147/#195).** Walk out of an enemy's melee reach and
+> nothing happens mid-step (you might step back). A second after you **stop moving**, the whole table
+> sees a window: everyone whose reach you left may swing, and **your turn waits** — you can't attack,
+> cast, use a feature or end your turn until they've swung or passed. A strike that lands after you've
+> already acted isn't an interruption, and it may drop you before you act at all. Disengage still
+> means nothing provokes.
 
 > **Reactions hold the attack (#195).** When a hit lands on someone who could react — a character
 > with their reaction in hand who knows a spell cast as a reaction, like Shield — the whole table
