@@ -893,7 +893,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         CombatSession session = resolveSession(player);
         if (session == null) return;
 
-        Combatant target = resolveActionTarget(player, session, args);
+        // "used" is the verb, not a combatant name — drop it before resolving who we're acting for,
+        // so a DM's "/combat bonusAction used" doesn't go looking for a creature called "used".
+        boolean markUsed = args.length >= 2 && args[1].equalsIgnoreCase("used");
+        String[] who = markUsed
+                ? java.util.stream.Stream.concat(java.util.stream.Stream.of(args[0]),
+                        java.util.Arrays.stream(args).skip(2)).toArray(String[]::new)
+                : args;
+
+        Combatant target = resolveActionTarget(player, session, who);
         if (target == null) return;
 
         TurnState state = target.getTurnState();
@@ -915,9 +923,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // No argument: show what this character can actually do with it, rather than silently
+        // Nothing asked for: show what this character can actually do with it, rather than silently
         // spending it (#176). Marking it used is still one click away.
-        if (collectPositionalArgs(args, 1).isEmpty()) {
+        if (!markUsed && collectPositionalArgs(args, 1).isEmpty()) {
             showBonusActionMenu(player, target);
             return;
         }
