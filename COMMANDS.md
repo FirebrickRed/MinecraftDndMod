@@ -51,7 +51,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `reveal <name>` · `hide <name>` | Toggle hidden-entity visibility |
 | `action` · `action <dash\|dodge\|disengage\|help\|hide\|ready\|…>` | No argument: a clickable menu of standard actions. With a name: take that action |
 | `bonusAction` | No argument: **what this character can do with it** — bonus-action spells (with slots left), features like Rage, an off-hand attack when dual-wielding. Everything fills a command rather than firing it (#176) |
-| `bonusAction used [target]` · `bonus …` | Mark the Bonus Action spent, for anything the engine doesn't model. `bonus` is the short alias |
+| `bonusAction used [target]` | Mark the Bonus Action spent, for anything the engine doesn't model |
 | `use <feature>` | Activate a class/racial feature, e.g. `use rage` (Effect Engine, #70) |
 | `movement [undo]` | Check / undo movement this turn |
 | `attack <target> [weapon] [stab\|throw] [flags]` | **Hit check only**: resolves HIT/MISS/CRIT, and on a hit prompts you with the `/combat damage` command to run. With no weapon you get clickable weapon buttons. Thrown weapons default by distance (#192) |

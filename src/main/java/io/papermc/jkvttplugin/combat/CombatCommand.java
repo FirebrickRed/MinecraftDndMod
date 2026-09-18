@@ -52,7 +52,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "bonusaction", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction", "reactions", "use");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonusaction", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction", "reactions", "use");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -99,7 +99,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "reveal" -> handleReveal(player, args);
             case "hide" -> handleHide(player, args);
             case "action" -> handleAction(player, args);
-            case "bonusaction", "bonus" -> handleBonusAction(player, args); // "bonus" kept as the short alias
+            case "bonusaction" -> handleBonusAction(player, args);
             case "movement" -> handleMovement(player, args);
             case "condition" -> handleCondition(player, args);
             case "cast" -> handleCast(player, args);
@@ -2786,7 +2786,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Subcommands
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
-                "reveal", "hide", "action", "bonusAction", "bonus", "movement", "condition", "cast", "save", "attack",
+                "reveal", "hide", "action", "bonusAction", "movement", "condition", "cast", "save", "attack",
                 "reactions", "damage", "override", "heal", "temphp", "deathsave", "use"));
             return filterCompletions(completions, args[0]);
         }
@@ -2853,7 +2853,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                         }
                     }
                 }
-                case "bonusaction", "bonus" -> {
+                case "bonusaction" -> {
                     // 'used' marks it spent; naming a combatant is the DM's form (#176).
                     completions.add("used");
                     if (session != null) {
