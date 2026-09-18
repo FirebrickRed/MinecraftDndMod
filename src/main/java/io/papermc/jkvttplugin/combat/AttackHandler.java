@@ -480,12 +480,12 @@ public class AttackHandler {
         // Result — attack resolves HIT/MISS only. Damage is a separate step (/combat damage).
         if (isNat20) {
             session.broadcast(Component.text("★ CRITICAL HIT! ★", NamedTextColor.GOLD, TextDecoration.BOLD));
-            promptDamage(session, attacker, target, damageStr, damageType, true, bonusLabel);
+            promptDamage(session, attacker, target, damageStr, damageType, true, bonusLabel, total);
         } else if (isNat1) {
             session.broadcast(Component.text("✗ CRITICAL MISS!", NamedTextColor.DARK_RED, TextDecoration.BOLD));
         } else if (hit) {
             session.broadcast(Component.text("HIT!", NamedTextColor.GREEN, TextDecoration.BOLD));
-            promptDamage(session, attacker, target, damageStr, damageType, false, bonusLabel);
+            promptDamage(session, attacker, target, damageStr, damageType, false, bonusLabel, total);
         } else {
             session.broadcast(Component.text("MISS", NamedTextColor.RED));
         }
@@ -500,10 +500,55 @@ public class AttackHandler {
      */
     static void promptDamage(CombatSession session, Combatant attacker, Combatant target,
                                      String damageStr, String damageType, boolean isCrit) {
-        promptDamage(session, attacker, target, damageStr, damageType, isCrit, "");
+        promptDamage(session, attacker, target, damageStr, damageType, isCrit, "", null);
     }
 
     static void promptDamage(CombatSession session, Combatant attacker, Combatant target,
+                                     String damageStr, String damageType, boolean isCrit, String bonusLabel) {
+        promptDamage(session, attacker, target, damageStr, damageType, isCrit, bonusLabel, null);
+    }
+
+    /**
+     * As above, but when {@code attackTotal} is given the hit can be held for a reaction (#195):
+     * if the creature that was hit could cast Shield (or anything else with a reaction casting time),
+     * a {@link ReactionWindow} opens, the damage prompt is withheld, and it's sent — or cancelled as
+     * a miss — once they've answered. Pass null for a hit nothing can react to (an auto-hit spell,
+     * a rider) and the prompt goes out immediately, as it always did.
+     */
+    static void promptDamage(CombatSession session, Combatant attacker, Combatant target,
+                                     String damageStr, String damageType, boolean isCrit, String bonusLabel,
+                                     Integer attackTotal) {
+        recordHit(attacker, target, damageStr, damageType, isCrit, bonusLabel);
+        if (attackTotal != null && ReactionWindow.openForHit(session, attacker, target, damageStr,
+                damageType, isCrit, bonusLabel, attackTotal)) {
+            return; // held — the window sends the prompt (or reports a miss) when it closes
+        }
+        sendDamagePrompt(session, attacker, target, damageStr, damageType, isCrit, bonusLabel);
+    }
+
+    /**
+     * Remember the hit on the attacker's turn state so {@code /combat damage} knows what to apply,
+     * what type it is, and whether it was a crit. Split out from the prompt itself so a hit can be
+     * recorded now and offered later, after a reaction window closes (#195).
+     */
+    private static void recordHit(Combatant attacker, Combatant target, String damageStr,
+                                  String damageType, boolean isCrit, String bonusLabel) {
+        int[] split = splitDamageBonus(damageStr);
+        String dice = damageStr == null ? "" : damageStr.replaceAll("[+-]\\s*\\d+\\s*$", "").trim();
+        int bonus = split[0];
+        boolean hasDice = dice.toLowerCase().contains("d");
+        String bonusStr = bonus == 0 ? "" : (bonus > 0 ? " +" + bonus : " " + bonus);
+        String bonusShown = (bonusLabel != null && !bonusLabel.isEmpty()) ? " " + bonusLabel : bonusStr;
+        if (attacker.getTurnState() != null) {
+            attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0,
+                    hasDice ? bonusShown.trim() : "", isCrit);
+            attacker.getTurnState().setPendingDamageType(damageType); // so /combat damage needs no 'type' (#183)
+            attacker.getTurnState().setPendingDamageDice(hasDice ? dice : ""); // so 'autoRoll' needs no dice (#183)
+        }
+    }
+
+    /** The clickable "apply damage" prompt for a hit that's already been recorded. */
+    static void sendDamagePrompt(CombatSession session, Combatant attacker, Combatant target,
                                      String damageStr, String damageType, boolean isCrit, String bonusLabel) {
         String name = target.getDisplayName();
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
@@ -517,17 +562,9 @@ public class AttackHandler {
         boolean hasDice = dice.toLowerCase().contains("d");
 
         // Labeled bonus for clarity (#168): "+5[STR] +2[Rage]" if we have it, else a bare "+N".
+        // (The pending-damage window itself was recorded by recordHit when the attack landed.)
         String bonusStr = bonus == 0 ? "" : (bonus > 0 ? " +" + bonus : " " + bonus);
         String bonusShown = (bonusLabel != null && !bonusLabel.isEmpty()) ? " " + bonusLabel : bonusStr;
-
-        // Remember the bonus (+ its label) + crit on the pending-damage window so /combat damage
-        // applies and explains them automatically.
-        if (attacker.getTurnState() != null) {
-            attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0,
-                    hasDice ? bonusShown.trim() : "", isCrit);
-            attacker.getTurnState().setPendingDamageType(damageType); // so /combat damage needs no 'type' (#183)
-            attacker.getTurnState().setPendingDamageDice(hasDice ? dice : ""); // so 'autoRoll' needs no dice (#183)
-        }
 
         Component prompt;
         if (hasDice) {

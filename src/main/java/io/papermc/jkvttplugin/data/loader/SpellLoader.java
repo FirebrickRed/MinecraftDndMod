@@ -148,6 +148,9 @@ public class SpellLoader {
         // Healing / temporary HP (#123).
         spell.setHealing(ParseUtil.asString(data.get("healing"), null));
         spell.setTempHp(ParseUtil.asString(data.get("temp_hp"), null));
+        // AC bonus for the spell's duration (#147): Shield's +5, Shield of Faith's +2. Applied to a
+        // combatant when cast in combat; out of combat it's narrated like any other buff.
+        if (data.get("ac_bonus") instanceof Number ac) spell.setAcBonus(ac.intValue());
         // Optional resource-pack model overlay (only applied if the pack provides it).
         spell.setCustomModel(ParseUtil.asString(data.get("custom_model"), null));
         return spell;

@@ -120,7 +120,10 @@ public class SpellCastHandler {
                 if (dmg == null) {
                     session.broadcast(Component.text("(no fixed damage on this spell — enter the amount)", NamedTextColor.DARK_GRAY));
                 }
-                AttackHandler.promptDamage(session, caster, target, dmg == null ? "" : dmg, spell.getDamageType(), r.nat20());
+                // Passing the roll total lets a reaction window open on the hit (#195) — Shield stops
+                // a Fire Bolt exactly as it stops a sword.
+                AttackHandler.promptDamage(session, caster, target, dmg == null ? "" : dmg,
+                        spell.getDamageType(), r.nat20(), "", r.total());
             } else {
                 session.broadcast(Component.text("MISS", NamedTextColor.RED));
             }

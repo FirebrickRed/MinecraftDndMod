@@ -412,10 +412,15 @@ public class Combatant {
     }
 
     /**
-     * Get the armor class for this combatant.
+     * Get the armor class for this combatant, including any temporary bonus (Shield, #147).
      * @return AC value
      */
     public int getArmorClass() {
+        return getBaseArmorClass() + tempAcBonus;
+    }
+
+    /** AC from armor and Dex alone, without a spell's temporary bonus. */
+    public int getBaseArmorClass() {
         if (isPlayer()) {
             CharacterSheet sheet = getCharacterSheet();
             return sheet != null ? sheet.getArmorClass() : 10;
@@ -423,6 +428,34 @@ public class Combatant {
             DndEntityInstance entity = getEntityInstance();
             return entity != null ? entity.getTemplate().getArmorClass() : 10;
         }
+    }
+
+    // ==================== TEMPORARY AC (Shield and friends, #147) ====================
+
+    private int tempAcBonus;
+    private String tempAcSource;
+
+    /**
+     * Raise this combatant's AC until the start of its next turn — Shield's +5, cast as a reaction
+     * to being hit. Deliberately not stacking: a second source replaces the first only if it's
+     * bigger, which is also the RAW answer for overlapping AC bonuses from the same kind of effect.
+     */
+    public void grantTempAc(int bonus, String source) {
+        if (bonus <= tempAcBonus) return;
+        this.tempAcBonus = bonus;
+        this.tempAcSource = source;
+    }
+
+    public int getTempAcBonus() { return tempAcBonus; }
+    public String getTempAcSource() { return tempAcSource; }
+    public boolean hasTempAc() { return tempAcBonus > 0; }
+
+    /** Drop the temporary bonus — called at the start of this combatant's turn, and when combat ends. */
+    public String clearTempAc() {
+        String was = tempAcSource;
+        this.tempAcBonus = 0;
+        this.tempAcSource = null;
+        return was;
     }
 
     // ==================== COMBAT HP (Issue #100) ====================

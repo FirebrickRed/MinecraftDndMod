@@ -1026,6 +1026,7 @@ spells:
     concentration: false
     ritual: false
     material: "SHIELD"
+    ac_bonus: 5   # really applied in combat, and it re-checks the triggering attack (#195)
 
   shield_of_faith:
     name: "Shield of Faith"
@@ -1039,7 +1040,8 @@ spells:
     description: "A shimmering field surrounds a creature of your choice within range, granting it a +2 bonus to AC for the duration."
     concentration: true
     ritual: false
-    material: "SHIELD"   # the +2 AC isn't applied to the sheet yet — DM/player tracks it
+    material: "SHIELD"
+    ac_bonus: 2   # lands on the caster today; an AC buff on someone else is #182
 
   silent_image:
     name: "Silent Image"

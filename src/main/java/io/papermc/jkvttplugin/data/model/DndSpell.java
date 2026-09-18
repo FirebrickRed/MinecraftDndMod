@@ -48,6 +48,7 @@ public class DndSpell {
     private int ritualRounds;         // combat rounds to channel this as a ritual (#156); 0 = use global default
     private String healing;           // hit points restored, e.g. "1d8" (+ spellcasting mod is added) (#123)
     private String tempHp;            // temporary hit points granted, e.g. "5" or "1d4+4" (no mod added)
+    private int acBonus;              // AC bonus granted while it lasts (Shield +5, Shield of Faith +2) (#147)
 
     public DndSpell() {}
 
@@ -225,11 +226,15 @@ public class DndSpell {
     public void setHealing(String healing) { this.healing = healing; }
     public String getTempHp() { return tempHp; }
     public void setTempHp(String tempHp) { this.tempHp = tempHp; }
+    public int getAcBonus() { return acBonus; }
+    public void setAcBonus(int acBonus) { this.acBonus = acBonus; }
 
     /** True if this spell restores hit points. */
     public boolean isHealing() { return healing != null && !healing.isBlank(); }
     /** True if this spell grants temporary hit points. */
     public boolean grantsTempHp() { return tempHp != null && !tempHp.isBlank(); }
+    /** True if this spell raises the target's AC while it lasts (Shield, Shield of Faith). */
+    public boolean grantsAcBonus() { return acBonus > 0; }
 
     /** True if this spell is a chat/social spell that opens a message prompt instead of rolling (#151). */
     public boolean isSocial() { return socialType != null && !socialType.isBlank(); }

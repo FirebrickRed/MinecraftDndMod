@@ -52,7 +52,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction", "reactions", "use");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonus", "bonusaction", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction", "reactions", "use");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -99,7 +99,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "reveal" -> handleReveal(player, args);
             case "hide" -> handleHide(player, args);
             case "action" -> handleAction(player, args);
-            case "bonus" -> handleBonusAction(player, args);
+            case "bonusaction", "bonus" -> handleBonusAction(player, args); // "bonus" kept as the short alias
             case "movement" -> handleMovement(player, args);
             case "condition" -> handleCondition(player, args);
             case "cast" -> handleCast(player, args);
@@ -563,6 +563,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         Combatant previous = session.getCurrentCombatant();
+        // A held attack has to finish before the turn does, or its damage is lost with the turn
+        // state (#195). One speed bump, not a wall: 'skip all' closes it.
+        if (previous != null && ReactionWindow.isBlocking(previous.getId())) {
+            ReactionWindow.explainBlock(dm, previous.getId());
+            return;
+        }
         // Surface any opportunity attacks the ending combatant provoked, before the turn advances (#147).
         if (previous != null) ReactionManager.resolveAtTurnEnd(session, previous);
         Combatant next = session.nextTurn();
@@ -619,6 +625,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        // A held attack has to finish before the turn does (#195) — see handleNextTurn.
+        if (ReactionWindow.isBlocking(combatant.getId())) {
+            ReactionWindow.explainBlock(player, combatant.getId());
+            return;
+        }
         // Surface any opportunity attacks the ending combatant provoked, before the turn advances (#147).
         ReactionManager.resolveAtTurnEnd(session, combatant);
         Combatant next = session.endTurn(combatant);
@@ -904,9 +915,104 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        // No argument: show what this character can actually do with it, rather than silently
+        // spending it (#176). Marking it used is still one click away.
+        if (collectPositionalArgs(args, 1).isEmpty()) {
+            showBonusActionMenu(player, target);
+            return;
+        }
+
         state.useBonusAction();
         session.broadcast(Component.text(target.getDisplayName(true) + " uses their Bonus Action.", NamedTextColor.YELLOW));
         session.sendActionBar(target);
+    }
+
+    /**
+     * The bonus actions this character actually has (#176): spells with a bonus-action casting time,
+     * features activated as a bonus action (Rage, Second Wind), an off-hand attack if they're holding
+     * a light weapon in each hand, and the universal fallback of marking it used for anything the
+     * engine doesn't model. Everything fills a command rather than firing it.
+     */
+    private void showBonusActionMenu(Player player, Combatant actor) {
+        player.sendMessage(Component.text("⚡ Bonus actions for " + actor.getDisplayName(), NamedTextColor.GOLD, TextDecoration.BOLD));
+        CharacterSheet sheet = actor.getCharacterSheet();
+        boolean any = false;
+
+        if (sheet != null) {
+            // Features with a bonus-action activation (Effect Engine, #70).
+            for (io.papermc.jkvttplugin.effect.Feature f : sheet.getAllFeatures()) {
+                if (f.getActivation() == null || !f.getActivation().equalsIgnoreCase("bonus_action")) continue;
+                String cmd = "/combat use " + f.getId();
+                String costNote = "";
+                if (f.getCostResource() != null) {
+                    io.papermc.jkvttplugin.data.model.ClassResource res = sheet.getResource(f.getCostResource());
+                    if (res != null) costNote = " (" + res.getCurrent() + "/" + res.getMax() + " " + res.getName() + ")";
+                }
+                player.sendMessage(Component.text("  ", NamedTextColor.GRAY)
+                        .append(Component.text("[" + f.getName() + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                                .clickEvent(ClickEvent.suggestCommand(cmd))
+                                .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd))))
+                        .append(Component.text(costNote, NamedTextColor.DARK_GRAY)));
+                any = true;
+            }
+
+            // Spells whose casting time is a bonus action (Healing Word, Misty Step, Hex…).
+            java.util.Set<io.papermc.jkvttplugin.data.model.DndSpell> known = new java.util.LinkedHashSet<>();
+            known.addAll(sheet.getKnownCantrips());
+            known.addAll(sheet.getKnownSpells());
+            for (io.papermc.jkvttplugin.data.model.DndSpell s : known) {
+                String time = s.getCastingTime();
+                if (time == null || !time.toLowerCase().contains("bonus")) continue;
+                io.papermc.jkvttplugin.character.SpellCost cost = io.papermc.jkvttplugin.character.SpellCost.of(sheet, s);
+                String cmd = "/combat cast " + s.getId() + (s.isAoe() ? "" : " ");
+                Component line = Component.text("  ", NamedTextColor.GRAY)
+                        .append(Component.text("[" + s.getName() + "]",
+                                cost.available() ? NamedTextColor.AQUA : NamedTextColor.DARK_GRAY, TextDecoration.UNDERLINED)
+                                .clickEvent(ClickEvent.suggestCommand(cmd))
+                                .hoverEvent(HoverEvent.showText(Component.text(cost.available()
+                                        ? "Fills: " + cmd + (s.isAoe() ? "" : "<target>")
+                                        : cost.unavailableReason(s)))));
+                if (s.getLevel() > 0) {
+                    line = line.append(Component.text("  lvl " + s.getLevel() + " · "
+                            + sheet.getSpellSlotsRemaining(s.getLevel()) + " slots", NamedTextColor.DARK_GRAY));
+                }
+                player.sendMessage(line);
+                any = true;
+            }
+
+            // Two-weapon fighting: a light weapon in each hand earns an off-hand attack (PHB 195).
+            io.papermc.jkvttplugin.data.model.DndWeapon main =
+                    io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(
+                            io.papermc.jkvttplugin.util.ItemUtil.getItemId(player.getInventory().getItemInMainHand()));
+            io.papermc.jkvttplugin.data.model.DndWeapon off =
+                    io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(
+                            io.papermc.jkvttplugin.util.ItemUtil.getItemId(player.getInventory().getItemInOffHand()));
+            if (main != null && off != null && isLight(main) && isLight(off)) {
+                String cmd = "/combat attack <target> " + off.getId();
+                player.sendMessage(Component.text("  ", NamedTextColor.GRAY)
+                        .append(Component.text("[Off-hand attack: " + off.getName() + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                                .clickEvent(ClickEvent.suggestCommand(cmd))
+                                .hoverEvent(HoverEvent.showText(Component.text("Two-weapon fighting — no ability modifier on the damage.")))));
+                any = true;
+            }
+        }
+
+        if (!any) {
+            player.sendMessage(Component.text("  Nothing the game knows about.", NamedTextColor.GRAY));
+        }
+        player.sendMessage(Component.text("  ", NamedTextColor.GRAY)
+                .append(Component.text("[something else — just mark it used]", NamedTextColor.YELLOW, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand("/combat bonusAction used"))
+                        .hoverEvent(HoverEvent.showText(Component.text("For anything the engine doesn't model — the DM adjudicates it.")))));
+    }
+
+    /** True if a weapon has the Light property (two-weapon fighting). */
+    private static boolean isLight(io.papermc.jkvttplugin.data.model.DndWeapon weapon) {
+        if (weapon == null || weapon.getProperties() == null) return false;
+        for (String p : weapon.getProperties()) {
+            if (p != null && p.equalsIgnoreCase("light")) return true;
+        }
+        return false;
     }
 
     // ==================== SPELLCASTING (Issue #123) ====================
@@ -972,6 +1078,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        // A leveled spell needs a slot (or an innate use). This was never checked in combat — the
+        // spellbook menu consumed the slot, and routing to /combat cast skipped it, so a 1st-level
+        // spell cast in a fight cost nothing at all. Check before resolving, spend after (#152).
+        CharacterSheet casterSheet = caster.getCharacterSheet();
+        io.papermc.jkvttplugin.character.SpellCost cost = io.papermc.jkvttplugin.character.SpellCost.of(casterSheet, spell);
+        if (!cost.available()) {
+            player.sendMessage(Component.text(cost.unavailableReason(spell), NamedTextColor.YELLOW));
+            return;
+        }
+
         RollService.RollInput roll = RollService.parseInput(args, player);
         Integer providedRoll = roll.providedRoll();
         Integer providedTotal = roll.providedTotal();
@@ -1013,12 +1129,29 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         if (resolved) {
+            cost.spend(casterSheet, spell);
+
+            // An AC-raising spell (Shield +5, Shield of Faith +2) actually moves the number (#147).
+            // It lands on the caster: both are cast on yourself today, and an AC buff on someone
+            // else needs the targeted-buff work in #182.
+            if (spell.grantsAcBonus()) {
+                caster.grantTempAc(spell.getAcBonus(), spell.getName());
+                session.broadcast(Component.text("🛡 " + caster.getDisplayName(true) + "'s AC is now "
+                        + caster.getArmorClass() + " (+" + spell.getAcBonus() + " " + spell.getName() + ").",
+                        NamedTextColor.AQUA));
+            }
+
             if (spendReaction) {
                 // The reaction is only spent once the cast actually goes through.
                 caster.setReactionAvailable(false);
                 ReactionManager.clearPending(caster); // if they were mid-OA, casting instead uses the reaction
                 session.broadcast(Component.text("⚡ " + caster.getDisplayName() + " casts " + spell.getName() + " as a reaction.", NamedTextColor.GOLD));
                 session.updateScoreboard();
+                // If this cast answered a held attack (#195), releasing the window re-checks the hit
+                // against the new AC and either sends the damage prompt or reports a miss.
+                if (ReactionWindow.isAwaiting(caster)) {
+                    ReactionWindow.answer(caster, "casts " + spell.getName());
+                }
             } else {
                 TurnState state = caster.getTurnState();
                 if (state != null) {
@@ -1058,6 +1191,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     /**
      * {@code /combat reaction [<reactor>] <attack|weapon|pass> [manualRoll <d20> | autoRoll]} — take (or pass) a pending
      * opportunity attack. A player reacting for themselves may omit the reactor name.
+     *
+     * <p>Also answers a blocking reaction window (#195): {@code pass} declines one, and
+     * {@code skip <who|all>} is the DM's override for a reactor who's gone quiet.
      */
     private void handleReaction(Player player, String[] args) {
         CombatSession session = resolveSession(player);
@@ -1068,6 +1204,30 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (pos.isEmpty()) {
             // No args: show the caller's available reactions (works on or off their turn).
             showReactions(player, session, isDM);
+            return;
+        }
+
+        // DM override: /combat reactions skip <who|all> — answer for someone who isn't answering.
+        if (pos.get(0).equalsIgnoreCase("skip")) {
+            if (!isDM) {
+                player.sendMessage(Component.text("Only the DM can skip someone's reaction.", NamedTextColor.RED));
+                return;
+            }
+            String who = pos.size() > 1 ? stripQuotes(String.join(" ", pos.subList(1, pos.size()))) : "all";
+            if (who.equalsIgnoreCase("all")) {
+                if (!ReactionWindow.skip(session, null, true)) {
+                    player.sendMessage(Component.text("No reaction window is open.", NamedTextColor.YELLOW));
+                }
+                return;
+            }
+            Combatant skipped = findCombatantByName(session, who);
+            if (skipped == null) {
+                player.sendMessage(Component.text("Combatant not found: " + who, NamedTextColor.RED));
+                return;
+            }
+            if (!ReactionWindow.skip(session, skipped, false)) {
+                player.sendMessage(Component.text(skipped.getDisplayName() + " isn't being asked for a reaction.", NamedTextColor.YELLOW));
+            }
             return;
         }
 
@@ -1099,6 +1259,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         } else if (!isDM) {
             player.sendMessage(Component.text("Only the DM controls that creature's reaction.", NamedTextColor.RED));
+            return;
+        }
+
+        // Declining a blocking reaction window (#195) — this is what releases the held damage.
+        if (attackName.equalsIgnoreCase("pass") && ReactionWindow.isAwaiting(reactor)) {
+            ReactionWindow.answer(reactor, "passes");
             return;
         }
 
@@ -2004,6 +2170,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 dm.sendMessage(Component.text("(DM: use /combat override to correct HP directly.)", NamedTextColor.GRAY));
                 return;
             }
+            // A reaction window is open on this hit (#195): the target may still cast Shield, so the
+            // damage waits rather than being applied and unwound. /combat override stays available.
+            if (ReactionWindow.isBlocking(attacker.getId())) {
+                ReactionWindow.explainBlock(dm, attacker.getId());
+                return;
+            }
         }
 
         // Damage roll: manualRoll <n> (you rolled it) / autoRoll [dice] (game rolls) / total <n>.
@@ -2549,8 +2721,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - Jump to turn", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat action [target]", NamedTextColor.YELLOW)
             .append(Component.text(" - Mark action used", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat bonus [target]", NamedTextColor.YELLOW)
-            .append(Component.text(" - Mark bonus action used", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat bonusAction", NamedTextColor.YELLOW)
+            .append(Component.text(" - List your bonus actions (alias: bonus)", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat bonusAction used [target]", NamedTextColor.YELLOW)
+            .append(Component.text(" - Mark the bonus action spent", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat reactions [skip <who|all>]", NamedTextColor.YELLOW)
+            .append(Component.text(" - Reaction roster; DM: skip a held reaction", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat attack <target> [weapon]", NamedTextColor.GREEN)
             .append(Component.text(" - Attack a target", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat attack <target> [weapon] manualRoll <d20>", NamedTextColor.YELLOW)
@@ -2602,7 +2778,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Subcommands
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
-                "reveal", "hide", "action", "bonus", "movement", "condition", "cast", "save", "attack",
+                "reveal", "hide", "action", "bonusAction", "bonus", "movement", "condition", "cast", "save", "attack",
                 "reactions", "damage", "override", "heal", "temphp", "deathsave", "use"));
             return filterCompletions(completions, args[0]);
         }
@@ -2625,7 +2801,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     }
                     // Add entity names would need entity registry iteration
                 }
-                case "remove", "surprise", "endturn", "turn", "action", "bonus", "attack", "damage", "override", "heal", "temphp", "deathsave" -> {
+                case "remove", "surprise", "endturn", "turn", "action", "attack", "damage", "override", "heal", "temphp", "deathsave" -> {
                     // Suggest combatants in session
                     if (session != null) {
                         for (Combatant c : session.getCombatants()) {
@@ -2669,12 +2845,20 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                         }
                     }
                 }
+                case "bonusaction", "bonus" -> {
+                    // 'used' marks it spent; naming a combatant is the DM's form (#176).
+                    completions.add("used");
+                    if (session != null) {
+                        for (Combatant c : session.getCombatants()) completions.add(c.getDisplayName());
+                    }
+                }
                 case "reaction", "reactions" -> {
-                    // Suggest combatants that currently have a pending opportunity attack, plus 'pass'.
+                    // 'pass' declines, 'skip' is the DM's override, plus anyone with something pending.
                     completions.add("pass");
+                    completions.add("skip");
                     if (session != null) {
                         for (Combatant c : session.getCombatants()) {
-                            if (ReactionManager.hasPending(c)) completions.add(c.getDisplayName());
+                            if (ReactionManager.hasPending(c) || ReactionWindow.isAwaiting(c)) completions.add(c.getDisplayName());
                         }
                     }
                 }

@@ -14,6 +14,7 @@ import org.bukkit.event.player.PlayerInteractAtEntityEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerToggleSneakEvent;
+import org.bukkit.event.vehicle.VehicleEnterEvent;
 import org.bukkit.event.vehicle.VehicleMoveEvent;
 
 /**
@@ -156,8 +157,33 @@ public class CombatListener implements Listener {
     }
 
     /**
+     * No vehicles during a fight (#198).
+     *
+     * <p>A player boarded a boat and rowed away on someone else's turn, straight through the
+     * movement freeze. There was already a guard — {@link #onVehicleMove} pins the vehicle to where
+     * it came from — but teleporting a vehicle with a passenger aboard doesn't reliably stop it in
+     * Paper, so it rubber-banded instead of holding. Prevention is simpler and can't be fought
+     * per-tick: you don't get in a boat while you're in initiative.
+     *
+     * <p>If a legitimate mounted fight ever matters, this is the line to relax — and the per-tick
+     * pin below is what would have to be made to work.
+     */
+    @EventHandler
+    public void onVehicleEnter(VehicleEnterEvent event) {
+        if (!(event.getEntered() instanceof Player player)) return;
+        CombatSession session = CombatSession.getSessionForPlayer(player.getUniqueId());
+        if (session == null || session.isSetupPhase()) return;
+        if (session.getDmId().equals(player.getUniqueId())) return; // the DM moves freely
+        event.setCancelled(true);
+        player.sendActionBar(Component.text("No boats or mounts during combat.", NamedTextColor.RED));
+    }
+
+    /**
      * Freeze boats/mounts too: cancelling PlayerMoveEvent doesn't stop a player being carried by
      * a vehicle, so if a vehicle's passenger is a frozen combatant, pin the vehicle in place.
+     *
+     * <p>Kept as a backstop for anyone already aboard when initiative was rolled — {@code onVehicleEnter}
+     * stops them getting in, this stops them getting away.
      */
     @EventHandler
     public void onVehicleMove(VehicleMoveEvent event) {

@@ -23,6 +23,7 @@ prints that command's own help.
 | `/character loot <check> <d20>` | Search a body you right-clicked (usually filled by the prompt) |
 | `/character check <type> <value> [manualRoll <n> \| autoRoll]` | Resolve a skill/ability/save roll (usually filled by the sheet prompt) |
 | `/character cast <spell> [target] [message…]` | Cast a chat/social spell — Message, Speak with Animals (#151) |
+| `/character cast <spell> [target]` | **Out of combat:** announce the spell, spend the slot, set concentration; the DM gets a filled-in `/dm hp` for its damage/healing. Clicking a spell in your spellbook fills this in. The spell itself isn't resolved yet (no roll, no save, no area) — that's the rest of #152 |
 | `/character drink <item_id> [autoRoll \| manualRoll <n> \| total <n>]` | Drink a healing item. Clicking the potion fills this in for you; in combat it costs your Action |
 | `/character reply <message…>` | Free reply to the last Message/Sending you received (usually the **[reply]** button) |
 | `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
@@ -30,8 +31,8 @@ prints that command's own help.
 DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the five roots below.
 
 **In combat, on your own turn only:**
-`/combat action` · `/combat bonus` · `/combat attack <target>` · `/combat damage <target>` · `/combat cast <spell>` · `/combat use <feature>` · `/combat endturn` · `/combat deathsave`
-Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat reactions …` (your ⚡ opportunity attack)
+`/combat action` · `/combat bonusAction` · `/combat attack <target>` · `/combat damage <target>` · `/combat cast <spell>` · `/combat use <feature>` · `/combat endturn` · `/combat deathsave`
+Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat reactions …` (your ⚡ opportunity attack, or answering a held attack)
 
 ---
 
@@ -49,7 +50,8 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `status` | Show the initiative order |
 | `reveal <name>` · `hide <name>` | Toggle hidden-entity visibility |
 | `action` · `action <dash\|dodge\|disengage\|help\|hide\|ready\|…>` | No argument: a clickable menu of standard actions. With a name: take that action |
-| `bonus [target]` | Mark the Bonus Action used (it doesn't list bonus actions yet, #176) |
+| `bonusAction` | No argument: **what this character can do with it** — bonus-action spells (with slots left), features like Rage, an off-hand attack when dual-wielding. Everything fills a command rather than firing it (#176) |
+| `bonusAction used [target]` · `bonus …` | Mark the Bonus Action spent, for anything the engine doesn't model. `bonus` is the short alias |
 | `use <feature>` | Activate a class/racial feature, e.g. `use rage` (Effect Engine, #70) |
 | `movement [undo]` | Check / undo movement this turn |
 | `attack <target> [weapon] [stab\|throw] [flags]` | **Hit check only**: resolves HIT/MISS/CRIT, and on a hit prompts you with the `/combat damage` command to run. With no weapon you get clickable weapon buttons. Thrown weapons default by distance (#192) |
@@ -63,7 +65,9 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `save [target] [manualRoll <d20> \| autoRoll]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
 | `condition <target> [add\|remove <cond>]` · `condition list` | DM: tag/clear conditions on a combatant (#103, #150) |
 | `reactions` | List reactions — a player sees their own; the **DM sees a whole-table roster** (#147) |
-| `reactions [<reactor>] <attack\|pass>` | Take/pass a provoked opportunity attack (usually the ⚡ end-of-turn buttons) (#147) |
+| `reactions [<reactor>] <attack|pass>` | Take/pass a provoked opportunity attack (usually the ⚡ end-of-turn buttons) (#147) |
+| `reactions pass` | Decline a **held** reaction — this is what releases the attacker's damage (#195) |
+| `reactions skip <who|all>` | **DM-only:** answer for a reactor who isn't answering, and let the attack resolve (#195) |
 | `finished` | **End combat & clean up** (clears glow, scoreboards, prone) — named distinctly from `endturn`, so no confirm needed |
 
 Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combatants, starts Round 1).
@@ -72,6 +76,15 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 > left-click while looking at them, and the game hands you the filled-in `/combat attack` command.
 > The click only *prompts* — you still choose your roll mode. Right-click means "use" (spell focus,
 > area-effect confirm), never attack.
+
+> **Reactions hold the attack (#195).** When a hit lands on someone who could react — a character
+> with their reaction in hand who knows a spell cast as a reaction, like Shield — the whole table
+> sees a **reaction window** open and the attacker's `/combat damage` is **held** until they answer.
+> They cast it (`/combat cast shield me`) or decline it (`/combat reactions pass`); the DM can answer
+> for them with `/combat reactions skip <who|all>`. If the reaction raised their AC, the attack is
+> re-checked against the new number and may become a miss — a crit still lands. Ending the turn is
+> blocked while a window is open, because the held damage would go with it. Hitting a creature that
+> can't react opens no window at all.
 
 **Roll input** (attack / cast / save / initiative / deathsave — a d20 action). Pick one, as a bare keyword (no `--`):
 - `autoRoll` — the game rolls your d20 for you, applying any advantage/disadvantage (rolls 2d20 and keeps the right one). Works even in physical-dice mode.

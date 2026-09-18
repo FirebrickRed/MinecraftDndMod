@@ -193,6 +193,28 @@ message:
   word_limit: 25                 # 0 = unlimited
 ```
 
+## Shape 5b — AC buff (Shield, Shield of Faith)
+
+```yaml
+shield:
+  # …common fields…
+  casting_time: "1 reaction"     # what makes it offerable in a reaction window (#195)
+  range: "Self"
+  ac_bonus: 5                    # a whole number; added to the caster's AC
+```
+
+`ac_bonus:` is applied for real when the spell is cast **in combat**: it raises
+`Combatant.getArmorClass()` and expires at the start of that combatant's next turn. Cast as a
+reaction to being hit, it also re-checks the triggering attack against the new AC — which is how
+Shield turns a hit into a miss. (A critical hit still lands: a nat 20 always hits.)
+
+Two things it doesn't do yet:
+- **The bonus always lands on the caster**, even for a spell like Shield of Faith that RAW targets an
+  ally within 60 feet. Targeted AC buffs are #182.
+- **Duration is always "until the start of your next turn."** A 10-minute buff ends early. Also #182.
+
+Out of combat there are no combatants, so `ac_bonus:` is narrated like any other buff.
+
 ## Shape 6 — Utility / buff (no automatic resolution)
 
 Longstrider, Invisibility, Jump, Hold Person's non-damage half, etc. Just the common fields, no

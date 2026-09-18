@@ -586,9 +586,28 @@ Consolidated into 5 base commands (Issue #122): `/character`, `/roll`, `/combat`
 classes remain and are delegated to from CharacterCommand / DmCommand).
 - **Character (any player):** `/character <create|view|list|close|rest|give>` (alias `/char`); `create <player>` and `give <player> <name>` are DM-only.
 - **Roll:** `/roll <XdY[+Z]>` (alias of the old `/rolldice`).
-- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `finished`, `reveal`, `hide`, `action`, `bonus`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`, `cast`, `save`, `use`, `condition`, `reactions`. Players may use `action`/`bonus`/`attack`/`endturn`/`deathsave` on their own turn only.
+- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `finished`, `reveal`, `hide`, `action`, `bonusAction` (alias `bonus`), `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`, `cast`, `save`, `use`, `condition`, `reactions`. Players may use `action`/`bonusAction`/`attack`/`endturn`/`deathsave` on their own turn only.
   - **Roll input (#183):** a d20 action takes one bare keyword — `autoRoll` (game rolls, applies advantage → 2d20), `manualRoll <n>` (you rolled it, game adds mods), or `total <n>` (final, nothing added). Damage uses `manualRoll <n>` / `autoRoll <dice>` / a flat `<amount>`; the **damage type is automatic** (`type <t>` overrides). There is **no** `--roll`/`--total`/`--type` — those aliases were removed. `RollService.parseInput`/`RollInput` is the one parser; `RollService.resolve(...)` applies reroll (Lucky) + advantage. The out-of-combat `/character check|save|loot` roller is separate (`RollOptionsMenuHandler`).
   - **Attacking (#189):** on your turn, holding a weapon, **left-click** the enemy (or left-click while looking at them) and `WeaponListener` hands you the filled-in `/combat attack`. The click only *prompts* — the roll still goes through the command. **Right-click never attacks**; it means "use" (spell focus, area-effect confirm #173), and is suppressed only for ranged weapons so a bow does not loose a real arrow. Left-clicking a combatant is always cancelled so a punch never damages the armor stand they are rendered on.
+  - **Reactions hold the attack (#195):** a hit on someone who could react (a character with their
+    reaction in hand who knows a spell cast as a reaction) opens a `ReactionWindow`, broadcast to the
+    whole table, and **blocks `/combat damage`** until every reactor answers — cast, `/combat reactions
+    pass`, or the DM's `/combat reactions skip <who|all>`. When it closes, a reaction that raised the
+    target's AC gets the hit re-checked (Shield turns a hit into a miss; a crit still lands). Ending
+    the turn is blocked too, since the held damage lives on the attacker's `TurnState`. The window
+    needs no timers because the attack→damage seam is already two commands. Opportunity attacks are
+    the other half (`ReactionManager`, #147) and do NOT block — they're offered at the end of a move.
+  - **A spell's AC bonus is data (#147):** `ac_bonus:` in a spell's YAML (Shield 5, Shield of Faith 2)
+    becomes `Combatant.grantTempAc`, added on top of `getBaseArmorClass()` and dropped at the start of
+    that combatant's next turn. Don't hardcode a spell name to move AC.
+  - **Spell slots are spent in one place (#152):** `character/SpellCost` — `of(sheet, spell)` to check
+    *before* resolving, `spend(...)` only once it has. `/combat cast` used to spend nothing at all
+    (the spellbook menu deducted the slot, and routing to the command skipped it), so a 1st-level
+    spell in a fight was free. The spellbook menu now only *fills a command*; it consumes nothing.
+  - **Bonus actions (#176):** `/combat bonusAction` with no argument lists what this character can
+    actually do — bonus-action spells, features with `activation: bonus_action`, an off-hand attack
+    when dual-wielding — each filling a command rather than firing it. `bonusAction used` is the
+    "anything else" escape hatch that just marks it spent.
   - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
 - **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
   - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dmentity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).
@@ -607,7 +626,7 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 - ❌ Feats
 - ❌ Conditional spell application (Genie patron, Lunar Sorcery)
 - ❌ Conditional advantages application
-- ⚠️ Combat system — largely implemented: initiative, turn/action economy, attack/spell rolls, damage/healing, temp HP, death saves (#97–#101); conditions with advantage/disadvantage (#103); the Effect Engine (#70: active buffs like Rage, the breath-weapon action path, passive features like Lucky/Savage/Relentless, resistances); AoE aim preview (#173); Hex (#178); and the autoRoll/manualRoll/total command redesign (#183). Remaining/rough edges: enemy-visibility polish (#102), the action-economy menu (#176), and assorted spell mechanics (#182). Combat crash recovery (#105) is largely done — sessions restore on boot; only the in-progress turn resets and stray turn-glow isn't scrubbed at startup. Much of this is committed but largely un-playtested.
+- ⚠️ Combat system — largely implemented: initiative, turn/action economy, attack/spell rolls, damage/healing, temp HP, death saves (#97–#101); conditions with advantage/disadvantage (#103); the Effect Engine (#70: active buffs like Rage, the breath-weapon action path, passive features like Lucky/Savage/Relentless, resistances); AoE aim preview (#173); Hex (#178); and the autoRoll/manualRoll/total command redesign (#183). Reaction windows that hold the damage until the target answers, and Shield actually moving AC (#195). Remaining/rough edges: enemy-visibility polish (#102), the rest of the action-economy menu (#176 — bonus actions list, actions still just markers), out-of-combat casting resolving rolls (#152), and assorted spell mechanics (#182). Combat crash recovery (#105) is largely done — sessions restore on boot; only the in-progress turn resets and stray turn-glow isn't scrubbed at startup. Much of this is committed but largely un-playtested.
 - ❌ Equipment management (equip/unequip in-game)
 - ❌ Persistence of player-chosen tool/language proficiencies (Issue #17)
 

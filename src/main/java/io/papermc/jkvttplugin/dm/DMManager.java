@@ -102,6 +102,19 @@ public class DMManager {
     }
 
     /**
+     * Every DM currently online — ops, permission holders and {@code /dm add} DMs alike.
+     * The "loop the online players and test isDM" dance is written out in half a dozen places;
+     * new code should use this instead.
+     */
+    public static List<Player> getOnlineDMs() {
+        List<Player> dms = new ArrayList<>();
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (isDM(p)) dms.add(p);
+        }
+        return dms;
+    }
+
+    /**
      * Get formatted list of all current DMs (including OPs).
      * Shows player names and online status.
      *

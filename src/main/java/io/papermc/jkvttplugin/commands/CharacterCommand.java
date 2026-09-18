@@ -248,8 +248,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (!spell.isSocial()) {
-            player.sendMessage(Component.text(spell.getName() + " isn't a chat spell — cast combat spells with /combat cast.", NamedTextColor.RED));
-            return true;
+            return castOutOfCombat(player, spell, rest);
         }
         boolean needsTarget = !spell.getSocialType().equalsIgnoreCase("speak_with_animals");
         String target = null;
@@ -262,6 +261,102 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         }
         io.papermc.jkvttplugin.social.SocialSpellHandler.begin(player, spell, target, words);
         return true;
+    }
+
+    /**
+     * {@code /character cast <spell> [target]} out of combat (#152, first slice).
+     *
+     * <p>What this does and doesn't do: it announces the cast to everyone nearby and to the DMs,
+     * spends the slot or innate use, handles concentration, and — for a spell with damage or
+     * healing dice — hands the DM a filled-in {@code /dm hp} so the effect goes through the one
+     * damage path ({@code DamageHandler}, #175) rather than a second one. It does <b>not</b> resolve
+     * the spell: no attack roll, no save, no area. That's the rest of #152, and a DM narrating the
+     * outcome is the intended workflow until then.
+     *
+     * <p>In combat this defers to {@code /combat cast}, which does resolve rolls.
+     */
+    private boolean castOutOfCombat(Player player, io.papermc.jkvttplugin.data.model.DndSpell spell, String[] rest) {
+        io.papermc.jkvttplugin.combat.CombatSession session =
+                io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(player.getUniqueId());
+        if (session != null && !session.isSetupPhase()) {
+            String cmd = "/combat cast " + spell.getId() + (spell.isAoe() ? "" : " <target>");
+            player.sendMessage(Component.text("You're in combat — cast it with " + cmd + ".", NamedTextColor.YELLOW));
+            return true;
+        }
+
+        CharacterSheet sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
+        if (sheet == null) {
+            player.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));
+            return true;
+        }
+        if (!sheet.getKnownCantrips().contains(spell) && !sheet.getKnownSpells().contains(spell)) {
+            player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
+            return true;
+        }
+        io.papermc.jkvttplugin.character.SpellCost cost = io.papermc.jkvttplugin.character.SpellCost.of(sheet, spell);
+        if (!cost.available()) {
+            player.sendMessage(Component.text(cost.unavailableReason(spell), NamedTextColor.YELLOW));
+            return true;
+        }
+
+        String target = rest.length >= 2 ? stripQuotes(String.join(" ", Arrays.copyOfRange(rest, 1, rest.length))) : null;
+
+        // Concentration: a new concentration spell drops the old one, same as in combat.
+        if (spell.isConcentration() && sheet.isConcentrating()) {
+            io.papermc.jkvttplugin.data.model.DndSpell was = sheet.getConcentratingOn();
+            sheet.breakConcentration();
+            player.sendMessage(Component.text("Concentration on " + was.getName() + " ends.", NamedTextColor.YELLOW));
+        }
+        cost.spend(sheet, spell);
+        if (spell.isConcentration()) sheet.setConcentratingOn(spell);
+
+        String who = sheet.getCharacterName();
+        Component announce = Component.text("✨ " + who + " casts " + spell.getName()
+                + (target != null ? " on " + target : "") + ".", NamedTextColor.LIGHT_PURPLE);
+        announceNearby(player, announce);
+
+        String spent = cost.spentLabel(sheet);
+        if (!spent.isEmpty()) {
+            player.sendMessage(Component.text("   Spent " + spent + ".", NamedTextColor.GRAY));
+        }
+        if (spell.isConcentration()) {
+            player.sendMessage(Component.text("   Concentrating on " + spell.getName() + ".", NamedTextColor.GRAY));
+        }
+
+        // Damage or healing dice: give the DM the command rather than a second HP path (#175).
+        String dice = spell.isHealing() ? spell.getHealing()
+                : (spell.getDamage() != null && !spell.getDamage().isBlank() ? spell.getDamage() : null);
+        if (dice != null) {
+            String verb = spell.isHealing() ? "heal" : "damage";
+            String quoted = target == null ? "<who>" : (target.contains(" ") ? "\"" + target + "\"" : target);
+            String cmd = "/dm hp " + quoted + " " + verb + " " + dice
+                    + (!spell.isHealing() && spell.getDamageType() != null ? " type " + spell.getDamageType() : "");
+            Component prompt = Component.text("   DM: ", NamedTextColor.GRAY)
+                    .append(Component.text("[apply " + dice + " " + verb + "]", NamedTextColor.GREEN, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                            .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))
+                            .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text("Fills: " + cmd))));
+            for (Player dm : io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs()) dm.sendMessage(prompt);
+        }
+        return true;
+    }
+
+    /** Tell the caster, every online DM, and anyone within earshot (30 blocks) what was cast. */
+    private void announceNearby(Player caster, Component message) {
+        java.util.Set<java.util.UUID> told = new java.util.HashSet<>();
+        caster.sendMessage(message);
+        told.add(caster.getUniqueId());
+        for (Player dm : io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs()) {
+            if (told.add(dm.getUniqueId())) dm.sendMessage(message);
+        }
+        for (Player nearby : caster.getWorld().getPlayers()) {
+            if (nearby.getLocation().distanceSquared(caster.getLocation()) > 900) continue; // 30 blocks
+            if (told.add(nearby.getUniqueId())) nearby.sendMessage(message);
+        }
+    }
+
+    private static String stripQuotes(String s) {
+        if (s != null && s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) return s.substring(1, s.length() - 1);
+        return s;
     }
 
     /** {@code /character reply <message…>} — free whisper back to the last Message/Sending you got (#151). */

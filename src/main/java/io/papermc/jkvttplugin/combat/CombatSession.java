@@ -331,9 +331,26 @@ public class CombatSession {
         isSetupPhase = false;
         roundNumber = 1;
         currentTurnIndex = 0;
+        dismountEveryone(); // no boats or mounts once initiative is rolled (#198)
 
         updateScoreboard();
         CombatPersistence.save(this); // combat left setup — snapshot so a crash keeps initiative (#105)
+    }
+
+    /**
+     * Put every player combatant back on their own feet (#198). Combat is resolved in turns on the
+     * ground; a boat or a horse carries a player through the movement freeze, and pinning the
+     * vehicle each tick doesn't hold. Anyone aboard when initiative is rolled steps off, and
+     * {@code CombatListener.onVehicleEnter} stops them getting back on.
+     */
+    private void dismountEveryone() {
+        for (Combatant c : combatants) {
+            if (!c.isPlayer()) continue;
+            Player p = c.getPlayer();
+            if (p == null || p.getVehicle() == null) continue;
+            p.leaveVehicle();
+            p.sendMessage(Component.text("You step out — no boats or mounts during combat.", NamedTextColor.GRAY));
+        }
     }
 
     /**
@@ -371,6 +388,7 @@ public class CombatSession {
 
         // Clear the setup 'added' glow from everyone; from here only the active turn glows.
         for (Combatant c : combatants) clearGlowEffect(c);
+        dismountEveryone(); // no boats or mounts once initiative is rolled (#198)
 
         startMovementRing();
 
@@ -450,6 +468,7 @@ public class CombatSession {
             current.startNewTurn(current.getLocation());
             current.setReactionAvailable(true); // reaction refreshes at the start of your turn (#147)
             ReactionManager.clearForMover(current.getId()); // its own OAs from last round are now moot (#147)
+            expireTempAc(current); // Shield lasts "until the start of your next turn" (#147)
             applyGlowEffect(current);
             onTurnStartConditions(current); // expire Dodge/Disengage, remind of the rest (#103)
             tickTurnStartEffects(current); // advance buff/debuff durations, expire the lapsed ones (#70)
@@ -462,6 +481,17 @@ public class CombatSession {
         CombatPersistence.save(this); // crash-recovery snapshot on each turn advance (#105)
         persistPlayerSheets();        // flush player HP/slots/resources spent this turn (#31)
         return getCurrentCombatant();
+    }
+
+    /**
+     * Drop a temporary AC bonus at the start of its holder's turn, and say so — otherwise a Shield
+     * cast on someone else's turn would quietly keep protecting them for the rest of the fight (#147).
+     */
+    private void expireTempAc(Combatant c) {
+        if (!c.hasTempAc()) return;
+        String source = c.clearTempAc();
+        broadcast(Component.text("⟳ " + c.getDisplayName(true) + "'s " + (source == null ? "AC bonus" : source)
+                + " ends — AC is back to " + c.getArmorClass() + ".", NamedTextColor.GRAY));
     }
 
     /**
@@ -721,6 +751,7 @@ public class CombatSession {
         isActive = false;
         stopMovementRing();
         ReactionManager.clearAll(); // drop any pending opportunity attacks (#147)
+        ReactionWindow.clearAll();  // and any held attack waiting on a reaction (#195)
         AmmoRecovery.startDespawnTimers(); // spent ammo now begins its ~5-min pickup window (#191)
 
         // Remove all players from session tracking, clear glows and turn state
