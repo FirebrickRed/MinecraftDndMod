@@ -129,7 +129,7 @@ Put these on the playtest checklist rather than treating them as open work:
 Magic items & attunement (#188, next big epic) · level-up (#153) · per-instance entity edits and the
 alias/reveal model (#194) · spawn groups (#79) · passive Perception and group checks (#186) ·
 stealth/hide (#163) · darkvision → night vision (#148) · random loot tables (#164) · currency
-conversion (#91/#92) · the turn glow hugging the model (#134) · Bless/Bane/Guidance-style roll
+conversion (#91/#92) · the turn glow hugging the model (#134) · a DM measuring tool (#199) · Bless/Bane/Guidance-style roll
 buffs (#182, #70) · Ready action (#157) · factions (#155) · `/roll` expressions (#57) ·
 op-is-not-DM (#116) · unit tests (#14) · codebase restructure (#95).
 
