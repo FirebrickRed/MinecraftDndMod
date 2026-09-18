@@ -41,6 +41,10 @@ public class DataManager {
         ClassLoader.loadAllClasses(classFolder);
         BackgroundLoader.loadAllBackgrounds(backgroundsFolder);
         EntityLoader.loadAllEntities(entitiesFolder);
+
+        // Cross-content sanity pass: typos that would otherwise fail silently (unknown item ids in
+        // shops/kits/loot, unwearable armor, focus types no class uses…). Warnings only.
+        ContentValidator.validateAll();
     }
 
     /**

@@ -12,6 +12,11 @@ nothing new to author. For the fine detail of the object/check commands used bel
 
 > **Everything here is largely un-playtested** (combat, exploration, and the object layer especially).
 > That's the point — this one-shot is the shakedown. Note what breaks.
+>
+> **Read [`oneshot-readiness.md`](oneshot-readiness.md) first.** The content gaps it found (Balin's
+> shop, gear, instruments, spells) are fixed as of 2026-09-17. What's left for this script is HP
+> changes outside combat (trap damage) and contested checks against an NPC. Workarounds for those
+> are noted inline below as **⚠️**.
 
 ---
 
@@ -34,7 +39,7 @@ Pre-alpha is all level 1. To exercise the widest surface, steer a **3–4 person
 | Role | Good picks | Why it matters for the test |
 |---|---|---|
 | **Lock/trap specialist** | Rogue (Thieves' Tools) | Sleight of Hand + Investigation; disarming traps |
-| **Class-resource martial** | Barbarian (Rage) or Monk (Ki) | Exercises `/dm resource consume/restore` + short-rest recovery |
+| **Class-resource martial** | Barbarian (Rage) | Exercises `/combat use rage` (Effect Engine) + long-rest recovery. A level-1 Monk has no Ki yet |
 | **Level-1-subclass caster** | Cleric / Sorcerer / Warlock | Only these pick a subclass at level 1 (#64); brings **save-spells & AoE** |
 | **Nature/social face** | Druid or Ranger | Speak with Animals + Persuasion/Insight social checks |
 
@@ -52,10 +57,12 @@ Be a DM first (op, or `/dm add <you>`). Reload if you edited YAML: `/dm reload`.
 **Build the smithy + shop (Act I):**
 ```
 /dmentity spawn balin_blacksmith          # his YAML already has shop.enabled: true
-/dmentity shop view balin_blacksmith      # confirm stock; if empty, shop create + shop add …
+/dmentity shop view Balin                 # commands take his spawned NAME (a prefix is fine)
 ```
-Balin already stocks daggers, longsword, greatsword, leather/chainmail/plate, whetstones. Seed the
-party with pocket money so they can actually shop:
+Balin stocks daggers, longswords, greatswords, leather armor, chain mail (8 platinum) and whetstones.
+Plate is commented out of his YAML: at 150 platinum it's over the 64-coin trade limit (#94).
+
+Seed the party with pocket money so they can actually shop:
 ```
 /dm give <player> gold_piece 25           # item type auto-detected from the id
 ```
@@ -78,8 +85,8 @@ party with pocket money so they can actually shop:
 Optionally place a **caged rat or the party's-eye-view "guard beast"** — spawn a `wolf` behind bars for
 a Speak with Animals beat.
 
-**Pre-stage the Warren (Act III) — don't spawn until the party is close** (HP/entities don't survive a
-restart, and glow lingers). When ready:
+**Pre-stage the Warren (Act III) — don't spawn until the party is close** (entities now survive a
+restart, but that's unconfirmed at a table, and stray glow lingers). When ready:
 ```
 /dmentity spawn kobold                    # ×3–4  (pack tactics; weak alone)
 /dmentity spawn kobold_sorcerer           # ×1    (Fire Bolt @ +4, 1d10 fire; 27 HP)
@@ -106,10 +113,12 @@ a struggling player's menu with `/character create <player>`.
   open the **viewer** (a finished sheet opens the viewer, not creation).
 - Click ability tiles → **Skills** drilldown; click a skill → roll with advantage/disadvantage.
 - Confirm starting gear renders as **real items** (not purple boxes) and sheets saved to
-  `plugins/jkvttplugin/Saved/Characters/`.
+  `plugins/jkvttplugin/Saved/Characters/`. Packs, tools, instruments and background gear are real
+  items now, and backgrounds hand out their coin as `gold_piece` stacks. Any "Unknown item" paper is a
+  bug to note.
 
-✅ Covers: creation flow, subclasses, racial traits (darkvision/innate spells show on the sheet),
-skills UI, persistence.
+✅ Covers: creation flow, subclasses, racial traits (applied, though darkvision/innate spells aren't
+shown on the sheet yet, #65), skills UI, persistence.
 
 ---
 
@@ -118,21 +127,24 @@ skills UI, persistence.
 1. **Roleplay Balin** (gruff, Scottish, secretly kind — see his `dm_notes`). He explains the job and
    **lowballs the reward** — a curt "fifty gold, take it or leave it" — and plays it off as just
    another lost bit of stock.
-2. **Shopping.** `/dmentity trade balin_blacksmith` — players buy a light source, a weapon upgrade,
-   maybe armor. Watch prices show in the right currency; buy until an item hits **out of stock**.
-   > ⚠️ **Keep merchant prices ≤ 64.** A currency cost over 64 breaks the trade (see Known rough edges),
-   > so for this playtest stick to cheap stock and don't sell the plate armor (1500 gp) in Balin's YAML.
+2. **Shopping.** `/dmentity trade Balin`. Players buy a weapon upgrade, maybe armor. Watch prices
+   show in the right currency, and buy until an item hits **out of stock**.
+   > **Keep merchant prices ≤ 64 coins** (see Known rough edges). `/dm reload` warns if a shop breaks
+   > this. A blacksmith doesn't sell torches: `/dm give <player> torch` (or place real ones) for light.
 3. **Selling.** Have a player sell starting gear back (sell price = 50% of buy). Confirm his stock
-   *increases* with what they sold: `/dmentity shop view balin_blacksmith`.
+   *increases* with what they sold: `/dmentity shop view Balin`.
 4. **Haggle (social check).** A player pushes for a discount:
    ```
    /dm check <player> skill persuasion dc 13
    ```
    Or a player senses the job means more to Balin than he's letting on — and it does: **that blade
    is his own finest work**, forged decades ago and stolen from him; the gruff "fifty gold" hides a
-   man who'd pay far more to get it back. Call a contested check (the DM rolls Balin's Deception):
+   man who'd pay far more to get it back. Run it as Insight vs Balin's Deception.
+   > ⚠️ `/dm check … vs …` only works **between two online players** for now ("NPC support is
+   > coming"). Call the player's side ungraded and roll Balin's yourself (Deception +1, CHA 13):
    ```
-   /dm check <player> insight vs balin deception     # contested; DM rolls Balin's side
+   /dm check <player> skill insight          # ungraded: you see their total privately
+   /roll 1d20+1                              # Balin's Deception; higher wins, ties go to Balin
    ```
    On a win, the player reads him — now a Persuasion check can talk the reward up (pay out in the
    coda). Results land on the **DM** with a **[Share]** button; reveal only what you choose.
@@ -144,8 +156,9 @@ social checks, `/dm give`.
 
 ## Act II — The Cellar (~15–20 min) · exploration, traps, stealth, chat spells
 
-Descend into the dark. **Darkvision races see; others need light** — a good moment for a Light cantrip,
-a torch bought in Act I, or a Light-Domain cleric.
+Descend into the dark. **Darkvision races see; others need light**: a good moment for a Light cantrip,
+a torch, or a Light-Domain cleric. (Darkvision isn't mechanical yet (#148). Everyone sees whatever
+Minecraft renders, so real torches and a genuinely dark cellar do the work.)
 
 1. **The locked grate (A).** A player right-clicks it → sees it's locked, tells you their approach.
    You get a **[call a check]** button → `/dm check <player> skill sleight_of_hand dc 15` (or
@@ -154,7 +167,9 @@ a torch bought in Act I, or a Light-Domain cleric.
 2. **The strongbox trap (B).** Someone reaches for the chest. Every DM gets the 🪤 prompt with
    `[Perception] [Disarm] [Trigger]`. Play it out: did they **spot** it (Perception)? Try to **disarm**
    it (Thieves' Tools/DEX → `/dm object disarm`)? Or **trigger** it — the button calls the victim's
-   **DEX save**; apply the 2d10 (out of combat, narrate it; or `/combat damage` if you'd rather).
+   **DEX save**; apply the 2d10 with `/dm hp <player> damage 2d10 type piercing` — no combat needed,
+   and resistances and unconsciousness still apply. A hurt player can drink a potion (click it) or be
+   healed with `/dm hp <player> heal <n>`.
    Then `/dm object unlock` for the real loot inside.
 3. **The caged beast (chat spell).** A Druid/Ranger casts Speak with Animals on the wolf:
    `/character cast speak_with_animals` → you voice it back with `/dm animalreply <player> …`. It
@@ -201,8 +216,11 @@ or add a kobold `--hidden` for an enemy ambush if they were loud.
   add prone` and watch attack advantage/disadvantage apply on subsequent rolls.
 - **Reactions / opportunity attacks.** A bloodied kobold flees an adjacent PC → the ⚡ end-of-turn
   prompt / `/combat reactions <reactor> attack`. DM sees the whole-table reaction roster.
-- **Class resources.** Barbarian rages / Monk spends Ki: track via the sheet and
-  `/dm resource consume <character> <resource> 1` (restore later with `restore`).
+- **Class resources.** The Barbarian rages with **`/combat use rage`** (bonus action; resistance,
+  +2 melee damage and a 10-round duration are all automatic). Anything not wired to the Effect Engine
+  yet is tracked on the sheet with `/dm resource consume <character> <resource> 1` (restore later with
+  `restore`). Note that Monk Ki is **0 at level 1** (it starts at 2nd level), so a level-1 monk has
+  nothing to spend.
 - **Healing, temp HP, death saves.** Drop a PC to 0 → `/combat deathsave autoRoll` on their turn;
   the cleric heals (`/combat heal <PC> autoRoll <dice>`) or grants `/combat temphp <PC> <n>`.
 
@@ -218,16 +236,17 @@ attacks, class resources, healing, temp HP, death saves.
 
 1. **The blade.** Loot Balin's stolen +2 longsword off the sorcerer (held-weapon loot), or reveal it in
    the annotated alcove: `/dm object give <player>`.
-2. **Rest.** `/character rest short` — recover short-rest resources & hit dice (confirm the Barbarian's
-   Rage / Monk's Ki come back). Do a `/character rest long` to confirm full HP + spell-slot restore.
+2. **Rest.** `/character rest short` recovers short-rest resources (e.g. a Warlock's pact slot).
+   There are **no hit dice yet** (#52), so a short rest heals nothing. Do a
+   `/character rest long` to confirm full HP, spell slots and Rage uses come back.
 3. **Return to Balin.** Turn in the blade → he pays up. Base reward `/dm give <player> gold_piece 50`;
    if a player read him in Act I and talked it up, add a second stack (a single `_piece` stack caps at
    64, so hand out large sums in multiple gives, or in platinum). Sell dungeon loot back at his shop.
    `/character close` to save & close sheets.
 
 **Before you shut the server down.** Combat state, entity HP, and corpses now persist and restore on
-restart (#89/#105/#31) — but the *in-progress turn* resets and player HP only autosaves every ~5 min,
-so it's still tidiest to `/combat finished`, `/dmentity remove <name>` unwanted NPCs, and
+restart (#89/#105/#31). Character HP saves on every change, but the *in-progress turn* resets and
+combat restore is unconfirmed (#165), so it's still tidiest to `/combat finished`, `/dmentity remove <name>` unwanted NPCs, and
 `/character rest long` or `close` before stopping. See Known rough edges.
 
 ✅ Covers: loot handoff, short/long rest recovery, resource restore, shop sell, save-on-close.
@@ -260,7 +279,7 @@ Tick these off during the run — this is the "test everything" contract.
 
 **Checks & social**
 - [ ] Single graded check (DC), ungraded check, advantage (2d20)
-- [ ] Contested check (PC vs NPC, DM rolls the NPC)
+- [ ] Contested check: PC vs PC via `/dm check A skill vs B skill`; PC vs NPC by hand (ungraded check + `/roll`)
 - [ ] Help (advantage) / Guidance (+1d4) folded in; **[Share]** gate works
 
 **Exploration layer**
@@ -290,12 +309,15 @@ Tick these off during the run — this is the "test everything" contract.
   (`ShopGuiUtil.createCurrencyItem` sets a single `_piece` stack, and a vanilla trade ingredient maxes
   at 64) — no denomination conversion or coin-pouch yet. Keep playtest prices ≤ 64; big sums need
   higher denominations or multiple stacks. *(Worth an issue if it isn't one.)*
-- **Combat crash recovery mostly works** (not "none"): sessions persist to `CombatSessions/*.yml`
-  (initiative, round, turn index, conditions, death saves — #105); entity HP + corpse state live on
-  the armor-stand PDC (#89); player HP autosaves every ~5 min (#31). **Lost on a hard crash:** the
-  in-progress turn (resets), player HP since the last autosave, and any stray turn-glow (no startup
-  scrub). *(The "no crash recovery" line in `COMMANDS.md`/`CLAUDE.md` is stale — flag if you'd like
-  me to correct those too.)*
-- Conditional spells (Genie/Lunar) and conditional advantages are parsed but **not applied**.
-- No level-up, multiclassing, feats, or in-game equip/unequip yet — everyone's level 1.
+- **Crash recovery, by design:** combat sessions persist to `CombatSessions/*.yml` (initiative, round,
+  turn index, conditions, death saves; #105), entity HP and corpse state live on the armor-stand PDC
+  (#89), and character HP, slots and resources save on every change (#31). **Lost on a hard crash:**
+  the in-progress turn (it resets) and any stray turn-glow (no startup scrub). **But** a playtest saw
+  combat not come back at all (#165, still open), so don't count on it mid-fight.
+- Conditional spells (Genie/Lunar) are parsed but **not applied**. Racial and subclass conditional
+  advantages on saves **are** applied (e583085); subrace-level ones aren't yet (#174).
+- No level-up, multiclassing or feats. Everyone's level 1. Armor and shields track live as you put
+  them on (#31).
+- HP changes anywhere now: `/dm hp <who> <damage|heal|temp|set> <amount>`, and potions are drinkable
+  (click one). Out of combat the result is shown to that player and the DMs, not the whole table.
 - Player-chosen tool/language proficiencies don't persist across reload yet (#17).

@@ -17,18 +17,21 @@ prints that command's own help.
 | `/character view [name]` | Open your character sheet (or view one by name) |
 | `/character list` | List your characters |
 | `/character close` | Save & close the active character sheet |
+| `/character delete <name>` | Delete one of **your** characters (also removes that character's own gear; DM-given items stay) |
 | `/character rest short` | Short rest — recover short-rest resources |
 | `/character rest long` | Long rest — full HP, spell slots, resources |
 | `/character loot <check> <d20>` | Search a body you right-clicked (usually filled by the prompt) |
 | `/character check <type> <value> [manualRoll <n> \| autoRoll]` | Resolve a skill/ability/save roll (usually filled by the sheet prompt) |
 | `/character cast <spell> [target] [message…]` | Cast a chat/social spell — Message, Speak with Animals (#151) |
+| `/character drink <item_id> [autoRoll \| manualRoll <n> \| total <n>]` | Drink a healing item. Clicking the potion fills this in for you; in combat it costs your Action |
 | `/character reply <message…>` | Free reply to the last Message/Sending you received (usually the **[reply]** button) |
 | `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
 
 DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the five roots below.
 
 **In combat, on your own turn only:**
-`/combat action` · `/combat bonus` · `/combat attack <target>` · `/combat damage <target>` · `/combat endturn` · `/combat deathsave`
+`/combat action` · `/combat bonus` · `/combat attack <target>` · `/combat damage <target>` · `/combat cast <spell>` · `/combat use <feature>` · `/combat endturn` · `/combat deathsave`
+Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat reactions …` (your ⚡ opportunity attack)
 
 ---
 
@@ -45,15 +48,11 @@ DM extras: `/character create <player>` opens creation for another player; `/cha
 | `nextturn` · `turn <name>` · `endturn` | Advance / jump / end a turn |
 | `status` | Show the initiative order |
 | `reveal <name>` · `hide <name>` | Toggle hidden-entity visibility |
-| `action [target]` · `bonus [target]` | Mark Action / Bonus Action used |
+| `action` · `action <dash\|dodge\|disengage\|help\|hide\|ready\|…>` | No argument: a clickable menu of standard actions. With a name: take that action |
+| `bonus [target]` | Mark the Bonus Action used (it doesn't list bonus actions yet, #176) |
+| `use <feature>` | Activate a class/racial feature, e.g. `use rage` (Effect Engine, #70) |
 | `movement [undo]` | Check / undo movement this turn |
-| `attack <target> [weapon] [flags]` | **Hit check only** — resolves HIT/MISS/CRIT; on a hit it prompts you with the `/combat damage` command to run |
-
-> **Left-click to attack (#189).** On your turn, holding a weapon: **left-click the enemy**, or
-> left-click while looking at them, and the game hands you the filled-in `/combat attack` command.
-> The click only *prompts* — you still choose your roll mode. Right-click means "use" (spell focus,
-> area-effect confirm), never attack.
-
+| `attack <target> [weapon] [stab\|throw] [flags]` | **Hit check only**: resolves HIT/MISS/CRIT, and on a hit prompts you with the `/combat damage` command to run. With no weapon you get clickable weapon buttons. Thrown weapons default by distance (#192) |
 | `damage <target> [amount] [flags]` | Apply damage — a **player on their own turn**, or the **DM** anytime |
 | `override <target> [amount] [flags]` | **DM-only:** apply corrective/extra damage anytime (e.g. a forgotten modifier) |
 | `heal <target> [amount \| manualRoll <n> \| autoRoll <dice> \| total <n>]` | Restore HP |
@@ -69,6 +68,11 @@ DM extras: `/character create <player>` opens creation for another player; `/cha
 
 Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combatants, starts Round 1).
 
+> **Left-click to attack (#189).** On your turn, holding a weapon: **left-click the enemy**, or
+> left-click while looking at them, and the game hands you the filled-in `/combat attack` command.
+> The click only *prompts* — you still choose your roll mode. Right-click means "use" (spell focus,
+> area-effect confirm), never attack.
+
 **Roll input** (attack / cast / save / initiative / deathsave — a d20 action). Pick one, as a bare keyword (no `--`):
 - `autoRoll` — the game rolls your d20 for you, applying any advantage/disadvantage (rolls 2d20 and keeps the right one). Works even in physical-dice mode.
 - `manualRoll <n>` — you physically rolled `n` (1–20); the game adds your modifiers.
@@ -82,19 +86,21 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 ### Entities & items — `/dmentity <subcommand>`
 | Subcommand | What it does |
 |---|---|
-| `spawn <entityId>` | Spawn an entity (from `DMContent/Entities/`) |
+| `spawn <entityId> [name] [x y z]` | Spawn an entity (from `DMContent/Entities/`), optionally named / placed. Also the DM-mode **Spawn Entity** tool |
 | `spawngroup <groupId>` | ⚠️ **Not implemented** — prints a notice (#79) |
 | `list` | List spawned entities |
-| `remove <name>` | Despawn an entity |
+| `remove <name>` · `remove all\|dead` · `remove type <creature_type>` · `remove radius <blocks>` | Despawn one or many entities |
 | `rename <current> <new>` | Rename a spawned entity, keeping its HP, shop stock and loot. Quote names with spaces — an ambiguous unquoted split is refused, not guessed |
 | `revive <name> [hp]` | Bring a dead entity back (default full HP) |
-| `teleport <name>` | Teleport an entity to you |
+| `teleport <name> [x y z]` | Teleport an entity to you (or to coordinates) |
 | `info <name>` | Show an entity's stat block |
 | `trade <name>` | Open a merchant's trade GUI |
-| `shop create <name>` | Turn an entity into a merchant |
-| `shop add <name> <item_id> <amount> <price> <currency>` | Add stock |
-| `shop restock <name> <item_id> <amount>` | Restock an item |
-| `shop view <name>` | View a merchant's inventory |
+| `shop view <name>` | View a merchant's stock |
+| `shop add <name> <item_id> <price> <currency> [stock]` | Add an item (stock `-1` = unlimited). Only works on an entity whose YAML has a `shop:` section; there's no `shop create` |
+| `shop restock <name> [item_id] [amount]` | Restock one item, or everything back to the YAML defaults |
+| `shop adjust <name> <item_id> <price>` · `shop reset <name> [item_id]` | Override / reset an item's price |
+| `shop discount <name> <percent>` · `shop markup <name> <percent>` | Shop-wide price change |
+| `shop setfunds <name> <amount> <currency>` · `shop setmultiplier <name> <buy\|sell> <x>` | Merchant money / buy-sell multipliers |
 | `cleanup` | Remove orphaned spawned entities the plugin lost track of (post-crash) |
 
 ### DM admin — `/dm <subcommand>`
@@ -102,7 +108,15 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 |---|---|
 | `add\|remove\|list` | Manage who is a DM (`add`/`remove` op only) |
 | `give <player> <item_id> [amount]` | Give a D&D item |
-| `promptcheck <player> <ability\|save\|skill> <name> [adv\|dis]` | Prompt a player to roll a check |
+| `hp <character\|creature> <damage\|heal\|temp\|set> <amount> [type <t>]` · `hp <name> full` | **Change HP anywhere**, in or out of combat (#175). The amount can be dice (`2d10`). Same engine as combat: resistances, downing, death saves and saving all still happen; out of combat the message goes to the target and the DMs |
+| `mode` | Enter/exit **DM mode**: your inventory is swapped for the DM toolbar (View, Possess, Move, Add/Remove Combatant, Spawn Entity, Exploration tools) and restored on exit |
+| `check <player> <ability\|save\|skill> <name> [dc <n>] [adv\|dis]` | Prompt a player to roll. The result comes to **you** (graded vs the DC if given) with a **[Share]** button. `promptcheck` is an alias (#186) |
+| `check <A> <skill> vs <B> <skill>` | Contested check between two **online players** (not NPCs yet: roll the NPC's side with `/roll`) |
+| `check active <player>` · `check clear <player> [skill\|all]` | See / clear held check values (e.g. an ongoing Stealth) |
+| `object <lock\|unlock\|hide\|reveal\|desc <text>\|clear\|info>` | Annotate the block you're looking at (#185). See `docs/playtest-oneshot.md` |
+| `object trap <damage> [save] [dc]` · `object disarm` · `object arm` | Trap the block, e.g. `object trap 2d10 dex 13` |
+| `object loot <item_id> [xN]` · `object loot clear` · `object give <player>` | Loot on a block with no container, then hand it over |
+| `tp <world> <x> <y> <z>` | Teleport (usually clicked from the coordinates in a DM notification) |
 | `lootprompt <player> <check>` | Call a loot check for a player searching a body (usually clicked, not typed) |
 | `animalreply <player> <message…>` | Voice the animals' reply to a Speak with Animals caster (usually clicked) |
 | `rest <character> <short\|long>` | Force a rest |

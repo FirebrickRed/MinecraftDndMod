@@ -63,7 +63,7 @@ public class ArmorLoader {
         Object materialObj = data.get("material");
         if (materialObj instanceof String materialStr) {
             try {
-                armor.setMaterial(org.bukkit.Material.valueOf(materialStr));
+                armor.setMaterial(org.bukkit.Material.valueOf(materialStr.trim().toUpperCase()));
             } catch (IllegalArgumentException e) {
                 LOGGER.warning("Invalid material '" + materialStr + "' for armor " + id + ", defaulting to LEATHER_CHESTPLATE");
             }

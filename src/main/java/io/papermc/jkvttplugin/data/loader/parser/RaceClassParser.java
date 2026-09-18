@@ -1,7 +1,5 @@
 package io.papermc.jkvttplugin.data.loader.parser;
 
-import io.papermc.jkvttplugin.JkVttPlugin;
-import io.papermc.jkvttplugin.data.loader.SpellLoader;
 import io.papermc.jkvttplugin.data.loader.util.ParseUtil;
 import io.papermc.jkvttplugin.data.model.DndSubClass;
 import io.papermc.jkvttplugin.data.model.DndSubRace;
@@ -126,14 +124,12 @@ public final class RaceClassParser {
         // Parse features by level
         subclass.setFeaturesByLevel(ParseUtil.parseLevelStringListMap(data.get("features_by_level")));
 
-        // Parse bonus spells (domain spells, expanded spell list, etc.) with validation
+        // Parse bonus spells (domain spells, expanded spell list, etc.) — unknown ids are reported by ContentValidator
         List<String> bonusSpells = ParseUtil.normalizeStringList(data.get("bonus_spells"));
-        validateSpells(bonusSpells, className, id, "bonus_spells");
         subclass.setBonusSpells(bonusSpells);
 
-        // Parse additional spells (cantrips always known) with validation
+        // Parse additional spells (cantrips always known)
         List<String> additionalSpells = ParseUtil.normalizeStringList(data.get("additional_spells"));
-        validateSpells(additionalSpells, className, id, "additional_spells");
         subclass.setAdditionalSpells(additionalSpells);
 
         // Parse proficiencies and languages
@@ -191,27 +187,10 @@ public final class RaceClassParser {
             if (entry.getKey() instanceof String choiceOption) {
                 List<String> spells = ParseUtil.normalizeStringList(entry.getValue());
 
-                // Validate spells
-                validateSpells(spells, className, subclassId, "conditional_bonus_spells[" + choiceOption + "]");
-
                 result.put(choiceOption, spells);
             }
         }
         return result;
     }
 
-    /**
-     * Validates a list of spell IDs and logs warnings for any that don't exist.
-     * Does not crash - gracefully warns about missing spells.
-     */
-    private static void validateSpells(List<String> spellIds, String className, String subclassId, String fieldName) {
-        if (spellIds == null || spellIds.isEmpty()) return;
-
-        for (String spellId : spellIds) {
-            if (SpellLoader.getSpell(spellId) == null) {
-                JkVttPlugin.logger().warning("[RaceClassParser] " + className + " subclass '" + subclassId +
-                    "' references unknown spell '" + spellId + "' in " + fieldName);
-            }
-        }
-    }
 }

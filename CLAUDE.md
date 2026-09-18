@@ -102,41 +102,43 @@ The plugin loads D&D content (races, classes, spells, weapons, armor, items) fro
 ### Testing Shop System (Issue #75)
 
 **1. Setup Test Merchant:**
+
+A merchant is an entity whose YAML has a `shop:` section — there is **no `shop create`**; `shop add`
+on an entity without one fails with "is not a merchant". `balin_blacksmith` ships with a shop. The
+commands take the spawned creature's **name** ("Balin"), not the template id:
 ```
-/dmentity spawn merchant_balin
-/dmentity shop create merchant_balin
-/dmentity shop add merchant_balin longsword 5 15 gold
-/dmentity shop add merchant_balin shortsword 3 10 gold
-/dmentity shop add merchant_balin leather_armor 2 5 gold
+/dmentity spawn balin_blacksmith
+/dmentity shop add Balin shortsword 10 gold 3      # <item_id> <price> <currency> [stock]
 ```
+See `docs/authoring-entities.md` → *Merchants* for the YAML.
 
 **2. Test Tab Completion:**
-- Type `/dmentity shop add merchant_balin ` and press TAB → should suggest all item IDs (weapons, armor, items)
-- Type `/dmentity shop add merchant_balin longsword 5 15 ` and press TAB → should suggest currencies (gold, silver, copper, platinum, electrum)
-- Type `/dmentity shop restock merchant_balin ` and press TAB → should suggest only items in Balin's current inventory
+- Type `/dmentity shop add Balin ` and press TAB → should suggest all item IDs (weapons, armor, items)
+- Type `/dmentity shop add Balin longsword 15 ` and press TAB → should suggest currencies (gold, silver, copper, platinum, electrum)
+- Type `/dmentity shop restock Balin ` and press TAB → should suggest only items in Balin's current inventory
 
 **3. Test Player Buying (Merchant to Player):**
 ```
-/dmentity trade merchant_balin
+/dmentity trade Balin
 ```
 - Merchant GUI should open with items for sale
 - Each item should show price in gold pieces
 - Execute a trade to buy longsword
-- Verify stock decreases: `/dmentity shop view merchant_balin`
+- Verify stock decreases: `/dmentity shop view Balin`
 - Buy remaining stock until item is out of stock
 - Verify "out of stock" message appears
 
 **4. Test Player Selling (Player to Merchant):**
 ```
 /dm give longsword 1
-/dmentity trade merchant_balin
+/dmentity trade Balin
 ```
 (`/dm give <item_id> [amount]` gives to yourself; `/dm give <player> <item_id> [amount]`
 gives to another player. The item type is auto-detected from the id — there is no
 `<item_type>` argument. There is no standalone `/dmgive`; it lives under `/dm give`.)
 - Merchant GUI should show reverse trades (player gives item, gets currency)
 - Sell longsword to merchant for gold (50% of buy price)
-- Verify merchant's inventory increases: `/dmentity shop view merchant_balin`
+- Verify merchant's inventory increases: `/dmentity shop view Balin`
 - Verify sold item appears in merchant's stock
 - Try selling an item not in merchant's acceptance list → should fail
 
@@ -148,22 +150,24 @@ gives to another player. The item type is auto-detected from the id — there is
 
 **6. Test Shop Persistence:**
 ```
-/dmentity shop view merchant_balin
+/dmentity shop view Balin
 ```
 - Note current stock levels
-- Restart server or use `/reload confirm`
+- Restart the server (not `/reload confirm` — Paper plugin reloads are unsupported)
 - Verify merchant still exists and stock persists
-- Check `plugins/jkvttplugin/Saved/Shops/merchant_balin.yml` exists
+- Check `plugins/jkvttplugin/Saved/Shops/<instance-uuid>.yml` exists — shops are saved **per spawned
+  creature**, keyed by its instance id, not by the template id
 - Verify both stock decreases (from buying) and inventory increases (from selling) persist
 
 **7. Test Complete Buy/Sell Cycle:**
 1. Buy longsword from merchant (stock: 5 → 4)
-2. Verify stock decreased: `/dmentity shop view merchant_balin`
+2. Verify stock decreased: `/dmentity shop view Balin`
 3. Sell longsword back to merchant (stock: 4 → 5)
 4. Verify merchant inventory increased
-5. Remove merchant: `/dmentity remove merchant_balin`
-6. Respawn merchant: `/dmentity spawn merchant_balin`
-7. Verify shop data persists (stock still at 5)
+5. Remove merchant: `/dmentity remove Balin`, then `/dmentity spawn balin_blacksmith`
+6. Verify the **new** Balin starts from the YAML stock — a fresh spawn gets a new instance id, so it
+   doesn't inherit the old creature's shop file (per-instance state, #194). Persistence covers
+   restarts, not respawns.
 
 **8. Test Edge Cases:**
 - Try buying with insufficient inventory space
@@ -193,6 +197,10 @@ All D&D content is defined in `DMContent/` YAML files:
 
 Each category has a corresponding loader in `src/main/java/io/papermc/jkvttplugin/data/loader/` and model in `data/model/`.
 
+**Authoring guides** (every field, what it actually drives, and the silent failure modes):
+`docs/authoring-spells.md` · `docs/authoring-items.md` (weapons, armor, items) ·
+`docs/authoring-entities.md` (NPCs, monsters, merchants, loot).
+
 ### Icons & Materials (Resource Pack)
 
 Two clear YAML keys, used consistently — change them in YAML, not code:
@@ -200,7 +208,8 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - **`material:`** — the **vanilla Minecraft item** to render (e.g. `IRON_SWORD`, `GOLD_INGOT`).
   This is what everyone sees, and the fallback for players without the resource pack.
   Used by the things a player physically receives: **weapons, armor, items**. Absent/invalid
-  → a sensible per-type default (weapons → `IRON_SWORD`/`BOW`, items → `PAPER`, armor → its slot).
+  → `PAPER` for all three (there's no per-type default). Armor's `material:` must be a wearable
+  chestplate (or `SHIELD`), or equip tracking never sees it.
   **Spells** follow the same convention: `material:` sets the base item, absent → a level-based
   default (cantrip → `PAPER`, low → `BOOK`, high → `ENCHANTED_BOOK`); `custom_model:` is optional.
   (No auto `spell_<name>` model — that produced purple placeholders. The old spell `icon:` key was
@@ -243,6 +252,11 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - Each content type has a dedicated loader (e.g., `RaceLoader`, `ClassLoader`, `SpellLoader`)
 - Loaders populate static registries accessible throughout the plugin
 - All loaders run on plugin startup via `JkVttPlugin.onEnable()`
+- **`data/ContentValidator`** runs after every load / `/dm reload` and warns about cross-content
+  mistakes the lenient loaders swallow: unknown item ids in kits, choices, shops and loot; unwearable
+  armor; materials that aren't items; focus types no class uses; bad spell fields (`Self` range on a
+  targeted spell, unknown condition, multi-group dice); prices over 64. A clean load prints nothing.
+  **When you add a new cross-reference between content types, add its check there.**
 - Shared parsing lives in `data/loader/util/ParseUtil` (generic YAML→value primitives) and the
   `data/loader/parser/` package (`AbilityParser`, `LanguageParser`, `EquipmentParser`,
   `ChoiceParser`, `InnateSpellParser`, `ShopParser`, `RaceClassParser`) — the old monolithic
@@ -325,7 +339,8 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
   - Player buying from merchant (merchant stock decreases)
   - Player selling to merchant (merchant inventory increases with sold items)
 - **Stock Tracking:** Limited and unlimited stock per item, persists across server restarts
-- **Shop Persistence:** Shops save to `plugins/jkvttplugin/Saved/Shops/<entityId>.yml`
+- **Shop Persistence:** Each spawned merchant clones its template's shop and saves it to
+  `plugins/jkvttplugin/Saved/Shops/<instance-uuid>.yml` (keyed by the creature, not the template id)
 - **NBT-Based Item Identification:** All items tagged with `item_id` NBT for reliable identification
   - Allows items with different display names to share the same mechanics
   - Currency items identified by `item_id` ending in "_piece"
@@ -575,9 +590,10 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
   - **Roll input (#183):** a d20 action takes one bare keyword — `autoRoll` (game rolls, applies advantage → 2d20), `manualRoll <n>` (you rolled it, game adds mods), or `total <n>` (final, nothing added). Damage uses `manualRoll <n>` / `autoRoll <dice>` / a flat `<amount>`; the **damage type is automatic** (`type <t>` overrides). There is **no** `--roll`/`--total`/`--type` — those aliases were removed. `RollService.parseInput`/`RollInput` is the one parser; `RollService.resolve(...)` applies reroll (Lucky) + advantage. The out-of-combat `/character check|save|loot` roller is separate (`RollOptionsMenuHandler`).
   - **Attacking (#189):** on your turn, holding a weapon, **left-click** the enemy (or left-click while looking at them) and `WeaponListener` hands you the filled-in `/combat attack`. The click only *prompts* — the roll still goes through the command. **Right-click never attacks**; it means "use" (spell focus, area-effect confirm #173), and is suppressed only for ranged weapons so a bow does not loose a real arrow. Left-clicking a combatant is always cancelled so a punch never damages the armor stand they are rendered on.
   - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
-- **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <create|add|restock|view>`. (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
+- **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
   - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dmentity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).
-- **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
+- **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check` (DM-first checks, #186), `hp` (change HP anywhere, #175), `object` (annotate locks/traps/hidden blocks, #185), `mode` (DM toolbar), `tp`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
+  - **HP changes aren't combat-only (#175):** `DamageHandler` takes a **nullable** `CombatSession`, so a trap, a potion or a DM correction runs the same resistance → damage → downing → persistence path as a sword swing. `CombatTargets` resolves the live `Combatant` when a fight is running and a transient one otherwise; out of combat the messages go to the affected player and the DMs instead of the table. **Never write a second HP path** — route new sources of damage or healing through `DamageHandler`.
 
 **DM authorization:** a "DM" is an op, a holder of the `jkvtt.dm` permission node, OR a
 player added via `/dm add` (`DMManager.isDM`). DM commands are gated in-command, not via

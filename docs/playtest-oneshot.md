@@ -102,7 +102,7 @@ When a player right-clicks it, they feel nothing special — but every DM gets:
 
 You decide: `[Perception]` (did they notice?), `[Disarm]` (they try — then `/dm object disarm` on a
 success), or `[Trigger]` (it goes off — the button calls the player's DEX save; apply the 2d10 on a
-fail — via `/combat damage` if you're in combat, or narrate it out of combat for now).
+fail — `/combat damage` in a fight, or `/dm hp <player> damage 2d10 type piercing` out of one).
 
 ## 4. Skill checks on their own (no object)
 
@@ -137,6 +137,12 @@ Both roll their own skill; when both are in, **you** see the winner with a **[Sh
 
 ## Not built yet (so don't expect it)
 
-- Traps (spot/disarm/trigger), loot tables on chests, passive-Perception auto-reveal — later slices of
-  #185. The lock outcome is DM-narrated for now (no auto-open/loot).
-- A DM tool + skill-picker menu (#187) — for now the DM types the check.
+*(Updated 2026-09-17. Traps, container-less loot and the DM-mode Annotate Object tool have all
+shipped since this was written.)*
+
+- **Passive-Perception auto-reveal** and **group checks**: the DM calls each check (#185/#186).
+- **Auto-open on a successful pick / auto-damage on a failed trap save**: the DM unlocks with
+  `/dm object unlock` and applies the damage with `/dm hp <player> damage <dice>` (which now works
+  out of combat) — the trap doesn't fire either by itself yet.
+- **Contested checks against an NPC**: player vs player only. Roll the NPC's side with `/roll`.
+- **A skill-picker menu** for the DM: checks are still typed (or filled from the buttons).

@@ -46,6 +46,11 @@ public class BackgroundLoader {
     }
 
     private static DndBackground parseBackground(String key, Map<String, Object> data) {
+        // Only `starting_equipment:` is read. `equipment:` looks right and silently grants nothing.
+        if (data.containsKey("equipment") && !data.containsKey("starting_equipment")) {
+            LOGGER.warning("Background '" + key + "' uses `equipment:` — rename it to `starting_equipment:`,"
+                    + " or the background grants no gear.");
+        }
 
         DndBackground.Builder builder = DndBackground.builder()
                 .id(key)
