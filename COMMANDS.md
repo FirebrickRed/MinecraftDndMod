@@ -62,7 +62,8 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `deathsave [<player>] [manualRoll <d20> \| autoRoll]` | Roll a death save (DM may roll for a downed player) |
 | `cast <spell> [target] [level <n>] [manualRoll <d20> | autoRoll | total <n>]` | Cast a combat spell — attack-roll or save; AoE spells aim (no target) (#123, #149). `level <n>` casts from a higher slot; it must come **last**, after the target |
 | `cast <ritual_spell> --ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
-| `save [target] [manualRoll <d20> \| autoRoll]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
+| `save [target] [manualRoll <d20> | autoRoll]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
+| `concentration [target] [autoRoll | manualRoll <d20> | total <n>]` | The CON save to keep a concentration spell (or a channelled ritual) going after taking damage. The prompt says what you add before you roll |
 | `condition <target> [add\|remove <cond>]` · `condition list` | DM: tag/clear conditions on a combatant (#103, #150) |
 | `reactions` | List reactions — a player sees their own; the **DM sees a whole-table roster** (#147) |
 | `reactions [<reactor>] <attack|pass>` | Take/pass a provoked opportunity attack (usually the ⚡ end-of-turn buttons) (#147) |
@@ -92,6 +93,14 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 > re-checked against the new number and may become a miss — a crit still lands. Ending the turn is
 > blocked while a window is open, because the held damage would go with it. Hitting a creature that
 > can't react opens no window at all.
+
+> **Concentration.** Casting a `concentration: true` spell announces it and shows **◈ <spell>** on your
+> action bar. Take damage and you're asked for a **CON save, DC 10 or half the damage, whichever is
+> higher** — with the modifier spelled out ("you add +3 (+1 CON, +2 proficiency)") so you know what to
+> add before picking up the die. **The game never rolls it for you**; you pick `autoRoll`,
+> `manualRoll <n>` or `total <n>` like any other d20, and the DM rolls for a creature. Casting a second
+> concentration spell drops the first; being knocked out, killed or incapacitated ends it with no save.
+> Your turn won't continue until the save is answered.
 
 **Roll input** (attack / cast / save / initiative / deathsave — a d20 action). Pick one, as a bare keyword (no `--`):
 - `autoRoll` — the game rolls your d20 for you, applying any advantage/disadvantage (rolls 2d20 and keeps the right one). Works even in physical-dice mode.

@@ -94,6 +94,11 @@ Put these on the playtest checklist rather than treating them as open work:
   asked, one window); Disengage first (nothing provokes); `/combat reactions skip all` when the DM
   wants to wave it off. Watch for the case where the kobold's OA *hits* a wizard with Shield — that
   should open a second window, holding the kobold's damage.
+- **Concentration (2026-09-18)**: cast Hex as a warlock, take a hit, and check the CON save prompt
+  appears with the modifier spelled out and that failing it drops the Hex rider. Then: cast a second
+  concentration spell (first one ends), get knocked to 0 while concentrating (ends, no save), and try
+  to act with the save unanswered (should refuse). Also a ritual: it should now ask instead of rolling
+  itself.
 - **`/combat action` (2026-09-18, #176)**: run it holding a weapon, as a caster with slots spent,
   and as a dragonborn (the breath weapon should be listed with its uses).
 - **Spell slots actually spent (2026-09-18)**: cast a 1st-level spell in combat and watch the slot

@@ -85,7 +85,13 @@ public final class RitualManager {
         session.updateScoreboard();
     }
 
-    /** Called after a combatant takes damage: apply the configured interruption rule. */
+    /**
+     * @deprecated Superseded by {@link ConcentrationManager#onDamage}, which asks for the save with
+     * the normal autoRoll/manualRoll/total prompt instead of rolling it itself, and settles a
+     * concentrated spell and a channelled ritual with the same roll. Kept only so an out-of-tree
+     * caller doesn't break; nothing in the plugin calls it. Remove once #193 says so.
+     */
+    @Deprecated
     public static void onDamage(CombatSession session, Combatant target, int finalDamage) {
         if (target == null || !target.isChanneling() || finalDamage <= 0) return;
         // A hit that drops the caster always breaks the ritual, whatever the interrupt rule.

@@ -586,7 +586,7 @@ Consolidated into 5 base commands (Issue #122): `/character`, `/roll`, `/combat`
 classes remain and are delegated to from CharacterCommand / DmCommand).
 - **Character (any player):** `/character <create|view|list|close|rest|give>` (alias `/char`); `create <player>` and `give <player> <name>` are DM-only.
 - **Roll:** `/roll <XdY[+Z]>` (alias of the old `/rolldice`).
-- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `finished`, `reveal`, `hide`, `action`, `bonusAction`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`, `cast`, `save`, `use`, `condition`, `reactions`. Players may use `action`/`bonusAction`/`attack`/`endturn`/`deathsave` on their own turn only.
+- **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `finished`, `reveal`, `hide`, `action`, `bonusAction`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`, `cast`, `save`, `concentration`, `use`, `condition`, `reactions`. Players may use `action`/`bonusAction`/`attack`/`endturn`/`deathsave` on their own turn only.
   - **Roll input (#183):** a d20 action takes one bare keyword — `autoRoll` (game rolls, applies advantage → 2d20), `manualRoll <n>` (you rolled it, game adds mods), or `total <n>` (final, nothing added). Damage uses `manualRoll <n>` / `autoRoll <dice>` / a flat `<amount>`; the **damage type is automatic** (`type <t>` overrides). There is **no** `--roll`/`--total`/`--type` — those aliases were removed. `RollService.parseInput`/`RollInput` is the one parser; `RollService.resolve(...)` applies reroll (Lucky) + advantage. The out-of-combat `/character check|save|loot` roller is separate (`RollOptionsMenuHandler`).
   - **Attacking (#189):** on your turn, holding a weapon, **left-click** the enemy (or left-click while looking at them) and `WeaponListener` hands you the filled-in `/combat attack`. The click only *prompts* — the roll still goes through the command. **Right-click never attacks**; it means "use" (spell focus, area-effect confirm #173), and is suppressed only for ranged weapons so a bow does not loose a real arrow. Left-clicking a combatant is always cancelled so a punch never damages the armor stand they are rendered on.
   - **Reactions hold the attack (#195):** a hit on someone who could react (a character with their
@@ -619,6 +619,16 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     short alias was removed so there's one spelling to learn and to document. `/combat action` with
     no argument is character-aware the same way (held weapon, Action-cost spells, Action features),
     with the generic Dodge/Disengage/Help/Hide/Ready/Search row after it.
+  - **Concentration (#152):** `ConcentrationManager` owns it. `DamageHandler` calls `onDamage` once —
+    it covers a concentrated spell AND a channelled ritual with one roll, so a caster doing both is
+    asked once. DC is max(10, damage/2). **The game never rolls it**: the target gets the standard
+    `autoRoll`/`manualRoll`/`total` prompt with the modifier spelled out ("+1 CON, +2 proficiency"),
+    answered by `/combat concentration`; the DM rolls for a creature. Downed, dead or incapacitated
+    ends it with no save. `/combat cast` sets concentration when the spell resolves (`castMark` does
+    its own for Hex/Hunter's Mark), a second concentration spell replaces the first, and the action
+    bar shows **◈ <spell>**. An unanswered save holds the caster's turn, like a reaction window.
+    `RitualManager.onDamage` is deprecated — it used to roll the check itself, the only d20 in combat
+    the game took out of the players' hands.
   - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
 - **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
   - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dmentity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).

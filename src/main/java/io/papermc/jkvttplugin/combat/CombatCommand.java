@@ -52,7 +52,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
-    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonusaction", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "reaction", "reactions", "use");
+    private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonusaction", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "concentration", "reaction", "reactions", "use");
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
@@ -104,6 +104,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "condition" -> handleCondition(player, args);
             case "cast" -> handleCast(player, args);
             case "save" -> handleSave(player, args);
+            case "concentration" -> handleConcentration(player, args);
             case "attack" -> handleAttack(player, args);
             case "use" -> handleUse(player, args);
             case "reaction", "reactions" -> handleReaction(player, args);
@@ -1238,6 +1239,18 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (resolved) {
             cost.spend(casterSheet, spell);
 
+            // Concentration (PHB 203): a second concentration spell replaces the first. castMark
+            // (Hex/Hunter's Mark) sets this itself, so don't tread on it.
+            if (spell.isConcentration() && casterSheet != null && !spell.isMarkSpell()) {
+                if (casterSheet.isConcentrating() && casterSheet.getConcentratingOn() != spell) {
+                    session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + "'s concentration on "
+                            + casterSheet.getConcentratingOn().getName() + " ends.", NamedTextColor.GRAY));
+                }
+                casterSheet.setConcentratingOn(spell);
+                session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + " is concentrating on "
+                        + spell.getName() + ".", NamedTextColor.LIGHT_PURPLE));
+            }
+
             // An AC-raising spell (Shield +5, Shield of Faith +2) actually moves the number (#147).
             // It lands on the caster: both are cast on yourself today, and an AC buff on someone
             // else needs the targeted-buff work in #182.
@@ -1291,6 +1304,31 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (target == null) { player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED)); return; }
         }
         SpellCastHandler.resolveSave(player, session, target, roll.providedRoll(), roll.providedTotal(), roll.forceAuto());
+    }
+
+    /**
+     * {@code /combat concentration [<who>] <autoRoll|manualRoll <n>|total <n>>} — the CON save to keep
+     * a spell (or a channelled ritual) going after taking damage. You roll your own; the DM rolls for
+     * a creature. The game never rolls it unasked — the prompt says what to add before you pick up
+     * the die.
+     */
+    private void handleConcentration(Player player, String[] args) {
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+        boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
+        RollService.RollInput roll = RollService.parseInput(args, player);
+        String targetName = joinArgsExcludingFlags(args, 1);
+
+        Combatant target;
+        if (targetName.isBlank()) {
+            target = findOwnCombatant(session, player.getUniqueId());
+            if (target == null) { player.sendMessage(Component.text("You're not in this combat.", NamedTextColor.RED)); return; }
+        } else {
+            if (!isDM) { player.sendMessage(Component.text("Only the DM rolls concentration for others.", NamedTextColor.RED)); return; }
+            target = findCombatantByName(session, stripQuotes(targetName));
+            if (target == null) { player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED)); return; }
+        }
+        ConcentrationManager.resolve(player, session, target, roll.providedRoll(), roll.providedTotal(), roll.forceAuto());
     }
 
     // ==================== REACTIONS (Issue #147) ====================
@@ -1553,6 +1591,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 session.setConditionEffect(target, cond, true); // apply any Minecraft effect (#103)
                 session.broadcast(Component.text(target.getDisplayName(true) + " is now ", NamedTextColor.YELLOW)
                         .append(conditionText(cond)));
+                // Incapacitated ends concentration outright, no save (PHB 203).
+                if (target.cannotAct()) ConcentrationManager.onIncapacitated(session, target, "they were " + cond.getName().toLowerCase());
             } else {
                 dm.sendMessage(Component.text(target.getDisplayName() + " already has " + cond.getName() + ".", NamedTextColor.GRAY));
             }
@@ -1799,9 +1839,17 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * after they've already acted isn't an interruption, and it may drop them before they act.
      */
     private boolean turnHeld(Player player, Combatant actor) {
-        if (!ReactionWindow.holdsTurnOf(actor)) return false;
-        ReactionWindow.explainBlock(player, actor.getId());
-        return true;
+        if (ReactionWindow.holdsTurnOf(actor)) {
+            ReactionWindow.explainBlock(player, actor.getId());
+            return true;
+        }
+        // An owed concentration save holds them too: whether the spell is still up changes what
+        // they can do next, so settle it before they act.
+        if (ConcentrationManager.isPending(actor)) {
+            ConcentrationManager.explainPending(player, actor);
+            return true;
+        }
+        return false;
     }
 
     private void handleAttack(Player player, String[] args) {
@@ -2851,6 +2899,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - List your bonus actions (alias: bonus)", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat bonusAction used [target]", NamedTextColor.YELLOW)
             .append(Component.text(" - Mark the bonus action spent", NamedTextColor.GRAY)));
+        player.sendMessage(Component.text("/combat concentration [autoRoll | manualRoll <d20>]", NamedTextColor.LIGHT_PURPLE)
+            .append(Component.text(" - CON save to keep a spell going after damage", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat reactions [skip <who|all>]", NamedTextColor.YELLOW)
             .append(Component.text(" - Reaction roster; DM: skip a held reaction", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat attack <target> [weapon]", NamedTextColor.GREEN)
@@ -2905,7 +2955,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
                 "reveal", "hide", "action", "bonusAction", "movement", "condition", "cast", "save", "attack",
-                "reactions", "damage", "override", "heal", "temphp", "deathsave", "use"));
+                "reactions", "concentration", "damage", "override", "heal", "temphp", "deathsave", "use"));
             return filterCompletions(completions, args[0]);
         }
 
@@ -2968,6 +3018,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                             if (f.getActivation() != null && !f.getActivation().equalsIgnoreCase("passive")) {
                                 completions.add(f.getId());
                             }
+                        }
+                    }
+                }
+                case "concentration" -> {
+                    // Roll keywords for yourself; the DM may also name a creature.
+                    completions.addAll(List.of("autoRoll", "manualRoll", "total"));
+                    if (session != null) {
+                        for (Combatant c : session.getCombatants()) {
+                            if (ConcentrationManager.isPending(c)) completions.add(c.getDisplayName());
                         }
                     }
                 }

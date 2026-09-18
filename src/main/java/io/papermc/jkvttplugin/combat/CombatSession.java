@@ -752,6 +752,7 @@ public class CombatSession {
         stopMovementRing();
         ReactionManager.clearAll(); // drop any pending opportunity attacks (#147)
         ReactionWindow.clearAll();  // and any held attack waiting on a reaction (#195)
+        ConcentrationManager.clearAll(); // and any unanswered concentration save
         AmmoRecovery.startDespawnTimers(); // spent ammo now begins its ~5-min pickup window (#191)
 
         // Remove all players from session tracking, clear glows and turn state
@@ -1135,7 +1136,14 @@ public class CombatSession {
             .append(Component.text("  AC " + combatant.getArmorClass(), NamedTextColor.AQUA))
             .append(Component.text("  |  ", NamedTextColor.DARK_GRAY));
 
-        player.sendActionBar(hpPart.append(actionPart).append(bonusPart).append(movePart));
+        // What they're holding together, so "am I still concentrating?" never needs asking.
+        Component concPart = Component.empty();
+        CharacterSheet cSheet = combatant.getCharacterSheet();
+        if (cSheet != null && cSheet.isConcentrating()) {
+            concPart = Component.text(" | ◈ " + cSheet.getConcentratingOn().getName(), NamedTextColor.LIGHT_PURPLE);
+        }
+
+        player.sendActionBar(hpPart.append(actionPart).append(bonusPart).append(movePart).append(concPart));
     }
 
     /** HP colour by fraction of max: green healthy, yellow bloodied, red critical, grey dead. */

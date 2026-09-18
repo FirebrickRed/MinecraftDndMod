@@ -409,6 +409,8 @@ public class SpellCastHandler {
         if (ps.damage() != null) AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false);
         DndCondition cond = ps.conditionOnFail() != null ? ConditionLoader.get(ps.conditionOnFail()) : null;
         if (cond != null && target.addCondition(cond.getId())) {
+            // Incapacitated ends concentration outright, no save (PHB 203).
+            if (target.cannotAct()) ConcentrationManager.onIncapacitated(session, target, "they were " + cond.getName().toLowerCase());
             session.setConditionEffect(target, cond, true);
             session.broadcast(Component.text(target.getDisplayName(true) + " is now " + cond.getName() + "!", NamedTextColor.YELLOW));
             session.updateScoreboard();

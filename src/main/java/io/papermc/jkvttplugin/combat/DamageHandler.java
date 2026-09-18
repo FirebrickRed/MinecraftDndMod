@@ -68,7 +68,8 @@ public class DamageHandler {
 
         handleDeathTriggers(session, target, wasUnconscious, finalDamage, wasCrit);
         if (session != null) {
-            RitualManager.onDamage(session, target, finalDamage); // may break a channelled ritual (#156)
+            // One prompt for both: a caster who is concentrating AND channelling is asked once (#156).
+            ConcentrationManager.onDamage(session, target, finalDamage);
         }
         say(session, target, Component.text("━━━━━━━━━━━━━━", NamedTextColor.RED));
 
