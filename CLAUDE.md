@@ -601,7 +601,8 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     becomes `Combatant.grantTempAc`, added on top of `getBaseArmorClass()` and dropped at the start of
     that combatant's next turn. Don't hardcode a spell name to move AC.
   - **Spell slots are spent in one place (#152):** `character/SpellCost` — `of(sheet, spell)` to check
-    *before* resolving, `spend(...)` only once it has. `/combat cast` used to spend nothing at all
+    *before* resolving, `spend(...)` only once it has. `level <n>` (last argument, after the target)
+    upcasts and spends that slot — the spellbook's "⬆ Casting at 2nd level" fills it in. `/combat cast` used to spend nothing at all
     (the spellbook menu deducted the slot, and routing to the command skipped it), so a 1st-level
     spell in a fight was free. The spellbook menu now only *fills a command*; it consumes nothing.
   - **Bonus actions (#176):** `/combat bonusAction` with no argument lists what this character can

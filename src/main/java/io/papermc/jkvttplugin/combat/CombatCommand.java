@@ -1090,7 +1090,21 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // spellbook menu consumed the slot, and routing to /combat cast skipped it, so a 1st-level
         // spell cast in a fight cost nothing at all. Check before resolving, spend after (#152).
         CharacterSheet casterSheet = caster.getCharacterSheet();
-        io.papermc.jkvttplugin.character.SpellCost cost = io.papermc.jkvttplugin.character.SpellCost.of(casterSheet, spell);
+        Integer castLevel = null;
+        String levelArg = valueAfterAny(args, "level");
+        if (levelArg != null) {
+            try { castLevel = Integer.parseInt(levelArg.trim()); }
+            catch (NumberFormatException e) {
+                player.sendMessage(Component.text("'level' wants a number, e.g. level 2.", NamedTextColor.RED));
+                return;
+            }
+            if (castLevel < spell.getLevel()) {
+                player.sendMessage(Component.text(spell.getName() + " is a level " + spell.getLevel()
+                        + " spell — you can't cast it from a lower slot.", NamedTextColor.RED));
+                return;
+            }
+        }
+        io.papermc.jkvttplugin.character.SpellCost cost = io.papermc.jkvttplugin.character.SpellCost.of(casterSheet, spell, castLevel);
         if (!cost.available()) {
             player.sendMessage(Component.text(cost.unavailableReason(spell), NamedTextColor.YELLOW));
             return;
@@ -2050,6 +2064,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // valueless 'showModifiers' all follow the positionals, so stop here — otherwise
             // "manualRoll"/"8"/"type"/"showModifiers" would be mistaken for a target/amount (#183).
             if (RollService.isRollKeyword(args[i]) || args[i].equalsIgnoreCase("type")
+                    || args[i].equalsIgnoreCase("level")
                     || args[i].equalsIgnoreCase("showModifiers")) break;
             if (args[i].startsWith("--")) {
                 // Check if this is a flag with an attached value (e.g., --roll20)

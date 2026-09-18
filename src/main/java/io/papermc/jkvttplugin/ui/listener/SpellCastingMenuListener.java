@@ -68,7 +68,7 @@ public class SpellCastingMenuListener implements Listener {
         // Either way the click fills a command rather than casting from the menu: /combat cast in a
         // fight (it resolves the roll, #196), /character cast outside one (it announces and spends,
         // #152). The menu itself no longer consumes anything — one path owns the cost.
-        routeToCastCommand(player, cantrip);
+        routeToCastCommand(player, cantrip, 0);
     }
 
     private void handleSpellCast(Player player, CharacterSheet sheet, String payload) {
@@ -79,8 +79,9 @@ public class SpellCastingMenuListener implements Listener {
         if (parts.length != 2) return;
 
         String spellName = parts[0];
+        int castingLevel;
         try {
-            Integer.parseInt(parts[1]); // validates the payload; the slot level is the cast command's business
+            castingLevel = Integer.parseInt(parts[1]);
         } catch (NumberFormatException e) {
             return;
         }
@@ -93,7 +94,9 @@ public class SpellCastingMenuListener implements Listener {
         }
 
         // Both in and out of combat, the click fills a command — the command owns the cost.
-        routeToCastCommand(player, spell);
+        // The slot level travels with it: the menu showed "⬆ Casting at 2nd level", so the command
+        // has to spend a 2nd-level slot, not the spell's own.
+        routeToCastCommand(player, spell, castingLevel);
     }
 
     /**
@@ -107,7 +110,7 @@ public class SpellCastingMenuListener implements Listener {
      * in-combat route spent nothing at all and the out-of-combat route spent a slot for a message
      * with no visible effect. One path, one cost.
      */
-    private void routeToCastCommand(Player player, DndSpell spell) {
+    private void routeToCastCommand(Player player, DndSpell spell, int castingLevel) {
         io.papermc.jkvttplugin.combat.CombatSession session =
                 io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(player.getUniqueId());
         boolean inCombat = session != null && !session.isSetupPhase();
@@ -115,15 +118,27 @@ public class SpellCastingMenuListener implements Listener {
         player.closeInventory();
         boolean needsTarget = !spell.isAoe()
                 && !(spell.getRange() != null && spell.getRange().equalsIgnoreCase("Self"));
-        String cmd = (inCombat ? "/combat cast " : "/character cast ") + spell.getId() + (needsTarget ? " " : "");
+        // A spell picked from a higher slot's page carries that level, so the command spends it.
+        // "level N" has to come last (it stops target-name collection), so when there's both a
+        // target and an upcast the command fills with a <target> placeholder to replace rather than
+        // a trailing space to type into — otherwise the level would be lost off the end.
+        boolean upcast = castingLevel > spell.getLevel() && spell.getLevel() > 0;
+        String base = (inCombat ? "/combat cast " : "/character cast ") + spell.getId();
+        String cmd = upcast
+                ? base + (needsTarget ? " <target>" : "") + " level " + castingLevel
+                : base + (needsTarget ? " " : "");
         String where = inCombat ? "then pick your roll mode." : "the DM applies the effect.";
-        player.sendMessage(Component.text("✨ Cast " + spell.getName() + " — ", NamedTextColor.LIGHT_PURPLE)
+        String hover = needsTarget && !upcast
+                ? "Fills: " + cmd + "<target> — " + where
+                : "Fills: " + cmd;
+        if (upcast) hover += "\nCast from a level " + castingLevel + " slot"
+                + (needsTarget ? " — replace <target> before sending." : ".");
+        player.sendMessage(Component.text("✨ Cast " + spell.getName()
+                        + (upcast ? " (level " + castingLevel + ")" : "") + " — ", NamedTextColor.LIGHT_PURPLE)
                 .append(Component.text(needsTarget ? "[click, then name your target]" : "[click to cast]",
                         NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
                         .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))
-                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(
-                                needsTarget ? "Fills: " + cmd + "<target> — " + where
-                                            : "Fills: " + cmd + " — press Enter to cast.")))));
+                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(hover)))));
     }
 
     private void handleSlotSelection(Player player, CharacterSheet sheet, String levelStr) {

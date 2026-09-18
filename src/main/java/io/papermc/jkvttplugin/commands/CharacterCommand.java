@@ -293,13 +293,33 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
             return true;
         }
-        io.papermc.jkvttplugin.character.SpellCost cost = io.papermc.jkvttplugin.character.SpellCost.of(sheet, spell);
+        // "level <n>" upcasts from a higher slot; everything before it is the target's name.
+        Integer castLevel = null;
+        String[] words = rest;
+        for (int i = 1; i < rest.length - 1; i++) {
+            if (!rest[i].equalsIgnoreCase("level")) continue;
+            try { castLevel = Integer.parseInt(rest[i + 1].trim()); }
+            catch (NumberFormatException e) {
+                player.sendMessage(Component.text("'level' wants a number, e.g. level 2.", NamedTextColor.RED));
+                return true;
+            }
+            if (castLevel < spell.getLevel()) {
+                player.sendMessage(Component.text(spell.getName() + " is a level " + spell.getLevel()
+                        + " spell — you can't cast it from a lower slot.", NamedTextColor.RED));
+                return true;
+            }
+            words = Arrays.copyOfRange(rest, 0, i);
+            break;
+        }
+
+        io.papermc.jkvttplugin.character.SpellCost cost =
+                io.papermc.jkvttplugin.character.SpellCost.of(sheet, spell, castLevel);
         if (!cost.available()) {
             player.sendMessage(Component.text(cost.unavailableReason(spell), NamedTextColor.YELLOW));
             return true;
         }
 
-        String target = rest.length >= 2 ? stripQuotes(String.join(" ", Arrays.copyOfRange(rest, 1, rest.length))) : null;
+        String target = words.length >= 2 ? stripQuotes(String.join(" ", Arrays.copyOfRange(words, 1, words.length))) : null;
 
         // Concentration: a new concentration spell drops the old one, same as in combat.
         if (spell.isConcentration() && sheet.isConcentrating()) {

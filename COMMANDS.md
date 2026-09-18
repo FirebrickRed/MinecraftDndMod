@@ -23,7 +23,7 @@ prints that command's own help.
 | `/character loot <check> <d20>` | Search a body you right-clicked (usually filled by the prompt) |
 | `/character check <type> <value> [manualRoll <n> \| autoRoll]` | Resolve a skill/ability/save roll (usually filled by the sheet prompt) |
 | `/character cast <spell> [target] [message…]` | Cast a chat/social spell — Message, Speak with Animals (#151) |
-| `/character cast <spell> [target]` | **Out of combat:** announce the spell, spend the slot, set concentration; the DM gets a filled-in `/dm hp` for its damage/healing. Clicking a spell in your spellbook fills this in. The spell itself isn't resolved yet (no roll, no save, no area) — that's the rest of #152 |
+| `/character cast <spell> [target] [level <n>]` | **Out of combat:** announce the spell, spend the slot, set concentration; the DM gets a filled-in `/dm hp` for its damage/healing. Clicking a spell in your spellbook fills this in. The spell itself isn't resolved yet (no roll, no save, no area) — that's the rest of #152 |
 | `/character drink <item_id> [autoRoll \| manualRoll <n> \| total <n>]` | Drink a healing item. Clicking the potion fills this in for you; in combat it costs your Action |
 | `/character reply <message…>` | Free reply to the last Message/Sending you received (usually the **[reply]** button) |
 | `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
@@ -60,7 +60,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `heal <target> [amount \| manualRoll <n> \| autoRoll <dice> \| total <n>]` | Restore HP |
 | `temphp <target> <amount>` | Grant temporary HP |
 | `deathsave [<player>] [manualRoll <d20> \| autoRoll]` | Roll a death save (DM may roll for a downed player) |
-| `cast <spell> [target] [manualRoll <d20> \| autoRoll \| total <n>]` | Cast a combat spell — attack-roll or save; AoE spells aim (no target) (#123, #149) |
+| `cast <spell> [target] [level <n>] [manualRoll <d20> | autoRoll | total <n>]` | Cast a combat spell — attack-roll or save; AoE spells aim (no target) (#123, #149). `level <n>` casts from a higher slot; it must come **last**, after the target |
 | `cast <ritual_spell> --ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
 | `save [target] [manualRoll <d20> \| autoRoll]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
 | `condition <target> [add\|remove <cond>]` · `condition list` | DM: tag/clear conditions on a combatant (#103, #150) |

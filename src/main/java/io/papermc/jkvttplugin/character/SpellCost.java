@@ -31,8 +31,20 @@ public record SpellCost(Kind kind, int level) {
         NONE_LEFT_SLOT
     }
 
-    /** Work out what {@code spell} costs {@code sheet} right now. Innate uses are spent before slots. */
+    /** Work out what {@code spell} costs {@code sheet} right now, from its own level. */
     public static SpellCost of(CharacterSheet sheet, DndSpell spell) {
+        return of(sheet, spell, null);
+    }
+
+    /**
+     * As above, but cast from a higher slot when {@code castLevel} says so — the spellbook offers
+     * this ("⬆ Casting at 2nd level") and the slot spent has to match what the player was shown.
+     * A null or too-low {@code castLevel} falls back to the spell's own level.
+     *
+     * <p>Upcasting an innate casting is meaningless — it has uses, not slots — so the level is
+     * ignored in that case.
+     */
+    public static SpellCost of(CharacterSheet sheet, DndSpell spell, Integer castLevel) {
         if (sheet == null || spell == null || spell.getLevel() <= 0) return new SpellCost(Kind.FREE, 0);
         InnateSpell innate = null;
         for (InnateSpell i : sheet.getAvailableInnateSpells()) {
@@ -43,9 +55,10 @@ public record SpellCost(Kind kind, int level) {
                     ? new SpellCost(Kind.INNATE, spell.getLevel())
                     : new SpellCost(Kind.NONE_LEFT_INNATE, spell.getLevel());
         }
-        return sheet.hasSpellSlot(spell.getLevel())
-                ? new SpellCost(Kind.SLOT, spell.getLevel())
-                : new SpellCost(Kind.NONE_LEFT_SLOT, spell.getLevel());
+        int level = (castLevel != null && castLevel > spell.getLevel()) ? castLevel : spell.getLevel();
+        return sheet.hasSpellSlot(level)
+                ? new SpellCost(Kind.SLOT, level)
+                : new SpellCost(Kind.NONE_LEFT_SLOT, level);
     }
 
     public boolean available() {
