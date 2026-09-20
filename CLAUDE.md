@@ -640,6 +640,15 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     fields: a chest can be locked AND trapped AND hold loot AND carry flavor text. `SEALED` is
     scenery — it never opens and **no DM is pinged**; `LOCKED` pings the DM with [call a check].
     The `description` renders on every path, including the trap one.
+  - **One prompt on every container (#185):** right-clicking a chest gives **[Open it]** /
+    **[Ask for a check]** — the same two buttons whether or not the block is annotated, because a
+    prompt that only appeared on annotated blocks would itself be the tell, and a menu naming
+    "[Check for traps]" / "[Pick the lock]" announces what the DM prepared. The player says aloud
+    what they're doing and the DM calls the check (#186). Scope is `objects.interaction_prompt`
+    (`all_containers` default / `annotated_only` / `off`). Buttons are Adventure
+    `ClickEvent.callback`s, not commands — nothing to type, replay, or aim at a distant chest.
+    **`hidden` is absolute**: no prompt, no trap, nothing until `/dm object reveal` (blundering into
+    a trap is #202's walk-over trigger). A sprung trap auto-disarms; `/dm object arm` resets it.
   - **HP changes aren't combat-only (#175):** `DamageHandler` takes a **nullable** `CombatSession`, so a trap, a potion or a DM correction runs the same resistance → damage → downing → persistence path as a sword swing. `CombatTargets` resolves the live `Combatant` when a fight is running and a transient one otherwise; out of combat the messages go to the affected player and the DMs instead of the table. **Never write a second HP path** — route new sources of damage or healing through `DamageHandler`.
 
 **DM authorization:** a "DM" is an op, a holder of the `jkvtt.dm` permission node, OR a

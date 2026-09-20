@@ -8,6 +8,26 @@ Reload content first if you edited YAML: `/dm reload`.
 
 ---
 
+## 0. What a player sees on any container
+
+Right-clicking a chest, barrel or shulker gives the same two buttons every time, whether or not you
+have annotated it:
+
+> The Chest is closed.
+> **[Open it]**  **[Ask for a check]**
+
+That sameness is the point. A menu that offered *[Check for traps]* or *[Pick the lock]* would tell
+the party what you prepared, and a prompt that only appeared on annotated blocks would do the same
+job one level up. **[Ask for a check]** pings you and the player says out loud what they are actually
+doing (searching it, trying a key, checking the lock, tipping it over) — then you call whatever check
+fits with `/dm check`.
+
+**[Open it]** is where consequences live: a live trap fires, a locked chest says so and pings you, a
+sealed one gives its description, an ordinary one just opens.
+
+Turn it off or narrow it in `config.yml` under `objects:` — `interaction_prompt: all_containers`
+(default), `annotated_only`, or `off`.
+
 ## 1. Locked chest (the MVP)
 
 Two ways to annotate — pick either:
@@ -168,7 +188,10 @@ Both roll their own skill; when both are in, **you** see the winner with a **[Sh
   chest/door does NOT open.
 - Sealed block: player sees only the description, the chest does NOT open, and **no DM is pinged**.
 - Description shows on every path — sealed, locked, trapped and plain-openable blocks alike.
-- Hidden block: players get nothing until `/dm object reveal`.
+- Hidden block: players get nothing until `/dm object reveal` — **no exceptions**, not even a live
+  trap. A player cannot interact with something they have not found (walk-over triggers are #202).
+- Every container prompts identically, annotated or not — that sameness is what hides the annotation.
+- A sprung trap auto-disarms so the rest of the party do not each eat it; `/dm object arm` resets it.
 - Check results land on the **DM**, not the table, until **[Share]**.
 - `adv` actually rolls 2d20 (visible in the breakdown).
 - Annotations survive a `/reload` / restart (they persist to `Saved/WorldObjects.yml`).

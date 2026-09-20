@@ -32,19 +32,27 @@ public class InteractiveObjectListener implements Listener {
         if (block == null) return;
 
         InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
-        if (o == null) return;
 
         Player player = event.getPlayer();
         // DMs annotate/inspect via /dm object; let their clicks fall through to normal behavior.
         if (DMManager.isDM(player)) return;
 
-        boolean armedTrap = o.hasArmedTrap();
-        // Hidden objects are inert to players — EXCEPT a live trap, which a blundering player springs.
-        if (o.hidden && !armedTrap) return;
+        // Hidden means hidden, with no exceptions — a player can't interact with something they
+        // haven't found, not even by blundering into its trap. The DM reveals it first.
+        if (o != null && o.hidden) return;
+
+        // Normally every container prompts, annotated or not, so the prompt itself gives nothing
+        // away. Resolution moves into ObjectInteraction once the player picks.
+        if (ObjectInteraction.shouldPrompt(block, o)) {
+            event.setCancelled(true);
+            ObjectInteraction.prompt(player, block);
+            return;
+        }
+        if (o == null) return;
 
         String prettyBlock = ObjectCommand.pretty(block.getType().name());
 
-        if (armedTrap) {
+        if (o.hasArmedTrap()) {
             event.setCancelled(true);
             sendFlavor(player, o);
             player.sendMessage(Component.text("You reach toward the " + prettyBlock + "…", NamedTextColor.GRAY));

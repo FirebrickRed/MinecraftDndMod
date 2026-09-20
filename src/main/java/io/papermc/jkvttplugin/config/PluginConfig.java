@@ -19,6 +19,14 @@ public final class PluginConfig {
     /** What breaks a ritual channelled in combat when its caster takes damage (#156). */
     public enum RitualInterrupt { CONCENTRATION_CHECK, BREAK_ON_DAMAGE, NONE }
 
+    /**
+     * Which blocks give a player the [Open it] / [Ask for a check] prompt (#185).
+     *
+     * <p>{@link #ALL_CONTAINERS} is the default because it's the only value that hides anything: if
+     * only annotated blocks prompted, the prompt would itself announce "the DM set this one up".
+     */
+    public enum InteractionPrompt { ALL_CONTAINERS, ANNOTATED_ONLY, OFF }
+
     private static RollMode rollMode = RollMode.PHYSICAL;
     private static int ritualCombatRounds = 10;
     private static RitualInterrupt ritualInterrupt = RitualInterrupt.CONCENTRATION_CHECK;
@@ -27,6 +35,7 @@ public final class PluginConfig {
     private static boolean abilityScoreCap20 = false; // false = house rule (racial bonuses may exceed 20)
     private static boolean trackAmmunition = true;    // bows consume arrows (#128)
     private static boolean trackThrownWeapons = true; // a thrown weapon leaves your hand (#192)
+    private static InteractionPrompt interactionPrompt = InteractionPrompt.ALL_CONTAINERS; // #185
     private static boolean annotationGlow = true;     // outline annotated blocks for the annotating DM
     private static int annotationGlowRadius = 24;
 
@@ -67,9 +76,19 @@ public final class PluginConfig {
         trackAmmunition = cfg.getBoolean("combat.track_ammunition", true);
         trackThrownWeapons = cfg.getBoolean("combat.track_thrown_weapons", true);
 
+        // Interaction prompt (#185). Unknown values fall back to all_containers rather than
+        // silently disabling the prompt, since "off" leaks more than a misspelling should cost.
+        interactionPrompt = switch (cfg.getString("objects.interaction_prompt", "all_containers").toLowerCase()) {
+            case "annotated_only" -> InteractionPrompt.ANNOTATED_ONLY;
+            case "off" -> InteractionPrompt.OFF;
+            default -> InteractionPrompt.ALL_CONTAINERS;
+        };
         annotationGlow = cfg.getBoolean("objects.annotation_glow", true);
         annotationGlowRadius = Math.max(4, Math.min(64, cfg.getInt("objects.annotation_glow_radius", 24)));
     }
+
+    /** Which blocks give players the [Open it] / [Ask for a check] prompt (#185). */
+    public static InteractionPrompt getInteractionPrompt() { return interactionPrompt; }
 
     /** True when annotated blocks are outlined for a DM holding the Annotate Object tool (#185). */
     public static boolean isAnnotationGlow() { return annotationGlow; }

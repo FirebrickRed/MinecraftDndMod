@@ -63,6 +63,20 @@ objects:
   # the annotation is (red armed trap, purple hidden, gold locked, grey sealed, green plain).
   # Drawn as particles sent to that DM alone, so the table never sees them. An outline floating in
   # empty air means the annotation's block is gone — see /dm object list.
+  # What a player gets when they right-click a block.
+  #   all_containers = every chest/barrel/shulker prompts "[Open it] [Ask for a check]", whether or
+  #                    not you have annotated it. The only value that hides anything: if just the
+  #                    annotated ones prompted, the prompt itself would announce "the DM set this up".
+  #                    Annotated non-containers (a false wall, a statue) prompt too.
+  #   annotated_only = only annotated blocks prompt. Less clicking on mundane storage, but you give
+  #                    the game away unless you also annotate decoys.
+  #   off            = no prompt; containers open on right-click and traps fire on contact.
+  #
+  # The prompt is deliberately vague. "Ask for a check" pings the DM and lets the player say out loud
+  # what they are actually doing (searching it, checking the lock, trying a key, tipping it over),
+  # rather than the game offering a menu that reveals what the DM prepared.
+  interaction_prompt: all_containers
+
   annotation_glow: true
   # How far the outline reaches, in blocks (clamped to 4-64).
   annotation_glow_radius: 24
