@@ -27,6 +27,8 @@ public final class PluginConfig {
     private static boolean abilityScoreCap20 = false; // false = house rule (racial bonuses may exceed 20)
     private static boolean trackAmmunition = true;    // bows consume arrows (#128)
     private static boolean trackThrownWeapons = true; // a thrown weapon leaves your hand (#192)
+    private static boolean annotationGlow = true;     // outline annotated blocks for the annotating DM
+    private static int annotationGlowRadius = 24;
 
     private PluginConfig() {}
 
@@ -64,7 +66,16 @@ public final class PluginConfig {
         // does not want the bookkeeping turns it off.
         trackAmmunition = cfg.getBoolean("combat.track_ammunition", true);
         trackThrownWeapons = cfg.getBoolean("combat.track_thrown_weapons", true);
+
+        annotationGlow = cfg.getBoolean("objects.annotation_glow", true);
+        annotationGlowRadius = Math.max(4, Math.min(64, cfg.getInt("objects.annotation_glow_radius", 24)));
     }
+
+    /** True when annotated blocks are outlined for a DM holding the Annotate Object tool (#185). */
+    public static boolean isAnnotationGlow() { return annotationGlow; }
+
+    /** How far that outline reaches, in blocks. */
+    public static int getAnnotationGlowRadius() { return annotationGlowRadius; }
 
     /** True when ranged weapons must spend ammunition to fire (#128). */
     public static boolean isTrackAmmunition() { return trackAmmunition; }

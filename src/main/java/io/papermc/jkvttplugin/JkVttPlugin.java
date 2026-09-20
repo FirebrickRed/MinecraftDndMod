@@ -53,6 +53,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new MenuClickListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.CombatVisualsListener(), this);
         io.papermc.jkvttplugin.dm.InteractiveObjectManager.init(this);
+        io.papermc.jkvttplugin.dm.AnnotationGlow.start(this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.dm.InteractiveObjectListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.CreationNameListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.EntityChunkListener(), this);
@@ -175,6 +176,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         // Tidy shutdown: persist characters (so mid-combat HP isn't lost) and cleanly
         // end any active combat (clears glow, scoreboards, prone). This is a safety net,
         // not full crash recovery — see Issue #105.
+        io.papermc.jkvttplugin.dm.AnnotationGlow.stop();
         try {
             CharacterPersistenceLoader.saveAllCharacters();
         } catch (Exception e) {

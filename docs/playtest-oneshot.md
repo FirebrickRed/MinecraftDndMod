@@ -184,3 +184,23 @@ shipped since this was written.)*
   out of combat) — the trap doesn't fire either by itself yet.
 - **Contested checks against an NPC**: player vs player only. Roll the NPC's side with `/roll`.
 - **A skill-picker menu** for the DM: checks are still typed (or filled from the buttons).
+
+## 3d. Seeing your own annotations (annotate-mode glow)
+
+Enter DM mode, open **Exploration Tools**, and **hold** the Annotate Object tool. Every annotated
+block within 24 blocks gets an outline only you can see, colour-coded:
+
+| Colour | Means |
+| --- | --- |
+| 🔴 red | armed trap |
+| 🟣 purple | hidden |
+| 🟡 gold | locked |
+| ⚪ grey | sealed |
+| 🟢 green | plain — opens, but annotated (usually just a description) |
+
+Most-dangerous-first, so a locked *and* trapped chest reads red. Put the tool away and the outlines
+stop. **An outline hanging in empty air is an orphan** — its block is gone; `/dm object list` will
+show it as *(block gone)* with a `[Clear]`.
+
+Tune it in `config.yml` under `objects:` — `annotation_glow: false` to switch it off, or
+`annotation_glow_radius:` to change the reach.

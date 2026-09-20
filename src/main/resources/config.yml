@@ -56,3 +56,13 @@ combat:
   # keeps it in hand. The game infers throw-vs-stab from range; the attack prompt offers an override.
   # false = the weapon never leaves your hand (BG-style infinite). Separate from track_ammunition.
   track_thrown_weapons: true
+
+# Interactive objects the DM annotates with /dm object (#185).
+objects:
+  # Outline nearby annotated blocks for a DM holding the Annotate Object tool, colour-coded by what
+  # the annotation is (red armed trap, purple hidden, gold locked, grey sealed, green plain).
+  # Drawn as particles sent to that DM alone, so the table never sees them. An outline floating in
+  # empty air means the annotation's block is gone — see /dm object list.
+  annotation_glow: true
+  # How far the outline reaches, in blocks (clamped to 4-64).
+  annotation_glow_radius: 24
