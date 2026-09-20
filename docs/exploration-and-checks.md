@@ -106,8 +106,9 @@ broadcasting them to the table.
 
 ## DM-mode tooling & submenus
 
-- A DM-mode **annotation tool** (a wand-like item) — right-click a block to annotate it (lock/trap/
-  hide/desc/loot), mirroring the `/dm object …` commands.
+- A DM-mode **annotation tool** (a wand-like item) — right-click a block to annotate it (opens/locked/
+  sealed, trap, hide, desc, loot), mirroring the `/dm object …` commands. Whether the block opens is
+  **pick-one** (one `Opening` value), so it's a radio row; the rest are independent toggles.
 - **Submenus / category items** — instead of 3–4 combat items cluttering the DM hotbar, one **Combat**
   item opens a combat-tools menu; likewise an **Exploration** menu, etc. Keeps DM mode tidy as it grows.
 

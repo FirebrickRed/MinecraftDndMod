@@ -142,7 +142,8 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `check <player> <ability\|save\|skill> <name> [dc <n>] [adv\|dis]` | Prompt a player to roll. The result comes to **you** (graded vs the DC if given) with a **[Share]** button. `promptcheck` is an alias (#186) |
 | `check <A> <skill> vs <B> <skill>` | Contested check between two **online players** (not NPCs yet: roll the NPC's side with `/roll`) |
 | `check active <player>` · `check clear <player> [skill\|all]` | See / clear held check values (e.g. an ongoing Stealth) |
-| `object <lock\|unlock\|hide\|reveal\|desc <text>\|clear\|info>` | Annotate the block you're looking at (#185). See `docs/playtest-oneshot.md` |
+| `object <hide\|reveal\|desc <text>\|clear\|info>` | Annotate the block you're looking at (#185). See `docs/playtest-oneshot.md` |
+| `object lock [text]` · `object unlock` · `object seal [text]` | Whether it opens — pick one. `lock` = DM gets a [call a check] ping; `seal` = scenery that never opens and pings no one; `unlock` = back to opening normally |
 | `object trap <damage> [save] [dc]` · `object disarm` · `object arm` | Trap the block, e.g. `object trap 2d10 dex 13` |
 | `object loot <item_id> [xN]` · `object loot clear` · `object give <player>` | Loot on a block with no container, then hand it over |
 | `tp <world> <x> <y> <z>` | Teleport (usually clicked from the coordinates in a DM notification) |

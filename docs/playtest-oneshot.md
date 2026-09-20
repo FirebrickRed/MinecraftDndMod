@@ -12,7 +12,8 @@ Reload content first if you edited YAML: `/dm reload`.
 
 Two ways to annotate — pick either:
 - **Tool:** enter DM mode (`/dm mode`) → right-click **Exploration Tools** → **Annotate Object** —
-  right-click the block for a clickable `[Lock] [Hide] [Reveal] [Clear] [Info]` menu.
+  right-click the block for a clickable `[Opens] [Locked] [Sealed] | [Hide] [Clear] [Info]` menu.
+  The first three are pick-one (the current one shows a ✔) — that's whether the block opens.
 - **Commands:** the `/dm object …` forms below (work whether or not you're in DM mode).
 
 As the DM, place a chest and look at it, then:
@@ -62,6 +63,25 @@ Remove the annotation anytime: look at the block → `/dm object clear` (or `/dm
 
 Look at a door block and `/dm object lock The iron-banded door is barred from the far side.` — same
 player/DM flow. Try `athletics` instead of `sleight_of_hand` to force it.
+
+## 2b. Sealed scenery — a chest that's just set dressing
+
+For a prop nobody is meant to open: the supply chest in the corner, a bookshelf, a barrel. It never
+opens, no roll changes that, and **you don't get pinged** — the description *is* the whole interaction.
+
+```
+/dm object seal Just food supplies for the journey — hardtack, salt pork, a wheel of cheese.
+/dm object info                 # "Chest: sealed \"Just food supplies…\""
+```
+
+A player right-clicking gets the text in grey and nothing else:
+> Just food supplies for the journey — hardtack, salt pork, a wheel of cheese.
+
+Seal with no description and they get a flat *"You see a Chest. There's nothing here for you."* —
+the command warns you about that, so write the flavor.
+
+**Sealed vs locked** is about whether the party has a way in. `lock` says *try something and I'll
+call a check*; `seal` says *this is furniture, move on*. `/dm object unlock` undoes either.
 
 ## 3. False wall / hidden passage
 
@@ -130,6 +150,8 @@ Both roll their own skill; when both are in, **you** see the winner with a **[Sh
 
 - Locked block: player right-click shows the lock + DM gets the [call a check] button; the vanilla
   chest/door does NOT open.
+- Sealed block: player sees only the description, the chest does NOT open, and **no DM is pinged**.
+- Description shows on every path — sealed, locked, trapped and plain-openable blocks alike.
 - Hidden block: players get nothing until `/dm object reveal`.
 - Check results land on the **DM**, not the table, until **[Share]**.
 - `adv` actually rolls 2d20 (visible in the breakdown).

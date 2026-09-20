@@ -139,19 +139,26 @@ public class DmModeListener implements Listener {
     private void showObjectMenu(Player player, org.bukkit.block.Block block) {
         InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
         String name = ObjectCommand.pretty(block.getType().name());
-        boolean locked = o != null && o.locked;
+        InteractiveObjectManager.Obj.Opening opening = o != null ? o.opening : InteractiveObjectManager.Obj.Opening.OPENS;
         boolean hidden = o != null && o.hidden;
         boolean trapped = o != null && o.trapped;
         String trapStr = trapped ? "trap[" + o.trapDamage + (o.disarmed ? ", disarmed" : ", armed") + "] " : "";
         String status = (o == null) ? "unannotated"
-                : ((locked ? "locked " : "") + (hidden ? "hidden " : "") + trapStr
+                : (ObjectCommand.openingLabel(opening) + (hidden ? "hidden " : "") + trapStr
                    + (o.description.isEmpty() ? "" : "\"" + o.description + "\"")).trim();
         player.sendMessage(Component.text("🔧 " + name + " — " + (status.isEmpty() ? "annotated" : status), NamedTextColor.GOLD));
 
+        // Opening is pick-one, so it's a row of three with the current one marked — not a toggle.
         Component opts = Component.text("  ", NamedTextColor.GRAY)
-                .append(button(locked ? "[Unlock]" : "[Lock]", "/dm object " + (locked ? "unlock" : "lock"),
-                        locked ? "Remove the lock" : "Mark it locked"))
+                .append(openingButton("Opens", "unlock", opening, InteractiveObjectManager.Obj.Opening.OPENS,
+                        "It opens normally"))
                 .append(Component.text(" "))
+                .append(openingButton("Locked", "lock", opening, InteractiveObjectManager.Obj.Opening.LOCKED,
+                        "It won't open, and you get pinged to call a check"))
+                .append(Component.text(" "))
+                .append(openingButton("Sealed", "seal", opening, InteractiveObjectManager.Obj.Opening.SEALED,
+                        "Scenery — it never opens and you aren't pinged"))
+                .append(Component.text(" | ", NamedTextColor.DARK_GRAY))
                 .append(button(hidden ? "[Reveal]" : "[Hide]", "/dm object " + (hidden ? "reveal" : "hide"),
                         hidden ? "Let players interact with it" : "Hide it from players until revealed"));
         if (trapped) {
@@ -165,6 +172,18 @@ public class DmModeListener implements Listener {
                 .append(button("[Info]", "/dm object info", "Show its annotation"));
         player.sendMessage(opts);
         player.sendMessage(Component.text("  (describe: /dm object desc <text>  ·  trap: /dm object trap <dmg> [save] [dc]  — while looking at it)", NamedTextColor.DARK_GRAY));
+    }
+
+    /** One choice in the pick-one opening row: the active one is marked and inert, the rest are clickable. */
+    private static Component openingButton(String label, String sub,
+                                           InteractiveObjectManager.Obj.Opening current,
+                                           InteractiveObjectManager.Obj.Opening mine,
+                                           String hover) {
+        if (current == mine) {
+            return Component.text("[✔ " + label + "]", NamedTextColor.GREEN)
+                    .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(hover)));
+        }
+        return button("[" + label + "]", "/dm object " + sub, hover);
     }
 
     private static Component button(String label, String cmd, String hover) {

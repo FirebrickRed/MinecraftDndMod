@@ -16,9 +16,11 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.entity.Player;
 
 /**
- * Turns a player's right-click on a DM-annotated block (#185) into a DM-first interaction: the player
- * sees the object (and that it's locked), and the DM is notified with a [call a check] button. Hidden
- * objects don't respond to players until the DM reveals them.
+ * Turns a player's right-click on a DM-annotated block (#185) into a DM-first interaction. An armed
+ * trap and a hidden block are handled first; after that the block's {@link
+ * InteractiveObjectManager.Obj.Opening} decides what happens — it opens, it's locked (and the DM is
+ * pinged with a [call a check] button), or it's sealed scenery that never opens and pings no one.
+ * The description is flavor and is shown on every one of those paths.
  */
 public class InteractiveObjectListener implements Listener {
 
@@ -36,7 +38,7 @@ public class InteractiveObjectListener implements Listener {
         // DMs annotate/inspect via /dm object; let their clicks fall through to normal behavior.
         if (DMManager.isDM(player)) return;
 
-        boolean armedTrap = o.trapped && !o.disarmed;
+        boolean armedTrap = o.hasArmedTrap();
         // Hidden objects are inert to players — EXCEPT a live trap, which a blundering player springs.
         if (o.hidden && !armedTrap) return;
 
@@ -44,19 +46,35 @@ public class InteractiveObjectListener implements Listener {
 
         if (armedTrap) {
             event.setCancelled(true);
+            sendFlavor(player, o);
             player.sendMessage(Component.text("You reach toward the " + prettyBlock + "…", NamedTextColor.GRAY));
             notifyTrap(player, prettyBlock, block.getLocation(), o);
             return;
         }
 
-        if (o.locked) {
-            event.setCancelled(true); // no vanilla open — it's locked
-            player.sendMessage(Component.text("🔒 You see a " + prettyBlock
-                    + (o.description.isEmpty() ? "" : " — " + o.description) + ". It's locked.", NamedTextColor.GOLD));
-            player.sendMessage(Component.text("Tell the DM how you'd like to open it.", NamedTextColor.GRAY));
-            notifyDms(player, prettyBlock, block.getLocation());
-        } else if (!o.description.isEmpty()) {
-            // Not locked — just flavor; let it open normally, but share what they notice.
+        switch (o.opening) {
+            case LOCKED -> {
+                event.setCancelled(true); // no vanilla open — it's locked
+                player.sendMessage(Component.text("🔒 You see a " + prettyBlock
+                        + (o.description.isEmpty() ? "" : " — " + o.description) + ". It's locked.", NamedTextColor.GOLD));
+                player.sendMessage(Component.text("Tell the DM how you'd like to open it.", NamedTextColor.GRAY));
+                notifyDms(player, prettyBlock, block.getLocation());
+            }
+            case SEALED -> {
+                // Scenery: it never opens and no roll changes that, so the DM isn't pinged. The
+                // description IS the interaction — fall back to naming the block if none is set.
+                event.setCancelled(true);
+                player.sendMessage(o.description.isEmpty()
+                        ? Component.text("You see a " + prettyBlock + ". There's nothing here for you.", NamedTextColor.GRAY)
+                        : Component.text(o.description, NamedTextColor.GRAY));
+            }
+            case OPENS -> sendFlavor(player, o); // let it open normally, but share what they notice
+        }
+    }
+
+    /** Share the DM's flavor text, if there is any, before whatever the block does next. */
+    private void sendFlavor(Player player, InteractiveObjectManager.Obj o) {
+        if (!o.description.isEmpty()) {
             player.sendMessage(Component.text("You see: " + o.description, NamedTextColor.GRAY));
         }
     }

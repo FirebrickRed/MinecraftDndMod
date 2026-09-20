@@ -632,7 +632,14 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
   - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
 - **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
   - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dmentity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).
-- **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check` (DM-first checks, #186), `hp` (change HP anywhere, #175), `object` (annotate locks/traps/hidden blocks, #185), `mode` (DM toolbar), `tp`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
+- **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check` (DM-first checks, #186), `hp` (change HP anywhere, #175), `object` (annotate blocks, #185), `mode` (DM toolbar), `tp`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
+  - **A block's openability is one value, not flags (#185):** `InteractiveObjectManager.Obj.Opening`
+    is `OPENS` / `LOCKED` / `SEALED` — set by `/dm object unlock|lock|seal`. They're mutually
+    exclusive by construction, so a block can't be both pickable and never-opening. `hidden`,
+    `trapped`/`disarmed`, `loot` and `description` are genuinely independent and stay as their own
+    fields: a chest can be locked AND trapped AND hold loot AND carry flavor text. `SEALED` is
+    scenery — it never opens and **no DM is pinged**; `LOCKED` pings the DM with [call a check].
+    The `description` renders on every path, including the trap one.
   - **HP changes aren't combat-only (#175):** `DamageHandler` takes a **nullable** `CombatSession`, so a trap, a potion or a DM correction runs the same resistance → damage → downing → persistence path as a sword swing. `CombatTargets` resolves the live `Combatant` when a fight is running and a transient one otherwise; out of combat the messages go to the affected player and the DMs instead of the table. **Never write a second HP path** — route new sources of damage or healing through `DamageHandler`.
 
 **DM authorization:** a "DM" is an op, a holder of the `jkvtt.dm` permission node, OR a

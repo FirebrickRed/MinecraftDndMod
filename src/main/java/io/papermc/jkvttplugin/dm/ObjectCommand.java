@@ -14,12 +14,20 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * {@code /dm object <lock|unlock|hide|reveal|desc|clear|info>} — annotate the block the DM is looking
- * at as an interactive object (#185). Works on any block: a chest, a door, a "false wall", etc.
+ * {@code /dm object <lock|unlock|seal|hide|reveal|desc|trap|loot|clear|info>} — annotate the block the
+ * DM is looking at as an interactive object (#185). Works on any block: a chest, a door, a bookshelf,
+ * a "false wall", etc.
+ *
+ * <p>{@code lock}, {@code unlock} and {@code seal} all set the one property that can only hold one
+ * value — whether the block opens. Everything else (hidden, trap, loot, description) is independent
+ * of it, so a chest can be locked AND trapped AND hold loot AND carry flavor text.
  */
 public class ObjectCommand implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("lock", "unlock", "hide", "reveal", "desc", "trap", "disarm", "arm", "loot", "give", "clear", "info");
+    private static final List<String> SUBS = List.of("lock", "unlock", "seal", "hide", "reveal", "desc", "trap", "disarm", "arm", "loot", "give", "clear", "info");
+
+    private static final String USAGE =
+            "Usage: /dm object <lock|unlock|seal|hide|reveal|desc <text>|trap|loot|clear|info> — while looking at a block.";
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -28,7 +36,7 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         if (args.length == 0) {
-            dm.sendMessage(Component.text("Usage: /dm object <lock|unlock|hide|reveal|desc <text>|clear|info> — while looking at a block.", NamedTextColor.RED));
+            dm.sendMessage(Component.text(USAGE, NamedTextColor.RED));
             return true;
         }
         Block block = dm.getTargetBlockExact(6);
@@ -42,7 +50,7 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
         switch (sub) {
             case "lock" -> {
                 InteractiveObjectManager.Obj o = InteractiveObjectManager.getOrCreate(block.getLocation());
-                o.locked = true;
+                o.opening = InteractiveObjectManager.Obj.Opening.LOCKED;
                 if (args.length > 1) o.description = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
                 InteractiveObjectManager.save();
                 dm.sendMessage(Component.text("🔒 Locked the " + prettyBlock + "." + (o.description.isEmpty() ? "" : " \"" + o.description + "\""), NamedTextColor.GREEN));
@@ -50,9 +58,24 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
             case "unlock" -> {
                 InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
                 if (o == null) { dm.sendMessage(notAnnotated(prettyBlock)); return true; }
-                o.locked = false;
+                // Also the way back from sealed — one word for "this opens normally again".
+                boolean wasSealed = o.opening == InteractiveObjectManager.Obj.Opening.SEALED;
+                o.opening = InteractiveObjectManager.Obj.Opening.OPENS;
                 InteractiveObjectManager.save();
-                dm.sendMessage(Component.text("Unlocked the " + prettyBlock + ".", NamedTextColor.GREEN));
+                dm.sendMessage(Component.text((wasSealed ? "Unsealed the " : "Unlocked the ") + prettyBlock
+                        + " — it opens normally now.", NamedTextColor.GREEN));
+            }
+            case "seal" -> {
+                InteractiveObjectManager.Obj o = InteractiveObjectManager.getOrCreate(block.getLocation());
+                o.opening = InteractiveObjectManager.Obj.Opening.SEALED;
+                if (args.length > 1) o.description = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+                InteractiveObjectManager.save();
+                dm.sendMessage(Component.text("🚫 Sealed the " + prettyBlock
+                        + " — it never opens, and no check will change that."
+                        + (o.description.isEmpty() ? "" : " \"" + o.description + "\""), NamedTextColor.GREEN));
+                if (o.description.isEmpty()) {
+                    dm.sendMessage(Component.text("  Tip: give it flavor with /dm object desc <text> — otherwise players just get \"there's nothing here for you\".", NamedTextColor.DARK_GRAY));
+                }
             }
             case "hide" -> {
                 InteractiveObjectManager.Obj o = InteractiveObjectManager.getOrCreate(block.getLocation());
@@ -158,12 +181,21 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
                         + (o.disarmed ? ", disarmed" : ", armed") + "] ") : "";
                 String loot = o.loot.isEmpty() ? "" : ("loot[" + String.join(", ", o.loot) + "] ");
                 dm.sendMessage(Component.text(prettyBlock + ": "
-                        + (o.locked ? "locked " : "") + (o.hidden ? "hidden " : "") + trap + loot
+                        + openingLabel(o.opening) + (o.hidden ? "hidden " : "") + trap + loot
                         + (o.description.isEmpty() ? "" : "\"" + o.description + "\""), NamedTextColor.AQUA));
             }
             default -> dm.sendMessage(Component.text("Unknown: " + sub + ". Use " + String.join("/", SUBS) + ".", NamedTextColor.RED));
         }
         return true;
+    }
+
+    /** How an opening reads in a DM status line; a plain openable block says nothing about it. */
+    static String openingLabel(InteractiveObjectManager.Obj.Opening opening) {
+        return switch (opening) {
+            case LOCKED -> "locked ";
+            case SEALED -> "sealed ";
+            case OPENS -> "";
+        };
     }
 
     private static Component notAnnotated(String block) {

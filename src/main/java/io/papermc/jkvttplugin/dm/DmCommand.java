@@ -291,7 +291,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("/dm give <player> <item_id> [amount]", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm check <player> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm check <A> <skillA> vs <B> <skillB>   (contested)", NamedTextColor.AQUA));
-            sender.sendMessage(Component.text("/dm object <lock|hide|reveal|desc|clear|info>   (look at a block)", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm object <lock|unlock|seal|hide|reveal|desc|trap|loot|clear|info>   (look at a block)", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm rest <character> <short|long>", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm resource <restore|consume> <character> ...", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm reload", NamedTextColor.AQUA)
