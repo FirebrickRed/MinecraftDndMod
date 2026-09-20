@@ -75,7 +75,7 @@ public final class ObjectInteraction {
     private static void open(Player player, Location loc) {
         Block block = loc.getBlock();
         String name = ObjectCommand.pretty(block.getType().name());
-        InteractiveObjectManager.Obj o = InteractiveObjectManager.get(loc);
+        InteractiveObjectManager.Obj o = InteractiveObjectManager.getForBlock(block);
 
         if (o != null && o.hasArmedTrap()) {
             springTrap(player, block, o);

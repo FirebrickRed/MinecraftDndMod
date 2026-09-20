@@ -160,6 +160,22 @@ inherited by whatever you build there next. It doesn't:
 Worth trying: annotate a chest, break it, `/dm object list` (should be gone), then re-annotate one,
 break it, and `/dm object restore` onto a different block.
 
+## 3e. Chests that vanilla would not let you open
+
+A chest with a solid block directly on top cannot be opened in vanilla Minecraft. **It can here.**
+The prompt cancels the vanilla right-click and `[Open it]` opens the inventory directly, which never
+consults the block-above rule — so a buried or built-in chest is fully lootable. Same for a chest
+with a cat sitting on it.
+
+The exception is `interaction_prompt: off`, which hands the click back to vanilla and takes the
+restriction back with it.
+
+## 3f. Double chests
+
+A double chest is **two blocks**, so annotating one half used to leave the other an ordinary chest —
+a free walk past any lock. Annotate either half now and both behave the same, and the glow lights
+both ends. Breaking either half clears the pair.
+
 ## 4. Skill checks on their own (no object)
 
 ```

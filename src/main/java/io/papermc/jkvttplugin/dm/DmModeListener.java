@@ -137,6 +137,7 @@ public class DmModeListener implements Listener {
 
     /** A clickable annotation menu for the block the DM clicked with the Annotate Object tool (#185/#187). */
     private void showObjectMenu(Player player, org.bukkit.block.Block block) {
+        block = InteractiveObjectManager.annotationBlock(block); // either half of a double chest
         InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
         String name = ObjectCommand.pretty(block.getType().name());
         InteractiveObjectManager.Obj.Opening opening = o != null ? o.opening : InteractiveObjectManager.Obj.Opening.OPENS;

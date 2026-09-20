@@ -75,7 +75,12 @@ public final class AnnotationGlow {
                 Location loc = InteractiveObjectManager.locationFromKey(e.getKey());
                 if (loc == null || !loc.getWorld().equals(dm.getWorld())) continue;
                 if (loc.distanceSquared(dm.getLocation()) > radiusSq) continue;
-                outline(dm, loc, colorFor(e.getValue()));
+                Particle.DustOptions color = colorFor(e.getValue());
+                outline(dm, loc, color);
+                // The annotation lives on one half of a double chest but covers both, so outline
+                // both — a chest lit at one end reads as half-annotated.
+                org.bukkit.block.Block partner = InteractiveObjectManager.partnerHalf(loc.getBlock());
+                if (partner != null) outline(dm, partner.getLocation(), color);
             }
         }
     }

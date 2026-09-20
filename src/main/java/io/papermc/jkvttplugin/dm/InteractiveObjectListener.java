@@ -31,6 +31,8 @@ public class InteractiveObjectListener implements Listener {
         Block block = event.getClickedBlock();
         if (block == null) return;
 
+        // Either half of a double chest carries the pair's annotation.
+        block = InteractiveObjectManager.annotationBlock(block);
         InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
 
         Player player = event.getPlayer();
@@ -93,7 +95,8 @@ public class InteractiveObjectListener implements Listener {
      */
     @EventHandler(ignoreCancelled = true)
     public void onBreak(org.bukkit.event.block.BlockBreakEvent event) {
-        InteractiveObjectManager.Obj o = InteractiveObjectManager.get(event.getBlock().getLocation());
+        org.bukkit.block.Block broken = InteractiveObjectManager.annotationBlock(event.getBlock());
+        InteractiveObjectManager.Obj o = InteractiveObjectManager.get(broken.getLocation());
         if (o == null) return;
 
         Player player = event.getPlayer();
@@ -105,7 +108,7 @@ public class InteractiveObjectListener implements Listener {
             return;
         }
 
-        InteractiveObjectManager.remove(event.getBlock().getLocation());
+        InteractiveObjectManager.remove(broken.getLocation());
         ObjectCommand.stashCleared(player, o);
         player.sendMessage(Component.text("🔧 Cleared the annotation on the " + prettyBlock + " you broke — "
                 + ObjectCommand.describe(o), NamedTextColor.YELLOW));

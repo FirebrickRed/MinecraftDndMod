@@ -65,6 +65,9 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
             dm.sendMessage(Component.text("Look at a block within 6 blocks first.", NamedTextColor.RED));
             return true;
         }
+        // A double chest is two blocks; annotate whichever half already carries one so the DM can
+        // aim at either end and get the same annotation instead of quietly making a second.
+        block = InteractiveObjectManager.annotationBlock(block);
         String prettyBlock = pretty(block.getType().name());
         String sub = args[0].toLowerCase();
 

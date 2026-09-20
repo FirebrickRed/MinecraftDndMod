@@ -81,6 +81,45 @@ public final class InteractiveObjectManager {
         return k == null ? null : objects.get(k);
     }
 
+    /**
+     * The other half of a double chest, or null for anything else.
+     *
+     * <p>A double chest is two blocks with two sets of coordinates, so an annotation on one half
+     * says nothing about the other. Without this, locking the left half leaves the right half an
+     * ordinary chest and the party walks straight past the lock.
+     */
+    public static org.bukkit.block.Block partnerHalf(org.bukkit.block.Block block) {
+        if (block == null || !(block.getState() instanceof org.bukkit.block.Chest chest)) return null;
+        if (!(chest.getInventory() instanceof org.bukkit.inventory.DoubleChestInventory dci)) return null;
+        Location left = dci.getLeftSide().getLocation();
+        Location right = dci.getRightSide().getLocation();
+        if (left == null || right == null) return null;
+        Location mine = block.getLocation();
+        Location other = sameBlock(left, mine) ? right : left;
+        return sameBlock(other, mine) ? null : other.getBlock();
+    }
+
+    private static boolean sameBlock(Location a, Location b) {
+        return a.getBlockX() == b.getBlockX() && a.getBlockY() == b.getBlockY() && a.getBlockZ() == b.getBlockZ();
+    }
+
+    /**
+     * The block that actually carries this block's annotation — itself, or the other half of its
+     * double chest. Annotating either half is enough, and a chest joined or split after the fact
+     * still resolves, because this looks both ways every time instead of picking a canonical half
+     * once and storing it.
+     */
+    public static org.bukkit.block.Block annotationBlock(org.bukkit.block.Block block) {
+        if (block == null || get(block.getLocation()) != null) return block;
+        org.bukkit.block.Block partner = partnerHalf(block);
+        return (partner != null && get(partner.getLocation()) != null) ? partner : block;
+    }
+
+    /** The annotation on this block or on its double-chest partner. */
+    public static Obj getForBlock(org.bukkit.block.Block block) {
+        return block == null ? null : get(annotationBlock(block).getLocation());
+    }
+
     /** Get the object at this block, creating a blank one if absent (for annotation). */
     public static Obj getOrCreate(Location loc) {
         String k = key(loc);
