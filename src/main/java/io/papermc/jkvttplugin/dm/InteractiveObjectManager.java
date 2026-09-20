@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.dm;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.plugin.Plugin;
@@ -93,6 +94,52 @@ public final class InteractiveObjectManager {
         boolean removed = objects.remove(k) != null;
         if (removed) save();
         return removed;
+    }
+
+    /** Remove by stored key — the only way to reach an orphan whose block no longer exists. */
+    public static boolean removeByKey(String k) {
+        if (k == null) return false;
+        boolean removed = objects.remove(k) != null;
+        if (removed) save();
+        return removed;
+    }
+
+    /** Put an annotation back at a location — used by {@code /dm object restore} after a break. */
+    public static void put(Location loc, Obj o) {
+        String k = key(loc);
+        if (k == null || o == null) return;
+        objects.put(k, o);
+        save();
+    }
+
+    /** Every annotation, keyed by location. Read-only: mutate through the other methods. */
+    public static Map<String, Obj> all() {
+        return java.util.Collections.unmodifiableMap(objects);
+    }
+
+    /**
+     * Turn a stored key back into a Location. Parsed from the RIGHT (the last three segments are
+     * x/y/z) so a world name containing ':' survives the round trip. Returns null if the world isn't
+     * loaded or the key is malformed.
+     */
+    public static Location locationFromKey(String k) {
+        if (k == null) return null;
+        int z = k.lastIndexOf(':');
+        if (z <= 0) return null;
+        int y = k.lastIndexOf(':', z - 1);
+        if (y <= 0) return null;
+        int x = k.lastIndexOf(':', y - 1);
+        if (x <= 0) return null;
+        org.bukkit.World world = Bukkit.getWorld(k.substring(0, x));
+        if (world == null) return null;
+        try {
+            return new Location(world,
+                    Integer.parseInt(k.substring(x + 1, y)),
+                    Integer.parseInt(k.substring(y + 1, z)),
+                    Integer.parseInt(k.substring(z + 1)));
+        } catch (NumberFormatException ex) {
+            return null;
+        }
     }
 
     public static void save() {

@@ -1,7 +1,10 @@
 package io.papermc.jkvttplugin.dm;
 
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.block.Block;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -24,10 +27,11 @@ import java.util.List;
  */
 public class ObjectCommand implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("lock", "unlock", "seal", "hide", "reveal", "desc", "trap", "disarm", "arm", "loot", "give", "clear", "info");
+    private static final List<String> SUBS = List.of("lock", "unlock", "seal", "hide", "reveal", "desc", "trap", "disarm", "arm", "loot", "give", "clear", "info", "list", "restore");
 
     private static final String USAGE =
-            "Usage: /dm object <lock|unlock|seal|hide|reveal|desc <text>|trap|loot|clear|info> — while looking at a block.";
+            "Usage: /dm object <lock|unlock|seal|hide|reveal|desc <text>|trap|loot|clear|info|restore> — while looking at a block."
+            + "  ·  /dm object list [all] works from anywhere.";
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -39,6 +43,23 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
             dm.sendMessage(Component.text(USAGE, NamedTextColor.RED));
             return true;
         }
+        // 'list' is the one sub that must work while looking at nothing — an orphaned annotation has
+        // no block left to aim at, which is exactly when you need to find it.
+        if (args[0].equalsIgnoreCase("list")) {
+            listAnnotations(dm, args);
+            return true;
+        }
+        // Clear by stored key — how you delete an orphan whose block no longer exists. The [Clear]
+        // buttons in 'list' run this; it isn't meant to be typed by hand.
+        if (args[0].equalsIgnoreCase("clearat")) {
+            if (args.length < 2) { dm.sendMessage(Component.text("Usage: /dm object clearat <key>  (use the [Clear] buttons in /dm object list)", NamedTextColor.RED)); return true; }
+            String k = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+            dm.sendMessage(InteractiveObjectManager.removeByKey(k)
+                    ? Component.text("Cleared the annotation at " + k + ".", NamedTextColor.GREEN)
+                    : Component.text("No annotation at " + k + ".", NamedTextColor.GRAY));
+            return true;
+        }
+
         Block block = dm.getTargetBlockExact(6);
         if (block == null) {
             dm.sendMessage(Component.text("Look at a block within 6 blocks first.", NamedTextColor.RED));
@@ -177,16 +198,91 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
             case "info" -> {
                 InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
                 if (o == null) { dm.sendMessage(notAnnotated(prettyBlock)); return true; }
-                String trap = o.trapped ? ("trap[" + o.trapDamage + " " + o.trapSave + (o.trapDc > 0 ? " DC " + o.trapDc : "")
-                        + (o.disarmed ? ", disarmed" : ", armed") + "] ") : "";
-                String loot = o.loot.isEmpty() ? "" : ("loot[" + String.join(", ", o.loot) + "] ");
-                dm.sendMessage(Component.text(prettyBlock + ": "
-                        + openingLabel(o.opening) + (o.hidden ? "hidden " : "") + trap + loot
-                        + (o.description.isEmpty() ? "" : "\"" + o.description + "\""), NamedTextColor.AQUA));
+                dm.sendMessage(Component.text(prettyBlock + ": " + describe(o), NamedTextColor.AQUA));
+            }
+            case "restore" -> {
+                InteractiveObjectManager.Obj stashed = CLEARED.get(dm.getUniqueId());
+                if (stashed == null) {
+                    dm.sendMessage(Component.text("Nothing to restore — this only works right after you break an annotated block.", NamedTextColor.GRAY));
+                    return true;
+                }
+                if (InteractiveObjectManager.get(block.getLocation()) != null) {
+                    dm.sendMessage(Component.text("That " + prettyBlock + " is already annotated — /dm object clear it first.", NamedTextColor.RED));
+                    return true;
+                }
+                InteractiveObjectManager.put(block.getLocation(), stashed);
+                CLEARED.remove(dm.getUniqueId());
+                dm.sendMessage(Component.text("Restored onto the " + prettyBlock + ": " + describe(stashed), NamedTextColor.GREEN));
             }
             default -> dm.sendMessage(Component.text("Unknown: " + sub + ". Use " + String.join("/", SUBS) + ".", NamedTextColor.RED));
         }
         return true;
+    }
+
+    /** The last annotation each DM cleared by breaking its block, for {@code /dm object restore}. */
+    private static final java.util.Map<java.util.UUID, InteractiveObjectManager.Obj> CLEARED = new java.util.HashMap<>();
+
+    /** Remember what this DM just broke so they can put it back somewhere else. */
+    static void stashCleared(Player dm, InteractiveObjectManager.Obj o) {
+        CLEARED.put(dm.getUniqueId(), o);
+    }
+
+    /** One-line summary of an annotation, shared by info, list and the break notice. */
+    static String describe(InteractiveObjectManager.Obj o) {
+        String trap = o.trapped ? ("trap[" + o.trapDamage + " " + o.trapSave + (o.trapDc > 0 ? " DC " + o.trapDc : "")
+                + (o.disarmed ? ", disarmed" : ", armed") + "] ") : "";
+        String loot = o.loot.isEmpty() ? "" : ("loot[" + String.join(", ", o.loot) + "] ");
+        String s = (openingLabel(o.opening) + (o.hidden ? "hidden " : "") + trap + loot
+                + (o.description.isEmpty() ? "" : "\"" + o.description + "\"")).trim();
+        return s.isEmpty() ? "annotated" : s;
+    }
+
+    /**
+     * {@code /dm object list [all]} — annotations in the DM's world (or every loaded world with
+     * {@code all}), nearest first. Each row's coordinates teleport you there and flag whether the
+     * block is still standing, which is how you find annotations whose block was deleted.
+     */
+    private static void listAnnotations(Player dm, String[] args) {
+        boolean everywhere = args.length > 1 && args[1].equalsIgnoreCase("all");
+        String here = dm.getWorld().getName();
+
+        record Row(String key, org.bukkit.Location loc, InteractiveObjectManager.Obj obj, double dist) {}
+        List<Row> rows = new ArrayList<>();
+        int unloaded = 0;
+        for (var e : InteractiveObjectManager.all().entrySet()) {
+            org.bukkit.Location loc = InteractiveObjectManager.locationFromKey(e.getKey());
+            if (loc == null) { unloaded++; continue; } // world not loaded — can't place or measure it
+            if (!everywhere && !loc.getWorld().getName().equals(here)) continue;
+            double d = loc.getWorld().equals(dm.getWorld()) ? loc.distanceSquared(dm.getLocation()) : Double.MAX_VALUE;
+            rows.add(new Row(e.getKey(), loc, e.getValue(), d));
+        }
+        rows.sort(java.util.Comparator.comparingDouble(Row::dist));
+
+        if (rows.isEmpty()) {
+            dm.sendMessage(Component.text("No annotations " + (everywhere ? "anywhere." : "in " + here + ". Try /dm object list all."), NamedTextColor.GRAY));
+            if (unloaded > 0) dm.sendMessage(Component.text(unloaded + " in worlds that aren't loaded.", NamedTextColor.DARK_GRAY));
+            return;
+        }
+
+        int shown = Math.min(rows.size(), 20);
+        dm.sendMessage(Component.text("🔧 " + rows.size() + " annotation" + (rows.size() == 1 ? "" : "s")
+                + (everywhere ? "" : " in " + here) + (shown < rows.size() ? " (showing " + shown + ")" : "") + ":", NamedTextColor.GOLD));
+        for (int i = 0; i < shown; i++) {
+            Row r = rows.get(i);
+            // getType() loads the chunk, which is the only way to know whether the block still exists.
+            boolean orphan = r.loc().getBlock().getType().isAir();
+            Component row = Component.text("  ")
+                    .append(InteractiveObjectListener.clickableCoords(r.loc()))
+                    .append(Component.text(" " + (orphan ? "(block gone) " : pretty(r.loc().getBlock().getType().name()) + " ")
+                            + describe(r.obj()) + " ", orphan ? NamedTextColor.RED : NamedTextColor.AQUA))
+                    .append(Component.text("[Clear]", NamedTextColor.GRAY, TextDecoration.UNDERLINED)
+                            .clickEvent(ClickEvent.runCommand("/dm object clearat " + r.key()))
+                            .hoverEvent(HoverEvent.showText(Component.text("Delete this annotation"))));
+            dm.sendMessage(row);
+        }
+        if (unloaded > 0) {
+            dm.sendMessage(Component.text("  (" + unloaded + " more in worlds that aren't loaded)", NamedTextColor.DARK_GRAY));
+        }
     }
 
     /** How an opening reads in a DM status line; a plain openable block says nothing about it. */

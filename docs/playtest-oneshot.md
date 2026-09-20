@@ -124,6 +124,22 @@ You decide: `[Perception]` (did they notice?), `[Disarm]` (they try — then `/d
 success), or `[Trigger]` (it goes off — the button calls the player's DEX save; apply the 2d10 on a
 fail — `/combat damage` in a fight, or `/dm hp <player> damage 2d10 type piercing` out of one).
 
+## 3c. Breaking an annotated block (build hygiene)
+
+An annotation is stored against bare coordinates, so it would happily outlive its block and get
+inherited by whatever you build there next. It doesn't:
+
+- **A DM breaking one clears it** and gets told what was cleared. `/dm object restore` puts it on the
+  next block you look at — that's the "I moved the chest one block over" case.
+- **A player can't break one at all.** Otherwise mining a locked chest bypasses the lock for free.
+- **`/dm object list`** shows every annotation in your world, nearest first, with clickable coords,
+  a `[Clear]` per row, and **(block gone)** on any whose block is missing. It's the only sub that
+  works while you're looking at nothing — which is exactly the situation an orphan leaves you in.
+  `/dm object list all` covers every loaded world.
+
+Worth trying: annotate a chest, break it, `/dm object list` (should be gone), then re-annotate one,
+break it, and `/dm object restore` onto a different block.
+
 ## 4. Skill checks on their own (no object)
 
 ```

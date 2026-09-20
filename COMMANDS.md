@@ -146,6 +146,8 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `object lock [text]` · `object unlock` · `object seal [text]` | Whether it opens — pick one. `lock` = DM gets a [call a check] ping; `seal` = scenery that never opens and pings no one; `unlock` = back to opening normally |
 | `object trap <damage> [save] [dc]` · `object disarm` · `object arm` | Trap the block, e.g. `object trap 2d10 dex 13` |
 | `object loot <item_id> [xN]` · `object loot clear` · `object give <player>` | Loot on a block with no container, then hand it over |
+| `object list [all]` | Every annotation in your world (or all worlds) — clickable coords, a `[Clear]` per row, and **(block gone)** on orphans. Works without looking at anything |
+| `object restore` | Put the annotation you just broke onto the block you're looking at |
 | `tp <world> <x> <y> <z>` | Teleport (usually clicked from the coordinates in a DM notification) |
 | `lootprompt <player> <check>` | Call a loot check for a player searching a body (usually clicked, not typed) |
 | `animalreply <player> <message…>` | Voice the animals' reply to a Speak with Animals caster (usually clicked) |

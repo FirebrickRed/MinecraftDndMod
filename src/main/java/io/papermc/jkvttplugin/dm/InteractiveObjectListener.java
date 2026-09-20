@@ -72,6 +72,38 @@ public class InteractiveObjectListener implements Listener {
         }
     }
 
+    /**
+     * An annotation is keyed by bare coordinates, so it outlives the block that carried it. Left
+     * alone, a broken-and-rebuilt block silently inherits the old annotation — your new bookshelf is
+     * still holding a 2d10 dart trap — and the orphan is unreachable, because {@code /dm object clear}
+     * needs a block to look at and air gives it none.
+     *
+     * <p>So: a DM breaking an annotated block clears it and gets told what was cleared, with
+     * {@code /dm object restore} to put it back on whatever they look at next (the "I moved the chest
+     * one block over" case). A player can't break one at all — otherwise mining a locked chest is a
+     * free bypass of the lock.
+     */
+    @EventHandler(ignoreCancelled = true)
+    public void onBreak(org.bukkit.event.block.BlockBreakEvent event) {
+        InteractiveObjectManager.Obj o = InteractiveObjectManager.get(event.getBlock().getLocation());
+        if (o == null) return;
+
+        Player player = event.getPlayer();
+        String prettyBlock = ObjectCommand.pretty(event.getBlock().getType().name());
+
+        if (!DMManager.isDM(player)) {
+            event.setCancelled(true);
+            player.sendMessage(Component.text("The " + prettyBlock + " won't budge — this one is the DM's.", NamedTextColor.GRAY));
+            return;
+        }
+
+        InteractiveObjectManager.remove(event.getBlock().getLocation());
+        ObjectCommand.stashCleared(player, o);
+        player.sendMessage(Component.text("🔧 Cleared the annotation on the " + prettyBlock + " you broke — "
+                + ObjectCommand.describe(o), NamedTextColor.YELLOW));
+        player.sendMessage(Component.text("  Put it back on another block with /dm object restore.", NamedTextColor.DARK_GRAY));
+    }
+
     /** Share the DM's flavor text, if there is any, before whatever the block does next. */
     private void sendFlavor(Player player, InteractiveObjectManager.Obj o) {
         if (!o.description.isEmpty()) {
