@@ -222,6 +222,9 @@ the pieces those three share (proficiency ids, `player_choices`, duplicate profi
 - **Duplicate proficiencies (PHB p.125)**: the same skill/tool from two fixed sources becomes a
   "Replace duplicate …" pick (`CharacterCreationService.duplicateReplacements`).
 - **Chosen tools/languages persist** (`chosenTools` / `chosenLanguages`); grants re-derive on load.
+- **`also_give: true`** on a `type: tool` choice grants the picked tool as an item too (Guild Artisan).
+  Starting-equipment picks are resolved from **every** source in one pass (`resolveEquipmentFromChoices`);
+  it used to run only for class and background, so a race/subclass equipment pick granted nothing.
 
 ### Icons & Materials (Resource Pack)
 

@@ -677,11 +677,6 @@ public class CharacterSheet {
             }
         }
 
-        if (dndClass != null && session != null) {
-            List<ItemStack> choiceItems = resolveEquipmentFromChoices(session.getPendingChoices(), "class");
-            startingItems.addAll(choiceItems);
-        }
-
         if (background != null) {
             List<String> bgEquipment = background.getStartingEquipment();
             if (bgEquipment != null) {
@@ -691,9 +686,10 @@ public class CharacterSheet {
             }
         }
 
-        if (background != null && session != null) {
-            List<ItemStack> choiceItems = resolveEquipmentFromChoices(session.getPendingChoices(), "background");
-            startingItems.addAll(choiceItems);
+        // Every source's picks at once. This used to run only for "class" and "background", so an
+        // equipment pick on a race or subclass was silently never granted.
+        if (session != null) {
+            startingItems.addAll(resolveEquipmentFromChoices(session.getPendingChoices()));
         }
 
 //        if (dndClass != null && dndClass.getSpellcastingAbility() != null) {
@@ -703,26 +699,31 @@ public class CharacterSheet {
         equipment.addAll(startingItems);
     }
 
-    private List<ItemStack> resolveEquipmentFromChoices(List<PendingChoice<?>> pendingChoices, String source) {
+    /**
+     * Items from the player's picks: every equipment choice, plus the tool itself for a
+     * {@code type: tool} choice marked {@code also_give} (Guild Artisan, Folk Hero, Entertainer).
+     */
+    private List<ItemStack> resolveEquipmentFromChoices(List<PendingChoice<?>> pendingChoices) {
         List<ItemStack> items = new ArrayList<>();
-
         if (pendingChoices == null) return items;
 
         for (PendingChoice<?> pc : pendingChoices) {
-            if (!source.equals(pc.getSource())) continue;
-
-            if (pc.getPlayersChoice().getType() != PlayersChoice.ChoiceType.EQUIPMENT) continue;
-
-            Set<?> chosen = pc.getChosen();
-
-            for (Object obj : chosen) {
-                if (obj instanceof EquipmentOption equipmentOption) {
-                    List<ItemStack> optionItems = createItemsFromEquipmentOption(equipmentOption);
-                    items.addAll(optionItems);
+            PlayersChoice<?> choice = pc.getPlayersChoice();
+            if (choice.getType() == PlayersChoice.ChoiceType.EQUIPMENT) {
+                for (Object obj : pc.getChosen()) {
+                    if (obj instanceof EquipmentOption equipmentOption) {
+                        items.addAll(createItemsFromEquipmentOption(equipmentOption));
+                    }
+                }
+            } else if (choice.getType() == PlayersChoice.ChoiceType.TOOL && choice.isAlsoGive()) {
+                for (Object obj : pc.getChosen()) {
+                    // A vehicle has no item; the content check warns about also_give offering one.
+                    if (obj instanceof String toolId && ItemUtil.displayNameOf(toolId) != null) {
+                        items.addAll(createItemsFromEquipmentOption(EquipmentOption.item(toolId, 1)));
+                    }
                 }
             }
         }
-
         return items;
     }
 

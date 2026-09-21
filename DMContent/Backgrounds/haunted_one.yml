@@ -1,0 +1,25 @@
+# Curse of Strahd, p.209. The only shipped background with a LIMITED skill pick (2 of 4) and a
+# limited language pick (exotic languages only). Field reference: docs/authoring-backgrounds.md
+haunted_one:
+  name: Haunted One
+  description: "You are haunted by something so terrible that you dare not speak of it — a monster, a curse, a memory. You've tried to bury it and run from it, to no avail."
+  starting_equipment:
+    - monster_hunters_pack
+    - trinket               # of special significance
+    - common_clothes
+    - silver_piece x1
+  player_choices:
+    - id: haunted_one_skills
+      title: Background Skills
+      type: skill
+      choose: 2
+      options: [arcana, investigation, religion, survival]
+    - id: haunted_one_languages
+      title: Exotic Languages
+      type: language
+      choose: 2
+      options: [Abyssal, Celestial, Deep Speech, Draconic, Infernal, Primordial, Sylvan, Undercommon]
+  feature:
+    name: Heart of Darkness
+    description: "Those who look into your eyes can see that you have faced unimaginable horror. Common folk extend you every courtesy and do their utmost to help you. They won't take up arms alongside you unless they're cornered, but they'll offer shelter, food and information."
+  links: ["https://www.dndbeyond.com/sources/cos/appendices#HauntedOne"]

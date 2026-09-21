@@ -297,6 +297,14 @@ public final class ContentValidator {
                 List<String> ids = new ArrayList<>();
                 for (Object opt : choice.pc().getOptions()) if (opt instanceof String s) ids.add(s);
                 checkToolIds(choiceWhere, ids);
+                // also_give hands over the picked tool's item — a vehicle (or a tool with no item) has none.
+                if (choice.pc().isAlsoGive()) {
+                    for (String t : ids) {
+                        if (ToolRegistry.isRegistered(t) && !itemExists(t)) {
+                            warn(choiceWhere + " sets also_give but offers '" + t + "', which has no item to give.");
+                        }
+                    }
+                }
             } else if (choice.type() == PlayersChoice.ChoiceType.LANGUAGE) {
                 for (Object opt : choice.pc().getOptions()) {
                     if (opt instanceof String s && !LanguageRegistry.isRegistered(s)) {

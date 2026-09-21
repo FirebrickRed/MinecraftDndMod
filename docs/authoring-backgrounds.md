@@ -78,9 +78,24 @@ A background often gives a tool **proficiency** and separately some **gear**:
 - *"Equipment: … a set of weighted dice"* (Charlatan's "tools of the con"): a `type: equipment`
   choice.
 
-When a background gives both the proficiency and *the same* item (the Guild Artisan's artisan's
-tools), you currently author two choices, and nothing forces the player to pick the same tool in
-both. Linking them is a known gap (#206).
+When a background gives the proficiency **and the same item** ("proficiency with one type of
+artisan's tools" + "a set of artisan's tools"), make it **one** tool pick with `also_give: true`:
+
+```yaml
+  player_choices:
+    - id: background_artisan_tool
+      title: Artisan's Tools
+      type: tool
+      choose: 1
+      options: [artisan_tool]
+      also_give: true      # the picked tool is granted as an item too
+```
+
+A tool id *is* an item id, so one pick does both, and the player can't end up proficient with smith's
+tools while carrying a lute. Guild Artisan, Folk Hero and Entertainer use it. Leave it off when the
+PHB gives only the proficiency: the Outlander's instrument, and the Criminal's and Soldier's gaming
+set. The Soldier's dice or cards are a separate equipment pick. `also_give` only works on
+`type: tool`, and the content check warns if the pick offers something with no item (a vehicle).
 
 ## 2024 rules: `feat:` and `ability_scores:`
 
@@ -109,6 +124,17 @@ Spelljammer backgrounds grant a feat too (Wildspacer → Tough), which is why `w
 | Sailor | fixed tool + vehicle. Wood elf + Sailor exercises the duplicate-Perception rule |
 | Urchin | equipment pick from a tag (`keepsake`) |
 | Wildspacer | `feat:` slot, `vehicles_space` |
+| Criminal | gaming-set proficiency pick (no item) + fixed thieves' tools |
+| Entertainer | instrument pick with `also_give` + fixed disguise kit |
+| Folk Hero | artisan's-tool pick with `also_give` + fixed vehicles (land) |
+| Guild Artisan | artisan's-tool pick with `also_give` + a language |
+| Hermit | fixed herbalism kit (Druid + Hermit exercises the duplicate-**tool** rule) |
+| Outlander | instrument **proficiency** pick without the item |
+| Sage | 2 language picks |
+| Soldier | gaming-set proficiency pick **and** a separate dice/cards gear pick |
+| Haunted One (Curse of Strahd) | a **limited** skill pick (2 of 4) and a limited language pick (exotic only) |
 
-Still missing from the PHB: Criminal, Entertainer, Folk Hero, Guild Artisan, Hermit, Outlander,
-Sage, Soldier (#206).
+That's all 13 PHB backgrounds. The PHB *variants* (Pirate, Spy, Gladiator, Knight, Guild Merchant)
+aren't shipped. Each is a copy of its parent with a different feature or gear line, so add one as
+its own background if your table wants it. The d6/d8 flavor tables (Criminal Specialty, Entertainer
+Routines, personality traits) aren't modelled; players roll or pick them at the table.

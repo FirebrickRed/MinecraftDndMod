@@ -421,3 +421,81 @@ wooden_case:
   type: "gear"
   description: "A wooden case for keeping maps and scrolls dry."
   material: "BARREL"
+
+# --- PHB backgrounds (#206) ---
+costume:
+  name: "Costume"
+  type: "gear"
+  description: "A performer's costume, bright and a little worn at the seams."
+  material: "RED_WOOL"
+  cost: { amount: 5, currency: gold }
+
+favor_of_an_admirer:
+  name: "Favor of an Admirer"
+  type: "gear"
+  description: "A love letter, a lock of hair, or a trinket pressed into your hand after a show."
+  material: "POPPY"
+
+iron_pot:
+  name: "Iron Pot"
+  type: "gear"
+  description: "A sturdy iron cooking pot."
+  material: "CAULDRON"
+  cost: { amount: 2, currency: gold }
+
+letter_of_introduction:
+  name: "Letter of Introduction"
+  type: "gear"
+  description: "A letter from your guild vouching for your skill and standing."
+  material: "PAPER"
+
+scroll_case_of_notes:
+  name: "Scroll Case of Notes"
+  type: "gear"
+  description: "A scroll case stuffed full of notes from your studies or prayers in seclusion."
+  material: "WRITABLE_BOOK"
+
+winter_blanket:
+  name: "Winter Blanket"
+  type: "gear"
+  description: "A heavy wool blanket for cold nights."
+  material: "WHITE_CARPET"
+  cost: { amount: 5, currency: silver }
+
+hunting_trap:
+  name: "Hunting Trap"
+  type: "gear"
+  description: "A sawtooth steel ring that snaps shut when a creature steps on the plate. Escaping takes a DC 13 Strength check."
+  material: "IRON_TRAPDOOR"
+  cost: { amount: 5, currency: gold }
+
+animal_trophy:
+  name: "Trophy from an Animal"
+  type: "gear"
+  description: "A claw, a tooth, or a pelt from a beast you killed."
+  material: "RABBIT_HIDE"
+
+letter_from_dead_colleague:
+  name: "Letter from a Dead Colleague"
+  type: "gear"
+  description: "A letter posing a question you have not yet been able to answer."
+  material: "PAPER"
+
+insignia_of_rank:
+  name: "Insignia of Rank"
+  type: "gear"
+  description: "The badge of the rank you held in the army you served."
+  material: "IRON_NUGGET"
+
+battle_trophy:
+  name: "Trophy from a Fallen Enemy"
+  type: "gear"
+  description: "A dagger, a broken blade, or a piece of a banner taken from a foe."
+  material: "WHITE_BANNER"
+
+monster_hunters_pack:
+  name: "Monster Hunter's Pack"
+  type: "pack"
+  description: "A chest, a crowbar, a hammer, three wooden stakes, a holy symbol, a flask of holy water, a set of manacles, a steel mirror, a flask of oil, a tinderbox, and 3 torches."
+  material: "BUNDLE"
+  tags: [pack]

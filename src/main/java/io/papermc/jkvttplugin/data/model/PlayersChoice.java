@@ -39,6 +39,23 @@ public class PlayersChoice<T> {
         return type;
     }
 
+    /**
+     * {@code also_give: true} on a {@code type: tool} choice: the picked tool is granted as an item
+     * as well as a proficiency. A tool id is an item id, so one pick does both — the Guild
+     * Artisan's "proficiency with one artisan's tool" and "a set of artisan's tools" are the same
+     * tool, and two separate picks couldn't enforce that (#206).
+     */
+    private boolean alsoGive = false;
+
+    public boolean isAlsoGive() {
+        return alsoGive;
+    }
+
+    public PlayersChoice<T> alsoGive(boolean alsoGive) {
+        this.alsoGive = alsoGive;
+        return this;
+    }
+
     // ToDo: update when I start using it based on use cases
     // it doesn't like that options may not be a string
 //    public boolean containsOptions(String value) {

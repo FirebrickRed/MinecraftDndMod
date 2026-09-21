@@ -64,6 +64,11 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] Finish a character with chosen languages/tools → sheet's **Proficiency Bonus** tile lists Armor / Weapons / Tools / Languages with proper names ("Navigator's Tools", "Vehicles (Water)").
 - [ ] **Restart the server** → the same character still lists its chosen languages and tools (they used to vanish).
 - [ ] Background tile → shows *Choices:* and *Feature:*. Wildspacer shows *Feat: Tough (not applied yet…)*. Sheet's background item shows the feature text.
+- [ ] **Guild Artisan / Folk Hero** → one *Artisan's Tools* pick; finish the character → you're proficient with that tool **and** the tool item is in your starting kit. **Entertainer** → same with an instrument.
+- [ ] **Outlander** → instrument pick gives proficiency but **no** instrument item. **Soldier** → gaming-set proficiency pick *plus* a separate Dice / Cards gear pick.
+- [ ] **Haunted One** → skill pick offers only Arcana / Investigation / Religion / Survival (choose 2); language pick offers only the 8 exotic languages.
+- [ ] **Druid + Hermit** → *Replace duplicate Herbalism Kit* pick.
+- [ ] **Dwarf + Guild Artisan** → pick Smith's Tools in the dwarf's tool section, then click it in the Guild Artisan section → it **moves** (light green "Selected in another section") instead of taking it twice.
 - [ ] **Tiefling** → Thaumaturgy is castable (it used to count as a 0-use leveled spell). Same for forest gnome's Minor Illusion.
 
 ## Save location

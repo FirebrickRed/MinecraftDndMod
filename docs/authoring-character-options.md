@@ -109,7 +109,9 @@ A choice with `choose: 0` or no usable options is dropped silently.
 
 **Proficiency vs item.** "Proficiency with one gaming set" is a `type: tool` choice with
 `options: [gaming_set]`. "A gaming set" in your pack is a `type: equipment` choice with the same
-option. They look alike and do different things, and the Noble used to get the wrong one.
+option. They look alike and do different things, and the Noble used to get the wrong one. When
+it's both, **and the same tool**, add `also_give: true` to the tool choice: the pick grants the
+proficiency *and* the item (Guild Artisan, Folk Hero, Entertainer).
 
 ### How choices are grouped in the menu
 

@@ -90,7 +90,8 @@ public final class ChoiceParser {
                         }
                     }
 
-                    pc = new PlayersChoice<>(choose, new ArrayList<>(toolIds), type);
+                    pc = new PlayersChoice<>(choose, new ArrayList<>(toolIds), type)
+                            .alsoGive(ParseUtil.asBoolean(m.get("also_give"), false));
                 }
                 case "LANGUAGE" -> {
                     type = PlayersChoice.ChoiceType.LANGUAGE;
@@ -153,6 +154,11 @@ public final class ChoiceParser {
                     pc = new PlayersChoice<>(choose, opts, type);
                 }
                 default -> { continue; }
+            }
+
+            if (m.containsKey("also_give") && pc.getType() != PlayersChoice.ChoiceType.TOOL) {
+                io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] choice '" + id
+                        + "' sets also_give, which only means something on a type: tool choice — ignored.");
             }
 
             if (choose > 0 && pc.getOptions() != null && !pc.getOptions().isEmpty()) {
