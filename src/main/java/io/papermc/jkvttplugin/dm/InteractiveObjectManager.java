@@ -52,10 +52,24 @@ public final class InteractiveObjectManager {
         public String trapSave = "";     // ability the victim saves with, e.g. "dexterity"
         public int trapDc;               // reference DC (spot / disarm / save); the DM can adjust per check
         public java.util.List<String> loot = new java.util.ArrayList<>(); // item ids, e.g. "longsword", "gold_piece x10"
+        // Key (#200): the item id that opens this lock without a check, or "" for none. A key is used
+        // up only when keySingleUse is set; either way the lock stays open afterwards, since a consumed
+        // key must not leave a lock that can never open again.
+        public String keyItem = "";
+        public boolean keySingleUse;
 
         /** True when a player poking this block springs the trap (trapped and not yet disarmed). */
         public boolean hasArmedTrap() {
             return trapped && !disarmed;
+        }
+
+        public boolean hasKey() { return keyItem != null && !keyItem.isBlank(); }
+
+        /** True when this is a lock whose key is among the item ids a player is carrying. */
+        public boolean keyOpens(java.util.Collection<String> carriedItemIds) {
+            if (opening != Opening.LOCKED || !hasKey() || carriedItemIds == null) return false;
+            for (String id : carriedItemIds) if (keyItem.equalsIgnoreCase(id)) return true;
+            return false;
         }
     }
 
@@ -199,6 +213,8 @@ public final class InteractiveObjectManager {
             yaml.set(path + ".trapSave", e.getValue().trapSave);
             yaml.set(path + ".trapDc", e.getValue().trapDc);
             yaml.set(path + ".loot", e.getValue().loot);
+            yaml.set(path + ".keyItem", e.getValue().keyItem);
+            yaml.set(path + ".keySingleUse", e.getValue().keySingleUse);
         }
         try {
             file.getParentFile().mkdirs();
@@ -230,6 +246,8 @@ public final class InteractiveObjectManager {
             o.trapSave = yaml.getString(path + ".trapSave", "");
             o.trapDc = yaml.getInt(path + ".trapDc", 0);
             o.loot = new java.util.ArrayList<>(yaml.getStringList(path + ".loot"));
+            o.keyItem = yaml.getString(path + ".keyItem", "");
+            o.keySingleUse = yaml.getBoolean(path + ".keySingleUse", false);
             objects.put(rawKey, o);
         }
         LOGGER.info("Loaded " + objects.size() + " interactive objects.");

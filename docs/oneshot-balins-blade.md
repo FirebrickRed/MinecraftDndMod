@@ -69,8 +69,10 @@ Seed the party with pocket money so they can actually shop:
 
 **Pre-annotate the Cellar (Act II).** Build a short corridor down to a room. Then, looking at each block:
 ```
-# A) Locked grate at the entrance (STR or Thieves' Tools)
+# A) Locked grate at the entrance (STR, Thieves' Tools, or a key)
 /dm object lock A rusted iron grate, chained from the far side.
+# optional: Balin hands over the grate key in Act I (#200) — the key opens it with no roll
+# /dm object key iron_key        then  /dm give <player> iron_key
 
 # B) A dart trap on a treasure chest (spot / disarm / trigger)
 /dm object trap 2d10 dex 13

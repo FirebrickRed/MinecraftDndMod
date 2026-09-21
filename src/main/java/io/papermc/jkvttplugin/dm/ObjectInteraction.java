@@ -87,9 +87,13 @@ public final class ObjectInteraction {
         if (o != null) {
             switch (o.opening) {
                 case LOCKED -> {
+                    if (o.keyOpens(carriedItemIds(player))) {
+                        unlockWithKey(player, name, loc, o);
+                        break; // unlocked — fall through to the open below
+                    }
                     player.sendMessage(Component.text("🔒 The " + name + " is locked.", NamedTextColor.GOLD));
                     player.sendMessage(Component.text("Tell the DM how you'd like to get it open.", NamedTextColor.GRAY));
-                    notifyLocked(player, name, loc);
+                    notifyLocked(player, name, loc, o);
                     return;
                 }
                 case SEALED -> {
@@ -196,7 +200,7 @@ public final class ObjectInteraction {
         toDms(buttons);
     }
 
-    private static void notifyLocked(Player player, String name, Location loc) {
+    private static void notifyLocked(Player player, String name, Location loc, InteractiveObjectManager.Obj o) {
         toDms(Component.text("🔒 " + player.getName() + " is trying to open a locked " + name + " ", NamedTextColor.GOLD)
                 .append(InteractiveObjectListener.clickableCoords(loc))
                 .append(Component.text(" — ", NamedTextColor.GOLD))
@@ -205,6 +209,60 @@ public final class ObjectInteraction {
                 .append(Component.text(" "))
                 .append(thievesToolsButton(player)));
         toDms(thievesToolsStatus(player));
+        if (o.hasKey()) {
+            String keyName = io.papermc.jkvttplugin.util.ItemUtil.displayNameOf(o.keyItem);
+            toDms(Component.text("   Opens with: " + (keyName != null ? keyName : o.keyItem)
+                    + " — they aren't carrying it.", NamedTextColor.DARK_GRAY));
+        }
+    }
+
+    /** Item ids of everything the player is carrying (the shared item_id tag). */
+    private static java.util.Set<String> carriedItemIds(Player player) {
+        java.util.Set<String> ids = new java.util.HashSet<>();
+        for (org.bukkit.inventory.ItemStack s : player.getInventory().getContents()) {
+            String id = io.papermc.jkvttplugin.util.ItemUtil.getItemId(s);
+            if (id != null) ids.add(id.toLowerCase());
+        }
+        return ids;
+    }
+
+    /**
+     * The player has the key (#200): the lock opens without a roll and stays open afterwards. A
+     * single-use key is taken from the inventory and the sheet's gear list together. The player,
+     * anyone standing nearby and the DMs all see it happen.
+     */
+    private static void unlockWithKey(Player player, String name, Location loc, InteractiveObjectManager.Obj o) {
+        String keyName = io.papermc.jkvttplugin.util.ItemUtil.displayNameOf(o.keyItem);
+        if (keyName == null) keyName = o.keyItem;
+        o.opening = InteractiveObjectManager.Obj.Opening.OPENS;
+        InteractiveObjectManager.save();
+
+        boolean consumed = false;
+        if (o.keySingleUse) {
+            org.bukkit.inventory.ItemStack[] contents = player.getInventory().getContents();
+            for (int i = 0; i < contents.length; i++) {
+                if (!o.keyItem.equalsIgnoreCase(io.papermc.jkvttplugin.util.ItemUtil.getItemId(contents[i]))) continue;
+                if (contents[i].getAmount() > 1) contents[i].setAmount(contents[i].getAmount() - 1);
+                else player.getInventory().setItem(i, null);
+                var sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
+                if (sheet != null) sheet.removeEquipmentItem(o.keyItem, 1);
+                consumed = true;
+                break;
+            }
+        }
+
+        String who = player.getName();
+        var sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
+        if (sheet != null) who = sheet.getCharacterName();
+        Component line = Component.text("🔑 " + who + " unlocks the " + name + " with the " + keyName
+                + (consumed ? " — the key stays in the lock." : "."), NamedTextColor.GOLD);
+        java.util.Set<Player> told = new java.util.HashSet<>();
+        for (Player p : loc.getWorld().getPlayers()) {
+            if (p.getLocation().distanceSquared(loc) <= 16 * 16 && told.add(p)) p.sendMessage(line);
+        }
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (DMManager.isDM(p) && told.add(p)) p.sendMessage(line);
+        }
     }
 
     private static void notifyLoot(Player player, String name, Location loc) {

@@ -145,6 +145,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `check active <player>` · `check clear <player> [skill\|all]` | See / clear held check values (e.g. an ongoing Stealth) |
 | `object <hide\|reveal\|desc <text>\|clear\|info>` | Annotate the block you're looking at (#185). See `docs/playtest-oneshot.md` |
 | `object lock [text]` · `object unlock` · `object seal [text]` | Whether it opens — pick one. `lock` = DM gets a [call a check] ping; `seal` = scenery that never opens and pings no one; `unlock` = back to opening normally |
+| `object key <item_id> [single-use]` · `object key none` | The item that opens this lock (#200). A player **carrying** it clicks [Open it] and it opens with no roll, then stays open; nearby players and the DMs see "X unlocks the chest with the Brass Key". Locks the block if it wasn't. `single-use` takes the key from them when it's turned. Ships `iron_key`, `brass_key`, `silver_key`, `ornate_key`; add your own item with `tags: [key]` for a key that fits one lock |
 | `object trap <damage> [save] [dc]` · `object disarm` · `object arm` | Trap the block, e.g. `object trap 2d10 dex 13` |
 | `object loot <item_id> [xN]` · `object loot clear` · `object give <player>` | Loot on a block with no container, then hand it over |
 | `object list [all]` | Every annotation in your world (or all worlds) — clickable coords, a `[Clear]` per row, and **(block gone)** on orphans. Works without looking at anything |

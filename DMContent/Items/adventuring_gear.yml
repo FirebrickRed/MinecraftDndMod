@@ -500,3 +500,36 @@ monster_hunters_pack:
   description: "A chest, a crowbar, a hammer, three wooden stakes, a holy symbol, a flask of holy water, a set of manacles, a steel mirror, a flask of oil, a tinderbox, and 3 torches."
   material: "BUNDLE"
   tags: [pack]
+
+# ==================== KEYS (#200) ====================
+# A lock names the key that opens it: /dm object key <item_id> [single-use], while looking at it.
+# A player carrying that item clicks [Open it] and it opens, no roll; the lock stays open after.
+# These are generic: every iron_key opens every lock keyed to iron_key. For a key that fits ONE
+# lock, add your own item here with tags: [key] (e.g. balin_cellar_key) and key the lock to it.
+iron_key:
+  name: "Iron Key"
+  type: "gear"
+  description: "A plain, heavy iron key."
+  material: "TRIPWIRE_HOOK"
+  tags: [key]
+
+brass_key:
+  name: "Brass Key"
+  type: "gear"
+  description: "A small brass key, worn smooth."
+  material: "TRIPWIRE_HOOK"
+  tags: [key]
+
+silver_key:
+  name: "Silver Key"
+  type: "gear"
+  description: "A slender silver key with a fine-toothed bit."
+  material: "TRIPWIRE_HOOK"
+  tags: [key]
+
+ornate_key:
+  name: "Ornate Key"
+  type: "gear"
+  description: "An elaborate key, its bow worked into a coat of arms."
+  material: "TRIPWIRE_HOOK"
+  tags: [key]

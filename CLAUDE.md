@@ -691,6 +691,10 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     fields: a chest can be locked AND trapped AND hold loot AND carry flavor text. `SEALED` is
     scenery — it never opens and **no DM is pinged**; `LOCKED` pings the DM with [call a check].
     The `description` renders on every path, including the trap one.
+  - **Keys (#200):** `Obj.keyItem` / `keySingleUse`, set by `/dm object key <item_id> [single-use]`.
+    A player carrying that item gets past the lock with no roll (`Obj.keyOpens`) and it **stays
+    open** afterwards (a consumed key mustn't leave a lock that can never open). A trap still fires
+    first. Keys are ordinary items tagged `key`; one per lock is just a uniquely named item.
   - **One prompt on every container (#185):** right-clicking a chest gives **[Open it]** /
     **[Ask for a check]** — the same two buttons whether or not the block is annotated, because a
     prompt that only appeared on annotated blocks would itself be the tell, and a menu naming

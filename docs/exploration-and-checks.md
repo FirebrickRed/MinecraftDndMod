@@ -120,8 +120,14 @@ broadcasting them to the table.
   that player then chooses whether to reveal it to the rest of the table. (Two-step share.)
 - **Help & Guidance.** A second player often chimes in "can I help?" — the Help action grants advantage,
   and Guidance adds +1d4. The check flow should let the DM fold in a helper.
-- **Tool proficiency.** Lockpicking/trap-disarm assume **Thieves' Tools** proficiency — factor it into
-  the bonus (it's easy to forget at the table, so the game should handle it).
+- **Tool proficiency — done (#207).** Picking a lock or disarming a trap is `/dm check <p> tool
+  thieves_tools dc N`: DEX + proficiency, doubled with expertise. The locked/ask pings carry a
+  [Thieves' tools] button and tell the DM whether the player is proficient and carrying them. A failed
+  graded check breaks one set by default (`objects.thieves_tools_break`, #210).
+- **Keys — done (#200).** `/dm object key <item_id> [single-use]` names the item that opens a lock. A
+  player carrying it gets past with no roll, and the lock stays open afterwards (a used-up key must not
+  leave a lock that can never open). Keys stay by default; `single-use` takes the key. So a lock has four
+  ways past it: the key, thieves' tools, force (Athletics), or the DM saying yes.
 - **DM escape hatch.** The DM can always just say yes/no and skip the roll. This overlaps the DM-override
   rework (#175) — which also wants an easy, clear "a player botched their combat round; let them redo it."
 - Who may attempt: only the interacting player, or anyone in reach?

@@ -27,10 +27,10 @@ import java.util.List;
  */
 public class ObjectCommand implements CommandExecutor, TabCompleter {
 
-    private static final List<String> SUBS = List.of("lock", "unlock", "seal", "hide", "reveal", "desc", "trap", "disarm", "arm", "loot", "give", "clear", "info", "list", "restore");
+    private static final List<String> SUBS = List.of("lock", "key", "unlock", "seal", "hide", "reveal", "desc", "trap", "disarm", "arm", "loot", "give", "clear", "info", "list", "restore");
 
     private static final String USAGE =
-            "Usage: /dm object <lock|unlock|seal|hide|reveal|desc <text>|trap|loot|clear|info|restore> — while looking at a block."
+            "Usage: /dm object <lock|key <item> [single-use]|unlock|seal|hide|reveal|desc <text>|trap|loot|clear|info|restore> — while looking at a block."
             + "  ·  /dm object list [all] works from anywhere.";
 
     @Override
@@ -78,6 +78,45 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
                 if (args.length > 1) o.description = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
                 InteractiveObjectManager.save();
                 dm.sendMessage(Component.text("🔒 Locked the " + prettyBlock + "." + (o.description.isEmpty() ? "" : " \"" + o.description + "\""), NamedTextColor.GREEN));
+            }
+            case "key" -> {
+                // /dm object key <item_id> [single-use]  ·  /dm object key none   (#200)
+                if (args.length < 2) {
+                    dm.sendMessage(Component.text("Usage: /dm object key <item_id> [single-use]  ·  /dm object key none", NamedTextColor.RED));
+                    return true;
+                }
+                if (args[1].equalsIgnoreCase("none") || args[1].equalsIgnoreCase("clear")) {
+                    InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
+                    if (o == null || !o.hasKey()) { dm.sendMessage(Component.text("That " + prettyBlock + " has no key.", NamedTextColor.GRAY)); return true; }
+                    o.keyItem = "";
+                    o.keySingleUse = false;
+                    InteractiveObjectManager.save();
+                    dm.sendMessage(Component.text("Removed the key from the " + prettyBlock + ". It's still locked.", NamedTextColor.GREEN));
+                    return true;
+                }
+                String itemId = args[1].toLowerCase();
+                String keyName = io.papermc.jkvttplugin.util.ItemUtil.displayNameOf(itemId);
+                if (keyName == null) {
+                    dm.sendMessage(Component.text("No item called '" + args[1] + "'. Keys are ordinary items: iron_key, brass_key, "
+                            + "silver_key, ornate_key, or add your own in DMContent/Items with tags: [key].", NamedTextColor.RED));
+                    return true;
+                }
+                InteractiveObjectManager.Obj o = InteractiveObjectManager.getOrCreate(block.getLocation());
+                if (o.opening == InteractiveObjectManager.Obj.Opening.SEALED) {
+                    dm.sendMessage(Component.text("The " + prettyBlock + " is sealed, and a sealed block never opens. "
+                            + "/dm object lock it first if a key should open it.", NamedTextColor.RED));
+                    return true;
+                }
+                boolean locked = o.opening != InteractiveObjectManager.Obj.Opening.LOCKED;
+                o.opening = InteractiveObjectManager.Obj.Opening.LOCKED; // a key only means something on a lock
+                o.keyItem = itemId;
+                o.keySingleUse = args.length > 2 && (args[2].equalsIgnoreCase("single-use") || args[2].equalsIgnoreCase("single"));
+                InteractiveObjectManager.save();
+                dm.sendMessage(Component.text("🔑 The " + keyName + " opens the " + prettyBlock
+                        + (locked ? " (locked it)" : "") + (o.keySingleUse ? ". The key is used up when it's turned." : ". The key is kept."),
+                        NamedTextColor.GREEN));
+                dm.sendMessage(Component.text("   Hand it out with /dm give <player> " + itemId
+                        + ", list it in a creature's inventory or loot, or leave it in a chest.", NamedTextColor.GRAY));
             }
             case "unlock" -> {
                 InteractiveObjectManager.Obj o = InteractiveObjectManager.get(block.getLocation());
@@ -235,7 +274,8 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
         String trap = o.trapped ? ("trap[" + o.trapDamage + " " + o.trapSave + (o.trapDc > 0 ? " DC " + o.trapDc : "")
                 + (o.disarmed ? ", disarmed" : ", armed") + "] ") : "";
         String loot = o.loot.isEmpty() ? "" : ("loot[" + String.join(", ", o.loot) + "] ");
-        String s = (openingLabel(o.opening) + (o.hidden ? "hidden " : "") + trap + loot
+        String key = o.hasKey() ? ("key[" + o.keyItem + (o.keySingleUse ? ", single-use" : "") + "] ") : "";
+        String s = (openingLabel(o.opening) + (o.hidden ? "hidden " : "") + trap + key + loot
                 + (o.description.isEmpty() ? "" : "\"" + o.description + "\"")).trim();
         return s.isEmpty() ? "annotated" : s;
     }
@@ -317,6 +357,17 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
         List<String> out = new ArrayList<>();
         if (args.length == 1) {
             for (String s : SUBS) if (s.startsWith(args[0].toLowerCase())) out.add(s);
+        } else if (args[0].equalsIgnoreCase("key")) {
+            List<String> opts = new ArrayList<>();
+            if (args.length == 2) {
+                opts.add("none");
+                // Items tagged `key` first; any item id works, so a DM's one-off key needs no tag.
+                opts.addAll(io.papermc.jkvttplugin.util.TagRegistry.itemsFor("key"));
+            } else if (args.length == 3) {
+                opts.add("single-use");
+            }
+            String typed = args[args.length - 1].toLowerCase();
+            for (String s : opts) if (s.startsWith(typed)) out.add(s);
         }
         return out;
     }
