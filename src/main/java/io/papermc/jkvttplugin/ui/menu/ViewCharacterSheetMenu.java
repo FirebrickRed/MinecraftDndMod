@@ -98,6 +98,13 @@ public class ViewCharacterSheetMenu {
             if (character.getEquippedShield() != null) {
                 lore.addLine("Shield: +" + character.getEquippedShield().getBaseAC(), NamedTextColor.AQUA);
             }
+            // #209: say what unproficient armor costs, where the player looks at their armor.
+            if (character.armorPenaltyReason() != null) {
+                lore.blankLine()
+                        .addLine("⚠ " + character.armorPenaltyReason(), NamedTextColor.RED)
+                        .addLine("Disadvantage on STR/DEX checks, saves, attacks", NamedTextColor.RED)
+                        .addLine("Can't cast spells", NamedTextColor.RED);
+            }
 
             m.lore(lore.build());
         });

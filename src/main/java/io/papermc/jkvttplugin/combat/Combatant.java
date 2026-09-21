@@ -525,6 +525,10 @@ public class Combatant {
                 adv = fold(adv, c.getIncomingAttack());
             }
         }
+        // Unproficient armor (#209): every weapon attack uses STR or DEX. (A spell attack can't get
+        // here in that armor at all — casting is refused.)
+        CharacterSheet s = getCharacterSheet();
+        if (s != null && s.armorPenaltyReason() != null) adv = adv.with(false);
         return adv;
     }
 
@@ -538,6 +542,10 @@ public class Combatant {
             for (io.papermc.jkvttplugin.data.model.DndCondition c : target.myConditions()) {
                 for (String r : c.getReminders()) notes.add(c.getName() + " (" + target.getDisplayName() + "): " + r);
             }
+        }
+        CharacterSheet s = getCharacterSheet();
+        if (s != null && s.armorPenaltyReason() != null) {
+            notes.add("Armor (you): disadvantage, " + s.armorPenaltyReason());
         }
         return notes;
     }
@@ -555,6 +563,7 @@ public class Combatant {
         }
         CharacterSheet s = getCharacterSheet();
         if (s != null && s.hasSaveAdvantageVs(tags)) adv = adv.with(true);
+        if (s != null && s.armorPenaltyApplies(ability)) adv = adv.with(false); // #209: STR/DEX saves
         return adv;
     }
 

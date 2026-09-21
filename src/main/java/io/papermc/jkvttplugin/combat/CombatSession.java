@@ -358,6 +358,11 @@ public class CombatSession {
      */
     private void rollInitiativeFor(Combatant combatant) {
         int roll = DiceRoller.rollDice(1, 20);
+        // Initiative is a DEX check, so unproficient armor gives disadvantage (#209): keep the lower.
+        var sheet = combatant.getCharacterSheet();
+        if (sheet != null && sheet.armorPenaltyApplies(io.papermc.jkvttplugin.data.model.enums.Ability.DEXTERITY)) {
+            roll = Math.min(roll, DiceRoller.rollDice(1, 20));
+        }
         int total = roll + combatant.getInitiativeBonus();
         combatant.setInitiative(total);
     }

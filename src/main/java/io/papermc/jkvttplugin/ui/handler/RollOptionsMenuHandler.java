@@ -72,8 +72,12 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
     public static void promptSkillRoll(Player player, CharacterSheet character, String type, String value, RollMode mode) {
         RollInfo info = getRollInfo(character, type, value);
         String bonusStr = info.bonus >= 0 ? "+" + info.bonus : String.valueOf(info.bonus);
-        String manualCmd = "/character check " + type + " " + value + " manualRoll ";
-        String autoCmd = "/character check " + type + " " + value + " autoRoll";
+        // Carry the menu's adv/dis pick in the command, or physical mode rolls it normal. The manual
+        // form puts it before manualRoll so the player's typed d20 still lands last.
+        String modeWord = switch (mode) { case ADVANTAGE -> "adv "; case DISADVANTAGE -> "dis "; default -> ""; };
+        String manualCmd = "/character check " + type + " " + value + " " + modeWord + "manualRoll ";
+        String autoCmd = "/character check " + type + " " + value + " " + modeWord + "autoRoll";
+        mode = withArmor(character, type, value, mode); // show the armor disadvantage before they roll (#209)
         String advNote = switch (mode) {
             case ADVANTAGE -> " (advantage)";
             case DISADVANTAGE -> " (disadvantage)";
@@ -98,7 +102,8 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
      * Resolve a physical skill/check/save roll (via RollService) and broadcast it. Returns false if
      * physical mode still needs a die (the caller should prompt).
      */
-    public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total, boolean forceAuto) {
+    public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total,
+                                          boolean forceAuto, io.papermc.jkvttplugin.combat.Advantage chosen) {
         RollInfo info = getRollInfo(character, type, value);
         // A DM-called check (#186) may carry advantage/disadvantage — apply it to the roll (so autoRoll
         // actually rolls 2d20 and keeps the right one), and report DM-first instead of broadcasting.
@@ -106,6 +111,13 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
                 io.papermc.jkvttplugin.dm.CheckManager.peekPending(character.getPlayerId());
         io.papermc.jkvttplugin.combat.Advantage advantage = pending != null
                 ? pending.advantage() : io.papermc.jkvttplugin.combat.Advantage.NONE;
+        if (pending == null && chosen != null) advantage = chosen; // the sheet menu's own adv/dis pick
+        // Unproficient armor: STR/DEX checks, saves and skills roll with disadvantage (#209).
+        if (armorApplies(character, type, value)) {
+            advantage = advantage.with(false);
+            Player owner = Bukkit.getPlayer(character.getPlayerId());
+            if (owner != null) owner.sendMessage(Component.text("↯ Disadvantage: " + character.armorPenaltyReason() + ".", NamedTextColor.RED));
+        }
         RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown,
                 character.rerollsNat1(), advantage, forceAuto);
         if (r == null) return false;
@@ -123,6 +135,31 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         String dice = r.providedTotal() ? "total" : String.valueOf(r.d20());
         broadcastRoll(character, info, r.total(), dice, null, null);
         return true;
+    }
+
+    /** The ability a roll of this type uses: a skill's ability, the check/save ability, a tool check's. */
+    private static Ability abilityOf(String type, String value) {
+        return switch (type) {
+            case "SKILL" -> Skill.valueOf(value).getAbility();
+            case "CHECK", "SAVE" -> Ability.valueOf(value);
+            case "TOOL" -> Ability.valueOf(value.substring(0, value.indexOf(':')).toUpperCase());
+            default -> null;
+        };
+    }
+
+    /** True when unproficient armor imposes disadvantage on this roll (STR or DEX, #209). */
+    private static boolean armorApplies(CharacterSheet character, String type, String value) {
+        Ability a = abilityOf(type, value);
+        return a != null && character.armorPenaltyApplies(a);
+    }
+
+    /** Fold the armor disadvantage into a menu roll mode (5e: advantage + disadvantage → normal). */
+    private static RollMode withArmor(CharacterSheet character, String type, String value, RollMode mode) {
+        if (!armorApplies(character, type, value)) return mode;
+        return switch (mode) {
+            case ADVANTAGE -> RollMode.NORMAL;
+            default -> RollMode.DISADVANTAGE;
+        };
     }
 
     /** Report a DM-called check to the DM (with success/fail vs the private DC) + a Share button. */
@@ -244,7 +281,7 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
      * @param value the enum name (e.g. "STEALTH", "STRENGTH")
      */
     public static void performRoll(CharacterSheet character, String type, String value, RollMode mode) {
-        switch (mode) {
+        switch (withArmor(character, type, value, mode)) { // unproficient armor → STR/DEX disadvantage (#209)
             case NORMAL -> rollNormal(character, type, value);
             case ADVANTAGE -> rollAdvantage(character, type, value);
             case DISADVANTAGE -> rollDisadvantage(character, type, value);

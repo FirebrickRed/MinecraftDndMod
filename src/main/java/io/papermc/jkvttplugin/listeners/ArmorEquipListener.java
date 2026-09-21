@@ -97,6 +97,7 @@ public class ArmorEquipListener implements Listener {
         if (body != null && body.isShield()) body = null;
         if (!sameArmor(body, sheet.getEquippedArmor())) {
             if (body == null) sheet.unequipArmor(); else sheet.equipArmor(body);
+            warnIfUnproficient(player, sheet, body);
         }
 
         // Shield: the off-hand, and only if it really is a shield.
@@ -104,9 +105,21 @@ public class ArmorEquipListener implements Listener {
         if (shield != null && !shield.isShield()) shield = null;
         if (!sameArmor(shield, sheet.getEquippedShield())) {
             if (shield == null) sheet.unequipShield(); else sheet.equipShield(shield);
+            warnIfUnproficient(player, sheet, shield);
             // AC is already updated; this only tells them what it cost if they're mid-turn (#190).
             GearChangeNotifier.notifyShieldChange(player, shield != null);
         }
+    }
+
+    /**
+     * Tell the player the cost of armor they aren't proficient with (#209). A warning only — the
+     * equip goes through; they may have a reason (a disguise, carrying it for someone).
+     */
+    private void warnIfUnproficient(Player player, CharacterSheet sheet, DndArmor armor) {
+        if (armor == null || sheet.isProficientWithArmor(armor)) return;
+        player.sendMessage(net.kyori.adventure.text.Component.text("⚠ You aren't proficient with " + armor.getName()
+                + ": disadvantage on Strength and Dexterity checks, saves and attacks, and you can't cast spells.",
+                net.kyori.adventure.text.format.NamedTextColor.GOLD));
     }
 
     /** The D&D armor a stack stands for, or null if it isn't one of ours. */

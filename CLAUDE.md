@@ -309,8 +309,12 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - Weapons/armor/items have custom NBT data for identification — all via the shared `item_id` tag
   (`ItemUtil.getItemId`). There is no `armor_id`/`weapon_id` key; anything reading one is a bug.
 - `WeaponListener` handles weapon interactions and the **left-click attack prompt** (#189)
-- Armor proficiency is tracked and shown on the sheet but **not enforced**. Nothing checks it when
-  armor is worn, and there's no auto-equip at creation; equipped armor comes from the real slots below.
+- **Armor proficiency is enforced (#209, PHB p.144).** `CharacterSheet.unproficientArmorWorn()` /
+  `armorPenaltyApplies(ability)` is the one source: disadvantage on weapon attacks
+  (`Combatant.attackAdvantageAgainst`), STR/DEX saves (`saveAdvantage`), STR/DEX checks, skills and
+  tool checks (`RollOptionsMenuHandler`), and initiative; `/combat cast` and `/character cast` refuse.
+  Equipping it warns but never blocks. No auto-equip at creation; equipped armor comes from the real
+  slots below.
 - **Live equip tracking (#31):** `ArmorEquipListener` re-reads the chestplate and off-hand slots on
   any event that could change them (click, drag, off-hand swap key, right-click-to-equip, drop,
   join, respawn) and updates `equippedArmor`/`equippedShield`, which recalculates AC and persists.

@@ -830,6 +830,46 @@ public class CharacterSheet {
         return new ArrayList<>(equipment);
     }
 
+    // ==================== ARMOR PROFICIENCY (#209) ====================
+
+    /**
+     * Worn armor and shield this character lacks proficiency with, by name; empty if none.
+     * PHB p.144: wearing armor you're not proficient with gives disadvantage on any ability check,
+     * saving throw or attack roll that involves Strength or Dexterity, and you can't cast spells.
+     */
+    public List<String> unproficientArmorWorn() {
+        List<String> out = new ArrayList<>();
+        if (equippedArmor != null && !isProficientWithArmor(equippedArmor)) out.add(equippedArmor.getName());
+        if (equippedShield != null && !isProficientWithArmor(equippedShield)) out.add(equippedShield.getName());
+        return out;
+    }
+
+    /** True if the armor penalty applies to a roll using this ability (STR or DEX, while wearing it). */
+    public boolean armorPenaltyApplies(Ability ability) {
+        return (ability == Ability.STRENGTH || ability == Ability.DEXTERITY) && !unproficientArmorWorn().isEmpty();
+    }
+
+    /** "not proficient with Plate Armor" — for roll reminders and refusals; null if no penalty. */
+    public String armorPenaltyReason() {
+        List<String> worn = unproficientArmorWorn();
+        return worn.isEmpty() ? null : "not proficient with " + String.join(" + ", worn);
+    }
+
+    /**
+     * Proficient by category (light_armor / medium_armor / heavy_armor / shields, as the class and
+     * race YAML spell them) or by the specific armor's id.
+     */
+    public boolean isProficientWithArmor(DndArmor armor) {
+        if (armor == null) return true;
+        String category = armor.isShield() ? "shields" : Util.normalize(armor.getCategory()) + "_armor";
+        for (String p : armorProficiencies) {
+            String key = Util.normalize(p);
+            if (key.equals(category) || key.equals(Util.normalize(armor.getId()))) return true;
+            if (armor.isShield() && key.equals("shield")) return true;
+        }
+        return false;
+    }
+
     public DndArmor getEquippedArmor() {
         return equippedArmor;
     }

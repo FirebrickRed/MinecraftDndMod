@@ -202,7 +202,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    /** {@code /character check <TYPE> <VALUE> [manualRoll <n> | autoRoll | total <n>]} — resolve a skill/ability/save roll (#145). */
+    /** {@code /character check <TYPE> <VALUE> [manualRoll <n> | autoRoll | total <n>] [adv|dis]} — resolve a skill/ability/save/tool roll (#145). */
     private boolean handleCheck(CommandSender sender, String[] rest) {
         if (!(sender instanceof Player player)) {
             sender.sendMessage(Component.text("Only players can roll checks.", NamedTextColor.RED));
@@ -220,8 +220,15 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));
             return true;
         }
+        // The sheet's roll menu passes the player's advantage/disadvantage pick through the command it
+        // fills in; without this, "roll with advantage" in physical-dice mode silently rolled normal.
+        io.papermc.jkvttplugin.combat.Advantage chosen = io.papermc.jkvttplugin.combat.Advantage.NONE;
+        for (String t : rest) {
+            if (t.equalsIgnoreCase("adv") || t.equalsIgnoreCase("advantage")) chosen = chosen.with(true);
+            else if (t.equalsIgnoreCase("dis") || t.equalsIgnoreCase("disadvantage")) chosen = chosen.with(false);
+        }
         if (!io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.resolvePhysical(sheet, type, value,
-                input.providedRoll(), input.providedTotal(), input.forceAuto())) {
+                input.providedRoll(), input.providedTotal(), input.forceAuto(), chosen)) {
             player.sendMessage(Component.text("Provide your roll: 'manualRoll <your d20>', or 'autoRoll'.", NamedTextColor.YELLOW));
         }
         return true;
@@ -245,6 +252,13 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                 io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(io.papermc.jkvttplugin.util.Util.normalize(rest[0]));
         if (spell == null) {
             player.sendMessage(Component.text("Unknown spell: " + rest[0], NamedTextColor.RED));
+            return true;
+        }
+        // PHB p.144: no spellcasting in armor you're not proficient with — chat spells included (#209).
+        CharacterSheet caster = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
+        if (caster != null && caster.armorPenaltyReason() != null) {
+            player.sendMessage(Component.text("✗ You can't cast spells — " + caster.armorPenaltyReason()
+                    + ". Take it off first.", NamedTextColor.RED));
             return true;
         }
         if (!spell.isSocial()) {

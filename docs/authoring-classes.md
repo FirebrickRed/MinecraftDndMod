@@ -49,7 +49,7 @@ custom_model: warlock_icon       # menu tile model; only if its texture exists
 | `hit_die` | 6 | A number. |
 | `saving_throws` | — | Full ability names. Drives save proficiency. |
 | `primary_abilities` | — | Hint only. |
-| `armor_proficiencies` / `weapon_proficiencies` | — | Shown on the sheet. Armor proficiency isn't enforced yet: no penalty for wearing armor you lack it for. |
+| `armor_proficiencies` / `weapon_proficiencies` | — | Shown on the sheet. Armor you lack proficiency with gives disadvantage on STR/DEX checks, saves and attacks, and blocks spellcasting (PHB p.144). Categories are `light_armor`, `medium_armor`, `heavy_armor`, `shields`; a specific armor id works too. |
 | `tool_proficiencies`, `languages`, `skills` | — | Automatic grants ([shared guide](authoring-character-options.md#automatic-grants)). |
 | `starting_equipment` | — | Flat list of item ids / `id xN`. |
 | `player_choices` | — | Skills, tools, equipment. |

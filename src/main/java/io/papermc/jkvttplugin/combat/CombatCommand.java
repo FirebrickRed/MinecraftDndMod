@@ -1108,6 +1108,18 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
     // ==================== SPELLCASTING (Issue #123) ====================
 
+    /**
+     * PHB p.144: you can't cast spells while wearing armor you lack proficiency with (#209). Refuses
+     * with the reason and returns true. A creature (no sheet) is the DM's call and is never blocked.
+     */
+    static boolean armorBlocksCasting(Player player, Combatant caster) {
+        CharacterSheet sheet = caster.getCharacterSheet();
+        if (sheet == null || sheet.armorPenaltyReason() == null) return false;
+        player.sendMessage(Component.text("✗ " + caster.getDisplayName() + " can't cast spells — "
+                + sheet.armorPenaltyReason() + ". Take it off first.", NamedTextColor.RED));
+        return true;
+    }
+
     private void handleCast(Player player, String[] args) {
         CombatSession session = resolveSession(player);
         if (session == null) return;
@@ -1150,7 +1162,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             caster = current;
             if (caster == null) { player.sendMessage(Component.text("No active turn.", NamedTextColor.RED)); return; }
             // Start a ritual channel (#156): /combat cast <ritual> --ritual
-            if (hasFlag(args, "--ritual")) { RitualManager.begin(session, player, caster, spell); return; }
+            if (hasFlag(args, "--ritual")) {
+                if (armorBlocksCasting(player, caster)) return;
+                RitualManager.begin(session, player, caster, spell);
+                return;
+            }
         } else {
             if (!reactionCast) {
                 player.sendMessage(Component.text("It's not your turn! (Only a reaction spell can be cast now.)", NamedTextColor.RED));
@@ -1168,6 +1184,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text(caster.getDisplayName() + " can't act — " + caster.actionBlockingCondition() + ".", NamedTextColor.RED));
             return;
         }
+        if (armorBlocksCasting(player, caster)) return;
         // A reaction cast is exempt: casting off-turn is often how you ANSWER a window, and
         // blocking it would deadlock the very thing that closes it.
         if (!spendReaction && turnHeld(player, caster)) return;
