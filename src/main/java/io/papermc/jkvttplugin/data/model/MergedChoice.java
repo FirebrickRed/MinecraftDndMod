@@ -16,7 +16,7 @@ public class MergedChoice {
     private final ChoiceCategory category;
     private final List<PendingChoice<?>> sourcePendingChoices;
     private final Set<String> alreadyKnown;
-    private final Set<String> selectedElsewhere; // Skills selected in OTHER sections (for cross-section display)
+    private final Set<String> selectedElsewhere; // Picked in OTHER sections of the same kind (for cross-section display)
     private final Set<String> availableOptionKeys;
     private final int totalChooseCount;
     private final Map<String, Integer> sourceContributions; // source -> count
@@ -241,7 +241,12 @@ public class MergedChoice {
                 return pc.displayFor(key);
             }
         }
-        return Util.prettify(key); // Fallback
+        // Not one of this choice's options (e.g. an "already known" grant): name it from its registry.
+        return switch (category) {
+            case TOOL -> io.papermc.jkvttplugin.data.model.enums.ToolRegistry.displayName(key);
+            case LANGUAGE -> io.papermc.jkvttplugin.data.model.enums.LanguageRegistry.displayName(key);
+            default -> Util.prettify(key);
+        };
     }
 
     /**

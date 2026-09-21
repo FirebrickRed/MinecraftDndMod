@@ -2,6 +2,8 @@ package io.papermc.jkvttplugin.data;
 
 import io.papermc.jkvttplugin.data.loader.*;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
+import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
+import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
@@ -31,12 +33,17 @@ public class DataManager {
         File backgroundsFolder = new File(dmContentFolder, "Backgrounds"); // references items/tools
         File entitiesFolder = new File(dmContentFolder, "Entities"); // References Weapons/Armor/Items
         File conditionsFolder = new File(dmContentFolder, "Conditions"); // No Dependencies
+        // Languages first: race/class/background loaders validate against the registry.
+        LanguageRegistry.load(new File(dmContentFolder, "Languages.yml"));
         SpellLoader.loadAllSpells(spellFolder);
         ConditionLoader.loadAllConditions(conditionsFolder);
         DamageTypeLoader.loadAll(new File(dmContentFolder, "DamageTypes.yml"));
         WeaponLoader.loadAllWeapons(weaponFolder);
         ArmorLoader.loadAllArmors(armorFolder);
         ItemLoader.loadAllItems(itemFolder);
+        // Tools are items (artisan_tool / musical_instrument / gaming_set / tool tags); register them
+        // before races/classes/backgrounds expand their tool choices.
+        ToolRegistry.registerItems(ItemLoader.getAllItems());
         RaceLoader.loadAllRaces(racesFolder);
         ClassLoader.loadAllClasses(classFolder);
         BackgroundLoader.loadAllBackgrounds(backgroundsFolder);
@@ -59,6 +66,7 @@ public class DataManager {
         WeaponLoader.clear();
         ArmorLoader.clear();
         ItemLoader.clear();
+        ToolRegistry.reset();
         EntityLoader.clear();
         ConditionLoader.clear();
         DamageTypeLoader.clear();

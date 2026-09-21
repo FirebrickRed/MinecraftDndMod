@@ -4,7 +4,10 @@ import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.data.model.ClassResource;
 import io.papermc.jkvttplugin.data.model.DndArmor;
+import io.papermc.jkvttplugin.data.model.DndBackground;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
+import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.ui.core.MenuHolder;
 import io.papermc.jkvttplugin.ui.core.MenuType;
@@ -155,9 +158,13 @@ public class ViewCharacterSheetMenu {
         ItemStack proficiencyItem = new ItemStack(Material.BOOK, profBonus);
         proficiencyItem.editMeta(m -> {
             m.displayName(Component.text("+" + profBonus, NamedTextColor.GOLD));
-            m.lore(LoreBuilder.create()
-                    .addLine("Proficiency Bonus", NamedTextColor.GRAY)
-                    .build());
+            // The paper sheet's "Other Proficiencies & Languages" box. Skills live in the Skills menu.
+            LoreBuilder lore = LoreBuilder.create().addLine("Proficiency Bonus", NamedTextColor.GRAY);
+            addProficiencyLine(lore, "Armor", character.getArmorProficiencies().stream().map(Util::prettify).sorted().toList());
+            addProficiencyLine(lore, "Weapons", character.getWeaponProficiencies().stream().map(Util::prettify).sorted().toList());
+            addProficiencyLine(lore, "Tools", character.getToolProficiencies().stream().map(ToolRegistry::displayName).sorted().toList());
+            addProficiencyLine(lore, "Languages", character.getLanguages().stream().map(LanguageRegistry::displayName).sorted().toList());
+            m.lore(lore.build());
         });
         inventory.setItem(6, proficiencyItem);
 
@@ -191,10 +198,13 @@ public class ViewCharacterSheetMenu {
             }
 
             // Show background feature if available
-            if (character.getBackground() != null && character.getBackground().getFeature() != null && !character.getBackground().getFeature().isEmpty()) {
+            DndBackground.Feature feature = character.getBackground() != null ? character.getBackground().getFeature() : null;
+            if (feature != null) {
                 lore.blankLine()
-                        .addLine("Feature:", NamedTextColor.YELLOW)
-                        .addLine(character.getBackground().getFeature(), NamedTextColor.GRAY);
+                        .addLine("Feature: " + feature.name(), NamedTextColor.YELLOW);
+                if (feature.description() != null && !feature.description().isBlank()) {
+                    lore.addWrappedText(feature.description(), NamedTextColor.GRAY);
+                }
             }
 
             m.lore(lore.build());
@@ -373,6 +383,12 @@ public class ViewCharacterSheetMenu {
      * Stack size shows the ability score value.
      * Clickable - opens the skills menu.
      */
+    /** One "Tools: A, B" line on the proficiency tile; nothing when the list is empty. */
+    private static void addProficiencyLine(LoreBuilder lore, String label, List<String> values) {
+        if (values.isEmpty()) return;
+        lore.blankLine().addLine(label + ":", NamedTextColor.YELLOW).addWrappedText(String.join(", ", values), NamedTextColor.GRAY);
+    }
+
     private static void addAbilityScore(Inventory inventory, CharacterSheet character, Ability ability, int slot, Material material) {
         int score = character.getAbility(ability);
         int modifier = character.getModifier(ability);

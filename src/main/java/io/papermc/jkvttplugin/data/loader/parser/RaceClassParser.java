@@ -5,6 +5,7 @@ import io.papermc.jkvttplugin.data.model.DndSubClass;
 import io.papermc.jkvttplugin.data.model.DndSubRace;
 import io.papermc.jkvttplugin.data.model.PlayersChoice;
 import io.papermc.jkvttplugin.data.model.enums.Size;
+import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -65,9 +66,6 @@ public final class RaceClassParser {
         // Ability scores (fixed and choice-based)
         AbilityParser.AbilityScoreParseResult abilityScores = AbilityParser.parseAbilityScores(data.get("ability_scores"));
 
-        // Languages
-        LanguageParser.LanguageParseResults langResult = LanguageParser.parseLanguagesAndChoices(data.get("languages"));
-
         return DndSubRace.builder()
                 .id(id)
                 .name((String) data.getOrDefault("name", id))
@@ -75,7 +73,7 @@ public final class RaceClassParser {
                 .fixedAbilityScores(abilityScores.fixedBonuses)
                 .abilityScoreChoice(abilityScores.choiceBonuses)
                 .traits(ParseUtil.parseTraits(data.get("traits")))
-                .languages(langResult.languages)
+                .languages(LanguageParser.parseLanguages(data.get("languages")))
                 .playerChoices(ChoiceParser.parsePlayerChoices(data.get("player_choices")))
                 .icon((String) data.getOrDefault("custom_model", "")) // resource-pack model name
                 // Parse mechanical trait fields (Issue #51)
@@ -89,6 +87,7 @@ public final class RaceClassParser {
                 .skillProficiencies(ParseUtil.parseStringList(data.get("skill_proficiencies")))
                 .weaponProficiencies(ParseUtil.parseStringList(data.get("weapon_proficiencies")))
                 .armorProficiencies(ParseUtil.parseStringList(data.get("armor_proficiencies")))
+                .toolProficiencies(ToolRegistry.idsOf(ParseUtil.normalizeStringList(data.get("tool_proficiencies"))))
                 .innateSpells(InnateSpellParser.parseInnateSpells(data.get("innate_spells")))
                 .build();
     }
@@ -136,7 +135,7 @@ public final class RaceClassParser {
         subclass.setSkillProficiencies(ParseUtil.normalizeStringList(data.get("skill_proficiencies")));
         subclass.setArmorProficiencies(ParseUtil.normalizeStringList(data.get("armor_proficiencies")));
         subclass.setWeaponProficiencies(ParseUtil.normalizeStringList(data.get("weapon_proficiencies")));
-        subclass.setToolProficiencies(ParseUtil.normalizeStringList(data.get("tool_proficiencies")));
+        subclass.setToolProficiencies(ToolRegistry.idsOf(ParseUtil.normalizeStringList(data.get("tool_proficiencies"))));
         subclass.setLanguages(LanguageParser.parseLanguages(data.get("languages")));
 
         // Parse special movement speeds

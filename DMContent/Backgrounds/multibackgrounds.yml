@@ -1,34 +1,46 @@
+# Several backgrounds in one file — each root key is a background id. Field reference:
+# docs/authoring-backgrounds.md
+#
 # Gear goes under `starting_equipment:` (plain ids, "id xN" for a quantity). Coin is gold_piece —
 # e.g. "gold_piece x15" for the classic belt pouch of 15 gp. Every id must exist in Items/Weapons/Armor
 # (Items/adventuring_gear.yml holds the background keepsakes).
+# Tools are item ids (Items/tools.yml); vehicles are vehicles_land / vehicles_water / vehicles_air /
+# vehicles_space.
 
 acolyte:
   name: Acolyte
-  description: ""
+  description: "You have spent your life in the service of a temple, acting as an intermediary between the realm of the holy and the mortal world."
   skill_proficiencies:
     - insight
     - religion
   starting_equipment:
     - holy_symbol
-    - prayer_book
     - vestments
     - common_clothes
     - sticks_of_incense x5
     - gold_piece x15
-  feature: "Shelter of the Faithful"
-  traits: [acolyte]
   player_choices:
     - id: background_language
       title: Background Language
       type: language
       choose: 2
       options: []
+    - id: acolyte_devotional
+      title: Prayer Book or Prayer Wheel
+      type: equipment
+      choose: 1
+      options:
+        - prayer_book
+        - prayer_wheel
+  feature:
+    name: Shelter of the Faithful
+    description: "You and your companions can expect free healing and care at a temple, shrine, or other presence of your faith, and those who share your religion will support you at a modest lifestyle. You have ties to one particular temple, where you have a residence and can call on the priests for help."
   links:
     - "https://dnd5e.wikidot.com/background:acolyte"
 
 anthropologist:
   name: Anthropologist
-  description: ""
+  description: "You have always been fascinated by other cultures, and you have spent years living among peoples not your own, studying their customs. Pick one culture you have adopted as your own (your Cultural Chameleon) — it's roleplay, not a mechanic."
   skill_proficiencies:
     - insight
     - religion
@@ -45,15 +57,15 @@ anthropologist:
       type: language
       choose: 2
       options: []
-#  ToDo: some have more than one feature
-  feature: "Cultural Chameleon"
-  traits: [cultural_chameleon, adept_linguist]
+  feature:
+    name: Adept Linguist
+    description: "You can communicate with humanoids who don't speak any language you know. You must observe them interacting for at least a day, after which you learn enough words and gestures to get simple ideas across."
   links:
     - "https://dnd5e.wikidot.com/background:anthropologist"
 
 archaeologist:
   name: Archaeologist
-  description: ""
+  description: "You have spent years digging through ruins, cataloguing what lost civilizations left behind."
   skill_proficiencies:
     - history
     - survival
@@ -69,45 +81,53 @@ archaeologist:
     - gold_piece x25
   player_choices:
     - id: background_tool_proficiencies
-      title: Background Tool Proficiencies
+      title: Cartographer's or Navigator's Tools
       type: tool
       choose: 1
-      options: ["cartographer's tools", "navigator's tools"]
+      options: [cartographers_tools, navigators_tools]
     - id: background_language
       title: Background Language
       type: language
       choose: 1
       options: []
-  feature: ""
-  traits: [dust_digger, historical_knowledge]
+  feature:
+    name: Historical Knowledge
+    description: "When you enter a ruin or dungeon, you can correctly ascertain its original purpose and determine its builders. You can also determine the monetary value of art objects more than a century old."
   links: ["https://dnd5e.wikidot.com/background:archaeologist"]
 
 athlete:
   name: Athlete
-  description: ""
+  description: "You strive to perfect your body through competition — racing, wrestling, throwing, or games of skill and strength."
   skill_proficiencies:
     - acrobatics
     - athletics
   tool_proficiencies:
-    - vehicles(land)
+    - vehicles_land
   starting_equipment:
-    - leather_ball
     - lucky_charm
     - travelers_clothes
     - gold_piece x10
   player_choices:
+    - id: athlete_sporting_gear
+      title: Bronze Discus or Leather Ball
+      type: equipment
+      choose: 1
+      options:
+        - bronze_discus
+        - leather_ball
     - id: background_language
       title: Background Language
       type: language
       choose: 1
       options: []
-  feature: ""
-  traits: [echoes_of_victory]
+  feature:
+    name: Echoes of Victory
+    description: "You have attracted admiration among spectators and fellow athletes. In most settlements you can find someone who has heard of you and will offer a place to stay and a meal while they hear about your victories."
   links: ["https://dnd5e.wikidot.com/background:athlete"]
 
 charlatan:
   name: Charlatan
-  description: ""
+  description: "You have always had a way with people. You know what makes them tick, and you can tease out their hearts' desires after a few minutes of conversation."
   skill_proficiencies:
     - deception
     - sleight_of_hand
@@ -118,6 +138,17 @@ charlatan:
     - fine_clothes
     - disguise_kit
     - gold_piece x15
-  feature: ""
-  traits: [false_identity]
+  player_choices:
+    - id: charlatan_con_tools
+      title: Tools of the Con
+      type: equipment
+      choose: 1
+      options:
+        - stoppered_bottles
+        - weighted_dice
+        - marked_cards
+        - imaginary_duke_signet_ring
+  feature:
+    name: False Identity
+    description: "You have created a second identity that includes documentation, established acquaintances, and disguises that let you assume that persona. You can also forge documents — official papers and personal letters — as long as you have seen an example of the kind you're copying."
   links: ["https://dnd5e.wikidot.com/background:charlatan"]

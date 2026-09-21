@@ -186,6 +186,20 @@ public class ItemUtil {
     }
 
     /**
+     * The display name of a content id ("stoppered_bottles" → "Ten Stoppered Bottles"), looked up in
+     * the same order as everywhere else (weapons, then armor, then items); null if no such id.
+     */
+    public static String displayNameOf(String id) {
+        if (id == null || id.isBlank()) return null;
+        var weapon = io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(id);
+        if (weapon != null && weapon.getName() != null) return weapon.getName();
+        var armor = io.papermc.jkvttplugin.data.loader.ArmorLoader.getArmor(id);
+        if (armor != null && armor.getName() != null) return armor.getName();
+        var item = io.papermc.jkvttplugin.data.loader.ItemLoader.getItem(id);
+        return (item != null && item.getName() != null) ? item.getName() : null;
+    }
+
+    /**
      * Retrieves the item_id from an ItemStack's NBT data.
      * Returns null if the item doesn't have an item_id tag.
      *

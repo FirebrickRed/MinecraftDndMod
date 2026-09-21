@@ -1,7 +1,6 @@
 package io.papermc.jkvttplugin.data.model.enums;
 
 import io.papermc.jkvttplugin.JkVttPlugin;
-
 import io.papermc.jkvttplugin.util.Util;
 import org.yaml.snakeyaml.Yaml;
 
@@ -9,63 +8,74 @@ import java.io.File;
 import java.io.FileReader;
 import java.util.*;
 
-public class LanguageRegistry {
+/**
+ * Every language a character can know, keyed by one canonical id ({@code deep_speech}) with a
+ * display name ("Deep Speech"). The PHB standard + exotic languages are built in;
+ * {@code DMContent/Languages.yml} (optional, a plain list of names) adds homebrew ones on every
+ * load. YAML can spell a language either way — {@link #idOf} folds "Deep Speech", "deep speech"
+ * and {@code deep_speech} to the same id, so a character never "knows" Common twice.
+ */
+public final class LanguageRegistry {
     private static final List<String> DEFAULT_LANGUAGES = List.of(
             "Common", "Dwarvish", "Elvish", "Giant", "Gnomish", "Goblin", "Halfling",
             "Orc", "Abyssal", "Celestial", "Draconic", "Deep Speech", "Infernal",
             "Primordial", "Sylvan", "Undercommon"
     );
 
-    private static final Set<String> registeredLanguages = new LinkedHashSet<>(DEFAULT_LANGUAGES);
+    /** id → display name, in registration order. */
+    private static final Map<String, String> languages = new LinkedHashMap<>();
 
-    public static void register(String language) {
-        if (language != null && !language.isBlank()) {
-            registeredLanguages.add(language.trim());
-        }
+    static { resetToDefault(); }
+
+    private LanguageRegistry() {}
+
+    /** The canonical id for any spelling of a language. */
+    public static String idOf(String raw) {
+        return Util.normalize(raw).replace("'", "");
     }
 
-    public static void registerAll(Iterable<String> languages) {
-        for (String lang : languages) {
-            register(lang);
-        }
+    public static void register(String name) {
+        if (name == null || name.isBlank()) return;
+        languages.putIfAbsent(idOf(name), name.trim());
     }
 
-    public static boolean isRegistered(String language) {
-        if (language == null) return false;
-        // Case-insensitive check using Util.normalize() - "primordial" matches "Primordial"
-        String normalized = Util.normalize(language);
-        return registeredLanguages.stream()
-                .anyMatch(lang -> Util.normalize(lang).equals(normalized));
+    public static boolean isRegistered(String raw) {
+        return raw != null && languages.containsKey(idOf(raw));
     }
 
+    /** "Deep Speech" for {@code deep_speech}; a prettified id if the language isn't registered. */
+    public static String displayName(String raw) {
+        String name = languages.get(idOf(raw));
+        return name != null ? name : Util.prettify(idOf(raw));
+    }
+
+    /** Every registered language id. */
     public static List<String> getAllLanguages() {
-        return new ArrayList<>(registeredLanguages);
-    }
-
-    public static void clear() {
-        registeredLanguages.clear();
+        return new ArrayList<>(languages.keySet());
     }
 
     public static void resetToDefault() {
-        registeredLanguages.clear();
-        registeredLanguages.addAll(DEFAULT_LANGUAGES);
+        languages.clear();
+        DEFAULT_LANGUAGES.forEach(LanguageRegistry::register);
     }
 
-    public static void loadLangagesFromYaml(File yamlFile) {
+    /**
+     * Resets to the built-in languages, then adds every name in {@code DMContent/Languages.yml}
+     * (a YAML list). A missing file is fine — the defaults stand.
+     */
+    public static void load(File yamlFile) {
+        resetToDefault();
+        if (yamlFile == null || !yamlFile.exists()) return;
         try (FileReader reader = new FileReader(yamlFile)) {
-            Yaml yaml = new Yaml();
-            Object loaded = yaml.load(reader);
-            if (loaded instanceof List<?> langList) {
-                clear();
-                for (Object obj : langList) {
-                    if (obj instanceof String lang) {
-                        register(lang);
-                    }
-                }
+            Object loaded = new Yaml().load(reader);
+            if (loaded instanceof List<?> list) {
+                for (Object o : list) if (o instanceof String s) register(s);
+            } else if (loaded != null) {
+                JkVttPlugin.logger().warning("[Languages] " + yamlFile.getName()
+                        + " should be a list of language names; ignoring it.");
             }
         } catch (Exception e) {
-            JkVttPlugin.logger().warning("[LanguageRegistry] Failed to load languages from YAML: " + e.getMessage() + ". Using default languages.");
-            resetToDefault();
+            JkVttPlugin.logger().warning("[Languages] Failed to read " + yamlFile.getName() + ": " + e.getMessage());
         }
     }
 }

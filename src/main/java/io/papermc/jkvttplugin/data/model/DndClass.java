@@ -318,58 +318,7 @@ public class DndClass {
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
-        for (ChoiceEntry e : playerChoices) {
-            switch (e.type()) {
-                case SKILL, TOOL, LANGUAGE, CUSTOM -> {
-                    PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
-                    out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "class"));
-                }
-                case EQUIPMENT -> {
-                    PlayersChoice<EquipmentOption> pc = (PlayersChoice<EquipmentOption>) e.pc();
-                    Function<EquipmentOption, String> toKey = eo ->
-                            switch (eo.getKind()) {
-                                case ITEM -> "item:" + eo.getIdOrTag() + (eo.getQuantity() > 1 ? "@" + eo.getQuantity() : "");
-                                case TAG -> "tag:" + eo.getIdOrTag();
-                                case BUNDLE -> "bundle:" + eo.getParts().stream().map(p ->
-                                        (p.getKind() == EquipmentOption.Kind.ITEM)
-                                            ? "item:" + p.getIdOrTag() + (p.getQuantity() > 1 ? "@" + p.getQuantity() : "")
-                                            : (p.getKind() == EquipmentOption.Kind.TAG)
-                                                ? "tag:" + p.getIdOrTag()
-                                                : "bundle:...")
-                                        .reduce((a, b) -> a + "+" + b).orElse("empty");
-                            };
-
-                    Function<String, EquipmentOption> fromKey = key -> {
-                        if (key == null) return null;
-                        if (key.startsWith("item")) {
-                            String rest = key.substring(5);
-                            int at = rest.indexOf('@');
-                            String id = (at >= 0) ? rest.substring(0, at) : rest;
-                            int qty = (at >= 0) ? ParseUtil.asInt(rest.substring(at + 1), 1) : 1;
-                            return EquipmentOption.item(id, qty);
-                        }
-                        if (key.startsWith("tag:")) {
-                            return EquipmentOption.tag(key.substring(4));
-                        }
-                        if (key.startsWith("bundle:")) {
-                            String k = key;
-                            return pc.getOptions().stream()
-                                    .filter(o -> toKey.apply(o).equals(k))
-                                    .findFirst().orElse(null);
-                        }
-                        return null;
-                    };
-
-                    Function<EquipmentOption, String> toLabel = EquipmentOption::prettyLabel;
-
-                    out.add(PendingChoice.ofGeneric(
-                            e.id(), e.title(), pc, "class",
-                            toKey, fromKey, toLabel
-                    ));
-                }
-                default -> {}
-            }
-        }
+        ChoiceContributor.contribute(playerChoices, "class", out);
     }
 
     /**
@@ -396,7 +345,19 @@ public class DndClass {
         // Tool Proficiencies (automatic, not from choices)
         if (toolProficiencies != null) {
             for (String tool : toolProficiencies) {
-                out.add(new AutomaticGrant(AutomaticGrant.GrantType.TOOL_PROFICIENCY, Util.prettify(tool), source));
+                out.add(AutomaticGrant.proficiency(AutomaticGrant.GrantType.TOOL_PROFICIENCY, tool, source));
+            }
+        }
+
+        // Fixed skills and languages (rare for a class, but the sheet applies them, so show them)
+        if (skills != null) {
+            for (String skill : skills) {
+                out.add(AutomaticGrant.proficiency(AutomaticGrant.GrantType.SKILL_PROFICIENCY, skill, source));
+            }
+        }
+        if (languages != null) {
+            for (String lang : languages) {
+                out.add(AutomaticGrant.proficiency(AutomaticGrant.GrantType.LANGUAGE, lang, source));
             }
         }
     }

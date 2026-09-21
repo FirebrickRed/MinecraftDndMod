@@ -249,6 +249,15 @@ public class CharacterPersistenceLoader {
         }
         data.put("skillProficiencies", skillProficiencies);
 
+        // Tool / language picks from creation (#17). Granted ones re-derive from race/class/background
+        // on load; these exist only on the sheet, so without saving them they vanished on restart.
+        if (!sheet.getChosenToolProficiencies().isEmpty()) {
+            data.put("chosenTools", new ArrayList<>(sheet.getChosenToolProficiencies()));
+        }
+        if (!sheet.getChosenLanguages().isEmpty()) {
+            data.put("chosenLanguages", new ArrayList<>(sheet.getChosenLanguages()));
+        }
+
         // Serialize spells and cantrips (save normalized keys, not display names)
         if (sheet.hasSpells()) {
             List<String> spellKeys = new ArrayList<>();
@@ -316,6 +325,13 @@ public class CharacterPersistenceLoader {
         }
 
         return data;
+    }
+
+    /** The strings in a YAML list, or an empty list if the key is absent or not a list. */
+    private static List<String> stringList(Object raw) {
+        List<String> out = new ArrayList<>();
+        if (raw instanceof List<?> list) for (Object o : list) if (o instanceof String s) out.add(s);
+        return out;
     }
 
     /** Parse a YAML map key (Integer or String) to an int, or return def if unparseable. */
@@ -395,6 +411,9 @@ public class CharacterPersistenceLoader {
                     }
                 }
             }
+
+            // Restore creation-time tool / language picks (#17).
+            sheet.restoreChosenProficiencies(stringList(data.get("chosenTools")), stringList(data.get("chosenLanguages")));
 
             // Restore CUSTOM choice selections (#70) so feature actions resolve their variant.
             if (data.get("customChoices") instanceof Map<?, ?> ccMap) {

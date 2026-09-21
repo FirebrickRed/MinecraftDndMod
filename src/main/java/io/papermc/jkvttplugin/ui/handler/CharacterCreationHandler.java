@@ -210,10 +210,11 @@ public class CharacterCreationHandler implements MenuClickHandler {
                 .findFirst().orElse(null);
         if (target == null) return;
 
-        // SKILL move-semantics: if selected in another section, move it here.
-        if (category == ChoiceCategory.SKILL && target.getSelectedElsewhere().contains(optionKey)) {
+        // Move-semantics (skills, tools, languages): if it's picked in another section of the same
+        // category, clicking it here moves the pick rather than taking the same thing twice.
+        if (target.getSelectedElsewhere().contains(optionKey)) {
             for (MergedChoice mc : merged) {
-                if (mc.getCategory() == ChoiceCategory.SKILL && mc.isSelected(optionKey)) mc.toggleOption(optionKey);
+                if (mc != target && mc.getCategory() == category && mc.isSelected(optionKey)) mc.toggleOption(optionKey);
             }
         }
         target.toggleOption(optionKey);

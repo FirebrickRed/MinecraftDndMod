@@ -52,6 +52,20 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] A **selected** option reads as a **bold green "✔ <name>"** (obvious even if the glint is faint).
 - [ ] **Automatic grants** (e.g. Common under Languages, background skills) appear as locked cyan tiles under "— Granted — automatic —". ⚠️ If Common does NOT appear, tell me — it means the language grant isn't being populated into the session (a data step, not the UI).
 
+## Backgrounds, tools & duplicate proficiencies (2026-09-21)
+- [ ] `/dm reload` → console shows **no** content-check warnings (the "N spells referenced but not defined" info line is expected).
+- [ ] **Archaeologist** → a *Cartographer's or Navigator's Tools* pick appears under Tools (it used to be silently dropped).
+- [ ] **Noble** → a *Gaming Set Proficiency* pick (4 sets) under **Tools**, not a dice item under Equipment.
+- [ ] **Acolyte** → Prayer Book / Prayer Wheel pick. **Charlatan** → Tools of the Con pick, labelled with real names ("Ten Stoppered Bottles").
+- [ ] **Wood elf + Sailor** → a *Replace duplicate Perception (Elf + Sailor)* skill pick; Perception shows as "Already known" in every skill list.
+- [ ] **Rock gnome + Artificer** → *Replace duplicate Tinker's Tools* pick. The artificer's artisan's-tool pick and the archaeologist's tool pick (if taken) are **separate sections**, not one merged "choose 3".
+- [ ] Pick the same tool in two tool sections → the second shows light green "Selected in another section"; clicking moves it.
+- [ ] **High elf** still gets its *Wizard Cantrip* pick; its extra language + a background language merge into one "choose 2".
+- [ ] Finish a character with chosen languages/tools → sheet's **Proficiency Bonus** tile lists Armor / Weapons / Tools / Languages with proper names ("Navigator's Tools", "Vehicles (Water)").
+- [ ] **Restart the server** → the same character still lists its chosen languages and tools (they used to vanish).
+- [ ] Background tile → shows *Choices:* and *Feature:*. Wildspacer shows *Feat: Tough (not applied yet…)*. Sheet's background item shows the feature text.
+- [ ] **Tiefling** → Thaumaturgy is castable (it used to count as a 0-use leveled spell). Same for forest gnome's Minor Illusion.
+
 ## Save location
 - [ ] New characters save under **`plugins/jkvttplugin/Saved/Characters/`**.
 - [ ] Shops save under **`plugins/jkvttplugin/Saved/Shops/`**.

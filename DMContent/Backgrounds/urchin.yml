@@ -21,9 +21,8 @@ urchin:
       choose: 1
       options:
         - keepsake      # any item tagged 'keepsake' (see Items/keepsakes.yml); auto-expands
-  feature: "City Secrets"
-#    name: City Secrets
-#    description: "You know the secret patterns and flow to cities and can find passages others would miss."
-  traits: [urchin]
+  feature:
+    name: City Secrets
+    description: "You know the secret patterns and flow of cities and can find passages through the urban sprawl that others would miss. When you are not in combat, you and companions you lead can travel between any two locations in a city twice as fast as your speed would normally allow."
   links:
     - "https://www.dndbeyond.com/backgrounds/urchin"

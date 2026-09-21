@@ -292,14 +292,7 @@ public class DndSubClass {
      * Adds subclass-specific player choices (e.g., Knowledge Domain skills/languages).
      */
     public void contributeChoices(List<PendingChoice<?>> out) {
-        if (playerChoices == null) return;
-
-        for (ChoiceEntry e : playerChoices) {
-            PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
-            if (ChoiceUtil.usable(pc)) {
-                out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "subclass"));
-            }
-        }
+        ChoiceContributor.contribute(playerChoices, "subclass", out);
     }
 
     /**
@@ -326,21 +319,21 @@ public class DndSubClass {
         // Tool Proficiencies
         if (toolProficiencies != null) {
             for (String tool : toolProficiencies) {
-                out.add(new AutomaticGrant(AutomaticGrant.GrantType.TOOL_PROFICIENCY, Util.prettify(tool), source));
+                out.add(AutomaticGrant.proficiency(AutomaticGrant.GrantType.TOOL_PROFICIENCY, tool, source));
             }
         }
 
         // Skill Proficiencies (automatic, not from choices)
         if (skillProficiencies != null) {
             for (String skill : skillProficiencies) {
-                out.add(new AutomaticGrant(AutomaticGrant.GrantType.SKILL_PROFICIENCY, Util.prettify(skill), source));
+                out.add(AutomaticGrant.proficiency(AutomaticGrant.GrantType.SKILL_PROFICIENCY, skill, source));
             }
         }
 
         // Languages
         if (languages != null) {
             for (String lang : languages) {
-                out.add(new AutomaticGrant(AutomaticGrant.GrantType.LANGUAGE, Util.prettify(lang), source));
+                out.add(AutomaticGrant.proficiency(AutomaticGrant.GrantType.LANGUAGE, lang, source));
             }
         }
 

@@ -10,6 +10,7 @@ import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -75,41 +76,30 @@ public final class ChoiceParser {
                     type = PlayersChoice.ChoiceType.TOOL;
                     var rawOpts = ParseUtil.normalizeStringList(m.get("options"));
 
-                    // Empty options means "choose from all tools"
+                    // Options are canonical tool ids (= item ids). Empty means "any tool"; a
+                    // category tag (artisan_tool, musical_instrument, gaming_set, vehicle, tool)
+                    // expands to every registered tool in it, homebrew items included.
+                    LinkedHashSet<String> toolIds = new LinkedHashSet<>();
                     if (rawOpts.isEmpty()) {
-                        List<String> allTools = ToolRegistry.getAllTools();
-                        rawOpts = new ArrayList<>();
-                        for (String tool : allTools) {
-                            rawOpts.add(tool.trim().toLowerCase());
-                        }
+                        toolIds.addAll(ToolRegistry.getAllTools());
                     } else {
-                        // Expand any tool tags (e.g., "musical_instrument" -> all instruments)
-                        List<String> expandedOpts = new ArrayList<>();
                         for (String opt : rawOpts) {
                             List<String> expanded = ToolRegistry.expandTag(opt);
-                            if (expanded != null) {
-                                // It's a tag - add all tools in that category (normalize to lowercase)
-                                for (String tool : expanded) {
-                                    expandedOpts.add(tool.trim().toLowerCase());
-                                }
-                            } else {
-                                // It's a specific tool name - add as-is (already normalized)
-                                expandedOpts.add(opt);
-                            }
+                            if (expanded != null) toolIds.addAll(expanded);
+                            else toolIds.add(ToolRegistry.idOf(opt));
                         }
-                        rawOpts = expandedOpts;
                     }
 
-                    pc = new PlayersChoice<>(choose, rawOpts, type);
+                    pc = new PlayersChoice<>(choose, new ArrayList<>(toolIds), type);
                 }
                 case "LANGUAGE" -> {
                     type = PlayersChoice.ChoiceType.LANGUAGE;
+                    // Options are canonical language ids. Empty means "any language".
                     var opts = ParseUtil.normalizeStringList(m.get("options"));
-                    // Empty options means "choose from all languages"
-                    if (opts.isEmpty()) {
-                        opts = LanguageRegistry.getAllLanguages();
-                    }
-                    pc = new PlayersChoice<>(choose, opts, type);
+                    List<String> langIds = opts.isEmpty()
+                            ? LanguageRegistry.getAllLanguages()
+                            : new ArrayList<>(new LinkedHashSet<>(opts.stream().map(LanguageRegistry::idOf).toList()));
+                    pc = new PlayersChoice<>(choose, langIds, type);
                 }
                 case "SPELL" -> {
                     type = PlayersChoice.ChoiceType.SPELL;

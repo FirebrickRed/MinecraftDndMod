@@ -1,8 +1,6 @@
 package io.papermc.jkvttplugin.combat;
 
 import io.papermc.jkvttplugin.config.PluginConfig;
-import io.papermc.jkvttplugin.data.loader.ItemLoader;
-import io.papermc.jkvttplugin.data.model.DndItem;
 import io.papermc.jkvttplugin.data.model.DndWeapon;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
@@ -115,7 +113,7 @@ public final class AmmunitionManager {
 
     /** The ammunition's display name from its item definition, falling back to the raw id. */
     private static String displayName(String ammoId) {
-        DndItem item = ItemLoader.getItem(ammoId);
-        return (item != null && item.getName() != null) ? item.getName() : ammoId;
+        String name = ItemUtil.displayNameOf(ammoId);
+        return name != null ? name : ammoId;
     }
 }

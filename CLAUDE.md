@@ -194,12 +194,34 @@ All D&D content is defined in `DMContent/` YAML files:
 - **Armor:** `DMContent/Armor/*.yml`
 - **Items:** `DMContent/Items/*.yml`
 - **Backgrounds:** `DMContent/Backgrounds/*.yml`
+- **Languages:** `DMContent/Languages.yml` (optional list of homebrew languages; the PHB ones are built in)
 
 Each category has a corresponding loader in `src/main/java/io/papermc/jkvttplugin/data/loader/` and model in `data/model/`.
 
 **Authoring guides** (every field, what it actually drives, and the silent failure modes):
 `docs/authoring-spells.md` · `docs/authoring-items.md` (weapons, armor, items) ·
-`docs/authoring-entities.md` (NPCs, monsters, merchants, loot).
+`docs/authoring-entities.md` (NPCs, monsters, merchants, loot) ·
+`docs/authoring-races.md` · `docs/authoring-classes.md` · `docs/authoring-backgrounds.md`, with
+the pieces those three share (proficiency ids, `player_choices`, duplicate proficiencies) in
+`docs/authoring-character-options.md`.
+
+### Proficiencies, tools & languages: one id each
+
+- **A tool proficiency is an item id.** `ToolRegistry` is built from items tagged `artisan_tool` /
+  `musical_instrument` / `gaming_set` / `tool` (plus built-in `vehicles_land|water|air|space`,
+  the only tools that aren't items). A homebrew tool is just an item with the tag.
+- **Every spelling folds to one id at load** (`ToolRegistry.idOf`, `LanguageRegistry.idOf`):
+  `"Navigator's Tools"` = `navigators_tools`, `vehicles(land)` = `vehicles_land`, `Deep Speech` =
+  `deep_speech`. Sheets, choice keys and grants all hold ids; display names come from the registry.
+  Never compare display strings.
+- **Choices go through `ChoiceContributor`**, one path for race, subrace, class, subclass and
+  background. (Five hand-copied switches used to drift apart: backgrounds dropped tool choices.)
+- **Grants carry ids** (`AutomaticGrant.proficiency(...)`, `grant.key()`). "Already known"
+  filtering (`KnownItemCollector`) and duplicate detection read the session's grants, so every
+  source is covered at once.
+- **Duplicate proficiencies (PHB p.125)**: the same skill/tool from two fixed sources becomes a
+  "Replace duplicate …" pick (`CharacterCreationService.duplicateReplacements`).
+- **Chosen tools/languages persist** (`chosenTools` / `chosenLanguages`); grants re-derive on load.
 
 ### Icons & Materials (Resource Pack)
 
@@ -280,7 +302,8 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - Weapons/armor/items have custom NBT data for identification — all via the shared `item_id` tag
   (`ItemUtil.getItemId`). There is no `armor_id`/`weapon_id` key; anything reading one is a bug.
 - `WeaponListener` handles weapon interactions and the **left-click attack prompt** (#189)
-- `CharacterSheet` auto-equips armor/shields during character creation if proficient
+- Armor proficiency is tracked and shown on the sheet but **not enforced**. Nothing checks it when
+  armor is worn, and there's no auto-equip at creation; equipped armor comes from the real slots below.
 - **Live equip tracking (#31):** `ArmorEquipListener` re-reads the chestplate and off-hand slots on
   any event that could change them (click, drag, off-hand swap key, right-click-to-equip, drop,
   join, respawn) and updates `equippedArmor`/`equippedShield`, which recalculates AC and persists.
@@ -430,13 +453,12 @@ smites), and the load-time validation. Quick version:
 
 ### Adding Racial Innate Spells
 
-1. Edit race YAML (e.g., `drow.yml`)
-2. Add `innate_spells` list with:
-   - `spell` - Spell ID
-   - `level` - Character level when available
-   - `uses` - Number of uses (0 = unlimited for cantrips)
-   - `recovery` - "long_rest", "short_rest", or "proficiency_bonus"
-   - `casting_ability` - "charisma", "intelligence", or "wisdom"
+1. Edit the race YAML (e.g. `tiefling.yml`, or a subrace under `elf.yml` → `dark_elf`)
+2. Add an `innate_spells` list. Each entry takes `spell_id` (required), `level_requirement`
+   (character level, default 1), `spell_level` (slot level, default the spell's own),
+   `uses` (a number or `"proficiency_bonus"`), `recovery` (`long_rest` / `short_rest`) and
+   `casting_ability`. Cantrip-ness comes from the **spell's own level**, so no flag is needed.
+   Full reference: `docs/authoring-races.md`.
 3. Run `/dm reload`
 4. Innate spells applied automatically during character creation
 
@@ -662,10 +684,9 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 - ❌ Multiclassing
 - ❌ Feats
 - ❌ Conditional spell application (Genie patron, Lunar Sorcery)
-- ❌ Conditional advantages application
+- ⚠️ Conditional advantages — saving-throw ones apply (Fey Ancestry, Dwarven Resilience); other types are display only
 - ⚠️ Combat system — largely implemented: initiative, turn/action economy, attack/spell rolls, damage/healing, temp HP, death saves (#97–#101); conditions with advantage/disadvantage (#103); the Effect Engine (#70: active buffs like Rage, the breath-weapon action path, passive features like Lucky/Savage/Relentless, resistances); AoE aim preview (#173); Hex (#178); and the autoRoll/manualRoll/total command redesign (#183). Reaction windows that hold the damage until the target answers, and Shield actually moving AC (#195). Remaining/rough edges: enemy-visibility polish (#102), the rest of the action-economy menu (#176 — bonus actions list, actions still just markers), out-of-combat casting resolving rolls (#152), and assorted spell mechanics (#182). Combat crash recovery (#105) is largely done — sessions restore on boot; only the in-progress turn resets and stray turn-glow isn't scrubbed at startup. Much of this is committed but largely un-playtested.
 - ❌ Equipment management (equip/unequip in-game)
-- ❌ Persistence of player-chosen tool/language proficiencies (Issue #17)
 
 ### Planned Enhancements
 - Issue #70: Structured features system (usage tracking, action economy, save DCs, damage formulas)
@@ -690,7 +711,7 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 ## Notes
 
 - Race and class data is declarative in YAML - add new content without touching Java code
-- The `conditional_advantages` and `conditional_bonus_spells` fields are parsed but not yet applied to characters
+- `conditional_advantages` of `type: saving_throw` are applied (advantage on saves vs that condition tag); other types, and `conditional_bonus_spells`, are parsed but not applied yet
 - Character sheets are read-only in-game (use commands for rest, no HP editing yet)
 - The NPC system is separate and allows spawning stat-block entities
 - **Known Bug Fix:** Class armor/weapon proficiencies now correctly applied to all characters (previously only racial/subclass proficiencies worked)

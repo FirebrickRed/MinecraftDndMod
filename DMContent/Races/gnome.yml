@@ -57,6 +57,9 @@ subraces:
     traits:
       - Artificer's Lore
       - Tinker
+    # Tinker: "You have proficiency with artisan's tools (tinker's tools)."
+    tool_proficiencies:
+      - tinkers_tools
     # Artificer's Lore: Add double proficiency to History checks about magic items, alchemical objects, technological devices
     # (Requires special handling - Issue #63)
     # Tinker: Can craft tiny clockwork devices

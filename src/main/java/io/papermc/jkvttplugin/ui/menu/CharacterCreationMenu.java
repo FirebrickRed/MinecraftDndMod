@@ -245,7 +245,7 @@ public class CharacterCreationMenu {
         for (DndBackground bg : Util.sortByName(BackgroundLoader.getAllBackgrounds(), DndBackground::getName)) {
             if (slot > CONTENT_END) break;
             boolean sel = bg.getId().equals(selected);
-            ItemStack item = option(bg.getIconMaterial(), bg.getName(),
+            ItemStack item = option(org.bukkit.Material.PAPER, bg.getName(),
                     sel ? NamedTextColor.GREEN : NamedTextColor.WHITE, bg.getSelectionMenuLore(), sel);
             ItemUtil.applyModel(item, bg.getIcon());
             ItemUtil.tagAction(item, MenuAction.CHOOSE_BACKGROUND, bg.getId());
@@ -495,7 +495,7 @@ public class CharacterCreationMenu {
             inv.setItem(slot++, sectionHeader("Granted — automatic", NamedTextColor.AQUA));
             for (AutomaticGrant grant : catGrants) {
                 if (slot > 44) break;
-                shownFree.add(Util.normalize(grant.displayName()));
+                shownFree.add(grant.key());
                 inv.setItem(slot++, grantTile(grant));
             }
         }
@@ -517,8 +517,8 @@ public class CharacterCreationMenu {
 
             for (String knownKey : choice.getAlreadyKnown()) {
                 if (slot > 44) break;
-                if (shownFree.contains(Util.normalize(knownKey))) continue; // already shown as a grant
-                ItemStack known = plain(Material.GRAY_STAINED_GLASS_PANE, Component.text(Util.prettify(knownKey), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+                if (shownFree.contains(knownKey)) continue; // already shown as a grant
+                ItemStack known = plain(Material.GRAY_STAINED_GLASS_PANE, Component.text(choice.displayFor(knownKey), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
                 known.editMeta(m -> m.lore(List.of(Component.text("Already known (can't select)", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false))));
                 inv.setItem(slot++, known);
             }
@@ -550,19 +550,19 @@ public class CharacterCreationMenu {
         List<Component> lore = new ArrayList<>();
         Set<String> seen = new HashSet<>();
         for (AutomaticGrant g : grantsForCategory(grants, cat)) {
-            if (seen.add(Util.normalize(g.displayName()))) {
+            if (seen.add(g.key())) {
                 lore.add(Component.text("• " + g.displayName() + " (granted)", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
             }
         }
         for (MergedChoice mc : merged) {
             if (mc.getCategory() != cat) continue;
             for (String k : mc.getAlreadyKnown()) {
-                if (seen.add(Util.normalize(k))) {
-                    lore.add(Component.text("• " + Util.prettify(k), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+                if (seen.add(k)) {
+                    lore.add(Component.text("• " + mc.displayFor(k), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
                 }
             }
             for (String key : mc.getAvailableOptionKeys()) {
-                if (mc.isSelected(key) && seen.add(Util.normalize(mc.displayFor(key)))) {
+                if (mc.isSelected(key) && seen.add(key)) {
                     lore.add(Component.text("• " + mc.displayFor(key), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
                 }
             }

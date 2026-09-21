@@ -3,6 +3,8 @@ package io.papermc.jkvttplugin.data.loader;
 import io.papermc.jkvttplugin.data.loader.util.ParseUtil;
 import io.papermc.jkvttplugin.data.loader.parser.AbilityParser;
 import io.papermc.jkvttplugin.data.loader.parser.ChoiceParser;
+import io.papermc.jkvttplugin.data.loader.parser.LanguageParser;
+import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import io.papermc.jkvttplugin.data.loader.parser.RaceClassParser;
 import io.papermc.jkvttplugin.data.model.DndClass;
 import io.papermc.jkvttplugin.data.model.SpellcastingInfo;
@@ -55,8 +57,8 @@ public class ClassLoader {
 
                 .armorProficiencies(ParseUtil.normalizeStringList(data.get("armor_proficiencies")))
                 .weaponProficiencies(ParseUtil.normalizeStringList(data.get("weapon_proficiencies")))
-                .toolProficiencies(ParseUtil.normalizeStringList(data.get("tool_proficiencies")))
-                .languages(ParseUtil.normalizeStringList(data.get("languages")))
+                .toolProficiencies(ToolRegistry.idsOf(ParseUtil.normalizeStringList(data.get("tool_proficiencies"))))
+                .languages(LanguageParser.parseLanguages(data.get("languages")))
 
                 .skills(ParseUtil.normalizeStringList(data.get("skills")))
                 .startingEquipment(ParseUtil.normalizeStringList(data.get("starting_equipment")))
@@ -102,7 +104,7 @@ public class ClassLoader {
 //        spellcasting.setType((String) map.get("type"));
         spellcasting.setCastingAbility((String) map.get("casting_ability"));
         spellcasting.setPreparationType((String) map.get("preparation_type"));
-        spellcasting.setRitualCasting((boolean) map.get("ritual_casting"));
+        spellcasting.setRitualCasting(ParseUtil.asBoolean(map.get("ritual_casting"), false)); // was a raw (boolean) cast: omitting the key threw and dropped the whole class
         spellcasting.setSpellcastingFocusType((String) map.get("spellcasting_focus_type"));
 //        spellcasting.setSpellList((String) map.get("spell_list"));
         spellcasting.setSpellcastingLevel((Integer) map.get("spellcasting_level"));

@@ -1,6 +1,6 @@
 wildspacer:
   name: Wildspacer
-  description: "You’ve lived much of your life in wildspace..."
+  description: "You've lived much of your life in wildspace, the airless void between worlds, aboard ships and on the rocks that drift there."
   skill_proficiencies:
     - athletics
     - survival
@@ -8,14 +8,16 @@ wildspacer:
     - navigators_tools
     - vehicles_space
   starting_equipment:
-    - belaying_pin
-    - grappling_hook
+    - belaying_pin        # a club
     - travelers_clothes
-    - rations x10
+    - grappling_hook
     - gold_piece x10
-  feature: "Wildspace Adaptation"
-#    name: Wildspace Adaptation
-#    description: "You have advantage on saving throws to avoid being stunned or disoriented in zero gravity."
-  traits: [wildspacer]
+  feature:
+    name: Wildspace Adaptation
+    description: "You've learned how to adapt to zero gravity: being weightless doesn't give you disadvantage on melee attack rolls. You also gain the Tough feat."
+  # Spelljammer backgrounds grant a feat, like the 2024 PHB ones. Carried here so the data is
+  # complete; it is NOT applied yet — feats aren't implemented (#204). Until then a
+  # Wildspacer's sheet is missing Tough's +2 max HP per level; the background tooltip says so.
+  feat: tough
   links:
     - "https://dnd5e.wikidot.com/background:wildspacer"

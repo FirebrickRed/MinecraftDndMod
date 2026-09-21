@@ -4,7 +4,8 @@
 # names it. Field reference: docs/authoring-items.md
 #
 # Packs are single items for now (opening one into its contents isn't a feature).
-# Tools here are the physical items; proficiency comes from the class/background tool list.
+# Tools here ARE the tool proficiencies: an item tagged `tool` (or artisan_tool, musical_instrument,
+# gaming_set) registers as a tool, and a proficiency names its item id (see Items/tools.yml).
 
 # ==================== TOOLS & KITS ====================
 
@@ -35,10 +36,9 @@ forgery_kit:
 
 healers_kit:
   name: "Healer's Kit"
-  type: "tool"
+  type: "gear"          # not a tool proficiency in 5e — anyone can use it
   description: "A leather pouch of bandages, salves, and splints. It has ten uses. As an action, you can expend one use to stabilize a creature that has 0 hit points, without a Wisdom (Medicine) check."
   material: "PAPER"
-  tags: [tool]
   cost: { amount: 5, currency: gold }
 
 spellbook:
@@ -366,6 +366,43 @@ signet_ring:
   description: "A ring bearing your family's seal."
   material: "GOLD_NUGGET"
   cost: { amount: 5, currency: gold }
+
+bronze_discus:
+  name: "Bronze Discus"
+  type: "gear"
+  description: "A heavy bronze disc, polished smooth by years of throwing."
+  material: "HEAVY_WEIGHTED_PRESSURE_PLATE"
+
+prayer_wheel:
+  name: "Prayer Wheel"
+  type: "gear"
+  description: "A spinning cylinder inscribed with prayers — each turn of the wheel counts as reciting them."
+  material: "CLOCK"
+
+# Charlatan "tools of the con" — the background offers one of these four.
+stoppered_bottles:
+  name: "Ten Stoppered Bottles"
+  type: "gear"
+  description: "Ten stoppered bottles of brightly colored liquid, sold as cure-alls, love potions, or whatever the mark needs to hear."
+  material: "POTION"
+
+weighted_dice:
+  name: "Weighted Dice"
+  type: "gear"
+  description: "A set of dice that land the way you want far more often than they should."
+  material: "BONE"
+
+marked_cards:
+  name: "Deck of Marked Cards"
+  type: "gear"
+  description: "A deck of cards with tiny marks on the backs that only you know how to read."
+  material: "PAPER"
+
+imaginary_duke_signet_ring:
+  name: "Signet Ring of an Imaginary Duke"
+  type: "gear"
+  description: "A convincing signet ring bearing the seal of a duke who does not exist."
+  material: "GOLD_NUGGET"
 
 small_knife:
   name: "Small Knife"

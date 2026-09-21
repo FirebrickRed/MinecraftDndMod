@@ -177,6 +177,7 @@ public class DndSubRace {
         this.innateSpells = innateSpells != null ? List.copyOf(innateSpells) : List.of();
     }
 
+    public List<ChoiceEntry> getPlayerChoices() { return playerChoices; }
     public void setPlayerChoices(List<ChoiceEntry> playerChoices) {
         this.playerChoices = playerChoices == null ? List.of() : List.copyOf(playerChoices);
     }
@@ -200,12 +201,7 @@ public class DndSubRace {
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
-        for(ChoiceEntry e : playerChoices) {
-            PlayersChoice<String> pc = (PlayersChoice<String>) e.pc();
-            if (ChoiceUtil.usable(pc)) {
-                out.add(PendingChoice.ofStrings(e.id(), e.title(), pc, "race"));
-            }
-        }
+        ChoiceContributor.contribute(playerChoices, "race", out);
     }
 
     /**
@@ -240,14 +236,14 @@ public class DndSubRace {
         // Languages
         if (languages != null) {
             for (String lang : languages) {
-                out.add(new AutomaticGrant(AutomaticGrant.GrantType.LANGUAGE, Util.prettify(lang), source));
+                out.add(AutomaticGrant.proficiency(AutomaticGrant.GrantType.LANGUAGE, lang, source));
             }
         }
 
         // Skill Proficiencies
         if (skillProficiencies != null) {
             for (String skill : skillProficiencies) {
-                out.add(new AutomaticGrant(AutomaticGrant.GrantType.SKILL_PROFICIENCY, Util.prettify(skill), source));
+                out.add(AutomaticGrant.proficiency(AutomaticGrant.GrantType.SKILL_PROFICIENCY, skill, source));
             }
         }
 
@@ -268,7 +264,7 @@ public class DndSubRace {
         // Tool Proficiencies
         if (toolProficiencies != null) {
             for (String tool : toolProficiencies) {
-                out.add(new AutomaticGrant(AutomaticGrant.GrantType.TOOL_PROFICIENCY, Util.prettify(tool), source));
+                out.add(AutomaticGrant.proficiency(AutomaticGrant.GrantType.TOOL_PROFICIENCY, tool, source));
             }
         }
 

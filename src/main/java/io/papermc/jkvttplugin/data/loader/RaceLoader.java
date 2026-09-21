@@ -8,6 +8,7 @@ import io.papermc.jkvttplugin.data.loader.parser.InnateSpellParser;
 import io.papermc.jkvttplugin.data.loader.parser.RaceClassParser;
 import io.papermc.jkvttplugin.data.model.DndRace;
 import io.papermc.jkvttplugin.data.model.enums.CreatureType;
+import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import org.yaml.snakeyaml.Yaml;
 
 import java.io.File;
@@ -45,7 +46,6 @@ public class RaceLoader {
 
     private static DndRace parseRace(Map<String, Object> data) {
         RaceClassParser.SizeParseResult sizeResult = RaceClassParser.parseSize(data.get("size"));
-        LanguageParser.LanguageParseResults langResult = LanguageParser.parseLanguagesAndChoices(data.get("languages"));
         Object abilityScoresRaw = data.get("ability_scores");
         AbilityParser.AbilityScoreParseResult abilityScores = AbilityParser.parseAbilityScores(abilityScoresRaw);
 
@@ -70,7 +70,7 @@ public class RaceLoader {
                 .fixedAbilityScores(abilityScores.fixedBonuses)
                 .abilityScoreChoice(abilityScores.choiceBonuses)
                 .traits(ParseUtil.parseTraits(data.get("traits")))
-                .languages(langResult.languages)
+                .languages(LanguageParser.parseLanguages(data.get("languages")))
                 .subraces(RaceClassParser.parseSubraces(data.get("subraces")))
                 .playerChoices(ChoiceParser.parsePlayerChoices(data.get("player_choices")))
                 .icon((String) data.getOrDefault("custom_model", null)) // resource-pack model name
@@ -84,6 +84,7 @@ public class RaceLoader {
                 .skillProficiencies(ParseUtil.parseStringList(data.get("skill_proficiencies")))
                 .weaponProficiencies(ParseUtil.parseStringList(data.get("weapon_proficiencies")))
                 .armorProficiencies(ParseUtil.parseStringList(data.get("armor_proficiencies")))
+                .toolProficiencies(ToolRegistry.idsOf(ParseUtil.normalizeStringList(data.get("tool_proficiencies"))))
                 .innateSpells(InnateSpellParser.parseInnateSpells(data.get("innate_spells")))
                 .features(io.papermc.jkvttplugin.effect.FeatureParser.parseFeatures(data.get("features")))
                 .conditionalAdvantages(io.papermc.jkvttplugin.data.loader.parser.RaceClassParser.parseConditionalAdvantages(data.get("conditional_advantages")));

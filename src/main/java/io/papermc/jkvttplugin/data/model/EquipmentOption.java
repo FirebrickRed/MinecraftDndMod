@@ -58,7 +58,11 @@ public class EquipmentOption {
     public String prettyLabel() {
         if (label != null && !label.isBlank()) return label; // DM-provided label wins
         return switch (kind) {
-            case ITEM -> prettify(idOrTag) + (quantity > 1 ? " x" + quantity : "");
+            case ITEM -> {
+                // The item's own name ("Ten Stoppered Bottles"), not its prettified id.
+                String name = io.papermc.jkvttplugin.util.ItemUtil.displayNameOf(idOrTag);
+                yield (name != null ? name : prettify(idOrTag)) + (quantity > 1 ? " x" + quantity : "");
+            }
             case TAG -> "Any " + prettify(idOrTag);
             case BUNDLE -> parts.stream().map(EquipmentOption::prettyLabel).reduce((a, b) -> a + " + " + b).orElse("");
         };

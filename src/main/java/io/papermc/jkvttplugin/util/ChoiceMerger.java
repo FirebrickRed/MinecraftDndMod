@@ -67,17 +67,22 @@ public class ChoiceMerger {
                 }
 
                 for (List<PendingChoice<?>> sourceChoices : bySource.values()) {
-                    // For SKILL category, collect skills selected in OTHER sections
-                    String choiceId = sourceChoices.get(0).getId();
-                    Set<String> selectedElsewhere = KnownItemCollector.collectSelectedSkillsFromOtherSections(session, choiceId);
-
-                    MergedChoice mergedChoice = mergeCategory(category, sourceChoices, session, selectedElsewhere);
-                    merged.add(mergedChoice);
+                    merged.add(mergeCategory(category, sourceChoices, session,
+                            KnownItemCollector.collectSelectedFromOtherSections(session, sourceChoices)));
                 }
             } else {
-                // Other categories (Languages, Tools) can be freely merged across sources
-                MergedChoice mergedChoice = mergeCategory(category, choices, session);
-                merged.add(mergedChoice);
+                // Languages, tools, etc.: merge only choices that offer the SAME options. Two "any
+                // language" picks become one "choose 2" pool; an artificer's "one artisan's tool" and
+                // an archaeologist's "cartographer's or navigator's" must stay separate, or a merged
+                // "choose 2 from both lists" lets the player take two artisan's tools and skip the other.
+                Map<Set<String>, List<PendingChoice<?>>> byOptions = new LinkedHashMap<>();
+                for (PendingChoice<?> pc : choices) {
+                    byOptions.computeIfAbsent(new HashSet<>(pc.optionKeys()), k -> new ArrayList<>()).add(pc);
+                }
+                for (List<PendingChoice<?>> group : byOptions.values()) {
+                    merged.add(mergeCategory(category, group, session,
+                            KnownItemCollector.collectSelectedFromOtherSections(session, group)));
+                }
             }
         }
 
@@ -106,7 +111,7 @@ public class ChoiceMerger {
      * @param category The category being merged
      * @param choices All pending choices in this category
      * @param session The session (used to collect already-known items)
-     * @param selectedElsewhere Items selected in OTHER sections (for SKILL category cross-section display)
+     * @param selectedElsewhere Items selected in OTHER sections of the same kind (shown light green, movable)
      * @return A merged choice combining all sources
      */
     private static MergedChoice mergeCategory(

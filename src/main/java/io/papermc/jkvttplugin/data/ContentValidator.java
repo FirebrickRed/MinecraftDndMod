@@ -4,7 +4,9 @@ import io.papermc.jkvttplugin.data.loader.*;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
+import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import io.papermc.jkvttplugin.util.TagRegistry;
 import org.bukkit.Material;
@@ -212,6 +214,8 @@ public final class ContentValidator {
         for (DndClass c : ClassLoader.getAllClasses()) {
             String where = "Class '" + c.getId() + "'";
             checkEquipmentList(where + " starting_equipment", c.getStartingEquipment());
+            checkSkillNames(where + " skills", c.getSkills());
+            checkToolIds(where + " tool_proficiencies", c.getToolProficiencies());
             checkChoices(where, c.getPlayerChoices());
             if (c.getSubclasses() == null) continue;
             for (DndSubClass sub : c.getSubclasses().values()) {
@@ -222,6 +226,7 @@ public final class ContentValidator {
                     sub.getConditionalBonusSpells().values().forEach(this::referenceSpells);
                 }
                 checkSkillNames(subWhere + " skill_proficiencies", sub.getSkillProficiencies());
+                checkToolIds(subWhere + " tool_proficiencies", sub.getToolProficiencies());
                 checkChoices(subWhere, sub.getPlayerChoices());
             }
         }
@@ -232,10 +237,15 @@ public final class ContentValidator {
             String where = "Race '" + r.getId() + "'";
             referenceInnate(r.getInnateSpells());
             checkSkillNames(where + " skill_proficiencies", r.getSkillProficiencies());
+            checkToolIds(where + " tool_proficiencies", r.getToolProficiencies());
+            checkChoices(where, r.getPlayerChoices());
             if (r.getSubraces() == null) continue;
             for (DndSubRace sub : r.getSubraces().values()) {
+                String subWhere = where + " subrace '" + sub.getId() + "'";
                 referenceInnate(sub.getInnateSpells());
-                checkSkillNames(where + " subrace '" + sub.getId() + "' skill_proficiencies", sub.getSkillProficiencies());
+                checkSkillNames(subWhere + " skill_proficiencies", sub.getSkillProficiencies());
+                checkToolIds(subWhere + " tool_proficiencies", sub.getToolProficiencies());
+                checkChoices(subWhere, sub.getPlayerChoices());
             }
         }
     }
@@ -245,7 +255,28 @@ public final class ContentValidator {
             String where = "Background '" + b.getId() + "'";
             checkEquipmentList(where + " starting_equipment", b.getStartingEquipment());
             checkSkillNames(where + " skill_proficiencies", b.getSkills());
+            checkToolIds(where + " tool_proficiencies", b.getTools());
             checkChoices(where, b.getPlayerChoices());
+            // 2024-rules slot: parsed, never applied (2014 ability increases come from the race).
+            if (!b.getAbilityScoreOptions().isEmpty()) {
+                warn(where + " sets ability_scores:, which is 2024-rules only and isn't applied yet — "
+                        + "under 2014 rules the race gives the ability score increases.");
+            }
+        }
+    }
+
+    /**
+     * A tool proficiency must be a registered tool: an item tagged artisan_tool / musical_instrument
+     * / gaming_set / tool, or a built-in vehicle. Anything else is a typo or a missing item — the
+     * character is "proficient" in something no menu or check will ever name.
+     */
+    private void checkToolIds(String where, List<String> tools) {
+        if (tools == null) return;
+        for (String t : tools) {
+            if (!blank(t) && !ToolRegistry.isRegistered(t)) {
+                warn(where + " names tool '" + t + "', which isn't a registered tool — give its item a tool tag"
+                        + " (artisan_tool, musical_instrument, gaming_set or tool), or fix the id.");
+            }
         }
     }
 
@@ -262,6 +293,17 @@ public final class ContentValidator {
                 List<String> names = new ArrayList<>();
                 for (Object opt : choice.pc().getOptions()) if (opt instanceof String s) names.add(s);
                 checkSkillNames(choiceWhere, names);
+            } else if (choice.type() == PlayersChoice.ChoiceType.TOOL) {
+                List<String> ids = new ArrayList<>();
+                for (Object opt : choice.pc().getOptions()) if (opt instanceof String s) ids.add(s);
+                checkToolIds(choiceWhere, ids);
+            } else if (choice.type() == PlayersChoice.ChoiceType.LANGUAGE) {
+                for (Object opt : choice.pc().getOptions()) {
+                    if (opt instanceof String s && !LanguageRegistry.isRegistered(s)) {
+                        warn(choiceWhere + " offers language '" + s + "', which isn't registered"
+                                + " (add it to DMContent/Languages.yml if it's homebrew).");
+                    }
+                }
             }
         }
     }

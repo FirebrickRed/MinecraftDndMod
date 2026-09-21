@@ -1,0 +1,178 @@
+# Tools — the items that ARE tool proficiencies.
+#
+# A tool proficiency names an item id: `tool_proficiencies: [smiths_tools]` means proficiency with
+# the item below. Any item carrying one of these tags registers as a tool on every load:
+#   artisan_tool        — Smith's Tools, Cook's Utensils, … (a "choose an artisan's tool" pick)
+#   musical_instrument  — Items/musical_instruments.yml
+#   gaming_set          — Items/gaming_sets.yml
+#   tool                — the other kits (Thieves' Tools, Herbalism Kit, …)
+# So a homebrew tool is just an item with the tag: it shows up in "choose any artisan's tool"
+# picks, and the content check stops flagging proficiencies that name it.
+# Vehicles (land / water / air / space) are the only tools that aren't items — see ToolRegistry.
+#
+# Prices are PHB p.154. Field reference: docs/authoring-items.md
+
+# ==================== ARTISAN'S TOOLS ====================
+
+alchemists_supplies:
+  name: "Alchemist's Supplies"
+  type: "tool"
+  description: "Two glass beakers, a metal frame to hold a beaker over a fire, a glass stirring rod, a mortar and pestle, and a pouch of common alchemical ingredients."
+  material: "BREWING_STAND"
+  tags: [artisan_tool]
+  cost: { amount: 50, currency: gold }
+
+brewers_supplies:
+  name: "Brewer's Supplies"
+  type: "tool"
+  description: "A large glass jug, a quantity of hops, a siphon, and several feet of tubing — everything needed to brew beer."
+  material: "BARREL"
+  tags: [artisan_tool]
+  cost: { amount: 20, currency: gold }
+
+calligraphers_supplies:
+  name: "Calligrapher's Supplies"
+  type: "tool"
+  description: "Ink, a dozen sheets of parchment, and three quills."
+  material: "FEATHER"
+  tags: [artisan_tool]
+  cost: { amount: 10, currency: gold }
+
+carpenters_tools:
+  name: "Carpenter's Tools"
+  type: "tool"
+  description: "A saw, a hammer, nails, a hatchet, a square, a ruler, an adze, a plane, and a chisel."
+  material: "IRON_AXE"
+  tags: [artisan_tool]
+  cost: { amount: 8, currency: gold }
+
+cartographers_tools:
+  name: "Cartographer's Tools"
+  type: "tool"
+  description: "A quill, ink, parchment, a pair of compasses, calipers, and a ruler."
+  material: "MAP"
+  tags: [artisan_tool]
+  cost: { amount: 15, currency: gold }
+
+cobblers_tools:
+  name: "Cobbler's Tools"
+  type: "tool"
+  description: "A hammer, an awl, a knife, a shoe stand, a cutter, spare leather, and thread."
+  material: "LEATHER_BOOTS"
+  tags: [artisan_tool]
+  cost: { amount: 5, currency: gold }
+
+cooks_utensils:
+  name: "Cook's Utensils"
+  type: "tool"
+  description: "A metal pot, knives, forks, a stirring spoon, and a ladle."
+  material: "BOWL"
+  tags: [artisan_tool]
+  cost: { amount: 1, currency: gold }
+
+glassblowers_tools:
+  name: "Glassblower's Tools"
+  type: "tool"
+  description: "A blowpipe, a small marver, blocks, and tweezers."
+  material: "GLASS_BOTTLE"
+  tags: [artisan_tool]
+  cost: { amount: 30, currency: gold }
+
+jewelers_tools:
+  name: "Jeweler's Tools"
+  type: "tool"
+  description: "A small saw and hammer, files, pliers, and tweezers."
+  material: "AMETHYST_SHARD"
+  tags: [artisan_tool]
+  cost: { amount: 25, currency: gold }
+
+leatherworkers_tools:
+  name: "Leatherworker's Tools"
+  type: "tool"
+  description: "A knife, a small mallet, an edger, a hole punch, thread, and leather scraps."
+  material: "LEATHER"
+  tags: [artisan_tool]
+  cost: { amount: 5, currency: gold }
+
+masons_tools:
+  name: "Mason's Tools"
+  type: "tool"
+  description: "A trowel, a hammer, a chisel, brushes, and a square."
+  material: "BRICK"
+  tags: [artisan_tool]
+  cost: { amount: 10, currency: gold }
+
+painters_supplies:
+  name: "Painter's Supplies"
+  type: "tool"
+  description: "An easel, canvas, paints, brushes, charcoal sticks, and a palette."
+  material: "BRUSH"
+  tags: [artisan_tool]
+  cost: { amount: 10, currency: gold }
+
+potters_tools:
+  name: "Potter's Tools"
+  type: "tool"
+  description: "Potter's needles, ribs, scrapers, a knife, and calipers."
+  material: "FLOWER_POT"
+  tags: [artisan_tool]
+  cost: { amount: 10, currency: gold }
+
+smiths_tools:
+  name: "Smith's Tools"
+  type: "tool"
+  description: "Hammers, tongs, charcoal, rags, and a whetstone."
+  material: "ANVIL"
+  tags: [artisan_tool]
+  cost: { amount: 20, currency: gold }
+
+tinkers_tools:
+  name: "Tinker's Tools"
+  type: "tool"
+  description: "Hand tools, thread, needles, a whetstone, scraps of cloth and leather, and a small pot of glue — for repairing small objects and building tiny contraptions."
+  material: "CLOCK"
+  tags: [artisan_tool]
+  cost: { amount: 50, currency: gold }
+
+weavers_tools:
+  name: "Weaver's Tools"
+  type: "tool"
+  description: "Thread, needles, and scraps of cloth."
+  material: "STRING"
+  tags: [artisan_tool]
+  cost: { amount: 1, currency: gold }
+
+woodcarvers_tools:
+  name: "Woodcarver's Tools"
+  type: "tool"
+  description: "A knife, a gouge, and a small saw."
+  material: "STICK"
+  tags: [artisan_tool]
+  cost: { amount: 1, currency: gold }
+
+# ==================== OTHER KITS ====================
+# (Thieves' Tools, Disguise Kit and Forgery Kit live in adventuring_gear.yml with the same `tool` tag.)
+
+herbalism_kit:
+  name: "Herbalism Kit"
+  type: "tool"
+  description: "Clippers, a mortar and pestle, pouches and vials — for identifying and applying herbs, and for making antitoxin and potions of healing."
+  material: "FERN"
+  tags: [tool]
+  cost: { amount: 5, currency: gold }
+
+navigators_tools:
+  name: "Navigator's Tools"
+  type: "tool"
+  description: "A sextant, a compass, calipers, a ruler, parchment, ink, and a quill — for charting a ship's course and following navigation charts."
+  material: "COMPASS"
+  tags: [tool]
+  cost: { amount: 25, currency: gold }
+
+poisoners_kit:
+  name: "Poisoner's Kit"
+  type: "tool"
+  description: "Vials, chemicals, and other equipment necessary for the creation of poisons."
+  material: "FERMENTED_SPIDER_EYE"
+  tags: [tool]
+  cost: { amount: 50, currency: gold }

@@ -1,6 +1,6 @@
 noble:
   name: Noble
-  description: "You understand wealth, power, and privilege..."
+  description: "You understand wealth, power, and privilege. You carry a noble title, and your family owns land, collects taxes, and wields significant political influence."
   skill_proficiencies:
     - history
     - persuasion
@@ -9,21 +9,21 @@ noble:
     - fine_clothes
     - scroll_of_pedigree
     - gold_piece x25
-  feature: "Position of Privilege"
-#    name: Position of Privilege
-#    description: "Thanks to your noble birth, people are inclined to think the best of you. You are welcome in high society, and people assume you have the right to be wherever you are. The common folk make every effort to accommodate you and avoid your displeasure, and other people of high birth treat you as a member of the same social sphere. You can secure an audience with a local noble if you need to."
-  traits: [noble]
   player_choices:
     - id: background_language
       title: Background Language
       type: language
       choose: 1
       options: []
-    - id: background_tool
-      title: Background Tool
-      type: equipment
+    # PHB: proficiency with one gaming set — a proficiency, not the item (a Noble's kit has no dice).
+    - id: background_gaming_set
+      title: Gaming Set Proficiency
+      type: tool
       choose: 1
       options:
-        - gaming_set
+        - gaming_set        # every item tagged gaming_set (Items/gaming_sets.yml)
+  feature:
+    name: Position of Privilege
+    description: "Thanks to your noble birth, people are inclined to think the best of you. You are welcome in high society, people assume you have the right to be wherever you are, and common folk make every effort to accommodate you. You can secure an audience with a local noble if you need to."
   links:
     - "https://dnd5e.wikidot.com/background:noble"

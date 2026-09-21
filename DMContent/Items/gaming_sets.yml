@@ -23,3 +23,25 @@ playing_card_set:
   cost:
     amount: 5
     currency: silver
+
+dragonchess_set:
+  name: "Dragonchess Set"
+  type: "gaming_set"
+  description: "A three-tiered board and carved pieces for the game of dragonchess."
+  material: "ITEM_FRAME"
+  tags:
+    - gaming_set
+  cost:
+    amount: 1
+    currency: gold
+
+three_dragon_ante_set:
+  name: "Three-Dragon Ante Set"
+  type: "gaming_set"
+  description: "A deck of cards for Three-Dragon Ante, the gambling game of dragons and wagers."
+  material: "PAPER"
+  tags:
+    - gaming_set
+  cost:
+    amount: 1
+    currency: gold

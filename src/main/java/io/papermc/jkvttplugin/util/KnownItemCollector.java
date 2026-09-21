@@ -1,137 +1,81 @@
 package io.papermc.jkvttplugin.util;
 
 import io.papermc.jkvttplugin.character.CharacterCreationSession;
-import io.papermc.jkvttplugin.data.loader.BackgroundLoader;
-import io.papermc.jkvttplugin.data.loader.ClassLoader;
-import io.papermc.jkvttplugin.data.loader.RaceLoader;
-import io.papermc.jkvttplugin.data.model.DndBackground;
-import io.papermc.jkvttplugin.data.model.DndClass;
-import io.papermc.jkvttplugin.data.model.DndRace;
-import io.papermc.jkvttplugin.data.model.DndSubRace;
+import io.papermc.jkvttplugin.data.model.AutomaticGrant;
 import io.papermc.jkvttplugin.data.model.PendingChoice;
 import io.papermc.jkvttplugin.data.model.PlayersChoice;
 
+import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * Utility for collecting already-known items (languages, skills, tools) from a character's
- * race, subrace, class, and background. Used to filter out redundant options in choice menus.
+ * Collects what a character already has (languages, skills, tools) so choice menus can show those
+ * options as "already known" instead of letting the player waste a pick on them.
+ * <p>
+ * "Already known" is read from the session's automatic grants — the same list the creation menu
+ * shows, built from race, subrace, class, subclass and background in one place
+ * ({@code CharacterCreationService.rebuildPendingChoices}). It used to re-query each source by
+ * hand and missed some (race and subclass skills, subclass tools), so a wood elf rogue could spend
+ * a class skill pick on the Perception they already had. Keys are canonical ids, matching the
+ * choice option keys exactly.
  */
 public class KnownItemCollector {
 
-    /**
-     * Collects all languages the character already knows from their race, subrace, and background.
-     * Does not include languages from player choices - only fixed grants.
-     *
-     * @param session The character creation session
-     * @return Set of language IDs the character knows
-     */
+    /** Language ids granted automatically (not the player's own picks). */
     public static Set<String> collectKnownLanguages(CharacterCreationSession session) {
-        Set<String> known = new LinkedHashSet<>();
-
-        DndRace race = RaceLoader.getRace(session.getSelectedRace());
-        if (race != null && race.getLanguages() != null) {
-            // Normalize using Util.normalize() for consistent filtering
-            race.getLanguages().forEach(lang -> known.add(Util.normalize(lang)));
-        }
-
-        DndSubRace subrace = getSubrace(session);
-        if (subrace != null && subrace.getLanguages() != null) {
-            subrace.getLanguages().forEach(lang -> known.add(Util.normalize(lang)));
-        }
-
-        DndBackground bg = BackgroundLoader.getBackground(session.getSelectedBackground());
-        if (bg != null && bg.getLanguages() != null) {
-            bg.getLanguages().forEach(lang -> known.add(Util.normalize(lang)));
-        }
-
-        return known;
+        return grantedIds(session, AutomaticGrant.GrantType.LANGUAGE);
     }
 
     /**
-     * Collects all skill proficiencies the character already has from their class and background.
-     * Only includes FIXED skills, not player-selected skills.
-     *
-     * @param session The character creation session
-     * @return Set of skill IDs the character knows from fixed sources (grayed out, can't be selected)
+     * Skill ids granted automatically. Player-selected skills are handled separately via
+     * {@link #collectSelectedFromOtherSections} so they show as "selected elsewhere"
+     * (light green, movable) rather than locked gray.
      */
     public static Set<String> collectKnownSkills(CharacterCreationSession session) {
+        return grantedIds(session, AutomaticGrant.GrantType.SKILL_PROFICIENCY);
+    }
+
+    /** Tool ids granted automatically (not the player's own picks). */
+    public static Set<String> collectKnownTools(CharacterCreationSession session) {
+        return grantedIds(session, AutomaticGrant.GrantType.TOOL_PROFICIENCY);
+    }
+
+    private static Set<String> grantedIds(CharacterCreationSession session, AutomaticGrant.GrantType type) {
         Set<String> known = new LinkedHashSet<>();
-
-        // Fixed skills from class
-        DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
-        if (dndClass != null && dndClass.getSkills() != null) {
-            known.addAll(dndClass.getSkills());
+        for (AutomaticGrant g : session.getAutomaticGrants()) {
+            if (g.type() == type) known.add(g.key());
         }
-
-        // Fixed skills from background
-        DndBackground bg = BackgroundLoader.getBackground(session.getSelectedBackground());
-        if (bg != null && bg.getSkills() != null) {
-            known.addAll(bg.getSkills());
-        }
-
-        // Note: We do NOT include player-selected skills here.
-        // Player-selected skills are handled separately via collectSelectedSkillsFromOtherSections()
-        // to show as "light green/selected elsewhere" instead of gray "already known".
-
         return known;
     }
 
     /**
-     * Collects skills that have been selected in OTHER pending choices (not the current one).
-     * Used to show skills as "selected elsewhere" (light green) so they can be moved between sections.
+     * What's picked in OTHER sections of the same kind (skill, tool, language) — shown light green
+     * so the player can move a pick instead of taking the same thing twice (a class artisan's-tool
+     * pick and a duplicate-replacement pick both offering Smith's Tools, say).
      *
-     * @param session The character creation session
-     * @param currentChoiceId The ID of the current choice to exclude from the search
-     * @return Set of skill IDs selected in other sections
+     * @param section the pending choices that make up the section being drawn (excluded)
      */
-    public static Set<String> collectSelectedSkillsFromOtherSections(CharacterCreationSession session, String currentChoiceId) {
+    public static Set<String> collectSelectedFromOtherSections(CharacterCreationSession session, List<PendingChoice<?>> section) {
         Set<String> selectedElsewhere = new LinkedHashSet<>();
+        if (section.isEmpty() || section.get(0).getPlayersChoice() == null) return selectedElsewhere;
+        PlayersChoice.ChoiceType type = section.get(0).getPlayersChoice().getType();
+        if (type == PlayersChoice.ChoiceType.EQUIPMENT) return selectedElsewhere;
+
+        Set<String> sectionIds = new HashSet<>();
+        for (PendingChoice<?> pc : section) sectionIds.add(pc.getId());
 
         List<PendingChoice<?>> pendingChoices = session.getPendingChoices();
-        if (pendingChoices != null) {
-            for (PendingChoice<?> pc : pendingChoices) {
-                // Skip the current choice - we only want skills from OTHER sections
-                if (pc.getId().equals(currentChoiceId)) continue;
-
-                if (pc.getPlayersChoice() != null &&
-                    pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.SKILL) {
-                    // Add all chosen skills from this other pending choice
-                    for (Object chosen : pc.getChosen()) {
-                        if (chosen instanceof String skill) {
-                            selectedElsewhere.add(skill);
-                        }
-                    }
-                }
+        if (pendingChoices == null) return selectedElsewhere;
+        for (PendingChoice<?> pc : pendingChoices) {
+            if (sectionIds.contains(pc.getId())) continue;
+            if (pc.getPlayersChoice() == null || pc.getPlayersChoice().getType() != type) continue;
+            for (Object chosen : pc.getChosen()) {
+                if (chosen instanceof String key) selectedElsewhere.add(key);
             }
         }
-
         return selectedElsewhere;
-    }
-
-    /**
-     * Collects all tool proficiencies the character already has from their class and background.
-     * Does not include tools from player choices - only fixed grants.
-     *
-     * @param session The character creation session
-     * @return Set of tool IDs the character knows
-     */
-    public static Set<String> collectKnownTools(CharacterCreationSession session) {
-        Set<String> known = new LinkedHashSet<>();
-
-        DndClass dndClass = ClassLoader.getClass(session.getSelectedClass());
-        if (dndClass != null && dndClass.getToolProficiencies() != null) {
-            known.addAll(dndClass.getToolProficiencies());
-        }
-
-        DndBackground bg = BackgroundLoader.getBackground(session.getSelectedBackground());
-        if (bg != null && bg.getTools() != null) {
-            known.addAll(bg.getTools());
-        }
-
-        return known;
     }
 
     /**
@@ -155,21 +99,5 @@ public class KnownItemCollector {
         }
 
         return known;
-    }
-
-    /**
-     * Helper method to get the character's selected subrace.
-     *
-     * @param session The character creation session
-     * @return The subrace, or null if no subrace selected or race not found
-     */
-    private static DndSubRace getSubrace(CharacterCreationSession session) {
-        String subraceId = session.getSelectedSubRace();
-        if (subraceId == null) return null;
-
-        DndRace race = RaceLoader.getRace(session.getSelectedRace());
-        if (race == null || race.getSubraces() == null) return null;
-
-        return race.getSubraces().get(subraceId);
     }
 }

@@ -4,6 +4,8 @@ import io.papermc.jkvttplugin.data.loader.*;
 import io.papermc.jkvttplugin.data.loader.ClassLoader;
 import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.data.model.enums.LanguageRegistry;
+import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.util.DndRules;
 import io.papermc.jkvttplugin.util.ItemUtil;
@@ -56,8 +58,13 @@ public class CharacterSheet {
     // Racial traits (Issue #51)
     private Set<String> weaponProficiencies = new HashSet<>();
     private Set<String> armorProficiencies = new HashSet<>();
-    private Set<String> toolProficiencies = new HashSet<>();
-    private Set<String> languages = new HashSet<>();
+    // Tool / language sets hold canonical ids (ToolRegistry / LanguageRegistry). The full sets are
+    // re-derived from race/class/background on load; the chosen* subsets are the player's picks
+    // from creation, which only exist here and so are what persistence saves (#17).
+    private Set<String> toolProficiencies = new LinkedHashSet<>();
+    private Set<String> languages = new LinkedHashSet<>();
+    private final Set<String> chosenToolProficiencies = new LinkedHashSet<>();
+    private final Set<String> chosenLanguages = new LinkedHashSet<>();
     private Set<String> damageResistances = new HashSet<>();
     // CUSTOM player-choice selections kept by choice id (e.g. draconic_ancestry -> "Red (Fire, …)").
     // Feature actions read these to resolve their per-choice variant (breath weapon, #70).
@@ -347,6 +354,18 @@ public class CharacterSheet {
         if (dndClass.getToolProficiencies() != null) {
             this.toolProficiencies.addAll(dndClass.getToolProficiencies());
         }
+
+        // Class languages (Druidic, Thieves' Cant) and fixed `skills:` — both parsed and shown in
+        // creation, but never applied to the sheet before.
+        if (dndClass.getLanguages() != null) {
+            this.languages.addAll(dndClass.getLanguages());
+        }
+        if (dndClass.getSkills() != null) {
+            for (String skillName : dndClass.getSkills()) {
+                Skill skill = Skill.fromString(skillName);
+                if (skill != null) this.skillProficiencies.add(skill);
+            }
+        }
     }
 
     /**
@@ -514,21 +533,16 @@ public class CharacterSheet {
         for (PendingChoice<?> pc : session.getPendingChoices()) {
             Set<?> chosen = pc.getChosen();
 
-            // Handle TOOL type choices
+            // TOOL / LANGUAGE choices. Recorded separately as well: grants re-derive from content on
+            // load, but a pick only exists on the sheet, so it's what gets persisted.
             if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.TOOL) {
                 for (Object obj : chosen) {
-                    if (obj instanceof String toolName) {
-                        toolProficiencies.add(toolName);
-                    }
+                    if (obj instanceof String tool) chosenToolProficiencies.add(ToolRegistry.idOf(tool));
                 }
             }
-
-            // Handle LANGUAGE type choices
             if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.LANGUAGE) {
                 for (Object obj : chosen) {
-                    if (obj instanceof String languageName) {
-                        languages.add(languageName);
-                    }
+                    if (obj instanceof String language) chosenLanguages.add(LanguageRegistry.idOf(language));
                 }
             }
 
@@ -543,7 +557,23 @@ public class CharacterSheet {
                 }
             }
         }
+        toolProficiencies.addAll(chosenToolProficiencies);
+        languages.addAll(chosenLanguages);
     }
+
+    /**
+     * Restores the player's creation-time tool/language picks on load (#17). Grants are already
+     * back from {@code loadFromData} re-applying race/class/background; these are the rest.
+     */
+    public void restoreChosenProficiencies(Collection<String> tools, Collection<String> langs) {
+        if (tools != null) for (String t : tools) chosenToolProficiencies.add(ToolRegistry.idOf(t));
+        if (langs != null) for (String l : langs) chosenLanguages.add(LanguageRegistry.idOf(l));
+        toolProficiencies.addAll(chosenToolProficiencies);
+        languages.addAll(chosenLanguages);
+    }
+
+    public Set<String> getChosenToolProficiencies() { return Collections.unmodifiableSet(chosenToolProficiencies); }
+    public Set<String> getChosenLanguages() { return Collections.unmodifiableSet(chosenLanguages); }
 
     private void calculateHealth() {
         if (dndClass != null) {
@@ -782,14 +812,9 @@ public class CharacterSheet {
         return null;
     }
 
-    private Set<String> getArmorProficiencies() {
-        Set<String> proficiencies = new HashSet<>();
-
-        if (dndClass != null && dndClass.getArmorProficiencies() != null) {
-            proficiencies.addAll(dndClass.getArmorProficiencies());
-        }
-
-        return proficiencies;
+    /** All armor proficiencies — race, subrace, class and subclass. */
+    public Set<String> getArmorProficiencies() {
+        return new HashSet<>(armorProficiencies);
     }
 
     public List<ItemStack> getEquipment() {

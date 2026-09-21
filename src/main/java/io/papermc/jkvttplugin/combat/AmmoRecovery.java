@@ -127,9 +127,7 @@ public final class AmmoRecovery implements Listener {
     }
 
     private static String displayName(String itemId) {
-        DndWeapon weapon = itemId != null ? WeaponLoader.getWeapon(itemId) : null;
-        if (weapon != null && weapon.getName() != null) return weapon.getName();
-        DndItem item = itemId != null ? ItemLoader.getItem(itemId) : null;
-        return (item != null && item.getName() != null) ? item.getName() : "projectile";
+        String name = io.papermc.jkvttplugin.util.ItemUtil.displayNameOf(itemId);
+        return name != null ? name : "projectile";
     }
 }
