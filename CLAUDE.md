@@ -737,6 +737,13 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
   *before* level-up (#153): we have shops, chests and loot with no treasure to put in them.
   Attunement is a **short** rest in RAW (DMG 138), with `attunement.time` per item for the
   artifact exceptions.
+  **First slice done:** magic *weapons*. A weapon's `base:` merges in its mundane stats
+  (`WeaponLoader.resolveBase`; name/cost/description aren't inherited); `rarity:` and
+  `magic: {bonus | attack_bonus, damage_bonus, crit_bonus_damage}` feed `AttackHandler`
+  (to-hit, damage, labelled `+2[Longsword +2]`, crit-only flat bonus). Proficiency matches the
+  base; magic weapons are excluded from the derived weapon tags. 42 +1/+2/+3 weapons and 3 Vicious
+  weapons ship in `Weapons/magic_weapons.yml`. Next: extra dice / a second damage type (Dragon
+  Slayer, Flame Tongue — damage strings are one dice group today), attunement, charges, armor.
 - ~~Persist equipped armor~~ **done** (#31): equipped armor/shield save and restore, and
   `ArmorEquipListener` now tracks them live. Current HP, temp HP, spell slots and class resources
   persist event-driven — `CharacterSheet` flushes to disk on every change, plus a save per combat turn.

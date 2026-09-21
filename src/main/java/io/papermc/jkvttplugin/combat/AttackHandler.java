@@ -96,6 +96,8 @@ public class AttackHandler {
         int dmgAbilityMod = sheet.getModifier(dmgAbility);
         String bonusLabel = dmgAbilityMod != 0
                 ? (dmgAbilityMod > 0 ? "+" : "") + dmgAbilityMod + "[" + dmgAbility.getAbbreviation() + "]" : "";
+        String magicDmg = magicLabel(weapon, weapon != null ? weapon.getDamageBonus() : 0);
+        if (!magicDmg.isEmpty()) bonusLabel = bonusLabel.isEmpty() ? magicDmg : bonusLabel + " " + magicDmg;
         if (meleeStr) {
             String eff = attacker.effectBonusDamageBreakdownFor("melee_str");
             if (!eff.isEmpty()) bonusLabel = bonusLabel.isEmpty() ? eff : bonusLabel + " " + eff;
@@ -119,7 +121,8 @@ public class AttackHandler {
         boolean resolved = resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
                 providedRoll, providedTotal, player, bonusLabel, extraCritDie, projectile, forceAuto,
                 AmmunitionManager.spentRoundId(weapon),
-                weapon != null ? (weapon.getLongRange() > 0 ? weapon.getLongRange() : weapon.getNormalRange()) : 0);
+                weapon != null ? (weapon.getLongRange() > 0 ? weapon.getLongRange() : weapon.getNormalRange()) : 0,
+                weapon != null ? weapon.getCritBonusDamage() : 0, weapon != null ? weapon.getName() : null);
         if (resolved) AmmunitionManager.consume(player, weapon);
         return resolved;
     }
@@ -147,14 +150,15 @@ public class AttackHandler {
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser) {
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, commandUser, "", false, null, false, null, 0);
+                providedRoll, providedTotal, commandUser, "", false, null, false, null, 0, 0, null);
     }
 
     private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel,
                                       boolean extraCritDie, String projectileVisual, boolean forceAuto,
-                                      String spentAmmoId, int projectileRangeFeet) {
+                                      String spentAmmoId, int projectileRangeFeet,
+                                      int critBonusDamage, String critBonusSource) {
         // Advantage/disadvantage from conditions (#103): auto-applied when the game rolls, and the
         // roller is reminded either way (a physical roll or provided total is trusted as-is).
         Advantage advantage = attacker.attackAdvantageAgainst(target);
@@ -181,6 +185,12 @@ public class AttackHandler {
         if (r.nat20()) {
             finalDamage = doubleDice(damageStr);
             if (extraCritDie) finalDamage = addOneDie(finalDamage);
+            // A flat bonus on a natural 20 only, not doubled (Vicious Weapon, #188).
+            if (critBonusDamage != 0) {
+                finalDamage = addFlatDamage(finalDamage, critBonusDamage);
+                String tag = (critBonusDamage > 0 ? "+" : "") + critBonusDamage + "[" + (critBonusSource != null ? critBonusSource : "crit") + "]";
+                bonusLabel = bonusLabel == null || bonusLabel.isEmpty() ? tag : bonusLabel + " " + tag;
+            }
         }
         broadcastAttackResult(session, attacker, target, false,
                 r.total(), targetAC, hit, r.nat20(), r.nat1(),
@@ -270,7 +280,14 @@ public class AttackHandler {
             profBonus = sheet.getProficiencyBonus();
         }
 
-        return abilityMod + profBonus;
+        // A magic weapon's bonus (#188) — added whether or not you're proficient, as in the DMG.
+        int magic = weapon != null ? weapon.getAttackBonus() : 0;
+        return abilityMod + profBonus + magic;
+    }
+
+    /** "+2[Longsword +2]" for a magic weapon's bonus in a roll breakdown; empty for none. */
+    private static String magicLabel(DndWeapon weapon, int bonus) {
+        return (weapon == null || bonus == 0) ? "" : (bonus > 0 ? "+" : "") + bonus + "[" + weapon.getName() + "]";
     }
 
     /**
@@ -317,6 +334,8 @@ public class AttackHandler {
             int profBonus = sheet.getProficiencyBonus();
             sb.append(" +").append(profBonus).append("[Prof]");
         }
+        String magic = magicLabel(weapon, weapon != null ? weapon.getAttackBonus() : 0);
+        if (!magic.isEmpty()) sb.append(" ").append(magic);
 
         return sb.toString();
     }
@@ -341,10 +360,12 @@ public class AttackHandler {
             return "1";
         }
 
-        if (abilityMod > 0) {
-            return baseDice + "+" + abilityMod;
-        } else if (abilityMod < 0) {
-            return baseDice + abilityMod; // negative sign included
+        // Ability modifier plus a magic weapon's damage bonus (#188), as one flat term (1d8+5).
+        int flat = abilityMod + weapon.getDamageBonus();
+        if (flat > 0) {
+            return baseDice + "+" + flat;
+        } else if (flat < 0) {
+            return baseDice + flat; // negative sign included
         }
         return baseDice;
     }
@@ -405,7 +426,7 @@ public class AttackHandler {
         // including whether its attack throws a cosmetic projectile (#181).
         return resolveAttack(session, attacker, target, toHit, "+" + toHit + "[ToHit]",
                 attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm, "", false,
-                CombatVisuals.projectileFor(attack), forceAuto, null, 0); // monsters do not track ammo
+                CombatVisuals.projectileFor(attack), forceAuto, null, 0, 0, null); // monsters do not track ammo
     }
 
     /**

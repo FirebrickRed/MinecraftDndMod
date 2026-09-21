@@ -97,6 +97,38 @@ Write properties in lowercase. Only these three change mechanics today; everythi
 A ranged or thrown attack shows a cosmetic projectile: a **trident** if `material: TRIDENT`, otherwise
 an **arrow**. It's purely visual; damage never comes from the Minecraft projectile.
 
+### Magic weapons (#188)
+
+A magic weapon names the mundane weapon it **is** with `base:` and adds a `magic:` block. The base's
+dice, damage type, properties, range, ammunition, material and model are merged in, so you write only
+what's different. `DMContent/Weapons/magic_weapons.yml` has the shipped set.
+
+```yaml
+longsword_plus_2:
+  base: longsword            # REQUIRED for a magic weapon; any weapon id, in any Weapons/ file
+  rarity: rare               # common | uncommon | rare | very_rare | legendary | artifact
+  magic:
+    bonus: 2                 # shorthand: +2 to attack AND damage (Weapon, +2)
+    # attack_bonus: 1        # or set them separately
+    # damage_bonus: 1
+    # crit_bonus_damage: 7   # flat extra damage on a natural 20 only (Vicious Weapon)
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+  # name: "Moonblade"        # optional; a +N weapon with no name becomes "Longsword +2"
+```
+
+- **Not inherited:** `name`, `cost`, `description`. A +2 longsword isn't worth 15 gp. Leave `cost`
+  off for now: DMG prices are far over the 64-coin trade limit (#94).
+- **Proficiency comes from the base.** A Longsword +2 counts as a longsword, for "martial weapons"
+  and for an elf's specific longsword proficiency. The magic bonus is added **even without**
+  proficiency (DMG).
+- **What players see:** the name in its rarity colour, an enchantment shimmer, "Rare magic weapon"
+  and "+2 to attack and damage rolls" in the tooltip, and `+2[Longsword +2]` in both roll breakdowns.
+- **Magic weapons are kept out of the weapon tags** (`martial_weapon`, …), so a "choose any martial
+  weapon" starting-kit pick never offers one. Hand them out with `/dm give`, a creature's
+  `inventory:`/`loot:`, a chest, or `/dm object loot`.
+- **Not supported yet:** extra *dice* (Dragon Slayer's +3d6 vs dragons), damage of a second type
+  (Flame Tongue's fire), attunement, charges. Those are the next slices of #188.
+
 ---
 
 ## Armor & shields — `DMContent/Armor/`

@@ -87,6 +87,9 @@ public final class ContentValidator {
             if (blank(w.getDamage())) warn(where + " has no damage dice.");
             else if (!isDice(w.getDamage())) warn(where + " damage '" + w.getDamage() + "' isn't a dice expression like 1d8.");
             if (blank(w.getDamageType())) warn(where + " has no damage_type.");
+            if (w.getRarity() != null && !Set.of("common", "uncommon", "rare", "very_rare", "legendary", "artifact").contains(w.getRarity())) {
+                warn(where + " rarity '" + w.getRarity() + "' should be common, uncommon, rare, very_rare, legendary or artifact.");
+            }
             checkMaterialName(where, w.getMaterial());
             if (w.isRanged() && w.getNormalRange() <= 0) warn(where + " is ranged but has no range: (e.g. \"80/320\").");
             if (w.hasProperty("thrown") && w.getNormalRange() <= 0) warn(where + " is thrown but has no range: — it can only stab.");

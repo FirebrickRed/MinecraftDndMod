@@ -1,0 +1,295 @@
+# Magic weapons (#188). A magic weapon names its mundane `base:` and adds a `magic:` block; the loader
+# merges in the base's dice, damage type, properties, range, material and model, so only what's
+# different is written here. Name, cost and description are NOT inherited.
+#
+#   longsword_plus_2:
+#     base: longsword
+#     rarity: rare                  # common | uncommon | rare | very_rare | legendary | artifact
+#     magic:
+#       bonus: 2                    # shorthand for attack_bonus: 2 + damage_bonus: 2
+#       # attack_bonus: 1           # or set them separately
+#       # damage_bonus: 1
+#       # crit_bonus_damage: 7      # extra damage on a natural 20 (Vicious Weapon)
+#
+# No `name:` on a +N weapon → "Longsword +2" from the base's name. The bonus is added to attack rolls
+# whether or not the wielder is proficient (DMG); proficiency still comes from the base (a Longsword +2
+# is a longsword). Magic weapons stay out of the simple/martial weapon tags, so starting kits never
+# offer them. No prices: DMG values are far over the 64-coin trade limit (#94) — they're loot for now.
+# Full reference: docs/authoring-items.md → Magic weapons.
+#
+# Weapon, +1 / +2 / +3 (DMG p.213): uncommon / rare / very rare. No attunement.
+
+longsword_plus_1:
+  base: longsword
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+longsword_plus_2:
+  base: longsword
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+longsword_plus_3:
+  base: longsword
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+shortsword_plus_1:
+  base: shortsword
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+shortsword_plus_2:
+  base: shortsword
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+shortsword_plus_3:
+  base: shortsword
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+rapier_plus_1:
+  base: rapier
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+rapier_plus_2:
+  base: rapier
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+rapier_plus_3:
+  base: rapier
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+scimitar_plus_1:
+  base: scimitar
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+scimitar_plus_2:
+  base: scimitar
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+scimitar_plus_3:
+  base: scimitar
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+dagger_plus_1:
+  base: dagger
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+dagger_plus_2:
+  base: dagger
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+dagger_plus_3:
+  base: dagger
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+handaxe_plus_1:
+  base: handaxe
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+handaxe_plus_2:
+  base: handaxe
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+handaxe_plus_3:
+  base: handaxe
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+greatsword_plus_1:
+  base: greatsword
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+greatsword_plus_2:
+  base: greatsword
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+greatsword_plus_3:
+  base: greatsword
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+greataxe_plus_1:
+  base: greataxe
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+greataxe_plus_2:
+  base: greataxe
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+greataxe_plus_3:
+  base: greataxe
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+warhammer_plus_1:
+  base: warhammer
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+warhammer_plus_2:
+  base: warhammer
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+warhammer_plus_3:
+  base: warhammer
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+mace_plus_1:
+  base: mace
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+mace_plus_2:
+  base: mace
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+mace_plus_3:
+  base: mace
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+quarterstaff_plus_1:
+  base: quarterstaff
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+quarterstaff_plus_2:
+  base: quarterstaff
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+quarterstaff_plus_3:
+  base: quarterstaff
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+longbow_plus_1:
+  base: longbow
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+longbow_plus_2:
+  base: longbow
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+longbow_plus_3:
+  base: longbow
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+shortbow_plus_1:
+  base: shortbow
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+shortbow_plus_2:
+  base: shortbow
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+shortbow_plus_3:
+  base: shortbow
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+light_crossbow_plus_1:
+  base: light_crossbow
+  rarity: uncommon
+  magic: { bonus: 1 }
+  description: "You have a +1 bonus to attack and damage rolls made with this magic weapon."
+
+light_crossbow_plus_2:
+  base: light_crossbow
+  rarity: rare
+  magic: { bonus: 2 }
+  description: "You have a +2 bonus to attack and damage rolls made with this magic weapon."
+
+light_crossbow_plus_3:
+  base: light_crossbow
+  rarity: very_rare
+  magic: { bonus: 3 }
+  description: "You have a +3 bonus to attack and damage rolls made with this magic weapon."
+
+# Vicious Weapon (DMG p.209, 2014): rare, no attunement. "When you roll a 20 on your attack roll with
+# this magic weapon, the target takes an extra 7 damage of the weapon's type."
+vicious_longsword:
+  name: "Vicious Longsword"
+  base: longsword
+  rarity: rare
+  magic: { crit_bonus_damage: 7 }
+  description: "When you roll a 20 on your attack roll with this magic weapon, the target takes an extra 7 damage of the weapon's type."
+
+vicious_rapier:
+  name: "Vicious Rapier"
+  base: rapier
+  rarity: rare
+  magic: { crit_bonus_damage: 7 }
+  description: "When you roll a 20 on your attack roll with this magic weapon, the target takes an extra 7 damage of the weapon's type."
+
+vicious_greataxe:
+  name: "Vicious Greataxe"
+  base: greataxe
+  rarity: rare
+  magic: { crit_bonus_damage: 7 }
+  description: "When you roll a 20 on your attack roll with this magic weapon, the target takes an extra 7 damage of the weapon's type."

@@ -23,27 +23,68 @@ public class WeaponLoader {
 
         Yaml yaml = new Yaml();
 
+        // Pass 1: every entry's raw YAML, so a magic weapon can name a base defined in another file.
+        Map<String, Map<String, Object>> raw = new LinkedHashMap<>();
         for (File file : files) {
             try (FileReader reader = new FileReader(file)) {
                 Map<String, Object> data = yaml.load(reader);
-
-                // Each YAML can contain multiple weapons
+                if (data == null) continue;
                 for (Map.Entry<String, Object> entry : data.entrySet()) {
-                    String weaponId = entry.getKey();
-
                     if (entry.getValue() instanceof Map<?, ?> weaponData) {
-                        DndWeapon weapon = parseWeapon(weaponId, weaponData);
-                        loadedWeapons.put(Util.normalize(weaponId), weapon);
-                        LOGGER.fine("Loaded weapon: " + weapon.getName());
+                        @SuppressWarnings("unchecked") Map<String, Object> m = (Map<String, Object>) weaponData;
+                        raw.put(Util.normalize(entry.getKey()), m);
                     }
                 }
             } catch (Exception e) {
                 LOGGER.severe("Failed to load weapons from " + file.getName() + ": " + e.getMessage());
-                e.printStackTrace();
+            }
+        }
+
+        // Pass 2: resolve `base:` and parse. One bad entry doesn't take the others down.
+        for (String id : raw.keySet()) {
+            try {
+                Map<String, Object> merged = resolveBase(id, raw, new LinkedHashSet<>());
+                if (merged == null) continue;
+                DndWeapon weapon = parseWeapon(id, merged);
+                loadedWeapons.put(id, weapon);
+                LOGGER.fine("Loaded weapon: " + weapon.getName());
+            } catch (Exception e) {
+                LOGGER.severe("Failed to load weapon '" + id + "': " + e.getMessage());
             }
         }
         LOGGER.info("Loaded " + loadedWeapons.size() + " weapons.");
         installWeaponTags();
+    }
+
+    /** Keys a magic weapon never inherits from its base: its own identity and price, not a longsword's. */
+    private static final Set<String> NOT_INHERITED = Set.of("name", "cost", "description", "base", "rarity", "magic");
+
+    /**
+     * A weapon's YAML with its {@code base:} chain merged in: the base's stats first, this entry's
+     * keys on top. A magic weapon authors only what differs ("Longsword +2" = base: longsword + a
+     * magic block). A missing base or a cycle is logged and the entry skipped.
+     */
+    private static Map<String, Object> resolveBase(String id, Map<String, Map<String, Object>> raw, Set<String> visiting) {
+        Map<String, Object> own = raw.get(id);
+        if (own == null) return null;
+        if (!(own.get("base") instanceof String baseRef)) return own;
+        String baseId = Util.normalize(baseRef);
+        if (!visiting.add(id)) {
+            LOGGER.warning("Weapon '" + id + "' has a base: cycle (" + String.join(" → ", visiting) + ") — skipped.");
+            return null;
+        }
+        Map<String, Object> base = resolveBase(baseId, raw, visiting);
+        if (base == null) {
+            LOGGER.warning("Weapon '" + id + "' has base: " + baseRef + ", which isn't a weapon — skipped.");
+            return null;
+        }
+        Map<String, Object> merged = new LinkedHashMap<>();
+        for (Map.Entry<String, Object> e : base.entrySet()) {
+            if (!NOT_INHERITED.contains(e.getKey())) merged.put(e.getKey(), e.getValue());
+        }
+        merged.putAll(own);
+        merged.put("__baseName", base.get("name")); // for proficiency matching and the default name
+        return merged;
     }
 
     /**
@@ -57,6 +98,9 @@ public class WeaponLoader {
         for (Map.Entry<String, DndWeapon> entry : loadedWeapons.entrySet()) {
             String id = entry.getKey(); // already normalized (the lookup key used everywhere)
             DndWeapon w = entry.getValue();
+            // Magic weapons stay out of the category tags, or every "choose any martial weapon"
+            // starting-kit pick would offer a Longsword +3.
+            if (w.isMagic()) continue;
             String cat = w.getCategory() == null ? "" : Util.normalize(w.getCategory());
             String type = w.getType() == null ? "" : Util.normalize(w.getType());
             if (cat.isBlank()) continue;
@@ -91,6 +135,29 @@ public class WeaponLoader {
         if (data.get("reach") instanceof Number reach) weapon.setReach(reach.intValue()); // melee reach in feet
         if (data.get("recovery_chance") instanceof Number rc) weapon.setRecoveryChance(rc.intValue()); // #191
         weapon.setCustomModel((String) data.get("custom_model"));  // optional resource-pack model
+
+        // Magic (#188): base weapon, rarity, and the magic block's bonuses.
+        if (data.get("base") instanceof String baseRef) {
+            weapon.setBaseId(Util.normalize(baseRef));
+            if (data.get("__baseName") instanceof String baseName) weapon.setBaseName(baseName);
+        }
+        if (data.get("rarity") instanceof String rarity) weapon.setRarity(Util.normalize(rarity));
+        if (data.get("magic") instanceof Map<?, ?> magic) {
+            weapon.setAttackBonus(io.papermc.jkvttplugin.data.loader.util.ParseUtil.asInt(magic.get("attack_bonus"), 0));
+            weapon.setDamageBonus(io.papermc.jkvttplugin.data.loader.util.ParseUtil.asInt(magic.get("damage_bonus"), 0));
+            weapon.setCritBonusDamage(io.papermc.jkvttplugin.data.loader.util.ParseUtil.asInt(magic.get("crit_bonus_damage"), 0));
+            // "bonus: 2" is shorthand for the usual Weapon +2 (same to attack and damage).
+            int both = io.papermc.jkvttplugin.data.loader.util.ParseUtil.asInt(magic.get("bonus"), 0);
+            if (both != 0) {
+                if (weapon.getAttackBonus() == 0) weapon.setAttackBonus(both);
+                if (weapon.getDamageBonus() == 0) weapon.setDamageBonus(both);
+            }
+        }
+        // No name on a +N weapon → "Longsword +2", from the base's name.
+        if (weapon.getName() == null && data.get("__baseName") instanceof String baseName) {
+            int n = weapon.getAttackBonus();
+            weapon.setName(n != 0 && n == weapon.getDamageBonus() ? baseName + " +" + n : baseName);
+        }
 
         // Parse properties
         Object propertiesObj = data.get("properties");
