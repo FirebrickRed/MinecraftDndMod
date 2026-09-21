@@ -819,6 +819,16 @@ public class CombatSession {
             if (!c.isPlayer() || !c.getId().equals(player.getUniqueId())) continue;
             if (c.isUnconscious() && !c.isDead()) DeathSaveHandler.applyProne(c);
             for (String id : c.getConditions()) setConditionEffect(c, ConditionLoader.get(id), true);
+            // An active effect's visual (Rage's red tint), in case it was cleared while offline (#212).
+            CharacterSheet sheet = c.getCharacterSheet();
+            if (sheet != null) {
+                for (var e : sheet.getActiveEffects()) {
+                    if (e.getMinecraftEffect() == null) continue;
+                    var type = org.bukkit.potion.PotionEffectType.getByName(e.getMinecraftEffect().toUpperCase());
+                    if (type != null) player.addPotionEffect(new org.bukkit.potion.PotionEffect(
+                            type, Integer.MAX_VALUE, e.getMinecraftAmplifier(), false, false));
+                }
+            }
             if (!isSetupPhase && c == getCurrentCombatant()) applyGlowEffect(c);
         }
     }

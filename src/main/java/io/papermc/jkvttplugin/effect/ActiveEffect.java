@@ -71,6 +71,17 @@ public class ActiveEffect {
                 maintainedBy, untilRest, untilUsed);
     }
 
+    /**
+     * Put back the live duration state saved with a character (#212). Everything else comes from
+     * the feature's YAML template, so tuning Rage in YAML also reaches a Rage that was saved mid-fight.
+     */
+    public void restoreState(int roundsRemaining, boolean maintainedThisRound) {
+        this.roundsRemaining = roundsRemaining;
+        this.maintainedThisRound = maintainedThisRound;
+    }
+
+    public boolean isMaintainedThisRound() { return maintainedThisRound; }
+
     /** Whether this effect carries a named boolean primitive (e.g. "reroll_natural_1"). */
     public boolean hasFlag(String flag) { return flag != null && flags.contains(flag.toLowerCase()); }
     public boolean rerollsNat1() { return hasFlag("reroll_natural_1"); }

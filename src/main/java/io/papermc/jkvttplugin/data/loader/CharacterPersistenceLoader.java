@@ -220,7 +220,8 @@ public class CharacterPersistenceLoader {
         return issues;
     }
 
-    private static Map<String, Object> serializeCharacterSheet(CharacterSheet sheet) {
+    // Package-private so tests can round-trip a sheet without the plugin or files (#14).
+    static Map<String, Object> serializeCharacterSheet(CharacterSheet sheet) {
         Map<String, Object> data = new HashMap<>();
 
         data.put("characterId", sheet.getCharacterId().toString());
@@ -259,6 +260,19 @@ public class CharacterPersistenceLoader {
         }
         if (!sheet.getExpertise().isEmpty()) {
             data.put("expertise", new ArrayList<>(sheet.getExpertise()));
+        }
+        // Live buffs such as Rage (#212): just the source feature and its live state; the effect
+        // itself is rebuilt from the feature's YAML on load.
+        if (!sheet.getActiveEffects().isEmpty()) {
+            List<Map<String, Object>> effects = new ArrayList<>();
+            for (var e : sheet.getActiveEffects()) {
+                Map<String, Object> em = new LinkedHashMap<>();
+                em.put("source", e.getSourceId());
+                em.put("roundsRemaining", e.getRoundsRemaining());
+                em.put("maintainedThisRound", e.isMaintainedThisRound());
+                effects.add(em);
+            }
+            data.put("activeEffects", effects);
         }
 
         // Serialize spells and cantrips (save normalized keys, not display names)
@@ -330,6 +344,21 @@ public class CharacterPersistenceLoader {
         return data;
     }
 
+    /** Re-attach saved buffs (#212). A feature that no longer exists is reported and dropped. */
+    static void restoreActiveEffects(CharacterSheet sheet, Object raw) {
+        if (!(raw instanceof List<?> list)) return;
+        for (Object o : list) {
+            if (!(o instanceof Map<?, ?> em) || !(em.get("source") instanceof String source)) continue;
+            int rounds = parseIntOrDefault(em.get("roundsRemaining"), -1);
+            boolean maintained = Boolean.TRUE.equals(em.get("maintainedThisRound"));
+            if (!sheet.restoreActiveEffect(source, rounds, maintained)) {
+                String who = sheet.getCharacterName();
+                java.util.logging.Logger.getLogger("CharacterPersistence").warning(who + " had an active '" + source
+                        + "' effect, but no feature with that id exists any more — dropped.");
+            }
+        }
+    }
+
     /** The strings in a YAML list, or an empty list if the key is absent or not a list. */
     private static List<String> stringList(Object raw) {
         List<String> out = new ArrayList<>();
@@ -346,7 +375,7 @@ public class CharacterPersistenceLoader {
         return def;
     }
 
-    private static CharacterSheet deserializeCharacterSheet(Map<String, Object> data) {
+    static CharacterSheet deserializeCharacterSheet(Map<String, Object> data) {
         try {
             UUID characterId = UUID.fromString((String) data.get("characterId"));
             UUID playerId = UUID.fromString((String) data.get("playerId"));
@@ -366,7 +395,7 @@ public class CharacterPersistenceLoader {
                         Ability ability = Ability.valueOf(entry.getKey());
                         abilities.put(ability, entry.getValue());
                     } catch (IllegalArgumentException e) {
-                        plugin.getLogger().warning("Invalid ability name in character data: " + entry.getKey());
+                        LOGGER.warning("Invalid ability name in character data: " + entry.getKey());
                     }
                 }
             }
@@ -380,7 +409,7 @@ public class CharacterPersistenceLoader {
                         Skill skill = Skill.valueOf(skillName);
                         skillProficiencies.add(skill);
                     } catch (IllegalArgumentException e) {
-                        plugin.getLogger().warning("Invalid skill name in character data: " + skillName);
+                        LOGGER.warning("Invalid skill name in character data: " + skillName);
                     }
                 }
             }
@@ -418,6 +447,7 @@ public class CharacterPersistenceLoader {
             // Restore creation-time tool / language picks (#17).
             sheet.restoreChosenProficiencies(stringList(data.get("chosenTools")), stringList(data.get("chosenLanguages")));
             sheet.restoreExpertise(stringList(data.get("expertise")));
+            restoreActiveEffects(sheet, data.get("activeEffects"));
 
             // Restore CUSTOM choice selections (#70) so feature actions resolve their variant.
             if (data.get("customChoices") instanceof Map<?, ?> ccMap) {
@@ -481,7 +511,7 @@ public class CharacterPersistenceLoader {
 //                    .build();
 
         } catch (Exception e) {
-            plugin.getLogger().severe("Failed to deserialize character sheet: " + e.getMessage());
+            LOGGER.severe("Failed to deserialize character sheet: " + e.getMessage());
             return null;
         }
     }

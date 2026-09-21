@@ -1480,10 +1480,37 @@ public class CharacterSheet {
         if (effect == null) return;
         if (!effect.stacks()) removeEffect(effect.getSourceId());
         activeEffects.add(effect);
+        persist(); // effects save like HP and slots do (#212) — a crash right after raging keeps the Rage
     }
 
     public void removeEffect(String sourceId) {
-        activeEffects.removeIf(e -> e.getSourceId().equalsIgnoreCase(sourceId));
+        if (activeEffects.removeIf(e -> e.getSourceId().equalsIgnoreCase(sourceId))) persist();
+    }
+
+    /**
+     * Re-attach a saved effect on load (#212). Only the live state (rounds left, maintained this
+     * round) is saved; the effect itself is rebuilt from its feature's YAML — this character's own
+     * features first, then any class or race (an effect can come from someone else's feature).
+     * Returns false if that feature no longer exists (renamed or removed), so the caller can report it.
+     */
+    public boolean restoreActiveEffect(String sourceId, int roundsRemaining, boolean maintainedThisRound) {
+        io.papermc.jkvttplugin.effect.Feature feature = getFeature(sourceId);
+        if (feature == null) feature = findFeatureAnywhere(sourceId);
+        if (feature == null || !feature.hasApply()) return false;
+        io.papermc.jkvttplugin.effect.ActiveEffect effect = feature.getApplyTemplate().copy();
+        effect.restoreState(roundsRemaining, maintainedThisRound);
+        activeEffects.add(effect);
+        return true;
+    }
+
+    private static io.papermc.jkvttplugin.effect.Feature findFeatureAnywhere(String id) {
+        for (DndClass c : ClassLoader.getAllClasses()) {
+            for (var f : c.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
+        }
+        for (DndRace r : RaceLoader.getAllRaces()) {
+            for (var f : r.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
+        }
+        return null;
     }
 
     /** Look up an authored feature by id across this character's class and race (Effect Engine, #70). */
@@ -1618,10 +1645,12 @@ public class CharacterSheet {
     /** Advance effect durations at this character's turn start; returns the effects that just expired. */
     public List<io.papermc.jkvttplugin.effect.ActiveEffect> tickEffectsTurnStart() {
         List<io.papermc.jkvttplugin.effect.ActiveEffect> ended = new ArrayList<>();
+        if (activeEffects.isEmpty()) return ended;
         activeEffects.removeIf(e -> {
             if (e.tickTurnStartAndCheckExpiry()) { ended.add(e); return true; }
             return false;
         });
+        persist(); // rounds left changed (#212)
         return ended;
     }
     /** Remove effects that end on the given rest ("short"/"long"); returns the expired effects. */
