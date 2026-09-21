@@ -125,6 +125,14 @@ gradlew clean build
 
 The compiled JAR lands in `build/libs/`.
 
+### Tests
+
+`gradlew build` also runs the test suite (`gradlew test` runs it alone). The tests load the real
+`DMContent/` folder, so **a broken YAML file or a content-check warning fails the build**: no jar
+until it's fixed. The console names the failing test and what it expected. Reports land in
+`build/reports/tests/test/index.html`. Anything that needs a live server (items in inventories,
+chat prompts) isn't covered; that's what [`TEST_PLAN.md`](TEST_PLAN.md) is for.
+
 ---
 
 ## Roadmap / not yet implemented

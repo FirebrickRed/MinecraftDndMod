@@ -1,6 +1,7 @@
 # Test Plan — command consolidation, icons, saves
 
-Rebuild + deploy the jar first (`gradlew build`, copy `build/libs/*.jar` to the server's
+Rebuild + deploy the jar first (`gradlew build` — it runs the automated tests too, and refuses to
+build if one fails — then copy `build/libs/*.jar` to the server's
 `plugins/`, restart or reload). Load the resource pack so icon checks are meaningful.
 
 Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second account or `/deop`.

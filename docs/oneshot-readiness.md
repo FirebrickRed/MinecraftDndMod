@@ -14,7 +14,7 @@ reactions (#195) and boats (#198), landed 2026-09-18 along with `/combat bonusAc
 first slice of out-of-combat casting (#152). What's left is the 🟠 retest list, which at this point
 matters more than any new code.
 
-The build is green (`gradlew clean build`, 2026-09-18). There are no automated tests (#14).
+The build is green (`gradlew clean build`, 2026-09-21), and it now runs 102 automated tests against the real DMContent (#14, closed). A broken content file fails the build instead of the table.
 
 ---
 
@@ -136,7 +136,7 @@ alias/reveal model (#194) · spawn groups (#79) · passive Perception and group 
 stealth/hide (#163) · darkvision → night vision (#148) · random loot tables (#164) · currency
 conversion (#91/#92) · the turn glow hugging the model (#134) · a DM measuring tool (#199) · Bless/Bane/Guidance-style roll
 buffs (#182, #70) · Ready action (#157) · factions (#155) · `/roll` expressions (#57) ·
-op-is-not-DM (#116) · unit tests (#14) · codebase restructure (#95).
+op-is-not-DM (#116) · codebase restructure (#95).
 
 ---
 
