@@ -173,9 +173,10 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
 
     @Override
     public void onDisable() {
-        // Tidy shutdown: persist characters (so mid-combat HP isn't lost) and cleanly
-        // end any active combat (clears glow, scoreboards, prone). This is a safety net,
-        // not full crash recovery — see Issue #105.
+        // Tidy shutdown: persist characters (so mid-combat HP isn't lost) and SUSPEND any active
+        // combat: snapshot it, keep its recovery file, and clear only what's visible (glow,
+        // scoreboards, prone). It resumes on the next boot. Ending it here deleted the file, which is
+        // why a normal /stop never restored anything (#165).
         io.papermc.jkvttplugin.dm.AnnotationGlow.stop();
         try {
             CharacterPersistenceLoader.saveAllCharacters();
@@ -192,7 +193,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         }
         for (CombatSession session : new java.util.ArrayList<>(CombatSession.getAllSessions())) {
             try {
-                session.endCombat();
+                session.suspendForShutdown(); // keep the recovery file: the fight resumes on next boot (#165)
             } catch (Exception e) {
                 getLogger().warning("Failed to end a combat session cleanly on shutdown: " + e.getMessage());
             }

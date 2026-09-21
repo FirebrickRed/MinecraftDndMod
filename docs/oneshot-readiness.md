@@ -67,7 +67,7 @@ Ordered by how likely each is to bite, with a cost estimate. None needs new syst
 
 Put these on the playtest checklist rather than treating them as open work:
 
-- **Combat restore after a restart** (#165). Steps are on the issue. If it fails, the rule is simply "don't restart mid-fight".
+- **Combat restore after a restart** (#165) — **fixed 2026-09-21**: a normal `/stop` used to delete the save file on the way down (shutdown ran the same clean end as `/combat finished`). Retest: start a fight, get a few turns in with a condition on someone and a player downed, `/stop`, start the server → the DM is told the round and whose turn; rejoining players get their scoreboard, prone and conditions back; the turn in progress restarts. Rage-style active effects are not restored.
 - **Entities survive a restart** (bd929da fixed the shutdown deletion; #166 closed).
 - **Exactly one attack prompt per click** (#167). Click the kobold directly *and* aim-then-click.
 - **DM Add tool** double-toggle fix, **miss scatter** (±0.12), **downed-can't-jump**. All from session 2's fix round.

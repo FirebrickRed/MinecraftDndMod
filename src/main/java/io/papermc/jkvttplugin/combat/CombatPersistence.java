@@ -15,15 +15,23 @@ import java.util.UUID;
 import java.util.logging.Logger;
 
 /**
- * Crash recovery for active combat (Issue #105). Each live combat session is snapshotted to
+ * Crash and restart recovery for active combat (#105, #165). Each live combat session is snapshotted to
  * {@code plugins/jkvttplugin/CombatSessions/<sessionId>.yml} on every meaningful state transition
- * (combat start / turn advance) and the file is deleted when combat ends cleanly. On startup any
- * leftover files mean a crash happened mid-combat, so they're restored.
- *
- * <p>Only the lightweight combat structure is saved — round, turn index, setup flag, and each
- * combatant's id/type/names/initiative/flags/death-saves/conditions/reaction. HP is NOT saved here:
- * player HP persists on the character sheet (#31) and entity HP on the armor stand (#89). The
- * turn-in-progress ({@code TurnState}) resets fresh on restore.
+ * (combat start, turn advance) and again at shutdown. The file is deleted only when combat ends
+ * cleanly ({@code /combat finished}), so a file found at startup means combat was interrupted — by a
+ * crash <em>or</em> a normal server stop — and it's restored.
+ * <p>
+ * #165: shutdown used to call {@code endCombat()}, whose last act is deleting this file, so an ordinary
+ * {@code /stop} erased the save a moment before the server went down and nothing ever restored. Shutdown
+ * now goes through {@link CombatSession#suspendForShutdown()}, which snapshots and keeps the file.
+ * <p>
+ * Only the lightweight combat structure is saved — round, turn index, setup flag, and each
+ * combatant's id/type/names/initiative/flags/death-saves/conditions/reaction/ritual. HP is NOT saved
+ * here: player HP persists on the character sheet (#31) and entity HP on the armor stand (#89). The
+ * turn in progress ({@code TurnState}) restarts fresh on restore, and active effects such as Rage
+ * aren't saved (they live on the sheet in memory only).
+ * <p>
+ * {@link #snapshot} and {@link #parse} are pure (no server, no files) so the round trip is testable.
  */
 public final class CombatPersistence {
 
@@ -32,13 +40,20 @@ public final class CombatPersistence {
 
     private CombatPersistence() {}
 
+    /** The parsed contents of a save file, before a {@link CombatSession} is built from it. */
+    public record Saved(UUID sessionId, UUID dmId, int roundNumber, int currentTurnIndex,
+                        boolean isSetupPhase, List<Combatant> combatants) {}
+
     private static File folder() {
         if (folder == null) {
             folder = new File(JkVttPlugin.getInstance().getDataFolder(), "CombatSessions");
-            if (!folder.exists()) folder.mkdirs();
         }
+        if (!folder.exists()) folder.mkdirs();
         return folder;
     }
+
+    /** Point persistence at another folder (tests). */
+    static void setFolder(File dir) { folder = dir; }
 
     private static File fileFor(UUID sessionId) {
         return new File(folder(), sessionId + ".yml");
@@ -50,51 +65,61 @@ public final class CombatPersistence {
     public static void save(CombatSession session) {
         if (session == null) return;
         try {
-            Map<String, Object> data = new LinkedHashMap<>();
-            data.put("sessionId", session.getSessionId().toString());
-            data.put("dmId", session.getDmId().toString());
-            data.put("roundNumber", session.getRoundNumber());
-            data.put("currentTurnIndex", session.getCurrentTurnIndex());
-            data.put("isSetupPhase", session.isSetupPhase());
-
-            List<Map<String, Object>> combatants = new ArrayList<>();
-            for (Combatant c : session.getCombatants()) {
-                Map<String, Object> cm = new LinkedHashMap<>();
-                cm.put("id", c.getId().toString());
-                cm.put("type", c.getType().name());
-                cm.put("displayName", c.getDisplayName());
-                cm.put("baseName", c.getBaseName());
-                cm.put("initiative", c.getInitiative());
-                cm.put("initiativeBonus", c.getInitiativeBonus());
-                cm.put("isSurprised", c.isSurprised());
-                cm.put("isHidden", c.isHidden());
-                cm.put("isUnconscious", c.isUnconscious());
-                cm.put("isDead", c.isDead());
-                cm.put("conditions", new ArrayList<>(c.getConditions()));
-                cm.put("deathSaveSuccesses", c.getDeathSaveSuccesses());
-                cm.put("deathSaveFailures", c.getDeathSaveFailures());
-                cm.put("isStabilized", c.isStabilized());
-                cm.put("reactionAvailable", c.isReactionAvailable());
-                // Channelled ritual in progress (#156), if any — so a multi-turn cast survives a crash.
-                if (c.isChanneling()) {
-                    cm.put("ritualSpellId", c.getRitualSpellId());
-                    cm.put("ritualSpellName", c.getRitualSpellName());
-                    cm.put("ritualRoundsLeft", c.getRitualRoundsLeft());
-                }
-                combatants.add(cm);
-            }
-            data.put("combatants", combatants);
-
-            DumperOptions options = new DumperOptions();
-            options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
-            options.setPrettyFlow(true);
-            Yaml yaml = new Yaml(options);
-            try (FileWriter writer = new FileWriter(fileFor(session.getSessionId()))) {
-                yaml.dump(data, writer);
-            }
+            Map<String, Object> data = snapshot(session.getSessionId(), session.getDmId(), session.getRoundNumber(),
+                    session.getCurrentTurnIndex(), session.isSetupPhase(), session.getCombatants());
+            write(fileFor(session.getSessionId()), data);
         } catch (Exception e) {
             LOGGER.warning("Failed to save combat session " + session.getSessionId() + ": " + e.getMessage());
         }
+    }
+
+    static void write(File file, Map<String, Object> data) throws java.io.IOException {
+        DumperOptions options = new DumperOptions();
+        options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
+        options.setPrettyFlow(true);
+        try (FileWriter writer = new FileWriter(file)) {
+            new Yaml(options).dump(data, writer);
+        }
+    }
+
+    /** The save-file map for a session. Pure: reads only the combatants' own fields. */
+    public static Map<String, Object> snapshot(UUID sessionId, UUID dmId, int roundNumber, int currentTurnIndex,
+                                               boolean isSetupPhase, List<Combatant> combatantList) {
+        Map<String, Object> data = new LinkedHashMap<>();
+        data.put("sessionId", sessionId.toString());
+        data.put("dmId", dmId.toString());
+        data.put("roundNumber", roundNumber);
+        data.put("currentTurnIndex", currentTurnIndex);
+        data.put("isSetupPhase", isSetupPhase);
+
+        List<Map<String, Object>> combatants = new ArrayList<>();
+        for (Combatant c : combatantList) {
+            Map<String, Object> cm = new LinkedHashMap<>();
+            cm.put("id", c.getId().toString());
+            cm.put("type", c.getType().name());
+            cm.put("displayName", c.getDisplayName());
+            cm.put("baseName", c.getBaseName());
+            cm.put("initiative", c.getInitiative());
+            cm.put("initiativeBonus", c.getInitiativeBonus());
+            cm.put("isSurprised", c.isSurprised());
+            cm.put("isHidden", c.isHidden());
+            cm.put("isUnconscious", c.isUnconscious());
+            cm.put("isDead", c.isDead());
+            cm.put("conditions", new ArrayList<>(c.getConditions()));
+            cm.put("deathSaveSuccesses", c.getDeathSaveSuccesses());
+            cm.put("deathSaveFailures", c.getDeathSaveFailures());
+            cm.put("isStabilized", c.isStabilized());
+            cm.put("reactionAvailable", c.isReactionAvailable());
+            // Channelled ritual in progress (#156), if any — so a multi-turn cast survives a restart.
+            if (c.isChanneling()) {
+                cm.put("ritualSpellId", c.getRitualSpellId());
+                cm.put("ritualSpellName", c.getRitualSpellName());
+                cm.put("ritualRoundsLeft", c.getRitualRoundsLeft());
+            }
+            combatants.add(cm);
+        }
+        data.put("combatants", combatants);
+        return data;
     }
 
     // ==================== DELETE ====================
@@ -115,45 +140,61 @@ public final class CombatPersistence {
     // ==================== RESTORE ====================
 
     /** Restore all saved combat sessions (call on plugin enable, after entities are restored). */
-    @SuppressWarnings("unchecked")
     public static int restoreAll() {
-        File dir = folder();
-        File[] files = dir.listFiles((d, name) -> name.endsWith(".yml"));
-        if (files == null || files.length == 0) return 0;
-
-        Yaml yaml = new Yaml();
         int restored = 0;
+        for (Saved saved : readAll()) {
+            CombatSession session = new CombatSession(saved.sessionId(), saved.dmId(), saved.roundNumber(),
+                    saved.currentTurnIndex(), saved.isSetupPhase(), saved.combatants());
+            session.onRestored();
+            restored++;
+        }
+        return restored;
+    }
+
+    /** Every save file parsed; empty/unusable files are removed, unreadable ones are logged and kept. */
+    @SuppressWarnings("unchecked")
+    static List<Saved> readAll() {
+        List<Saved> out = new ArrayList<>();
+        File[] files = folder().listFiles((d, name) -> name.endsWith(".yml"));
+        if (files == null) return out;
+        Yaml yaml = new Yaml();
         for (File file : files) {
             try (FileReader reader = new FileReader(file)) {
                 Map<String, Object> data = yaml.load(reader);
-                if (data == null) { file.delete(); continue; }
-
-                UUID sessionId = UUID.fromString((String) data.get("sessionId"));
-                UUID dmId = UUID.fromString((String) data.get("dmId"));
-                int roundNumber = ((Number) data.getOrDefault("roundNumber", 1)).intValue();
-                int currentTurnIndex = ((Number) data.getOrDefault("currentTurnIndex", 0)).intValue();
-                boolean isSetupPhase = Boolean.TRUE.equals(data.get("isSetupPhase"));
-
-                List<Combatant> combatants = new ArrayList<>();
-                Object rawCombatants = data.get("combatants");
-                if (rawCombatants instanceof List<?> list) {
-                    for (Object element : list) {
-                        if (element instanceof Map<?, ?> cm) {
-                            Combatant c = deserializeCombatant((Map<String, Object>) cm);
-                            if (c != null) combatants.add(c);
-                        }
-                    }
+                Saved saved = data == null ? null : parse(data);
+                if (saved == null || saved.combatants().isEmpty()) {
+                    reader.close();
+                    file.delete();
+                    continue;
                 }
-
-                if (combatants.isEmpty()) { file.delete(); continue; }
-
-                new CombatSession(sessionId, dmId, roundNumber, currentTurnIndex, isSetupPhase, combatants);
-                restored++;
+                out.add(saved);
             } catch (Exception e) {
+                // Keep the file: a DM can inspect it, and a fixed build can still restore it.
                 LOGGER.warning("Failed to restore combat session from " + file.getName() + ": " + e.getMessage());
             }
         }
-        return restored;
+        return out;
+    }
+
+    /** A save-file map back into its parts. Pure. Bad combatant entries are skipped, not fatal. */
+    @SuppressWarnings("unchecked")
+    public static Saved parse(Map<String, Object> data) {
+        UUID sessionId = UUID.fromString((String) data.get("sessionId"));
+        UUID dmId = UUID.fromString((String) data.get("dmId"));
+        int roundNumber = num(data.get("roundNumber"), 1);
+        int currentTurnIndex = num(data.get("currentTurnIndex"), 0);
+        boolean isSetupPhase = Boolean.TRUE.equals(data.get("isSetupPhase"));
+
+        List<Combatant> combatants = new ArrayList<>();
+        if (data.get("combatants") instanceof List<?> list) {
+            for (Object element : list) {
+                if (element instanceof Map<?, ?> cm) {
+                    Combatant c = deserializeCombatant((Map<String, Object>) cm);
+                    if (c != null) combatants.add(c);
+                }
+            }
+        }
+        return new Saved(sessionId, dmId, roundNumber, currentTurnIndex, isSetupPhase, combatants);
     }
 
     private static Combatant deserializeCombatant(Map<String, Object> cm) {

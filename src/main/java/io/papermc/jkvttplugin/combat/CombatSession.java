@@ -426,7 +426,25 @@ public class CombatSession {
      */
     public Combatant getCurrentCombatant() {
         if (combatants.isEmpty() || isSetupPhase) return null;
-        return combatants.get(currentTurnIndex);
+        Combatant current = combatants.get(currentTurnIndex);
+        if (restoredTurnPending) resumeRestoredTurn(current);
+        return current;
+    }
+
+    /**
+     * Set when this session was rebuilt from a save file: the turn in progress has no TurnState yet
+     * (action, movement, the attack→damage hand-off all live there, and several callers assume it's
+     * there). It can't be started at boot — the player is offline, or the entity's chunk isn't loaded,
+     * so there's no location to measure movement from — so it starts the first time it can.
+     */
+    private boolean restoredTurnPending = false;
+
+    private void resumeRestoredTurn(Combatant current) {
+        if (current == null || current.getTurnState() != null) { restoredTurnPending = false; return; }
+        org.bukkit.Location loc = current.getLocation();
+        if (loc == null) return; // not in the world yet — try again next time
+        current.startNewTurn(loc);
+        restoredTurnPending = false;
     }
 
     /**
@@ -752,6 +770,59 @@ public class CombatSession {
     /**
      * End the combat session and clean up.
      */
+    /**
+     * The server is stopping mid-fight (#165). Unlike {@link #endCombat()} — which is the DM ending
+     * the fight and deletes the recovery file — this snapshots the session (conditions added this
+     * turn included) and KEEPS the file, so the fight comes back on the next boot. It only clears
+     * what's visible in the world (glow, prone, condition potions, the movement ring, scoreboards),
+     * since those would otherwise be saved into the world or stick to players. Conditions, death
+     * saves and initiative stay on the combatants and in the file; nothing is announced as "ended".
+     */
+    public void suspendForShutdown() {
+        CombatPersistence.save(this);
+        stopMovementRing();
+        for (Combatant c : combatants) {
+            clearGlowEffect(c);
+            if (c.isEntity() && c.isDead() && c.getEntityInstance() != null) {
+                c.getEntityInstance().updateDeathVisual(); // corpses keep their glow (#172)
+            }
+            DeathSaveHandler.removeProne(c);
+            for (String id : c.getConditions()) setConditionEffect(c, ConditionLoader.get(id), false);
+            if (c.isPlayer()) {
+                Player player = c.getPlayer();
+                if (player != null) player.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+            }
+        }
+        Player dm = Bukkit.getPlayer(dmId);
+        if (dm != null) dm.setScoreboard(Bukkit.getScoreboardManager().getMainScoreboard());
+    }
+
+    /**
+     * Just rebuilt from a save file at boot (#165). Players are offline at this point, so their
+     * visuals go back on as each one rejoins ({@link #reattachScoreboardOnJoin}); entities are
+     * already restored, so an entity whose turn it is glows now.
+     */
+    void onRestored() {
+        restoredTurnPending = !isSetupPhase;
+        Combatant current = getCurrentCombatant(); // starts an entity's turn now if its chunk is loaded
+        if (!isSetupPhase && current != null && current.isEntity()) applyGlowEffect(current);
+        LOGGER_RESTORE.info("Restored combat " + sessionId + ": round " + roundNumber
+                + (current != null ? ", " + current.getDisplayName() + "'s turn" : "")
+                + ", " + combatants.size() + " combatants. The turn in progress restarts.");
+    }
+
+    private static final java.util.logging.Logger LOGGER_RESTORE = java.util.logging.Logger.getLogger("CombatSession");
+
+    /** Re-apply one player's in-combat visuals after they rejoin a restored (or ongoing) fight. */
+    private void restoreVisualsFor(Player player) {
+        for (Combatant c : combatants) {
+            if (!c.isPlayer() || !c.getId().equals(player.getUniqueId())) continue;
+            if (c.isUnconscious() && !c.isDead()) DeathSaveHandler.applyProne(c);
+            for (String id : c.getConditions()) setConditionEffect(c, ConditionLoader.get(id), true);
+            if (!isSetupPhase && c == getCurrentCombatant()) applyGlowEffect(c);
+        }
+    }
+
     public void endCombat() {
         isActive = false;
         stopMovementRing();
@@ -1032,6 +1103,16 @@ public class CombatSession {
         }
         if (session != null && session.scoreboard != null) {
             player.setScoreboard(session.scoreboard);
+        }
+        if (session == null) return;
+        // #165: the rest of what they saw before the restart — prone if downed, condition effects,
+        // their turn glow — and, for the DM, where the fight picks up.
+        session.restoreVisualsFor(player);
+        if (session.dmId.equals(pid)) {
+            Combatant current = session.getCurrentCombatant();
+            player.sendMessage(Component.text("⚔ Combat is still on: round " + session.roundNumber
+                    + (current != null ? ", " + current.getDisplayName() + "'s turn" : "")
+                    + ". A turn that was in progress when the server stopped starts over.", NamedTextColor.GOLD));
         }
     }
 
