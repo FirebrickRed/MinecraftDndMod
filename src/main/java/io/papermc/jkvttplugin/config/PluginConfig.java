@@ -26,6 +26,8 @@ public final class PluginConfig {
      * only annotated blocks prompted, the prompt would itself announce "the DM set this one up".
      */
     public enum InteractionPrompt { ALL_CONTAINERS, ANNOTATED_ONLY, OFF }
+    /** When a DM-graded thieves' tools check uses up the set (#210). */
+    public enum ThievesToolsBreak { NEVER, ON_FAIL, ALWAYS }
 
     private static RollMode rollMode = RollMode.PHYSICAL;
     private static int ritualCombatRounds = 10;
@@ -36,6 +38,7 @@ public final class PluginConfig {
     private static boolean trackAmmunition = true;    // bows consume arrows (#128)
     private static boolean trackThrownWeapons = true; // a thrown weapon leaves your hand (#192)
     private static InteractionPrompt interactionPrompt = InteractionPrompt.ALL_CONTAINERS; // #185
+    private static ThievesToolsBreak thievesToolsBreak = ThievesToolsBreak.ON_FAIL; // #210, BG3-style default
     private static boolean annotationGlow = true;     // outline annotated blocks for the annotating DM
     private static int annotationGlowRadius = 24;
 
@@ -83,12 +86,20 @@ public final class PluginConfig {
             case "off" -> InteractionPrompt.OFF;
             default -> InteractionPrompt.ALL_CONTAINERS;
         };
+        thievesToolsBreak = switch (cfg.getString("objects.thieves_tools_break", "on_fail").toLowerCase()) {
+            case "never" -> ThievesToolsBreak.NEVER;
+            case "always" -> ThievesToolsBreak.ALWAYS;
+            default -> ThievesToolsBreak.ON_FAIL;
+        };
         annotationGlow = cfg.getBoolean("objects.annotation_glow", true);
         annotationGlowRadius = Math.max(4, Math.min(64, cfg.getInt("objects.annotation_glow_radius", 24)));
     }
 
     /** Which blocks give players the [Open it] / [Ask for a check] prompt (#185). */
     public static InteractionPrompt getInteractionPrompt() { return interactionPrompt; }
+
+    /** When a graded thieves' tools check breaks the set (#210). */
+    public static ThievesToolsBreak getThievesToolsBreak() { return thievesToolsBreak; }
 
     /** True when annotated blocks are outlined for a DM holding the Annotate Object tool (#185). */
     public static boolean isAnnotationGlow() { return annotationGlow; }

@@ -870,6 +870,24 @@ public class CharacterSheet {
         }
     }
 
+    /**
+     * Take {@code quantity} of an item off this character's recorded gear, so switching or deleting
+     * the character doesn't try to strip items that are already gone (a broken set of thieves' tools,
+     * #210). The live inventory is the caller's job; this keeps the sheet's list in step with it.
+     */
+    public void removeEquipmentItem(String itemId, int quantity) {
+        int left = quantity;
+        for (java.util.Iterator<ItemStack> it = equipment.iterator(); it.hasNext() && left > 0; ) {
+            ItemStack stack = it.next();
+            if (!itemId.equalsIgnoreCase(ItemUtil.getItemId(stack))) continue;
+            int take = Math.min(left, stack.getAmount());
+            left -= take;
+            if (take >= stack.getAmount()) it.remove();
+            else stack.setAmount(stack.getAmount() - take);
+        }
+        if (left < quantity) persist();
+    }
+
 
     // ========== GETTERS ==========
 

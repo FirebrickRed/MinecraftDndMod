@@ -152,8 +152,8 @@ public final class ObjectInteraction {
     /**
      * "Zek: Thieves' Tools — proficient (expertise), carrying them", so the DM knows before calling it.
      *
-     * Thieves' tools are never used up (RAW; PHB p.154 is silent on breakage). Whether a failed pick
-     * should break them, as BG3 does, is an open table decision (#210).
+     * "Carrying them" matters twice: RAW you need the tools in hand, and a failed graded check breaks
+     * one set by default (objects.thieves_tools_break, #210).
      */
     private static Component thievesToolsStatus(Player player) {
         var sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);

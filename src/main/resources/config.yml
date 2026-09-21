@@ -77,6 +77,13 @@ objects:
   # rather than the game offering a menu that reveals what the DM prepared.
   interaction_prompt: all_containers
 
+  # When a set of thieves' tools is used up by a DM-graded check (/dm check <p> tool thieves_tools dc N):
+  #   on_fail = a failed check breaks one set (Baldur's Gate 3 style) — default
+  #   always  = every graded use breaks one, pass or fail
+  #   never   = RAW: the PHB has no breakage rule
+  # Only checks with a DC count; an ungraded check has no pass or fail to go on.
+  thieves_tools_break: on_fail
+
   annotation_glow: true
   # How far the outline reaches, in blocks (clamped to 4-64).
   annotation_glow_radius: 24

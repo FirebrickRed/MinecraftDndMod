@@ -116,6 +116,7 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
             } else {
                 io.papermc.jkvttplugin.dm.CheckManager.recordActive(character.getPlayerId(), info.displayName, r.total());
                 reportDmCheck(character, info, r.total(), pending);
+                if ("TOOL".equals(type)) maybeBreakThievesTools(character, value, r.total(), pending);
             }
             return true;
         }
@@ -152,6 +153,43 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         Player dm = Bukkit.getPlayer(p.dmId());
         if (dm != null) dm.sendMessage(dmMsg);
         else Bukkit.broadcast(Component.text("🎲 " + shareText, NamedTextColor.YELLOW)); // DM offline → announce
+    }
+
+    /**
+     * A graded thieves' tools check may use up one set, per {@code objects.thieves_tools_break}
+     * (#210): {@code on_fail} (default, BG3-style), {@code always}, or {@code never} (RAW). Needs a DC,
+     * since an ungraded check has no pass or fail. Removes the item from the live inventory and the
+     * sheet's recorded gear together, and tells the player and the DMs.
+     */
+    private static void maybeBreakThievesTools(CharacterSheet character, String value, int total,
+                                               io.papermc.jkvttplugin.dm.CheckManager.Pending p) {
+        String tool = io.papermc.jkvttplugin.data.model.enums.ToolRegistry.idOf(value.substring(value.indexOf(':') + 1));
+        if (!"thieves_tools".equals(tool) || p.dc() == null) return;
+        boolean breaks = switch (io.papermc.jkvttplugin.config.PluginConfig.getThievesToolsBreak()) {
+            case NEVER -> false;
+            case ALWAYS -> true;
+            case ON_FAIL -> total < p.dc();
+        };
+        if (!breaks) return;
+
+        Player owner = Bukkit.getPlayer(character.getPlayerId());
+        if (owner == null) return;
+        org.bukkit.inventory.ItemStack[] contents = owner.getInventory().getContents();
+        for (int i = 0; i < contents.length; i++) {
+            if (!tool.equalsIgnoreCase(io.papermc.jkvttplugin.util.ItemUtil.getItemId(contents[i]))) continue;
+            org.bukkit.inventory.ItemStack stack = contents[i];
+            if (stack.getAmount() > 1) stack.setAmount(stack.getAmount() - 1);
+            else owner.getInventory().setItem(i, null);
+            character.removeEquipmentItem(tool, 1);
+            owner.sendMessage(Component.text("🔧 Your thieves' tools snap — that set is ruined.", NamedTextColor.RED));
+            Component note = Component.text("🔧 " + character.getCharacterName() + "'s thieves' tools broke ("
+                    + (total < p.dc() ? "failed" : "used") + ", DC " + p.dc() + ").", NamedTextColor.GRAY);
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (io.papermc.jkvttplugin.dm.DMManager.isDM(online)) online.sendMessage(note);
+            }
+            return;
+        }
+        // Not carrying any: nothing to break. The DM was already told "NOT carrying them" when calling it.
     }
 
     /** Record one side of a contested check; when both sides are in, report the winner to the DM (#186). */
