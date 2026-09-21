@@ -220,6 +220,23 @@ public class EntityLoader {
                 entity.setAbilities(abilities);
             }
 
+            // Skills: stat-block bonuses ({deception: 5}). A bad name or value warns rather than vanishing.
+            if (data.get("skills") instanceof Map<?, ?> skillsMap) {
+                Map<io.papermc.jkvttplugin.data.model.enums.Skill, Integer> skills = new HashMap<>();
+                for (Map.Entry<?, ?> entry : skillsMap.entrySet()) {
+                    io.papermc.jkvttplugin.data.model.enums.Skill skill =
+                            io.papermc.jkvttplugin.data.model.enums.Skill.fromString(String.valueOf(entry.getKey()));
+                    if (skill == null) {
+                        LOGGER.warning("[" + id + "] lists skill '" + entry.getKey() + "', which isn't a skill — ignored.");
+                    } else if (entry.getValue() instanceof Number n) {
+                        skills.put(skill, n.intValue());
+                    } else {
+                        LOGGER.warning("[" + id + "] skill '" + entry.getKey() + "' needs a number (the stat-block bonus, e.g. 5 for +5).");
+                    }
+                }
+                entity.setSkills(skills);
+            }
+
             // Attacks
             Object attacksObj = data.get("attacks");
             if (attacksObj instanceof List<?> attacksList) {

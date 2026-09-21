@@ -300,6 +300,30 @@ public class DndEntity {
         return Ability.getModifier(getAbilityScore(ability));
     }
 
+    /**
+     * Skill bonuses as a stat block prints them ({@code skills: {deception: 5}} = "Deception +5"),
+     * i.e. the whole bonus, proficiency included. A skill the stat block doesn't list uses the
+     * plain ability modifier, which is how monster stat blocks work.
+     */
+    private Map<io.papermc.jkvttplugin.data.model.enums.Skill, Integer> skills = new java.util.EnumMap<>(io.papermc.jkvttplugin.data.model.enums.Skill.class);
+
+    public Map<io.papermc.jkvttplugin.data.model.enums.Skill, Integer> getSkills() { return skills; }
+    public void setSkills(Map<io.papermc.jkvttplugin.data.model.enums.Skill, Integer> skills) {
+        this.skills = new java.util.EnumMap<>(io.papermc.jkvttplugin.data.model.enums.Skill.class);
+        if (skills != null) this.skills.putAll(skills);
+    }
+
+    /** The total bonus for a skill check: the listed bonus, else the ability modifier. */
+    public int getSkillBonus(io.papermc.jkvttplugin.data.model.enums.Skill skill) {
+        Integer listed = skills.get(skill);
+        return listed != null ? listed : getAbilityModifier(skill.getAbility());
+    }
+
+    /** True if the stat block lists this skill (proficient), vs falling back to the raw modifier. */
+    public boolean listsSkill(io.papermc.jkvttplugin.data.model.enums.Skill skill) {
+        return skills.containsKey(skill);
+    }
+
     @Override
     public String toString() {
         return name + " [" + id + "]";

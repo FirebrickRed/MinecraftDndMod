@@ -14,9 +14,9 @@ nothing new to author. For the fine detail of the object/check commands used bel
 > That's the point — this one-shot is the shakedown. Note what breaks.
 >
 > **Read [`oneshot-readiness.md`](oneshot-readiness.md) first.** The content gaps it found (Balin's
-> shop, gear, instruments, spells) are fixed as of 2026-09-17. What's left for this script is HP
-> changes outside combat (trap damage) and contested checks against an NPC. Workarounds for those
-> are noted inline below as **⚠️**.
+> shop, gear, instruments, spells) are fixed as of 2026-09-17. The last two workarounds are gone
+> too: HP changes outside combat (`/dm hp`, 2026-09-17) and contested checks against an NPC
+> (`/dm check <player> insight vs Balin deception`, 2026-09-21).
 
 ---
 
@@ -140,12 +140,13 @@ shown on the sheet yet, #65), skills UI, persistence.
    Or a player senses the job means more to Balin than he's letting on — and it does: **that blade
    is his own finest work**, forged decades ago and stolen from him; the gruff "fifty gold" hides a
    man who'd pay far more to get it back. Run it as Insight vs Balin's Deception.
-   > ⚠️ `/dm check … vs …` only works **between two online players** for now ("NPC support is
-   > coming"). Call the player's side ungraded and roll Balin's yourself (Deception +1, CHA 13):
    ```
-   /dm check <player> skill insight          # ungraded: you see their total privately
-   /roll 1d20+1                              # Balin's Deception; higher wins, ties go to Balin
+   /dm check <player> insight vs Balin deception
    ```
+   The player gets their usual roll prompt; you get **[Roll it]** / **[I rolled…]** for Balin
+   (Deception +1, from CHA 13; he has no listed skills). Or answer inline:
+   `/dm check <player> insight vs Balin deception autoRoll`. A tie changes nothing (PHB p.174), so
+   Balin's story stands.
    On a win, the player reads him — now a Persuasion check can talk the reward up (pay out in the
    coda). Results land on the **DM** with a **[Share]** button; reveal only what you choose.
 
@@ -279,7 +280,7 @@ Tick these off during the run — this is the "test everything" contract.
 
 **Checks & social**
 - [ ] Single graded check (DC), ungraded check, advantage (2d20)
-- [ ] Contested check: PC vs PC via `/dm check A skill vs B skill`; PC vs NPC by hand (ungraded check + `/roll`)
+- [ ] Contested check: PC vs PC via `/dm check A skill vs B skill`; PC vs NPC via `/dm check A insight vs Balin deception` (DM clicks [Roll it] for Balin)
 - [ ] Help (advantage) / Guidance (+1d4) folded in; **[Share]** gate works
 
 **Exploration layer**

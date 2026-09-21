@@ -162,12 +162,22 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
             owner.sendMessage(Component.text("You rolled " + info.displayName + ": " + total
                     + " — sent to the DM.", NamedTextColor.GRAY));
         }
+        recordContestSide(p.contestId(), character.getPlayerId(), character.getCharacterName(), info.displayName, total);
+    }
+
+    /**
+     * One side of a contest has rolled: a character through the roll menu, or the DM for an NPC
+     * ({@code /dm check npcroll}). When both are in, the winner goes to the DM with [Share].
+     */
+    public static void recordContestSide(String contestId, java.util.UUID sideKey, String name, String label, int total) {
+        io.papermc.jkvttplugin.dm.CheckManager.Contest pendingContest = io.papermc.jkvttplugin.dm.CheckManager.getContest(contestId);
+        if (pendingContest == null) return; // already resolved or expired
+        Player dm = pendingContest.dmId != null ? Bukkit.getPlayer(pendingContest.dmId) : null;
         io.papermc.jkvttplugin.dm.CheckManager.Contest done =
-                io.papermc.jkvttplugin.dm.CheckManager.recordContestRoll(p.contestId(), character.getPlayerId(), total);
-        Player dm = Bukkit.getPlayer(p.dmId());
+                io.papermc.jkvttplugin.dm.CheckManager.recordContestRoll(contestId, sideKey, total);
         if (done == null) { // still waiting on the other side
-            if (dm != null) dm.sendMessage(Component.text(character.getCharacterName() + " rolled "
-                    + info.displayName + ": " + total + " — waiting on the other side…", NamedTextColor.GRAY));
+            if (dm != null) dm.sendMessage(Component.text(name + " rolled " + label + ": " + total
+                    + " — waiting on the other side…", NamedTextColor.GRAY));
             return;
         }
         var a = done.sides.get(0);
@@ -175,7 +185,8 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         String result;
         if (a.total > b.total) result = a.name + " wins — " + a.label + " " + a.total + " vs " + b.label + " " + b.total;
         else if (b.total > a.total) result = b.name + " wins — " + b.label + " " + b.total + " vs " + a.label + " " + a.total;
-        else result = "Tie (" + a.total + " vs " + b.total + ") — DM decides";
+        // PHB p.174: on a tie the situation stays as it was before the contest.
+        else result = "Tie (" + a.total + " vs " + b.total + ") — nothing changes";
         String token = io.papermc.jkvttplugin.dm.CheckManager.stashShare(result);
         Component msg = Component.text("⚔ Contested: " + result, NamedTextColor.GOLD)
                 .append(Component.text("  "))

@@ -37,41 +37,56 @@ public final class CheckManager {
 
     // ==================== CONTESTS (A vs B) ====================
 
-    /** One side of a contest; {@code total} is null until they roll. */
+    /**
+     * One side of a contest; {@code total} is null until it's rolled. {@code key} is the player's id
+     * for a character, or the creature's instance id for an NPC. An NPC side is rolled by the DM (the
+     * game never rolls on anyone's behalf), so it carries its modifier for the DM's prompt.
+     */
     public static final class Side {
-        public final UUID playerId; public final String name; public final String label; public Integer total;
-        Side(UUID playerId, String name, String label) { this.playerId = playerId; this.name = name; this.label = label; }
+        public final UUID key; public final String name; public final String label;
+        public final boolean npc; public final int modifier; public final String modSource; // "Deception" (listed) or "CHA" (raw)
+        public Integer total;
+        public Side(UUID key, String name, String label) { this(key, name, label, false, 0, null); }
+        public Side(UUID key, String name, String label, boolean npc, int modifier, String modSource) {
+            this.key = key; this.name = name; this.label = label;
+            this.npc = npc; this.modifier = modifier; this.modSource = modSource;
+        }
     }
     public static final class Contest {
-        public final UUID dmId; public final List<Side> sides = new ArrayList<>();
-        Contest(UUID dmId) { this.dmId = dmId; }
+        public final String id; public final UUID dmId; public final List<Side> sides = new ArrayList<>();
+        Contest(String id, UUID dmId) { this.id = id; this.dmId = dmId; }
         public boolean complete() { return sides.stream().allMatch(s -> s.total != null); }
+        /** A side by index (0 = A, 1 = B); null if out of range. */
+        public Side side(int index) { return index >= 0 && index < sides.size() ? sides.get(index) : null; }
     }
 
     private static final Map<String, Contest> contests = new HashMap<>();
     private static int contestCounter = 0;
 
     /**
-     * Register a two-sided contest and mark each participant's pending check with the contest id.
-     * Each side is [playerId, displayName, skillLabel]; advantage defaults to none per side.
+     * Register a two-sided contest. A character side gets a pending check marked with the contest
+     * id (their roll lands through the normal roll menu); an NPC side waits for the DM's
+     * {@link #recordContestRoll}.
      */
-    public static String registerContest(UUID dmId, UUID aId, String aName, String aLabel,
-                                          UUID bId, String bName, String bLabel) {
+    public static Contest registerContest(UUID dmId, Side a, Side b) {
         String id = "vs" + (++contestCounter);
-        Contest c = new Contest(dmId);
-        c.sides.add(new Side(aId, aName, aLabel));
-        c.sides.add(new Side(bId, bName, bLabel));
+        Contest c = new Contest(id, dmId);
+        c.sides.add(a);
+        c.sides.add(b);
         contests.put(id, c);
-        registerPending(aId, new Pending(dmId, null, aLabel, Advantage.NONE, id));
-        registerPending(bId, new Pending(dmId, null, bLabel, Advantage.NONE, id));
-        return id;
+        for (Side s : c.sides) {
+            if (!s.npc) registerPending(s.key, new Pending(dmId, null, s.label, Advantage.NONE, id));
+        }
+        return c;
     }
 
+    public static Contest getContest(String contestId) { return contestId == null ? null : contests.get(contestId); }
+
     /** Record a side's roll in a contest; returns the Contest if it is now complete (else null). */
-    public static Contest recordContestRoll(String contestId, UUID playerId, int total) {
+    public static Contest recordContestRoll(String contestId, UUID sideKey, int total) {
         Contest c = contests.get(contestId);
         if (c == null) return null;
-        for (Side s : c.sides) if (playerId.equals(s.playerId)) s.total = total;
+        for (Side s : c.sides) if (sideKey.equals(s.key)) s.total = total;
         if (c.complete()) { contests.remove(contestId); return c; }
         return null;
     }

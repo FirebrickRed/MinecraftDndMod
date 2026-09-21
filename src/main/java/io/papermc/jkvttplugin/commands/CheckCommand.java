@@ -4,11 +4,19 @@ import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
+import io.papermc.jkvttplugin.combat.CombatTargets;
+import io.papermc.jkvttplugin.combat.RollService;
+import io.papermc.jkvttplugin.data.model.DndEntity;
+import io.papermc.jkvttplugin.data.model.DndEntityInstance;
+import io.papermc.jkvttplugin.dm.CheckManager;
 import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler;
 import io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode;
 import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
@@ -27,11 +35,13 @@ import java.util.UUID;
  * The player never sees the DC. Reuses the sheet roll math (advantage/disadvantage, Lucky, …).
  *
  * Usage: /dm check &lt;player&gt; &lt;ability|save|skill&gt; &lt;name&gt; [dc &lt;n&gt;] [adv|dis]
- *        /dm check &lt;A&gt; &lt;skillA&gt; vs &lt;B&gt; &lt;skillB&gt;   (contested — both roll, DM sees the winner)
+ *        /dm check &lt;A&gt; &lt;skillA&gt; vs &lt;B&gt; &lt;skillB&gt; [autoRoll|manualRoll &lt;n&gt;|total &lt;n&gt;]
+ *            (contested — either side a character or a spawned creature; a creature's side is the DM's
+ *            roll, answered inline or via the [Roll it] button → /dm check npcroll &lt;contest&gt; &lt;1|2&gt; …)
  *        /dm check clear &lt;player&gt; [skill|all]  ·  /dm check active &lt;player&gt;   (held checks, e.g. Stealth)
  *        /dm check share &lt;token&gt;   (the [Share] button)
  *
- * Deferred: contested with an NPC side, the responder-picks-approach menu, multi-target/all (#186).
+ * Deferred: the responder-picks-approach menu, multi-target/all (#186).
  */
 public class CheckCommand implements CommandExecutor, TabCompleter {
 
@@ -74,37 +84,16 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         // Contested: /dm check <A> <skillA> vs <B> <skillB> — both roll, DM sees the winner.
         int vsIdx = -1;
         for (int i = 0; i < args.length; i++) if (args[i].equalsIgnoreCase("vs")) { vsIdx = i; break; }
+        // The DM's roll for an NPC side of a contest: /dm check npcroll <contest> <1|2> autoRoll|manualRoll <n>|total <n>
+        if (args.length >= 3 && args[0].equalsIgnoreCase("npcroll")) {
+            return handleNpcRoll(sender, args);
+        }
         if (vsIdx == 2 && args.length >= vsIdx + 3) {
-            CharacterSheet aSheet = CharacterResolver.resolveOrError(sender, args[0]);
-            if (aSheet == null) return true;
-            CharacterSheet bSheet = CharacterResolver.resolveOrError(sender, args[vsIdx + 1]);
-            if (bSheet == null) return true;
-            Skill aSkill = resolveSkill(args[1]);
-            Skill bSkill = resolveSkill(args[vsIdx + 2]);
-            if (aSkill == null || bSkill == null) {
-                sender.sendMessage(Component.text("Contested checks use skill names, e.g. /dm check Zek insight vs Yeek deception.", NamedTextColor.RED));
-                return true;
-            }
-            Player aP = Bukkit.getPlayer(aSheet.getPlayerId());
-            Player bP = Bukkit.getPlayer(bSheet.getPlayerId());
-            if (aP == null || bP == null) {
-                sender.sendMessage(Component.text("Both players must be online for a contested check (NPC support is coming).", NamedTextColor.RED));
-                return true;
-            }
-            UUID dmId = (sender instanceof Player dm) ? dm.getUniqueId() : null;
-            io.papermc.jkvttplugin.dm.CheckManager.registerContest(dmId,
-                    aSheet.getPlayerId(), aSheet.getCharacterName(), aSkill.getDisplayName(),
-                    bSheet.getPlayerId(), bSheet.getCharacterName(), bSkill.getDisplayName());
-            RollOptionsMenuHandler.promptSkillRoll(aP, aSheet, "SKILL", aSkill.name(), RollMode.NORMAL);
-            RollOptionsMenuHandler.promptSkillRoll(bP, bSheet, "SKILL", bSkill.name(), RollMode.NORMAL);
-            sender.sendMessage(Component.text("Contested: " + aSheet.getCharacterName() + " (" + aSkill.getDisplayName()
-                    + ") vs " + bSheet.getCharacterName() + " (" + bSkill.getDisplayName()
-                    + ") — the winner comes back to you to share.", NamedTextColor.GRAY));
-            return true;
+            return handleContest(sender, args, vsIdx);
         }
         if (args.length < 3) {
             sender.sendMessage(Component.text("Usage: /dm check <player> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
-            sender.sendMessage(Component.text("       /dm check <A> <skillA> vs <B> <skillB>   (contested)", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("       /dm check <A> <skillA> vs <B> <skillB> [autoRoll|manualRoll <n>]   (contested; A/B can be a creature)", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("       /dm check clear <player> [skill|all]  ·  /dm check active <player>", NamedTextColor.GRAY));
             return true;
         }
@@ -179,6 +168,141 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    // ==================== CONTESTED CHECKS ====================
+
+    /** One side of a contest as typed: a character (rolls their own die) or a spawned creature (the DM rolls). */
+    private record ContestSide(CharacterSheet sheet, Player player, DndEntityInstance creature) {
+        String name() { return sheet != null ? sheet.getCharacterName() : creature.getDisplayName(); }
+    }
+
+    /**
+     * /dm check &lt;A&gt; &lt;skillA&gt; vs &lt;B&gt; &lt;skillB&gt; [autoRoll | manualRoll &lt;n&gt; | total &lt;n&gt;]
+     * <p>
+     * Either side can be a character or a spawned creature. A character is prompted to roll as for
+     * any DM check. A creature's side is the DM's to roll: the trailing roll words answer it inline,
+     * otherwise the DM gets a [Roll for …] prompt with the modifier spelled out. The game never
+     * rolls on anyone's behalf (same rule as concentration saves).
+     */
+    private boolean handleContest(CommandSender sender, String[] args, int vsIdx) {
+        ContestSide a = resolveContestSide(sender, args[0]);
+        if (a == null) return true;
+        ContestSide b = resolveContestSide(sender, args[vsIdx + 1]);
+        if (b == null) return true;
+        Skill aSkill = resolveSkill(args[1]);
+        Skill bSkill = resolveSkill(args[vsIdx + 2]);
+        if (aSkill == null || bSkill == null) {
+            sender.sendMessage(Component.text("Contested checks use skill names, e.g. /dm check Zek insight vs Balin deception.", NamedTextColor.RED));
+            return true;
+        }
+
+        String[] rollWords = java.util.Arrays.copyOfRange(args, vsIdx + 3, args.length);
+        RollService.RollInput inline = RollService.parseInput(rollWords, sender);
+        int npcSides = (a.creature() != null ? 1 : 0) + (b.creature() != null ? 1 : 0);
+        if (!inline.isEmpty() && npcSides != 1) {
+            sender.sendMessage(Component.text(npcSides == 0
+                    ? "Roll words only apply to a creature's side — both sides here are characters, who roll their own."
+                    : "Both sides are creatures — use the [Roll for …] buttons so each roll goes to the right one.",
+                    NamedTextColor.RED));
+            return true;
+        }
+
+        UUID dmId = (sender instanceof Player dm) ? dm.getUniqueId() : null;
+        CheckManager.Contest contest = CheckManager.registerContest(dmId, toSide(a, aSkill), toSide(b, bSkill));
+        sender.sendMessage(Component.text("Contested: " + a.name() + " (" + aSkill.getDisplayName() + ") vs "
+                + b.name() + " (" + bSkill.getDisplayName() + ") — the winner comes back to you to share.", NamedTextColor.GRAY));
+
+        ContestSide[] sides = {a, b};
+        Skill[] skills = {aSkill, bSkill};
+        for (int i = 0; i < 2; i++) {
+            ContestSide s = sides[i];
+            if (s.creature() == null) {
+                RollOptionsMenuHandler.promptSkillRoll(s.player(), s.sheet(), "SKILL", skills[i].name(), RollMode.NORMAL);
+            } else if (!inline.isEmpty()) {
+                rollNpcSide(sender, contest, i, inline);
+            } else {
+                promptNpcRoll(sender, contest, i);
+            }
+        }
+        return true;
+    }
+
+    /** Creature first (the name a DM is most likely pointing at), then a character; same order as CombatTargets. */
+    private ContestSide resolveContestSide(CommandSender sender, String name) {
+        DndEntityInstance creature = CombatTargets.findEntity(name.replaceAll("^\"|\"$", ""));
+        if (creature != null) return new ContestSide(null, null, creature);
+        CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
+        if (sheet == null) return null;
+        Player player = Bukkit.getPlayer(sheet.getPlayerId());
+        if (player == null) {
+            sender.sendMessage(Component.text(sheet.getCharacterName() + "'s player is offline — they need to be on to roll.", NamedTextColor.RED));
+            return null;
+        }
+        return new ContestSide(sheet, player, null);
+    }
+
+    private CheckManager.Side toSide(ContestSide s, Skill skill) {
+        if (s.creature() == null) return new CheckManager.Side(s.sheet().getPlayerId(), s.name(), skill.getDisplayName());
+        DndEntity template = s.creature().getTemplate();
+        int mod = template.getSkillBonus(skill);
+        // "+5 Deception" when the stat block lists the skill; "+1 CHA" when it's the raw modifier.
+        String source = template.listsSkill(skill) ? skill.getDisplayName() : skill.getAbility().getAbbreviation();
+        return new CheckManager.Side(s.creature().getInstanceId(), s.name(), skill.getDisplayName(), true, mod, source);
+    }
+
+    private static String modText(CheckManager.Side side) { return signed(side.modifier) + " " + side.modSource; }
+
+    /** The DM's prompt for an NPC side: [Roll it] runs autoRoll; [I rolled…] pre-fills manualRoll. */
+    private void promptNpcRoll(CommandSender sender, CheckManager.Contest contest, int index) {
+        CheckManager.Side side = contest.side(index);
+        String base = "/dm check npcroll " + contest.id + " " + (index + 1) + " ";
+        Component msg = Component.text("🎲 " + side.name + "'s " + side.label + " (" + modText(side) + "): ", NamedTextColor.GOLD)
+                .append(Component.text("[Roll it]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand(base + "autoRoll"))
+                        .hoverEvent(HoverEvent.showText(Component.text("Roll 1d20 " + modText(side)))))
+                .append(Component.text("  "))
+                .append(Component.text("[I rolled…]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand(base + "manualRoll "))
+                        .hoverEvent(HoverEvent.showText(Component.text("Type the d20 you rolled; the modifier is added."))));
+        sender.sendMessage(msg);
+    }
+
+    private boolean handleNpcRoll(CommandSender sender, String[] args) {
+        CheckManager.Contest contest = CheckManager.getContest(args[1]);
+        if (contest == null) {
+            sender.sendMessage(Component.text("That contest is already resolved or has expired.", NamedTextColor.GRAY));
+            return true;
+        }
+        int index;
+        try { index = Integer.parseInt(args[2]) - 1; } catch (NumberFormatException e) { index = -1; }
+        CheckManager.Side side = contest.side(index);
+        if (side == null || !side.npc) {
+            sender.sendMessage(Component.text("That side of the contest isn't a creature's roll.", NamedTextColor.RED));
+            return true;
+        }
+        if (side.total != null) {
+            sender.sendMessage(Component.text(side.name + " already rolled (" + side.total + ").", NamedTextColor.GRAY));
+            return true;
+        }
+        RollService.RollInput input = RollService.parseInput(java.util.Arrays.copyOfRange(args, 3, args.length), sender);
+        if (input.isEmpty()) {
+            promptNpcRoll(sender, contest, index);
+            return true;
+        }
+        rollNpcSide(sender, contest, index, input);
+        return true;
+    }
+
+    private void rollNpcSide(CommandSender sender, CheckManager.Contest contest, int index, RollService.RollInput input) {
+        CheckManager.Side side = contest.side(index);
+        RollService.RollResult r = RollService.resolve(input, side.modifier,
+                signed(side.modifier) + "[" + side.modSource + "]", false, io.papermc.jkvttplugin.combat.Advantage.NONE);
+        if (r == null) { promptNpcRoll(sender, contest, index); return; } // no die given in physical-dice mode
+        sender.sendMessage(Component.text(side.name + " — " + side.label + ": " + r.breakdown(), NamedTextColor.GRAY));
+        RollOptionsMenuHandler.recordContestSide(contest.id, side.key, side.name, side.label, r.total());
+    }
+
+    private static String signed(int n) { return n >= 0 ? "+" + n : String.valueOf(n); }
+
     private Ability resolveAbility(String s) {
         String u = s.toUpperCase();
         try {
@@ -213,10 +337,25 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         List<String> out = new ArrayList<>();
         if (!DMManager.isDM(sender)) return out;
 
+        // Contested: after "vs" → a name, then a skill, then the NPC side's roll words.
+        int vsIdx = -1;
+        for (int i = 0; i < args.length - 1; i++) if (args[i].equalsIgnoreCase("vs")) { vsIdx = i; break; }
+        if (vsIdx >= 0) {
+            int pos = args.length - 1 - vsIdx;
+            if (pos == 1) out.addAll(CombatTargets.suggestions());
+            else if (pos == 2) for (Skill s : Skill.values()) out.add(s.name().toLowerCase());
+            else if (pos == 3) out.addAll(List.of("autoRoll", "manualRoll", "total"));
+            return filter(out, args[args.length - 1]);
+        }
+
         switch (args.length) {
             case 1 -> {
                 out.addAll(List.of("clear", "active"));
                 for (Player p : Bukkit.getOnlinePlayers()) out.add(p.getName());
+                // A creature can open a contest too (Balin's Deception vs Zek's Insight).
+                for (DndEntityInstance e : DndEntityInstance.getAll()) {
+                    if (e.getDisplayName() != null) out.add(e.getDisplayName());
+                }
             }
             case 2 -> {
                 if (args[0].equalsIgnoreCase("clear") || args[0].equalsIgnoreCase("active")) {

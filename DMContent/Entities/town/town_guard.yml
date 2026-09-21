@@ -30,6 +30,11 @@ abilities:
   wisdom: 11
   charisma: 10
 
+# Skills as the stat block prints them: the whole bonus, proficiency included (MM guard: Perception +2).
+# A skill not listed uses the plain ability modifier. Used by contested checks (/dm check A x vs Guard perception).
+skills:
+  perception: 2
+
 # Attacks. `item:` links each weapon attack to the item it wields, so it's held + lootable from one
 # definition (#132). Longsword and crossbow no longer need duplicate inventory entries.
 attacks:

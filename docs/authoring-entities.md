@@ -27,6 +27,7 @@ That spawns, fights, dies and can be looted. Every other field has a default:
 | `armor_class` | 10 |
 | `speed` | 30 |
 | `abilities` | all 10 |
+| `skills` | none (every skill = the ability modifier) |
 | `attacks`, `inventory`, `loot`, `shop` | none |
 
 **The id is permanent.** It's written into every spawned armor stand and looked up when the server
@@ -110,6 +111,7 @@ kobold_sorcerer:
 | `hit_points` vs `hit_dice` | `hit_points: 7d8+2` (dice without quotes) is **not** a number. The loader warns and falls back to 10 HP. Put dice in `hit_dice: "7d8+2"`. |
 | `armor_class`, `speed` | Must be whole numbers. A blank or text value warns and falls back to the default. |
 | `abilities` | Full lowercase names. Modifiers feed saves and checks. **No proficiency bonus is added to entity saves**, so fold it into the score if it matters. |
+| `skills` | `{deception: 5}`: the bonus **as the stat block prints it** ("Deception +5"), proficiency included. A skill that isn't listed uses the plain ability modifier, which is how monster stat blocks work. Used by contested checks (`/dm check Zek insight vs Balin deception`). A bad skill name or non-number warns on load. |
 | `size` | Stored and shown, but **doesn't scale the body** yet (#194 §6). A gargantuan dragon stands as tall as a kobold. It does scale the DM while possessing. |
 | `random_names` | Picked at spawn when you don't pass a name (`/dmentity spawn kobold "Meepo"` overrides it). |
 | `model` | Absent means an invisible stand with a floating nameplate. **A model with no texture renders as a purple box**, which is worse than no model. |
