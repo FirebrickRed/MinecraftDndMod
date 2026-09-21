@@ -18,6 +18,10 @@ public class DndItem {
     private String name;
     private String type;
     private String focusType;
+    // The ability a check with this tool normally uses (thieves' tools → DEX). Null = the DM names it.
+    private io.papermc.jkvttplugin.data.model.enums.Ability checkAbility;
+    public io.papermc.jkvttplugin.data.model.enums.Ability getCheckAbility() { return checkAbility; }
+    public void setCheckAbility(io.papermc.jkvttplugin.data.model.enums.Ability a) { this.checkAbility = a; }
     private String description;
     private String material;     // YAML material: vanilla Minecraft item to render as
     private String customModel;  // YAML custom_model: optional resource-pack model (opt-in)

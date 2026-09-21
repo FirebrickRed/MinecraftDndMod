@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
+import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import io.papermc.jkvttplugin.combat.CombatTargets;
 import io.papermc.jkvttplugin.combat.RollService;
 import io.papermc.jkvttplugin.data.model.DndEntity;
@@ -35,6 +36,8 @@ import java.util.UUID;
  * The player never sees the DC. Reuses the sheet roll math (advantage/disadvantage, Lucky, …).
  *
  * Usage: /dm check &lt;player&gt; &lt;ability|save|skill&gt; &lt;name&gt; [dc &lt;n&gt;] [adv|dis]
+ *        /dm check &lt;player&gt; tool &lt;tool&gt; [ability] [dc &lt;n&gt;] [adv|dis]   (ability + tool proficiency, ×2 with
+ *            expertise; ability defaults to the tool item's check_ability, e.g. thieves' tools → DEX)
  *        /dm check &lt;A&gt; &lt;skillA&gt; vs &lt;B&gt; &lt;skillB&gt; [autoRoll|manualRoll &lt;n&gt;|total &lt;n&gt;]
  *            (contested — either side a character or a spawned creature; a creature's side is the DM's
  *            roll, answered inline or via the [Roll it] button → /dm check npcroll &lt;contest&gt; &lt;1|2&gt; …)
@@ -93,6 +96,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         }
         if (args.length < 3) {
             sender.sendMessage(Component.text("Usage: /dm check <player> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("       /dm check <player> tool <tool> [ability] [dc <n>]   (e.g. tool thieves_tools dc 15)", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("       /dm check <A> <skillA> vs <B> <skillB> [autoRoll|manualRoll <n>]   (contested; A/B can be a creature)", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("       /dm check clear <player> [skill|all]  ·  /dm check active <player>", NamedTextColor.GRAY));
             return true;
@@ -129,8 +133,28 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
                 rollType = "SKILL";
                 value = skill.name();
             }
+            case "tool" -> {
+                // /dm check <player> tool <tool> [ability] … — ability modifier + tool proficiency (#207).
+                if (!ToolRegistry.isRegistered(args[2])) {
+                    sender.sendMessage(Component.text("Unknown tool: " + args[2] + " (e.g. thieves_tools, smiths_tools, lute).", NamedTextColor.RED));
+                    return true;
+                }
+                String tool = ToolRegistry.idOf(args[2]);
+                Ability ability = null;
+                for (int i = 3; i < args.length && ability == null; i++) ability = resolveAbility(args[i]);
+                if (ability == null) ability = ToolRegistry.get(tool).checkAbility();
+                if (ability == null) {
+                    sender.sendMessage(Component.text("Which ability? " + ToolRegistry.displayName(tool)
+                            + " has no default — e.g. /dm check " + args[0] + " tool " + tool + " int dc 12", NamedTextColor.RED));
+                    return true;
+                }
+                rollType = "TOOL";
+                value = ability.name() + ":" + tool;
+                // What the DM needs to adjudicate: RAW you need the tools in hand to use them at all.
+                sender.sendMessage(Component.text(sheet.getCharacterName() + ": " + toolStatus(sheet, target, tool), NamedTextColor.GRAY));
+            }
             default -> {
-                sender.sendMessage(Component.text("Type must be ability, save, or skill.", NamedTextColor.RED));
+                sender.sendMessage(Component.text("Type must be ability, save, skill, or tool.", NamedTextColor.RED));
                 return true;
             }
         }
@@ -303,6 +327,25 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
 
     private static String signed(int n) { return n >= 0 ? "+" + n : String.valueOf(n); }
 
+    /**
+     * "Thieves' Tools: proficient (expertise), carrying" — for the DM, before the roll. Carrying is
+     * checked on the player's live inventory by item id; a vehicle has no item, so it's skipped.
+     */
+    public static String toolStatus(CharacterSheet sheet, Player player, String tool) {
+        String prof = sheet.isProficientWithTool(tool)
+                ? (sheet.hasExpertise(tool) ? "proficient (expertise)" : "proficient")
+                : "not proficient";
+        String carrying = "";
+        if (player != null && io.papermc.jkvttplugin.util.ItemUtil.displayNameOf(tool) != null) {
+            boolean has = false;
+            for (org.bukkit.inventory.ItemStack s : player.getInventory().getContents()) {
+                if (tool.equalsIgnoreCase(io.papermc.jkvttplugin.util.ItemUtil.getItemId(s))) { has = true; break; }
+            }
+            carrying = has ? ", carrying them" : ", NOT carrying them";
+        }
+        return ToolRegistry.displayName(tool) + " — " + prof + carrying;
+    }
+
     private Ability resolveAbility(String s) {
         String u = s.toUpperCase();
         try {
@@ -361,7 +404,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
                 if (args[0].equalsIgnoreCase("clear") || args[0].equalsIgnoreCase("active")) {
                     for (Player p : Bukkit.getOnlinePlayers()) out.add(p.getName());
                 } else {
-                    out.addAll(List.of("ability", "save", "skill"));
+                    out.addAll(List.of("ability", "save", "skill", "tool"));
                     for (Skill s : Skill.values()) out.add(s.name().toLowerCase()); // contested: <A> <skillA> vs …
                 }
             }
@@ -371,11 +414,16 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
                     for (Skill s : Skill.values()) out.add(s.name().toLowerCase());
                 } else if (cat.equals("ability") || cat.equals("save")) {
                     out.addAll(List.of("str", "dex", "con", "int", "wis", "cha"));
+                } else if (cat.equals("tool")) {
+                    out.addAll(ToolRegistry.getAllTools());
                 } else {
                     out.add("vs"); // contested continuation
                 }
             }
-            case 4 -> out.addAll(List.of("dc", "adv", "dis"));
+            case 4 -> {
+                if (args[1].equalsIgnoreCase("tool")) out.addAll(List.of("str", "dex", "con", "int", "wis", "cha"));
+                out.addAll(List.of("dc", "adv", "dis"));
+            }
             default -> { /* no suggestions */ }
         }
         return filter(out, args[args.length - 1]);

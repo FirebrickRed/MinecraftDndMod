@@ -4,7 +4,9 @@ import java.util.*;
 
 public class PlayersChoice<T> {
     public enum ChoiceType {
-        SKILL, TOOL, LANGUAGE, EQUIPMENT, FEAT, ABILITY_SCORE, SPELL, CUSTOM
+        SKILL, TOOL, LANGUAGE, EQUIPMENT, FEAT, ABILITY_SCORE, SPELL, CUSTOM,
+        /** Doubled proficiency in skills or tools you already have (rogue, bard). Options: skill ids, tool ids, or the tag `skill`. */
+        EXPERTISE
     }
 
     private final int choose;

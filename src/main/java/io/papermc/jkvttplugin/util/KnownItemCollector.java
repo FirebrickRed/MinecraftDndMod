@@ -42,6 +42,40 @@ public class KnownItemCollector {
         return grantedIds(session, AutomaticGrant.GrantType.TOOL_PROFICIENCY);
     }
 
+    /**
+     * Every skill and tool this character is proficient in right now: granted ones plus the picks in
+     * every skill/tool section. Expertise can only go on these.
+     */
+    public static Set<String> collectProficientSkillsAndTools(CharacterCreationSession session) {
+        Set<String> out = new LinkedHashSet<>();
+        out.addAll(collectKnownSkills(session));
+        out.addAll(collectKnownTools(session));
+        List<PendingChoice<?>> pendingChoices = session.getPendingChoices();
+        if (pendingChoices != null) {
+            for (PendingChoice<?> pc : pendingChoices) {
+                if (pc.getPlayersChoice() == null) continue;
+                PlayersChoice.ChoiceType t = pc.getPlayersChoice().getType();
+                if (t != PlayersChoice.ChoiceType.SKILL && t != PlayersChoice.ChoiceType.TOOL) continue;
+                for (Object chosen : pc.getChosen()) if (chosen instanceof String key) out.add(key.toLowerCase());
+            }
+        }
+        return out;
+    }
+
+    /** Expertise options the character can't take yet, because they aren't proficient in them. */
+    public static Set<String> collectExpertiseUnavailable(CharacterCreationSession session) {
+        Set<String> proficient = collectProficientSkillsAndTools(session);
+        Set<String> unavailable = new LinkedHashSet<>();
+        for (io.papermc.jkvttplugin.data.model.enums.Skill s : io.papermc.jkvttplugin.data.model.enums.Skill.values()) {
+            String id = s.name().toLowerCase();
+            if (!proficient.contains(id)) unavailable.add(id);
+        }
+        for (String tool : io.papermc.jkvttplugin.data.model.enums.ToolRegistry.getAllTools()) {
+            if (!proficient.contains(tool)) unavailable.add(tool);
+        }
+        return unavailable;
+    }
+
     private static Set<String> grantedIds(CharacterCreationSession session, AutomaticGrant.GrantType type) {
         Set<String> known = new LinkedHashSet<>();
         for (AutomaticGrant g : session.getAutomaticGrants()) {

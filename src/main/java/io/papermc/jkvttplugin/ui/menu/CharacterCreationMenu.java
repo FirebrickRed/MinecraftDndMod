@@ -515,7 +515,12 @@ public class CharacterCreationMenu {
             String headerText = title != null ? title + " — " + progress : progress;
             inv.setItem(slot++, sectionHeader(headerText, choice.getStatusColor()));
 
-            for (String knownKey : choice.getAlreadyKnown()) {
+            // For expertise, the "known" set is everything NOT yet proficient — dozens of entries, and the
+            // wrong label. Say what the rule is instead of listing them.
+            if (choice.getCategory() == ChoiceCategory.EXPERTISE) {
+                if (slot <= 44) inv.setItem(slot++, plain(Material.GRAY_STAINED_GLASS_PANE,
+                        Component.text("Only skills and tools you're proficient in are offered", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
+            } else for (String knownKey : choice.getAlreadyKnown()) {
                 if (slot > 44) break;
                 if (shownFree.contains(knownKey)) continue; // already shown as a grant
                 ItemStack known = plain(Material.GRAY_STAINED_GLASS_PANE, Component.text(choice.displayFor(knownKey), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
@@ -556,7 +561,7 @@ public class CharacterCreationMenu {
         }
         for (MergedChoice mc : merged) {
             if (mc.getCategory() != cat) continue;
-            for (String k : mc.getAlreadyKnown()) {
+            if (cat != ChoiceCategory.EXPERTISE) for (String k : mc.getAlreadyKnown()) {
                 if (seen.add(k)) {
                     lore.add(Component.text("• " + mc.displayFor(k), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
                 }

@@ -320,6 +320,17 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
                         character.getSaveBreakdown(ability)
                 );
             }
+            case "TOOL" -> {
+                // "DEXTERITY:thieves_tools" — an ability check that adds tool proficiency (#207).
+                int colon = value.indexOf(':');
+                Ability ability = Ability.valueOf(value.substring(0, colon).toUpperCase());
+                String tool = value.substring(colon + 1);
+                yield new RollInfo(
+                        io.papermc.jkvttplugin.data.model.enums.ToolRegistry.displayName(tool) + " (" + ability.getAbbreviation() + ")",
+                        character.getToolCheckBonus(ability, tool),
+                        character.getToolCheckBreakdown(ability, tool)
+                );
+            }
             default -> throw new IllegalArgumentException("Unknown roll type: " + type);
         };
     }

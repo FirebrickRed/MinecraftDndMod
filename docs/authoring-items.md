@@ -163,6 +163,7 @@ arrow:
 | `tags` | Data-driven groups. `gaming_set` feeds "choose a gaming set" equipment choices. `ammunition` gives a default 50% recovery. Add a new tag just by using it, then reference it from a class or background `player_choices`. |
 | `recovery_chance` | Ammunition survival %. Defaults to 50 for `ammunition`-tagged items and 100 otherwise. |
 | `healing` | Dice restored when the item is drunk (`"2d4+2"`). **Any item with this is drinkable** — no potion list in code. |
+| `check_ability` | For a **tool**: the ability a check with it uses by default (`dexterity` on thieves' tools), so `/dm check <p> tool thieves_tools dc 15` needs no ability. Full ability names. Absent = the DM names the ability each time. |
 
 ### Potions
 

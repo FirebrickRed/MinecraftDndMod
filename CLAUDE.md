@@ -225,6 +225,10 @@ the pieces those three share (proficiency ids, `player_choices`, duplicate profi
 - **`also_give: true`** on a `type: tool` choice grants the picked tool as an item too (Guild Artisan).
   Starting-equipment picks are resolved from **every** source in one pass (`resolveEquipmentFromChoices`);
   it used to run only for class and background, so a race/subclass equipment pick granted nothing.
+- **Expertise** (`type: expertise` choice; rogue) doubles proficiency on skills and tools the character
+  already has. `CharacterSheet.hasExpertise`, persisted as `expertise`. **Tool checks**: `/dm check <p> tool <tool>`
+  → `getToolCheckBonus` (ability + tool proficiency, ×2 with expertise); the ability defaults to the item's
+  `check_ability:` (thieves' tools → DEX). Picking a lock is a thieves' tools check, not Sleight of Hand.
 
 ### Icons & Materials (Resource Pack)
 

@@ -131,8 +131,35 @@ public final class ObjectInteraction {
                         .hoverEvent(HoverEvent.showText(Component.text(
                                 "Ask them what they're doing, then finish the command — e.g. "
                                 + "perception (searching), investigation (how it's put together), "
-                                + "sleight_of_hand (the lock), athletics (force it)."))));
+                                + "athletics (force it). Picking the lock or disarming a trap is the "
+                                + "[Thieves' tools] button."))))
+                .append(Component.text(" "))
+                .append(thievesToolsButton(player));
         toDms(msg);
+        toDms(thievesToolsStatus(player));
+    }
+
+    /**
+     * Picking a lock or disarming a trap is a DEX check that adds thieves' tools proficiency
+     * (PHB p.154) — not Sleight of Hand. Offered on every ask/locked ping, so its presence tells the
+     * DM nothing new and the player nothing at all (these messages are DM-only).
+     */
+    private static Component thievesToolsButton(Player player) {
+        return dmButton("[Thieves' tools]", "/dm check " + player.getName() + " tool thieves_tools dc ",
+                "DEX + thieves' tools proficiency (doubled with expertise). Add the DC and Enter.");
+    }
+
+    /**
+     * "Zek: Thieves' Tools — proficient (expertise), carrying them", so the DM knows before calling it.
+     *
+     * Thieves' tools are never used up (RAW; PHB p.154 is silent on breakage). Whether a failed pick
+     * should break them, as BG3 does, is an open table decision (#210).
+     */
+    private static Component thievesToolsStatus(Player player) {
+        var sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
+        String status = sheet == null ? "no active character"
+                : io.papermc.jkvttplugin.commands.CheckCommand.toolStatus(sheet, player, "thieves_tools");
+        return Component.text("   " + (sheet != null ? sheet.getCharacterName() + ": " : "") + status, NamedTextColor.DARK_GRAY);
     }
 
     /**
@@ -174,7 +201,10 @@ public final class ObjectInteraction {
                 .append(InteractiveObjectListener.clickableCoords(loc))
                 .append(Component.text(" — ", NamedTextColor.GOLD))
                 .append(dmButton("[call a check]", "/dm check " + player.getName() + " skill ",
-                        "Pick the skill they're using and a dc")));
+                        "Pick the skill they're using and a dc"))
+                .append(Component.text(" "))
+                .append(thievesToolsButton(player)));
+        toDms(thievesToolsStatus(player));
     }
 
     private static void notifyLoot(Player player, String name, Location loc) {

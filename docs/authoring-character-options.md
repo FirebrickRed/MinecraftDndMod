@@ -91,7 +91,7 @@ A list. Every entry has `id`, `title`, `type`, `choose` and (usually) `options`:
 player_choices:
   - id: background_language      # unique within this race/class/background
     title: Background Language   # shown on the choice header
-    type: language               # skill | tool | language | equipment | spell | custom
+    type: language               # skill | tool | language | equipment | spell | custom | expertise
     choose: 2
     options: []                  # empty = "any" (see per-type below)
 ```
@@ -104,6 +104,14 @@ player_choices:
 | `equipment` | item ids, tags, `id xN`, or `give: [a, b]` bundles (CLAUDE.md → *Equipment choices*) | nothing (the choice is dropped) |
 | `spell` | spell ids, **or** `spell_list: wizard` + `spell_level: 0` instead of options | — |
 | `custom` | free strings (draconic ancestry, a size) | nothing |
+| `expertise` | skill ids, tool ids, tool tags, or the tag `skill` (every skill) | every skill |
+
+**Expertise** doubles the proficiency bonus on a skill or tool the character **already has**.
+The menu only offers the ones they're proficient in right now, counting picks made in other
+sections, so choose class and background skills first. If a later change removes the proficiency
+under an expertise pick, finishing is blocked with "Expertise (not proficient in …)". The rogue's
+is `choose: 2`, `options: [skill, thieves_tools]` (PHB p.96: two skills, or one skill and thieves'
+tools). Expertise on thieves' tools shows up on `/dm check <p> tool thieves_tools` as `×2`.
 
 A choice with `choose: 0` or no usable options is dropped silently.
 

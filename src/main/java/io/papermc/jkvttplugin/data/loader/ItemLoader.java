@@ -79,6 +79,12 @@ public class ItemLoader {
         item.setTags(ParseUtil.normalizeStringList(data.get("tags"))); // item-grouping tags (#54)
         if (data.get("recovery_chance") instanceof Number rc) item.setRecoveryChance(rc.intValue()); // #191
         item.setHealing(ParseUtil.asString(data.get("healing"), null)); // a potion: drinkable for HP
+        // A tool's default check ability (#207): `check_ability: dexterity` → /dm check <p> tool <id> uses DEX.
+        if (data.get("check_ability") instanceof String ca) {
+            io.papermc.jkvttplugin.data.model.enums.Ability a = io.papermc.jkvttplugin.data.model.enums.Ability.fromString(ca);
+            if (a == null) java.util.logging.Logger.getLogger("ItemLoader").warning("[" + id + "] check_ability '" + ca + "' isn't an ability — ignored.");
+            item.setCheckAbility(a);
+        }
         return item;
     }
 

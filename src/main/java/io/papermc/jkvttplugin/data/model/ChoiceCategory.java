@@ -11,6 +11,7 @@ public enum ChoiceCategory {
     LANGUAGE("Languages", Material.BOOK),
     SKILL("Skill Proficiencies", Material.IRON_SWORD),
     TOOL("Tool Proficiencies", Material.IRON_PICKAXE),
+    EXPERTISE("Expertise", Material.DIAMOND), // doubled proficiency — only in things already proficient
     EQUIPMENT("Starting Equipment", Material.CHEST),
     SPELL("Spell", Material.BONE_MEAL),
     EXTRA("Other", Material.PAPER); // Size, feats, and other miscellaneous choices
@@ -43,6 +44,7 @@ public enum ChoiceCategory {
             case LANGUAGE -> LANGUAGE;
             case SKILL -> SKILL;
             case TOOL -> TOOL;
+            case EXPERTISE -> EXPERTISE;
             case EQUIPMENT -> EQUIPMENT;
             case SPELL -> SPELL;
             case CUSTOM -> categorizeCustom(choiceId);

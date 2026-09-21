@@ -38,6 +38,7 @@ public final class ChoiceContributor {
             case SKILL, CUSTOM -> PendingChoice.ofStrings(e.id(), e.title(), (PlayersChoice<String>) e.pc(), source);
             case TOOL -> strings(e, source, ToolRegistry::displayName);
             case LANGUAGE -> strings(e, source, LanguageRegistry::displayName);
+            case EXPERTISE -> strings(e, source, ChoiceContributor::skillOrToolLabel);
             // A bonus-cantrip pick (high elf, Nature Domain); applied by CharacterSheetManager at finish.
             case SPELL -> strings(e, source, ChoiceContributor::spellLabel);
             case EQUIPMENT -> equipment(e, source);
@@ -59,6 +60,12 @@ public final class ChoiceContributor {
         return PendingChoice.ofGeneric(e.id(), e.title(), pc, source,
                 ChoiceContributor::equipmentKey, key -> equipmentFromKey(key, pc),
                 EquipmentOption::prettyLabel);
+    }
+
+    /** An expertise option is a skill id or a tool id; name it either way. */
+    private static String skillOrToolLabel(String key) {
+        return io.papermc.jkvttplugin.data.model.enums.Skill.fromString(key) != null
+                ? Util.prettify(key) : ToolRegistry.displayName(key);
     }
 
     private static String spellLabel(String id) {

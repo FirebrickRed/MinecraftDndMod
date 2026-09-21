@@ -141,6 +141,8 @@ public class ChoiceMerger {
             case LANGUAGE -> KnownItemCollector.collectKnownLanguages(session);
             case SKILL -> KnownItemCollector.collectKnownSkills(session);
             case TOOL -> KnownItemCollector.collectKnownTools(session);
+            // Not "already known" but "not allowed": expertise only goes on current proficiencies.
+            case EXPERTISE -> KnownItemCollector.collectExpertiseUnavailable(session);
             case SPELL -> KnownItemCollector.collectKnownSpells(session);
             case EQUIPMENT, EXTRA, AUTOMATIC_GRANTS -> Collections.emptySet(); // No filtering needed
         };

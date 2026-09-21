@@ -69,6 +69,10 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] **Haunted One** → skill pick offers only Arcana / Investigation / Religion / Survival (choose 2); language pick offers only the 8 exotic languages.
 - [ ] **Druid + Hermit** → *Replace duplicate Herbalism Kit* pick.
 - [ ] **Dwarf + Guild Artisan** → pick Smith's Tools in the dwarf's tool section, then click it in the Guild Artisan section → it **moves** (light green "Selected in another section") instead of taking it twice.
+- [ ] **Contested vs an NPC**: `/dmentity spawn balin_blacksmith`, then `/dm check <player> insight vs Balin deception` → the player gets their roll prompt, you get **[Roll it] / [I rolled…]** labelled "+1 CHA". Winner comes back with [Share]. Also try it inline with `autoRoll`, and a guard's Perception (`+2 Perception`, listed skill).
+- [ ] **Rogue expertise**: rogue + Sage → the Expertise pick offers only skills you're proficient in (plus Thieves' Tools). Pick Stealth, then un-pick Stealth from class skills → finishing says "Expertise (not proficient in Stealth)". Sheet skill roll for Stealth shows `+4[Expertise]`.
+- [ ] **Thieves' tools on a lock**: `/dm object lock …` a chest, player clicks [Open it] → your ping has **[Thieves' tools]** and a status line ("proficient (expertise), carrying them"). Click it, add a DC → the roll shows `+4[Thieves' Tools ×2]` for that rogue, just `+DEX` for a non-proficient character.
+- [ ] `/dm check <player> tool smiths_tools` with no ability → asks which ability; `… tool smiths_tools int dc 12` works.
 - [ ] **Tiefling** → Thaumaturgy is castable (it used to count as a 0-use leveled spell). Same for forest gnome's Minor Illusion.
 
 ## Save location

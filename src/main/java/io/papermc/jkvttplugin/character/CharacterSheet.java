@@ -65,6 +65,9 @@ public class CharacterSheet {
     private Set<String> languages = new LinkedHashSet<>();
     private final Set<String> chosenToolProficiencies = new LinkedHashSet<>();
     private final Set<String> chosenLanguages = new LinkedHashSet<>();
+    // Expertise (doubled proficiency): skill ids and tool ids from creation picks, e.g. a rogue's
+    // stealth + thieves_tools. Saved as-is; only counts where the character is also proficient.
+    private final Set<String> expertise = new LinkedHashSet<>();
     private Set<String> damageResistances = new HashSet<>();
     // CUSTOM player-choice selections kept by choice id (e.g. draconic_ancestry -> "Red (Fire, …)").
     // Feature actions read these to resolve their per-choice variant (breath weapon, #70).
@@ -543,6 +546,11 @@ public class CharacterSheet {
             if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.LANGUAGE) {
                 for (Object obj : chosen) {
                     if (obj instanceof String language) chosenLanguages.add(LanguageRegistry.idOf(language));
+                }
+            }
+            if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.EXPERTISE) {
+                for (Object obj : chosen) {
+                    if (obj instanceof String key) expertise.add(key.toLowerCase());
                 }
             }
 
@@ -1043,21 +1051,19 @@ public class CharacterSheet {
      * @return The total skill bonus
      */
     public int getSkillBonus(Skill skill) {
-        int abilityModifier = getModifier(skill.getAbility());
-        int profBonus = isProficientInSkill(skill) ? getProficiencyBonus() : 0;
-        return abilityModifier + profBonus;
+        return getModifier(skill.getAbility()) + skillProficiencyBonus(skill);
     }
 
     /**
      * Gets a formatted breakdown of a skill bonus for display in chat.
-     * Examples: "+3[DEX] +2[Prof]" (proficient), "+2[DEX]" (not proficient), "-1[STR]" (negative modifier)
+     * Examples: "+3[DEX] +2[Prof]" (proficient), "+3[DEX] +4[Expertise]", "+2[DEX]" (not proficient)
      *
      * @param skill The skill to get the breakdown for
      * @return Formatted string showing ability modifier and proficiency bonus if applicable
      */
     public String getSkillBonusBreakdown(Skill skill) {
         int abilityModifier = getModifier(skill.getAbility());
-        int profBonus = isProficientInSkill(skill) ? getProficiencyBonus() : 0;
+        int profBonus = skillProficiencyBonus(skill);
 
         StringBuilder breakdown = new StringBuilder();
 
@@ -1068,12 +1074,69 @@ public class CharacterSheet {
                  .append(skill.getAbility().getAbbreviation())
                  .append("]");
 
-        // Add proficiency if applicable: " +2[Prof]"
+        // Add proficiency if applicable: " +2[Prof]", or doubled " +4[Expertise]"
         if (profBonus > 0) {
-            breakdown.append(" +").append(profBonus).append("[Prof]");
+            breakdown.append(" +").append(profBonus).append(hasExpertise(skill.name()) ? "[Expertise]" : "[Prof]");
         }
 
         return breakdown.toString();
+    }
+
+    /** Proficiency added to a skill check: 0, the bonus, or double it with expertise. */
+    private int skillProficiencyBonus(Skill skill) {
+        if (!isProficientInSkill(skill)) return 0;
+        return getProficiencyBonus() * (hasExpertise(skill.name()) ? 2 : 1);
+    }
+
+    // ==================== TOOL CHECKS (#207) ====================
+
+    public boolean isProficientWithTool(String tool) {
+        return toolProficiencies.contains(ToolRegistry.idOf(tool));
+    }
+
+    /**
+     * An ability check using a tool (PHB p.154): the ability modifier, plus the proficiency bonus if
+     * proficient with the tool, doubled with expertise (a rogue's thieves' tools).
+     */
+    public int getToolCheckBonus(Ability ability, String tool) {
+        return getModifier(ability) + toolProficiencyBonus(tool);
+    }
+
+    /** "+3[DEX] +2[Thieves' Tools]", "+3[DEX] +4[Thieves' Tools ×2]", or "+3[DEX]" when not proficient. */
+    public String getToolCheckBreakdown(Ability ability, String tool) {
+        int mod = getModifier(ability);
+        StringBuilder b = new StringBuilder().append(mod >= 0 ? "+" : "").append(mod)
+                .append("[").append(ability.getAbbreviation()).append("]");
+        int prof = toolProficiencyBonus(tool);
+        if (prof > 0) {
+            b.append(" +").append(prof).append("[").append(ToolRegistry.displayName(tool))
+                    .append(hasExpertise(tool) ? " ×2" : "").append("]");
+        }
+        return b.toString();
+    }
+
+    private int toolProficiencyBonus(String tool) {
+        if (!isProficientWithTool(tool)) return 0;
+        return getProficiencyBonus() * (hasExpertise(tool) ? 2 : 1);
+    }
+
+    // ==================== EXPERTISE ====================
+
+    /**
+     * True if this skill or tool has expertise (doubled proficiency). Keys are skill ids
+     * ({@code stealth}) and tool ids ({@code thieves_tools}); expertise only counts where the
+     * character is also proficient, which creation enforces.
+     */
+    public boolean hasExpertise(String skillOrTool) {
+        if (skillOrTool == null) return false;
+        return expertise.contains(skillOrTool.toLowerCase()) || expertise.contains(ToolRegistry.idOf(skillOrTool));
+    }
+
+    public Set<String> getExpertise() { return Collections.unmodifiableSet(expertise); }
+
+    /** Restores saved expertise on load. */
+    public void restoreExpertise(Collection<String> keys) {
+        if (keys != null) for (String k : keys) if (k != null && !k.isBlank()) expertise.add(k.toLowerCase());
     }
 
     /**

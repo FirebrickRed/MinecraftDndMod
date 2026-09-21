@@ -83,6 +83,13 @@ player_choices:
     type: skill
     choose: 4
     options: [acrobatics, athletics, deception, insight, intimidation, investigation, perception, performance, persuasion, sleight_of_hand, stealth]
+  # Expertise (PHB p.96): two of your skill proficiencies, or one and your thieves' tools. Only
+  # things you're proficient in are offered — pick class/background skills first.
+  - id: rogue_expertise
+    title: Expertise
+    type: expertise
+    choose: 2
+    options: [skill, thieves_tools]
   - id: class_equipment_1
     title: Class Equipment 1
     type: equipment

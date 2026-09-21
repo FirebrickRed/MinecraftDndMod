@@ -305,6 +305,12 @@ public final class ContentValidator {
                         }
                     }
                 }
+            } else if (choice.type() == PlayersChoice.ChoiceType.EXPERTISE) {
+                for (Object opt : choice.pc().getOptions()) {
+                    if (opt instanceof String s && Skill.fromString(s) == null && !ToolRegistry.isRegistered(s)) {
+                        warn(choiceWhere + " offers expertise in '" + s + "', which is neither a skill nor a registered tool.");
+                    }
+                }
             } else if (choice.type() == PlayersChoice.ChoiceType.LANGUAGE) {
                 for (Object opt : choice.pc().getOptions()) {
                     if (opt instanceof String s && !LanguageRegistry.isRegistered(s)) {

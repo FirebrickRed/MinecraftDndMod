@@ -93,6 +93,27 @@ public final class ChoiceParser {
                     pc = new PlayersChoice<>(choose, new ArrayList<>(toolIds), type)
                             .alsoGive(ParseUtil.asBoolean(m.get("also_give"), false));
                 }
+                case "EXPERTISE" -> {
+                    // Options: skill ids, tool ids / tool tags, or the tag `skill` (every skill).
+                    // Empty = every skill. Which of these the character can actually pick is decided
+                    // at creation time: only ones they're proficient in (see ChoiceMerger).
+                    type = PlayersChoice.ChoiceType.EXPERTISE;
+                    var rawOpts = ParseUtil.normalizeStringList(m.get("options"));
+                    LinkedHashSet<String> keys = new LinkedHashSet<>();
+                    if (rawOpts.isEmpty()) rawOpts = List.of("skill");
+                    for (String opt : rawOpts) {
+                        if (opt.equals("skill") || opt.equals("skills")) {
+                            for (Skill skill : Skill.values()) keys.add(skill.name().toLowerCase());
+                        } else if (Skill.fromString(opt) != null) {
+                            keys.add(Skill.fromString(opt).name().toLowerCase());
+                        } else {
+                            List<String> expanded = ToolRegistry.expandTag(opt);
+                            if (expanded != null) keys.addAll(expanded);
+                            else keys.add(ToolRegistry.idOf(opt));
+                        }
+                    }
+                    pc = new PlayersChoice<>(choose, new ArrayList<>(keys), type);
+                }
                 case "LANGUAGE" -> {
                     type = PlayersChoice.ChoiceType.LANGUAGE;
                     // Options are canonical language ids. Empty means "any language".

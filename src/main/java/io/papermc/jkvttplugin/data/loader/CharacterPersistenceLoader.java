@@ -257,6 +257,9 @@ public class CharacterPersistenceLoader {
         if (!sheet.getChosenLanguages().isEmpty()) {
             data.put("chosenLanguages", new ArrayList<>(sheet.getChosenLanguages()));
         }
+        if (!sheet.getExpertise().isEmpty()) {
+            data.put("expertise", new ArrayList<>(sheet.getExpertise()));
+        }
 
         // Serialize spells and cantrips (save normalized keys, not display names)
         if (sheet.hasSpells()) {
@@ -414,6 +417,7 @@ public class CharacterPersistenceLoader {
 
             // Restore creation-time tool / language picks (#17).
             sheet.restoreChosenProficiencies(stringList(data.get("chosenTools")), stringList(data.get("chosenLanguages")));
+            sheet.restoreExpertise(stringList(data.get("expertise")));
 
             // Restore CUSTOM choice selections (#70) so feature actions resolve their variant.
             if (data.get("customChoices") instanceof Map<?, ?> ccMap) {

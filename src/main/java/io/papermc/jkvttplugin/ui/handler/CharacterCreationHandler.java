@@ -426,6 +426,17 @@ public class CharacterCreationHandler implements MenuClickHandler {
         }
         if (session.getSelectedBackground() == null) missing.add("Background");
         if (!session.allChoicesSatisfied()) missing.add("Choices");
+        // Expertise picked, then the proficiency under it was un-picked (moved a class skill, swapped
+        // background): the expertise would silently do nothing, so make them fix it.
+        java.util.Set<String> proficient = io.papermc.jkvttplugin.util.KnownItemCollector.collectProficientSkillsAndTools(session);
+        for (var pc : session.getPendingChoices()) {
+            if (pc.getPlayersChoice() == null || pc.getPlayersChoice().getType() != io.papermc.jkvttplugin.data.model.PlayersChoice.ChoiceType.EXPERTISE) continue;
+            for (Object chosen : pc.getChosen()) {
+                if (chosen instanceof String key && !proficient.contains(key.toLowerCase())) {
+                    missing.add("Expertise (not proficient in " + pc.displayFor(key) + ")");
+                }
+            }
+        }
         if (session.getAbilityScores() == null || session.getAbilityScores().isEmpty()) missing.add("Abilities");
         else if (!racialBonusComplete(session)) missing.add("Racial bonus");
         if (session.getSelectedClass() != null) {

@@ -49,14 +49,15 @@ public final class ToolRegistry {
         }
     }
 
-    public record Tool(String id, String name, Category category) {}
+    /** {@code checkAbility}: the ability a check with it defaults to (item `check_ability:`), or null. */
+    public record Tool(String id, String name, Category category, Ability checkAbility) {}
 
     /** Vehicles aren't items, so they're the only tools defined here. */
     private static final List<Tool> VEHICLES = List.of(
-            new Tool("vehicles_land", "Vehicles (Land)", Category.VEHICLE),
-            new Tool("vehicles_water", "Vehicles (Water)", Category.VEHICLE),
-            new Tool("vehicles_air", "Vehicles (Air)", Category.VEHICLE),
-            new Tool("vehicles_space", "Vehicles (Space)", Category.VEHICLE)
+            new Tool("vehicles_land", "Vehicles (Land)", Category.VEHICLE, null),
+            new Tool("vehicles_water", "Vehicles (Water)", Category.VEHICLE, null),
+            new Tool("vehicles_air", "Vehicles (Air)", Category.VEHICLE, null),
+            new Tool("vehicles_space", "Vehicles (Space)", Category.VEHICLE, null)
     );
 
     private static final Map<String, Tool> tools = new LinkedHashMap<>();
@@ -105,7 +106,7 @@ public final class ToolRegistry {
             if (category == null) continue;
             String id = idOf(item.getId());
             String name = (item.getName() == null || item.getName().isBlank()) ? Util.prettify(id) : item.getName();
-            tools.put(id, new Tool(id, name, category));
+            tools.put(id, new Tool(id, name, category, item.getCheckAbility()));
         }
     }
 
