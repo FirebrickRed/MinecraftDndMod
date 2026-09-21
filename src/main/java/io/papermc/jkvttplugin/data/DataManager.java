@@ -7,20 +7,27 @@ import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.util.List;
 
 // ToDO: Look up Records to see about Intellij's suggestion of turning this into a record class
 public class DataManager {
     private final File dmContentFolder;
 
     public DataManager(JavaPlugin plugin) {
-        this.dmContentFolder = new File(plugin.getDataFolder(), "DMContent");
+        this(new File(plugin.getDataFolder(), "DMContent"));
+    }
+
+    /** Load from any content folder — the plugin's own, or the repo's DMContent in tests. */
+    public DataManager(File dmContentFolder) {
+        this.dmContentFolder = dmContentFolder;
         if (!dmContentFolder.exists()) {
             dmContentFolder.mkdirs();
             // ToDo: Optionally copy defaults here from internal resources
         }
     }
 
-    public void loadAllData() {
+    /** Loads everything in dependency order; returns the content check's warnings (empty = clean). */
+    public List<String> loadAllData() {
         // Clear existing data before reloading (for /reloadyaml command)
         clearAllData();
 
@@ -51,7 +58,7 @@ public class DataManager {
 
         // Cross-content sanity pass: typos that would otherwise fail silently (unknown item ids in
         // shops/kits/loot, unwearable armor, focus types no class uses…). Warnings only.
-        ContentValidator.validateAll();
+        return ContentValidator.validateAll();
     }
 
     /**

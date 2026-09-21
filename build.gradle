@@ -19,6 +19,28 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
+
+    // Tests (#14). Never bundled into the plugin jar. Paper is on the test classpath because the
+    // model classes touch Bukkit types (Material, Component); the loaders and character math run
+    // fine without a server, which is exactly what the tests cover.
+    testImplementation("io.papermc.paper:paper-api:1.21.8-R0.1-SNAPSHOT")
+    testImplementation(platform("org.junit:junit-bom:5.11.4"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+test {
+    useJUnitPlatform()
+    // Tests load the repo's real DMContent/ (relative to the project dir), so content regressions
+    // fail the build. Keep the loaders' INFO chatter out of the output; failures still print in full.
+    systemProperty "java.util.logging.config.file", "${projectDir}/src/test/resources/logging.properties"
+    // The tests read DMContent at runtime; without this Gradle treats a YAML-only edit as "nothing
+    // changed" and skips the tests as up to date, so a broken content file would build green.
+    inputs.dir("DMContent").withPropertyName("dmContent")
+    testLogging {
+        events "failed"
+        exceptionFormat "full"
+    }
 }
 
 def targetJavaVersion = 21

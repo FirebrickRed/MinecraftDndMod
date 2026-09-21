@@ -34,12 +34,15 @@ public final class ContentValidator {
     private static final int MAX_TRADE_STACK = 64;
 
     private int warnings = 0;
+    /** Every warning this pass logged, in order — returned so a test can assert a clean load. */
+    private final List<String> messages = new ArrayList<>();
     /** Spell ids referenced by classes/races that don't exist — reported as one summary line. */
     private final Set<String> missingSpellRefs = new TreeSet<>();
 
     private ContentValidator() {}
 
-    public static void validateAll() {
+    /** Runs every check, logs each problem, and returns them (empty = a clean load). */
+    public static List<String> validateAll() {
         ContentValidator v = new ContentValidator();
         v.checkWeapons();
         v.checkArmor();
@@ -59,10 +62,12 @@ public final class ContentValidator {
         if (v.warnings > 0) {
             LOGGER.warning("Content check finished with " + v.warnings + " warning(s) — see above.");
         }
+        return List.copyOf(v.messages);
     }
 
     private void warn(String message) {
         warnings++;
+        messages.add(message);
         LOGGER.warning(message);
     }
 

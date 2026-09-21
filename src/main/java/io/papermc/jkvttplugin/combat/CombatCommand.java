@@ -428,7 +428,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         RollService.RollInput roll = RollService.parseInput(args, player);
         int bonus = self.getInitiativeBonus();
         RollService.RollResult r = RollService.resolve(roll.providedRoll(), roll.providedTotal(), bonus,
-                (bonus >= 0 ? "+" : "") + bonus + "[DEX]", self.rerollsNat1(), Advantage.NONE, roll.forceAuto()); // initiative is a DEX check → Lucky applies
+                (bonus >= 0 ? "+" : "") + bonus + "[DEX]", self.rerollsNat1(), initiativeAdvantage(self), roll.forceAuto()); // initiative is a DEX check → Lucky applies
         if (r == null) { // physical mode, no die supplied — prompt
             promptInitiativeRoll(player, self);
             return;
@@ -1104,6 +1104,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (p != null && p.equalsIgnoreCase("light")) return true;
         }
         return false;
+    }
+
+    /** Initiative is a DEX check, so unproficient armor gives it disadvantage (#209). */
+    private static Advantage initiativeAdvantage(Combatant c) {
+        CharacterSheet s = c.getCharacterSheet();
+        return s != null && s.armorPenaltyApplies(io.papermc.jkvttplugin.data.model.enums.Ability.DEXTERITY)
+                ? Advantage.DISADVANTAGE : Advantage.NONE;
     }
 
     // ==================== SPELLCASTING (Issue #123) ====================

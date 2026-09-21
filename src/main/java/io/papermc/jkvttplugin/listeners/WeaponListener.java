@@ -258,7 +258,7 @@ public class WeaponListener implements Listener {
         io.papermc.jkvttplugin.combat.Advantage adv = ctx.attacker.attackAdvantageAgainst(target);
         if (adv != io.papermc.jkvttplugin.combat.Advantage.NONE) {
             player.sendMessage(Component.text("↯ You have " + adv.label() + " on this attack.",
-                    adv.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
+                    adv.isAdvantage() ? NamedTextColor.GREEN : adv.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
         }
         for (String note : ctx.attacker.attackReminders(target)) {
             player.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));

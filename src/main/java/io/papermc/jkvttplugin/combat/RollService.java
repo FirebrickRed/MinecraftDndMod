@@ -168,7 +168,7 @@ public final class RollService {
         String advNote = "";
         if (d20 == null) {
             if (!forceAuto && !PluginConfig.isAutoRoll()) return null; // physical mode: caller prompts for a die
-            if (advantage == Advantage.NONE) {
+            if (!advantage.affectsRoll()) { // NONE or CANCELLED: one die
                 d20 = DiceRoller.rollDice(1, 20);
             } else {
                 int a = DiceRoller.rollDice(1, 20);

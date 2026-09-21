@@ -38,6 +38,24 @@ gradlew clean build
 
 **Note:** On Windows, use `gradlew` (not `./gradlew`). The `.bat` extension is implied.
 
+### Tests (#14)
+
+`gradlew test` (and `gradlew build`, which runs it) executes the JUnit suite in `src/test/java`.
+**A failing test fails the build**, so no jar is produced.
+
+- **Tests run against the repo's real `DMContent/`**, loaded once by `TestContent.load()` through the
+  same `DataManager` the plugin uses. `ContentLoadTest.contentCheckIsClean` fails on any content-check
+  warning, so "a clean load prints nothing" is enforced, not a convention. `DMContent` is a declared
+  test input, so a YAML-only edit re-runs the tests instead of being skipped as up to date.
+- **Helpers:** `TestContent.character(race, subrace, class, background, scores(...), skills...)` builds a
+  level-1 sheet the way a saved one loads; `TestContent.session(...)` builds a creation session with
+  its choices, and `merged(session)` gives the menu's sections.
+- **What can't be tested here:** anything needing a live server: `ItemStack` creation (starting gear,
+  `also_give`, thieves' tools breaking), online players, chat prompts. Those stay in `TEST_PLAN.md`.
+- **Don't write throwaway `main()` harnesses in the scratchpad to check logic.** Write the check as a
+  test, so it keeps guarding after the session ends. When you fix a bug, add the test that would have
+  caught it.
+
 ## Development Environment
 
 - **OS**: Windows 11

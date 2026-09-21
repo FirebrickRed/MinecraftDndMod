@@ -166,7 +166,7 @@ public final class ConcentrationManager {
         Advantage advantage = target.saveAdvantage(Ability.CONSTITUTION, SAVE_TAGS);
         if (advantage != Advantage.NONE) {
             roller.sendMessage(Component.text("↯ " + target.getDisplayName() + " rolls this save with "
-                    + advantage.label() + ".", advantage.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
+                    + advantage.label() + ".", advantage.isAdvantage() ? NamedTextColor.GREEN : advantage.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
         }
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
                 (bonus >= 0 ? "+" : "") + bonus + "[CON]", target.rerollsNat1(), advantage, forceAuto);

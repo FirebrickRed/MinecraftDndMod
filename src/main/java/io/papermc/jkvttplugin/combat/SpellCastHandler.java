@@ -96,7 +96,7 @@ public class SpellCastHandler {
             Advantage advantage = caster.attackAdvantageAgainst(target); // spell attacks get condition adv/dis too (#103)
             if (advantage != Advantage.NONE) {
                 player.sendMessage(Component.text("↯ You have " + advantage.label() + " on this spell attack.",
-                        advantage.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
+                        advantage.isAdvantage() ? NamedTextColor.GREEN : advantage.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
             }
             RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, mod,
                     (mod >= 0 ? "+" : "") + mod + "[Spell]", caster.rerollsNat1(), advantage, forceAuto);
@@ -378,7 +378,7 @@ public class SpellCastHandler {
         Advantage advantage = target.saveAdvantage(ps.ability(), ps.saveTags());
         if (advantage != Advantage.NONE) {
             roller.sendMessage(Component.text("↯ " + target.getDisplayName() + " rolls this save with "
-                    + advantage.label() + ".", advantage.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
+                    + advantage.label() + ".", advantage.isAdvantage() ? NamedTextColor.GREEN : advantage.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
         }
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
                 (bonus >= 0 ? "+" : "") + bonus + "[" + ps.ability().getAbbreviation() + "]", target.rerollsNat1(), advantage, forceAuto);

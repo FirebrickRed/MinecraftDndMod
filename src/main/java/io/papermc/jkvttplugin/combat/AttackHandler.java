@@ -161,7 +161,7 @@ public class AttackHandler {
         if (commandUser != null) {
             if (advantage != Advantage.NONE) {
                 commandUser.sendMessage(Component.text("↯ You have " + advantage.label() + " on this attack.",
-                        advantage.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
+                        advantage.isAdvantage() ? NamedTextColor.GREEN : advantage.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
             }
             for (String note : attacker.attackReminders(target)) {
                 commandUser.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));
