@@ -132,6 +132,11 @@ whatever the class, so a high elf rogue can cast their cantrip, with INT (PHB p.
 pick gets one use per long rest. Without it, the pick joins the class's cantrips/spells and uses
 the class's ability. That's right for a class feature like the Nature cleric's druid cantrip (WIS),
 and wrong for a race's pick. `casting_ability:` on any other choice type is ignored with a warning.
+
+When the player picks the ability too (MotM astral elf: "Intelligence, Wisdom, or Charisma"), give
+a list: `casting_ability: [intelligence, wisdom, charisma]`. The menu then adds a second choice,
+"<title>: Spellcasting Ability" (id `<choice id>_ability`), under the Extra tab, and Finish waits
+for both.
 (Races with a fixed spell use `innate_spells:` and its own `casting_ability:` instead; see
 `authoring-races.md`.)
 

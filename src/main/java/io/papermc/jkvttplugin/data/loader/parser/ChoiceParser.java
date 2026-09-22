@@ -56,6 +56,7 @@ public final class ChoiceParser {
 
             PlayersChoice<?> pc = null;
             PlayersChoice.ChoiceType type;
+            ChoiceEntry abilityPick = null; // a spell choice's "which ability?" pick, if it has one
 
             switch(typeString) {
                 case "SKILL" -> {
@@ -162,17 +163,7 @@ public final class ChoiceParser {
                     }
 
                     pc = new PlayersChoice<>(choose, spellOpts, type);
-                    String ability = ParseUtil.asString(m.get("casting_ability"), null);
-                    if (ability != null) {
-                        io.papermc.jkvttplugin.data.model.enums.Ability a = io.papermc.jkvttplugin.data.model.enums.Ability.fromString(ability.trim());
-                        if (a == null) {
-                            io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] SPELL choice '" + id
-                                    + "' has casting_ability '" + ability + "', which isn't an ability (use e.g. intelligence) — ignored,"
-                                    + " so the pick is cast with the class's ability.");
-                        } else {
-                            ((PlayersChoice<?>) pc).castingAbility(a);
-                        }
-                    }
+                    abilityPick = castingAbility(id, title, m.get("casting_ability"), pc);
                 }
                 case "CUSTOM" -> {
                     type = PlayersChoice.ChoiceType.CUSTOM;
@@ -200,8 +191,35 @@ public final class ChoiceParser {
 
             if (choose > 0 && pc.getOptions() != null && !pc.getOptions().isEmpty()) {
                 out.add(new ChoiceEntry(id, title, pc.getType(), pc));
+                if (abilityPick != null) out.add(abilityPick);
             }
         }
         return out;
+    }
+
+    /**
+     * Reads a spell choice's {@code casting_ability:}. One ability (the high elf's
+     * {@code intelligence}) is set on the choice. A list ({@code [intelligence, wisdom, charisma]},
+     * the astral elf's Astral Fire) means the player picks: that pick is returned as its own choice,
+     * {@code <id>_ability}, for the caller to add next to the spell choice.
+     */
+    private static ChoiceEntry castingAbility(String id, String title, Object raw, PlayersChoice<?> pc) {
+        if (raw == null) return null;
+        List<String> names = raw instanceof List<?> ? ParseUtil.normalizeStringList(raw) : List.of(raw.toString().trim().toLowerCase());
+        List<String> abilities = new ArrayList<>();
+        for (String name : names) {
+            if (io.papermc.jkvttplugin.data.model.enums.Ability.fromString(name) != null) abilities.add(name);
+            else io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] SPELL choice '" + id
+                    + "' has casting_ability '" + name + "', which isn't an ability (use e.g. intelligence) — ignored.");
+        }
+        if (abilities.isEmpty()) return null;
+        if (abilities.size() == 1) {
+            pc.castingAbility(io.papermc.jkvttplugin.data.model.enums.Ability.fromString(abilities.get(0)));
+            return null;
+        }
+        String abilityId = id + "_ability";
+        pc.castingAbilityChoiceId(abilityId);
+        return new ChoiceEntry(abilityId, title + ": Spellcasting Ability", PlayersChoice.ChoiceType.CUSTOM,
+                new PlayersChoice<>(1, abilities, PlayersChoice.ChoiceType.CUSTOM));
     }
 }

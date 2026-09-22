@@ -91,6 +91,22 @@ class CharacterCreationTest {
         assertNull(druidCantrip.pc().getCastingAbility(), "a class feature's cantrip uses the class's ability");
     }
 
+    /** MotM astral elf: INT, WIS or CHA for Astral Fire, the player's pick, asked as its own choice. */
+    @Test
+    void astralElfPicksTheAbilityForItsCantrip() {
+        CharacterCreationSession s = session("elf", "astral_elf", "fighter", "sage");
+        PendingChoice<?> ability = choice(s, "astral_fire_cantrip_ability");
+        assertEquals(Set.of("intelligence", "wisdom", "charisma"), Set.copyOf(ability.optionKeys()));
+
+        s.toggleChoiceByKey("astral_fire_cantrip", "sacred_flame");
+        assertTrue(s.chosenInnateSpells().isEmpty(), "no ability picked yet");
+        assertFalse(ability.isComplete(), "Finish waits for the ability");
+
+        s.toggleChoiceByKey("astral_fire_cantrip_ability", "wisdom");
+        assertEquals(java.util.Map.of("sacred_flame", io.papermc.jkvttplugin.data.model.enums.Ability.WISDOM),
+                s.chosenInnateSpells());
+    }
+
     /** "Already known" covers race skills too — a wood elf rogue can't waste a class pick on Perception. */
     @Test
     void knownSkillsIncludeRaceGrants() {

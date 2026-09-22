@@ -124,6 +124,9 @@ again belongs in the automated tests (`src/test/java`), not in a stale checkbox 
 - [ ] **High elf rogue** → pick Fire Bolt as the Wizard Cantrip, finish → `/character cast fire_bolt` works and uses
       INT (a rogue has no class spellcasting; it used to be stored as a class cantrip with no ability to cast it).
       Restart → still castable. A **high elf wizard**'s cantrip still works the same as before.
+- [ ] **Astral elf** (any class) → Extra tab has **"Astral Fire Cantrip: Spellcasting Ability"** (Intelligence / Wisdom /
+      Charisma); Finish waits for it. Pick Sacred Flame + Wisdom, finish → `/combat cast sacred_flame <target>` uses
+      your WIS for the save DC. Restart → still Wisdom.
 - [ ] **Focus, non-caster class:** a tiefling rogue right-clicks thieves' tools → "You cannot use this type of focus!"
       (it used to open the spell menu). An artificer with the same tools → the spell menu opens.
 
@@ -175,9 +178,6 @@ Tiefling rogue: "Teef doesn't know Thaumaturgy".
   → fixed. Cast paths only checked class spell lists, never racial spells. Same fix covers `/combat cast`.
 
 ## Known deferred (not in this build)
-- **Astral elf's** Astral Fire cantrip is still a class-style pick: MotM lets the player choose INT, WIS or CHA
-  for it, and there's no "choose an ability" step yet, so it has no `casting_ability:`.
-- High elves made **before** this build keep their cantrip as a class cantrip (re-create to test the new path).
 - Racial spell **uses** (a level-3 tiefling's Hellish Rebuke) aren't saved, so a restart refills them.
   Harmless at level 1, where every racial spell is a cantrip; matters once level-up (#153) lands.
 - Character-sheet inventory redesign (waiting until more content lands).

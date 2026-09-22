@@ -168,9 +168,18 @@ public class CharacterCreationSession {
         Map<String, Ability> out = new LinkedHashMap<>();
         for (PendingChoice<?> pc : pendingChoices) {
             PlayersChoice<?> choice = pc.getPlayersChoice();
-            if (choice == null || choice.getType() != PlayersChoice.ChoiceType.SPELL || choice.getCastingAbility() == null) continue;
+            if (choice == null || choice.getType() != PlayersChoice.ChoiceType.SPELL || !choice.isRacialSpellPick()) continue;
+            Ability ability = choice.getCastingAbility();
+            if (ability == null) {
+                // The player picks the ability (astral elf): read their pick from its own choice.
+                PendingChoice<?> abilityPick = findPendingChoice(choice.getCastingAbilityChoiceId());
+                if (abilityPick != null) for (Object a : abilityPick.getChosen()) {
+                    if (a instanceof String name) ability = Ability.fromString(name);
+                }
+            }
+            if (ability == null) continue; // not picked yet: Finish is blocked until it is
             for (Object chosen : pc.getChosen()) {
-                if (chosen instanceof String id) out.put(id.toLowerCase(), choice.getCastingAbility());
+                if (chosen instanceof String id) out.put(id.toLowerCase(), ability);
             }
         }
         return out;

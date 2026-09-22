@@ -75,6 +75,26 @@ public class PlayersChoice<T> {
         return this;
     }
 
+    /**
+     * {@code casting_ability: [intelligence, wisdom, charisma]}: the player picks the ability too
+     * (an astral elf's Astral Fire, MotM). The parser adds that pick as its own choice; this is its id.
+     */
+    private String castingAbilityChoiceId;
+
+    public String getCastingAbilityChoiceId() {
+        return castingAbilityChoiceId;
+    }
+
+    public PlayersChoice<T> castingAbilityChoiceId(String choiceId) {
+        this.castingAbilityChoiceId = choiceId;
+        return this;
+    }
+
+    /** A race's own spell pick (fixed or player-chosen ability): it becomes an innate spell, not a class spell. */
+    public boolean isRacialSpellPick() {
+        return castingAbility != null || castingAbilityChoiceId != null;
+    }
+
     // ToDo: update when I start using it based on use cases
     // it doesn't like that options may not be a string
 //    public boolean containsOptions(String value) {

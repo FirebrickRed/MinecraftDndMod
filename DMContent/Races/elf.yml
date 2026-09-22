@@ -186,6 +186,7 @@ subraces:
         type: SPELL
         choose: 1
         options: [dancing_lights, light, sacred_flame]  # Spell IDs (not display names)
+        casting_ability: [intelligence, wisdom, charisma]  # the player picks one (MotM); adds an "…: Spellcasting Ability" choice
       - id: subrace_languages
         title: Extra Language
         type: LANGUAGE
