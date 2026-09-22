@@ -156,4 +156,20 @@ class DeathTest {
         c.revive(0);
         assertEquals(1, c.getCurrentHealth(), "at least 1 HP");
     }
+
+    /** PHB p.186: a long rest needs at least 1 HP at the start. */
+    @Test
+    void noLongRestAtZeroHp() {
+        CharacterSheet c = downed();
+        c.addDeathSaveSuccess();
+        c.addDeathSaveSuccess();
+        c.addDeathSaveSuccess();
+        assertTrue(c.isStable());
+        c.longRest();
+        assertEquals(0, c.getCurrentHealth(), "stable isn't enough");
+
+        c.heal(1);
+        c.longRest();
+        assertEquals(c.getMaxHealth(), c.getCurrentHealth());
+    }
 }

@@ -139,7 +139,7 @@ public class InteractiveObjectListener implements Listener {
     }
 
     /** A clickable "(x, y, z)" that teleports the DM there. */
-    static Component clickableCoords(Location loc) {
+    public static Component clickableCoords(Location loc) {
         String w = loc.getWorld() != null ? loc.getWorld().getName() : "world";
         int x = loc.getBlockX(), y = loc.getBlockY(), z = loc.getBlockZ();
         return Component.text("(" + x + ", " + y + ", " + z + ")", NamedTextColor.YELLOW, TextDecoration.UNDERLINED)

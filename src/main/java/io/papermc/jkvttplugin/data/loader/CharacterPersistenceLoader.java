@@ -235,6 +235,8 @@ public class CharacterPersistenceLoader {
         data.put("currentHealth", sheet.getCurrentHealth());
         data.put("maxHealth", sheet.getMaxHealth());
         data.put("armorClass", sheet.getArmorClass());
+        if (sheet.getTempHealth() > 0) data.put("tempHealth", sheet.getTempHealth());
+        if (sheet.isRelentlessEnduranceUsed()) data.put("relentlessEnduranceUsed", true);
         // Dying / dead (#101): written only when there's something to say, so a healthy sheet's
         // file doesn't change shape.
         if (sheet.isDead()) data.put("dead", true);
@@ -462,6 +464,8 @@ public class CharacterPersistenceLoader {
                 dsSuccesses = parseIntOrDefault(saves.get("successes"), 0);
                 dsFailures = parseIntOrDefault(saves.get("failures"), 0);
             }
+            sheet.restoreRestState(parseIntOrDefault(data.get("tempHealth"), 0),
+                    Boolean.TRUE.equals(data.get("relentlessEnduranceUsed")));
             sheet.restoreDeathState(dsSuccesses, dsFailures, Boolean.TRUE.equals(data.get("dead")));
 
             // Restore CUSTOM choice selections (#70) so feature actions resolve their variant.

@@ -32,6 +32,12 @@ public class LongRestCommand implements CommandExecutor {
             player.sendMessage(Component.text(character.getCharacterName() + " is dead — resting won't bring them back.", NamedTextColor.RED));
             return true;
         }
+        if (character.getCurrentHealth() <= 0) {
+            player.sendMessage(Component.text("A long rest needs at least 1 HP when it starts, and "
+                    + character.getCharacterName() + " is at 0. Someone has to heal you first "
+                    + "(a stable character regains 1 HP after 1d4 hours — ask the DM).", NamedTextColor.RED));
+            return true;
+        }
 
         // Store pre-rest HP for display
         int hpBefore = character.getCurrentHealth();

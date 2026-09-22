@@ -154,7 +154,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `tp <world> <x> <y> <z>` | Teleport (usually clicked from the coordinates in a DM notification) |
 | `lootprompt <player> <check>` | Call a loot check for a player searching a body (usually clicked, not typed) |
 | `animalreply <player> <message…>` | Voice the animals' reply to a Speak with Animals caster (usually clicked) |
-| `rest <character> <short\|long>` | Force a rest (refused for a dead character) |
+| `rest <character> <short\|long>` | Force a rest (refused for a dead character; a long rest also needs at least 1 HP, PHB p.186) |
 | `resource restore <character> <name\|all>` | Restore a class resource |
 | `resource consume <character> <name> [amount]` | Spend a class resource |
 | `reload` | Reload all `DMContent/` YAML without a restart |

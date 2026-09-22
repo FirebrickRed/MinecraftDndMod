@@ -120,4 +120,24 @@ class CharacterPersistenceTest {
         assertFalse(data.containsKey("dead"));
         assertFalse(data.containsKey("deathSaves"));
     }
+
+    /** Temp HP wasn't saved, so a restart mid-adventure quietly took it away. */
+    @Test
+    void tempHpSurvives() {
+        CharacterSheet c = character("human", null, "fighter", "soldier", scores());
+        c.setTemporaryHp(7);
+        assertEquals(7, roundTrip(c).getTempHealth());
+    }
+
+    /** Relentless Endurance wasn't saved either, so a restart handed a spent use back. */
+    @Test
+    void spentRelentlessEnduranceSurvives() {
+        CharacterSheet orc = character("half_orc", null, "barbarian", "outlander", scores());
+        assertTrue(orc.canEndureLethalHit());
+        orc.markRelentlessEnduranceUsed();
+        CharacterSheet back = roundTrip(orc);
+        assertFalse(back.canEndureLethalHit(), "still spent until a long rest");
+        back.longRest();
+        assertTrue(back.canEndureLethalHit());
+    }
 }

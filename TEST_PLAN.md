@@ -7,7 +7,7 @@ build if one fails — then copy `build/libs/*.jar` to the server's
 Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second account or `/deop`.
 
 ## Resource pack / icons
-- [ ] Server hands the pack on join (or load it client-side). Accept the prompt.
+- [X] Server hands the pack on join (or load it client-side). Accept the prompt.
 - [X] `/character create` → **Class** tab shows custom class art (incl. barbarian).
 - [X] **Abilities** tab: the six tiles show `str_icon … cha_icon`; stack count = the score.
 - [X] Plasmoid or half-elf → racial bonus row shows the ability icons; the **assigned** one shimmers (enchant glint).
@@ -24,7 +24,7 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] Right-click the **Character Sheet** paper → opens the sheet.
 
 ## /character (DM forms)
-- [ ] `/character create <onlinePlayer>` → creation opens **for that player**.
+- [X] `/character create <onlinePlayer>` → creation opens **for that player**.
 - [ ] `/character give <player> <name>` → player receives the sheet paper.
 - [ ] `/character list all` → every saved character with `(owner)`.
 - [ ] As non-DM: `/character create Bob` and `/character list all` are refused; `/character list` still lists your own.
@@ -44,6 +44,15 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] Massive damage: `/dm hp <c> damage <current HP + max HP>` → dies outright, no saves.
 - [ ] Dying carries over: fail one save, `/combat finished`, new fight → tally still shows 1 failure.
 - [ ] `/dmentity revive <creature>` mid-fight → the creature's turns come back.
+- [ ] **The body:** a dead character leaves a tipped-over head named "☠ <name>" where they fell (the player
+      stands up and can walk away). Right-click it as a player → "The body of …" + [Ask for a check] → DM gets
+      a [call a check] ping. As DM → also [Revive] and [Remove body]. Can't punch it or take the head.
+      `/dm revive` → the character stands up **at the body** and the body disappears. Restart → body still there.
+- [ ] Walk far away (chunk unloads), `/dm revive <c>`, walk back → the stale body is gone when the chunk loads.
+- [ ] Other players can still `/character view <dead character>` and be called for checks on the body.
+- [ ] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP". `/dm hp <c> heal 1` → now works.
+- [ ] **Temp HP & Relentless Endurance survive a restart:** `/dm hp <c> temp 7`, restart → still 7 temp HP.
+      Half-orc drops to 0 → held at 1 by Relentless; restart; drop them again → this time they fall.
 - [ ] Tab: `/dm ` shows add/remove/list + give/check/rest/resource/reload; `/dm resource ` shows restore/consume.
 - [ ] As non-DM: `/dm give`, `/dm rest`, `/dm reload` refused.
 - [ ] As non-op DM (added via `/dm add`): DM tools work, but `/dm add`/`remove` refused (op-only).

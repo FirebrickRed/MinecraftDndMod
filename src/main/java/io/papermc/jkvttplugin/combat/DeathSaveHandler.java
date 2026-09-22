@@ -53,7 +53,7 @@ public class DeathSaveHandler {
 
         // Resolve outcome.
         if (target.isDead()) {
-            removeProne(target);
+            leaveBody(target);
             session.broadcast(Component.text(target.getDisplayName() + " has DIED.", NamedTextColor.DARK_RED, TextDecoration.BOLD));
             session.offerEndIfDecided(); // a death here may have ended the fight (e.g. a TPK)
         } else if (target.isStabilized()) {
@@ -90,6 +90,16 @@ public class DeathSaveHandler {
             player.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, Integer.MAX_VALUE, 200, false, false));
             player.setPose(Pose.SWIMMING, true);
         }
+    }
+
+    /**
+     * A player character just died. The player stands back up (they're free to walk off and roll
+     * someone new) and the character's body is left where they fell ({@link PlayerCorpse}).
+     */
+    static void leaveBody(Combatant combatant) {
+        removeProne(combatant);
+        if (!combatant.isPlayer()) return;
+        PlayerCorpse.place(combatant.getPlayer(), combatant.getCharacterSheet());
     }
 
     /** Stand a player back up when they're revived or combat ends. */

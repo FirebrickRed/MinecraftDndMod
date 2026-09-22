@@ -1127,6 +1127,12 @@ public class CharacterSheet {
         return true;
     }
 
+    /** Restore saved temp HP and per-rest trait uses on load, without persisting mid-deserialization. */
+    public void restoreRestState(int tempHp, boolean relentlessUsed) {
+        this.tempHealth = Math.max(0, tempHp);
+        this.relentlessEnduranceUsed = relentlessUsed;
+    }
+
     /** Restore saved death state on load, without persisting mid-deserialization. */
     public void restoreDeathState(int successes, int failures, boolean isDead) {
         this.deathSaveSuccesses = Math.max(0, Math.min(3, successes));
@@ -1728,8 +1734,9 @@ public class CharacterSheet {
     public boolean hasRelentlessEndurance() { return hasPassiveFlag("endure_below_1"); }
     /** True if Relentless Endurance is available right now (has the trait and hasn't used it since a long rest). */
     public boolean canEndureLethalHit() { return hasRelentlessEndurance() && !relentlessEnduranceUsed; }
-    /** Spend Relentless Endurance for this long-rest window. */
-    public void markRelentlessEnduranceUsed() { relentlessEnduranceUsed = true; }
+    /** Spend Relentless Endurance for this long-rest window. Saved, so a restart doesn't hand it back. */
+    public void markRelentlessEnduranceUsed() { relentlessEnduranceUsed = true; persist(); }
+    public boolean isRelentlessEnduranceUsed() { return relentlessEnduranceUsed; }
     public int bonusDamageFor(String rollTag) {
         int sum = 0;
         for (var e : activeEffects) sum += e.bonusDamageFor(rollTag);
@@ -1776,9 +1783,12 @@ public class CharacterSheet {
         return getResource(resourceName) != null;
     }
 
-    /** A long rest. Does nothing for a dead character: resting doesn't bring anyone back. */
+    /**
+     * A long rest. A character needs at least 1 HP at the start to benefit (PHB p.186), so this does
+     * nothing at 0 HP: not for the dying, the stable, or the dead.
+     */
     public void longRest() {
-        if (dead) return;
+        if (dead || currentHealth <= 0) return;
         // Restore spell slots
         for (int i = 0; i < 9; i++) {
             spellSlots[i] = maxSpellSlots[i];

@@ -139,7 +139,7 @@ public class DamageHandler {
         int newFailures = target.getDeathSaveFailures() - failuresBefore;
 
         if (target.isDead()) {
-            DeathSaveHandler.removeProne(target);
+            DeathSaveHandler.leaveBody(target);
             if (newFailures > 0) {
                 say(session, target, Component.text(target.getDisplayName() + " takes damage while down — "
                         + newFailures + " death save failure" + (newFailures > 1 ? "s" : "") + ".", NamedTextColor.DARK_RED));
@@ -230,6 +230,12 @@ public class DamageHandler {
     public static boolean revive(CombatSession session, Combatant target, int hp) {
         if (!target.isDead() || !target.revive(hp)) return false;
         DeathSaveHandler.removeProne(target);
+        io.papermc.jkvttplugin.character.CharacterSheet sheet = target.getCharacterSheet();
+        if (sheet != null) {
+            // They get up where the body lay; then the body is gone.
+            PlayerCorpse.returnToBody(target.getPlayer(), sheet);
+            PlayerCorpse.remove(sheet.getCharacterId());
+        }
         say(session, target, Component.text("✚ " + target.getDisplayName() + " returns to life ("
                 + target.getCurrentHp() + "/" + target.getMaxHp() + " HP).", NamedTextColor.GREEN, TextDecoration.BOLD));
         if (session != null) {
