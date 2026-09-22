@@ -72,6 +72,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                         sender.sendMessage(Component.text("Player not online: " + rest[0], NamedTextColor.RED));
                         return true;
                     }
+                    io.papermc.jkvttplugin.combat.PlayerCorpse.leaveSpectator(target); // out of death-spectator (#101)
                     CharacterCreationSession session = CharacterCreationService.start(target.getUniqueId());
                     CharacterSheetManager.giveCreationPaperIfAbsent(target);
                     CharacterCreationMenu.open(target, session.getSessionId());
@@ -421,15 +422,62 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         if (name.length() >= 2 && name.startsWith("\"") && name.endsWith("\"")) name = name.substring(1, name.length() - 1);
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
         if (sheet == null) return true;
+        if (DMManager.isDM(sender)) {
+            deleteNow(sheet);
+            sender.sendMessage(Component.text("Deleted character: " + sheet.getCharacterName()
+                    + " (its file is kept in Saved/Characters/Deleted).", NamedTextColor.GREEN));
+            return true;
+        }
         boolean isOwn = sender instanceof Player p && sheet.getPlayerId().equals(p.getUniqueId());
-        if (!isOwn && !DMManager.isDM(sender)) {
+        if (!isOwn) {
             sender.sendMessage(Component.text("You can only delete your own characters.", NamedTextColor.RED));
             return true;
         }
-        String deleted = sheet.getCharacterName();
-        CharacterSheetManager.deleteCharacter(sheet.getPlayerId(), sheet.getCharacterId());
-        sender.sendMessage(Component.text("Deleted character: " + deleted, NamedTextColor.GREEN));
+        requestDeletion((Player) sender, sheet);
         return true;
+    }
+
+    /**
+     * A player can't delete a character on their own: the DM approves it. A character is campaign
+     * state (a dead hero the party may yet raise, a sheet the DM wants to look back at), so the
+     * table's DM decides, not a stray command.
+     */
+    private void requestDeletion(Player player, CharacterSheet sheet) {
+        List<Player> dms = new ArrayList<>();
+        for (Player p : Bukkit.getOnlinePlayers()) if (DMManager.isDM(p)) dms.add(p);
+        if (dms.isEmpty()) {
+            player.sendMessage(Component.text("Deleting a character needs a DM's approval, and no DM is online.", NamedTextColor.RED));
+            return;
+        }
+        UUID characterId = sheet.getCharacterId();
+        UUID ownerId = player.getUniqueId();
+        String name = sheet.getCharacterName();
+        var once = net.kyori.adventure.text.event.ClickCallback.Options.builder()
+                .uses(1).lifetime(java.time.Duration.ofMinutes(10)).build();
+
+        Component ask = Component.text("🗑 " + player.getName() + " asks to delete their character "
+                        + name + (sheet.isDead() ? " (dead)" : "") + ". ", NamedTextColor.GOLD)
+                .append(Component.text("[Approve]", NamedTextColor.RED, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                        .clickEvent(net.kyori.adventure.text.event.ClickEvent.callback(a -> {
+                            CharacterSheet still = CharacterSheetManager.getCharacter(ownerId, characterId);
+                            if (still == null) return;
+                            deleteNow(still);
+                            for (Player dm : dms) dm.sendMessage(Component.text("Deleted " + name + ".", NamedTextColor.GRAY));
+                            Player owner = Bukkit.getPlayer(ownerId);
+                            if (owner != null) owner.sendMessage(Component.text("The DM deleted " + name + ".", NamedTextColor.GRAY));
+                        }, once)))
+                .append(Component.text("  "))
+                .append(Component.text("[Deny]", NamedTextColor.GRAY, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                        .clickEvent(net.kyori.adventure.text.event.ClickEvent.callback(a -> {
+                            Player owner = Bukkit.getPlayer(ownerId);
+                            if (owner != null) owner.sendMessage(Component.text("The DM kept " + name + ".", NamedTextColor.GRAY));
+                        }, once)));
+        for (Player dm : dms) dm.sendMessage(ask);
+        player.sendMessage(Component.text("Asked the DM to delete " + name + ".", NamedTextColor.GRAY));
+    }
+
+    private static void deleteNow(CharacterSheet sheet) {
+        CharacterSheetManager.deleteCharacter(sheet.getPlayerId(), sheet.getCharacterId());
     }
 
     private void sendUsage(CommandSender sender) {

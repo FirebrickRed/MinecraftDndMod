@@ -22,7 +22,7 @@ import java.util.UUID;
 /**
  * View a character sheet (Issue #47).
  * - /viewsheet                     → your own active character
- * - /viewsheet &lt;characterName&gt;      → any saved character by name (DM only)
+ * - /viewsheet &lt;characterName&gt;      → one of your own characters; any character for a DM
  * - /viewsheet player &lt;playerName&gt;  → a player's character (DM only)
  */
 public class ViewSheetCommand implements CommandExecutor, TabCompleter {
@@ -50,9 +50,21 @@ public class ViewSheetCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Everything below is DM-only.
+        // Players may open any of their OWN characters by name. Anyone else's sheet is DM-only: an
+        // NPC ally or a traitor in the party mustn't be readable by the players (a DM can still
+        // share what a successful check would reveal).
         if (!DMManager.isDM(sender)) {
-            player.sendMessage(Component.text("Only a DM can view other characters.", NamedTextColor.RED));
+            String wanted = stripQuotes(String.join(" ", args));
+            List<CharacterSheet> owned = CharacterSheetManager.getPlayerCharacters(player.getUniqueId());
+            if (owned != null) {
+                for (CharacterSheet own : owned) {
+                    if (own.getCharacterName().equalsIgnoreCase(wanted)) {
+                        ViewCharacterSheetMenu.open(player, own.getCharacterId());
+                        return true;
+                    }
+                }
+            }
+            player.sendMessage(Component.text("You can only view your own characters.", NamedTextColor.RED));
             return true;
         }
 
@@ -98,7 +110,15 @@ public class ViewSheetCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         List<String> out = new ArrayList<>();
-        if (!DMManager.isDM(sender)) return out;
+        if (!DMManager.isDM(sender)) {
+            // Only your own characters' names — never a list of everyone else's.
+            if (args.length == 1 && sender instanceof Player p) {
+                List<CharacterSheet> owned = CharacterSheetManager.getPlayerCharacters(p.getUniqueId());
+                if (owned != null) for (CharacterSheet c : owned) out.add(c.getCharacterName());
+                return filter(out, args[0]);
+            }
+            return out;
+        }
 
         if (args.length == 1) {
             out.add("player");

@@ -220,6 +220,8 @@ public class CharacterSheetManager {
         CharacterSheet sheet = CharacterPersistenceLoader.getCharacter(playerId, characterId);
         Player owner = Bukkit.getPlayer(playerId);
         if (owner != null) clearCharacterItems(owner, characterId, sheet);
+        // Anything still holding the sheet mustn't write it back into Saved/Characters.
+        if (sheet != null) sheet.setSavable(false);
 
         CharacterPersistenceLoader.removeCharacter(playerId, characterId);
     }
@@ -288,10 +290,6 @@ public class CharacterSheetManager {
 //    public static void loadPlayerCharacters(Player player) {
 //        CharacterPersistenceLoader.loadPlayerCharacters(player.getUniqueId());
 //    }
-
-    public static void removePlayerCharacters(Player player) {
-        CharacterPersistenceLoader.removePlayerCharacters(player.getUniqueId());
-    }
 
     /**
      * Find a character by name (case-insensitive search across all players).

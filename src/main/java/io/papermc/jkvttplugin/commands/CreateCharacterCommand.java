@@ -17,6 +17,8 @@ public class CreateCharacterCommand implements CommandExecutor {
             return true;
         }
 
+        // A player whose character died is a spectator; starting someone new brings them back (#101).
+        io.papermc.jkvttplugin.combat.PlayerCorpse.leaveSpectator(player);
         CharacterCreationSession session = CharacterCreationService.start(player.getUniqueId());
         // Hand out the "Create Character" paper so closing the menu isn't destructive — they can
         // right-click it to resume. It's swapped for the real sheet when creation completes.

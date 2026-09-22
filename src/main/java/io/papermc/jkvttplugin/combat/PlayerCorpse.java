@@ -1,6 +1,5 @@
 package io.papermc.jkvttplugin.combat;
 
-import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.dm.DMManager;
@@ -12,6 +11,7 @@ import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
@@ -50,7 +50,7 @@ import java.util.UUID;
  *       read the cause of death, Investigation to search it). A DM also gets <b>[Revive]</b> and
  *       <b>[Remove body]</b>.</li>
  *   <li>The stand carries the character's id in its PDC, so it survives restarts on its own.
- *       Reviving removes it (and stands the character up where it lay); a body whose character is
+ *       Reviving removes it (the DM gets a button to bring the player back to it); a body whose character is
  *       alive again is cleared when its chunk loads. A body whose character was deleted is kept as a
  *       memorial until a DM removes it.</li>
  * </ul>
@@ -178,7 +178,7 @@ public class PlayerCorpse implements Listener {
                 buttons = buttons.append(Component.text("  ")).append(
                         Component.text("[Revive]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                                 .clickEvent(ClickEvent.suggestCommand("/dm revive " + sheet.getCharacterName() + " 1"))
-                                .hoverEvent(HoverEvent.showText(Component.text("Revivify-style: back at 1 HP, here."))));
+                                .hoverEvent(HoverEvent.showText(Component.text("Revivify-style: back at 1 HP."))));
             }
             buttons = buttons.append(Component.text("  ")).append(button("[Remove body]",
                     "Take the body out of the world. The character stays dead.",
@@ -220,12 +220,58 @@ public class PlayerCorpse implements Listener {
         }
     }
 
-    /** Stand a revived character up where their body lay, if it's their active character and it's loaded. */
-    static void returnToBody(Player player, CharacterSheet sheet) {
-        if (player == null || sheet == null) return;
-        CharacterSheet active = ActiveCharacterTracker.getActiveCharacter(player);
-        if (active == null || !active.getCharacterId().equals(sheet.getCharacterId())) return;
-        Location at = find(sheet.getCharacterId());
-        if (at != null) player.teleport(at);
+    // ==================== THE DEAD PLAYER ====================
+    // A dead character's player becomes a spectator: they can watch the table but can't touch the
+    // world. The game mode they had is kept on the player (PDC), so it survives a restart, and it
+    // comes back when the character is revived or the player starts someone new.
+
+    private static final NamespacedKey MODE_BEFORE_DEATH = new NamespacedKey("jkvtt", "mode_before_death");
+
+    /** Put the player of a character who just died into spectator mode. */
+    static void toSpectator(Player player) {
+        if (player == null || player.getGameMode() == GameMode.SPECTATOR) return;
+        player.getPersistentDataContainer().set(MODE_BEFORE_DEATH, PersistentDataType.STRING, player.getGameMode().name());
+        player.setGameMode(GameMode.SPECTATOR);
+        player.sendMessage(Component.text("You have died. You're a spectator until you're revived, "
+                + "or you start a new character with /character create.", NamedTextColor.GRAY));
+    }
+
+    /**
+     * Give a dead character's player back the game mode they had (adventure, usually). Does nothing
+     * for a player who wasn't made a spectator by a death, so a DM's own spectator mode is left alone.
+     */
+    public static void leaveSpectator(Player player) {
+        if (player == null) return;
+        String before = player.getPersistentDataContainer().get(MODE_BEFORE_DEATH, PersistentDataType.STRING);
+        if (before == null) return;
+        player.getPersistentDataContainer().remove(MODE_BEFORE_DEATH);
+        GameMode mode;
+        try {
+            mode = GameMode.valueOf(before);
+        } catch (IllegalArgumentException e) {
+            mode = GameMode.ADVENTURE;
+        }
+        player.setGameMode(mode);
+    }
+
+    /**
+     * After a revival, offer the DMs a button that brings the player back to the body. It's a
+     * prompt, not automatic: the player may have wandered off as a spectator, and the DM decides
+     * where the revived character is standing.
+     */
+    static void offerReturnToBody(CharacterSheet sheet, Location bodyAt) {
+        if (sheet == null || bodyAt == null) return;
+        UUID owner = sheet.getPlayerId();
+        String name = sheet.getCharacterName();
+        Component msg = Component.text("✚ " + name + " is back where their body lay? ", NamedTextColor.GREEN)
+                .append(button("[Teleport them to the body]", "Move " + name + "'s player to "
+                        + bodyAt.getBlockX() + ", " + bodyAt.getBlockY() + ", " + bodyAt.getBlockZ(),
+                        a -> {
+                            Player p = Bukkit.getPlayer(owner);
+                            if (p != null) p.teleport(bodyAt);
+                        }));
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (DMManager.isDM(p)) p.sendMessage(msg);
+        }
     }
 }

@@ -36,6 +36,11 @@ public class CharacterPersistenceLoader {
         loadAllCharacters();
     }
 
+    /** Point saving at another folder, for tests — normally set by {@link #initialize}. */
+    static void setDataFolder(File folder) {
+        dataFolder = folder;
+    }
+
     public static void saveCharacter(CharacterSheet sheet) {
         File characterFile = new File(dataFolder, sheet.getCharacterId().toString() + ".yml");
 
@@ -165,21 +170,10 @@ public class CharacterPersistenceLoader {
         return names;
     }
 
-    public static void removePlayerCharacters(UUID playerId) {
-        // Remove from memory
-        Map<UUID, CharacterSheet> characters = playerCharacters.remove(playerId);
-
-        // Remove files from disk
-        if (characters != null) {
-            for (UUID characterId : characters.keySet()) {
-                File characterFile = new File(dataFolder, characterId.toString() + ".yml");
-                if (characterFile.exists()) {
-                    characterFile.delete();
-                }
-            }
-        }
-    }
-
+    /**
+     * Take a character out of play. The file isn't erased: it moves to {@code Saved/Characters/Deleted/}
+     * (which the loader doesn't read), so a DM can bring a character back by moving the file home.
+     */
     public static void removeCharacter(UUID playerId, UUID characterId) {
         // Remove from memory
         Map<UUID, CharacterSheet> characters = playerCharacters.get(playerId);
@@ -190,10 +184,17 @@ public class CharacterPersistenceLoader {
             }
         }
 
-        // Remove file from disk
         File characterFile = new File(dataFolder, characterId.toString() + ".yml");
-        if (characterFile.exists()) {
-            characterFile.delete();
+        if (!characterFile.exists()) return;
+        File archive = new File(dataFolder, "Deleted");
+        if (!archive.exists() && !archive.mkdirs()) {
+            LOGGER.warning("Couldn't create " + archive.getPath() + "; leaving " + characterFile.getName() + " in place.");
+            return;
+        }
+        File target = new File(archive, characterId + ".yml");
+        if (target.exists()) target = new File(archive, characterId + "-" + System.currentTimeMillis() + ".yml");
+        if (!characterFile.renameTo(target)) {
+            LOGGER.warning("Couldn't move " + characterFile.getName() + " to " + archive.getPath() + "; it was left in place.");
         }
     }
 

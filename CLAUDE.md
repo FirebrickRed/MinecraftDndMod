@@ -711,9 +711,13 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     are only a snapshot for an offline player in a restored fight), and an entity combatant reads its
     instance. The dead ignore healing and rests; the one way back is `DamageHandler.revive`
     (`/dm revive`, `/dmentity revive`). A new fight doesn't reset a dying character's tally.
-    A dying player's body is `PlayerCorpse`: an armor stand tagged `jkvtt:corpse_of` = character id,
-    placed where they fell (`DeathSaveHandler.leaveBody`), right-click → [Ask for a check]. Revive stands
-    the character up there and removes it; a stale body is cleared on chunk load.
+    A dead player's body is `PlayerCorpse`: an armor stand tagged `jkvtt:corpse_of` = character id,
+    placed where they fell (`DeathSaveHandler.leaveBody`), right-click → [Ask for a check]. The player goes
+    to spectator (previous mode kept in their PDC) until revived or `/character create`. Revive removes the
+    body and offers the DM [Teleport them to the body], never an automatic teleport; a stale body is
+    cleared on chunk load.
+  - **Characters are never erased by the game.** A player's `/character delete` is a request the DM
+    approves; deletion archives the file to `Saved/Characters/Deleted/`. Other people's sheets are DM-only.
 
 **DM authorization:** a "DM" is an op, a holder of the `jkvtt.dm` permission node, OR a
 player added via `/dm add` (`DMManager.isDM`). DM commands are gated in-command, not via

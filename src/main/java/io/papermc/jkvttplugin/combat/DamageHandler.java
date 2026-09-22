@@ -230,14 +230,17 @@ public class DamageHandler {
     public static boolean revive(CombatSession session, Combatant target, int hp) {
         if (!target.isDead() || !target.revive(hp)) return false;
         DeathSaveHandler.removeProne(target);
-        io.papermc.jkvttplugin.character.CharacterSheet sheet = target.getCharacterSheet();
-        if (sheet != null) {
-            // They get up where the body lay; then the body is gone.
-            PlayerCorpse.returnToBody(target.getPlayer(), sheet);
-            PlayerCorpse.remove(sheet.getCharacterId());
-        }
         say(session, target, Component.text("✚ " + target.getDisplayName() + " returns to life ("
                 + target.getCurrentHp() + "/" + target.getMaxHp() + " HP).", NamedTextColor.GREEN, TextDecoration.BOLD));
+        io.papermc.jkvttplugin.character.CharacterSheet sheet = target.getCharacterSheet();
+        if (sheet != null) {
+            // Out of spectator, and the body is gone. Where they now stand is the DM's call: the
+            // player may have drifted off while dead, so the DM gets a button rather than a teleport.
+            PlayerCorpse.leaveSpectator(target.getPlayer());
+            org.bukkit.Location bodyAt = PlayerCorpse.find(sheet.getCharacterId());
+            PlayerCorpse.remove(sheet.getCharacterId());
+            PlayerCorpse.offerReturnToBody(sheet, bodyAt);
+        }
         if (session != null) {
             session.refreshHpDisplays(target);
             session.updateScoreboard();

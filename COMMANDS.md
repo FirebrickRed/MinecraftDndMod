@@ -14,10 +14,10 @@ prints that command's own help.
 | Command | What it does |
 |---|---|
 | `/character create` | Start character creation (or right-click your **Character Sheet** paper) |
-| `/character view [name]` | Open your character sheet (or view one by name) |
+| `/character view [name]` | Open your character sheet, or another of **your** characters by name. Other people's sheets are DM-only |
 | `/character list` | List your characters |
 | `/character close` | Save & close the active character sheet |
-| `/character delete <name>` | Delete one of **your** characters (also removes that character's own gear; DM-given items stay) |
+| `/character delete <name>` | **Ask the DM** to delete one of your characters ([Approve]/[Deny]; a DM deletes directly). The file is archived to `Saved/Characters/Deleted/`, never erased. Also removes that character's own gear; DM-given items stay |
 | `/character rest short` | Short rest — recover short-rest resources |
 | `/character rest long` | Long rest — full HP, spell slots, resources |
 | `/character loot <check> <d20>` | Search a body you right-clicked (usually filled by the prompt) |

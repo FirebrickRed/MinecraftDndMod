@@ -18,7 +18,7 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] `/character` and `/char` → usage list; Tab cycles create/view/list/close/rest (+give if DM).
 - [ ] `/character create` → creation menu opens.
 - [ ] Finish a character → `/character list` shows its name.
-- [ ] `/character view` opens your sheet; `/character view <name>` opens that one.
+- [ ] `/character view` opens your sheet; `/character view <name>` opens that one if it's yours (DM: anyone's).
 - [ ] `/character rest short` and `/character rest long` recover as before.
 - [ ] `/character close` saves & closes.
 - [ ] Right-click the **Character Sheet** paper → opens the sheet.
@@ -44,12 +44,23 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] Massive damage: `/dm hp <c> damage <current HP + max HP>` → dies outright, no saves.
 - [ ] Dying carries over: fail one save, `/combat finished`, new fight → tally still shows 1 failure.
 - [ ] `/dmentity revive <creature>` mid-fight → the creature's turns come back.
-- [ ] **The body:** a dead character leaves a tipped-over head named "☠ <name>" where they fell (the player
-      stands up and can walk away). Right-click it as a player → "The body of …" + [Ask for a check] → DM gets
-      a [call a check] ping. As DM → also [Revive] and [Remove body]. Can't punch it or take the head.
-      `/dm revive` → the character stands up **at the body** and the body disappears. Restart → body still there.
+- [ ] **The body:** a dead character leaves a tipped-over head named "☠ <name>" where they fell. Right-click it
+      as another player → "The body of …" + [Ask for a check] → DM gets a [call a check] ping (medicine /
+      investigation / religion suggested). As DM → also [Revive] and [Remove body]. Can't punch it or take the head.
+      Restart → body still there.
+- [ ] **Spectator:** the dead character's player (in adventure mode) is put in spectator mode with a message.
+      `/dm revive <c>` → back in **adventure**, body gone, and the DM gets **[Teleport them to the body]**
+      (no automatic teleport). Click it → the player lands at the body.
+- [ ] Dead player runs `/character create` → back in adventure mode, creation menu opens and works.
+- [ ] A DM already in spectator mode for their own reasons isn't pulled out of it by any of this.
 - [ ] Walk far away (chunk unloads), `/dm revive <c>`, walk back → the stale body is gone when the chunk loads.
-- [ ] Other players can still `/character view <dead character>` and be called for checks on the body.
+- [ ] **Sheets are private:** as a non-DM, `/character view <someone else's character>` → "You can only view your
+      own characters"; Tab only suggests your own. `/character view <your other character>` opens it. Right-click
+      someone else's sheet paper → "This isn't your character sheet" (and it doesn't become your active character).
+- [ ] **Deleting needs the DM:** as a player, `/character delete <yours>` → "Asked the DM"; DM gets [Approve] / [Deny].
+      Deny → player told, character kept. Approve → gone from `/character list`, and the file is in
+      `plugins/jkvttplugin/Saved/Characters/Deleted/` (not erased). No DM online → refused.
+      As DM, `/character delete <name>` deletes straight away (still archived).
 - [ ] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP". `/dm hp <c> heal 1` → now works.
 - [ ] **Temp HP & Relentless Endurance survive a restart:** `/dm hp <c> temp 7`, restart → still 7 temp HP.
       Half-orc drops to 0 → held at 1 by Relentless; restart; drop them again → this time they fall.

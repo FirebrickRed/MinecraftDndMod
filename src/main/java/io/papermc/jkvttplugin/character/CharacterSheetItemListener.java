@@ -35,7 +35,6 @@ public class CharacterSheetItemListener implements Listener {
         if (CharacterSheetManager.isBlankCharacterSheet(item)) {
             handleCharacterCreation(player);
         } else {
-            ActiveCharacterTracker.setActiveCharacter(player, CharacterSheetManager.getCharacterIdFromItem(item));
             handleCharacterSheetView(player, item);
         }
     }
@@ -60,11 +59,16 @@ public class CharacterSheetItemListener implements Listener {
             return;
         }
 
+        // Looked up under the holder's own characters, so someone else's sheet (dropped, stolen) is
+        // neither opened nor made the holder's active character.
         CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
         if (character == null) {
-            player.sendMessage("Character not found. The character sheet may be corrupted.");
+            player.sendMessage(CharacterSheetManager.getCharacterById(characterId) != null
+                    ? "This isn't your character sheet."
+                    : "Character not found. The character sheet may be corrupted.");
             return;
         }
+        ActiveCharacterTracker.setActiveCharacter(player, characterId);
 
         player.sendMessage("Opening character sheet for: " + character.getCharacterName());
         ViewCharacterSheetMenu.open(player, characterId);

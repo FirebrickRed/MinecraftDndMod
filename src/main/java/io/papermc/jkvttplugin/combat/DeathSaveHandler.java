@@ -93,13 +93,14 @@ public class DeathSaveHandler {
     }
 
     /**
-     * A player character just died. The player stands back up (they're free to walk off and roll
-     * someone new) and the character's body is left where they fell ({@link PlayerCorpse}).
+     * A player character just died. The character's body is left where they fell
+     * ({@link PlayerCorpse}) and the player becomes a spectator until a revival or a new character.
      */
     static void leaveBody(Combatant combatant) {
         removeProne(combatant);
         if (!combatant.isPlayer()) return;
         PlayerCorpse.place(combatant.getPlayer(), combatant.getCharacterSheet());
+        PlayerCorpse.toSpectator(combatant.getPlayer());
     }
 
     /** Stand a player back up when they're revived or combat ends. */
