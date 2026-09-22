@@ -105,6 +105,10 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         // Accept either a player username or a character name (forgiving resolver, #108).
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, args[0]);
         if (sheet == null) return true;
+        if (sheet.isDead()) {
+            sender.sendMessage(Component.text(sheet.getCharacterName() + " is dead.", NamedTextColor.RED));
+            return true;
+        }
         Player target = Bukkit.getPlayer(sheet.getPlayerId()); // null if the owner is offline
 
         String category = args[1].toLowerCase();
@@ -256,6 +260,10 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         if (creature != null) return new ContestSide(null, null, creature);
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
         if (sheet == null) return null;
+        if (sheet.isDead()) {
+            sender.sendMessage(Component.text(sheet.getCharacterName() + " is dead.", NamedTextColor.RED));
+            return null;
+        }
         Player player = Bukkit.getPlayer(sheet.getPlayerId());
         if (player == null) {
             sender.sendMessage(Component.text(sheet.getCharacterName() + "'s player is offline — they need to be on to roll.", NamedTextColor.RED));

@@ -16,6 +16,7 @@ import io.papermc.jkvttplugin.util.LoreBuilder;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -50,9 +51,25 @@ public class ViewCharacterSheetMenu {
 
         // Slot 1: HP
         int currentHP = Math.max(1, character.getCurrentHealth()); // Show at least 1 for visibility
-        ItemStack healthItem = new ItemStack(Material.REDSTONE_BLOCK, currentHP);
+        ItemStack healthItem = new ItemStack(character.isDead() ? Material.SKELETON_SKULL : Material.REDSTONE_BLOCK,
+                character.isDead() ? 1 : currentHP);
         healthItem.editMeta(m -> {
+            if (character.isDead()) {
+                m.displayName(Component.text("DEAD", NamedTextColor.DARK_RED, TextDecoration.BOLD)
+                        .decoration(TextDecoration.ITALIC, false));
+                m.lore(List.of(Component.text("Only a DM can bring them back (/dm revive).", NamedTextColor.GRAY)
+                        .decoration(TextDecoration.ITALIC, false)));
+                return;
+            }
             m.displayName(Component.text(character.getCurrentHealth() + "/" + character.getMaxHealth() + " HP", NamedTextColor.RED));
+            if (character.getCurrentHealth() <= 0) {
+                String state = character.isStable() ? "Stable (unconscious)" : "Dying";
+                m.lore(List.of(
+                        Component.text(state, NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false),
+                        Component.text("Death saves: " + character.getDeathSaveSuccesses() + " ✔  "
+                                + character.getDeathSaveFailures() + " ✘", NamedTextColor.GRAY)
+                                .decoration(TextDecoration.ITALIC, false)));
+            }
         });
         inventory.setItem(1, healthItem);
 

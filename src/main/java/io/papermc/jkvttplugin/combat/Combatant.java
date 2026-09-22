@@ -240,8 +240,25 @@ public class Combatant {
         return null;
     }
 
-    public boolean isDead() { return isDead; }
-    public void setDead(boolean dead) { isDead = dead; }
+    // ==================== DEATH (Issue #101) ====================
+    // Death and the death-save tally are owned by the character sheet (players) or the entity
+    // instance, which outlive this combatant. The fields here are only a snapshot for when that owner
+    // can't be reached: a player who is offline while a restored fight waits for them (#165).
+
+    public boolean isDead() {
+        CharacterSheet s = sheetIfPlayer();
+        if (s != null) return s.isDead();
+        DndEntityInstance e = entityIfLoaded();
+        if (e != null) return e.isDead();
+        return isDead;
+    }
+
+    /** Entities only: a player dies through death saves or massive damage on their sheet. */
+    public void setDead(boolean dead) {
+        isDead = dead;
+        DndEntityInstance e = entityIfLoaded();
+        if (e != null && e.isDead() != dead) e.setDead(dead);
+    }
 
     // ==================== RITUAL CHANNEL (Issue #156) ====================
     public boolean isChanneling() { return ritualSpellId != null; }
@@ -288,28 +305,72 @@ public class Combatant {
         return Ability.getModifier(entity.getTemplate().getAbilities().getOrDefault(Ability.CONSTITUTION, 10));
     }
 
-    public int getDeathSaveSuccesses() { return deathSaveSuccesses; }
-    public int getDeathSaveFailures() { return deathSaveFailures; }
-    public boolean isStabilized() { return isStabilized; }
+    public int getDeathSaveSuccesses() {
+        CharacterSheet s = sheetIfPlayer();
+        return s != null ? s.getDeathSaveSuccesses() : deathSaveSuccesses;
+    }
+    public int getDeathSaveFailures() {
+        CharacterSheet s = sheetIfPlayer();
+        return s != null ? s.getDeathSaveFailures() : deathSaveFailures;
+    }
+    public boolean isStabilized() {
+        CharacterSheet s = sheetIfPlayer();
+        return s != null ? s.isStable() : isStabilized;
+    }
 
     public void addDeathSaveSuccess() {
-        deathSaveSuccesses++;
-        if (deathSaveSuccesses >= 3) {
-            isStabilized = true;
-        }
+        CharacterSheet s = sheetIfPlayer();
+        if (s != null) s.addDeathSaveSuccess();
+        syncDeathSnapshot();
     }
 
     public void addDeathSaveFailure(int count) {
-        deathSaveFailures += count;
-        if (deathSaveFailures >= 3) {
-            isDead = true;
-        }
+        CharacterSheet s = sheetIfPlayer();
+        if (s != null) s.addDeathSaveFailures(count);
+        syncDeathSnapshot();
     }
 
     public void resetDeathSaves() {
-        deathSaveSuccesses = 0;
-        deathSaveFailures = 0;
-        isStabilized = false;
+        CharacterSheet s = sheetIfPlayer();
+        if (s != null) s.resetDeathSaves();
+        syncDeathSnapshot();
+    }
+
+    /**
+     * Bring the dead back at {@code hp} (clamped to 1..max). Returns false if this combatant isn't
+     * dead, or its sheet/instance can't be reached. Callers go through {@link DamageHandler#revive}.
+     */
+    boolean revive(int hp) {
+        CharacterSheet s = sheetIfPlayer();
+        DndEntityInstance e = entityIfLoaded();
+        boolean revived;
+        if (s != null) revived = s.revive(hp);
+        else if (e != null && e.isDead()) { e.revive(hp); revived = true; }
+        else revived = false;
+        if (revived) {
+            isDead = false;
+            isUnconscious = false;
+            syncDeathSnapshot();
+        }
+        return revived;
+    }
+
+    /** Copy the owner's death state into the snapshot fields the combat save file writes. */
+    private void syncDeathSnapshot() {
+        CharacterSheet s = sheetIfPlayer();
+        if (s == null) return;
+        deathSaveSuccesses = s.getDeathSaveSuccesses();
+        deathSaveFailures = s.getDeathSaveFailures();
+        isStabilized = s.isStable();
+        isDead = s.isDead();
+    }
+
+    private CharacterSheet sheetIfPlayer() {
+        return isPlayer() ? getCharacterSheet() : null;
+    }
+
+    private DndEntityInstance entityIfLoaded() {
+        return isEntity() ? getEntityInstance() : null;
     }
 
     // ==================== TURN STATE (Issue #98) ====================
@@ -374,6 +435,7 @@ public class Combatant {
      */
     public Player getPlayer() {
         if (type != CombatantType.PLAYER) return null;
+        if (Bukkit.getServer() == null) return null; // no server (unit tests): nobody is online
         return Bukkit.getPlayer(id);
     }
 
@@ -383,7 +445,7 @@ public class Combatant {
      */
     public CharacterSheet getCharacterSheet() {
         if (type != CombatantType.PLAYER) return null;
-        Player player = Bukkit.getPlayer(id);
+        Player player = getPlayer();
         if (player == null) return null;
         return ActiveCharacterTracker.getActiveCharacter(player);
     }
@@ -605,22 +667,27 @@ public class Combatant {
         return s != null ? s.tickEffectsTurnStart() : java.util.List.of();
     }
 
-    /** Apply already type-adjusted damage. Temp HP absorbs first for players. */
-    public void applyDamage(int amount) {
+    /**
+     * Apply already type-adjusted damage. For players the sheet applies the 0-HP rules too (failed
+     * death saves, massive damage), which is why it needs to know about a critical hit.
+     */
+    public void applyDamage(int amount, boolean critical) {
         if (isPlayer()) {
             CharacterSheet sheet = getCharacterSheet();
-            if (sheet != null) sheet.takeDamage(amount);
+            if (sheet != null) sheet.takeDamage(amount, critical);
+            syncDeathSnapshot();
         } else {
             DndEntityInstance entity = getEntityInstance();
             if (entity != null) entity.takeDamage(amount);
         }
     }
 
-    /** Restore hit points, capped at max. */
+    /** Restore hit points, capped at max. The dead can't be healed (see {@link CharacterSheet#heal}). */
     public void applyHealing(int amount) {
         if (isPlayer()) {
             CharacterSheet sheet = getCharacterSheet();
             if (sheet != null) sheet.heal(amount);
+            syncDeathSnapshot();
         } else {
             DndEntityInstance entity = getEntityInstance();
             if (entity != null) entity.heal(amount);

@@ -1333,10 +1333,10 @@ public class CombatSession {
     private void promptDeathSaveIfNeeded(Combatant c) {
         if (c == null || !c.isPlayer() || c.isDead()) return;
         // Sync: a player at 0 HP is unconscious even if they were downed outside the
-        // /combat damage path (e.g. already at 0 HP when combat started).
+        // /combat damage path (e.g. already at 0 HP when combat started). The death-save tally is
+        // left alone: it lives on the sheet and carries over from wherever they fell (#101).
         if (!c.isUnconscious() && c.getCurrentHp() <= 0) {
             c.setUnconscious(true);
-            c.resetDeathSaves();
             DeathSaveHandler.applyProne(c);
         }
         if (c.isStabilized()) {

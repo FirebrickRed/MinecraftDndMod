@@ -59,7 +59,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `override <target> [amount] [flags]` | **DM-only:** apply corrective/extra damage anytime (e.g. a forgotten modifier) |
 | `heal <target> [amount \| manualRoll <n> \| autoRoll <dice> \| total <n>]` | Restore HP |
 | `temphp <target> <amount>` | Grant temporary HP |
-| `deathsave [<player>] [manualRoll <d20> \| autoRoll]` | Roll a death save (DM may roll for a downed player) |
+| `deathsave [<player>] [manualRoll <d20> \| autoRoll]` | Roll a death save (DM may roll for a downed player). Three failures and the character is **dead**, on the sheet, so it outlasts the fight: see `/dm revive` |
 | `cast <spell> [target] [level <n>] [manualRoll <d20> | autoRoll | total <n>]` | Cast a combat spell — attack-roll or save; AoE spells aim (no target) (#123, #149). `level <n>` casts from a higher slot; it must come **last**, after the target |
 | `cast <ritual_spell> --ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
 | `save [target] [manualRoll <d20> | autoRoll]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
@@ -120,7 +120,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `list` | List spawned entities |
 | `remove <name>` · `remove all\|dead` · `remove type <creature_type>` · `remove radius <blocks>` | Despawn one or many entities |
 | `rename <current> <new>` | Rename a spawned entity, keeping its HP, shop stock and loot. Quote names with spaces — an ambiguous unquoted split is refused, not guessed |
-| `revive <name> [hp]` | Bring a dead entity back (default full HP) |
+| `revive <name> [hp]` | Bring a dead entity back (default full HP). Same path as `/dm revive`, so it rejoins a fight in progress |
 | `teleport <name> [x y z]` | Teleport an entity to you (or to coordinates) |
 | `info <name>` | Show an entity's stat block |
 | `trade <name>` | Open a merchant's trade GUI |
@@ -138,6 +138,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `add\|remove\|list` | Manage who is a DM (`add`/`remove` op only) |
 | `give <player> <item_id> [amount]` | Give a D&D item |
 | `hp <character\|creature> <damage\|heal\|temp\|set> <amount> [type <t>]` · `hp <name> full` | **Change HP anywhere**, in or out of combat (#175). The amount can be dice (`2d10`). Same engine as combat: resistances, downing, death saves and saving all still happen; out of combat the message goes to the target and the DMs |
+| `revive <character\|creature> [hp]` | **The only way back from death** (#101), standing in for Revivify / Raise Dead. Default 1 HP. Healing, rests and the fight ending never revive anyone. Damage at 0 HP is a failed death save (two on a crit); massive damage (left over past 0 HP ≥ max HP) kills outright |
 | `mode` | Enter/exit **DM mode**: your inventory is swapped for the DM toolbar (View, Possess, Move, Add/Remove Combatant, Spawn Entity, Exploration tools) and restored on exit |
 | `check <player> <ability\|save\|skill> <name> [dc <n>] [adv\|dis]` | Prompt a player to roll. The result comes to **you** (graded vs the DC if given) with a **[Share]** button. `promptcheck` is an alias (#186) |
 | `check <player> tool <tool> [ability] [dc <n>] [adv\|dis]` | A check **with a tool** (#207): the ability modifier + proficiency if they have the tool, **doubled with expertise**. The ability defaults to the item's `check_ability:` (thieves' tools → DEX); name it for other tools (`tool smiths_tools int dc 12`). You're told first whether they're proficient and whether they're carrying the tools. Picking a lock is `tool thieves_tools`, not Sleight of Hand (PHB p.154). A **failed** graded thieves' tools check breaks one set by default (BG3-style); set `objects.thieves_tools_break` to `on_fail`, `always` or `never` in config.yml (#210). |
@@ -153,7 +154,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `tp <world> <x> <y> <z>` | Teleport (usually clicked from the coordinates in a DM notification) |
 | `lootprompt <player> <check>` | Call a loot check for a player searching a body (usually clicked, not typed) |
 | `animalreply <player> <message…>` | Voice the animals' reply to a Speak with Animals caster (usually clicked) |
-| `rest <character> <short\|long>` | Force a rest |
+| `rest <character> <short\|long>` | Force a rest (refused for a dead character) |
 | `resource restore <character> <name\|all>` | Restore a class resource |
 | `resource consume <character> <name> [amount]` | Spend a class resource |
 | `reload` | Reload all `DMContent/` YAML without a restart |

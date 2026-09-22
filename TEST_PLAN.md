@@ -8,11 +8,11 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 
 ## Resource pack / icons
 - [ ] Server hands the pack on join (or load it client-side). Accept the prompt.
-- [ ] `/character create` → **Class** tab shows custom class art (incl. barbarian).
-- [ ] **Abilities** tab: the six tiles show `str_icon … cha_icon`; stack count = the score.
-- [ ] Plasmoid or half-elf → racial bonus row shows the ability icons; the **assigned** one shimmers (enchant glint).
-- [ ] Race / Background tabs stay on vanilla items (no purple boxes) — expected until those textures exist.
-- [ ] Selected race/class tile shimmers (enchant glint) without hovering.
+- [X] `/character create` → **Class** tab shows custom class art (incl. barbarian).
+- [X] **Abilities** tab: the six tiles show `str_icon … cha_icon`; stack count = the score.
+- [X] Plasmoid or half-elf → racial bonus row shows the ability icons; the **assigned** one shimmers (enchant glint).
+- [X] Race / Background tabs stay on vanilla items (no purple boxes) — expected until those textures exist.
+- [X] Selected race/class tile shimmers (enchant glint) without hovering.
 
 ## /character (player)
 - [ ] `/character` and `/char` → usage list; Tab cycles create/view/list/close/rest (+give if DM).
@@ -37,6 +37,13 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] `/dm list`; `/dm give <player> <item_id> 1`; `/dm check <player> save dexterity`.
 - [ ] `/dm rest <character> long`; `/dm resource restore <character> all`; `/dm resource consume <character> <res> 1`.
 - [ ] `/dm reload` reloads YAML.
+- [ ] **Death (#101):** in combat, down a player and fail three death saves → "has DIED", turn skipped.
+      `/combat finished`, start a new fight with them → still `[DEAD]`, still skipped. `/dm hp <c> heal 10`,
+      `/character rest long` and `/dm rest <c> long` all refuse. Character sheet HP slot shows a skull "DEAD".
+      Restart the server → still dead. `/dm revive <c>` → back at 1 HP; mid-fight their turns return.
+- [ ] Massive damage: `/dm hp <c> damage <current HP + max HP>` → dies outright, no saves.
+- [ ] Dying carries over: fail one save, `/combat finished`, new fight → tally still shows 1 failure.
+- [ ] `/dmentity revive <creature>` mid-fight → the creature's turns come back.
 - [ ] Tab: `/dm ` shows add/remove/list + give/check/rest/resource/reload; `/dm resource ` shows restore/consume.
 - [ ] As non-DM: `/dm give`, `/dm rest`, `/dm reload` refused.
 - [ ] As non-op DM (added via `/dm add`): DM tools work, but `/dm add`/`remove` refused (op-only).

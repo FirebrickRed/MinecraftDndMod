@@ -497,7 +497,9 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             try { hp = Integer.parseInt(last); } catch (NumberFormatException ignored) { /* keep full */ }
         }
 
-        instance.revive(hp);
+        // Same path as /dm revive, so a creature revived mid-fight is back on the tracker too.
+        var target = io.papermc.jkvttplugin.combat.CombatTargets.forEntity(instance);
+        io.papermc.jkvttplugin.combat.DamageHandler.revive(target.session(), target.combatant(), hp);
         sender.sendMessage(Component.text("✚ Revived " + instance.getDisplayName()
                 + " (" + instance.getCurrentHp() + "/" + instance.getMaxHp() + " HP).", NamedTextColor.GREEN));
     }

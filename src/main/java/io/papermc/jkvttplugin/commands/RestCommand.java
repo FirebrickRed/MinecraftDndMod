@@ -39,6 +39,11 @@ public class RestCommand implements CommandExecutor, TabCompleter {
         // Find character by name
         CharacterSheet character = CharacterResolver.resolveOrError(sender, characterName);
         if (character == null) return true;
+        if (character.isDead()) {
+            sender.sendMessage(Component.text(character.getCharacterName() + " is dead — resting won't bring them back. "
+                    + "Use /dm revive " + character.getCharacterName() + " [hp].", NamedTextColor.RED));
+            return true;
+        }
 
         // Store pre-rest HP for display
         int hpBefore = character.getCurrentHealth();

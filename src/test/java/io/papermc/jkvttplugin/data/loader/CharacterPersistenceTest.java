@@ -86,4 +86,38 @@ class CharacterPersistenceTest {
         CharacterPersistenceLoader.restoreActiveEffects(c, List.of(Map.of("source", "no_such_feature", "roundsRemaining", 3)));
         assertTrue(c.getActiveEffects().isEmpty());
     }
+
+    /** #101: death used to live on the combatant, so it ended with the fight. It's on the sheet now. */
+    @Test
+    void deathSurvives() {
+        CharacterSheet c = character("human", null, "fighter", "soldier", scores());
+        c.takeDamage(c.getCurrentHealth());
+        c.addDeathSaveFailures(3);
+        CharacterSheet back = roundTrip(c);
+        assertTrue(back.isDead());
+        assertEquals(0, back.getCurrentHealth());
+        back.heal(5);
+        assertEquals(0, back.getCurrentHealth(), "still can't be healed after a reload");
+    }
+
+    /** Someone dying when the server stops is still dying, with the same tally. */
+    @Test
+    void deathSaveTallySurvives() {
+        CharacterSheet c = character("human", null, "fighter", "soldier", scores());
+        c.takeDamage(c.getCurrentHealth());
+        c.addDeathSaveSuccess();
+        c.addDeathSaveFailures(2);
+        CharacterSheet back = roundTrip(c);
+        assertFalse(back.isDead());
+        assertEquals(1, back.getDeathSaveSuccesses());
+        assertEquals(2, back.getDeathSaveFailures());
+    }
+
+    @Test
+    void aHealthySheetWritesNoDeathKeys() {
+        Map<String, Object> data = CharacterPersistenceLoader.serializeCharacterSheet(
+                character("human", null, "fighter", "soldier", scores()));
+        assertFalse(data.containsKey("dead"));
+        assertFalse(data.containsKey("deathSaves"));
+    }
 }

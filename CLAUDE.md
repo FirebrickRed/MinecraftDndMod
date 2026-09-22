@@ -683,7 +683,7 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
   - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
 - **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
   - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dmentity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).
-- **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check` (DM-first checks, #186), `hp` (change HP anywhere, #175), `object` (annotate blocks, #185), `mode` (DM toolbar), `tp`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
+- **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check` (DM-first checks, #186), `hp` (change HP anywhere, #175), `revive` (#101), `object` (annotate blocks, #185), `mode` (DM toolbar), `tp`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
   - **A block's openability is one value, not flags (#185):** `InteractiveObjectManager.Obj.Opening`
     is `OPENS` / `LOCKED` / `SEALED` — set by `/dm object unlock|lock|seal`. They're mutually
     exclusive by construction, so a block can't be both pickable and never-opening. `hidden`,
@@ -705,6 +705,12 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     **`hidden` is absolute**: no prompt, no trap, nothing until `/dm object reveal` (blundering into
     a trap is #202's walk-over trigger). A sprung trap auto-disarms; `/dm object arm` resets it.
   - **HP changes aren't combat-only (#175):** `DamageHandler` takes a **nullable** `CombatSession`, so a trap, a potion or a DM correction runs the same resistance → damage → downing → persistence path as a sword swing. `CombatTargets` resolves the live `Combatant` when a fight is running and a transient one otherwise; out of combat the messages go to the affected player and the DMs instead of the table. **Never write a second HP path** — route new sources of damage or healing through `DamageHandler`.
+  - **Death lives on the sheet (#101).** `CharacterSheet` owns `dead` and the death-save tally, persisted
+    (`dead:`, `deathSaves:`), and applies the 0-HP rules in `takeDamage`: damage at 0 is a failed save
+    (two on a crit), massive damage kills outright. `Combatant` reads them from the sheet (its own fields
+    are only a snapshot for an offline player in a restored fight), and an entity combatant reads its
+    instance. The dead ignore healing and rests; the one way back is `DamageHandler.revive`
+    (`/dm revive`, `/dmentity revive`). A new fight doesn't reset a dying character's tally.
 
 **DM authorization:** a "DM" is an op, a holder of the `jkvtt.dm` permission node, OR a
 player added via `/dm add` (`DMManager.isDM`). DM commands are gated in-command, not via

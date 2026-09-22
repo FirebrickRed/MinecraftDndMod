@@ -31,15 +31,22 @@ public class DamageHandler {
     public static void applyDamage(CombatSession session, Combatant target,
                                    int rawDamage, String damageType, boolean wasCrit) {
         if (rawDamage < 0) rawDamage = 0;
+        if (target.isDead()) {
+            say(session, target, Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.GRAY));
+            return;
+        }
 
         AdjustedDamage adj = adjustForType(target, rawDamage, damageType);
         int finalDamage = adj.amount();
 
-        boolean wasUnconscious = target.isPlayer() && target.isUnconscious();
+        // Down = at 0 HP, however they got there: the combat flag is only set on the combat path, and
+        // a character can be at 0 out of combat or when a fight starts.
+        boolean wasDown = target.isPlayer() && (target.isUnconscious() || target.getCurrentHp() <= 0);
+        int failuresBefore = target.getDeathSaveFailures();
         int hpBefore = target.getCurrentHp();
         int tempBefore = target.getTempHp();
 
-        target.applyDamage(finalDamage);
+        target.applyDamage(finalDamage, wasCrit);
         if (finalDamage > 0) {
             target.markEffectsMaintained("took_damage"); // keeps Rage etc. going (#70)
             CombatVisuals.hurtOnDamage(target);           // flinch + hurt sound as HP actually drops (#181)
@@ -66,7 +73,7 @@ public class DamageHandler {
         }
         say(session, target, Component.text("HP: " + hpBefore + " → " + hpAfter + " / " + target.getMaxHp(), NamedTextColor.GRAY));
 
-        handleDeathTriggers(session, target, wasUnconscious, finalDamage, wasCrit);
+        handleDeathTriggers(session, target, wasDown, failuresBefore, finalDamage);
         if (session != null) {
             // One prompt for both: a caster who is concentrating AND channelling is asked once (#156).
             ConcentrationManager.onDamage(session, target, finalDamage);
@@ -111,38 +118,55 @@ public class DamageHandler {
 
     // ==================== DEATH / UNCONSCIOUS TRIGGERS ====================
 
+    /**
+     * Announce what the damage did at the edge of death. The rules themselves (failed death saves for
+     * damage at 0 HP, massive damage) are applied by the character sheet as it takes the damage; this
+     * reads the result, so every source of damage gets them, in combat or not.
+     */
     private static void handleDeathTriggers(CombatSession session, Combatant target,
-                                            boolean wasUnconscious, int damageDealt, boolean wasCrit) {
+                                            boolean wasDown, int failuresBefore, int damageDealt) {
         if (target.isEntity()) {
-            if (target.getCurrentHp() <= 0 && !target.isDead()) {
-                target.setDead(true);
+            // The instance marks itself dead at 0 HP; this is the announcement (applyDamage has
+            // already returned early for a creature that was dead before the hit).
+            if (target.getCurrentHp() <= 0) {
+                if (!target.isDead()) target.setDead(true);
                 say(session, target, Component.text(target.getDisplayName() + " is defeated!",
                         NamedTextColor.DARK_RED, TextDecoration.BOLD));
             }
             return;
         }
 
-        // Player already down: damage while unconscious = automatic death save failure(s).
-        if (wasUnconscious) {
-            if (damageDealt > 0) {
-                int fails = wasCrit ? 2 : 1;
-                target.addDeathSaveFailure(fails);
+        int newFailures = target.getDeathSaveFailures() - failuresBefore;
+
+        if (target.isDead()) {
+            DeathSaveHandler.removeProne(target);
+            if (newFailures > 0) {
                 say(session, target, Component.text(target.getDisplayName() + " takes damage while down — "
-                        + fails + " death save failure" + (fails > 1 ? "s" : "") + "!", NamedTextColor.DARK_RED));
-                if (target.isDead()) {
-                    DeathSaveHandler.removeProne(target);
-                    say(session, target, Component.text(target.getDisplayName() + " has died.",
-                            NamedTextColor.DARK_RED, TextDecoration.BOLD));
-                } else {
-                    say(session, target, deathSaveTally(target));
-                }
+                        + newFailures + " death save failure" + (newFailures > 1 ? "s" : "") + ".", NamedTextColor.DARK_RED));
+            } else {
+                // Massive damage (PHB p.197): what's left past 0 HP is at least their HP maximum.
+                say(session, target, Component.text("That's at least " + target.getMaxHp()
+                        + " damage past 0 HP — massive damage kills outright.", NamedTextColor.DARK_RED));
+            }
+            say(session, target, Component.text(target.getDisplayName() + " has DIED.",
+                    NamedTextColor.DARK_RED, TextDecoration.BOLD));
+            if (session != null) session.updateScoreboard();
+            return;
+        }
+
+        // Player already down: damage while unconscious = automatic death save failure(s).
+        if (wasDown) {
+            if (damageDealt > 0 && newFailures > 0) {
+                say(session, target, Component.text(target.getDisplayName() + " takes damage while down — "
+                        + newFailures + " death save failure" + (newFailures > 1 ? "s" : "") + "!", NamedTextColor.DARK_RED));
+                say(session, target, deathSaveTally(target));
             }
             return;
         }
 
         // Player just dropped to 0 HP: fall unconscious and begin death saves (Issue #101) — unless
         // Half-Orc Relentless Endurance holds them at 1 HP instead (once per long rest, #70).
-        if (target.getCurrentHp() <= 0 && !target.isUnconscious()) {
+        if (target.getCurrentHp() <= 0) {
             io.papermc.jkvttplugin.character.CharacterSheet sheet = target.getCharacterSheet();
             if (sheet != null && sheet.canEndureLethalHit()) {
                 sheet.markRelentlessEnduranceUsed();
@@ -169,9 +193,10 @@ public class DamageHandler {
     public static void applyHealing(CombatSession session, Combatant target, int amount) {
         if (amount < 0) amount = 0;
 
-        // A dead entity can't be healed back (5e: needs revivify, not hit points).
-        if (target.isEntity() && target.getCurrentHp() <= 0) {
-            say(session, target, Component.text(target.getDisplayName() + " is dead and cannot be healed.", NamedTextColor.GRAY));
+        // The dead can't be healed back: that takes Revivify or the like, not hit points (PHB p.197).
+        if (target.isDead() || (target.isEntity() && target.getCurrentHp() <= 0)) {
+            say(session, target, Component.text(target.getDisplayName() + " is dead — healing can't bring them back. "
+                    + "A DM can /dm revive them.", NamedTextColor.GRAY));
             return;
         }
 
@@ -193,6 +218,25 @@ public class DamageHandler {
                     NamedTextColor.GREEN, TextDecoration.BOLD));
         }
         say(session, target, Component.text("━━━━━━━━━━━━━━", NamedTextColor.GREEN));
+    }
+
+    // ==================== REVIVAL ====================
+
+    /**
+     * Bring a dead character or creature back at {@code hp} (clamped to 1..max): the table-side
+     * stand-in for Revivify, Raise Dead or DM fiat. Nothing else clears death — not healing, not a
+     * rest, not the fight ending. Returns false, changing nothing, if the target isn't dead.
+     */
+    public static boolean revive(CombatSession session, Combatant target, int hp) {
+        if (!target.isDead() || !target.revive(hp)) return false;
+        DeathSaveHandler.removeProne(target);
+        say(session, target, Component.text("✚ " + target.getDisplayName() + " returns to life ("
+                + target.getCurrentHp() + "/" + target.getMaxHp() + " HP).", NamedTextColor.GREEN, TextDecoration.BOLD));
+        if (session != null) {
+            session.refreshHpDisplays(target);
+            session.updateScoreboard();
+        }
+        return true;
     }
 
     // ==================== TEMPORARY HP ====================

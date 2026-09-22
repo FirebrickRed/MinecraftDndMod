@@ -235,6 +235,15 @@ public class CharacterPersistenceLoader {
         data.put("currentHealth", sheet.getCurrentHealth());
         data.put("maxHealth", sheet.getMaxHealth());
         data.put("armorClass", sheet.getArmorClass());
+        // Dying / dead (#101): written only when there's something to say, so a healthy sheet's
+        // file doesn't change shape.
+        if (sheet.isDead()) data.put("dead", true);
+        if (sheet.getDeathSaveSuccesses() > 0 || sheet.getDeathSaveFailures() > 0) {
+            Map<String, Object> saves = new LinkedHashMap<>();
+            saves.put("successes", sheet.getDeathSaveSuccesses());
+            saves.put("failures", sheet.getDeathSaveFailures());
+            data.put("deathSaves", saves);
+        }
 
         // Serialize abilities
         Map<String, Integer> abilities = new HashMap<>();
@@ -448,6 +457,12 @@ public class CharacterPersistenceLoader {
             sheet.restoreChosenProficiencies(stringList(data.get("chosenTools")), stringList(data.get("chosenLanguages")));
             sheet.restoreExpertise(stringList(data.get("expertise")));
             restoreActiveEffects(sheet, data.get("activeEffects"));
+            int dsSuccesses = 0, dsFailures = 0;
+            if (data.get("deathSaves") instanceof Map<?, ?> saves) {
+                dsSuccesses = parseIntOrDefault(saves.get("successes"), 0);
+                dsFailures = parseIntOrDefault(saves.get("failures"), 0);
+            }
+            sheet.restoreDeathState(dsSuccesses, dsFailures, Boolean.TRUE.equals(data.get("dead")));
 
             // Restore CUSTOM choice selections (#70) so feature actions resolve their variant.
             if (data.get("customChoices") instanceof Map<?, ?> ccMap) {

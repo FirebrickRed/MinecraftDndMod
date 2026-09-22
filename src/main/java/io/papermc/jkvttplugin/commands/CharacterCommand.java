@@ -256,6 +256,11 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         }
         // PHB p.144: no spellcasting in armor you're not proficient with — chat spells included (#209).
         CharacterSheet caster = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
+        if (caster != null && caster.getCurrentHealth() <= 0) {
+            player.sendMessage(Component.text("✗ " + caster.getCharacterName()
+                    + (caster.isDead() ? " is dead." : " is unconscious and can't act."), NamedTextColor.RED));
+            return true;
+        }
         if (caster != null && caster.armorPenaltyReason() != null) {
             player.sendMessage(Component.text("✗ You can't cast spells — " + caster.armorPenaltyReason()
                     + ". Take it off first.", NamedTextColor.RED));

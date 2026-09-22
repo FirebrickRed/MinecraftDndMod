@@ -28,6 +28,10 @@ public class ShortRestCommand implements CommandExecutor {
                     .append(Component.text(" Right-click your character sheet to select one.", NamedTextColor.GRAY)));
             return true;
         }
+        if (character.isDead()) {
+            player.sendMessage(Component.text(character.getCharacterName() + " is dead — resting won't bring them back.", NamedTextColor.RED));
+            return true;
+        }
 
         // Perform short rest
         character.shortRest();

@@ -74,6 +74,12 @@ public class CharacterSheet {
     private final Map<String, String> customChoices = new HashMap<>();
     // Half-Orc Relentless Endurance: once between long rests, dropping to 0 HP leaves you at 1 (#70).
     private boolean relentlessEnduranceUsed = false;
+    // Dying and death (#101). The death-save tally and death itself belong to the character, not to
+    // the combatant: a fight ending, a restart, or a new fight must not quietly bring anyone back.
+    // A dead character ignores hit points and rests until a DM revives them (revive()).
+    private int deathSaveSuccesses;
+    private int deathSaveFailures;
+    private boolean dead;
     private List<InnateSpell> innateSpells = new ArrayList<>();
     private Integer darkvision;  // Vision range in feet (60, 120, etc.), null = no darkvision
     private int longRestHours = 8;      // Hours needed for a long rest (#160); elves trance in 4.
@@ -1004,10 +1010,13 @@ public class CharacterSheet {
     }
 
     /**
-     * Heal this character, never exceeding max HP. Ignores non-positive amounts.
+     * Heal this character, never exceeding max HP. Ignores non-positive amounts. Regaining any hit
+     * points resets the death-save tally (PHB p.197). The dead can't be healed: that takes a spell
+     * like Revivify, which is {@link #revive}.
      */
     public void heal(int amount) {
-        if (amount <= 0) return;
+        if (amount <= 0 || dead) return;
+        if (currentHealth <= 0) resetDeathSaveTally();
         currentHealth = Math.min(totalHealth, currentHealth + amount);
         persist();
     }
@@ -1028,12 +1037,25 @@ public class CharacterSheet {
         return currentHealth <= 0;
     }
 
-    /**
-     * Apply incoming damage. Temporary HP absorbs damage first; any remainder
-     * reduces current HP and never drops it below 0.
-     */
+    /** Apply incoming damage that isn't a critical hit. See {@link #takeDamage(int, boolean)}. */
     public void takeDamage(int damage) {
-        if (damage <= 0) return;
+        takeDamage(damage, false);
+    }
+
+    /**
+     * Apply incoming damage, with the 0-HP rules from PHB p.197. Temporary HP absorbs damage first;
+     * the remainder reduces current HP, never below 0.
+     *
+     * <ul>
+     *   <li>Dropping to 0 starts a fresh death-save tally, unless the damage left over after reaching
+     *       0 is at least the hit point maximum: that's instant death (massive damage).</li>
+     *   <li>Damage while already at 0 is a failed death save, two on a critical hit, or instant death
+     *       if it's at least the hit point maximum.</li>
+     * </ul>
+     * The dead take no further damage.
+     */
+    public void takeDamage(int damage, boolean critical) {
+        if (damage <= 0 || dead) return;
 
         // Temporary HP absorbs damage first; leftover temp HP persists.
         if (tempHealth > 0) {
@@ -1042,9 +1064,96 @@ public class CharacterSheet {
             damage -= absorbed;
         }
 
-        // Any remaining damage reduces current HP, never below 0 (MVP: no negative HP).
-        currentHealth = Math.max(0, currentHealth - damage);
+        if (damage > 0) {
+            if (currentHealth > 0) {
+                int leftOver = damage - currentHealth;
+                currentHealth = Math.max(0, currentHealth - damage);
+                if (currentHealth == 0) {
+                    resetDeathSaveTally(); // a fresh fall starts a fresh tally
+                    if (leftOver >= totalHealth) markDead();
+                }
+            } else if (damage >= totalHealth) {
+                markDead();
+            } else {
+                recordDeathSaveFailures(critical ? 2 : 1);
+            }
+        }
         persist();
+    }
+
+    // ==================== Dying and death (Issue #101) ====================
+
+    public boolean isDead() { return dead; }
+    public int getDeathSaveSuccesses() { return deathSaveSuccesses; }
+    public int getDeathSaveFailures() { return deathSaveFailures; }
+
+    /** At 0 HP with three successes: unconscious, but no longer rolling death saves. */
+    public boolean isStable() {
+        return !dead && currentHealth <= 0 && deathSaveSuccesses >= 3;
+    }
+
+    /** One successful death save; the third makes the character stable. */
+    public void addDeathSaveSuccess() {
+        if (dead) return;
+        deathSaveSuccesses = Math.min(3, deathSaveSuccesses + 1);
+        persist();
+    }
+
+    /** Failed death saves (two for a natural 1); the third kills. */
+    public void addDeathSaveFailures(int count) {
+        if (dead || count <= 0) return;
+        recordDeathSaveFailures(count);
+        persist();
+    }
+
+    /** Clear the tally: the character regained hit points, or has just dropped and starts over. */
+    public void resetDeathSaves() {
+        resetDeathSaveTally();
+        persist();
+    }
+
+    /**
+     * Bring a dead character back (Revivify, Raise Dead, or DM fiat) at {@code hp} hit points,
+     * clamped to 1..max. Returns false, changing nothing, if the character isn't dead.
+     */
+    public boolean revive(int hp) {
+        if (!dead) return false;
+        dead = false;
+        resetDeathSaveTally();
+        breakConcentration(); // nothing carries over from before the death
+        activeEffects.clear();
+        currentHealth = Math.max(1, Math.min(totalHealth, hp));
+        persist();
+        return true;
+    }
+
+    /** Restore saved death state on load, without persisting mid-deserialization. */
+    public void restoreDeathState(int successes, int failures, boolean isDead) {
+        this.deathSaveSuccesses = Math.max(0, Math.min(3, successes));
+        this.deathSaveFailures = Math.max(0, Math.min(3, failures));
+        this.dead = isDead;
+        if (isDead) this.currentHealth = 0;
+    }
+
+    private void recordDeathSaveFailures(int count) {
+        deathSaveFailures = Math.min(3, deathSaveFailures + count);
+        if (deathSaveFailures >= 3) markDead();
+    }
+
+    private void resetDeathSaveTally() {
+        deathSaveSuccesses = 0;
+        deathSaveFailures = 0;
+    }
+
+    /**
+     * Concentration and active effects are deliberately left alone here: the combat layer ends them
+     * when the character drops (ConcentrationManager, endCombat) and announces it, and it can't if
+     * they've already vanished. {@link #revive} clears whatever is left.
+     */
+    private void markDead() {
+        dead = true;
+        currentHealth = 0;
+        tempHealth = 0;
     }
 
     /**
@@ -1667,7 +1776,9 @@ public class CharacterSheet {
         return getResource(resourceName) != null;
     }
 
+    /** A long rest. Does nothing for a dead character: resting doesn't bring anyone back. */
     public void longRest() {
+        if (dead) return;
         // Restore spell slots
         for (int i = 0; i < 9; i++) {
             spellSlots[i] = maxSpellSlots[i];
@@ -1697,7 +1808,9 @@ public class CharacterSheet {
         persist();
     }
 
+    /** A short rest. Does nothing for a dead character. */
     public void shortRest() {
+        if (dead) return;
         // Restore class resources that recover on short rest
         for (ClassResource resource : classResources) {
             if (resource.getRecovery() == ClassResource.RecoveryType.SHORT_REST) {
