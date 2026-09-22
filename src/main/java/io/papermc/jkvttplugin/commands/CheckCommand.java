@@ -263,7 +263,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
 
     /** Creature first (the name a DM is most likely pointing at), then a character; same order as CombatTargets. */
     private ContestSide resolveContestSide(CommandSender sender, String name) {
-        DndEntityInstance creature = CombatTargets.findEntity(name.replaceAll("^\"|\"$", ""));
+        DndEntityInstance creature = CombatTargets.findEntity(io.papermc.jkvttplugin.util.NameUtil.stripQuotes(name.trim()));
         if (creature != null) return new ContestSide(null, null, creature);
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
         if (sheet == null) return null;

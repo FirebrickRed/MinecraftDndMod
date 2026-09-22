@@ -56,8 +56,8 @@ Be a DM first (op, or `/dm add <you>`). Reload if you edited YAML: `/dm reload`.
 
 **Build the smithy + shop (Act I):**
 ```
-/dmentity spawn balin_blacksmith          # his YAML already has shop.enabled: true
-/dmentity shop view Balin                 # commands take his spawned NAME (a prefix is fine)
+/dm entity spawn balin_blacksmith          # his YAML already has shop.enabled: true
+/dm entity shop view Balin                 # commands take his spawned NAME (a prefix is fine)
 ```
 Balin stocks daggers, longswords, greatswords, leather armor, chain mail (8 platinum) and whetstones.
 Plate is commented out of his YAML: at 150 platinum it's over the 64-coin trade limit (#94).
@@ -90,8 +90,8 @@ a Speak with Animals beat.
 **Pre-stage the Warren (Act III) — don't spawn until the party is close** (entities now survive a
 restart, but that's unconfirmed at a table, and stray glow lingers). When ready:
 ```
-/dmentity spawn kobold                    # ×3–4  (pack tactics; weak alone)
-/dmentity spawn kobold_sorcerer           # ×1    (Fire Bolt @ +4, 1d10 fire; 27 HP)
+/dm entity spawn kobold                    # ×3–4  (pack tactics; weak alone)
+/dm entity spawn kobold_sorcerer           # ×1    (Fire Bolt @ +4, 1d10 fire; 27 HP)
 ```
 
 **The reward.** The stolen blade is on the sorcerer. Because a slain entity's held weapon is lootable,
@@ -129,12 +129,12 @@ shown on the sheet yet, #65), skills UI, persistence.
 1. **Roleplay Balin** (gruff, Scottish, secretly kind — see his `dm_notes`). He explains the job and
    **lowballs the reward** — a curt "fifty gold, take it or leave it" — and plays it off as just
    another lost bit of stock.
-2. **Shopping.** `/dmentity trade Balin`. Players buy a weapon upgrade, maybe armor. Watch prices
+2. **Shopping.** `/dm entity trade Balin`. Players buy a weapon upgrade, maybe armor. Watch prices
    show in the right currency, and buy until an item hits **out of stock**.
    > **Keep merchant prices ≤ 64 coins** (see Known rough edges). `/dm reload` warns if a shop breaks
    > this. A blacksmith doesn't sell torches: `/dm give <player> torch` (or place real ones) for light.
 3. **Selling.** Have a player sell starting gear back (sell price = 50% of buy). Confirm his stock
-   *increases* with what they sold: `/dmentity shop view Balin`.
+   *increases* with what they sold: `/dm entity shop view Balin`.
 4. **Haggle (social check).** A player pushes for a discount:
    ```
    /dm check <player> skill persuasion dc 13
@@ -248,7 +248,7 @@ attacks, class resources, healing, temp HP, death saves.
 
 **Before you shut the server down.** Combat state, entity HP, and corpses now persist and restore on
 restart (#89/#105/#31). Character HP saves on every change, but the *in-progress turn* resets and
-combat restore is unconfirmed (#165), so it's still tidiest to `/combat finished`, `/dmentity remove <name>` unwanted NPCs, and
+combat restore is unconfirmed (#165), so it's still tidiest to `/combat finished`, `/dm entity remove <name>` unwanted NPCs, and
 `/character rest long` or `close` before stopping. See Known rough edges.
 
 ✅ Covers: loot handoff, short/long rest recovery, resource restore, shop sell, save-on-close.
@@ -261,7 +261,7 @@ combat restore is unconfirmed (#165), so it's still tidiest to `/combat finished
 |---|---|
 | **~30 min** | Skip Act 0 (pre-build characters), one lock + the trap in Act II, straight to the kobold fight. |
 | **~60 min** | The full three acts as written. |
-| **~90 min** | Add the contested Insight, the Speak-with-Animals beat, group Stealth, a second kobold wave (`/dmentity spawn kobold` mid-fight), and both rests. |
+| **~90 min** | Add the contested Insight, the Speak-with-Animals beat, group Stealth, a second kobold wave (`/dm entity spawn kobold` mid-fight), and both rests. |
 
 ---
 

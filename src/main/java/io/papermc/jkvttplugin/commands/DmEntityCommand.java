@@ -12,7 +12,7 @@ import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.shop.ShopGuiUtil;
 import io.papermc.jkvttplugin.shop.ShopPersistenceLoader;
 import io.papermc.jkvttplugin.ui.menu.EntityStatBlockMenu;
-import io.papermc.jkvttplugin.util.CommandUtil;
+import io.papermc.jkvttplugin.util.NameUtil;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -41,11 +41,11 @@ import java.util.stream.Collectors;
  DM-only command for spawning and managing entities in the world.
 
  Subcommands:
- - /dmentity spawn <id> [name] [x y z]
- - /dmentity list
- - /dmentity remove <name|all|type <type>|radius <distance>>
- - /dmentity teleport <name> <x y z>
- - /dmentity spawngroup <group_id>
+ - /dm entity spawn <id> [name] [x y z]
+ - /dm entity list
+ - /dm entity remove <name|all|type <type>|radius <distance>>
+ - /dm entity teleport <name> <x y z>
+ - /dm entity spawngroup <group_id>
 
  */
 public class DmEntityCommand implements CommandExecutor, TabCompleter {
@@ -101,7 +101,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity spawn <id> [name] [x y z]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity spawn <id> [name] [x y z]", NamedTextColor.RED));
             return;
         }
 
@@ -118,15 +118,12 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         String customName = null;
         int coordStartIndex = 2;
 
-        // Check for quoted string first (e.g., "Marcus the Brave")
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            customName = quotedResult.getValue();
-            coordStartIndex = quotedResult.getNextIndex();
-        } else if (args.length > 2 && !isCoordinate(args[2])) {
-            // Single word name without quotes
-            customName = args[2];
-            coordStartIndex = 3;
+        // A name here may be quoted ("Marcus the Brave"); an unquoted word is a name unless it is
+        // the first coordinate.
+        NameUtil.TakenName named = NameUtil.takeName(args, 2);
+        if (named != null && (named.quoted() || !isCoordinate(named.value()))) {
+            customName = named.value();
+            coordStartIndex = named.nextIndex();
         }
 
         // Parse location (default to player location if not specified)
@@ -204,8 +201,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
     private void handleRemove(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity remove <name...>|all|dead|type <type>|radius <distance>", NamedTextColor.RED));
-            sender.sendMessage(Component.text("Tip: You can remove multiple entities: /dmentity remove wolf guard Marcus", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm entity remove <name...>|all|dead|type <type>|radius <distance>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Tip: You can remove multiple entities: /dm entity remove wolf guard Marcus", NamedTextColor.GRAY));
             return;
         }
 
@@ -216,7 +213,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "dead" -> removeDead(sender);
             case "type" -> {
                 if (args.length < 3) {
-                    sender.sendMessage(Component.text("Usage: /dmentity remove type <creature_type>", NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Usage: /dm entity remove type <creature_type>", NamedTextColor.RED));
                     return;
                 }
                 removeByType(sender, args[2]);
@@ -227,7 +224,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                     return;
                 }
                 if (args.length < 3) {
-                    sender.sendMessage(Component.text("Usage: /dmentity remove radius <distance>", NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Usage: /dm entity remove radius <distance>", NamedTextColor.RED));
                     return;
                 }
                 try {
@@ -238,7 +235,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                 }
             }
             default -> {
-                // Multiple names support: /dmentity remove name1 name2 name3
+                // Multiple names support: /dm entity remove name1 name2 name3
                 List<String> names = new ArrayList<>();
                 for (int i = 1; i < args.length; i++) {
                     names.add(args[i]);
@@ -257,7 +254,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity teleport <name> [x y z]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity teleport <name> [x y z]", NamedTextColor.RED));
             return;
         }
 
@@ -265,14 +262,9 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         String entityName;
         int coordStartIndex;
 
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 1);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-            coordStartIndex = quotedResult.getNextIndex();
-        } else {
-            entityName = args[1];
-            coordStartIndex = 2;
-        }
+        NameUtil.TakenName taken = NameUtil.takeName(args, 1);
+        entityName = taken.value();
+        coordStartIndex = taken.nextIndex();
 
         DndEntityInstance instance = findEntity(entityName);
 
@@ -316,18 +308,13 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity info <name>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity info <name>", NamedTextColor.RED));
             return;
         }
 
         // Parse entity name (may be quoted)
         String entityName;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 1);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-        } else {
-            entityName = args[1];
-        }
+        entityName = NameUtil.takeName(args, 1).value();
 
         DndEntityInstance instance = findEntity(entityName);
 
@@ -351,24 +338,24 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
      * Quoting is never wrong. Unquoted works when the split is unambiguous — one word on each side,
      * or an old name that exactly matches something spawned — and is refused otherwise rather than
      * guessed at, since a rename that renamed the wrong creature looks just like one that worked:
-     *   /dmentity rename "The Kindler" "Alira the Kindler"   always
-     *   /dmentity rename Kindler Fluffy                      one word each side
-     *   /dmentity rename The Kindler Alira the Kindler       "The Kindler" is spawned, so it resolves
-     *   /dmentity rename The Kindlr Alira the Kindler        typo — refused, asks for quotes
+     *   /dm entity rename "The Kindler" "Alira the Kindler"   always
+     *   /dm entity rename Kindler Fluffy                      one word each side
+     *   /dm entity rename The Kindler Alira the Kindler       "The Kindler" is spawned, so it resolves
+     *   /dm entity rename The Kindlr Alira the Kindler        typo — refused, asks for quotes
      */
     private void handleRename(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /dmentity rename <current name> <new name>", NamedTextColor.RED));
-            sender.sendMessage(Component.text("Quote a name that has spaces: /dmentity rename \"The Kindler\" \"Alira the Kindler\"", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm entity rename <current name> <new name>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Quote a name that has spaces: /dm entity rename \"The Kindler\" \"Alira the Kindler\"", NamedTextColor.GRAY));
             return;
         }
 
         String currentName;
         int newNameStart;
-        CommandUtil.QuotedStringResult quoted = CommandUtil.parseQuotedString(args, 1);
-        if (quoted != null) {
-            currentName = quoted.getValue();
-            newNameStart = quoted.getNextIndex();
+        NameUtil.TakenName quoted = NameUtil.takeName(args, 1);
+        if (quoted != null && quoted.quoted()) {
+            currentName = quoted.value();
+            newNameStart = quoted.nextIndex();
         } else {
             // Unquoted, so we have to find the split ourselves. Two cases are safe and the third is
             // not, and the third refuses rather than guesses — a rename that quietly renames the
@@ -388,7 +375,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                 // findEntity's prefix match take over, which is how `rename The Kindlr Alira the
                 // Kindler` ends up renaming "The Kindler" to "Kindlr Alira the Kindler".
                 sender.sendMessage(Component.text("Can't tell where the old name ends and the new one begins.", NamedTextColor.RED));
-                sender.sendMessage(Component.text("Quote them: /dmentity rename \"<current name>\" \"<new name>\"", NamedTextColor.YELLOW));
+                sender.sendMessage(Component.text("Quote them: /dm entity rename \"<current name>\" \"<new name>\"", NamedTextColor.YELLOW));
                 sendSpawnedNames(sender);
                 return;
             }
@@ -398,13 +385,13 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         if (newNameStart >= args.length) {
-            sender.sendMessage(Component.text("Give the new name too: /dmentity rename <current name> <new name>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Give the new name too: /dm entity rename <current name> <new name>", NamedTextColor.RED));
             return;
         }
 
-        CommandUtil.QuotedStringResult quotedNew = CommandUtil.parseQuotedString(args, newNameStart);
-        String newName = (quotedNew != null
-                ? quotedNew.getValue()
+        NameUtil.TakenName quotedNew = NameUtil.takeName(args, newNameStart);
+        String newName = (quotedNew != null && quotedNew.quoted()
+                ? quotedNew.value()
                 : String.join(" ", Arrays.copyOfRange(args, newNameStart, args.length))).trim();
 
         if (newName.isEmpty()) {
@@ -426,7 +413,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         // Re-key the tracking map. It's keyed on the lowercased display name, so leaving the old key
-        // in place would have /dmentity info|teleport|trade answering to a name nobody can see.
+        // in place would have /dm entity info|teleport|trade answering to a name nobody can see.
         spawnedEntities.values().removeIf(e -> e == instance);
         spawnedEntities.put(generateTrackingKey(newName), instance);
 
@@ -472,13 +459,12 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
     private void handleRevive(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity revive <name> [hp]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity revive <name> [hp]", NamedTextColor.RED));
             return;
         }
 
         String entityName;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 1);
-        entityName = quotedResult != null ? quotedResult.getValue() : args[1];
+        entityName = NameUtil.takeName(args, 1).value();
 
         DndEntityInstance instance = findEntity(entityName);
         if (instance == null) {
@@ -513,18 +499,13 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity trade <name>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity trade <name>", NamedTextColor.RED));
             return;
         }
 
         // Parse entity name (may be quoted)
         String entityName;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 1);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-        } else {
-            entityName = args[1];
-        }
+        entityName = NameUtil.takeName(args, 1).value();
 
         DndEntityInstance instance = findEntity(entityName);
 
@@ -558,7 +539,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
     private void handleShop(CommandSender sender, String[] args) {
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop <action> <entity> ...", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity shop <action> <entity> ...", NamedTextColor.RED));
             sender.sendMessage(Component.text("Actions: view, restock, add, adjust, discount, markup, reset, setfunds, setmultiplier", NamedTextColor.GRAY));
             return;
         }
@@ -583,24 +564,19 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /dmentity shop view <entity>
+     * /dm entity shop view <entity>
      * Shows current stock for all items in the merchant's shop.
      * Issue #76 - Enhanced to show DM price adjustments
      */
     private void handleShopView(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop view <entity>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity shop view <entity>", NamedTextColor.RED));
             return;
         }
 
         // Parse entity name (may be quoted)
         String entityName;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-        } else {
-            entityName = args[2];
-        }
+        entityName = NameUtil.takeName(args, 2).value();
 
         DndEntityInstance instance = findEntity(entityName);
 
@@ -708,14 +684,14 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /dmentity shop restock <entity> [item_id] [amount]
+     * /dm entity shop restock <entity> [item_id] [amount]
      * Restocks an item to specified amount (or template default if not specified).
      * If no item_id is provided, restocks ALL items to template defaults.
      * Issue #76 - Added "restock all" variant
      */
     private void handleShopRestock(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop restock <entity> [item_id] [amount]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity shop restock <entity> [item_id] [amount]", NamedTextColor.RED));
             sender.sendMessage(Component.text("Without item_id: restocks ALL items to template defaults", NamedTextColor.GRAY));
             return;
         }
@@ -723,14 +699,9 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         // Parse entity name (may be quoted)
         String entityName;
         int nextArgIndex;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-            nextArgIndex = quotedResult.getNextIndex();
-        } else {
-            entityName = args[2];
-            nextArgIndex = 3;
-        }
+        NameUtil.TakenName taken = NameUtil.takeName(args, 2);
+        entityName = taken.value();
+        nextArgIndex = taken.nextIndex();
 
         DndEntityInstance instance = findEntity(entityName);
 
@@ -811,31 +782,26 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /dmentity shop add <entity> <item_id> <price_amount> <price_currency> [stock]
+     * /dm entity shop add <entity> <item_id> <price_amount> <price_currency> [stock]
      * Adds a new item to the shop.
      */
     private void handleShopAdd(CommandSender sender, String[] args) {
         if (args.length < 6) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop add <entity> <item_id> <price_amount> <price_currency> [stock]", NamedTextColor.RED));
-            sender.sendMessage(Component.text("Example: /dmentity shop add balin healing_potion 50 gold 10", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm entity shop add <entity> <item_id> <price_amount> <price_currency> [stock]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dm entity shop add balin healing_potion 50 gold 10", NamedTextColor.GRAY));
             return;
         }
 
         // Parse entity name (may be quoted)
         String entityName;
         int nextArgIndex;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-            nextArgIndex = quotedResult.getNextIndex();
-        } else {
-            entityName = args[2];
-            nextArgIndex = 3;
-        }
+        NameUtil.TakenName taken = NameUtil.takeName(args, 2);
+        entityName = taken.value();
+        nextArgIndex = taken.nextIndex();
 
         if (args.length < nextArgIndex + 3) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop add <entity> <item_id> <price_amount> <price_currency> [stock]", NamedTextColor.RED));
-            sender.sendMessage(Component.text("Example: /dmentity shop add balin healing_potion 50 gold 10", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm entity shop add <entity> <item_id> <price_amount> <price_currency> [stock]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dm entity shop add balin healing_potion 50 gold 10", NamedTextColor.GRAY));
             return;
         }
 
@@ -926,30 +892,25 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /dmentity shop setfunds <entity> <amount> <currency>
+     * /dm entity shop setfunds <entity> <amount> <currency>
      * Sets merchant's currency reserves (Issue #76).
      */
     private void handleShopSetFunds(CommandSender sender, String[] args) {
         if (args.length < 5) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop setfunds <entity> <amount> <currency>", NamedTextColor.RED));
-            sender.sendMessage(Component.text("Example: /dmentity shop setfunds balin 500 gold", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm entity shop setfunds <entity> <amount> <currency>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dm entity shop setfunds balin 500 gold", NamedTextColor.GRAY));
             return;
         }
 
         // Parse entity name (may be quoted)
         String entityName;
         int nextArgIndex;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-            nextArgIndex = quotedResult.getNextIndex();
-        } else {
-            entityName = args[2];
-            nextArgIndex = 3;
-        }
+        NameUtil.TakenName taken = NameUtil.takeName(args, 2);
+        entityName = taken.value();
+        nextArgIndex = taken.nextIndex();
 
         if (args.length < nextArgIndex + 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop setfunds <entity> <amount> <currency>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity shop setfunds <entity> <amount> <currency>", NamedTextColor.RED));
             return;
         }
 
@@ -992,13 +953,13 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /dmentity shop setmultiplier <entity> <buy|sell> <multiplier>
+     * /dm entity shop setmultiplier <entity> <buy|sell> <multiplier>
      * Sets merchant's price multipliers (Issue #76).
      */
     private void handleShopSetMultiplier(CommandSender sender, String[] args) {
         if (args.length < 5) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop setmultiplier <entity> <buy|sell> <multiplier>", NamedTextColor.RED));
-            sender.sendMessage(Component.text("Example: /dmentity shop setmultiplier balin sell 0.6", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm entity shop setmultiplier <entity> <buy|sell> <multiplier>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dm entity shop setmultiplier balin sell 0.6", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("  buy = price when merchant sells TO player", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("  sell = price when merchant buys FROM player", NamedTextColor.GRAY));
             return;
@@ -1007,17 +968,12 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         // Parse entity name (may be quoted)
         String entityName;
         int nextArgIndex;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-            nextArgIndex = quotedResult.getNextIndex();
-        } else {
-            entityName = args[2];
-            nextArgIndex = 3;
-        }
+        NameUtil.TakenName taken = NameUtil.takeName(args, 2);
+        entityName = taken.value();
+        nextArgIndex = taken.nextIndex();
 
         if (args.length < nextArgIndex + 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop setmultiplier <entity> <buy|sell> <multiplier>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity shop setmultiplier <entity> <buy|sell> <multiplier>", NamedTextColor.RED));
             return;
         }
 
@@ -1070,14 +1026,14 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /dmentity shop adjust <entity> <item_id> <price>
+     * /dm entity shop adjust <entity> <item_id> <price>
      * Sets a fixed price override for a specific item (ignores all multipliers).
      * Issue #76 - Price Adjustment System
      */
     private void handleShopAdjust(CommandSender sender, String[] args) {
         if (args.length < 5) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop adjust <entity> <item_id> <price>", NamedTextColor.RED));
-            sender.sendMessage(Component.text("Example: /dmentity shop adjust balin longsword 10", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm entity shop adjust <entity> <item_id> <price>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dm entity shop adjust balin longsword 10", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("Sets a fixed price that ignores all discounts/markups.", NamedTextColor.GRAY));
             return;
         }
@@ -1085,17 +1041,12 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         // Parse entity name (may be quoted)
         String entityName;
         int nextArgIndex;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-            nextArgIndex = quotedResult.getNextIndex();
-        } else {
-            entityName = args[2];
-            nextArgIndex = 3;
-        }
+        NameUtil.TakenName taken = NameUtil.takeName(args, 2);
+        entityName = taken.value();
+        nextArgIndex = taken.nextIndex();
 
         if (args.length < nextArgIndex + 2) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop adjust <entity> <item_id> <price>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity shop adjust <entity> <item_id> <price>", NamedTextColor.RED));
             return;
         }
 
@@ -1148,14 +1099,14 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /dmentity shop discount <entity> <percent>
+     * /dm entity shop discount <entity> <percent>
      * Applies a global discount to all items in the shop.
      * Issue #76 - Price Adjustment System
      */
     private void handleShopDiscount(CommandSender sender, String[] args) {
         if (args.length < 4) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop discount <entity> <percent>", NamedTextColor.RED));
-            sender.sendMessage(Component.text("Example: /dmentity shop discount balin 20", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm entity shop discount <entity> <percent>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dm entity shop discount balin 20", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("Applies a 20% discount to all items.", NamedTextColor.GRAY));
             return;
         }
@@ -1163,17 +1114,12 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         // Parse entity name (may be quoted)
         String entityName;
         int nextArgIndex;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-            nextArgIndex = quotedResult.getNextIndex();
-        } else {
-            entityName = args[2];
-            nextArgIndex = 3;
-        }
+        NameUtil.TakenName taken = NameUtil.takeName(args, 2);
+        entityName = taken.value();
+        nextArgIndex = taken.nextIndex();
 
         if (args.length < nextArgIndex + 1) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop discount <entity> <percent>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity shop discount <entity> <percent>", NamedTextColor.RED));
             return;
         }
 
@@ -1215,14 +1161,14 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /dmentity shop markup <entity> <percent>
+     * /dm entity shop markup <entity> <percent>
      * Applies a global markup to all items in the shop.
      * Issue #76 - Price Adjustment System
      */
     private void handleShopMarkup(CommandSender sender, String[] args) {
         if (args.length < 4) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop markup <entity> <percent>", NamedTextColor.RED));
-            sender.sendMessage(Component.text("Example: /dmentity shop markup balin 15", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm entity shop markup <entity> <percent>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Example: /dm entity shop markup balin 15", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("Increases all prices by 15%.", NamedTextColor.GRAY));
             return;
         }
@@ -1230,17 +1176,12 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         // Parse entity name (may be quoted)
         String entityName;
         int nextArgIndex;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-            nextArgIndex = quotedResult.getNextIndex();
-        } else {
-            entityName = args[2];
-            nextArgIndex = 3;
-        }
+        NameUtil.TakenName taken = NameUtil.takeName(args, 2);
+        entityName = taken.value();
+        nextArgIndex = taken.nextIndex();
 
         if (args.length < nextArgIndex + 1) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop markup <entity> <percent>", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity shop markup <entity> <percent>", NamedTextColor.RED));
             return;
         }
 
@@ -1282,13 +1223,13 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * /dmentity shop reset <entity> [item_id]
+     * /dm entity shop reset <entity> [item_id]
      * Resets price adjustments for all items or a specific item.
      * Issue #76 - Price Adjustment System
      */
     private void handleShopReset(CommandSender sender, String[] args) {
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /dmentity shop reset <entity> [item_id]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm entity shop reset <entity> [item_id]", NamedTextColor.RED));
             sender.sendMessage(Component.text("Without item_id: resets discount, markup, and all overrides", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("With item_id: resets only that item's override", NamedTextColor.GRAY));
             return;
@@ -1297,14 +1238,9 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         // Parse entity name (may be quoted)
         String entityName;
         int nextArgIndex;
-        CommandUtil.QuotedStringResult quotedResult = CommandUtil.parseQuotedString(args, 2);
-        if (quotedResult != null) {
-            entityName = quotedResult.getValue();
-            nextArgIndex = quotedResult.getNextIndex();
-        } else {
-            entityName = args[2];
-            nextArgIndex = 3;
-        }
+        NameUtil.TakenName taken = NameUtil.takeName(args, 2);
+        entityName = taken.value();
+        nextArgIndex = taken.nextIndex();
 
         DndEntityInstance instance = findEntity(entityName);
 
@@ -1426,7 +1362,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         // Don't let players punch the stand apart or strip the model "head"/gear off it.
-        // (DMs still remove entities via /dmentity, which isn't affected by these.)
+        // (DMs still remove entities via /dm entity, which isn't affected by these.)
         armorStand.setInvulnerable(true);
         for (EquipmentSlot slot : new EquipmentSlot[]{
                 EquipmentSlot.HEAD, EquipmentSlot.CHEST, EquipmentSlot.LEGS,
@@ -1697,25 +1633,25 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
      */
     private void sendHelp(CommandSender sender) {
         sender.sendMessage(Component.text("=== DM Entity Commands ===", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("/dmentity spawn <id> [name] [x y z]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm entity spawn <id> [name] [x y z]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Spawn a single entity at location", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmentity list", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm entity list", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - List all spawned entities", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmentity remove <name...>|all|type <type>|radius <distance>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm entity remove <name...>|all|type <type>|radius <distance>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Remove one or more entities (supports multiple names)", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmentity rename <current name> <new name>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm entity rename <current name> <new name>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Rename a spawned entity (keeps its HP, shop and loot)", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmentity revive <name> [hp]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm entity revive <name> [hp]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Bring a dead entity back (default full HP)", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmentity teleport <name> [x y z]", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm entity teleport <name> [x y z]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Teleport entity to location", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmentity info <name>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm entity info <name>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - View entity stat block", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmentity trade <name>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm entity trade <name>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Open merchant trade GUI", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmentity shop <view|restock|add> <entity> ...", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("/dm entity shop <view|restock|add> <entity> ...", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Manage merchant shop inventory", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dmentity spawngroup <group_id>", NamedTextColor.DARK_GRAY)
+        sender.sendMessage(Component.text("/dm entity spawngroup <group_id>", NamedTextColor.DARK_GRAY)
                 .append(Component.text(" (Coming in Issue #79)", NamedTextColor.DARK_GRAY)));
     }
 

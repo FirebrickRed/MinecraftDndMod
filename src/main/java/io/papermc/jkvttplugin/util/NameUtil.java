@@ -23,6 +23,40 @@ public final class NameUtil {
         return input;
     }
 
+    /**
+     * A name taken off the front of the arguments, where the rest of the command continues, and
+     * whether it was quoted — some commands treat "a quoted name" as the DM being explicit.
+     */
+    public record TakenName(String value, int nextIndex, boolean quoted) {}
+
+    /**
+     * Take ONE name at {@code args[from]}, for commands that have arguments after the name
+     * ({@code /dm entity spawn <id> "Marcus the Brave" 100}). A quoted span is read to its closing
+     * quote; anything else is the single word. Null when there's nothing there.
+     *
+     * <p>Bukkit splits arguments on spaces before we see them, so a multi-word name only survives in
+     * quotes. Use this wherever a name is followed by more arguments; use {@link #joinArgs} when the
+     * name runs to the end of the command.
+     */
+    public static TakenName takeName(String[] args, int from) {
+        if (args == null || from < 0 || from >= args.length) return null;
+        String first = args[from];
+        if (!first.startsWith("\"")) return new TakenName(first, from + 1, false);
+        if (first.length() > 1 && first.endsWith("\"")) {
+            return new TakenName(first.substring(1, first.length() - 1), from + 1, true);
+        }
+        StringBuilder merged = new StringBuilder(first.substring(1));
+        for (int i = from + 1; i < args.length; i++) {
+            String arg = args[i];
+            if (arg.endsWith("\"")) {
+                merged.append(" ").append(arg, 0, arg.length() - 1);
+                return new TakenName(merged.toString(), i + 1, true);
+            }
+            merged.append(" ").append(arg);
+        }
+        return new TakenName(merged.toString(), args.length, true); // unclosed quote: take what is there
+    }
+
     /** Join {@code args[from..]} into one space-separated name, stripping surrounding quotes. */
     public static String joinArgs(String[] args, int from) {
         if (args == null || from >= args.length) return "";

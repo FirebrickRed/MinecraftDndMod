@@ -64,7 +64,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.GearChangeNotifier(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.AmmoRecovery(), this);
         Bukkit.getPluginManager().registerEvents(new SpellCastingMenuListener(), this);
-        // EntityInteractionListener removed - use /dmentity info command instead
+        // EntityInteractionListener removed - use /dm entity info command instead
         Bukkit.getPluginManager().registerEvents(new StatBlockMenuListener(), this);
         Bukkit.getPluginManager().registerEvents(new ShopListener(this), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.CombatListener(), this);
@@ -85,9 +85,6 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         this.getCommand("combat").setExecutor(combatCommand);
         this.getCommand("combat").setTabCompleter(combatCommand);
 
-        DmEntityCommand dmEntityCommand = new DmEntityCommand();
-        this.getCommand("dmentity").setExecutor(dmEntityCommand);
-        this.getCommand("dmentity").setTabCompleter(dmEntityCommand);
 
         DmCommand dmCommand = new DmCommand();
         this.getCommand("dm").setExecutor(dmCommand);
@@ -203,7 +200,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         // Entities are NOT despawned on shutdown: their state rides on the armor stand's persistent
         // data (persisted just above), Minecraft saves the stands with the world, and on next boot
         // restoreAll() + the chunk-load listener re-register them (Issue #89). Deleting them here
-        // would defeat that persistence — use /dmentity cleanup to clear genuine orphans instead.
+        // would defeat that persistence — use /dm entity cleanup to clear genuine orphans instead.
         getLogger().info("D&D Plugin has been disabled!");
     }
 

@@ -125,38 +125,38 @@ A merchant is an entity whose YAML has a `shop:` section — there is **no `shop
 on an entity without one fails with "is not a merchant". `balin_blacksmith` ships with a shop. The
 commands take the spawned creature's **name** ("Balin"), not the template id:
 ```
-/dmentity spawn balin_blacksmith
-/dmentity shop add Balin shortsword 10 gold 3      # <item_id> <price> <currency> [stock]
+/dm entity spawn balin_blacksmith
+/dm entity shop add Balin shortsword 10 gold 3      # <item_id> <price> <currency> [stock]
 ```
 See `docs/authoring-entities.md` → *Merchants* for the YAML.
 
 **2. Test Tab Completion:**
-- Type `/dmentity shop add Balin ` and press TAB → should suggest all item IDs (weapons, armor, items)
-- Type `/dmentity shop add Balin longsword 15 ` and press TAB → should suggest currencies (gold, silver, copper, platinum, electrum)
-- Type `/dmentity shop restock Balin ` and press TAB → should suggest only items in Balin's current inventory
+- Type `/dm entity shop add Balin ` and press TAB → should suggest all item IDs (weapons, armor, items)
+- Type `/dm entity shop add Balin longsword 15 ` and press TAB → should suggest currencies (gold, silver, copper, platinum, electrum)
+- Type `/dm entity shop restock Balin ` and press TAB → should suggest only items in Balin's current inventory
 
 **3. Test Player Buying (Merchant to Player):**
 ```
-/dmentity trade Balin
+/dm entity trade Balin
 ```
 - Merchant GUI should open with items for sale
 - Each item should show price in gold pieces
 - Execute a trade to buy longsword
-- Verify stock decreases: `/dmentity shop view Balin`
+- Verify stock decreases: `/dm entity shop view Balin`
 - Buy remaining stock until item is out of stock
 - Verify "out of stock" message appears
 
 **4. Test Player Selling (Player to Merchant):**
 ```
 /dm give <you> longsword 1
-/dmentity trade Balin
+/dm entity trade Balin
 ```
 (`/dm give <player> <item_id> [amount]`: the player is required and always first, your own name
 included, so tab completion goes players → items → amounts. The item type is auto-detected from the id — there is no
 `<item_type>` argument. There is no standalone `/dmgive`; it lives under `/dm give`.)
 - Merchant GUI should show reverse trades (player gives item, gets currency)
 - Sell longsword to merchant for gold (50% of buy price)
-- Verify merchant's inventory increases: `/dmentity shop view Balin`
+- Verify merchant's inventory increases: `/dm entity shop view Balin`
 - Verify sold item appears in merchant's stock
 - Try selling an item not in merchant's acceptance list → should fail
 
@@ -168,7 +168,7 @@ included, so tab completion goes players → items → amounts. The item type is
 
 **6. Test Shop Persistence:**
 ```
-/dmentity shop view Balin
+/dm entity shop view Balin
 ```
 - Note current stock levels
 - Restart the server (not `/reload confirm` — Paper plugin reloads are unsupported)
@@ -179,10 +179,10 @@ included, so tab completion goes players → items → amounts. The item type is
 
 **7. Test Complete Buy/Sell Cycle:**
 1. Buy longsword from merchant (stock: 5 → 4)
-2. Verify stock decreased: `/dmentity shop view Balin`
+2. Verify stock decreased: `/dm entity shop view Balin`
 3. Sell longsword back to merchant (stock: 4 → 5)
 4. Verify merchant inventory increased
-5. Remove merchant: `/dmentity remove Balin`, then `/dmentity spawn balin_blacksmith`
+5. Remove merchant: `/dm entity remove Balin`, then `/dm entity spawn balin_blacksmith`
 6. Verify the **new** Balin starts from the YAML stock — a fresh spawn gets a new instance id, so it
    doesn't inherit the old creature's shop file (per-instance state, #194). Persistence covers
    restarts, not respawns.
@@ -632,10 +632,11 @@ Menu clicks are handled in `MenuClickListener.onMenuClick()` via switch on `Menu
 command list. `src/main/resources/plugin.yml` is the registration source of truth.
 Summary of groups:
 
-Consolidated into 5 base commands (Issue #122): `/character`, `/roll`, `/combat`,
-`/dmentity`, `/dm`. The legacy per-action commands have been removed (their executor
+Consolidated into 4 base commands (Issue #122): `/character`, `/roll`, `/combat`, `/dm`.
+Entities moved under `/dm entity` — `/dmentity` is **gone**, so `/dm` + Tab no longer
+autocompletes into it. The legacy per-action commands have been removed (their executor
 classes remain and are delegated to from CharacterCommand / DmCommand).
-- **Character (any player):** `/character <create|view|list|close|rest|give>` (alias `/char`); `create <player>` and `give <player> <name>` are DM-only.
+- **Character (any player):** `/character <create|view|list|rest|give|delete>` (alias `/char`); `create <player>` and `give <player> <name>` are DM-only. `view` opens your own characters only (a DM can open anyone's); `delete` by a player is a request a DM approves.
 - **Roll:** `/roll <XdY[+Z]>` (alias of the old `/rolldice`).
 - **Combat (`/combat <sub>`):** `start`, `add`, `remove`, `surprise`, `initiative`, `nextturn`, `endturn`, `turn`, `status`, `finished`, `reveal`, `hide`, `action`, `bonusAction`, `movement`, `attack`, `damage`, `heal`, `temphp`, `deathsave`, `cast`, `save`, `concentration`, `use`, `condition`, `reactions`. Players may use `action`/`bonusAction`/`attack`/`endturn`/`deathsave` on their own turn only.
   - **Roll input (#183):** a d20 action takes one bare keyword — `autoRoll` (game rolls, applies advantage → 2d20), `manualRoll <n>` (you rolled it, game adds mods), or `total <n>` (final, nothing added). Damage uses `manualRoll <n>` / `autoRoll <dice>` / a flat `<amount>`; the **damage type is automatic** (`type <t>` overrides). There is **no** `--roll`/`--total`/`--type` — those aliases were removed. `RollService.parseInput`/`RollInput` is the one parser; `RollService.resolve(...)` applies reroll (Lucky) + advantage. The out-of-combat `/character check|save|loot` roller is separate (`RollOptionsMenuHandler`).
@@ -681,8 +682,8 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     `RitualManager.onDamage` is deprecated — it used to roll the check itself, the only d20 in combat
     the game took out of the players' hands.
   - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
-- **DM entities & items (`/dmentity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
-  - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dmentity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).
+- **DM entities & items (`/dm entity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
+  - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dm entity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).
 - **DM admin (`/dm <sub>`):** `add`, `remove`, `list` (role mgmt; add/remove op-only), `give`, `check` (DM-first checks, #186), `hp` (change HP anywhere, #175), `revive` (#101), `object` (annotate blocks, #185), `mode` (DM toolbar), `tp`, `rest <character> <short|long>`, `resource <restore|consume> <character> …`, `reload`.
   - **A block's openability is one value, not flags (#185):** `InteractiveObjectManager.Obj.Opening`
     is `OPENS` / `LOCKED` / `SEALED` — set by `/dm object unlock|lock|seal`. They're mutually
@@ -710,7 +711,7 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     (two on a crit), massive damage kills outright. `Combatant` reads them from the sheet (its own fields
     are only a snapshot for an offline player in a restored fight), and an entity combatant reads its
     instance. The dead ignore healing and rests; the one way back is `DamageHandler.revive`
-    (`/dm revive`, `/dmentity revive`). A new fight doesn't reset a dying character's tally.
+    (`/dm revive`, `/dm entity revive`). A new fight doesn't reset a dying character's tally.
     A dead player's body is `PlayerCorpse`: an armor stand tagged `jkvtt:corpse_of` = character id,
     placed where they fell (`DeathSaveHandler.leaveBody`), right-click → [Ask for a check]. The player goes
     to spectator (previous mode kept in their PDC) until revived or `/character create`. Revive removes the
@@ -742,9 +743,9 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 - Encounter builder
 - Issue #194: [Epic] Live entity instances — a spawned entity is a thin wrapper over a *shared*
   template (only name/HP/dead/shop are per-instance), so you can't arm one guard differently from
-  its siblings. Per-instance overrides for AC, abilities, attacks and gear; a `/dmentity edit` GUI;
+  its siblings. Per-instance overrides for AC, abilities, attacks and gear; a `/dm entity edit` GUI;
   and an alias/reveal model to replace the binary `???` hidden flag (supersedes that half of #102).
-  `/dmentity rename` is the first slice, already landed.
+  `/dm entity rename` is the first slice, already landed.
 - Issue #188: [Epic] Magic items & attunement — magic item schema (`+N`, charges, recharge),
   attunement tracking with a chest-style GUI, bonuses gated on being attuned. Deliberately scoped
   *before* level-up (#153): we have shops, chests and loot with no treasure to put in them.

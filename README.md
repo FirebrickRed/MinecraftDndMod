@@ -46,7 +46,7 @@ Characters are saved to disk and persist across restarts.
 
 ### DM tools
 - **DM roles:** `/dm add|remove|list` grants DM-only powers
-- **Entity spawning:** `/dmentity` spawns and manages stat-block NPCs and monsters in the world
+- **Entity spawning:** `/dm entity` spawns and manages stat-block NPCs and monsters in the world
 - **Item granting:** `/dm give` hands D&D weapons, armor, and items to players
 - **Hot-reload content:** `/dm reload` reloads all D&D data without a server restart
 
@@ -78,7 +78,7 @@ DMContent/
 
 ## Commands
 
-Commands are consolidated under five roots: `/character`, `/roll`, `/combat`, `/dmentity`, `/dm`.
+Commands are consolidated under four roots: `/character`, `/roll`, `/combat`, `/dm`.
 
 | Command | Who | What it does |
 |---|---|---|
@@ -87,7 +87,7 @@ Commands are consolidated under five roots: `/character`, `/roll`, `/combat`, `/
 | `/character rest <short\|long>` | Player | Recover resources (short / long rest) |
 | `/roll <XdY[+Z]>` | Player | Roll dice (e.g. `2d6+3`) |
 | `/dm <add\|remove\|list>` | Op | Manage who is a DM |
-| `/dmentity <spawn\|list\|remove\|teleport\|...>` | DM | Spawn & manage NPCs/monsters; create & run shops |
+| `/dm entity <spawn\|list\|remove\|teleport\|...>` | DM | Spawn & manage NPCs/monsters; create & run shops |
 | `/dm give <player> <item_id> [amount]` | DM | Give D&D items to a player |
 | `/combat <start\|add\|initiative\|nextturn\|attack\|...>` | DM | Manage a combat encounter |
 | `/dm rest <character> <short\|long>` | DM | Trigger a rest for a character |

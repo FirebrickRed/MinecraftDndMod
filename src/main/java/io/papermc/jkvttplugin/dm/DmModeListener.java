@@ -109,7 +109,7 @@ public class DmModeListener implements Listener {
         }
     }
 
-    /** A clickable chat list of every loaded entity; clicking fills /dmentity spawn for that id (#20). */
+    /** A clickable chat list of every loaded entity; clicking fills /dm entity spawn for that id (#20). */
     private void showSpawnMenu(Player player) {
         java.util.List<io.papermc.jkvttplugin.data.model.DndEntity> entities =
                 new java.util.ArrayList<>(io.papermc.jkvttplugin.data.loader.EntityLoader.getAllEntities());
@@ -126,7 +126,7 @@ public class DmModeListener implements Listener {
             String label = e.getName() != null ? e.getName() : e.getId();
             // Fill the command (trailing space) so the DM can add a custom name before Enter, and
             // spawn happens on Enter rather than firing the instant they browse the list.
-            String cmd = "/dmentity spawn " + e.getId() + " ";
+            String cmd = "/dm entity spawn " + e.getId() + " ";
             row = row.append(Component.text("[" + label + "] ", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.suggestCommand(cmd))
                     .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "\nAdd a name, or press Enter to spawn "

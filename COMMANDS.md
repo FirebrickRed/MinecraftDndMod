@@ -27,7 +27,7 @@ prints that command's own help.
 | `/character reply <message…>` | Free reply to the last Message/Sending you received (usually the **[reply]** button) |
 | `/roll <XdY[+Z]>` | Roll dice and show every die, e.g. `/roll 2d6+3` → `[4, 3] +3 = 10` |
 
-DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet; if the character belongs to someone else, a **[Give … to …]** confirm transfers the character to them (its gear stays put — hand it over in game). The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the five roots below.
+DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet; if the character belongs to someone else, a **[Give … to …]** confirm transfers the character to them (its gear stays put — hand it over in game). The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the four roots below.
 
 **In combat, on your own turn only:**
 `/combat action` · `/combat bonusAction` · `/combat attack <target>` · `/combat damage <target>` · `/combat cast <spell>` · `/combat use <feature>` · `/combat endturn` · `/combat deathsave`
@@ -111,7 +111,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 
 **Other attack options:** `showModifiers` (show your to-hit breakdown without attacking) · `--force` (DM override, reworking later).
 
-### Entities & items — `/dmentity <subcommand>`
+### Entities & items — `/dm entity <subcommand>`
 | Subcommand | What it does |
 |---|---|
 | `spawn <entityId> [name] [x y z]` | Spawn an entity (from `DMContent/Entities/`), optionally named / placed. Also the DM-mode **Spawn Entity** tool |
@@ -176,7 +176,7 @@ resources save to disk **on every change** and at **each combat turn advance** �
 (#31). What a hard crash still loses: the **in-progress combat turn** (it resets fresh), and any
 stray turn-indicator glow on armor stands. So before a planned stop it's tidiest to:
 1. `/combat finished` (clears glow, scoreboards, prone)
-2. `/dmentity remove <name>` for NPCs you don't want lingering
+2. `/dm entity remove <name>` for NPCs you don't want lingering
 
 Issues #105 (combat auto-save), #89 (entity persistence), #31 (character auto-save) are done;
 the remaining gap is mid-turn state and startup glow-scrub.

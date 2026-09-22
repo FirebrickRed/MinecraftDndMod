@@ -68,7 +68,7 @@ public final class CombatTargets {
             sender.sendMessage(Component.text("Name a character or creature.", NamedTextColor.RED));
             return null;
         }
-        String raw = name.trim().replaceAll("^\"|\"$", "");
+        String raw = io.papermc.jkvttplugin.util.NameUtil.stripQuotes(name.trim());
 
         // A spawned creature first: entity names are the ones a DM is most likely to be pointing at,
         // and a character with the same name still resolves through the explicit Owner/Name form.

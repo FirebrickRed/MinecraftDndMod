@@ -171,12 +171,12 @@ Newest first. Tick these off after a build to confirm they work in-game.
 - [ ] **Crash-safe:** enter DM mode, then disconnect/kill the server → on rejoin you're OUT of DM mode with your real inventory back.
 
 ### Commands & misc
-- [ ] Five roots only: `/character` `/roll` `/combat` `/dmentity` `/dm` (old commands gone).
+- [ ] Five roots only: `/character` `/roll` `/combat` `/dm entity` `/dm` (old commands gone).
 - [ ] **`/character delete <name>`** removes a character (yours; DM removes any).
 - [ ] **Entities survive a server restart** (spawn kobolds, damage one, restart → still there with same HP).
 - [ ] **Dead entities** (#138): a killed entity **tips over** (corpse), **can't be possessed**, and a
-      dead entity **can't join combat** — until the DM **`/dmentity revive <name> [hp]`** stands it back
-      up. The corpse pose survives a restart. **`/dmentity remove dead`** clears all corpses at once.
+      dead entity **can't join combat** — until the DM **`/dm entity revive <name> [hp]`** stands it back
+      up. The corpse pose survives a restart. **`/dm entity remove dead`** clears all corpses at once.
 - [ ] **Group move spreads** (#141): select several entities with the Move tool out of combat and send
       them to one spot → they **fan out into a ring** instead of stacking on one block.
 - [ ] **Entity kit is consistent** (#132): an entity's weapon is defined once (an attack with `item:`).

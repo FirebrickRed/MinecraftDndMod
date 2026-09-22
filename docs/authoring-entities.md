@@ -7,7 +7,7 @@ organise however you like. After editing, run `/dm reload` and read the console.
 
 > **YAML edits don't reach creatures already standing in the world** (#194). A spawned entity
 > keeps the template it was spawned from, its name is fixed at spawn, and its shop is a private
-> copy. To see a change, remove the creature and spawn it again. Use `/dmentity rename` for names.
+> copy. To see a change, remove the creature and spawn it again. Use `/dm entity rename` for names.
 
 ---
 
@@ -63,7 +63,7 @@ kobold_sorcerer:
   name: "Kobold Sorcerer"
   random_names: ["Zix the Scorched", "Ember-Scale", "Flamecaller Rik"]  # one is picked at spawn
 
-  creature_type: humanoid        # free text; `/dmentity remove type <t>` matches it
+  creature_type: humanoid        # free text; `/dm entity remove type <t>` matches it
   subtype: kobold                # display only
   size: small                    # tiny|small|medium|large|huge|gargantuan (see note below)
 
@@ -113,9 +113,9 @@ kobold_sorcerer:
 | `abilities` | Full lowercase names. Modifiers feed saves and checks. **No proficiency bonus is added to entity saves**, so fold it into the score if it matters. |
 | `skills` | `{deception: 5}`: the bonus **as the stat block prints it** ("Deception +5"), proficiency included. A skill that isn't listed uses the plain ability modifier, which is how monster stat blocks work. Used by contested checks (`/dm check Zek insight vs Balin deception`). A bad skill name or non-number warns on load. |
 | `size` | Stored and shown, but **doesn't scale the body** yet (#194 §6). A gargantuan dragon stands as tall as a kobold. It does scale the DM while possessing. |
-| `random_names` | Picked at spawn when you don't pass a name (`/dmentity spawn kobold "Meepo"` overrides it). |
+| `random_names` | Picked at spawn when you don't pass a name (`/dm entity spawn kobold "Meepo"` overrides it). |
 | `model` | Absent means an invisible stand with a floating nameplate. **A model with no texture renders as a purple box**, which is worse than no model. |
-| `dm_notes` | Shown to the DM in the stat block (`/dmentity info`, or the DM-mode View tool). |
+| `dm_notes` | Shown to the DM in the stat block (`/dm entity info`, or the DM-mode View tool). |
 
 ---
 
@@ -189,8 +189,8 @@ shop:
     - chain_mail
 ```
 
-- Players open it with `/dmentity trade <name>`. The DM manages it with
-  `/dmentity shop view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier` (see `COMMANDS.md`).
+- Players open it with `/dm entity trade <name>`. The DM manages it with
+  `/dm entity shop view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier` (see `COMMANDS.md`).
 - **Each spawned merchant gets its own copy** of this shop, saved to
   `plugins/jkvttplugin/Saved/Shops/<instance-uuid>.yml`. Stock changes persist across restarts for
   *that* creature. Removing it and spawning a new one starts again from the YAML.
@@ -204,7 +204,7 @@ shop:
 1. `/dm reload`. No `[EntityLoader]` or `[ContentValidator]` warnings in the console? The content
    check names attack `item:`s, inventory/loot ids and shop ids that don't exist, plus shop prices
    over 64 coins.
-2. `/dmentity spawn <id>`, then `/dmentity info <name>`. Do the HP, AC and attacks look right?
+2. `/dm entity spawn <id>`, then `/dm entity info <name>`. Do the HP, AC and attacks look right?
 3. Possess it (DM mode) and check each attack shows in the hotbar and resolves.
-4. Merchant: `/dmentity trade <name>`. Is every item there, with no crossed-out prices?
+4. Merchant: `/dm entity trade <name>`. Is every item there, with no crossed-out prices?
 5. Kill it (`/combat override`) and search the body. Is the loot what you expected?

@@ -70,7 +70,7 @@ public class SpellCastHandler {
                 if (providedTotal != null) healAmount = providedTotal;                       // final total given
                 else if (providedRoll != null) healAmount = providedRoll + abilityMod;        // rolled dice given
                 else if (io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll())
-                    healAmount = rollAmount(spell.getHealing()) + abilityMod;                 // game rolls it
+                    healAmount = rollAmount(spell.getHealing(), session) + abilityMod;        // game rolls it (and shows it)
                 else { promptHealingRoll(player, target, spell); return false; }              // physical: ask them to roll
                 healAmount = Math.max(1, healAmount);
             }
@@ -78,7 +78,7 @@ public class SpellCastHandler {
             session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
                     + " on " + target.getDisplayName(true) + ".", NamedTextColor.LIGHT_PURPLE));
             if (healAmount != null) DamageHandler.applyHealing(session, target, healAmount);
-            if (spell.grantsTempHp()) DamageHandler.applyTempHp(session, target, Math.max(0, rollAmount(spell.getTempHp())));
+            if (spell.grantsTempHp()) DamageHandler.applyTempHp(session, target, Math.max(0, rollAmount(spell.getTempHp(), session)));
             return true;
         }
 
@@ -475,12 +475,15 @@ public class SpellCastHandler {
         return -1;
     }
 
-    /** Roll a dice expression ("1d8", "1d4+4") or read a flat number ("5"); 0 if unparseable. */
-    private static int rollAmount(String expr) {
-        if (expr == null || expr.isBlank()) return 0;
-        java.util.OptionalInt rolled = io.papermc.jkvttplugin.util.DiceRoller.parseDiceRoll(expr.trim());
-        if (rolled.isPresent()) return rolled.getAsInt();
-        try { return Integer.parseInt(expr.trim()); } catch (NumberFormatException e) { return 0; }
+    /**
+     * Roll a spell's dice ("1d8", "1d4+4") or read a flat number ("5"); 0 if unreadable. The dice are
+     * shown to the table, since the game rolled them.
+     */
+    private static int rollAmount(String expr, CombatSession session) {
+        io.papermc.jkvttplugin.util.DiceRoller.Rolled rolled = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(expr);
+        if (rolled == null) return 0;
+        if (session != null) session.broadcast(Component.text(rolled.display(), NamedTextColor.GRAY));
+        return rolled.total();
     }
 
     private static Ability spellcastingAbility(CharacterSheet sheet) {

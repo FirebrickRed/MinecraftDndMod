@@ -356,16 +356,30 @@ public class CombatSession {
     /**
      * Roll initiative for a single combatant.
      */
-    private void rollInitiativeFor(Combatant combatant) {
+    /**
+     * Roll initiative for one combatant and return the working, so whoever asked can show it. This is
+     * the ONE place initiative is rolled: the DM's {@code /combat rollforinitiative} used to roll its
+     * own flat d20 for the display, which quietly skipped the armor disadvantage below.
+     */
+    public InitiativeRoll rollInitiativeFor(Combatant combatant) {
         int roll = DiceRoller.rollDice(1, 20);
+        String note = "";
         // Initiative is a DEX check, so unproficient armor gives disadvantage (#209): keep the lower.
         var sheet = combatant.getCharacterSheet();
         if (sheet != null && sheet.armorPenaltyApplies(io.papermc.jkvttplugin.data.model.enums.Ability.DEXTERITY)) {
-            roll = Math.min(roll, DiceRoller.rollDice(1, 20));
+            int second = DiceRoller.rollDice(1, 20);
+            note = " [disadvantage: " + roll + "/" + second + "]";
+            roll = Math.min(roll, second);
         }
-        int total = roll + combatant.getInitiativeBonus();
+        int bonus = combatant.getInitiativeBonus();
+        int total = roll + bonus;
         combatant.setInitiative(total);
+        return new InitiativeRoll(roll, total, "[" + roll + "] " + (bonus >= 0 ? "+" + bonus : bonus)
+                + " (DEX) = " + total + note);
     }
+
+    /** One initiative roll, with the line to show the table. */
+    public record InitiativeRoll(int d20, int total, String show) {}
 
     /**
      * Sort combatants by initiative (highest first).
@@ -953,7 +967,7 @@ public class CombatSession {
                 display.append(makeUniqueSuffix(i));
 
                 // HP at a glance — PLAYERS ONLY. Enemy HP is never shown to players; the DM
-                // checks entity HP via /combat status or /dmentity info.
+                // checks entity HP via /combat status or /dm entity info.
                 if (c.isPlayer() && !c.isHidden()) {
                     display.append(" ").append(hpColorCode(c.getCurrentHp(), c.getMaxHp()))
                            .append(c.getCurrentHp()).append("/").append(c.getMaxHp());

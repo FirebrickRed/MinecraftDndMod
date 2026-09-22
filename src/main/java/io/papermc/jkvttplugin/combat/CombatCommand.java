@@ -476,8 +476,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         for (Combatant combatant : session.getCombatants()) {
             Integer provided = combatant.isPlayer() ? session.getPlayerInitiative(combatant.getId()) : null;
-            int bonus = combatant.getInitiativeBonus();
-            String bonusStr = bonus >= 0 ? "+" + bonus : String.valueOf(bonus);
             Component rollMsg;
             if (provided != null) {
                 // Player already rolled their own initiative (#114) — use it.
@@ -486,14 +484,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                         .append(Component.text(String.valueOf(provided), NamedTextColor.GREEN, TextDecoration.BOLD))
                         .append(Component.text(" (rolled their own)", NamedTextColor.DARK_GRAY));
             } else {
-                int roll = DiceRoller.rollDice(1, 20);
-                int total = roll + bonus;
-                combatant.setInitiative(total);
+                // The session owns the roll (it applies the armor disadvantage, #209) and hands back
+                // the working to show.
+                CombatSession.InitiativeRoll r = session.rollInitiativeFor(combatant);
                 rollMsg = Component.text("  " + combatant.getDisplayName() + ": ", NamedTextColor.WHITE)
-                        .append(Component.text("[" + roll + "]", NamedTextColor.AQUA))
-                        .append(Component.text(" " + bonusStr + " (DEX)", NamedTextColor.GRAY))
-                        .append(Component.text(" = ", NamedTextColor.WHITE))
-                        .append(Component.text(String.valueOf(total), NamedTextColor.GREEN, TextDecoration.BOLD));
+                        .append(Component.text(r.show(), NamedTextColor.GRAY));
             }
             dm.sendMessage(rollMsg);
         }
@@ -2449,14 +2444,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         int damage;
         if (rollStr != null) {
             int rolled;
+            String diceShown = null;
             if (rollStr.toLowerCase().contains("d")) {
-                // A dice formula (e.g. 1d12) — the game rolls the weapon die for you.
-                OptionalInt r = DiceRoller.parseDiceRoll(rollStr);
-                if (r.isEmpty()) {
+                // A dice formula (e.g. 1d12) — the game rolls the weapon die for you, and shows it.
+                DiceRoller.Rolled r = DiceRoller.rollOrFlat(rollStr);
+                if (r == null) {
                     dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED));
                     return;
                 }
-                rolled = r.getAsInt();
+                rolled = r.total();
+                diceShown = r.display();
             } else {
                 // A plain number — what you physically rolled on the weapon die.
                 try {
@@ -2469,12 +2466,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Either way, add the pending bonus the attack promised (+STR, +Rage, …) — the prompt
             // says "the game adds +N", so it must, whether the die was typed or auto-rolled (#168).
             damage = rolled + pendingBonus;
+            if (diceShown != null) dm.sendMessage(Component.text(diceShown, NamedTextColor.GRAY));
             if (pendingBonus != 0) {
                 String bonusShow = !pendingLabel.isEmpty() ? " " + pendingLabel
                         : (pendingBonus > 0 ? " +" + pendingBonus : " " + pendingBonus);
                 dm.sendMessage(Component.text("Damage: " + rolled + bonusShow + " = " + damage, NamedTextColor.GRAY));
-            } else {
-                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + damage, NamedTextColor.GRAY));
             }
         } else if (total != null) {
             damage = total;
@@ -2522,13 +2518,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         int heal;
         if (rollStr != null) {
             if (rollStr.toLowerCase().contains("d")) {
-                OptionalInt rolled = DiceRoller.parseDiceRoll(rollStr);
-                if (rolled.isEmpty()) {
+                DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(rollStr);
+                if (rolled == null) {
                     dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED));
                     return;
                 }
-                heal = rolled.getAsInt();
-                dm.sendMessage(Component.text("Rolled " + rollStr + " → " + heal, NamedTextColor.GRAY));
+                heal = rolled.total();
+                dm.sendMessage(Component.text(rolled.display(), NamedTextColor.GRAY));
             } else {
                 try {
                     heal = Integer.parseInt(rollStr.trim());

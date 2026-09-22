@@ -6,6 +6,7 @@ import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.dm.DMManager;
+import io.papermc.jkvttplugin.util.NameUtil;
 import io.papermc.jkvttplugin.ui.menu.CharacterCreationMenu;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -334,7 +335,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String target = words.length >= 2 ? stripQuotes(String.join(" ", Arrays.copyOfRange(words, 1, words.length))) : null;
+        String target = words.length >= 2 ? NameUtil.joinArgs(words, 1) : null;
 
         // Concentration: a new concentration spell drops the old one, same as in combat.
         if (spell.isConcentration() && sheet.isConcentrating()) {
@@ -387,11 +388,6 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             if (nearby.getLocation().distanceSquared(caster.getLocation()) > 900) continue; // 30 blocks
             if (told.add(nearby.getUniqueId())) nearby.sendMessage(message);
         }
-    }
-
-    private static String stripQuotes(String s) {
-        if (s != null && s.length() >= 2 && s.startsWith("\"") && s.endsWith("\"")) return s.substring(1, s.length() - 1);
-        return s;
     }
 
     /** {@code /character reply <message…>} — free whisper back to the last Message/Sending you got (#151). */

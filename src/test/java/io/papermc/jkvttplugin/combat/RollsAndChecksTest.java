@@ -42,6 +42,27 @@ class RollsAndChecksTest {
         assertTrue(DiceRoller.roll("1d4-1").orElseThrow().breakdown().contains(" -1 = "));
     }
 
+    /** Whenever the GAME rolls, it shows the dice: one helper, so no caller can print a bare total. */
+    @Test
+    void aGameRollShowsItsDice() {
+        DiceRoller.Rolled r = DiceRoller.rollOrFlat("2d8+1");
+        assertNotNull(r);
+        assertEquals(2, r.dice().size());
+        assertTrue(r.display().startsWith("🎲 2d8+1: ["), r.display());
+        assertTrue(r.display().endsWith("= " + r.total()));
+    }
+
+    /** A flat amount is allowed and shows as itself, so callers don't need a second path for "5". */
+    @Test
+    void aFlatAmountIsItsOwnRoll() {
+        DiceRoller.Rolled flat = DiceRoller.rollOrFlat("5");
+        assertNotNull(flat);
+        assertEquals(5, flat.total());
+        assertEquals("🎲 5", flat.display());
+        assertNull(DiceRoller.rollOrFlat("banana"));
+        assertNull(DiceRoller.rollOrFlat(null));
+    }
+
     @Test
     void aDieWithNoSidesIsMalformedNotACrash() {
         assertTrue(DiceRoller.roll("1d0").isEmpty());

@@ -68,7 +68,7 @@ public class PossessionManager {
             return;
         }
         if (instance.isDead()) {
-            dm.sendMessage(Component.text(instance.getDisplayName() + " is dead — revive it first (/dmentity revive).", NamedTextColor.RED));
+            dm.sendMessage(Component.text(instance.getDisplayName() + " is dead — revive it first (/dm entity revive).", NamedTextColor.RED));
             return;
         }
         if (isPossessing(dm.getUniqueId())) endPossession(dm, false); // switch targets cleanly

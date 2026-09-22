@@ -38,11 +38,40 @@ public class DiceRoller {
 
     /** A rolled expression with every die kept, so the table can see the work, not just the total. */
     public record Rolled(String expression, java.util.List<Integer> dice, int modifier, int multiplier, int total) {
-        /** "[4, 3] +3 = 10", or "([4, 3] +3) ×2 = 20" with a multiplier. */
+        /** "[4, 3] +3 = 10", or "([4, 3] +3) ×2 = 20" with a multiplier. A flat amount is just itself. */
         public String breakdown() {
+            if (dice.isEmpty()) return String.valueOf(total);
             String sum = dice.toString() + (modifier > 0 ? " +" + modifier : modifier < 0 ? " " + modifier : "");
             if (multiplier != 1) sum = "(" + sum + ") ×" + multiplier;
             return sum + " = " + total;
+        }
+
+        /**
+         * The line to show whenever <b>the game</b> rolled: "🎲 2d6+3: [4, 3] +3 = 10".
+         *
+         * <p>Use this everywhere the game rolls dice on someone's behalf. A bare total ("you take 7")
+         * asks the table to trust the computer; the dice are what a physical table would see on the
+         * felt. (A d20 action goes through {@link io.papermc.jkvttplugin.combat.RollService} instead,
+         * which builds the same kind of breakdown with the modifiers named.)
+         */
+        public String display() {
+            return dice.isEmpty() ? "🎲 " + total : "🎲 " + expression + ": " + breakdown();
+        }
+    }
+
+    /**
+     * Roll a dice expression, or read a flat number ("5") as itself. Null if it's neither, so a
+     * caller can report bad input instead of silently rolling nothing.
+     */
+    public static Rolled rollOrFlat(String input) {
+        if (input == null || input.isBlank()) return null;
+        java.util.Optional<Rolled> rolled = roll(input);
+        if (rolled.isPresent()) return rolled.get();
+        try {
+            int flat = Integer.parseInt(input.trim());
+            return new Rolled(input.trim(), java.util.List.of(), 0, 1, flat);
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 

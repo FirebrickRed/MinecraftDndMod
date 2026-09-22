@@ -69,7 +69,7 @@ public class HpCommand implements CommandExecutor, TabCompleter {
             usage(sender);
             return true;
         }
-        Integer amount = parseAmount(args[2]);
+        Integer amount = parseAmount(sender, args[2]);
         if (amount == null) {
             sender.sendMessage(Component.text("'" + args[2] + "' isn't a number or dice (try 7 or 2d10).", NamedTextColor.RED));
             return true;
@@ -96,11 +96,13 @@ public class HpCommand implements CommandExecutor, TabCompleter {
     }
 
     /** An amount is a flat number or a dice expression the DM wants rolled ("2d10", "1d6+2"). */
-    private static Integer parseAmount(String raw) {
+    private static Integer parseAmount(CommandSender sender, String raw) {
         String token = raw.trim();
         if (token.toLowerCase(Locale.ROOT).contains("d")) {
-            OptionalInt rolled = DiceRoller.parseDiceRoll(token);
-            return rolled.isPresent() ? Math.max(0, rolled.getAsInt()) : null;
+            DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(token);
+            if (rolled == null) return null;
+            sender.sendMessage(Component.text(rolled.display(), NamedTextColor.GRAY)); // show the dice we rolled
+            return Math.max(0, rolled.total());
         }
         try {
             return Math.max(0, Integer.parseInt(token));

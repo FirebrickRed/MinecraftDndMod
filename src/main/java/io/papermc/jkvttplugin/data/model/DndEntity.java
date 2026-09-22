@@ -148,7 +148,7 @@ public class DndEntity {
 
     /**
      * Optional shop configuration for merchant entities.
-     * If present, players can trade with this entity via /dmentity trade
+     * If present, players can trade with this entity via /dm entity trade
      */
     private ShopConfig shop;
 

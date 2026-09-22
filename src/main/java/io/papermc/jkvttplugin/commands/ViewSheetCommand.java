@@ -5,6 +5,7 @@ import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.dm.DMManager;
+import io.papermc.jkvttplugin.util.NameUtil;
 import io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
@@ -54,7 +55,7 @@ public class ViewSheetCommand implements CommandExecutor, TabCompleter {
         // NPC ally or a traitor in the party mustn't be readable by the players (a DM can still
         // share what a successful check would reveal).
         if (!DMManager.isDM(sender)) {
-            String wanted = stripQuotes(String.join(" ", args));
+            String wanted = NameUtil.joinArgs(args, 0);
             List<CharacterSheet> owned = CharacterSheetManager.getPlayerCharacters(player.getUniqueId());
             if (owned != null) {
                 for (CharacterSheet own : owned) {
@@ -93,18 +94,11 @@ public class ViewSheetCommand implements CommandExecutor, TabCompleter {
         }
 
         // /viewsheet <characterName> (supports spaces via quotes)
-        String name = stripQuotes(String.join(" ", args));
+        String name = NameUtil.joinArgs(args, 0);
         CharacterSheet sheet = CharacterResolver.resolveOrError(player, name);
         if (sheet == null) return true;
         ViewCharacterSheetMenu.open(player, sheet.getCharacterId());
         return true;
-    }
-
-    private String stripQuotes(String input) {
-        if (input.length() >= 2 && input.startsWith("\"") && input.endsWith("\"")) {
-            return input.substring(1, input.length() - 1);
-        }
-        return input;
     }
 
     @Override

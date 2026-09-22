@@ -5,28 +5,15 @@ build if one fails — then copy `build/libs/*.jar` to the server's
 `plugins/`, restart or reload). Load the resource pack so icon checks are meaningful.
 
 Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second account or `/deop`.
-
-## Resource pack / icons
-- [X] Server hands the pack on join (or load it client-side). Accept the prompt.
-- [X] `/character create` → **Class** tab shows custom class art (incl. barbarian).
-- [X] **Abilities** tab: the six tiles show `str_icon … cha_icon`; stack count = the score.
-- [X] Plasmoid or half-elf → racial bonus row shows the ability icons; the **assigned** one shimmers (enchant glint).
-- [X] Race / Background tabs stay on vanilla items (no purple boxes) — expected until those textures exist.
-- [X] Selected race/class tile shimmers (enchant glint) without hovering.
+Checked-off rows are deleted once they pass — git history has them, and anything that could break
+again belongs in the automated tests (`src/test/java`), not in a stale checkbox here.
 
 ## /character (player)
-- [X] `/character` and `/char` → usage list; Tab cycles create/view/list/close/rest (+give if DM).
-      (`close` has since been removed — saving is automatic — so it should no longer be listed.)
 - [ ] `/character create` → creation menu opens.
-- [X] Finish a character → `/character list` shows its name.
-- [X] `/character view` opens your sheet; `/character view <name>` opens that one.
-      Now only if it's **yours** (a DM can open anyone's) — see "Sheets are private" below.
 - [ ] `/character rest short` and `/character rest long` recover as before.
-- [X] Right-click the **Character Sheet** paper → opens the sheet.
 - [ ] Press **Q** with the sheet or the Create Character paper in hand → it drops; nothing opens.
 
 ## /character (DM forms)
-- [X] `/character create <onlinePlayer>` → creation opens **for that player**.
 - [ ] `/character give <player> <name>` → player receives the sheet paper.
 - [ ] `/character give <brother> <your character>` → you get **[Give <name> to <brother>]**; click it → the
       character is now theirs (`/character list` as them shows it, their paper opens it), your paper for it is
@@ -35,21 +22,17 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] As non-DM: `/character create Bob` and `/character list all` are refused; `/character list` still lists your own.
 
 ## /roll
-- [X] `/roll 2d6+3` works. `/rolldice 1d20` still works (deprecated alias).
 - [ ] `/roll 2d6+3` shows each die: `🎲 2d6+3: [4, 3] +3 = 10`. `/roll 1d0` → "Invalid dice format", no error.
 
 ## /dm
-- [X] `/dm` → help shows role verbs + DM tools.
-- [X] `/dm list`; `/dm give <player> <item_id> 1`; `/dm check <player> save dexterity`.
 - [ ] `/dm rest <character> long`; `/dm resource restore <character> all`; `/dm resource consume <character> <res> 1`.
-- [X] `/dm reload` reloads YAML.
 - [ ] **Death (#101):** in combat, down a player and fail three death saves → "has DIED", turn skipped.
       `/combat finished`, start a new fight with them → still `[DEAD]`, still skipped. `/dm hp <c> heal 10`,
       `/character rest long` and `/dm rest <c> long` all refuse. Character sheet HP slot shows a skull "DEAD".
       Restart the server → still dead. `/dm revive <c>` → back at 1 HP; mid-fight their turns return.
 - [ ] Massive damage: `/dm hp <c> damage <current HP + max HP>` → dies outright, no saves.
 - [ ] Dying carries over: fail one save, `/combat finished`, new fight → tally still shows 1 failure.
-- [ ] `/dmentity revive <creature>` mid-fight → the creature's turns come back.
+- [ ] `/dm entity revive <creature>` mid-fight → the creature's turns come back.
 - [ ] **The body:** a dead character leaves a tipped-over head named "☠ <name>" where they fell. Right-click it
       as another player → "The body of …" + [Ask for a check] → DM gets a [call a check] ping (medicine /
       investigation / religion suggested). As DM → also [Revive] and [Remove body]. Can't punch it or take the head.
@@ -71,8 +54,6 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] **Temp HP & Relentless Endurance survive a restart:** `/dm hp <c> temp 7`, restart → still 7 temp HP.
       Half-orc drops to 0 → held at 1 by Relentless; restart; drop them again → this time they fall.
 - [ ] Tab: `/dm ` shows add/remove/list + give/check/rest/resource/reload; `/dm resource ` shows restore/consume.
-- [X] As non-DM: `/dm give`, `/dm rest`, `/dm reload` refused.
-- [X] As non-op DM (added via `/dm add`): DM tools work, but `/dm add`/`remove` refused (op-only).
 
 ## Equipment items (starting gear)
 - [ ] Create a character; the granted items (Rapier, Dagger, Leather Armor, Flute, Entertainer's Pack, Dice Set) show **real vanilla items**, NOT purple/black boxes.
@@ -91,7 +72,6 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] **Archaeologist** → a *Cartographer's or Navigator's Tools* pick appears under Tools (it used to be silently dropped).
 - [ ] **Noble** → a *Gaming Set Proficiency* pick (4 sets) under **Tools**, not a dice item under Equipment.
 - [ ] **Acolyte** → Prayer Book / Prayer Wheel pick. **Charlatan** → Tools of the Con pick, labelled with real names ("Ten Stoppered Bottles").
-- [X] **Wood elf + Sailor** → a *Replace duplicate Perception (Elf + Sailor)* skill pick; Perception shows as "Already known" in every skill list.
 - [ ] **Rock gnome + Artificer** → *Replace duplicate Tinker's Tools* pick. The artificer's artisan's-tool pick and the archaeologist's tool pick (if taken) are **separate sections**, not one merged "choose 3".
 - [ ] Pick the same tool in two tool sections → the second shows light green "Selected in another section"; clicking moves it.
 - [ ] **High elf** still gets its *Wizard Cantrip* pick; its extra language + a background language merge into one "choose 2".
@@ -103,7 +83,7 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] **Haunted One** → skill pick offers only Arcana / Investigation / Religion / Survival (choose 2); language pick offers only the 8 exotic languages.
 - [ ] **Druid + Hermit** → *Replace duplicate Herbalism Kit* pick.
 - [ ] **Dwarf + Guild Artisan** → pick Smith's Tools in the dwarf's tool section, then click it in the Guild Artisan section → it **moves** (light green "Selected in another section") instead of taking it twice.
-- [ ] **Contested vs an NPC**: `/dmentity spawn balin_blacksmith`, then `/dm check <player> insight vs Balin deception` → the player gets their roll prompt, you get **[Roll it] / [I rolled…]** labelled "+1 CHA". Winner comes back with [Share]. Also try it inline with `autoRoll`, and a guard's Perception (`+2 Perception`, listed skill).
+- [ ] **Contested vs an NPC**: `/dm entity spawn balin_blacksmith`, then `/dm check <player> insight vs Balin deception` → the player gets their roll prompt, you get **[Roll it] / [I rolled…]** labelled "+1 CHA". Winner comes back with [Share]. Also try it inline with `autoRoll`, and a guard's Perception (`+2 Perception`, listed skill).
 - [ ] **Rogue expertise**: rogue + Sage → the Expertise pick offers only skills you're proficient in (plus Thieves' Tools). Pick Stealth, then un-pick Stealth from class skills → finishing says "Expertise (not proficient in Stealth)". Sheet skill roll for Stealth shows `+4[Expertise]`.
 - [ ] **Thieves' tools on a lock**: `/dm object lock …` a chest, player clicks [Open it] → your ping has **[Thieves' tools]** and a status line ("proficient (expertise), carrying them"). Click it, add a DC → the roll shows `+4[Thieves' Tools ×2]` for that rogue, just `+DEX` for a non-proficient character.
 - [ ] **Thieves' tools break on a fail** (default `objects.thieves_tools_break: on_fail`): give a player 2 sets, call `tool thieves_tools dc 25` and fail → one set gone from the inventory, player and DMs told. Pass a DC 5 → nothing breaks. No DC → never breaks. Try `always` and `never` in config.yml (restart).
@@ -111,8 +91,6 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] **Combat survives a restart (#165)**: start a fight with a player and a kobold, roll initiative, get into round 2, give someone a condition, drop a player to 0. `/stop`, start the server. Check `plugins/jkvttplugin/CombatSessions/` has a file before restarting. On boot the console says "Restored combat … round 2, X's turn". Rejoin: the DM gets "Combat is still on: round 2, X's turn"; players see the initiative scoreboard again; the downed player is prone again; the condition is still listed. The current combatant can act (attack → damage works, no errors). A barbarian who was raging still is (sheet shows it, slashing damage is halved, red tint back). `/combat finished` → the file is gone.
 - [ ] **Sheet adv/dis in physical-dice mode**: click a skill → "Roll with advantage" → the filled command has `adv` in it and the result shows two d20s (this used to roll normal silently).
 - [ ] **Keys (#200)**: look at a chest, `/dm object key brass_key` → "The Brass Key opens the Chest (locked it)". A player without the key clicks [Open it] → locked, and your ping adds "Opens with: Brass Key — they aren't carrying it". `/dm give <player> brass_key`, they click [Open it] → it opens, you and anyone nearby see "X unlocks the chest with the Brass Key", they keep the key, and the chest opens normally for everyone after. Repeat with `key iron_key single-use` → the key is gone from their inventory. A trapped chest with a key still springs its trap first. `key` on a sealed block refuses.
-- [X] **Magic weapons (#188)**: `/dm give <player> longsword_plus_2` → a blue "Longsword +2" that shimmers, tooltip says "Rare magic weapon" and "+2 to attack and damage rolls". Attack with it → the to-hit breakdown shows `+2[Longsword +2]` and the damage prompt `1d8+(STR+2)`. A starting-kit "choose any martial weapon" pick does NOT list magic weapons. `vicious_longsword`: on a natural 20 the damage gets `+7[Vicious Longsword]` on top of the doubled dice; on a normal hit, nothing extra.
-- [X] `/dm check <player> tool smiths_tools` with no ability → asks which ability; `… tool smiths_tools int dc 12` works.
 - [ ] **Tiefling** → Thaumaturgy is castable (it used to count as a 0-use leveled spell). Same for forest gnome's Minor Illusion.
 
 ## Playtest fixes (2026-09-22)
@@ -136,13 +114,24 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
       the name in quotes). `/dm check <player> insight vs Balin deception` still works.
 - [ ] **`/dm list` with every DM offline** → lists the offline ops as `[OP] name (Offline)` instead of "No DMs".
 
+## Entities move under /dm (2026-09-22)
+- [ ] `/dmentity` → "Unknown command". `/dm ` + Tab no longer autocompletes into it.
+- [ ] `/dm entity spawn balin_blacksmith`, `/dm entity list`, `/dm entity info Balin`, `/dm entity trade Balin`,
+      `/dm entity shop view Balin`, `/dm entity remove Balin` all work as before, with Tab at each step.
+- [ ] `/dm entity spawn town_guard "Marcus the Brave" ~ ~ ~` → named Marcus the Brave, spawned at you.
+- [ ] `/dm entity rename "Marcus the Brave" "Marcus the Bold"` → renamed; an unquoted two-word rename still
+      refuses rather than guessing.
+- [ ] Buttons the game fills in (loot, possession, shop prompts) all say `/dm entity …` and work when clicked.
+
+## Every game roll shows its dice (2026-09-22)
+- [ ] `/combat damage <t> autoRoll 2d6` → "🎲 2d6: [4, 3] = 7" before the damage line; `/combat heal <t> autoRoll 2d4` same.
+- [ ] `/dm hp <who> damage 2d10` → shows the dice. A flat `/dm hp <who> damage 7` doesn't pretend to roll.
+- [ ] Drink a healing potion with auto-roll on → the dice show. Cure Wounds cast with auto-roll → the dice show.
+- [ ] `/combat rollforinitiative` → each line shows `[d20] +N (DEX) = total`; a character in unproficient
+      armor shows `[disadvantage: a/b]` (this path used to skip the armor rule entirely).
+
 ## Save location
 - [ ] New characters save under **`plugins/jkvttplugin/Saved/Characters/`**.
-- [X] Shops save under **`plugins/jkvttplugin/Saved/Shops/`**.
-- [X] No stray `<server-root>/DMContent/` folder is recreated.
-
-## Old commands removed (should NOT exist)
-- [X] `/createcharacter`, `/viewsheet`, `/closesheet`, `/givesheet`, `/shortrest`, `/longrest`, `/rolldice`, `/dmgive`, `/check`, `/rest`, `/restoreresource`, `/consumeresource`, `/reloadyaml` — each should be "Unknown command". Only the five roots (`/character`, `/roll`, `/combat`, `/dmentity`, `/dm`) exist.
 
 ## Known deferred (not in this build)
 - Character-sheet inventory redesign (waiting until more content lands).
@@ -163,13 +152,13 @@ we should also have a path where we can remove character creation paper from a p
 I'm not quite sure what /close is supposed to do it says it ran but it doesn't look like anything happens
   → it only saved, and saving is automatic now; removed.
 also not sure how we want to handle one player having 2 character sheets. like the player get's both sets of equipment and not sure which goes to which. 
-  → open question: needs per-character inventories (see the chat).
+  → ticketed: #213 (per-character inventories).
 /character list all only works for dm, as a non dm /character list sends an error. 
   → couldn't reproduce from the code; what did the error say?
 /roll 2d6+3 works but can we have the message show not just the end result of 10 (what I got) Can we show what each dice rolled then a +3 and then a = 10
   → fixed, see "/roll".
 do we want to move /dmentity to /dm entity? give me your thoughts on this, I only get annoyed because I go to type /dm and it wants to finish autofilling it to /dmentity
-  → open question (see the chat).
+  → done: /dmentity is gone, entities live under /dm entity.
 /dm give autofills item and player on the next input, maybe we make player neccissary next? then item
   → fixed, player is required and first.
 can we also word wrap the yellow text on magical sword. 

@@ -15,12 +15,7 @@ commands:
     usage: /combat <start|add|remove|nextturn|endturn|finished|...>
     # Authorization handled in-command: DMs get full control, players get their
     # own-turn subcommands (see PLAYER_ALLOWED in CombatCommand).
-  dmentity:
-    description: (DM) Spawn and manage entities in the world.
-    usage: /dmentity <spawn|list|remove|teleport|info|trade|spawngroup|shop|cleanup>
-    # Authorization handled in-command via DMManager.isDM (op or /dm add), so
-    # non-op DMs work. A plugin.yml permission would default to op-only and block them.
   dm:
     description: DM role management and DM admin tools.
-    usage: /dm <add|remove|list|give|check|object|rest|resource|reload|mode>
+    usage: /dm <add|remove|list|give|check|hp|revive|entity|object|rest|resource|reload|mode>
     permission-message: Only server operators can manage DMs.

@@ -40,9 +40,10 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
     private final HpCommand hpExec = new HpCommand();
     private final ReviveCommand reviveExec = new ReviveCommand();
+    private final io.papermc.jkvttplugin.commands.DmEntityCommand entityExec = new io.papermc.jkvttplugin.commands.DmEntityCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "hp", "revive", "object", "lootprompt", "rest", "resource", "reload", "mode", "animalreply");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "hp", "revive", "entity", "object", "lootprompt", "rest", "resource", "reload", "mode", "animalreply");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -61,6 +62,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "check", "promptcheck" -> delegateDm(sender, command, label, args, checkExec);
             case "hp" -> delegateDm(sender, command, label, args, hpExec);
             case "revive" -> delegateDm(sender, command, label, args, reviveExec);
+            case "entity" -> delegateDm(sender, command, label, args, entityExec);
             case "object" -> delegateDm(sender, command, label, args, objectExec);
             case "tp", "goto" -> handleTp(sender, args);
             case "rest" -> delegateDm(sender, command, label, args, restExec);
@@ -297,6 +299,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("/dm hp <character|creature> <damage|heal|temp|set|full> [amount]", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm revive <character|creature> [hp]", NamedTextColor.AQUA)
                     .append(Component.text("  - the only way back from death", NamedTextColor.GRAY)));
+            sender.sendMessage(Component.text("/dm entity <spawn|list|remove|rename|revive|teleport|info|trade|shop|cleanup>", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm rest <character> <short|long>", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm resource <restore|consume> <character> ...", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm reload", NamedTextColor.AQUA)
@@ -351,6 +354,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
                 case "check", "promptcheck" -> { return checkExec.onTabComplete(sender, command, label, sub); }
                 case "hp" -> { return hpExec.onTabComplete(sender, command, label, sub); }
                 case "revive" -> { return reviveExec.onTabComplete(sender, command, label, sub); }
+                case "entity" -> { return entityExec.onTabComplete(sender, command, label, sub); }
                 case "object" -> { return objectExec.onTabComplete(sender, command, label, sub); }
                 case "rest" -> { return restExec.onTabComplete(sender, command, label, sub); }
                 case "resource" -> {

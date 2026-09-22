@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.character.CharacterResolver;
 import io.papermc.jkvttplugin.dm.DMManager;
+import io.papermc.jkvttplugin.util.NameUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.Bukkit;
@@ -42,7 +43,7 @@ public class GiveSheetCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String name = stripQuotes(String.join(" ", java.util.Arrays.copyOfRange(args, 1, args.length)));
+        String name = NameUtil.joinArgs(args, 1);
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
         if (sheet == null) return true;
 
@@ -103,13 +104,6 @@ public class GiveSheetCommand implements CommandExecutor, TabCompleter {
 
         sender.sendMessage(Component.text("Gave " + sheet.getCharacterName() + "'s sheet to " + target.getName() + ".", NamedTextColor.GREEN));
         target.sendMessage(Component.text("You received " + sheet.getCharacterName() + "'s character sheet.", NamedTextColor.GREEN));
-    }
-
-    private String stripQuotes(String input) {
-        if (input.length() >= 2 && input.startsWith("\"") && input.endsWith("\"")) {
-            return input.substring(1, input.length() - 1);
-        }
-        return input;
     }
 
     @Override

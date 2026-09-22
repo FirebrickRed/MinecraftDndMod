@@ -110,12 +110,13 @@ public class DrinkCommand implements CommandExecutor {
         if (input.providedTotal() != null) return Math.max(0, input.providedTotal());
         if (input.providedRoll() != null) return Math.max(0, input.providedRoll() + flatBonus(dice));
         if (input.forceAuto() || PluginConfig.isAutoRoll()) {
-            OptionalInt rolled = DiceRoller.parseDiceRoll(dice);
-            if (rolled.isEmpty()) {
+            DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(dice);
+            if (rolled == null) {
                 player.sendMessage(Component.text(item.getName() + " has an unreadable healing value ('" + dice + "').", NamedTextColor.RED));
                 return null;
             }
-            return Math.max(0, rolled.getAsInt());
+            player.sendMessage(Component.text(rolled.display(), NamedTextColor.GRAY)); // the game rolled it: show the dice
+            return Math.max(0, rolled.total());
         }
         promptRoll(player, item);
         return null;
