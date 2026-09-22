@@ -245,7 +245,6 @@ attacks, class resources, healing, temp HP, death saves.
 3. **Return to Balin.** Turn in the blade → he pays up. Base reward `/dm give <player> gold_piece 50`;
    if a player read him in Act I and talked it up, add a second stack (a single `_piece` stack caps at
    64, so hand out large sums in multiple gives, or in platinum). Sell dungeon loot back at his shop.
-   `/character close` to save & close sheets.
 
 **Before you shut the server down.** Combat state, entity HP, and corpses now persist and restore on
 restart (#89/#105/#31). Character HP saves on every change, but the *in-progress turn* resets and

@@ -136,11 +136,12 @@ public class DMManager {
             }
         }
 
-        // Add OPs who aren't already in the DM list
-        for (Player op : Bukkit.getOnlinePlayers()) {
-            if (op.isOp() && !dmPlayers.contains(op.getUniqueId())) {
-                dmList.add("[OP] " + op.getName() + " (Online)");
-            }
+        // Add OPs who aren't already in the DM list, online or not (an op is a DM even while away,
+        // so leaving offline ones out made /dm list say "no DMs" whenever they'd logged off).
+        for (org.bukkit.OfflinePlayer op : Bukkit.getOperators()) {
+            if (dmPlayers.contains(op.getUniqueId())) continue;
+            String name = op.getName() != null ? op.getName() : "Unknown";
+            dmList.add("[OP] " + name + (op.isOnline() ? " (Online)" : " (Offline)"));
         }
 
         return dmList;

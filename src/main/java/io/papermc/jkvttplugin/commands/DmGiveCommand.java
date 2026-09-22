@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  *
  * Usage:
  * /dm give <player> <item_id> [amount]
- * /dm give <item_id> [amount] - Give to self
+ * (The player is required and always first — use your own name to give yourself something.)
  */
 public class DmGiveCommand implements CommandExecutor, TabCompleter {
 
@@ -44,51 +44,27 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Parse arguments: /dm give <player> <item_id> [amount] OR /dm give <item_id> [amount]
-        Player targetPlayer;
-        String itemId;
+        // /dm give <player> <item_id> [amount]. The player always comes first (yourself included), so
+        // tab completion is players, then items, then amounts, never a mixed list.
+        if (args.length < 2) {
+            sendHelp(sender);
+            return true;
+        }
+        Player targetPlayer = Bukkit.getPlayerExact(args[0]);
+        if (targetPlayer == null) {
+            sender.sendMessage(Component.text("Player not online: " + args[0] + " (the player comes first: /dm give <player> <item_id> [amount])",
+                    NamedTextColor.RED));
+            return true;
+        }
+        String itemId = args[1];
         int amount = 1;
-
-        if (args.length >= 2) {
-            // Check if first arg is a player name
-            Player possiblePlayer = Bukkit.getPlayer(args[0]);
-            if (possiblePlayer != null) {
-                // Format: /dm give <player> <item_id> [amount]
-                targetPlayer = possiblePlayer;
-                itemId = args[1];
-                if (args.length >= 3) {
-                    try {
-                        amount = Integer.parseInt(args[2]);
-                    } catch (NumberFormatException e) {
-                        sender.sendMessage(Component.text("Invalid amount: " + args[2], NamedTextColor.RED));
-                        return true;
-                    }
-                }
-            } else {
-                // Format: /dm give <item_id> [amount] (give to self)
-                if (!(sender instanceof Player)) {
-                    sender.sendMessage(Component.text("Console must specify a player name.", NamedTextColor.RED));
-                    return true;
-                }
-                targetPlayer = (Player) sender;
-                itemId = args[0];
-                if (args.length >= 2) {
-                    try {
-                        amount = Integer.parseInt(args[1]);
-                    } catch (NumberFormatException e) {
-                        sender.sendMessage(Component.text("Invalid amount: " + args[1], NamedTextColor.RED));
-                        return true;
-                    }
-                }
-            }
-        } else {
-            // Format: /dm give <item_id> (give 1 to self)
-            if (!(sender instanceof Player)) {
-                sender.sendMessage(Component.text("Usage: /dm give <player> <item_id> [amount]", NamedTextColor.RED));
+        if (args.length >= 3) {
+            try {
+                amount = Integer.parseInt(args[2]);
+            } catch (NumberFormatException e) {
+                sender.sendMessage(Component.text("Invalid amount: " + args[2], NamedTextColor.RED));
                 return true;
             }
-            targetPlayer = (Player) sender;
-            itemId = args[0];
         }
 
         // Validate amount
@@ -106,8 +82,10 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // Give item to player
-        targetPlayer.getInventory().addItem(itemStack);
+        // Give item to player; a full inventory drops the rest at their feet rather than losing it.
+        for (ItemStack left : targetPlayer.getInventory().addItem(itemStack).values()) {
+            targetPlayer.getWorld().dropItemNaturally(targetPlayer.getLocation(), left);
+        }
 
         // Success message
         Component itemName = itemStack.displayName();
@@ -141,12 +119,10 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("=== DM Give Command ===", NamedTextColor.GOLD));
         sender.sendMessage(Component.text("/dm give <player> <item_id> [amount]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Give D&D item to a player", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("/dm give <item_id> [amount]", NamedTextColor.YELLOW));
-        sender.sendMessage(Component.text("  - Give item to yourself", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("  - To yourself: use your own name", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("Examples:", NamedTextColor.GOLD));
-        sender.sendMessage(Component.text("  /dm give gold_piece 64", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("  /dm give charlie longsword 1", NamedTextColor.GRAY));
-        sender.sendMessage(Component.text("  /dm give silver_piece 100", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("  /dm give charlie longsword", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("  /dm give charlie gold_piece 64", NamedTextColor.GRAY));
     }
 
     @Override
@@ -156,35 +132,16 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
         }
 
         if (args.length == 1) {
-            // First arg: player names OR item IDs
-            List<String> suggestions = new ArrayList<>();
-
-            // Add online player names
-            suggestions.addAll(Bukkit.getOnlinePlayers().stream()
+            return Bukkit.getOnlinePlayers().stream()
                     .map(Player::getName)
                     .filter(name -> name.toLowerCase().startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList()));
-
-            // Add all item IDs
-            suggestions.addAll(getAllItemIds().stream()
-                    .filter(id -> id.toLowerCase().startsWith(args[0].toLowerCase()))
-                    .collect(Collectors.toList()));
-
-            return suggestions;
+                    .collect(Collectors.toList());
         }
 
         if (args.length == 2) {
-            // Second arg: item IDs (if first was a player) OR amount
-            Player possiblePlayer = Bukkit.getPlayer(args[0]);
-            if (possiblePlayer != null) {
-                // First arg was a player, suggest item IDs
-                return getAllItemIds().stream()
-                        .filter(id -> id.toLowerCase().startsWith(args[1].toLowerCase()))
-                        .collect(Collectors.toList());
-            } else {
-                // First arg was an item, suggest common amounts
-                return List.of("1", "8", "16", "32", "64");
-            }
+            return getAllItemIds().stream()
+                    .filter(id -> id.toLowerCase().startsWith(args[1].toLowerCase()))
+                    .collect(Collectors.toList());
         }
 
         if (args.length == 3) {

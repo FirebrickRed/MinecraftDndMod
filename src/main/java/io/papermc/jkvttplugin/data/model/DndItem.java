@@ -138,7 +138,8 @@ public class DndItem {
 
         if (description != null) {
             lore.add(Component.text(""));
-            lore.add(Component.text(description, NamedTextColor.YELLOW));
+            // Wrapped: one long line runs off the edge of the screen.
+            for (String line : Util.wrapText(description, 50)) lore.add(Component.text(line, NamedTextColor.YELLOW));
         }
 
         // Base: the vanilla Minecraft item (YAML material:), defaulting to paper.

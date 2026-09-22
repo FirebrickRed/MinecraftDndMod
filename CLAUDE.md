@@ -148,11 +148,11 @@ See `docs/authoring-entities.md` → *Merchants* for the YAML.
 
 **4. Test Player Selling (Player to Merchant):**
 ```
-/dm give longsword 1
+/dm give <you> longsword 1
 /dmentity trade Balin
 ```
-(`/dm give <item_id> [amount]` gives to yourself; `/dm give <player> <item_id> [amount]`
-gives to another player. The item type is auto-detected from the id — there is no
+(`/dm give <player> <item_id> [amount]`: the player is required and always first, your own name
+included, so tab completion goes players → items → amounts. The item type is auto-detected from the id — there is no
 `<item_type>` argument. There is no standalone `/dmgive`; it lives under `/dm give`.)
 - Merchant GUI should show reverse trades (player gives item, gets currency)
 - Sell longsword to merchant for gold (50% of buy price)

@@ -16,6 +16,9 @@ public class CharacterSheetItemListener implements Listener {
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getHand() != EquipmentSlot.HAND) return;
+        // Right-click only. Dropping an item (Q) swings the arm, which arrives as a LEFT_CLICK_AIR:
+        // without this, trying to throw the paper away opened character creation instead.
+        if (!event.getAction().isRightClick()) return;
 
         Player player = event.getPlayer();
         ItemStack item = event.getItem();

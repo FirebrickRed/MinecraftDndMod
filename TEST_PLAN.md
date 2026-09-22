@@ -15,28 +15,34 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [X] Selected race/class tile shimmers (enchant glint) without hovering.
 
 ## /character (player)
-- [ ] `/character` and `/char` → usage list; Tab cycles create/view/list/close/rest (+give if DM).
+- [X] `/character` and `/char` → usage list; Tab cycles create/view/list/close/rest (+give if DM).
+      (`close` has since been removed — saving is automatic — so it should no longer be listed.)
 - [ ] `/character create` → creation menu opens.
-- [ ] Finish a character → `/character list` shows its name.
-- [ ] `/character view` opens your sheet; `/character view <name>` opens that one if it's yours (DM: anyone's).
+- [X] Finish a character → `/character list` shows its name.
+- [X] `/character view` opens your sheet; `/character view <name>` opens that one.
+      Now only if it's **yours** (a DM can open anyone's) — see "Sheets are private" below.
 - [ ] `/character rest short` and `/character rest long` recover as before.
-- [ ] `/character close` saves & closes.
-- [ ] Right-click the **Character Sheet** paper → opens the sheet.
+- [X] Right-click the **Character Sheet** paper → opens the sheet.
+- [ ] Press **Q** with the sheet or the Create Character paper in hand → it drops; nothing opens.
 
 ## /character (DM forms)
 - [X] `/character create <onlinePlayer>` → creation opens **for that player**.
 - [ ] `/character give <player> <name>` → player receives the sheet paper.
+- [ ] `/character give <brother> <your character>` → you get **[Give <name> to <brother>]**; click it → the
+      character is now theirs (`/character list` as them shows it, their paper opens it), your paper for it is
+      gone, and you're told the gear stayed with you. Refused while either of you is in a fight. Restart → still theirs.
 - [ ] `/character list all` → every saved character with `(owner)`.
 - [ ] As non-DM: `/character create Bob` and `/character list all` are refused; `/character list` still lists your own.
 
 ## /roll
-- [ ] `/roll 2d6+3` works. `/rolldice 1d20` still works (deprecated alias).
+- [X] `/roll 2d6+3` works. `/rolldice 1d20` still works (deprecated alias).
+- [ ] `/roll 2d6+3` shows each die: `🎲 2d6+3: [4, 3] +3 = 10`. `/roll 1d0` → "Invalid dice format", no error.
 
 ## /dm
-- [ ] `/dm` → help shows role verbs + DM tools.
-- [ ] `/dm list`; `/dm give <player> <item_id> 1`; `/dm check <player> save dexterity`.
+- [X] `/dm` → help shows role verbs + DM tools.
+- [X] `/dm list`; `/dm give <player> <item_id> 1`; `/dm check <player> save dexterity`.
 - [ ] `/dm rest <character> long`; `/dm resource restore <character> all`; `/dm resource consume <character> <res> 1`.
-- [ ] `/dm reload` reloads YAML.
+- [X] `/dm reload` reloads YAML.
 - [ ] **Death (#101):** in combat, down a player and fail three death saves → "has DIED", turn skipped.
       `/combat finished`, start a new fight with them → still `[DEAD]`, still skipped. `/dm hp <c> heal 10`,
       `/character rest long` and `/dm rest <c> long` all refuse. Character sheet HP slot shows a skull "DEAD".
@@ -65,8 +71,8 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] **Temp HP & Relentless Endurance survive a restart:** `/dm hp <c> temp 7`, restart → still 7 temp HP.
       Half-orc drops to 0 → held at 1 by Relentless; restart; drop them again → this time they fall.
 - [ ] Tab: `/dm ` shows add/remove/list + give/check/rest/resource/reload; `/dm resource ` shows restore/consume.
-- [ ] As non-DM: `/dm give`, `/dm rest`, `/dm reload` refused.
-- [ ] As non-op DM (added via `/dm add`): DM tools work, but `/dm add`/`remove` refused (op-only).
+- [X] As non-DM: `/dm give`, `/dm rest`, `/dm reload` refused.
+- [X] As non-op DM (added via `/dm add`): DM tools work, but `/dm add`/`remove` refused (op-only).
 
 ## Equipment items (starting gear)
 - [ ] Create a character; the granted items (Rapier, Dagger, Leather Armor, Flute, Entertainer's Pack, Dice Set) show **real vanilla items**, NOT purple/black boxes.
@@ -85,7 +91,7 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] **Archaeologist** → a *Cartographer's or Navigator's Tools* pick appears under Tools (it used to be silently dropped).
 - [ ] **Noble** → a *Gaming Set Proficiency* pick (4 sets) under **Tools**, not a dice item under Equipment.
 - [ ] **Acolyte** → Prayer Book / Prayer Wheel pick. **Charlatan** → Tools of the Con pick, labelled with real names ("Ten Stoppered Bottles").
-- [ ] **Wood elf + Sailor** → a *Replace duplicate Perception (Elf + Sailor)* skill pick; Perception shows as "Already known" in every skill list.
+- [X] **Wood elf + Sailor** → a *Replace duplicate Perception (Elf + Sailor)* skill pick; Perception shows as "Already known" in every skill list.
 - [ ] **Rock gnome + Artificer** → *Replace duplicate Tinker's Tools* pick. The artificer's artisan's-tool pick and the archaeologist's tool pick (if taken) are **separate sections**, not one merged "choose 3".
 - [ ] Pick the same tool in two tool sections → the second shows light green "Selected in another section"; clicking moves it.
 - [ ] **High elf** still gets its *Wizard Cantrip* pick; its extra language + a background language merge into one "choose 2".
@@ -105,19 +111,76 @@ Legend: run as a **DM** (op) unless noted; for "non-DM" rows use a second accoun
 - [ ] **Combat survives a restart (#165)**: start a fight with a player and a kobold, roll initiative, get into round 2, give someone a condition, drop a player to 0. `/stop`, start the server. Check `plugins/jkvttplugin/CombatSessions/` has a file before restarting. On boot the console says "Restored combat … round 2, X's turn". Rejoin: the DM gets "Combat is still on: round 2, X's turn"; players see the initiative scoreboard again; the downed player is prone again; the condition is still listed. The current combatant can act (attack → damage works, no errors). A barbarian who was raging still is (sheet shows it, slashing damage is halved, red tint back). `/combat finished` → the file is gone.
 - [ ] **Sheet adv/dis in physical-dice mode**: click a skill → "Roll with advantage" → the filled command has `adv` in it and the result shows two d20s (this used to roll normal silently).
 - [ ] **Keys (#200)**: look at a chest, `/dm object key brass_key` → "The Brass Key opens the Chest (locked it)". A player without the key clicks [Open it] → locked, and your ping adds "Opens with: Brass Key — they aren't carrying it". `/dm give <player> brass_key`, they click [Open it] → it opens, you and anyone nearby see "X unlocks the chest with the Brass Key", they keep the key, and the chest opens normally for everyone after. Repeat with `key iron_key single-use` → the key is gone from their inventory. A trapped chest with a key still springs its trap first. `key` on a sealed block refuses.
-- [ ] **Magic weapons (#188)**: `/dm give <player> longsword_plus_2` → a blue "Longsword +2" that shimmers, tooltip says "Rare magic weapon" and "+2 to attack and damage rolls". Attack with it → the to-hit breakdown shows `+2[Longsword +2]` and the damage prompt `1d8+(STR+2)`. A starting-kit "choose any martial weapon" pick does NOT list magic weapons. `vicious_longsword`: on a natural 20 the damage gets `+7[Vicious Longsword]` on top of the doubled dice; on a normal hit, nothing extra.
-- [ ] `/dm check <player> tool smiths_tools` with no ability → asks which ability; `… tool smiths_tools int dc 12` works.
+- [X] **Magic weapons (#188)**: `/dm give <player> longsword_plus_2` → a blue "Longsword +2" that shimmers, tooltip says "Rare magic weapon" and "+2 to attack and damage rolls". Attack with it → the to-hit breakdown shows `+2[Longsword +2]` and the damage prompt `1d8+(STR+2)`. A starting-kit "choose any martial weapon" pick does NOT list magic weapons. `vicious_longsword`: on a natural 20 the damage gets `+7[Vicious Longsword]` on top of the doubled dice; on a normal hit, nothing extra.
+- [X] `/dm check <player> tool smiths_tools` with no ability → asks which ability; `… tool smiths_tools int dc 12` works.
 - [ ] **Tiefling** → Thaumaturgy is castable (it used to count as a 0-use leveled spell). Same for forest gnome's Minor Illusion.
+
+## Playtest fixes (2026-09-22)
+- [ ] **Menus:** in character creation, double-click an option → it toggles **once** (it used to select and
+      straight back off). Double-click / drag a glass pane → nothing ends up on your cursor, not even for a flicker.
+- [ ] **Bows, out of combat:** right-click with a shortbow at open sky → it doesn't draw, no arrow fires, the arrow
+      stays in your inventory, and the action bar says it's for combat **right away**. Same aiming at a block.
+- [ ] **Bows, in combat:** on your turn, left-click toward a distant enemy (not touching them) → you get the
+      filled-in `/combat attack` prompt. (Clicks at open sky used to be ignored.)
+- [ ] **Content items keep their vanilla hands off:** right-click the *Map of Your Home City* → it stays that item
+      (it used to turn into a random filled map). Same for flint and steel (no fire), a potion item (not drunk —
+      healing potions still go through their prompt), a bottle (doesn't fill). Chests still open with one in hand.
+      Armor still equips by right-click; a shield still raises.
+- [ ] **Magic weapon tooltip:** `/dm give <you> longsword_plus_2` → the yellow description wraps across lines
+      instead of running off the screen. Same for long armor/item descriptions.
+- [ ] **`/dm give` order:** Tab after `/dm give ` → players only; next → items; next → amounts. `/dm give longsword`
+      (no player) → usage, not "gave it to you". Full inventory → the rest drops at their feet.
+- [ ] **Checks show the work:** `/dm check <player> save dex` → both you and the player see
+      `d20(16) +3[DEX] +2[Prof] = 21`, not just 21. [Share] shares the same line. Contested checks show it too.
+- [ ] **Contested, multi-word names:** `/dm check <player> insight vs Balin Ironforge deception` works (and with
+      the name in quotes). `/dm check <player> insight vs Balin deception` still works.
+- [ ] **`/dm list` with every DM offline** → lists the offline ops as `[OP] name (Offline)` instead of "No DMs".
 
 ## Save location
 - [ ] New characters save under **`plugins/jkvttplugin/Saved/Characters/`**.
-- [ ] Shops save under **`plugins/jkvttplugin/Saved/Shops/`**.
-- [ ] No stray `<server-root>/DMContent/` folder is recreated.
+- [X] Shops save under **`plugins/jkvttplugin/Saved/Shops/`**.
+- [X] No stray `<server-root>/DMContent/` folder is recreated.
 
 ## Old commands removed (should NOT exist)
-- [ ] `/createcharacter`, `/viewsheet`, `/closesheet`, `/givesheet`, `/shortrest`, `/longrest`, `/rolldice`, `/dmgive`, `/check`, `/rest`, `/restoreresource`, `/consumeresource`, `/reloadyaml` — each should be "Unknown command". Only the five roots (`/character`, `/roll`, `/combat`, `/dmentity`, `/dm`) exist.
+- [X] `/createcharacter`, `/viewsheet`, `/closesheet`, `/givesheet`, `/shortrest`, `/longrest`, `/rolldice`, `/dmgive`, `/check`, `/rest`, `/restoreresource`, `/consumeresource`, `/reloadyaml` — each should be "Unknown command". Only the five roots (`/character`, `/roll`, `/combat`, `/dmentity`, `/dm`) exist.
 
 ## Known deferred (not in this build)
 - Character-sheet inventory redesign (waiting until more content lands).
 - Unify the class-resource nested `icon:` (a sheet-display Material) into the `material:` naming.
 - Give spellcasting foci / packs nicer default `material:` values.
+
+## playtest notes:
+(`→` lines are Claude's status for each note.)
+
+My player when in the character creation menu keeps trying to steal the glass panes, it doesn't let him keep the glass panes but is there a way to prevent them from double clicking the glass panes
+  → fixed, see "Playtest fixes → Menus".
+bows used out of combat still use ammo and the command prompt doesn't show until after the arrow is used. 
+  → fixed (a click at open sky skipped the bow guard), see "Playtest fixes → Bows".
+we should also have a path where we can remove character creation paper from a player if the command get's run accidently.
+  → the real bug was Q opening creation; fixed, see "/character (player)".
+/character give does not work, well at least I can't give my character to my brother. but if I give him one of his character sheet's it works. 
+  → now a DM-confirmed hand-over, see "/character (DM forms)".
+I'm not quite sure what /close is supposed to do it says it ran but it doesn't look like anything happens
+  → it only saved, and saving is automatic now; removed.
+also not sure how we want to handle one player having 2 character sheets. like the player get's both sets of equipment and not sure which goes to which. 
+  → open question: needs per-character inventories (see the chat).
+/character list all only works for dm, as a non dm /character list sends an error. 
+  → couldn't reproduce from the code; what did the error say?
+/roll 2d6+3 works but can we have the message show not just the end result of 10 (what I got) Can we show what each dice rolled then a +3 and then a = 10
+  → fixed, see "/roll".
+do we want to move /dmentity to /dm entity? give me your thoughts on this, I only get annoyed because I go to type /dm and it wants to finish autofilling it to /dmentity
+  → open question (see the chat).
+/dm give autofills item and player on the next input, maybe we make player neccissary next? then item
+  → fixed, player is required and first.
+can we also word wrap the yellow text on magical sword. 
+  → fixed (weapons, armor and items).
+my player right clicked a map and it turned it into a different map
+  → fixed for every content item, see "Content items keep their vanilla hands off".
+I prompted for a dex save and can we show the work of the save not just 21. if that makes sense. 
+  → fixed, see "Checks show the work".
+/dm list for a player when all dm's are offline shows no dm's currently assigned (not sure if this is expected behavior)
+  → fixed, offline ops are listed.
+My dmcontent/saved/characters is empty when there should be characters in there... 
+  → expected: characters moved to plugins/jkvttplugin/Saved/Characters/ (see "Save location"). The old folder is stale.
+this command breaks with spaces in the name, the name being "Balin Ironforge" instead of "balin" /dm check <player> insight vs Balin deception
+  → fixed, see "Contested, multi-word names".

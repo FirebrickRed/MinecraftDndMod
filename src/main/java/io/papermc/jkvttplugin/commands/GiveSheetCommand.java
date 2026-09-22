@@ -19,8 +19,8 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Give a player their character sheet paper item (Issue #47).
- * Useful when a player loses/drops theirs.
+ * Give a player a character sheet paper item (Issue #47): a replacement for their own when they
+ * lose it, or, for someone else's character, a DM-confirmed hand-over of the character itself.
  * Usage: /givesheet &lt;player&gt; &lt;characterName&gt;
  */
 public class GiveSheetCommand implements CommandExecutor, TabCompleter {
@@ -46,6 +46,54 @@ public class GiveSheetCommand implements CommandExecutor, TabCompleter {
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
         if (sheet == null) return true;
 
+        // Someone else's character: this is a hand-over, not a replacement paper. The paper alone
+        // would be useless to them (a sheet only opens for its owner), so it transfers ownership,
+        // after the DM confirms.
+        if (!sheet.getPlayerId().equals(target.getUniqueId())) {
+            confirmTransfer(sender, target, sheet);
+            return true;
+        }
+
+        givePaper(sender, target, sheet);
+        return true;
+    }
+
+    private void confirmTransfer(CommandSender sender, Player target, CharacterSheet sheet) {
+        String owner = Bukkit.getOfflinePlayer(sheet.getPlayerId()).getName();
+        if (io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(sheet.getPlayerId()) != null
+                || io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(target.getUniqueId()) != null) {
+            sender.sendMessage(Component.text("Finish the fight first — " + (owner != null ? owner : "the owner")
+                    + " or " + target.getName() + " is in combat.", NamedTextColor.RED));
+            return;
+        }
+        java.util.UUID oldOwnerId = sheet.getPlayerId();
+        Runnable transfer = () -> {
+            if (!sheet.getPlayerId().equals(oldOwnerId)) return; // already handed on
+            CharacterSheetManager.transferCharacter(sheet, target.getUniqueId());
+            givePaper(sender, target, sheet);
+            sender.sendMessage(Component.text(sheet.getCharacterName() + " now belongs to " + target.getName()
+                    + ". Their gear is still with " + (owner != null ? owner : "the old owner") + " — hand it over in game.",
+                    NamedTextColor.GRAY));
+            Player old = Bukkit.getPlayer(oldOwnerId);
+            if (old != null) old.sendMessage(Component.text(sheet.getCharacterName() + " was handed to "
+                    + target.getName() + " by the DM.", NamedTextColor.GRAY));
+        };
+        if (!(sender instanceof Player)) {
+            transfer.run();
+            return;
+        }
+        var once = net.kyori.adventure.text.event.ClickCallback.Options.builder()
+                .uses(1).lifetime(java.time.Duration.ofMinutes(5)).build();
+        sender.sendMessage(Component.text(sheet.getCharacterName() + " belongs to " + (owner != null ? owner : "someone else")
+                        + ". ", NamedTextColor.YELLOW)
+                .append(Component.text("[Give " + sheet.getCharacterName() + " to " + target.getName() + "]",
+                                NamedTextColor.GOLD, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                        .clickEvent(net.kyori.adventure.text.event.ClickEvent.callback(a -> transfer.run(), once))
+                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(
+                                "Transfers the character: " + target.getName() + " becomes its player.")))));
+    }
+
+    private void givePaper(CommandSender sender, Player target, CharacterSheet sheet) {
         ItemStack item = CharacterSheetManager.createCharacterSheetItem(sheet);
         HashMap<Integer, ItemStack> overflow = target.getInventory().addItem(item);
         if (!overflow.isEmpty()) {
@@ -55,7 +103,6 @@ public class GiveSheetCommand implements CommandExecutor, TabCompleter {
 
         sender.sendMessage(Component.text("Gave " + sheet.getCharacterName() + "'s sheet to " + target.getName() + ".", NamedTextColor.GREEN));
         target.sendMessage(Component.text("You received " + sheet.getCharacterName() + "'s character sheet.", NamedTextColor.GREEN));
-        return true;
     }
 
     private String stripQuotes(String input) {

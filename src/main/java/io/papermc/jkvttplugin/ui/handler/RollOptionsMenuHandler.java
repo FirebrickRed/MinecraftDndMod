@@ -124,10 +124,10 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         if (pending != null) {
             io.papermc.jkvttplugin.dm.CheckManager.takePending(character.getPlayerId());
             if (pending.contestId() != null) {
-                reportContest(character, info, r.total(), pending);
+                reportContest(character, info, r.total(), r.breakdown(), pending);
             } else {
                 io.papermc.jkvttplugin.dm.CheckManager.recordActive(character.getPlayerId(), info.displayName, r.total());
-                reportDmCheck(character, info, r.total(), pending);
+                reportDmCheck(character, info, r.total(), r.breakdown(), pending);
                 if ("TOOL".equals(type)) maybeBreakThievesTools(character, value, r.total(), pending);
             }
             return true;
@@ -163,16 +163,17 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
     }
 
     /** Report a DM-called check to the DM (with success/fail vs the private DC) + a Share button. */
-    private static void reportDmCheck(CharacterSheet character, RollInfo info, int total,
+    private static void reportDmCheck(CharacterSheet character, RollInfo info, int total, String work,
                                       io.papermc.jkvttplugin.dm.CheckManager.Pending p) {
         String rollerName = character.getCharacterName();
         // The roller sees their own number (never the DC).
         Player owner = Bukkit.getPlayer(character.getPlayerId());
         if (owner != null) {
-            owner.sendMessage(Component.text("You rolled " + info.displayName + ": " + total
+            owner.sendMessage(Component.text("You rolled " + info.displayName + ": " + work
                     + " — sent to the DM.", NamedTextColor.GRAY));
         }
-        String shareText = rollerName + " rolled " + info.displayName + ": " + total;
+        // Show the work, not just the number: "d20(16) +3[DEX] +2[Prof] = 21".
+        String shareText = rollerName + " rolled " + info.displayName + ": " + work;
         String token = io.papermc.jkvttplugin.dm.CheckManager.stashShare(shareText);
         Component verdict = Component.empty();
         if (p.dc() != null) {
@@ -230,28 +231,28 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
     }
 
     /** Record one side of a contested check; when both sides are in, report the winner to the DM (#186). */
-    private static void reportContest(CharacterSheet character, RollInfo info, int total,
+    private static void reportContest(CharacterSheet character, RollInfo info, int total, String work,
                                       io.papermc.jkvttplugin.dm.CheckManager.Pending p) {
         Player owner = Bukkit.getPlayer(character.getPlayerId());
         if (owner != null) {
-            owner.sendMessage(Component.text("You rolled " + info.displayName + ": " + total
+            owner.sendMessage(Component.text("You rolled " + info.displayName + ": " + work
                     + " — sent to the DM.", NamedTextColor.GRAY));
         }
-        recordContestSide(p.contestId(), character.getPlayerId(), character.getCharacterName(), info.displayName, total);
+        recordContestSide(p.contestId(), character.getPlayerId(), character.getCharacterName(), info.displayName, total, work);
     }
 
     /**
      * One side of a contest has rolled: a character through the roll menu, or the DM for an NPC
      * ({@code /dm check npcroll}). When both are in, the winner goes to the DM with [Share].
      */
-    public static void recordContestSide(String contestId, java.util.UUID sideKey, String name, String label, int total) {
+    public static void recordContestSide(String contestId, java.util.UUID sideKey, String name, String label, int total, String work) {
         io.papermc.jkvttplugin.dm.CheckManager.Contest pendingContest = io.papermc.jkvttplugin.dm.CheckManager.getContest(contestId);
         if (pendingContest == null) return; // already resolved or expired
         Player dm = pendingContest.dmId != null ? Bukkit.getPlayer(pendingContest.dmId) : null;
         io.papermc.jkvttplugin.dm.CheckManager.Contest done =
                 io.papermc.jkvttplugin.dm.CheckManager.recordContestRoll(contestId, sideKey, total);
         if (done == null) { // still waiting on the other side
-            if (dm != null) dm.sendMessage(Component.text(name + " rolled " + label + ": " + total
+            if (dm != null) dm.sendMessage(Component.text(name + " rolled " + label + ": " + work
                     + " — waiting on the other side…", NamedTextColor.GRAY));
             return;
         }

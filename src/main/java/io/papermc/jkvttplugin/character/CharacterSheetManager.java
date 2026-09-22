@@ -226,6 +226,24 @@ public class CharacterSheetManager {
         CharacterPersistenceLoader.removeCharacter(playerId, characterId);
     }
 
+    /**
+     * Hand a character to another player (a DM decision: a premade, or passing a character on).
+     * The sheet paper leaves the old owner's inventory; the character's gear stays where it is, since
+     * which items in a shared inventory belong to which character is a table call.
+     */
+    public static void transferCharacter(CharacterSheet sheet, UUID newOwner) {
+        Player old = Bukkit.getPlayer(sheet.getPlayerId());
+        if (old != null) {
+            ItemStack[] contents = old.getInventory().getContents();
+            for (int i = 0; i < contents.length; i++) {
+                if (contents[i] != null && sheet.getCharacterId().equals(getCharacterIdFromItem(contents[i]))) {
+                    old.getInventory().setItem(i, null);
+                }
+            }
+        }
+        CharacterPersistenceLoader.transferCharacter(sheet, newOwner);
+    }
+
     /** Strip this character's sheet item and recorded gear from the player's inventory. */
     private static void clearCharacterItems(Player player, UUID characterId, CharacterSheet sheet) {
         // How many of each item id this character was carrying — we remove up to that many, so a

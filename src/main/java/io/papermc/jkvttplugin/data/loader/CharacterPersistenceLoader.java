@@ -101,6 +101,18 @@ public class CharacterPersistenceLoader {
         playerCharacters.computeIfAbsent(sheet.getPlayerId(), k -> new ConcurrentHashMap<>()).put(sheet.getCharacterId(), sheet);
     }
 
+    /** Re-file a character under a new owning player, in memory and on disk. */
+    public static void transferCharacter(CharacterSheet sheet, UUID newOwner) {
+        Map<UUID, CharacterSheet> old = playerCharacters.get(sheet.getPlayerId());
+        if (old != null) {
+            old.remove(sheet.getCharacterId());
+            if (old.isEmpty()) playerCharacters.remove(sheet.getPlayerId());
+        }
+        sheet.setOwner(newOwner);
+        playerCharacters.computeIfAbsent(newOwner, k -> new ConcurrentHashMap<>()).put(sheet.getCharacterId(), sheet);
+        saveCharacter(sheet);
+    }
+
     public static CharacterSheet getCharacter(UUID playerId, UUID characterId) {
         Map<UUID, CharacterSheet> characters = playerCharacters.get(playerId);
         return characters != null ? characters.get(characterId) : null;

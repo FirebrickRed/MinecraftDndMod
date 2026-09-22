@@ -24,7 +24,7 @@ import java.util.UUID;
 /**
  * Consolidated player-facing character command (Issue #122).
  *
- * <p>One command replaces four: {@code /character <create|view|list|close|give>}
+ * <p>One command replaces four: {@code /character <create|view|list|give>}
  * (alias {@code /char}). The subcommands delegate to the existing executors so
  * behaviour stays identical; only the entry point is unified.
  *
@@ -33,20 +33,18 @@ import java.util.UUID;
  *   <li>{@code /character create <player>}       — (DM) open creation for another player</li>
  *   <li>{@code /character view [name|player <p>]}— view a sheet (delegates to viewsheet)</li>
  *   <li>{@code /character list [player]}         — list your characters (DM: another player's)</li>
- *   <li>{@code /character close}                 — save & close the active sheet</li>
- *   <li>{@code /character give <player> <name>}  — (DM) give a player their sheet item</li>
+ *   <li>{@code /character give <player> <name>}  — (DM) give a player their sheet item, or hand them the character</li>
  * </ul>
  */
 public class CharacterCommand implements CommandExecutor, TabCompleter {
 
     private final CreateCharacterCommand createExec = new CreateCharacterCommand();
     private final ViewSheetCommand viewExec = new ViewSheetCommand();
-    private final CloseSheetCommand closeExec = new CloseSheetCommand();
     private final GiveSheetCommand giveExec = new GiveSheetCommand();
     private final ShortRestCommand shortRestExec = new ShortRestCommand();
     private final LongRestCommand longRestExec = new LongRestCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "close", "rest", "give", "delete", "loot", "check", "cast", "drink", "reply");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "rest", "give", "delete", "loot", "check", "cast", "drink", "reply");
     private final DrinkCommand drinkExec = new DrinkCommand();
 
     @Override
@@ -86,9 +84,6 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "list" -> {
                 return handleList(sender, rest);
-            }
-            case "close" -> {
-                return closeExec.onCommand(sender, cmd, label, rest);
             }
             case "rest" -> {
                 if (rest.length < 1) {
@@ -443,8 +438,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
      * table's DM decides, not a stray command.
      */
     private void requestDeletion(Player player, CharacterSheet sheet) {
-        List<Player> dms = new ArrayList<>();
-        for (Player p : Bukkit.getOnlinePlayers()) if (DMManager.isDM(p)) dms.add(p);
+        List<Player> dms = DMManager.getOnlineDMs();
         if (dms.isEmpty()) {
             player.sendMessage(Component.text("Deleting a character needs a DM's approval, and no DM is online.", NamedTextColor.RED));
             return;
@@ -488,8 +482,6 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text("view a character sheet", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("  /character list             ", NamedTextColor.YELLOW)
                 .append(Component.text("list your characters", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("  /character close            ", NamedTextColor.YELLOW)
-                .append(Component.text("save & close the active sheet", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("  /character rest <short|long>", NamedTextColor.YELLOW)
                 .append(Component.text("  take a rest", NamedTextColor.GRAY)));
         if (DMManager.isDM(sender)) {

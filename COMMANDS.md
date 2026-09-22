@@ -16,7 +16,6 @@ prints that command's own help.
 | `/character create` | Start character creation (or right-click your **Character Sheet** paper) |
 | `/character view [name]` | Open your character sheet, or another of **your** characters by name. Other people's sheets are DM-only |
 | `/character list` | List your characters |
-| `/character close` | Save & close the active character sheet |
 | `/character delete <name>` | **Ask the DM** to delete one of your characters ([Approve]/[Deny]; a DM deletes directly). The file is archived to `Saved/Characters/Deleted/`, never erased. Also removes that character's own gear; DM-given items stay |
 | `/character rest short` | Short rest — recover short-rest resources |
 | `/character rest long` | Long rest — full HP, spell slots, resources |
@@ -26,9 +25,9 @@ prints that command's own help.
 | `/character cast <spell> [target] [level <n>]` | **Out of combat:** announce the spell, spend the slot, set concentration; the DM gets a filled-in `/dm hp` for its damage/healing. Clicking a spell in your spellbook fills this in. The spell itself isn't resolved yet (no roll, no save, no area) — that's the rest of #152 |
 | `/character drink <item_id> [autoRoll \| manualRoll <n> \| total <n>]` | Drink a healing item. Clicking the potion fills this in for you; in combat it costs your Action |
 | `/character reply <message…>` | Free reply to the last Message/Sending you received (usually the **[reply]** button) |
-| `/roll <XdY[+Z]>` | Roll dice, e.g. `/roll 2d6+3` |
+| `/roll <XdY[+Z]>` | Roll dice and show every die, e.g. `/roll 2d6+3` → `[4, 3] +3 = 10` |
 
-DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet. The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the five roots below.
+DM extras: `/character create <player>` opens creation for another player; `/character give <player> <name>` hands them their sheet; if the character belongs to someone else, a **[Give … to …]** confirm transfers the character to them (its gear stays put — hand it over in game). The old per-action commands (`/createcharacter`, `/viewsheet`, `/shortrest`, `/dmgive`, `/reloadyaml`, …) have been **removed** — everything lives under the five roots below.
 
 **In combat, on your own turn only:**
 `/combat action` · `/combat bonusAction` · `/combat attack <target>` · `/combat damage <target>` · `/combat cast <spell>` · `/combat use <feature>` · `/combat endturn` · `/combat deathsave`
@@ -136,7 +135,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | Subcommand | What it does |
 |---|---|
 | `add\|remove\|list` | Manage who is a DM (`add`/`remove` op only) |
-| `give <player> <item_id> [amount]` | Give a D&D item |
+| `give <player> <item_id> [amount]` | Give a D&D item. The player is required and first (use your own name for yourself) |
 | `hp <character\|creature> <damage\|heal\|temp\|set> <amount> [type <t>]` · `hp <name> full` | **Change HP anywhere**, in or out of combat (#175). The amount can be dice (`2d10`). Same engine as combat: resistances, downing, death saves and saving all still happen; out of combat the message goes to the target and the DMs |
 | `revive <character\|creature> [hp]` | **The only way back from death** (#101), standing in for Revivify / Raise Dead. Default 1 HP. Healing, rests and the fight ending never revive anyone. Damage at 0 HP is a failed death save (two on a crit); massive damage (left over past 0 HP ≥ max HP) kills outright |
 | `mode` | Enter/exit **DM mode**: your inventory is swapped for the DM toolbar (View, Possess, Move, Add/Remove Combatant, Spawn Entity, Exploration tools) and restored on exit |

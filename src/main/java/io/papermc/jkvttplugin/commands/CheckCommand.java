@@ -91,7 +91,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         if (args.length >= 3 && args[0].equalsIgnoreCase("npcroll")) {
             return handleNpcRoll(sender, args);
         }
-        if (vsIdx == 2 && args.length >= vsIdx + 3) {
+        if (vsIdx >= 2 && args.length >= vsIdx + 3) { // names before "vs" can be several words
             return handleContest(sender, args, vsIdx);
         }
         if (args.length < 3) {
@@ -212,18 +212,25 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
      * rolls on anyone's behalf (same rule as concentration saves).
      */
     private boolean handleContest(CommandSender sender, String[] args, int vsIdx) {
-        ContestSide a = resolveContestSide(sender, args[0]);
-        if (a == null) return true;
-        ContestSide b = resolveContestSide(sender, args[vsIdx + 1]);
-        if (b == null) return true;
-        Skill aSkill = resolveSkill(args[1]);
-        Skill bSkill = resolveSkill(args[vsIdx + 2]);
+        // <A name…> <skill> vs <B name…> <skill> [roll words]. Names can be several words ("Balin
+        // Ironforge"), so each side's skill is found rather than assumed to be the second word:
+        // A's is the word right before "vs", B's is the first skill word after B's name.
+        int bSkillIdx = -1;
+        for (int i = vsIdx + 2; i < args.length; i++) {
+            if (resolveSkill(args[i]) != null) { bSkillIdx = i; break; }
+        }
+        Skill aSkill = resolveSkill(args[vsIdx - 1]);
+        Skill bSkill = bSkillIdx >= 0 ? resolveSkill(args[bSkillIdx]) : null;
         if (aSkill == null || bSkill == null) {
-            sender.sendMessage(Component.text("Contested checks use skill names, e.g. /dm check Zek insight vs Balin deception.", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Contested checks use skill names, e.g. /dm check Zek insight vs Balin Ironforge deception.", NamedTextColor.RED));
             return true;
         }
+        ContestSide a = resolveContestSide(sender, String.join(" ", java.util.Arrays.copyOfRange(args, 0, vsIdx - 1)));
+        if (a == null) return true;
+        ContestSide b = resolveContestSide(sender, String.join(" ", java.util.Arrays.copyOfRange(args, vsIdx + 1, bSkillIdx)));
+        if (b == null) return true;
 
-        String[] rollWords = java.util.Arrays.copyOfRange(args, vsIdx + 3, args.length);
+        String[] rollWords = java.util.Arrays.copyOfRange(args, bSkillIdx + 1, args.length);
         RollService.RollInput inline = RollService.parseInput(rollWords, sender);
         int npcSides = (a.creature() != null ? 1 : 0) + (b.creature() != null ? 1 : 0);
         if (!inline.isEmpty() && npcSides != 1) {
@@ -330,7 +337,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
                 signed(side.modifier) + "[" + side.modSource + "]", false, io.papermc.jkvttplugin.combat.Advantage.NONE);
         if (r == null) { promptNpcRoll(sender, contest, index); return; } // no die given in physical-dice mode
         sender.sendMessage(Component.text(side.name + " — " + side.label + ": " + r.breakdown(), NamedTextColor.GRAY));
-        RollOptionsMenuHandler.recordContestSide(contest.id, side.key, side.name, side.label, r.total());
+        RollOptionsMenuHandler.recordContestSide(contest.id, side.key, side.name, side.label, r.total(), r.breakdown());
     }
 
     private static String signed(int n) { return n >= 0 ? "+" + n : String.valueOf(n); }

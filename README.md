@@ -84,7 +84,6 @@ Commands are consolidated under five roots: `/character`, `/roll`, `/combat`, `/
 |---|---|---|
 | `/character create` | Player | Start character creation |
 | `/character view [name]` | Player | View a character sheet |
-| `/character close` | Player | Save and close the active character sheet |
 | `/character rest <short\|long>` | Player | Recover resources (short / long rest) |
 | `/roll <XdY[+Z]>` | Player | Roll dice (e.g. `2d6+3`) |
 | `/dm <add\|remove\|list>` | Op | Manage who is a DM |

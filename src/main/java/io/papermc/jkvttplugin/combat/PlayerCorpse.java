@@ -200,9 +200,7 @@ public class PlayerCorpse implements Listener {
                         .hoverEvent(HoverEvent.showText(Component.text(
                                 "Ask what they're doing, then finish the command: medicine (cause of death), "
                                 + "investigation (search the body), religion (rites or undeath)."))));
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (DMManager.isDM(p)) p.sendMessage(msg);
-        }
+        for (Player dm : DMManager.getOnlineDMs()) dm.sendMessage(msg);
     }
 
     private static Component button(String label, String hover, ClickCallback<net.kyori.adventure.audience.Audience> action) {
@@ -270,8 +268,6 @@ public class PlayerCorpse implements Listener {
                             Player p = Bukkit.getPlayer(owner);
                             if (p != null) p.teleport(bodyAt);
                         }));
-        for (Player p : Bukkit.getOnlinePlayers()) {
-            if (DMManager.isDM(p)) p.sendMessage(msg);
-        }
+        for (Player dm : DMManager.getOnlineDMs()) dm.sendMessage(msg);
     }
 }

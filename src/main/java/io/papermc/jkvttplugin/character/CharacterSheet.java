@@ -19,7 +19,7 @@ import java.util.*;
 
 public class CharacterSheet {
     private final UUID characterId;
-    private final UUID playerId;
+    private UUID playerId; // the owning player; changes only through a DM transfer
     private String characterName;
 
     private DndRace race;
@@ -939,6 +939,11 @@ public class CharacterSheet {
 
     public UUID getPlayerId() {
         return playerId;
+    }
+
+    /** Hand this character to another player. Use CharacterSheetManager.transferCharacter, which re-files it. */
+    public void setOwner(UUID newOwner) {
+        this.playerId = newOwner;
     }
     public UUID getCharacterId() {
         return characterId;

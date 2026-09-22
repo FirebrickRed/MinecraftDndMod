@@ -32,6 +32,22 @@ class RollsAndChecksTest {
         assertFalse(DiceRoller.parseDiceRoll("").isPresent());
     }
 
+    /** /roll shows the work: every die, the modifier, the total — and they add up. */
+    @RepeatedTest(20)
+    void aRollKeepsEveryDie() {
+        DiceRoller.Rolled r = DiceRoller.roll("2d6+3").orElseThrow();
+        assertEquals(2, r.dice().size());
+        assertEquals(r.dice().get(0) + r.dice().get(1) + 3, r.total());
+        assertEquals("[" + r.dice().get(0) + ", " + r.dice().get(1) + "] +3 = " + r.total(), r.breakdown());
+        assertTrue(DiceRoller.roll("1d4-1").orElseThrow().breakdown().contains(" -1 = "));
+    }
+
+    @Test
+    void aDieWithNoSidesIsMalformedNotACrash() {
+        assertTrue(DiceRoller.roll("1d0").isEmpty());
+        assertFalse(DiceRoller.parseDiceRoll("2d0").isPresent());
+    }
+
     // ---------- the roll resolver ----------
 
     @Test

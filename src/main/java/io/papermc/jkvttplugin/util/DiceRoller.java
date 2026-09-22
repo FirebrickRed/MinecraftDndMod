@@ -33,14 +33,38 @@ public class DiceRoller {
      * roll can equal -1, so callers must branch on {@code isPresent()}, not on the value's sign.
      */
     public static OptionalInt parseDiceRoll(String input) {
-        Matcher matcher = DICE_PATTERN.matcher(input.toLowerCase().replace(" ", ""));
-        if (!matcher.matches()) return OptionalInt.empty();
+        return roll(input).map(r -> OptionalInt.of(r.total())).orElse(OptionalInt.empty());
+    }
+
+    /** A rolled expression with every die kept, so the table can see the work, not just the total. */
+    public record Rolled(String expression, java.util.List<Integer> dice, int modifier, int multiplier, int total) {
+        /** "[4, 3] +3 = 10", or "([4, 3] +3) ×2 = 20" with a multiplier. */
+        public String breakdown() {
+            String sum = dice.toString() + (modifier > 0 ? " +" + modifier : modifier < 0 ? " " + modifier : "");
+            if (multiplier != 1) sum = "(" + sum + ") ×" + multiplier;
+            return sum + " = " + total;
+        }
+    }
+
+    /** Roll a dice expression, keeping each die. Empty if malformed (or a die with no sides). */
+    public static java.util.Optional<Rolled> roll(String input) {
+        String expr = input.toLowerCase().replace(" ", "");
+        Matcher matcher = DICE_PATTERN.matcher(expr);
+        if (!matcher.matches()) return java.util.Optional.empty();
 
         int numDice = matcher.group(1).isEmpty() ? 1 : Integer.parseInt(matcher.group(1));
         int sides = Integer.parseInt(matcher.group(2));
+        if (sides < 1 || numDice > 1000) return java.util.Optional.empty();
         int modifier = (matcher.group(3) != null) ? Integer.parseInt(matcher.group(3)) : 0;
         int multiplier = (matcher.group(4) != null) ? Integer.parseInt(matcher.group(4)) : 1;
 
-        return OptionalInt.of((rollDice(numDice, sides) + modifier) * multiplier);
+        java.util.List<Integer> dice = new java.util.ArrayList<>();
+        int sum = 0;
+        for (int i = 0; i < numDice; i++) {
+            int die = random.nextInt(sides) + 1;
+            dice.add(die);
+            sum += die;
+        }
+        return java.util.Optional.of(new Rolled(expr, dice, modifier, multiplier, (sum + modifier) * multiplier));
     }
 }

@@ -69,7 +69,9 @@ public class WeaponListener implements Listener {
     // Left-click air / block, then ray-trace along your look direction.
     @EventHandler
     public void onPlayerLeftClick(PlayerInteractEvent event) {
-        if (event.isCancelled()) return;
+        // Not isCancelled(): a click at the sky always reports cancelled, and a click at the sky while
+        // looking at a distant enemy is exactly the ranged case this handler exists for.
+        if (event.useItemInHand() == org.bukkit.event.Event.Result.DENY) return;
         if (event.getHand() != EquipmentSlot.HAND) return; // main hand only (avoids double-fire)
         if (!event.getAction().isLeftClick()) return;
 
@@ -108,7 +110,10 @@ public class WeaponListener implements Listener {
      */
     @EventHandler
     public void onPlayerRightClick(PlayerInteractEvent event) {
-        if (event.isCancelled()) return; // e.g. an area-effect confirm already consumed this click (#173)
+        // An area-effect confirm that already consumed this click (#173) denies the item use. Not
+        // isCancelled(): Bukkit reports every click at the SKY as cancelled (there's no block to use),
+        // so checking that let a bow drawn at open air through, and it loosed a real arrow.
+        if (event.useItemInHand() == org.bukkit.event.Event.Result.DENY) return;
         if (event.getHand() != EquipmentSlot.HAND) return;
         if (!event.getAction().isRightClick()) return;
 
@@ -123,6 +128,11 @@ public class WeaponListener implements Listener {
         // also blocks opening a chest, flipping a lever or using a door while a bow is in hand —
         // which is exactly what a playtest caught: players holding a shortbow couldn't open chests.
         event.setUseItemInHand(org.bukkit.event.Event.Result.DENY);
+        // Say so now, while they're trying — not after a shot that never happens.
+        boolean inCombat = io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(player.getUniqueId()) != null;
+        player.sendActionBar(Component.text(inCombat
+                ? held.getName() + " fires through /combat attack — left-click your target on your turn."
+                : held.getName() + " is for combat: shots are made with /combat attack.", NamedTextColor.GRAY));
     }
 
     /**
@@ -142,7 +152,9 @@ public class WeaponListener implements Listener {
         if (weapon == null || !weapon.isRanged()) return;
 
         event.setCancelled(true);
+        event.setConsumeItem(false); // the draw already took the arrow; don't let a refused shot spend it
         if (event.getEntity() instanceof Player shooter) {
+            shooter.updateInventory();
             shooter.sendActionBar(Component.text(weapon.getName()
                     + " fires through /combat attack — left-click your target.", NamedTextColor.GRAY));
         }

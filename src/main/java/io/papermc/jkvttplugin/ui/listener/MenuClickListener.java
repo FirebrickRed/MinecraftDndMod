@@ -44,6 +44,12 @@ public class MenuClickListener implements Listener {
         handlers.put(MenuType.ROLL_OPTIONS_MENU, ROLL_OPTIONS_HANDLER);
     }
 
+    /** Click-and-drag across a menu is a separate event from a click; it must not move items either. */
+    @EventHandler
+    public void onDrag(org.bukkit.event.inventory.InventoryDragEvent event) {
+        if (event.getInventory().getHolder() instanceof MenuHolder) event.setCancelled(true);
+    }
+
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         // Only handle clicks in our custom menus
@@ -53,6 +59,15 @@ public class MenuClickListener implements Listener {
 
         // Cancel the event to prevent item movement
         event.setCancelled(true);
+        // The client shows the item on the cursor before the server says no; resync so a pane
+        // doesn't linger in the player's hand after a cancelled click.
+        if (event.getWhoClicked() instanceof Player clicker) {
+            org.bukkit.Bukkit.getScheduler().runTask(io.papermc.jkvttplugin.JkVttPlugin.getInstance(), clicker::updateInventory);
+        }
+
+        // A double-click arrives as a normal click AND a DOUBLE_CLICK. Acting on both would run the
+        // button twice (select, then straight back off), so the second half is ignored.
+        if (event.getClick() == ClickType.DOUBLE_CLICK) return;
 
         // Validate click
         if (event.getClickedInventory() == null) return;
