@@ -131,7 +131,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         // DM: /character list all -> every saved character across all players.
         if (rest.length >= 1 && rest[0].equalsIgnoreCase("all")) {
             if (!DMManager.isDM(sender)) {
-                sender.sendMessage(Component.text("Only a DM can list all characters.", NamedTextColor.RED));
+                sender.sendMessage(Component.text("Only a DM can list everyone's characters. Use /character list for your own.", NamedTextColor.RED));
                 return true;
             }
             List<CharacterSheet> all = CharacterSheetManager.getAllCharacters();
@@ -153,7 +153,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         String who;
         if (rest.length >= 1) {
             if (!DMManager.isDM(sender)) {
-                sender.sendMessage(Component.text("Only a DM can list another player's characters.", NamedTextColor.RED));
+                sender.sendMessage(Component.text("Only a DM can list another player's characters. Use /character list for your own.", NamedTextColor.RED));
                 return true;
             }
             Player target = Bukkit.getPlayerExact(rest[0]);
@@ -409,8 +409,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Usage: /character delete <name>", NamedTextColor.RED));
             return true;
         }
-        String name = String.join(" ", rest);
-        if (name.length() >= 2 && name.startsWith("\"") && name.endsWith("\"")) name = name.substring(1, name.length() - 1);
+        String name = NameUtil.joinArgs(rest, 0);
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
         if (sheet == null) return true;
         if (DMManager.isDM(sender)) {

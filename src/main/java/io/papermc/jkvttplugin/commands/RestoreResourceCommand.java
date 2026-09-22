@@ -1,5 +1,6 @@
 package io.papermc.jkvttplugin.commands;
 
+import io.papermc.jkvttplugin.util.NameUtil;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.character.CharacterResolver;
@@ -34,13 +35,13 @@ public class RestoreResourceCommand implements CommandExecutor, TabCompleter {
 
         // Check if last arg is "all"
         if (lastArg.equalsIgnoreCase("all")) {
-            characterName = String.join(" ", Arrays.copyOfRange(args, 0, args.length - 1));
+            characterName = NameUtil.joinArgs(Arrays.copyOfRange(args, 0, args.length - 1), 0);
             resourceName = "all";
         } else {
-            // Try to find where character name ends and resource name begins
-            // This is tricky with spaces - for now, try the first arg as character name
-            characterName = args[0];
-            resourceName = String.join(" ", Arrays.copyOfRange(args, 1, args.length));
+            // The character comes first and may be quoted ("Balin Ironforge"); the resource is the rest.
+            NameUtil.TakenName who = NameUtil.takeName(args, 0);
+            characterName = who.value();
+            resourceName = NameUtil.joinArgs(args, who.nextIndex());
         }
 
         // Find character by name

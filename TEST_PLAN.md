@@ -22,6 +22,7 @@ again belongs in the automated tests (`src/test/java`), not in a stale checkbox 
 - [ ] As non-DM: `/character create Bob` and `/character list all` are refused; `/character list` still lists your own.
 
 ## /roll
+- [ ] As a **non-op player**: `/roll 2d6+3` works (it was op-only — an undefined permission node).
 - [ ] `/roll 2d6+3` shows each die: `🎲 2d6+3: [4, 3] +3 = 10`. `/roll 1d0` → "Invalid dice format", no error.
 
 ## /dm
@@ -113,6 +114,9 @@ again belongs in the automated tests (`src/test/java`), not in a stale checkbox 
 - [ ] **Contested, multi-word names:** `/dm check <player> insight vs Balin Ironforge deception` works (and with
       the name in quotes). `/dm check <player> insight vs Balin deception` still works.
 - [ ] **`/dm list` with every DM offline** → lists the offline ops as `[OP] name (Offline)` instead of "No DMs".
+- [ ] `/dm entity spawn <creature with hit_dice>` → the DM sees the HP dice it rolled.
+- [ ] `/combat add <someone>` mid-fight → the table sees their initiative roll, not just a new row.
+- [ ] `/dm resource restore "Balin Ironforge" rage` and `/character delete "Balin Ironforge"` → quoted names work.
 
 ## Entities move under /dm (2026-09-22)
 - [ ] `/dmentity` → "Unknown command". `/dm ` + Tab no longer autocompletes into it.
@@ -154,7 +158,8 @@ I'm not quite sure what /close is supposed to do it says it ran but it doesn't l
 also not sure how we want to handle one player having 2 character sheets. like the player get's both sets of equipment and not sure which goes to which. 
   → ticketed: #213 (per-character inventories).
 /character list all only works for dm, as a non dm /character list sends an error. 
-  → couldn't reproduce from the code; what did the error say?
+  → that message is `/character list all` being DM-only, by design; the wording now points at `/character list`.
+    The real find next to it: `/roll` was op-only (an undefined permission node), now fixed.
 /roll 2d6+3 works but can we have the message show not just the end result of 10 (what I got) Can we show what each dice rolled then a +3 and then a = 10
   → fixed, see "/roll".
 do we want to move /dmentity to /dm entity? give me your thoughts on this, I only get annoyed because I go to type /dm and it wants to finish autofilling it to /dmentity

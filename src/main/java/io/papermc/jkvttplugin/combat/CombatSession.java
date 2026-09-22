@@ -179,9 +179,12 @@ public class CombatSession {
         // Rebuild display names to handle duplicates (Wolf -> Wolf #1, Wolf #2)
         rebuildEntityDisplayNames();
 
-        // If combat has already started, roll initiative for new combatant
+        // If combat has already started, roll initiative for new combatant — and show the roll, the
+        // same as everyone else's at the top of the fight.
         if (!isSetupPhase) {
-            rollInitiativeFor(combatant);
+            InitiativeRoll rolled = rollInitiativeFor(combatant);
+            broadcast(Component.text(combatant.getDisplayName() + " joins the fight — initiative "
+                    + rolled.show(), NamedTextColor.GRAY));
             sortByInitiative();
             updateScoreboard();
         } else {

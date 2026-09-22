@@ -47,9 +47,12 @@ public class ConsumeResourceCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        // For now, assume first arg is character name, rest is resource name (before optional amount)
-        String characterName = args[0];
-        String resourceName = String.join(" ", Arrays.copyOfRange(args, 1, resourceNameEndIndex));
+        // The character comes first and may be quoted ("Balin Ironforge"); the resource is the rest,
+        // up to an optional trailing amount.
+        io.papermc.jkvttplugin.util.NameUtil.TakenName who = io.papermc.jkvttplugin.util.NameUtil.takeName(args, 0);
+        String characterName = who.value();
+        String resourceName = io.papermc.jkvttplugin.util.NameUtil.stripQuotes(
+                String.join(" ", Arrays.copyOfRange(args, Math.min(who.nextIndex(), resourceNameEndIndex), resourceNameEndIndex)));
 
         // Find character by name
         CharacterSheet character = CharacterResolver.resolveOrError(sender, characterName);

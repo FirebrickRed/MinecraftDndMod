@@ -4,12 +4,13 @@ main: io.papermc.jkvttplugin.JkVttPlugin
 api-version: '1.21'
 commands:
   character:
-    description: Character commands (create, view, list, close, rest, give, delete, loot, check, cast, reply).
-    usage: /character <create|view|list|close|rest|give|delete|loot|check|cast|reply>
+    description: Character commands (create, view, list, rest, give, delete, loot, check, cast, drink, reply).
+    usage: /character <create|view|list|rest|give|delete|loot|check|cast|drink|reply>
   roll:
     description: Roll dice using XdY format (e.g., 2d6+3).
     usage: /roll <XdY[+Z]>
-    permission: dnd.rolldice
+    # No permission node: `dnd.rolldice` was declared here but never defined with a default, so
+    # Bukkit treated it as op-only and ordinary players couldn't roll dice at all.
   combat:
     description: (DM) Combat session management commands.
     usage: /combat <start|add|remove|nextturn|endturn|finished|...>
@@ -18,4 +19,5 @@ commands:
   dm:
     description: DM role management and DM admin tools.
     usage: /dm <add|remove|list|give|check|hp|revive|entity|object|rest|resource|reload|mode>
-    permission-message: Only server operators can manage DMs.
+    # Authorization is in-command (DMManager.isDM), so there's no permission node here — a
+    # plugin.yml permission would default to op-only and lock out /dm add DMs.

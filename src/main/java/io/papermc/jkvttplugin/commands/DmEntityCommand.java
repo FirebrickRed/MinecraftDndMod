@@ -144,7 +144,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         String finalName = generateName(template, customName);
 
         // Roll HP
-        int maxHp = rollHitPoints(template);
+        int maxHp = rollHitPoints(template, sender);
 
         // Spawn armor stand
         ArmorStand armorStand = spawnArmorStand(template, finalName, spawnLocation);
@@ -1320,12 +1320,14 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
      * Roll hit points for entity based on hit_dice or hit_points.
      * Priority: hit_dice > hit_points > default (10)
      */
-    private int rollHitPoints(DndEntity template) {
+    private int rollHitPoints(DndEntity template, CommandSender spawner) {
         if (template.getHitDice() != null) {
             // Roll hit dice; if the expression is malformed, fall through to fixed HP / default
-            java.util.OptionalInt rolled = DiceRoller.parseDiceRoll(template.getHitDice());
-            if (rolled.isPresent()) {
-                return rolled.getAsInt();
+            DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(template.getHitDice());
+            if (rolled != null) {
+                // The game rolled this creature's HP — show the DM what it got.
+                if (spawner != null) spawner.sendMessage(Component.text(rolled.display(), NamedTextColor.DARK_GRAY));
+                return rolled.total();
             }
         }
         if (template.getHitPoints() != null) {
