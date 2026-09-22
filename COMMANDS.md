@@ -15,7 +15,7 @@ prints that command's own help.
 |---|---|
 | `/character create` | Start character creation (or right-click your **Character Sheet** paper) |
 | `/character view [name]` | Open your character sheet, or another of **your** characters by name. Other people's sheets are DM-only |
-| `/character list` | List your characters |
+| `/character list [all]` | List your characters (`all` is the same for a player; for a DM it lists the whole table with owners) |
 | `/character delete <name>` | **Ask the DM** to delete one of your characters ([Approve]/[Deny]; a DM deletes directly). The file is archived to `Saved/Characters/Deleted/`, never erased. Also removes that character's own gear; DM-given items stay |
 | `/character rest short` | Short rest — recover short-rest resources |
 | `/character rest long` | Long rest — full HP, spell slots, resources |

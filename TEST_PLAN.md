@@ -19,7 +19,7 @@ again belongs in the automated tests (`src/test/java`), not in a stale checkbox 
       character is now theirs (`/character list` as them shows it, their paper opens it), your paper for it is
       gone, and you're told the gear stayed with you. Refused while either of you is in a fight. Restart → still theirs.
 - [ ] `/character list all` → every saved character with `(owner)`.
-- [ ] As non-DM: `/character create Bob` and `/character list all` are refused; `/character list` still lists your own.
+- [ ] As non-DM: `/character create Bob` is refused. `/character list all` lists **your own** characters (not a refusal), same as `/character list`; Tab offers `all` but no player names.
 
 ## /roll
 - [ ] As a **non-op player**: `/roll 2d6+3` works (it was op-only — an undefined permission node).
@@ -158,7 +158,7 @@ I'm not quite sure what /close is supposed to do it says it ran but it doesn't l
 also not sure how we want to handle one player having 2 character sheets. like the player get's both sets of equipment and not sure which goes to which. 
   → ticketed: #213 (per-character inventories).
 /character list all only works for dm, as a non dm /character list sends an error. 
-  → that message is `/character list all` being DM-only, by design; the wording now points at `/character list`.
+  → `/character list all` now lists a player's own characters instead of refusing (a DM still gets the whole table).
     The real find next to it: `/roll` was op-only (an undefined permission node), now fixed.
 /roll 2d6+3 works but can we have the message show not just the end result of 10 (what I got) Can we show what each dice rolled then a +3 and then a = 10
   → fixed, see "/roll".

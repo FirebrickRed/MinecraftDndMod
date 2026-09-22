@@ -128,12 +128,10 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     }
 
     private boolean handleList(CommandSender sender, String[] rest) {
-        // DM: /character list all -> every saved character across all players.
-        if (rest.length >= 1 && rest[0].equalsIgnoreCase("all")) {
-            if (!DMManager.isDM(sender)) {
-                sender.sendMessage(Component.text("Only a DM can list everyone's characters. Use /character list for your own.", NamedTextColor.RED));
-                return true;
-            }
+        // "all" means what the sender can see: every character in the game for a DM, all of your own
+        // for a player — which is what a player asking for "all" meant anyway, so it lists them
+        // instead of refusing.
+        if (rest.length >= 1 && rest[0].equalsIgnoreCase("all") && DMManager.isDM(sender)) {
             List<CharacterSheet> all = CharacterSheetManager.getAllCharacters();
             if (all.isEmpty()) {
                 sender.sendMessage(Component.text("No saved characters.", NamedTextColor.GRAY));
@@ -151,7 +149,10 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
 
         UUID targetId;
         String who;
-        if (rest.length >= 1) {
+        // A player asking for "all" means all of THEIRS — the DM form above already took the other
+        // reading — so it falls through to the own-characters branch rather than being refused.
+        boolean askedForAll = rest.length >= 1 && rest[0].equalsIgnoreCase("all");
+        if (rest.length >= 1 && !askedForAll) {
             if (!DMManager.isDM(sender)) {
                 sender.sendMessage(Component.text("Only a DM can list another player's characters. Use /character list for your own.", NamedTextColor.RED));
                 return true;
@@ -552,7 +553,11 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                 return List.of();
             }
             case "create", "list" -> {
-                // DM forms take an online player name (and, for list, "all") as the first extra arg.
+                // "list all" is for everyone (yours, or the whole table for a DM); naming another
+                // player is a DM form.
+                if (rest.length == 1 && sub.equals("list") && !DMManager.isDM(sender)) {
+                    return "all".startsWith(rest[0].toLowerCase()) ? List.of("all") : List.of();
+                }
                 if (rest.length == 1 && DMManager.isDM(sender)) {
                     List<String> opts = new ArrayList<>();
                     if (sub.equals("list") && "all".startsWith(rest[0].toLowerCase())) opts.add("all");
