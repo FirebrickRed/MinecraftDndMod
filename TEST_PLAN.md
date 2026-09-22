@@ -102,6 +102,18 @@ again belongs in the automated tests (`src/test/java`), not in a stale checkbox 
 ## Entities move under /dm (2026-09-22)
 - [ ] Buttons the game fills in (loot, possession, shop prompts) all say `/dm entity …` and work when clicked.
 
+## Initiative scoreboard, rebuilt on components (2026-09-22)
+The sidebar used to be built from `§` colour codes; it now uses Paper's component scores. It should look the same:
+- [ ] Setup: combatants listed in the order added, **no numbers** on the right, "Add combatants..." at the bottom.
+      Two creatures with the same name (Goblin, Goblin) → **two** lines, not one.
+- [ ] In a fight: green **→** on the current turn; initiative as the red number; players' HP green / yellow / red as
+      they drop below ½ and ¼, `+N` temp HP in aqua; **[S]** surprised; downed → red ☠ with green/red death-save
+      dots; **[DEAD]**; purple condition tag; pink ✦N while channelling a ritual.
+- [ ] Two combatants **tied** on initiative → shown in turn order. "Round: N" at the bottom with **no number**,
+      even when someone has a negative initiative.
+- [ ] `/combat damage` and `/combat heal` with `autoRoll 2d6`, `manualRoll 7`, and a bad value (`manualRoll abc`)
+      → same messages as before (shared code now).
+
 ## Every game roll shows its dice (2026-09-22)
 - [ ] `/combat damage <t> autoRoll 2d6` → "🎲 2d6: [4, 3] = 7" before the damage line; `/combat heal <t> autoRoll 2d4` same.
 - [ ] `/dm hp <who> damage 2d10` → shows the dice. A flat `/dm hp <who> damage 7` doesn't pretend to roll.

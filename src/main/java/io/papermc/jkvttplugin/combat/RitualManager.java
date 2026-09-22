@@ -8,7 +8,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-
 /**
  * Ritual casting during combat (Issue #156) — a house-ruled multi-turn channel.
  *
@@ -19,7 +18,6 @@ import org.bukkit.entity.Player;
  * the caster acting (Stunned, Paralyzed, …).
  */
 public final class RitualManager {
-
 
     private RitualManager() {}
 
@@ -93,9 +91,9 @@ public final class RitualManager {
         session.updateScoreboard();
     }
 
-    /** Compact scoreboard tag for an active channel, e.g. "§d✦2". */
-    public static String scoreboardTag(Combatant c) {
-        if (c == null || !c.isChanneling()) return "";
-        return " §d✦" + c.getRitualRoundsLeft();
+    /** Compact scoreboard tag for an active channel, e.g. a pink " ✦2". */
+    public static Component scoreboardTag(Combatant c) {
+        if (c == null || !c.isChanneling()) return Component.empty();
+        return Component.text(" ✦" + c.getRitualRoundsLeft(), NamedTextColor.LIGHT_PURPLE);
     }
 }

@@ -928,6 +928,11 @@ public class CombatSession {
 
     /**
      * Update the scoreboard display with current combat state.
+     *
+     * <p>Each line is keyed by a hidden, stable entry ({@code c00}, {@code c01}, …) and shows a
+     * component via {@link Score#customName}. The sidebar sorts by score, then by entry name, so
+     * the zero-padded keys keep tied initiatives in turn order. (Lines used to BE their text, which
+     * needed § colour codes and an invisible suffix to stop two "Goblin"s merging into one line.)
      */
     public void updateScoreboard() {
         // Clear existing entries
@@ -936,63 +941,49 @@ public class CombatSession {
         }
 
         if (isSetupPhase) {
-            // Show combatants without initiative during setup
+            // Show combatants without initiative during setup, in the order they were added.
             int score = combatants.size();
             for (int i = 0; i < combatants.size(); i++) {
                 Combatant c = combatants.get(i);
                 // Show ??? for hidden entities even during setup
-                String name = c.isHidden() ? "???" : c.getDisplayName();
-                // Add invisible unique suffix to prevent entry merging (using color reset codes)
-                String display = "  " + name + makeUniqueSuffix(i);
-                if (c.isSurprised()) {
-                    display += " §e[S]";  // Surprised marker
-                }
-                initiativeObjective.getScore(display).setScore(score--);
+                Component line = Component.text("  " + (c.isHidden() ? "???" : c.getDisplayName()), NamedTextColor.WHITE);
+                if (c.isSurprised()) line = line.append(Component.text(" [S]", NamedTextColor.YELLOW));
+                scoreLine(entryKey(i), line, score--, true);
             }
-            initiativeObjective.getScore("§7Add combatants...").setScore(0);
+            scoreLine("zz_hint", Component.text("Add combatants...", NamedTextColor.GRAY), Integer.MIN_VALUE, true);
         } else {
-            // Show initiative order - use actual initiative as the red score number
+            // Initiative order; the initiative is the red number on the right.
             for (int i = 0; i < combatants.size(); i++) {
                 Combatant c = combatants.get(i);
-                StringBuilder display = new StringBuilder();
-
-                // Current turn indicator
-                if (i == currentTurnIndex) {
-                    display.append("§a→ ");
-                } else {
-                    display.append("  ");
-                }
+                Component line = i == currentTurnIndex
+                        ? Component.text("→ ", NamedTextColor.GREEN)
+                        : Component.text("  ");
 
                 // Name (respecting hidden status - scoreboard is same for all, so show ???)
-                display.append(c.isHidden() ? "???" : c.getDisplayName());
-
-                // Add invisible unique suffix to prevent entry merging
-                display.append(makeUniqueSuffix(i));
+                line = line.append(Component.text(c.isHidden() ? "???" : c.getDisplayName(), NamedTextColor.WHITE));
 
                 // HP at a glance — PLAYERS ONLY. Enemy HP is never shown to players; the DM
                 // checks entity HP via /combat status or /dm entity info.
                 if (c.isPlayer() && !c.isHidden()) {
-                    display.append(" ").append(hpColorCode(c.getCurrentHp(), c.getMaxHp()))
-                           .append(c.getCurrentHp()).append("/").append(c.getMaxHp());
-                    if (c.getTempHp() > 0) display.append("§b+").append(c.getTempHp());
+                    line = line.append(Component.text(" " + c.getCurrentHp() + "/" + c.getMaxHp(),
+                            hpColor(c.getCurrentHp(), c.getMaxHp())));
+                    if (c.getTempHp() > 0) line = line.append(Component.text("+" + c.getTempHp(), NamedTextColor.AQUA));
                 }
 
                 // Status indicators
-                if (c.isSurprised()) display.append(" §e[S]");
+                if (c.isSurprised()) line = line.append(Component.text(" [S]", NamedTextColor.YELLOW));
                 if (c.isUnconscious()) {
-                    display.append(" §c\u2620 ");  // Skull
-                    display.append(formatDeathSaves(c));
+                    line = line.append(Component.text(" ☠ ", NamedTextColor.RED)).append(formatDeathSaves(c)); // skull
                 }
-                if (c.isDead()) display.append(" §4[DEAD]");
-                display.append(conditionTag(c)); // active conditions (#103)
-                display.append(RitualManager.scoreboardTag(c)); // ritual channel (#156)
+                if (c.isDead()) line = line.append(Component.text(" [DEAD]", NamedTextColor.DARK_RED));
+                line = line.append(conditionTag(c)); // active conditions (#103)
+                line = line.append(RitualManager.scoreboardTag(c)); // ritual channel (#156)
 
-                // Use actual initiative as the score (shown as red number on right)
-                initiativeObjective.getScore(display.toString()).setScore(c.getInitiative());
+                scoreLine(entryKey(i), line, c.getInitiative(), false);
             }
 
-            // Round counter at bottom
-            initiativeObjective.getScore("§8Round: " + roundNumber).setScore(0);
+            // Round counter at the bottom, below any negative initiative.
+            scoreLine("zz_round", Component.text("Round: " + roundNumber, NamedTextColor.DARK_GRAY), Integer.MIN_VALUE, true);
         }
 
         // Apply scoreboard to all combatant players and DM
@@ -1070,10 +1061,10 @@ public class CombatSession {
         if (c.isPlayer()) sendToDM(msg);
     }
 
-    /** Compact condition tag for the scoreboard, e.g. "§5[Prone,Dodging]". */
-    private String conditionTag(Combatant c) {
-        if (c.getConditions().isEmpty()) return "";
-        StringBuilder sb = new StringBuilder(" §5[");
+    /** Compact condition tag for the scoreboard, e.g. " [Pron,Dodg]" in purple. */
+    private Component conditionTag(Combatant c) {
+        if (c.getConditions().isEmpty()) return Component.empty();
+        StringBuilder sb = new StringBuilder(" [");
         boolean first = true;
         for (String id : c.getConditions()) {
             DndCondition cond = ConditionLoader.get(id);
@@ -1082,37 +1073,35 @@ public class CombatSession {
             sb.append(label.length() > 4 ? label.substring(0, 4) : label);
             first = false;
         }
-        return sb.append("]").toString();
+        return Component.text(sb.append("]").toString(), NamedTextColor.DARK_PURPLE);
     }
 
-    private String formatDeathSaves(Combatant c) {
-        StringBuilder sb = new StringBuilder();
-        // Successes
+    /** Death-save tally, e.g. green ●●○ / red ●○○. */
+    private Component formatDeathSaves(Combatant c) {
+        Component out = Component.empty();
         for (int i = 0; i < 3; i++) {
-            sb.append(i < c.getDeathSaveSuccesses() ? "§a●" : "§7○");
+            boolean hit = i < c.getDeathSaveSuccesses();
+            out = out.append(Component.text(hit ? "●" : "○", hit ? NamedTextColor.GREEN : NamedTextColor.GRAY));
         }
-        sb.append("§7/");
-        // Failures
+        out = out.append(Component.text("/", NamedTextColor.GRAY));
         for (int i = 0; i < 3; i++) {
-            sb.append(i < c.getDeathSaveFailures() ? "§c●" : "§7○");
+            boolean hit = i < c.getDeathSaveFailures();
+            out = out.append(Component.text(hit ? "●" : "○", hit ? NamedTextColor.RED : NamedTextColor.GRAY));
         }
-        return sb.toString();
+        return out;
     }
 
-    /**
-     * Create an invisible unique suffix to differentiate scoreboard entries.
-     * Uses color codes that reset to white, making them invisible but unique.
-     * This prevents Minecraft from merging entries with identical text.
-     */
-    private String makeUniqueSuffix(int index) {
-        // Use a combination of color codes to create unique invisible suffixes
-        // §r resets formatting, repeated in patterns based on index
-        StringBuilder suffix = new StringBuilder("§r");
-        // Add additional invisible characters based on index
-        for (int i = 0; i <= index; i++) {
-            suffix.append("§f");  // White color (invisible extra codes)
-        }
-        return suffix.toString();
+    /** The hidden entry key for combatant row {@code i}: zero-padded so ties sort in turn order. */
+    private static String entryKey(int i) {
+        return String.format("c%02d", i);
+    }
+
+    /** One sidebar line: a hidden entry key, the text shown, its score, and whether to hide the number. */
+    private void scoreLine(String key, Component text, int score, boolean hideNumber) {
+        Score s = initiativeObjective.getScore(key);
+        s.setScore(score);
+        s.customName(text);
+        if (hideNumber) s.numberFormat(io.papermc.paper.scoreboard.numbers.NumberFormat.blank());
     }
 
     /**
@@ -1266,12 +1255,6 @@ public class CombatSession {
         return r > 0.5 ? NamedTextColor.GREEN : r > 0.25 ? NamedTextColor.YELLOW : NamedTextColor.RED;
     }
 
-    /** Legacy §-code equivalent of {@link #hpColor} for the scoreboard text. */
-    private static String hpColorCode(int hp, int max) {
-        if (max <= 0 || hp <= 0) return "§8";
-        double r = (double) hp / max;
-        return r > 0.5 ? "§a" : r > 0.25 ? "§e" : "§c";
-    }
 
     /**
      * Refresh the HP-at-a-glance surfaces after a combatant's HP changes: the shared scoreboard,

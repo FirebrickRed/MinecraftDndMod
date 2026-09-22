@@ -1510,7 +1510,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      */
     private boolean showReactionLine(Player viewer, Combatant c, boolean roster) {
         boolean avail = c.isReactionAvailable();
-        String status = avail ? "§areaction ready" : "§7reaction used";
+        String status = avail ? "reaction ready" : "reaction used";
         StringBuilder extras = new StringBuilder();
 
         List<io.papermc.jkvttplugin.data.model.DndSpell> reactionSpells = new ArrayList<>();
@@ -1528,7 +1528,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // Header line (DM sees a name prefix; a player just sees "You").
         String who = roster ? c.getDisplayName() : "You";
         Component head = Component.text((roster ? "• " : "") + who + " — ", NamedTextColor.YELLOW)
-                .append(Component.text(status.substring(2), avail ? NamedTextColor.GREEN : NamedTextColor.GRAY));
+                .append(Component.text(status, avail ? NamedTextColor.GREEN : NamedTextColor.GRAY));
         if (!reactionSpells.isEmpty()) {
             head = head.append(Component.text("  reaction spells: " + reactionSpells.stream()
                     .map(io.papermc.jkvttplugin.data.model.DndSpell::getName).collect(java.util.stream.Collectors.joining(", ")), NamedTextColor.AQUA));
@@ -2260,6 +2260,29 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
     // ==================== DAMAGE / HEAL / TEMP HP (Issue #100) ====================
 
+    /**
+     * The number behind {@code manualRoll <n>} / {@code autoRoll <dice>} for damage and healing: a
+     * dice formula (contains 'd') is rolled by the game and its dice shown; a plain number is what
+     * was rolled at the table. Null after telling the sender what was wrong with it.
+     */
+    private static Integer rolledAmount(Player sender, String rollStr) {
+        if (rollStr.toLowerCase().contains("d")) {
+            DiceRoller.Rolled r = DiceRoller.rollOrFlat(rollStr);
+            if (r == null) {
+                sender.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED));
+                return null;
+            }
+            sender.sendMessage(Component.text(r.display(), NamedTextColor.GRAY));
+            return r.total();
+        }
+        try {
+            return Integer.parseInt(rollStr.trim());
+        } catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));
+            return null;
+        }
+    }
+
     /** A resolved target plus an optional trailing flat amount, shared by /combat damage and heal. */
     private record AmountAndTarget(Combatant target, Integer flat) {}
 
@@ -2443,30 +2466,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 ? attacker.getTurnState().getPendingDamageLabel() : "";
         int damage;
         if (rollStr != null) {
-            int rolled;
-            String diceShown = null;
-            if (rollStr.toLowerCase().contains("d")) {
-                // A dice formula (e.g. 1d12) — the game rolls the weapon die for you, and shows it.
-                DiceRoller.Rolled r = DiceRoller.rollOrFlat(rollStr);
-                if (r == null) {
-                    dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED));
-                    return;
-                }
-                rolled = r.total();
-                diceShown = r.display();
-            } else {
-                // A plain number — what you physically rolled on the weapon die.
-                try {
-                    rolled = Integer.parseInt(rollStr.trim());
-                } catch (NumberFormatException e) {
-                    dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));
-                    return;
-                }
-            }
+            Integer rolled = rolledAmount(dm, rollStr);
+            if (rolled == null) return;
             // Either way, add the pending bonus the attack promised (+STR, +Rage, …) — the prompt
             // says "the game adds +N", so it must, whether the die was typed or auto-rolled (#168).
             damage = rolled + pendingBonus;
-            if (diceShown != null) dm.sendMessage(Component.text(diceShown, NamedTextColor.GRAY));
             if (pendingBonus != 0) {
                 String bonusShow = !pendingLabel.isEmpty() ? " " + pendingLabel
                         : (pendingBonus > 0 ? " +" + pendingBonus : " " + pendingBonus);
@@ -2517,22 +2521,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         int heal;
         if (rollStr != null) {
-            if (rollStr.toLowerCase().contains("d")) {
-                DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(rollStr);
-                if (rolled == null) {
-                    dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED));
-                    return;
-                }
-                heal = rolled.total();
-                dm.sendMessage(Component.text(rolled.display(), NamedTextColor.GRAY));
-            } else {
-                try {
-                    heal = Integer.parseInt(rollStr.trim());
-                } catch (NumberFormatException e) {
-                    dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));
-                    return;
-                }
-            }
+            Integer rolled = rolledAmount(dm, rollStr);
+            if (rolled == null) return;
+            heal = rolled;
         } else if (total != null) {
             heal = total;
         } else if (flat != null) {
