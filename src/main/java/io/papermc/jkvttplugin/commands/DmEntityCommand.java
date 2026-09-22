@@ -81,6 +81,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "list" -> handleList(sender, args);
             case "remove" -> handleRemove(sender, args);
             case "rename" -> handleRename(sender, args);
+            case "maxhp" -> handleMaxHp(sender, args);
             case "revive" -> handleRevive(sender, args);
             case "teleport" -> handleTeleport(sender, args);
             case "info" -> handleInfo(sender, args);
@@ -144,7 +145,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         String finalName = generateName(template, customName);
 
         // Roll HP
-        int maxHp = rollHitPoints(template, sender);
+        int maxHp = rollHitPoints(template, sender, finalName);
 
         // Spawn armor stand
         ArmorStand armorStand = spawnArmorStand(template, finalName, spawnLocation);
@@ -182,15 +183,22 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         sender.sendMessage(Component.text("Spawned Entities (" + spawnedEntities.size() + "):", NamedTextColor.GOLD));
 
+        org.bukkit.World here = sender instanceof Player p ? p.getWorld() : null;
         int index = 1;
         for (Map.Entry<String, DndEntityInstance> entry : spawnedEntities.entrySet()) {
             DndEntityInstance instance = entry.getValue();
             Location loc = instance.getLocation();
+            // Coordinates alone are ambiguous across dimensions: say which world, and flag one
+            // that isn't the DM's own.
+            org.bukkit.World world = loc != null ? loc.getWorld() : null;
+            boolean elsewhere = world != null && here != null && !world.equals(here);
 
             sender.sendMessage(Component.text(index + ". ", NamedTextColor.GRAY)
                     .append(Component.text(instance.getDisplayName(), NamedTextColor.WHITE))
                     .append(Component.text(" (" + instance.getTemplate().getId() + ")", NamedTextColor.DARK_GRAY))
                     .append(Component.text(" at " + formatLocation(loc), NamedTextColor.GRAY))
+                    .append(Component.text(" in " + (world != null ? world.getName() : "an unloaded world")
+                            + (elsewhere ? " (not your world)" : ""), elsewhere ? NamedTextColor.YELLOW : NamedTextColor.GRAY))
                     .append(Component.text(" [" + instance.getCurrentHp() + "/" + instance.getMaxHp() + " HP]", NamedTextColor.RED))
             );
             index++;
@@ -343,6 +351,43 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
      *   /dm entity rename The Kindler Alira the Kindler       "The Kindler" is spawned, so it resolves
      *   /dm entity rename The Kindlr Alira the Kindler        typo — refused, asks for quotes
      */
+    /**
+     * {@code /dm entity maxhp <name> <hp>}: set a creature's maximum HP, e.g. to hit dice the DM
+     * rolled at the table instead of the game's roll. The number is always last, so the name can
+     * have spaces without quotes. An unhurt creature is topped up to the new maximum; a hurt one
+     * keeps its HP (capped at the new maximum).
+     */
+    private void handleMaxHp(CommandSender sender, String[] args) {
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /dm entity maxhp <name> <hp>", NamedTextColor.RED));
+            return;
+        }
+        int hp;
+        try { hp = Integer.parseInt(args[args.length - 1]); }
+        catch (NumberFormatException e) {
+            sender.sendMessage(Component.text("'" + args[args.length - 1] + "' isn't a number. Usage: /dm entity maxhp <name> <hp>", NamedTextColor.RED));
+            return;
+        }
+        if (hp < 1) {
+            sender.sendMessage(Component.text("Max HP must be at least 1.", NamedTextColor.RED));
+            return;
+        }
+        String name = String.join(" ", Arrays.copyOfRange(args, 1, args.length - 1)).replace("\"", "");
+        DndEntityInstance instance = findEntity(name);
+        if (instance == null) {
+            sender.sendMessage(Component.text("Entity not found: " + name, NamedTextColor.RED));
+            sendSpawnedNames(sender);
+            return;
+        }
+        int oldMax = instance.getMaxHp();
+        boolean unhurt = instance.getCurrentHp() >= oldMax;
+        instance.setMaxHp(hp);
+        if (!instance.isDead()) instance.setCurrentHp(unhurt ? hp : instance.getCurrentHp()); // clamps and persists
+        instance.persist();
+        sender.sendMessage(Component.text("✓ " + instance.getDisplayName() + ": max HP " + oldMax + " → " + hp
+                + " (now " + instance.getCurrentHp() + "/" + hp + ")", NamedTextColor.GREEN));
+    }
+
     private void handleRename(CommandSender sender, String[] args) {
         if (args.length < 3) {
             sender.sendMessage(Component.text("Usage: /dm entity rename <current name> <new name>", NamedTextColor.RED));
@@ -1320,13 +1365,19 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
      * Roll hit points for entity based on hit_dice or hit_points.
      * Priority: hit_dice > hit_points > default (10)
      */
-    private int rollHitPoints(DndEntity template, CommandSender spawner) {
+    private int rollHitPoints(DndEntity template, CommandSender spawner, String name) {
         if (template.getHitDice() != null) {
             // Roll hit dice; if the expression is malformed, fall through to fixed HP / default
             DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(template.getHitDice());
             if (rolled != null) {
-                // The game rolled this creature's HP — show the DM what it got.
-                if (spawner != null) spawner.sendMessage(Component.text(rolled.display(), NamedTextColor.DARK_GRAY));
+                // The game rolled this creature's HP — show the DM what it got, and offer to use
+                // their own dice instead (fills in /dm entity maxhp; the DM types the number).
+                if (spawner != null) spawner.sendMessage(Component.text(rolled.display() + "  ", NamedTextColor.DARK_GRAY)
+                        .append(Component.text("[Use my own roll]", NamedTextColor.AQUA)
+                                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(
+                                        "Roll " + template.getHitDice() + " yourself and set " + name + "'s HP to it")))
+                                .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(
+                                        "/dm entity maxhp " + name + " "))));
                 return rolled.total();
             }
         }
@@ -1643,6 +1694,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("  - Remove one or more entities (supports multiple names)", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dm entity rename <current name> <new name>", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Rename a spawned entity (keeps its HP, shop and loot)", NamedTextColor.GRAY));
+        sender.sendMessage(Component.text("/dm entity maxhp <name> <hp>", NamedTextColor.YELLOW));
+        sender.sendMessage(Component.text("  - Set max HP, e.g. to hit dice you rolled yourself", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dm entity revive <name> [hp]", NamedTextColor.YELLOW));
         sender.sendMessage(Component.text("  - Bring a dead entity back (default full HP)", NamedTextColor.GRAY));
         sender.sendMessage(Component.text("/dm entity teleport <name> [x y z]", NamedTextColor.YELLOW));
@@ -1667,7 +1720,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             // Subcommands
-            return List.of("spawn", "list", "remove", "rename", "revive", "teleport", "info", "trade", "shop", "spawngroup", "cleanup").stream()
+            return List.of("spawn", "list", "remove", "rename", "maxhp", "revive", "teleport", "info", "trade", "shop", "spawngroup", "cleanup").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
@@ -1697,8 +1750,16 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
                 case "rename":
                 case "teleport":
-                case "info":
                 case "trade":
+                    // Only merchants: trading with anyone else just fails with "is not a merchant".
+                    return spawnedEntities.values().stream()
+                            .filter(e -> e.getTemplate().hasShop())
+                            .map(DndEntityInstance::getDisplayName)
+                            .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
+                            .collect(Collectors.toList());
+
+                case "info":
+                case "maxhp":
                     // Suggest spawned entity names
                     return spawnedEntities.values().stream()
                             .map(DndEntityInstance::getDisplayName)

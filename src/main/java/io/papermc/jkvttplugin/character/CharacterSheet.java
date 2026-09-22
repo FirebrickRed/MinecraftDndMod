@@ -1558,6 +1558,43 @@ public class CharacterSheet {
                 .toList();
     }
 
+    /** The racial innate spell for this spell, if the character has it at their level; else null. */
+    public InnateSpell findAvailableInnateSpell(DndSpell spell) {
+        if (spell == null) return null;
+        for (InnateSpell i : getAvailableInnateSpells()) {
+            if (i.getSpellId() != null && i.getSpellId().equalsIgnoreCase(spell.getId())) return i;
+        }
+        return null;
+    }
+
+    /**
+     * Whether the character can cast this spell at all: a class cantrip or spell, or a racial innate
+     * spell they're high enough level for. Every cast path asks this one question; they used to
+     * check only the class lists, so a tiefling rogue "didn't know" their own Thaumaturgy.
+     */
+    public boolean knowsSpell(DndSpell spell) {
+        if (spell == null) return false;
+        // By id, not object identity: /dm reload builds new DndSpell objects.
+        for (DndSpell s : knownCantrips) if (s.getId().equalsIgnoreCase(spell.getId())) return true;
+        for (DndSpell s : knownSpells) if (s.getId().equalsIgnoreCase(spell.getId())) return true;
+        return findAvailableInnateSpell(spell) != null;
+    }
+
+    /**
+     * The ability a spell is cast with: a racial innate spell's own {@code casting_ability} (a
+     * tiefling's CHA, whatever their class), else the class's spellcasting ability. Null when
+     * neither applies, e.g. a non-caster class with no innate spell.
+     */
+    public Ability castingAbilityFor(DndSpell spell) {
+        InnateSpell innate = findAvailableInnateSpell(spell);
+        if (innate != null && innate.getCastingAbility() != null) return innate.getCastingAbility();
+        if (getMainClass() == null || getMainClass().getSpellcastingInfo() == null) return null;
+        String name = getMainClass().getSpellcastingInfo().getCastingAbility();
+        if (name == null) return null;
+        try { return Ability.valueOf(name.trim().toUpperCase()); }
+        catch (IllegalArgumentException e) { return null; }
+    }
+
     /**
      * Checks if the character has any innate spells available at the specified spell level.
      * This is used to determine whether spell level buttons should be shown in the UI

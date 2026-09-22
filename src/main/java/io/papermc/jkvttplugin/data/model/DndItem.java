@@ -128,12 +128,29 @@ public class DndItem {
         return focusType != null && focusType.equals(classSpellFocusType);
     }
 
+    /** Names of the classes whose spellcasting focus type this item is. Empty for a component pouch (anyone). */
+    private List<String> focusClasses() {
+        List<String> out = new ArrayList<>();
+        if (focusType == null || "component".equals(focusType)) return out;
+        for (DndClass c : io.papermc.jkvttplugin.data.loader.ClassLoader.getAllClasses()) {
+            SpellcastingInfo info = c.getSpellcastingInfo();
+            if (info != null && focusType.equalsIgnoreCase(info.getSpellcastingFocusType())) out.add(c.getName());
+        }
+        out.sort(String::compareTo);
+        return out;
+    }
+
     public ItemStack createItemStack() {
         List<Component> lore = new ArrayList<>();
 
         if (isSpellcastingFocus()) {
-            lore.add(Component.text("Spellcasting Focus", NamedTextColor.LIGHT_PURPLE));
-            lore.add(Component.text("Right-click to cast spells", NamedTextColor.GRAY));
+            // Name who can cast with it: thieves' tools are the artificer's focus, and a bare
+            // "Spellcasting Focus" on them read as if any rogue could cast through their lockpicks.
+            List<String> casters = focusClasses();
+            lore.add(Component.text(casters.isEmpty() ? "Spellcasting Focus"
+                    : "Spellcasting focus for: " + String.join(", ", casters), NamedTextColor.LIGHT_PURPLE));
+            lore.add(Component.text(casters.isEmpty() ? "Right-click to cast spells"
+                    : "Right-click to cast spells (" + String.join(", ", casters) + " only)", NamedTextColor.GRAY));
         }
 
         if (description != null) {

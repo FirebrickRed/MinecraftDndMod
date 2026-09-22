@@ -75,7 +75,7 @@ public class SocialSpellHandler implements Listener {
             caster.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));
             return;
         }
-        if (!knows(sheet, spell)) {
+        if (!sheet.knowsSpell(spell)) {
             caster.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
             return;
         }
@@ -300,11 +300,6 @@ public class SocialSpellHandler implements Listener {
         return a.getWorld().equals(b.getWorld()) && a.getLocation().distance(b.getLocation()) <= MESSAGE_RANGE_BLOCKS;
     }
 
-    private static boolean knows(CharacterSheet sheet, DndSpell spell) {
-        for (DndSpell s : sheet.getKnownCantrips()) if (s.getId().equalsIgnoreCase(spell.getId())) return true;
-        for (DndSpell s : sheet.getKnownSpells()) if (s.getId().equalsIgnoreCase(spell.getId())) return true;
-        return sheet.getAvailableInnateSpells().stream().anyMatch(i -> i.getSpellId().equalsIgnoreCase(spell.getId()));
-    }
 
     private static boolean isDm(Player p) {
         return DMManager.isDM(p) || p.hasPermission("jkvtt.dm");

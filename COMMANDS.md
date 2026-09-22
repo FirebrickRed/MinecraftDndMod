@@ -116,13 +116,14 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 |---|---|
 | `spawn <entityId> [name] [x y z]` | Spawn an entity (from `DMContent/Entities/`), optionally named / placed. Also the DM-mode **Spawn Entity** tool |
 | `spawngroup <groupId>` | ⚠️ **Not implemented** — prints a notice (#79) |
-| `list` | List spawned entities |
+| `list` | List spawned entities with their coordinates and world (flagged when it isn't yours) |
 | `remove <name>` · `remove all\|dead` · `remove type <creature_type>` · `remove radius <blocks>` | Despawn one or many entities |
 | `rename <current> <new>` | Rename a spawned entity, keeping its HP, shop stock and loot. Quote names with spaces — an ambiguous unquoted split is refused, not guessed |
+| `maxhp <name> <hp>` | Set a creature's max HP, e.g. to hit dice you rolled at the table. The spawn message's **[Use my own roll]** fills it in. An unhurt creature is topped up to the new max |
 | `revive <name> [hp]` | Bring a dead entity back (default full HP). Same path as `/dm revive`, so it rejoins a fight in progress |
 | `teleport <name> [x y z]` | Teleport an entity to you (or to coordinates) |
 | `info <name>` | Show an entity's stat block |
-| `trade <name>` | Open a merchant's trade GUI |
+| `trade <name>` | Open a merchant's trade GUI (Tab offers merchants only) |
 | `shop view <name>` | View a merchant's stock |
 | `shop add <name> <item_id> <price> <currency> [stock]` | Add an item (stock `-1` = unlimited). Only works on an entity whose YAML has a `shop:` section; there's no `shop create` |
 | `shop restock <name> [item_id] [amount]` | Restock one item, or everything back to the YAML defaults |

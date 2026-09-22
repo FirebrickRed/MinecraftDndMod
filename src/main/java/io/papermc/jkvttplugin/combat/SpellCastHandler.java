@@ -48,13 +48,13 @@ public class SpellCastHandler {
             player.sendMessage(Component.text("Only characters cast spells this way (an entity's spells are attacks — use /combat attack).", NamedTextColor.RED));
             return false;
         }
-        Ability ability = spellcastingAbility(sheet);
-        if (ability == null) {
-            player.sendMessage(Component.text("Your class doesn't have spellcasting.", NamedTextColor.RED));
+        if (!sheet.knowsSpell(spell)) {
+            player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
             return false;
         }
-        if (!sheet.getKnownCantrips().contains(spell) && !sheet.getKnownSpells().contains(spell)) {
-            player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
+        Ability ability = sheet.castingAbilityFor(spell);
+        if (ability == null) {
+            player.sendMessage(Component.text("No spellcasting ability to cast " + spell.getName() + " with.", NamedTextColor.RED));
             return false;
         }
         // Range: Touch = 5 ft, Self = only yourself, "N feet" = N. Unknown → not enforced.
@@ -195,12 +195,12 @@ public class SpellCastHandler {
             player.sendMessage(Component.text("Only characters cast spells this way.", NamedTextColor.RED));
             return false;
         }
-        Ability ability = spellcastingAbility(sheet);
-        if (ability == null) { player.sendMessage(Component.text("Your class doesn't have spellcasting.", NamedTextColor.RED)); return false; }
-        if (!sheet.getKnownCantrips().contains(spell) && !sheet.getKnownSpells().contains(spell)) {
+        if (!sheet.knowsSpell(spell)) {
             player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
             return false;
         }
+        Ability ability = sheet.castingAbilityFor(spell);
+        if (ability == null) { player.sendMessage(Component.text("No spellcasting ability to cast " + spell.getName() + " with.", NamedTextColor.RED)); return false; }
         Runnable onConfirm = () -> {
             resolveAoeNow(caster, session, player, spell);
             TurnState ts = caster.getTurnState();
@@ -216,7 +216,7 @@ public class SpellCastHandler {
     private static void resolveAoeNow(Combatant caster, CombatSession session, Player player, DndSpell spell) {
         CharacterSheet sheet = caster.getCharacterSheet();
         if (sheet == null) return;
-        Ability ability = spellcastingAbility(sheet);
+        Ability ability = sheet.castingAbilityFor(spell);
         if (ability == null) return;
         int mod = sheet.getProficiencyBonus() + sheet.getModifier(ability);
 
@@ -484,11 +484,6 @@ public class SpellCastHandler {
         if (rolled == null) return 0;
         if (session != null) session.broadcast(Component.text(rolled.display(), NamedTextColor.GRAY));
         return rolled.total();
-    }
-
-    private static Ability spellcastingAbility(CharacterSheet sheet) {
-        if (sheet.getMainClass() == null || sheet.getMainClass().getSpellcastingInfo() == null) return null;
-        return parseAbility(sheet.getMainClass().getSpellcastingInfo().getCastingAbility());
     }
 
     private static Ability parseAbility(String name) {

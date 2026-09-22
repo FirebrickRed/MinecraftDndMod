@@ -33,6 +33,7 @@ public class CharacterCreationSession {
     private String activeCreationTab = "race";
     private String activeChoiceCategory = null;   // null → menu picks the first category
     private int activeSpellLevel = 0;
+    private int choicePage = 0;
     // Equipment drilldown state (null = not drilling down)
     private String drilldownChoiceId = null;
     private String drilldownWildcardKey = null;
@@ -156,6 +157,27 @@ public class CharacterCreationSession {
         PendingChoice<?> pc = findPendingChoice(choiceId);
         if (pc == null) return false;
         return pc.toggleKey(optionKey, Collections.emptySet());
+    }
+
+    /**
+     * Expertise sits on top of a proficiency (PHB p.96), so un-picking the skill or tool underneath
+     * takes the expertise with it. Otherwise the pick would stay selected and do nothing.
+     *
+     * @return display names of the expertise picks dropped
+     */
+    public List<String> dropOrphanedExpertise() {
+        Set<String> proficient = io.papermc.jkvttplugin.util.KnownItemCollector.collectProficientSkillsAndTools(this);
+        List<String> dropped = new ArrayList<>();
+        for (PendingChoice<?> pc : pendingChoices) {
+            if (pc.getPlayersChoice() == null || pc.getPlayersChoice().getType() != PlayersChoice.ChoiceType.EXPERTISE) continue;
+            for (Object chosen : new ArrayList<>(pc.getChosen())) {
+                if (chosen instanceof String key && !proficient.contains(key.toLowerCase())) {
+                    pc.deselectKey(key);
+                    dropped.add(pc.displayFor(key));
+                }
+            }
+        }
+        return dropped;
     }
 
     public boolean isChoiceSatisfied(PendingChoice<?> pc) {
@@ -293,6 +315,15 @@ public class CharacterCreationSession {
     }
     public void setActiveChoiceCategory(String category) {
         this.activeChoiceCategory = category;
+        this.choicePage = 0;
+    }
+
+    /** Page of the active choices sub-tab, when its options don't fit in one screen. */
+    public int getChoicePage() {
+        return choicePage;
+    }
+    public void setChoicePage(int page) {
+        this.choicePage = Math.max(0, page);
     }
 
     public int getActiveSpellLevel() {

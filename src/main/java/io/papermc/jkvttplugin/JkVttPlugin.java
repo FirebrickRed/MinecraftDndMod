@@ -79,7 +79,9 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         this.getCommand("character").setExecutor(characterCommand);
         this.getCommand("character").setTabCompleter(characterCommand);
 
-        this.getCommand("roll").setExecutor(new RollDiceCommand());
+        RollDiceCommand rollCommand = new RollDiceCommand();
+        this.getCommand("roll").setExecutor(rollCommand);
+        this.getCommand("roll").setTabCompleter(rollCommand);
 
         CombatCommand combatCommand = new CombatCommand();
         this.getCommand("combat").setExecutor(combatCommand);

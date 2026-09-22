@@ -155,6 +155,14 @@ public class CharacterCreationHandler implements MenuClickHandler {
             }
             case TOGGLE_CHOICE_OPTION -> {
                 toggleChoiceOption(player, session, payload);
+                for (String dropped : session.dropOrphanedExpertise()) {
+                    player.sendMessage(Component.text("Expertise in " + dropped + " removed: you're no longer proficient in it.",
+                            NamedTextColor.YELLOW));
+                }
+                CharacterCreationMenu.open(player, sessionId);
+            }
+            case CHOICE_PAGE -> {
+                try { session.setChoicePage(Integer.parseInt(payload)); } catch (NumberFormatException ignored) {}
                 CharacterCreationMenu.open(player, sessionId);
             }
             case DRILLDOWN_OPEN -> {

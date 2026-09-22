@@ -39,6 +39,18 @@ class CharacterCreationTest {
         choice(s, "duplicate_tool_tinkers_tools");
     }
 
+    /** PHB p.125: the replacement is ANY other tool — artisan's tools, instruments and gaming sets too. */
+    @Test
+    void duplicateToolReplacementOffersEveryOtherTool() {
+        CharacterCreationSession s = session("gnome", "rock_gnome", "artificer", "sage");
+        MergedChoice dup = sections(s, ChoiceCategory.TOOL).stream()
+                .filter(m -> m.getChoiceId().equals("duplicate_tool_tinkers_tools")).findFirst().orElseThrow();
+        for (String tool : List.of("smiths_tools", "flute", "dice_set", "navigators_tools", "vehicles_land")) {
+            assertTrue(dup.getAvailableOptionKeys().contains(tool), tool + " missing from " + dup.getAvailableOptionKeys());
+        }
+        assertFalse(dup.getAvailableOptionKeys().contains("tinkers_tools"), "already known");
+    }
+
     @Test
     void druidHermitGetsAReplacementForHerbalismKit() {
         CharacterCreationSession s = session("human", null, "druid", "hermit");
@@ -98,6 +110,21 @@ class CharacterCreationTest {
         MergedChoice exp = sections(s, ChoiceCategory.EXPERTISE).get(0);
         assertEquals(Set.of("stealth", "perception", "arcana", "history", "thieves_tools"),
                 Set.copyOf(exp.getAvailableOptionKeys()));
+    }
+
+    /** Un-picking a skill takes its expertise with it, instead of leaving a pick that does nothing. */
+    @Test
+    void unpickingAProficiencyDropsItsExpertise() {
+        CharacterCreationSession s = session("human", null, "rogue", "sage");
+        s.toggleChoiceByKey("class_skills", "athletics");
+        s.toggleChoiceByKey("rogue_expertise", "athletics");
+        s.toggleChoiceByKey("rogue_expertise", "arcana"); // from Sage: stays
+        assertTrue(s.dropOrphanedExpertise().isEmpty());
+
+        s.toggleChoiceByKey("class_skills", "athletics");
+        assertEquals(List.of("Athletics"), s.dropOrphanedExpertise());
+        assertEquals(Set.of("arcana"), Set.copyOf(choice(s, "rogue_expertise").getChosen()));
+        assertTrue(CharacterCreationHandler.missingSteps(s).stream().noneMatch(m -> m.startsWith("Expertise (")));
     }
 
     @Test

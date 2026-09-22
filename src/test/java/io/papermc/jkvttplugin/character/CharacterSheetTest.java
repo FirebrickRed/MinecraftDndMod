@@ -22,6 +22,21 @@ class CharacterSheetTest {
         return a;
     }
 
+    // ---------- racial spells ----------
+
+    /** A tiefling rogue's Thaumaturgy is theirs to cast, with CHA; the cast paths only checked class lists. */
+    @Test
+    void innateSpellsAreKnownAndUseTheirOwnAbility() {
+        CharacterSheet teef = character("tiefling", null, "rogue", "urchin", scores(Ability.CHARISMA, 14));
+        var thaumaturgy = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell("thaumaturgy");
+        assertTrue(teef.knowsSpell(thaumaturgy));
+        assertEquals(Ability.CHARISMA, teef.castingAbilityFor(thaumaturgy));
+
+        var rebuke = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell("hellish_rebuke");
+        assertFalse(teef.knowsSpell(rebuke), "Hellish Rebuke comes at level 3");
+        assertNull(teef.castingAbilityFor(rebuke), "a rogue has no class spellcasting");
+    }
+
     // ---------- tool checks + expertise (#207) ----------
 
     @Test

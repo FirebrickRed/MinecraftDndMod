@@ -306,7 +306,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));
             return true;
         }
-        if (!sheet.getKnownCantrips().contains(spell) && !sheet.getKnownSpells().contains(spell)) {
+        if (!sheet.knowsSpell(spell)) {
             player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
             return true;
         }

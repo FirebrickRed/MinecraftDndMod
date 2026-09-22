@@ -41,6 +41,7 @@ import org.bukkit.inventory.ItemFlag;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
@@ -51,6 +52,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -472,66 +474,167 @@ public class CharacterCreationMenu {
             inv.setItem(catSlots[ci], tab);
         }
 
-        int slot = 18;
+        // Every tile for this sub-tab in order, each remembering the header of its section so a page
+        // that starts mid-section can repeat it. Laid out into pages at the end: a tool pick alone
+        // offers ~36 tools and the pane holds 27, so without paging a section past the fold was cut
+        // off and only its first few options (the vehicles) showed.
+        List<ItemStack> tiles = new ArrayList<>();
+        List<ItemStack> sectionOf = new ArrayList<>();
+
         if (active == ChoiceCategory.AUTOMATIC_GRANTS) {
-            for (AutomaticGrant grant : grants) {
-                if (slot > 44) break;
+            for (AutomaticGrant grant : mergeGrantSources(grants)) {
                 ItemStack g = plain(grant.getIcon(), Component.text(grant.getFullDisplay(), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
-                g.editMeta(m -> m.lore(List.of(
-                        Component.text("From: " + grant.source(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
-                        Component.text("✓ Automatically granted", NamedTextColor.DARK_GREEN).decoration(TextDecoration.ITALIC, false))));
-                inv.setItem(slot++, g);
+                g.editMeta(m -> m.lore(grantLore(grant, "✓ Automatically granted", NamedTextColor.DARK_GREEN)));
+                tiles.add(g);
+                sectionOf.add(null);
             }
-            return;
+        } else {
+            // Track what the character is already given for free so we never render it twice
+            // (e.g. Common shows up both as an automatic grant and as an "already known" key).
+            Set<String> shownFree = new HashSet<>();
+
+            // 1) Automatic grants that belong to THIS category (e.g. Common under Languages) — locked.
+            List<AutomaticGrant> catGrants = mergeGrantSources(grantsForCategory(grants, active));
+            if (!catGrants.isEmpty()) {
+                ItemStack header = sectionHeader("Granted — automatic", NamedTextColor.AQUA);
+                tiles.add(header);
+                sectionOf.add(null);
+                for (AutomaticGrant grant : catGrants) {
+                    shownFree.add(grant.key());
+                    tiles.add(grantTile(grant));
+                    sectionOf.add(header);
+                }
+            }
+
+            // 2) The actual choices for this category, each under its own progress header.
+            for (MergedChoice choice : merged) {
+                if (choice.getCategory() != active) continue;
+
+                int remaining = Math.max(0, choice.getTotalChooseCount() - choice.getSelectedCount());
+                String title = choiceTitle(choice);
+                String progress = remaining > 0
+                        ? "Choose " + remaining + " more  (" + choice.getProgressText() + ")"
+                        : "All chosen  (" + choice.getProgressText() + ") ✓";
+                // Name the choice on its header so a bare "Choose 1 more" isn't a mystery (e.g. what a
+                // dragonborn's Draconic Ancestry pick is for).
+                String headerText = title != null ? title + " — " + progress : progress;
+                ItemStack header = sectionHeader(headerText, choice.getStatusColor());
+                // For expertise, the "known" set is everything NOT yet proficient — dozens of entries,
+                // and the wrong label. The header says what the rule is instead of listing them.
+                if (choice.getCategory() == ChoiceCategory.EXPERTISE) {
+                    header.editMeta(m -> m.lore(List.of(Component.text("Only skills and tools you're proficient in are offered",
+                            NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false))));
+                }
+                tiles.add(header);
+                sectionOf.add(null);
+
+                if (choice.getCategory() != ChoiceCategory.EXPERTISE) for (String knownKey : choice.getAlreadyKnown()) {
+                    if (shownFree.contains(knownKey)) continue; // already shown as a grant
+                    // A cantrip pick only needs to flag the cantrips it offers, not every class spell.
+                    if (choice.getCategory() == ChoiceCategory.SPELL && !offers(choice, knownKey)) continue;
+                    ItemStack known = plain(Material.GRAY_STAINED_GLASS_PANE, Component.text(choice.displayFor(knownKey), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+                    known.editMeta(m -> m.lore(List.of(Component.text("Already known (can't select)", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false))));
+                    tiles.add(known);
+                    sectionOf.add(header);
+                }
+                for (String optionKey : sortedOptions(choice)) {
+                    tiles.add(choiceOption(choice, optionKey));
+                    sectionOf.add(header);
+                }
+            }
         }
 
-        // Track what the character is already given for free so we never render it twice
-        // (e.g. Common shows up both as an automatic grant and as an "already known" key).
-        Set<String> shownFree = new HashSet<>();
+        layOutPaged(inv, session, tiles, sectionOf);
+    }
 
-        // 1) Automatic grants that belong to THIS category (e.g. Common under Languages) — locked.
-        List<AutomaticGrant> catGrants = grantsForCategory(grants, active);
-        if (!catGrants.isEmpty() && slot <= 44) {
-            inv.setItem(slot++, sectionHeader("Granted — automatic", NamedTextColor.AQUA));
-            for (AutomaticGrant grant : catGrants) {
-                if (slot > 44) break;
-                shownFree.add(grant.key());
-                inv.setItem(slot++, grantTile(grant));
+    /**
+     * Lays tiles out across slots 18–44, one page at a time, with ◀ / ▶ in the bottom row when
+     * there's more than one page. A page that opens in the middle of a section repeats its header.
+     */
+    private static void layOutPaged(Inventory inv, CharacterCreationSession session, List<ItemStack> tiles, List<ItemStack> sectionOf) {
+        final int first = 18, last = 44;
+        List<Map<Integer, ItemStack>> pages = new ArrayList<>();
+        Map<Integer, ItemStack> page = new LinkedHashMap<>();
+        int slot = first;
+        for (int i = 0; i < tiles.size(); i++) {
+            if (slot > last) {
+                pages.add(page);
+                page = new LinkedHashMap<>();
+                slot = first;
+                ItemStack header = sectionOf.get(i);
+                if (header != null) {
+                    ItemStack cont = header.clone();
+                    cont.editMeta(m -> {
+                        Component name = m.displayName();
+                        if (name != null) m.displayName(name.append(Component.text(" (continued)", NamedTextColor.DARK_GRAY)));
+                    });
+                    page.put(slot++, cont);
+                }
+            }
+            page.put(slot++, tiles.get(i));
+        }
+        pages.add(page);
+
+        int current = Math.min(session.getChoicePage(), pages.size() - 1);
+        pages.get(current).forEach(inv::setItem);
+        if (pages.size() == 1) return;
+
+        if (current > 0) {
+            ItemStack prev = plain(Material.ARROW, Component.text("◀ Previous page", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            ItemUtil.tagAction(prev, MenuAction.CHOICE_PAGE, String.valueOf(current - 1));
+            inv.setItem(45, prev);
+        }
+        inv.setItem(49, label("Page " + (current + 1) + " of " + pages.size()));
+        if (current < pages.size() - 1) {
+            ItemStack next = plain(Material.ARROW, Component.text("Next page ▶", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            ItemUtil.tagAction(next, MenuAction.CHOICE_PAGE, String.valueOf(current + 1));
+            inv.setItem(53, next);
+        }
+    }
+
+    private static boolean offers(MergedChoice choice, String key) {
+        for (PendingChoice<?> pc : choice.getSourcePendingChoices()) if (pc.optionKeys().contains(key)) return true;
+        return false;
+    }
+
+    /** A choice's options, alphabetical by what the player reads. Equipment keeps its authored order. */
+    private static List<String> sortedOptions(MergedChoice choice) {
+        List<String> keys = new ArrayList<>(choice.getAvailableOptionKeys());
+        if (choice.getCategory() != ChoiceCategory.EQUIPMENT) {
+            keys.sort(Comparator.comparing(k -> choice.displayFor(k).toLowerCase()));
+        }
+        return keys;
+    }
+
+    /**
+     * One tile per proficiency, not one per source: a rock gnome artificer gets Tinker's Tools from
+     * both, which is a single proficiency (plus a replacement pick) and reads "Rock Gnome + Artificer".
+     */
+    private static List<AutomaticGrant> mergeGrantSources(List<AutomaticGrant> grants) {
+        Map<String, AutomaticGrant> byKey = new LinkedHashMap<>();
+        for (AutomaticGrant g : grants) {
+            String k = g.type() + ":" + g.key() + ":" + g.description();
+            AutomaticGrant prev = byKey.get(k);
+            if (prev == null) byKey.put(k, g);
+            else if (!List.of(prev.source().split(" \\+ ")).contains(g.source())) {
+                byKey.put(k, new AutomaticGrant(prev.type(), prev.displayName(), prev.source() + " + " + g.source(),
+                        prev.description(), prev.id()));
             }
         }
+        return new ArrayList<>(byKey.values());
+    }
 
-        // 2) The actual choices for this category, each under its own progress header.
-        for (MergedChoice choice : merged) {
-            if (choice.getCategory() != active) continue;
-            if (slot > 44) break;
-
-            int remaining = Math.max(0, choice.getTotalChooseCount() - choice.getSelectedCount());
-            String title = choiceTitle(choice);
-            String progress = remaining > 0
-                    ? "Choose " + remaining + " more  (" + choice.getProgressText() + ")"
-                    : "All chosen  (" + choice.getProgressText() + ") ✓";
-            // Name the choice on its header so a bare "Choose 1 more" isn't a mystery (e.g. what a
-            // dragonborn's Draconic Ancestry pick is for).
-            String headerText = title != null ? title + " — " + progress : progress;
-            inv.setItem(slot++, sectionHeader(headerText, choice.getStatusColor()));
-
-            // For expertise, the "known" set is everything NOT yet proficient — dozens of entries, and the
-            // wrong label. Say what the rule is instead of listing them.
-            if (choice.getCategory() == ChoiceCategory.EXPERTISE) {
-                if (slot <= 44) inv.setItem(slot++, plain(Material.GRAY_STAINED_GLASS_PANE,
-                        Component.text("Only skills and tools you're proficient in are offered", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false)));
-            } else for (String knownKey : choice.getAlreadyKnown()) {
-                if (slot > 44) break;
-                if (shownFree.contains(knownKey)) continue; // already shown as a grant
-                ItemStack known = plain(Material.GRAY_STAINED_GLASS_PANE, Component.text(choice.displayFor(knownKey), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
-                known.editMeta(m -> m.lore(List.of(Component.text("Already known (can't select)", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false))));
-                inv.setItem(slot++, known);
-            }
-            for (String optionKey : choice.getAvailableOptionKeys()) {
-                if (slot > 44) break;
-                inv.setItem(slot++, choiceOption(choice, optionKey));
-            }
+    private static List<Component> grantLore(AutomaticGrant grant, String status, NamedTextColor statusColor) {
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("From: " + grant.source(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text(status, statusColor).decoration(TextDecoration.ITALIC, false));
+        boolean proficiency = grant.type() == AutomaticGrant.GrantType.SKILL_PROFICIENCY
+                || grant.type() == AutomaticGrant.GrantType.TOOL_PROFICIENCY;
+        if (proficiency && grant.source().contains(" + ")) {
+            lore.add(Component.text("Granted twice, so you get to pick another", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.text("in its place: \"Replace duplicate …\" (PHB p.125)", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
         }
+        return lore;
     }
 
     /** Maps an automatic grant to the choice category it should also appear under (or null). */
@@ -579,9 +682,7 @@ public class CharacterCreationMenu {
     private static ItemStack grantTile(AutomaticGrant grant) {
         ItemStack g = plain(Material.CYAN_STAINED_GLASS_PANE,
                 Component.text(grant.getFullDisplay(), NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
-        g.editMeta(m -> m.lore(List.of(
-                Component.text("From: " + grant.source(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false),
-                Component.text("✓ Granted — automatic (can't change)", NamedTextColor.DARK_AQUA).decoration(TextDecoration.ITALIC, false))));
+        g.editMeta(m -> m.lore(grantLore(grant, "✓ Granted — automatic (can't change)", NamedTextColor.DARK_AQUA)));
         return g;
     }
 
@@ -609,23 +710,40 @@ public class CharacterCreationMenu {
                 ? real
                 : plain(material, Component.text(choice.displayFor(optionKey)).decoration(TextDecoration.ITALIC, false));
         if (real != null && (selected || selectedElsewhere)) addGlint(item);
-        List<Component> existingLore = item.lore();
-        List<Component> lore = existingLore != null ? new ArrayList<>(existingLore) : new ArrayList<>();
-        if (real != null && !lore.isEmpty()) lore.add(Component.text("")); // spacer above the selection status
+
+        // The selection status goes right under the name, and a selected option's name turns bold
+        // green with a ✔: a real item's glint is easy to miss, and a status line at the bottom of a
+        // long stat tooltip was too.
+        List<Component> status = new ArrayList<>();
         if (isResolved && resolvedItem != null) {
-            lore.add(Component.text("✓ " + resolvedItem.prettyLabel(), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
-            lore.add(Component.text("Click to change", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            status.add(Component.text("✔ " + resolvedItem.prettyLabel(), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            status.add(Component.text("Click to change", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         } else if (selected) {
-            lore.add(Component.text("✓ Selected — click to deselect", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            status.add(Component.text("✔ Selected — click to deselect", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
         } else if (selectedElsewhere) {
-            lore.add(Component.text("Selected in another section", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
-            lore.add(Component.text("Click to move it here", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            status.add(Component.text("Selected in another section", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            status.add(Component.text("Click to move it here", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         } else if (needsDrilldown) {
-            lore.add(Component.text("Click to choose a specific item", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+            status.add(Component.text("Click to choose a specific item", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
         } else {
-            lore.add(Component.text("Click to select", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            status.add(Component.text("Click to select", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         }
-        item.editMeta(m -> m.lore(lore));
+        List<Component> lore = new ArrayList<>(status);
+        List<Component> existingLore = item.lore();
+        if (existingLore != null && !existingLore.isEmpty()) {
+            lore.add(Component.empty());
+            lore.addAll(existingLore);
+        }
+
+        boolean chosen = selected || isResolved;
+        String plainName = item.getItemMeta().hasDisplayName()
+                ? PlainTextComponentSerializer.plainText().serialize(item.getItemMeta().displayName())
+                : choice.displayFor(optionKey);
+        Component name = Component.text((chosen ? "✔ " : "") + plainName,
+                        chosen ? NamedTextColor.GREEN : selectedElsewhere ? NamedTextColor.YELLOW : NamedTextColor.WHITE)
+                .decoration(TextDecoration.ITALIC, false)
+                .decoration(TextDecoration.BOLD, chosen);
+        item.editMeta(m -> { m.displayName(name); m.lore(lore); });
 
         if (needsDrilldown && !selected) {
             ItemUtil.tagAction(item, MenuAction.DRILLDOWN_OPEN, choice.getChoiceId() + "|" + optionKey);
@@ -767,14 +885,27 @@ public class CharacterCreationMenu {
                 .filter(s -> s.getLevel() == level)
                 .sorted(Comparator.comparing(DndSpell::getName))
                 .toList();
+        // Spells already taken through another pick (a high elf's wizard cantrip): knowing it twice
+        // does nothing, so it's shown but can't be taken again here.
+        Map<String, String> knownElsewhere = spellsPickedInChoices(session);
+
         int slot = 18;
         for (DndSpell spell : spells) {
             if (slot > 44) break;
-            boolean sel = session.hasSpell(Util.normalize(spell.getName()));
-            ItemStack it = plain(Material.BOOK, Component.text(spell.getName(), sel ? NamedTextColor.AQUA : NamedTextColor.WHITE).decoration(TextDecoration.ITALIC, false));
+            String key = Util.normalize(spell.getName());
+            String via = knownElsewhere.get(key);
+            if (via != null && !session.hasSpell(key)) {
+                ItemStack known = plain(Material.GRAY_STAINED_GLASS_PANE, Component.text(spell.getName(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+                known.editMeta(m -> m.lore(List.of(Component.text("Already known from " + via + " (can't select)", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false))));
+                inv.setItem(slot++, known);
+                continue;
+            }
+            boolean sel = session.hasSpell(key);
+            ItemStack it = plain(Material.BOOK, Component.text((sel ? "✔ " : "") + spell.getName(), sel ? NamedTextColor.GREEN : NamedTextColor.WHITE)
+                    .decoration(TextDecoration.ITALIC, false).decoration(TextDecoration.BOLD, sel));
             List<Component> lore = new ArrayList<>();
+            lore.add(Component.text(sel ? "✔ Selected — click to remove" : "Click to select", sel ? NamedTextColor.GREEN : NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
             lore.add(Component.text("School: " + spell.getSchool(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
-            lore.add(Component.text(sel ? "✓ Selected — click to remove" : "Click to select", sel ? NamedTextColor.GREEN : NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
             it.editMeta(m -> {
                 m.lore(lore);
                 if (sel) { m.addEnchant(Enchantment.UNBREAKING, 1, true); m.addItemFlags(ItemFlag.HIDE_ENCHANTS); }
@@ -782,6 +913,19 @@ public class CharacterCreationMenu {
             ItemUtil.tagAction(it, MenuAction.CHOOSE_SPELL, Util.normalize(spell.getName()) + ":" + level);
             inv.setItem(slot++, it);
         }
+    }
+
+    /** Spell keys picked through a SPELL choice (race, subclass…), mapped to that choice's title. */
+    private static Map<String, String> spellsPickedInChoices(CharacterCreationSession session) {
+        Map<String, String> out = new LinkedHashMap<>();
+        for (PendingChoice<?> pc : session.getPendingChoices()) {
+            if (pc.getPlayersChoice() == null || pc.getPlayersChoice().getType() != io.papermc.jkvttplugin.data.model.PlayersChoice.ChoiceType.SPELL) continue;
+            String via = pc.getTitle() != null && !pc.getTitle().isBlank() ? pc.getTitle() : pc.getSource();
+            for (Object chosen : pc.getChosen()) {
+                if (chosen instanceof String key) out.put(Util.normalize(key), via);
+            }
+        }
+        return out;
     }
 
     private static boolean hasSpellSlotAtLevel(SpellcastingInfo info, int spellLevel) {
