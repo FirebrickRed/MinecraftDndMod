@@ -121,7 +121,25 @@ again belongs in the automated tests (`src/test/java`), not in a stale checkbox 
 - [ ] **High elf wizard** → pick Acid Splash as the Wizard Cantrip (Choices) → on the Spells tab Acid Splash is a gray
       pane "Already known from Wizard Cantrip". The other way round: pick it on the Spells tab first → the Wizard
       Cantrip pick shows it gray "Already known".
-- [ ] Actually **finish** a character (so far everything was checked inside creation) and look at the sheet.
+- [ ] **High elf rogue** → pick Fire Bolt as the Wizard Cantrip, finish → `/character cast fire_bolt` works and uses
+      INT (a rogue has no class spellcasting; it used to be stored as a class cantrip with no ability to cast it).
+      Restart → still castable. A **high elf wizard**'s cantrip still works the same as before.
+- [ ] **Focus, non-caster class:** a tiefling rogue right-clicks thieves' tools → "You cannot use this type of focus!"
+      (it used to open the spell menu). An artificer with the same tools → the spell menu opens.
+
+## Finish a character: combos (next round)
+Everything so far was checked inside creation. Finish each of these, then check the sheet (Proficiency Bonus tile's
+tools and languages, spells, AC) and your inventory. Then **restart the server** and check it all again. That also
+covers the "Restart the server" row above.
+- [ ] **Tiefling Rogue, Urchin**: Thaumaturgy castable out of combat (`/character cast thaumaturgy`). Expertise on
+      thieves' tools shows `×2` on a lock check. Breastplate on → casting refused; leather back on → casts.
+      Thieves' tools right-click → refused (not an artificer).
+- [ ] **Rock Gnome Artificer, Sage**: the Tinker's Tools replacement (page 2 of Tools) → the picked tool is on the sheet.
+      Thieves' tools right-click → spell menu opens.
+- [ ] **High Elf Wizard, Noble**: Wizard Cantrip + class cantrips, no double pick. Merged "choose 2" languages and the
+      gaming-set pick both on the sheet. Spells tab picks are in the spellbook.
+- [ ] **Mountain Dwarf Fighter, Guild Artisan**: the artisan's-tool pick gives the proficiency **and** the item.
+      Picking Smith's Tools in the dwarf's section and then the Guild Artisan's moves it. Heavy armor, no penalty.
 
 ## Playtest notes
 (`→` lines are Claude's status for each note. Add new notes at the bottom.)
@@ -146,7 +164,7 @@ Rock gnome + artificer: Tinker's Tools twice in Granted, plus a prompt to pick a
     one instead. Showing it twice wasn't: it's now one tile naming both sources. Only vehicles showed because the
     pane has 27 slots and that pick came last, so it got cut off after 3 options. Added paging.
 Haven't actually finished a character yet.
-  → added a row in "round 2".
+  → see "Finish a character: combos".
 Alphabetize the high elf's wizard cantrip list.
   → done, and every non-equipment choice list.
 Acid Splash selectable as both the high elf cantrip and a wizard cantrip.
@@ -157,9 +175,11 @@ Tiefling rogue: "Teef doesn't know Thaumaturgy".
   → fixed. Cast paths only checked class spell lists, never racial spells. Same fix covers `/combat cast`.
 
 ## Known deferred (not in this build)
-- A high elf **non-wizard** casting their racial wizard cantrip uses their class's ability (or none, for a
-  rogue) instead of INT: the pick is stored with class cantrips, so its source is lost. Needs the pick to
-  become an innate spell with `casting_ability: intelligence`.
+- **Astral elf's** Astral Fire cantrip is still a class-style pick: MotM lets the player choose INT, WIS or CHA
+  for it, and there's no "choose an ability" step yet, so it has no `casting_ability:`.
+- High elves made **before** this build keep their cantrip as a class cantrip (re-create to test the new path).
+- Racial spell **uses** (a level-3 tiefling's Hellish Rebuke) aren't saved, so a restart refills them.
+  Harmless at level 1, where every racial spell is a cantrip; matters once level-up (#153) lands.
 - Character-sheet inventory redesign (waiting until more content lands).
 - Unify the class-resource nested `icon:` (a sheet-display Material) into the `material:` naming.
 - Give spellcasting foci / packs nicer default `material:` values.

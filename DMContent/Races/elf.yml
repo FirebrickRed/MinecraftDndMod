@@ -10,10 +10,12 @@ speed: 30
 custom_model: elf_icon
 
 # Trance (#160): elves finish a long rest in 4 hours of meditative trance instead of 8h of sleep.
+# Trance: Only need 4 hours for long rest (Issue #63)
 # Not enforced mechanically yet — long rests aren't time-gated (see #45); this records the trait.
 rest_requirements:
   long_rest_hours: 4
   sleep_required: false
+  description: "Elves don't need to sleep. Instead, they meditate deeply for 4 hours a day."
 
 # Display-only trait names
 traits:
@@ -42,11 +44,6 @@ condition_immunities:
   - type: sleep
     magical_only: true
     description: "Magic can't put you to sleep."
-
-# Trance: Only need 4 hours for long rest (Issue #63)
-rest_requirements:
-  long_rest_hours: 4
-  description: "Elves don't need to sleep. Instead, they meditate deeply for 4 hours a day."
 
 subraces:
   dark_elf:
@@ -104,6 +101,7 @@ subraces:
         choose: 1
         spell_list: wizard
         spell_level: 0  # 0 = cantrips only
+        casting_ability: intelligence  # racial magic: INT whatever the class (PHB p.24), so a high elf rogue can cast it
       - id: subrace_languages
         title: Extra Language
         type: LANGUAGE

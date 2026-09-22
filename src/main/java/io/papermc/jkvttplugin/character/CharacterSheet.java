@@ -81,6 +81,8 @@ public class CharacterSheet {
     private int deathSaveFailures;
     private boolean dead;
     private List<InnateSpell> innateSpells = new ArrayList<>();
+    /** Innate spells the player picked (spell id → casting ability); saved, since the race YAML doesn't list them. */
+    private final Map<String, Ability> chosenInnateSpells = new LinkedHashMap<>();
     private Integer darkvision;  // Vision range in feet (60, 120, etc.), null = no darkvision
     private int longRestHours = 8;      // Hours needed for a long rest (#160); elves trance in 4.
     private boolean sleepRequired = true; // Warforged don't sleep. Not yet enforced — see #45.
@@ -146,6 +148,7 @@ public class CharacterSheet {
         sheet.applySubclassTraits();
 
         sheet.loadSpells(session.getSelectedSpells(), session.getSelectedCantrips());
+        sheet.restoreChosenInnateSpells(session.chosenInnateSpells());
         sheet.loadSkillProficiencies(session);
         sheet.loadToolAndLanguageProficiencies(session);
         sheet.applyLinkedResistances(); // now that CUSTOM choices (e.g. draconic ancestry) are known
@@ -585,6 +588,36 @@ public class CharacterSheet {
         toolProficiencies.addAll(chosenToolProficiencies);
         languages.addAll(chosenLanguages);
     }
+
+    /**
+     * Adds the spells a player picked through a race's spell choice (a high elf's wizard cantrip)
+     * as innate spells cast with the given ability, at creation and again on load. Unlike race
+     * innate spells these aren't in the race YAML, so the pick itself is saved
+     * ({@code chosenInnateSpells}). A leveled pick gets one use per long rest.
+     */
+    public void restoreChosenInnateSpells(Map<String, Ability> picks) {
+        if (picks == null) return;
+        int proficiencyBonus = getProficiencyBonus();
+        for (Map.Entry<String, Ability> e : picks.entrySet()) {
+            String id = e.getKey().toLowerCase();
+            if (chosenInnateSpells.containsKey(id)) continue;
+            DndSpell spell = SpellLoader.getSpell(id);
+            if (spell == null) continue; // removed from the YAML since; nothing to cast
+            InnateSpell innate = new InnateSpell();
+            innate.setSpellId(spell.getId());
+            innate.setLevelRequirement(1);
+            innate.setCantrip(spell.getLevel() == 0);
+            innate.setSpellLevel(spell.getLevel());
+            innate.setUses(spell.getLevel() == 0 ? 0 : 1);
+            innate.setRecovery("long_rest");
+            innate.setCastingAbility(e.getValue());
+            innate.initializeUses(proficiencyBonus);
+            innateSpells.add(innate);
+            chosenInnateSpells.put(id, e.getValue());
+        }
+    }
+
+    public Map<String, Ability> getChosenInnateSpells() { return Collections.unmodifiableMap(chosenInnateSpells); }
 
     public Set<String> getChosenToolProficiencies() { return Collections.unmodifiableSet(chosenToolProficiencies); }
     public Set<String> getChosenLanguages() { return Collections.unmodifiableSet(chosenLanguages); }

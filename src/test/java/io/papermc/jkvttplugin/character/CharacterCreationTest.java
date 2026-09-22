@@ -72,6 +72,25 @@ class CharacterCreationTest {
         assertTrue(choice(s, "wizard_cantrip").optionKeys().size() > 10);
     }
 
+    /**
+     * The high elf's cantrip is racial magic (INT, whatever the class), so the pick becomes an innate
+     * spell. A Nature cleric's druid cantrip has no casting_ability: it's a class cantrip (WIS).
+     */
+    @Test
+    void racialCantripPickCarriesItsOwnAbility() {
+        CharacterCreationSession s = session("elf", "high_elf", "rogue", "sage");
+        assertEquals(io.papermc.jkvttplugin.data.model.enums.Ability.INTELLIGENCE,
+                choice(s, "wizard_cantrip").getPlayersChoice().getCastingAbility());
+        s.toggleChoiceByKey("wizard_cantrip", "fire_bolt");
+        assertEquals(java.util.Map.of("fire_bolt", io.papermc.jkvttplugin.data.model.enums.Ability.INTELLIGENCE),
+                s.chosenInnateSpells());
+
+        var druidCantrip = io.papermc.jkvttplugin.data.loader.ClassLoader.getClass("cleric").getSubclasses().values().stream()
+                .flatMap(sc -> sc.getPlayerChoices().stream())
+                .filter(c -> c.id().equals("druid_cantrip")).findFirst().orElseThrow();
+        assertNull(druidCantrip.pc().getCastingAbility(), "a class feature's cantrip uses the class's ability");
+    }
+
     /** "Already known" covers race skills too — a wood elf rogue can't waste a class pick on Perception. */
     @Test
     void knownSkillsIncludeRaceGrants() {

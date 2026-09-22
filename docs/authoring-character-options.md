@@ -109,9 +109,31 @@ player_choices:
 **Expertise** doubles the proficiency bonus on a skill or tool the character **already has**.
 The menu only offers the ones they're proficient in right now, counting picks made in other
 sections, so choose class and background skills first. If a later change removes the proficiency
-under an expertise pick, finishing is blocked with "Expertise (not proficient in …)". The rogue's
+under an expertise pick (un-picking the skill in the menu), the expertise pick is dropped with a
+chat message; anything that still slips through blocks finishing with "Expertise (not proficient
+in …)". The rogue's
 is `choose: 2`, `options: [skill, thieves_tools]` (PHB p.96: two skills, or one skill and thieves'
 tools). Expertise on thieves' tools shows up on `/dm check <p> tool thieves_tools` as `×2`.
+
+**Racial spell picks: `casting_ability:`.** A `type: spell` choice can name the ability the pick
+is cast with:
+
+```yaml
+- id: wizard_cantrip
+  type: spell
+  choose: 1
+  spell_list: wizard
+  spell_level: 0
+  casting_ability: intelligence
+```
+
+With it, the pick is **the race's own magic**: it becomes an innate spell cast with that ability
+whatever the class, so a high elf rogue can cast their cantrip, with INT (PHB p.24). A leveled
+pick gets one use per long rest. Without it, the pick joins the class's cantrips/spells and uses
+the class's ability. That's right for a class feature like the Nature cleric's druid cantrip (WIS),
+and wrong for a race's pick. `casting_ability:` on any other choice type is ignored with a warning.
+(Races with a fixed spell use `innate_spells:` and its own `casting_ability:` instead; see
+`authoring-races.md`.)
 
 A choice with `choose: 0` or no usable options is dropped silently.
 

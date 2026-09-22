@@ -285,6 +285,12 @@ public class CharacterPersistenceLoader {
         if (!sheet.getExpertise().isEmpty()) {
             data.put("expertise", new ArrayList<>(sheet.getExpertise()));
         }
+        // Racial spell picks (a high elf's wizard cantrip): spell id → casting ability.
+        if (!sheet.getChosenInnateSpells().isEmpty()) {
+            Map<String, String> innate = new LinkedHashMap<>();
+            sheet.getChosenInnateSpells().forEach((id, ability) -> innate.put(id, ability.name().toLowerCase()));
+            data.put("chosenInnateSpells", innate);
+        }
         // Live buffs such as Rage (#212): just the source feature and its live state; the effect
         // itself is rebuilt from the feature's YAML on load.
         if (!sheet.getActiveEffects().isEmpty()) {
@@ -471,6 +477,14 @@ public class CharacterPersistenceLoader {
             // Restore creation-time tool / language picks (#17).
             sheet.restoreChosenProficiencies(stringList(data.get("chosenTools")), stringList(data.get("chosenLanguages")));
             sheet.restoreExpertise(stringList(data.get("expertise")));
+            if (data.get("chosenInnateSpells") instanceof Map<?, ?> innate) {
+                Map<String, Ability> picks = new LinkedHashMap<>();
+                for (Map.Entry<?, ?> e : innate.entrySet()) {
+                    Ability a = e.getValue() == null ? null : Ability.fromString(e.getValue().toString());
+                    if (e.getKey() != null && a != null) picks.put(e.getKey().toString(), a);
+                }
+                sheet.restoreChosenInnateSpells(picks);
+            }
             restoreActiveEffects(sheet, data.get("activeEffects"));
             int dsSuccesses = 0, dsFailures = 0;
             if (data.get("deathSaves") instanceof Map<?, ?> saves) {

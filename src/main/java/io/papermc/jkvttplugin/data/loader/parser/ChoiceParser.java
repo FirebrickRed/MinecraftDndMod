@@ -162,6 +162,17 @@ public final class ChoiceParser {
                     }
 
                     pc = new PlayersChoice<>(choose, spellOpts, type);
+                    String ability = ParseUtil.asString(m.get("casting_ability"), null);
+                    if (ability != null) {
+                        io.papermc.jkvttplugin.data.model.enums.Ability a = io.papermc.jkvttplugin.data.model.enums.Ability.fromString(ability.trim());
+                        if (a == null) {
+                            io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] SPELL choice '" + id
+                                    + "' has casting_ability '" + ability + "', which isn't an ability (use e.g. intelligence) — ignored,"
+                                    + " so the pick is cast with the class's ability.");
+                        } else {
+                            ((PlayersChoice<?>) pc).castingAbility(a);
+                        }
+                    }
                 }
                 case "CUSTOM" -> {
                     type = PlayersChoice.ChoiceType.CUSTOM;
@@ -180,6 +191,11 @@ public final class ChoiceParser {
             if (m.containsKey("also_give") && pc.getType() != PlayersChoice.ChoiceType.TOOL) {
                 io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] choice '" + id
                         + "' sets also_give, which only means something on a type: tool choice — ignored.");
+            }
+
+            if (m.containsKey("casting_ability") && pc.getType() != PlayersChoice.ChoiceType.SPELL) {
+                io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] choice '" + id
+                        + "' sets casting_ability, which only means something on a type: spell choice — ignored.");
             }
 
             if (choose > 0 && pc.getOptions() != null && !pc.getOptions().isEmpty()) {

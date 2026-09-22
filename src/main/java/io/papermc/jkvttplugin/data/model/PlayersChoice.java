@@ -58,6 +58,23 @@ public class PlayersChoice<T> {
         return this;
     }
 
+    /**
+     * {@code casting_ability:} on a {@code type: spell} choice: the pick is the race's own magic,
+     * cast with this ability whatever the class (a high elf's wizard cantrip is INT for a rogue
+     * too). The pick becomes an innate spell instead of joining the class's cantrips. Null = a
+     * class pick (a Nature cleric's druid cantrip), cast with the class's ability.
+     */
+    private io.papermc.jkvttplugin.data.model.enums.Ability castingAbility;
+
+    public io.papermc.jkvttplugin.data.model.enums.Ability getCastingAbility() {
+        return castingAbility;
+    }
+
+    public PlayersChoice<T> castingAbility(io.papermc.jkvttplugin.data.model.enums.Ability ability) {
+        this.castingAbility = ability;
+        return this;
+    }
+
     // ToDo: update when I start using it based on use cases
     // it doesn't like that options may not be a string
 //    public boolean containsOptions(String value) {

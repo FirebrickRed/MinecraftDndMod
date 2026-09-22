@@ -37,6 +37,17 @@ class CharacterSheetTest {
         assertNull(teef.castingAbilityFor(rebuke), "a rogue has no class spellcasting");
     }
 
+    /** A high elf rogue's wizard cantrip is an innate spell cast with INT, not a (nonexistent) class cantrip. */
+    @Test
+    void highElfRogueCastsTheirCantripWithInt() {
+        CharacterSheet elf = character("elf", "high_elf", "rogue", "sage", scores(Ability.INTELLIGENCE, 14));
+        elf.restoreChosenInnateSpells(java.util.Map.of("fire_bolt", Ability.INTELLIGENCE));
+        var fireBolt = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell("fire_bolt");
+        assertTrue(elf.knowsSpell(fireBolt));
+        assertEquals(Ability.INTELLIGENCE, elf.castingAbilityFor(fireBolt));
+        assertTrue(elf.getKnownCantrips().isEmpty(), "not a class cantrip");
+    }
+
     // ---------- tool checks + expertise (#207) ----------
 
     @Test

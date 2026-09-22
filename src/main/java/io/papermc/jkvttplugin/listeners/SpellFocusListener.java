@@ -36,14 +36,14 @@ public class SpellFocusListener implements Listener {
             return;
         }
 
+        // A class with no spellcasting has no focus type, so only a component pouch works for it.
+        // Skipping the check for them let a tiefling rogue cast through thieves' tools.
         String focusType = getFocusType(item);
-        if (sheet.getMainClass() != null && sheet.getMainClass().getSpellcastingInfo() != null) {
-            String classRequirement = sheet.getMainClass().getSpellcastingInfo().getSpellcastingFocusType();
-
-            if (!canUseThisFocus(focusType, classRequirement)) {
-                player.sendMessage("You cannot use this type of focus!");
-                return;
-            }
+        String classRequirement = sheet.getMainClass() != null && sheet.getMainClass().getSpellcastingInfo() != null
+                ? sheet.getMainClass().getSpellcastingInfo().getSpellcastingFocusType() : null;
+        if (!canUseThisFocus(focusType, classRequirement)) {
+            player.sendMessage("You cannot use this type of focus!");
+            return;
         }
 
         SpellCastingMenu.open(player, sheet);

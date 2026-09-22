@@ -160,6 +160,23 @@ public class CharacterCreationSession {
     }
 
     /**
+     * Spells picked through a spell choice that has its own {@code casting_ability} (a high elf's
+     * wizard cantrip), as spell id → ability. These become innate spells on the sheet rather than
+     * class cantrips, so a high elf rogue can cast theirs, with INT.
+     */
+    public Map<String, Ability> chosenInnateSpells() {
+        Map<String, Ability> out = new LinkedHashMap<>();
+        for (PendingChoice<?> pc : pendingChoices) {
+            PlayersChoice<?> choice = pc.getPlayersChoice();
+            if (choice == null || choice.getType() != PlayersChoice.ChoiceType.SPELL || choice.getCastingAbility() == null) continue;
+            for (Object chosen : pc.getChosen()) {
+                if (chosen instanceof String id) out.put(id.toLowerCase(), choice.getCastingAbility());
+            }
+        }
+        return out;
+    }
+
+    /**
      * Expertise sits on top of a proficiency (PHB p.96), so un-picking the skill or tool underneath
      * takes the expertise with it. Otherwise the pick would stay selected and do nothing.
      *

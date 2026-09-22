@@ -67,6 +67,9 @@ public class CharacterSheetManager {
 
         for (PendingChoice<?> pc : session.getPendingChoices()) {
             if (pc.getPlayersChoice().getType() == PlayersChoice.ChoiceType.SPELL) {
+                // A pick with its own casting_ability is the race's magic, not a class spell: the
+                // sheet makes it an innate spell (CharacterCreationSession.chosenInnateSpells).
+                if (pc.getPlayersChoice().getCastingAbility() != null) continue;
                 // Get chosen spells from this pending choice
                 Set<?> chosen = pc.getChosen();
 

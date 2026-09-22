@@ -51,6 +51,18 @@ class CharacterPersistenceTest {
         assertTrue(back.getLanguages().containsAll(List.of("deep_speech", "draconic")));
     }
 
+    /** A racial spell pick isn't in the race YAML, so the file has to carry it (and its ability). */
+    @Test
+    void chosenInnateSpellsSurvive() {
+        CharacterSheet elf = character("elf", "high_elf", "rogue", "sage", scores(Ability.INTELLIGENCE, 14));
+        elf.restoreChosenInnateSpells(Map.of("fire_bolt", Ability.INTELLIGENCE));
+        CharacterSheet back = roundTrip(elf);
+        var fireBolt = SpellLoader.getSpell("fire_bolt");
+        assertTrue(back.knowsSpell(fireBolt));
+        assertEquals(Ability.INTELLIGENCE, back.castingAbilityFor(fireBolt));
+        assertEquals(1, back.getInnateSpells().stream().filter(i -> i.getSpellId().equals("fire_bolt")).count(), "not added twice");
+    }
+
     @Test
     void expertiseSurvives() {
         CharacterSheet rogue = character("human", null, "rogue", "urchin", scores(Ability.DEXTERITY, 16), Skill.STEALTH);
