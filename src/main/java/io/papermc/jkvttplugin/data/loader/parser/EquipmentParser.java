@@ -108,8 +108,8 @@ public final class EquipmentParser {
     }
 
     /**
-     * Parse one give-entry: a scalar {@code "id"} or {@code "id xN"} string (tag auto-detected), or a
-     * {@code {item: id, quantity: n}} / {@code {tag: id}} map (still accepted for explicitness).
+     * Parse one give-entry: {@code "id"} or {@code "id xN"} (a tag is auto-detected). That's the
+     * only spelling; there's no {@code {item: id, quantity: n}} map form.
      */
     private static EquipmentOption parseGiveEntry(Object node) {
         if (node instanceof String s) {
@@ -127,32 +127,7 @@ public final class EquipmentParser {
             if (id.isBlank()) return null;
             return TagRegistry.isTag(id) ? EquipmentOption.tag(id) : EquipmentOption.item(id, qty);
         }
-        if (node instanceof Map<?, ?> m) {
-            if (m.containsKey("item")) {
-                String id = Util.normalize(ParseUtil.asString(m.get("item"), ""));
-                int qty = ParseUtil.asInt(m.get("quantity"), 1);
-                if (!id.isBlank()) return EquipmentOption.item(id, qty);
-            }
-            if (m.containsKey("tag")) {
-                String tag = Util.normalize(ParseUtil.asString(m.get("tag"), ""));
-                if (!tag.isBlank()) return EquipmentOption.tag(tag);
-            }
-        }
         return null;
     }
 
-    @SuppressWarnings("unused") // kept for a planned choice-time tag expansion (see ChoiceParser EQUIPMENT case)
-    private static List<EquipmentOption> expandTagsForChoices(List<EquipmentOption> options) {
-        List<EquipmentOption> out = new ArrayList<>();
-        for (var opt : options) {
-            if (opt.getKind() == EquipmentOption.Kind.TAG) {
-                for (String id : TagRegistry.itemsFor(opt.getIdOrTag())) {
-                    out.add(EquipmentOption.item(id));
-                }
-            } else {
-                out.add(opt);
-            }
-        }
-        return out;
-    }
 }

@@ -90,10 +90,6 @@ public class SpellLoader {
 
         // Parse classes list
         List<String> classes = ParseUtil.normalizeStringList(data.get("classes"));
-        // Handle legacy comma-separated string format if normalizeStringList returns empty
-        if (classes.isEmpty() && data.get("classes") instanceof String classString) {
-            classes = Arrays.asList(classString.split(",\\s*"));
-        }
 
         String castingTime = ParseUtil.asString(data.get("casting_time"), "1 action");
         String range = ParseUtil.asString(data.get("range"), "Self");

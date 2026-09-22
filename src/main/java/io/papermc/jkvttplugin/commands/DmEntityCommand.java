@@ -1448,7 +1448,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         String idStr = pdc.get(key("dnd_instance_id"), PersistentDataType.STRING);
         String templateId = pdc.get(key("dnd_template_id"), PersistentDataType.STRING);
-        if (idStr == null || templateId == null) return null; // marked but pre-#89 (no saved state)
+        if (idStr == null || templateId == null) return null; // damaged save: skip it rather than throw on chunk load
 
         DndEntity template = EntityLoader.getEntity(templateId);
         if (template == null) return null; // template no longer exists
@@ -1498,7 +1498,6 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             }
         }
         sender.sendMessage(Component.text("✓ Removed " + removed + " orphaned D&D entity stand(s).", NamedTextColor.GREEN));
-        sender.sendMessage(Component.text("(Stands spawned before this feature have no marker — use /kill for those once.)", NamedTextColor.GRAY));
     }
 
     /**

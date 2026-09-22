@@ -173,7 +173,6 @@ public final class ChoiceParser {
                 case "EQUIPMENT" -> {
                     type = PlayersChoice.ChoiceType.EQUIPMENT;
                     var opts = EquipmentParser.parseEquipmentOptions(m.get("options"));
-//                    opts = expandTagsForChoices(opts);
                     pc = new PlayersChoice<>(choose, opts, type);
                 }
                 default -> { continue; }

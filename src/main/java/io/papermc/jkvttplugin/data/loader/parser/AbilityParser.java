@@ -91,14 +91,6 @@ public final class AbilityParser {
         return distributions.isEmpty() ? null : new AbilityScoreChoice(distributions);
     }
 
-    /**
-     * Legacy method - kept for backwards compatibility. Only returns fixed bonuses.
-     */
-    public static Map<Ability, Integer> parseAbilityScoreMap(Object rawObject) {
-        AbilityScoreParseResult result = parseAbilityScores(rawObject);
-        return result.fixedBonuses;
-    }
-
     public static List<Ability> parseAbilityList(Object input) {
         if (!(input instanceof List<?> inputList)) return List.of();
 

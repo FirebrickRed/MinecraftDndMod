@@ -679,8 +679,8 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     ends it with no save. `/combat cast` sets concentration when the spell resolves (`castMark` does
     its own for Hex/Hunter's Mark), a second concentration spell replaces the first, and the action
     bar shows **◈ <spell>**. An unanswered save holds the caster's turn, like a reaction window.
-    `RitualManager.onDamage` is deprecated — it used to roll the check itself, the only d20 in combat
-    the game took out of the players' hands.
+    (The old `RitualManager.onDamage` rolled the check itself, the only d20 in combat the game took
+    out of the players' hands; it's been removed.)
   - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
 - **DM entities & items (`/dm entity <sub>`):** `spawn`, `list`, `remove`, `rename`, `maxhp`, `revive`, `teleport`, `info`, `trade`, `cleanup`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
   - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world. `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dm entity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).

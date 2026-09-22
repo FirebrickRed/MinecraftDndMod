@@ -30,13 +30,6 @@ public class Feature {
     private final boolean grantedResourceByProf;  // max = proficiency bonus
     private final String grantedResourceRecovery; // "long_rest" | "short_rest" | "dawn" | null
 
-    /** Legacy 7-arg constructor (apply-only features such as Rage). */
-    public Feature(String id, String name, String activation, String target,
-                   String costResource, int costAmount, ActiveEffect applyTemplate) {
-        this(id, name, activation, target, costResource, costAmount, applyTemplate,
-                null, -1, false, null);
-    }
-
     public Feature(String id, String name, String activation, String target,
                    String costResource, int costAmount, ActiveEffect applyTemplate,
                    FeatureAction action, int grantedResourceMax, boolean grantedResourceByProf,

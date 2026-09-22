@@ -8,7 +8,6 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
-import java.util.Random;
 
 /**
  * Ritual casting during combat (Issue #156) — a house-ruled multi-turn channel.
@@ -21,7 +20,6 @@ import java.util.Random;
  */
 public final class RitualManager {
 
-    private static final Random RNG = new Random();
 
     private RitualManager() {}
 
@@ -83,40 +81,6 @@ public final class RitualManager {
             }
         }
         session.updateScoreboard();
-    }
-
-    /**
-     * @deprecated Superseded by {@link ConcentrationManager#onDamage}, which asks for the save with
-     * the normal autoRoll/manualRoll/total prompt instead of rolling it itself, and settles a
-     * concentrated spell and a channelled ritual with the same roll. Kept only so an out-of-tree
-     * caller doesn't break; nothing in the plugin calls it. Remove once #193 says so.
-     */
-    @Deprecated
-    public static void onDamage(CombatSession session, Combatant target, int finalDamage) {
-        if (target == null || !target.isChanneling() || finalDamage <= 0) return;
-        // A hit that drops the caster always breaks the ritual, whatever the interrupt rule.
-        if (target.isDead() || target.getCurrentHp() <= 0) {
-            cancel(session, target, "the caster was knocked down");
-            return;
-        }
-        switch (PluginConfig.getRitualInterrupt()) {
-            case NONE -> { /* nothing breaks it */ }
-            case BREAK_ON_DAMAGE -> cancel(session, target, "the hit shattered its focus");
-            case CONCENTRATION_CHECK -> {
-                int dc = PluginConfig.getRitualInterruptDc() > 0
-                        ? PluginConfig.getRitualInterruptDc()
-                        : Math.max(10, finalDamage / 2);
-                int d20 = 1 + RNG.nextInt(20);
-                int total = d20 + target.getConstitutionModifier();
-                session.broadcast(Component.text(target.getDisplayName() + " — ritual concentration: CON save "
-                        + total + " vs DC " + dc + " (d20 " + d20 + ").", NamedTextColor.GRAY));
-                if (total < dc) {
-                    cancel(session, target, "the concentration check failed");
-                } else {
-                    session.broadcast(Component.text(target.getDisplayName() + " holds the ritual together!", NamedTextColor.GREEN));
-                }
-            }
-        }
     }
 
     /** Break an in-progress ritual and announce why. No-op if the combatant isn't channelling. */
