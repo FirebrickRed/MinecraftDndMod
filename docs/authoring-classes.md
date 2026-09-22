@@ -89,7 +89,7 @@ class_resources:
     max_by_level: [2,2,3,3,3,4,…]   # OR:
     # uses_ability: charisma        #   max = that ability's modifier (Bardic Inspiration)
     recovery: long_rest             # short_rest | long_rest | dawn | none
-    material: red_dye               # the item it shows as on the sheet (`icon:` is the old, deprecated spelling)
+    material: red_dye               # the item it shows as on the sheet
 ```
 
 A resource whose max works out to 0 at the character's level isn't created (Action Surge before

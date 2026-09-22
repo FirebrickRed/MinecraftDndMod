@@ -23,7 +23,7 @@ public class DndSubClass {
     private String id;           // Normalized name (e.g., "life_domain", "the_fiend")
     private String name;         // Display name (e.g., "Life Domain", "The Fiend")
     private String parentClass;  // The class this subclass belongs to (e.g., "cleric", "warlock")
-    private String icon;         // Resource-pack model name (from YAML icon:); null → vanilla fallback
+    private String customModel;         // Resource-pack model name (from YAML custom_model:); null → vanilla fallback
     private String description;  // Flavor text for the subclass
 
     // Subclass features and spells
@@ -190,20 +190,16 @@ public class DndSubClass {
         this.conditionalBonusSpells = conditionalBonusSpells;
     }
 
-    /**
-     * Returns the icon material for this subclass.
-     * Currently uses default icons based on parent class.
-     * TODO: Add custom icons per subclass in YAML.
-     */
-    /** Resource-pack model name (from YAML {@code icon:}); null → vanilla fallback. */
-    public String getIcon() {
-        return icon;
+    /** Resource-pack model name (from YAML {@code custom_model:}); null → vanilla fallback. */
+    public String getCustomModel() {
+        return customModel;
     }
 
-    public void setIcon(String icon) {
-        this.icon = icon;
+    public void setCustomModel(String customModel) {
+        this.customModel = customModel;
     }
 
+    /** The vanilla item under the subclass's menu tile, by parent class (a {@code custom_model:} overlays it). */
     public Material getIconMaterial() {
         if (parentClass == null) return Material.ENCHANTED_BOOK;
 

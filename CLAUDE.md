@@ -259,8 +259,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
   chestplate (or `SHIELD`), or equip tracking never sees it.
   **Spells** follow the same convention: `material:` sets the base item, absent → a level-based
   default (cantrip → `PAPER`, low → `BOOK`, high → `ENCHANTED_BOOK`); `custom_model:` is optional.
-  (No auto `spell_<name>` model — that produced purple placeholders. The old spell `icon:` key was
-  renamed to `material:`.)
+  (No auto `spell_<name>` model — that produced purple placeholders.)
 - **`custom_model:`** — the **resource-pack model name** to overlay if the pack is loaded
   (e.g. `custom_model: bard_icon` → the pack's `bard_icon` model in the `jkvttresourcepack`
   namespace). Optional and opt-in: absent/blank → keeps the vanilla `material`/item. Used by
@@ -272,8 +271,9 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
   Vanilla base materials go through `Util.parseMaterial(name, fallback)`.
 - **There is no `icon:` key.** Everything that renders as a Minecraft item uses `material:`
   (+ optional `custom_model:`) — content items, entity attacks (`PossessionManager` hotbar), and
-  class resources alike. `icon:` was the old spelling for the last two; loaders still read it so
-  existing homebrew keeps its art, but they log a deprecation warning telling you to rename it.
+  class resources alike. `icon:` isn't read anywhere (the old fallback is gone), so a file still
+  using it just gets the vanilla default. In code the same split holds: `getCustomModel()` for the
+  pack model, `material` for the vanilla item.
 - Fixed game concepts use hardcoded models: ability tiles resolve to `<abbr>_icon`
   (`str_icon`, `dex_icon`, …). Other fixed UI icons (Back arrow, tabs) are vanilla until
   their pack textures exist; a house-rule/UI-icon override config is future work (#104).

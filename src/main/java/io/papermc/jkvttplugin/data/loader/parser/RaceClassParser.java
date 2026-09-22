@@ -75,7 +75,7 @@ public final class RaceClassParser {
                 .traits(ParseUtil.parseTraits(data.get("traits")))
                 .languages(LanguageParser.parseLanguages(data.get("languages")))
                 .playerChoices(ChoiceParser.parsePlayerChoices(data.get("player_choices")))
-                .icon((String) data.getOrDefault("custom_model", "")) // resource-pack model name
+                .customModel((String) data.getOrDefault("custom_model", "")) // resource-pack model name
                 // Parse mechanical trait fields (Issue #51)
                 .speed((int) data.getOrDefault("speed", 0))
                 .swimmingSpeed((int) data.getOrDefault("swimming_speed", 0))
@@ -118,7 +118,7 @@ public final class RaceClassParser {
         subclass.setName((String) data.getOrDefault("name", id));
         subclass.setParentClass(className);
         subclass.setDescription((String) data.getOrDefault("description", ""));
-        subclass.setIcon((String) data.get("custom_model")); // resource-pack model name
+        subclass.setCustomModel((String) data.get("custom_model")); // resource-pack model name
 
         // Parse features by level
         subclass.setFeaturesByLevel(ParseUtil.parseLevelStringListMap(data.get("features_by_level")));

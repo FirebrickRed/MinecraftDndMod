@@ -51,7 +51,7 @@ public class DndClass {
     public List<ChoiceEntry> getPlayerChoices() { return playerChoices; }
     public void setPlayerChoices(List<ChoiceEntry> pcs) { this.playerChoices = (pcs == null) ? List.of() : List.copyOf(pcs); }
 
-    private String icon;
+    private String customModel;
 
     public DndClass() {}
 
@@ -97,13 +97,13 @@ public class DndClass {
         // ToDo: update to use custom icons
         return Material.PAPER;
     }
-    public void setIcon(String icon) {
-        this.icon = icon;
+    public void setCustomModel(String customModel) {
+        this.customModel = customModel;
     }
 
-    /** Resource-pack model name (from YAML {@code icon:}); null → vanilla fallback. */
-    public String getIcon() {
-        return icon;
+    /** Resource-pack model name (from YAML {@code custom_model:}); null → vanilla fallback. */
+    public String getCustomModel() {
+        return customModel;
     }
 
     public int getHitDie() {
@@ -254,7 +254,7 @@ public class DndClass {
     }
 
     public ItemStack getClassIcon() {
-        return Util.createItem(Component.text(getName()), null, this.icon, 0);
+        return Util.createItem(Component.text(getName()), null, this.customModel, 0);
     }
 
     /**
@@ -273,14 +273,8 @@ public class DndClass {
         for (Map<String, Object> def : classResources) {
             String name = (String) def.get("name");
             String recovery = (String) def.get("recovery");
-            // The vanilla item this resource shows as on the sheet. `icon:` was the old spelling —
-            // still read so existing homebrew doesn't silently lose its art, but warned about.
-            String icon = (String) def.get("material");
-            if (icon == null && def.get("icon") instanceof String legacyIcon) {
-                icon = legacyIcon;
-                org.bukkit.Bukkit.getLogger().warning("[jkvtt] Class resource '" + name
-                        + "': `icon:` is deprecated — rename it to `material:`.");
-            }
+            // The vanilla item this resource shows as on the sheet.
+            String material = (String) def.get("material");
 
             // Determine max value
             int max = 0;
@@ -310,7 +304,7 @@ public class DndClass {
             }
 
             if (max > 0) {  // Only add resources with positive max
-                resources.add(new ClassResource(name, max, recoveryType, icon));
+                resources.add(new ClassResource(name, max, recoveryType, material));
             }
         }
 
@@ -537,8 +531,8 @@ public class DndClass {
             return this;
         }
 
-        public Builder icon(String icon) {
-            instance.setIcon(icon);
+        public Builder customModel(String customModel) {
+            instance.setCustomModel(customModel);
             return this;
         }
 

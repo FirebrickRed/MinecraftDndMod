@@ -74,7 +74,7 @@ public class BackgroundLoader {
                 .abilityScoreOptions(AbilityParser.parseAbilityList(data.get("ability_scores")))
                 .links(ParseUtil.normalizeStringList(data.get("links")))
                 .playerChoices(ChoiceParser.parsePlayerChoices(data.get("player_choices")))
-                .icon((String) data.get("custom_model")) // resource-pack model name
+                .customModel((String) data.get("custom_model")) // resource-pack model name
                 .build();
     }
 

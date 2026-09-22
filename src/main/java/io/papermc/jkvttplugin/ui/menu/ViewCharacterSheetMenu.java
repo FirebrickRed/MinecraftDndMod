@@ -320,9 +320,9 @@ public class ViewCharacterSheetMenu {
 
             // Get material from resource icon, or default to NETHER_STAR
             Material material = Material.NETHER_STAR;  // Default fallback
-            if (resource.getIcon() != null && !resource.getIcon().isEmpty()) {
+            if (resource.getMaterial() != null && !resource.getMaterial().isEmpty()) {
                 try {
-                    material = Material.valueOf(resource.getIcon().toUpperCase());
+                    material = Material.valueOf(resource.getMaterial().toUpperCase());
                 } catch (IllegalArgumentException e) {
                     // Invalid icon specified in YAML, fall back to NETHER_STAR
                 }

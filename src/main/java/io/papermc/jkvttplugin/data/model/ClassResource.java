@@ -9,18 +9,18 @@ public class ClassResource {
     private int current;
     private final int max;
     private final RecoveryType recovery;
-    private final String icon;  // Material ID for display (e.g., "red_dye", "glowstone_dust")
+    private final String material;  // YAML material: the vanilla item it shows as on the sheet (e.g. "red_dye")
 
     public ClassResource(String name, int max, RecoveryType recovery) {
         this(name, max, recovery, null);
     }
 
-    public ClassResource(String name, int max, RecoveryType recovery, String icon) {
+    public ClassResource(String name, int max, RecoveryType recovery, String material) {
         this.name = name;
         this.max = max;
         this.current = max;  // Start at full
         this.recovery = recovery;
-        this.icon = icon;
+        this.material = material;
     }
 
     /**
@@ -31,14 +31,14 @@ public class ClassResource {
     }
 
     /**
-     * Full constructor for creating instances with current/max values and icon.
+     * Full constructor for creating instances with current/max values and material.
      */
-    public ClassResource(String name, int current, int max, RecoveryType recovery, String icon) {
+    public ClassResource(String name, int current, int max, RecoveryType recovery, String material) {
         this.name = name;
         this.current = current;
         this.max = max;
         this.recovery = recovery;
-        this.icon = icon;
+        this.material = material;
     }
 
     public String getName() {
@@ -58,11 +58,11 @@ public class ClassResource {
     }
 
     /**
-     * Gets the material icon ID for this resource (e.g., "red_dye", "glowstone_dust").
+     * Gets the YAML material: for this resource (e.g., "red_dye", "glowstone_dust").
      * @return Material ID string, or null if not specified (defaults to nether_star)
      */
-    public String getIcon() {
-        return icon;
+    public String getMaterial() {
+        return material;
     }
 
     /**

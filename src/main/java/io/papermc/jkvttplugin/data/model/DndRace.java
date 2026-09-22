@@ -61,7 +61,7 @@ public class DndRace {
 
     private Map<String, DndSubRace> subraces;
     private List<ChoiceEntry> playerChoices = List.of();
-    private String icon;
+    private String customModel;
 
     public DndRace() { }
 
@@ -263,13 +263,13 @@ public class DndRace {
         this.playerChoices = playerChoices == null ? List.of() : List.copyOf(playerChoices);
     }
 
-    public void setIcon(String icon) {
-        this.icon = icon;
+    public void setCustomModel(String customModel) {
+        this.customModel = customModel;
     }
 
     /** Resource-pack model name (from YAML {@code icon_name:}); null → vanilla fallback. */
-    public String getIcon() {
-        return icon;
+    public String getCustomModel() {
+        return customModel;
     }
 
     public boolean hasSubraces() {
@@ -282,7 +282,7 @@ public class DndRace {
     }
 
     public ItemStack getRaceIcon() {
-        return Util.createItem(Component.text(getName()), null, icon, 0);
+        return Util.createItem(Component.text(getName()), null, customModel, 0);
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
@@ -539,8 +539,8 @@ public class DndRace {
             return this;
         }
 
-        public Builder icon(String icon) {
-            instance.setIcon(icon);
+        public Builder customModel(String customModel) {
+            instance.setCustomModel(customModel);
             return this;
         }
 

@@ -1,6 +1,5 @@
 package io.papermc.jkvttplugin.data.loader;
 
-import org.bukkit.Bukkit;
 import io.papermc.jkvttplugin.data.loader.parser.ShopParser;
 import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
@@ -373,16 +372,8 @@ public class EntityLoader {
         // The weapon this attack represents (for possession + loot), if any (#132).
         if (data.get("item") instanceof String item) attack.setItem(item);
         if (data.get("lootable") instanceof Boolean b) attack.setLootable(b);
-        // The vanilla item a natural/spell attack shows as in the possession hotbar. `icon:` was the
-        // old spelling — still read so existing homebrew doesn't silently lose its art, but warned
-        // about so it gets migrated.
-        if (data.get("material") instanceof String material) {
-            attack.setMaterial(material);
-        } else if (data.get("icon") instanceof String legacyIcon) {
-            attack.setMaterial(legacyIcon);
-            Bukkit.getLogger().warning("[jkvtt] Attack '" + attack.getName()
-                    + "': `icon:` is deprecated — rename it to `material:`.");
-        }
+        // The vanilla item a natural/spell attack shows as in the possession hotbar.
+        if (data.get("material") instanceof String material) attack.setMaterial(material);
 
         return attack;
     }

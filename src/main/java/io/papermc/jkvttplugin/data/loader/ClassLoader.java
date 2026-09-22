@@ -75,7 +75,7 @@ public class ClassLoader {
 
                 .allowFeats((boolean) data.getOrDefault("allow_feats", true))
                 .playerChoices(ChoiceParser.parsePlayerChoices(data.get("player_choices")))
-                .icon((String) data.get("custom_model")); // resource-pack model name
+                .customModel((String) data.get("custom_model")); // resource-pack model name
 
         return builder.build();
     }

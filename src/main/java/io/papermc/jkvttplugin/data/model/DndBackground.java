@@ -35,7 +35,7 @@ public class DndBackground {
     private String feat;
     private List<Ability> abilityScoreOptions = List.of();
     private List<String> links = List.of();
-    private String icon;
+    private String customModel;
     private List<ChoiceEntry> playerChoices = List.of();
 
     public DndBackground() {}
@@ -82,14 +82,14 @@ public class DndBackground {
     public void setLinks(List<String> links) { this.links = links != null ? List.copyOf(links) : List.of(); }
 
     /** Resource-pack model name (from YAML {@code custom_model:}); null → vanilla fallback. */
-    public String getIcon() { return icon; }
-    public void setIcon(String icon) { this.icon = icon; }
+    public String getCustomModel() { return customModel; }
+    public void setCustomModel(String customModel) { this.customModel = customModel; }
 
     public List<ChoiceEntry> getPlayerChoices() { return playerChoices; }
     public void setPlayerChoices(List<ChoiceEntry> pcs) { this.playerChoices = (pcs == null) ? List.of() : List.copyOf(pcs); }
 
     public ItemStack getBackgroundIcon() {
-        return Util.createItem(Component.text(getName()), null, icon, 0);
+        return Util.createItem(Component.text(getName()), null, customModel, 0);
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
@@ -151,7 +151,7 @@ public class DndBackground {
         public Builder feat(String feat) { instance.setFeat(feat); return this; }
         public Builder abilityScoreOptions(List<Ability> abilities) { instance.setAbilityScoreOptions(abilities); return this; }
         public Builder links(List<String> links) { instance.setLinks(links); return this; }
-        public Builder icon(String icon) { instance.setIcon(icon); return this; }
+        public Builder customModel(String customModel) { instance.setCustomModel(customModel); return this; }
         public Builder playerChoices(List<ChoiceEntry> playerChoices) { instance.setPlayerChoices(playerChoices); return this; }
 
         public DndBackground build() { return instance; }

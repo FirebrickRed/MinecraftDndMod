@@ -145,7 +145,7 @@ covers the "Restart the server" row above.
       Picking Smith's Tools in the dwarf's section and then the Guild Artisan's moves it. Heavy armor, no penalty.
 
 ## Playtest notes
-(`→` lines are Claude's status for each note. Add new notes at the bottom.)
+(`→` lines are Claude's status for each note. New notes go at the top.)
 
 `/dm entity trade` autofills every entity's name.
   → fixed, merchants only. There's no use for it on a non-merchant; it just fails with "is not a merchant".
@@ -181,6 +181,5 @@ Tiefling rogue: "Teef doesn't know Thaumaturgy".
 - Racial spell **uses** (a level-3 tiefling's Hellish Rebuke) aren't saved, so a restart refills them.
   Harmless at level 1, where every racial spell is a cantrip; matters once level-up (#153) lands.
 - Character-sheet inventory redesign (waiting until more content lands).
-- Unify the class-resource nested `icon:` (a sheet-display Material) into the `material:` naming.
 - Give spellcasting foci / packs nicer default `material:` values.
 
