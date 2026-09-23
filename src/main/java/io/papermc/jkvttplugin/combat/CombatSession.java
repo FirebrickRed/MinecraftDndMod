@@ -317,7 +317,12 @@ public class CombatSession {
      * Mark a combatant as surprised.
      */
     public void markSurprised(Combatant combatant) {
-        combatant.setSurprised(true);
+        setSurprised(combatant, true);
+    }
+
+    /** Mark or clear Surprised (before initiative). */
+    public void setSurprised(Combatant combatant, boolean surprised) {
+        combatant.setSurprised(surprised);
         updateScoreboard();
     }
 

@@ -34,6 +34,7 @@ public class DmModeManager {
     /** DM tool identifiers (stored on the item's PDC). */
     public static final String TOOL_VIEW = "view";
     public static final String TOOL_ADJUST = "adjust";
+    public static final String TOOL_SURPRISE = "surprise";
     public static final String TOOL_POSSESS = "possess";
     public static final String TOOL_START = "combat_start";
     public static final String TOOL_ADD = "combat_add";
@@ -182,6 +183,11 @@ public class DmModeManager {
         player.getInventory().setItem(4, tool(Material.LEATHER_BOOTS, TOOL_MOVE, "Move",
                 "Right-click entities to select them (they glow)", "then right-click the ground to send them there",
                 "(in combat: only on that entity's turn, counts vs speed)"));
+        player.getInventory().setItem(5, tool(Material.FIREWORK_STAR, TOOL_SURPRISE, "Surprised (ambush)",
+                "Right-click someone in the fight to mark them Surprised (again to clear)",
+                "Use it before rolling initiative, when they didn't see it coming:",
+                "an ambush, or a friendly chat that turns into a Fire Bolt.",
+                "They can't move, act or react on their first turn. Shows [S]."));
         player.getInventory().setItem(7, adjustTool());
         player.getInventory().setItem(6, tool(Material.SPYGLASS, TOOL_VIEW, "View",
                 "Right-click someone → a quick look in chat (HP, AC, conditions)", "Sneak + right-click → the full view (inventory, DM notes)"));

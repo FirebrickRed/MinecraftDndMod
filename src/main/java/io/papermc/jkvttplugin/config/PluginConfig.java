@@ -37,6 +37,7 @@ public final class PluginConfig {
     private static boolean abilityScoreCap20 = false; // false = house rule (racial bonuses may exceed 20)
     private static boolean trackAmmunition = true;    // bows consume arrows (#128)
     private static boolean trackThrownWeapons = true; // a thrown weapon leaves your hand (#192)
+    private static boolean damageNeedsDmApproval = true; // a player's /combat damage waits for [Apply] (#175)
     private static InteractionPrompt interactionPrompt = InteractionPrompt.ALL_CONTAINERS; // #185
     private static ThievesToolsBreak thievesToolsBreak = ThievesToolsBreak.ON_FAIL; // #210, BG3-style default
     private static boolean annotationGlow = true;     // outline annotated blocks for the annotating DM
@@ -78,6 +79,9 @@ public final class PluginConfig {
         // does not want the bookkeeping turns it off.
         trackAmmunition = cfg.getBoolean("combat.track_ammunition", true);
         trackThrownWeapons = cfg.getBoolean("combat.track_thrown_weapons", true);
+        // A player's /combat damage waits for the DM's [Apply] (#175). Default on: a playtest saw damage go
+        // wrong around reactions, and a DM who trusts the flow turns it off.
+        damageNeedsDmApproval = cfg.getBoolean("combat.damage_needs_dm_approval", true);
 
         // Interaction prompt (#185). Unknown values fall back to all_containers rather than
         // silently disabling the prompt, since "off" leaks more than a misspelling should cost.
@@ -112,6 +116,9 @@ public final class PluginConfig {
 
     /** True when a thrown weapon leaves the thrower's hand and lands in the world (#192). */
     public static boolean isTrackThrownWeapons() { return trackThrownWeapons; }
+
+    /** Whether a player's /combat damage waits for the DM to approve it (#175). */
+    public static boolean isDamageNeedsDmApproval() { return damageNeedsDmApproval; }
 
     public static RollMode getRollMode() { return rollMode; }
 

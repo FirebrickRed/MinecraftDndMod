@@ -44,7 +44,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `start` | Begin a combat session (setup phase) |
 | `add <player\|entity> [--hidden]` · `add --radius <blocks> [--hidden]` | Add combatant(s) |
 | `remove <name>` | Remove a combatant |
-| `surprise <name>` | Mark a combatant surprised |
+| `surprise <name>` | **Toggle** Surprised on a combatant, before initiative: they didn't see it coming (an ambush, or a friendly chat that turns into a Fire Bolt), so they can't move, act or react on their first turn. Shows **[S]**. Also the **Surprised (ambush)** tool on the DM combat toolbar |
 | `initiative <name> <n>` | Manually set initiative |
 | `nextturn` · `turn <name>` · `endturn` | Advance / jump / end a turn |
 | `status` | Show the initiative order |
@@ -55,7 +55,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `use <feature>` | Activate a class/racial feature, e.g. `use rage` (Effect Engine, #70) |
 | `movement [undo]` | Check / undo movement this turn |
 | `attack <target> [weapon] [stab\|throw] [flags]` | **Hit check only**: resolves HIT/MISS/CRIT, and on a hit prompts you with the `/combat damage` command to run. With no weapon you get clickable weapon buttons. Thrown weapons default by distance (#192) |
-| `damage <target> [amount] [flags]` | Apply damage — a **player on their own turn**, or the **DM** anytime |
+| `damage <target> [amount] [flags]` | Apply damage — a **player on their own turn**, or the **DM** anytime. With `combat.damage_needs_dm_approval: true` (the default) a player's damage goes to the DM as **[Apply]** / **[Deny]** first; Deny lets them roll again |
 | `heal <target> [amount \| manualRoll <n> \| autoRoll <dice> \| total <n>]` | Restore HP |
 | `temphp <target> <amount>` | Grant temporary HP |
 | `deathsave [<player>] [manualRoll <d20> \| autoRoll]` | Roll a death save (DM may roll for a downed player). Three failures and the character is **dead**, on the sheet, so it outlasts the fight: see `/dm revive` |
@@ -144,7 +144,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `view <who> full` | **Full view** menu, read-only: summary, a button to their sheet / stat block, all DM notes, [Add a note], [Adjust]; a character's actual inventory (backpack, hotbar, armor, off-hand; while online) or what a creature carries and drops, with the check to find each item. The View tool does this on **sneak** + right-click |
 | `note <who> add <text…>` · `note <who> clear` · `note <who>` | **DM-only notes** on a character or a spawned creature, saved with them. Players never see them. A creature's YAML `dm_notes:` show alongside and `clear` doesn't touch them |
 | `revive <character\|creature> [hp]` | **The only way back from death** (#101), standing in for Revivify / Raise Dead. Default 1 HP. Healing, rests and the fight ending never revive anyone. Damage at 0 HP is a failed death save (two on a crit); massive damage (left over past 0 HP ≥ max HP) kills outright |
-| `mode` | Enter/exit **DM mode**: your inventory is swapped for the DM toolbar (View, Adjust, Possess, Move, Add/Remove Combatant, Spawn Entity, Exploration tools) and restored on exit |
+| `mode` | Enter/exit **DM mode**: your inventory is swapped for the DM toolbar (View, Adjust, Surprised, Possess, Move, Add/Remove Combatant, Spawn Entity, Exploration tools) and restored on exit |
 | `check <player> <ability\|save\|skill> <name> [dc <n>] [adv\|dis]` | Prompt a player to roll. The result comes to **you** (graded vs the DC if given) with a **[Share]** button. `promptcheck` is an alias (#186) |
 | `check <player> tool <tool> [ability] [dc <n>] [adv\|dis]` | A check **with a tool** (#207): the ability modifier + proficiency if they have the tool, **doubled with expertise**. The ability defaults to the item's `check_ability:` (thieves' tools → DEX); name it for other tools (`tool smiths_tools int dc 12`). You're told first whether they're proficient and whether they're carrying the tools. Picking a lock is `tool thieves_tools`, not Sleight of Hand (PHB p.154). A **failed** graded thieves' tools check breaks one set by default (BG3-style); set `objects.thieves_tools_break` to `on_fail`, `always` or `never` in config.yml (#210). |
 | `check <A> <skill> vs <B> <skill> [autoRoll \| manualRoll <n> \| total <n>]` | Contested check. Either side can be a character (rolls their own die) or a **spawned creature** (the DM rolls: add the roll words inline, or click **[Roll it]** / **[I rolled…]**). The creature uses its stat-block `skills:` bonus, else its ability modifier. The winner comes back to the DM with **[Share]**; a tie changes nothing (PHB p.174). |

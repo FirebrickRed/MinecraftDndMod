@@ -361,7 +361,7 @@ public final class OutOfCombatAttack {
         dm.performCommand("combat add " + targetArg);
         openings.put(attackerId, new Opening(label, heldCommand, System.currentTimeMillis()));
         dm.sendMessage(Component.text("Anyone else in this? Add them (Add tool, or /combat add). Caught anyone off guard? "
-                + "Mark them surprised (/combat surprise <who>). Then roll initiative.", NamedTextColor.YELLOW));
+                + "Mark them surprised (the Surprise tool, or /combat surprise <who>). Then roll initiative.", NamedTextColor.YELLOW));
         attacker.sendMessage(Component.text("It's a fight! Your " + label + " comes back to you on your first turn.", NamedTextColor.GOLD));
     }
 

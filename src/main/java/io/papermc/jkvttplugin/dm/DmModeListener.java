@@ -66,6 +66,14 @@ public class DmModeListener implements Listener {
             } else {
                 player.sendActionBar(Component.text("Look at a player or entity to view them.", NamedTextColor.GRAY));
             }
+        } else if (DmModeManager.TOOL_SURPRISE.equals(tool)) {
+            if (toolDebounced(player)) return; // this click already handled via the entity event
+            RayTraceResult hit = player.rayTraceEntities(10);
+            if (hit == null || hit.getHitEntity() == null) {
+                player.sendActionBar(Component.text("Look at someone in the fight to mark them Surprised.", NamedTextColor.GRAY));
+            } else {
+                surprise(player, hit.getHitEntity());
+            }
         } else if (DmModeManager.TOOL_ADJUST.equals(tool)) {
             if (toolDebounced(player)) return; // this click already handled via the entity event
             RayTraceResult hit = player.rayTraceEntities(10);
@@ -208,6 +216,10 @@ public class DmModeListener implements Listener {
             event.setCancelled(true);
             if (toolDebounced(player)) return;
             adjust(player, event.getRightClicked());
+        } else if (DmModeManager.TOOL_SURPRISE.equals(tool)) {
+            event.setCancelled(true);
+            if (toolDebounced(player)) return;
+            surprise(player, event.getRightClicked());
         } else if (DmModeManager.TOOL_POSSESS.equals(tool) && event.getRightClicked() instanceof ArmorStand stand) {
             event.setCancelled(true);
             if (toolDebounced(player)) return;
@@ -293,6 +305,28 @@ public class DmModeListener implements Listener {
             event.setCancelled(true);
             PossessionManager.toggleSelfModel(event.getPlayer());
         }
+    }
+
+    /** The Surprise tool: toggle Surprised on someone already in the DM's fight, via /combat surprise. */
+    private void surprise(Player dm, Entity target) {
+        if (!DMManager.isDM(dm)) return;
+        io.papermc.jkvttplugin.combat.CombatSession session = null;
+        for (var s : io.papermc.jkvttplugin.combat.CombatSession.getAllSessions()) {
+            if (dm.getUniqueId().equals(s.getDmId())) session = s;
+        }
+        if (session == null) {
+            dm.sendActionBar(Component.text("Start a fight first (Start Combat), then mark who's surprised.", NamedTextColor.GRAY));
+            return;
+        }
+        UUID id = target instanceof Player p ? p.getUniqueId()
+                : target instanceof ArmorStand stand && DndEntityInstance.getByArmorStand(stand) != null
+                        ? DndEntityInstance.getByArmorStand(stand).getInstanceId() : null;
+        io.papermc.jkvttplugin.combat.Combatant c = id != null ? session.getCombatantById(id) : null;
+        if (c == null) {
+            dm.sendActionBar(Component.text("They're not in the fight. Add them first (Add / Remove tool).", NamedTextColor.GRAY));
+            return;
+        }
+        dm.performCommand("combat surprise " + c.getDisplayName());
     }
 
     /** Open the Adjust menu (#175) on a player's character or a creature. False if it's neither. */

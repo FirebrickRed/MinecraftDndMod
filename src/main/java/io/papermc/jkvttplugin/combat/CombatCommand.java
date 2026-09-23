@@ -343,8 +343,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        session.markSurprised(combatant);
-        dm.sendMessage(Component.text(combatant.getDisplayName() + " is marked as surprised.", NamedTextColor.YELLOW));
+        // A toggle, so a misclick (or the DM changing their mind) can be undone before initiative.
+        boolean now = !combatant.isSurprised();
+        session.setSurprised(combatant, now);
+        dm.sendMessage(now
+                ? Component.text(combatant.getDisplayName() + " is Surprised: they didn't see it coming, so they can't move, act "
+                        + "or react on their first turn. [S] on the tracker.", NamedTextColor.YELLOW)
+                : Component.text(combatant.getDisplayName() + " is no longer surprised.", NamedTextColor.GRAY));
     }
 
     private void handleInitiative(Player dm, String[] args) {
@@ -2302,6 +2307,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         // /combat damage applies the damage from ONE attack hit. Changing HP by fiat is /dm adjust.
         Combatant attacker = session.getCurrentCombatant();
+        if (!isDM && attacker != null && isAwaitingDm(attacker)) {
+            dm.sendMessage(Component.text("Your damage is with the DM — wait for them to apply it (or ask for a reroll).", NamedTextColor.YELLOW));
+            return;
+        }
         {
             TurnState ts = attacker != null ? attacker.getTurnState() : null;
             if (ts == null || !ts.isDamagePending()) {
@@ -2415,13 +2424,72 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             dm.sendMessage(Component.text("Saved — half damage: " + full + " → " + damage + ".", NamedTextColor.GRAY));
         }
 
+        // A player's damage waits for the DM's [Apply] when the table uses that setting (#175).
+        if (!isDM && io.papermc.jkvttplugin.config.PluginConfig.isDamageNeedsDmApproval() && attacker != null) {
+            holdForDm(session, attacker, target, damage, type, crit, dm);
+            return;
+        }
+        applyHit(session, attacker, target, damage, type, crit);
+    }
+
+    /** Apply a hit's damage and close its damage window so it can't land twice. */
+    private static void applyHit(CombatSession session, Combatant attacker, Combatant target, int damage, String type, boolean crit) {
         DamageHandler.applyDamage(session, target, damage, type, crit);
         session.refreshHpDisplays(target);
-
-        // Consume the hit's damage window so it can't be applied again this turn.
         if (attacker != null && attacker.getTurnState() != null) {
             attacker.getTurnState().clearDamagePending();
         }
+    }
+
+    /**
+     * Damage a player rolled that's waiting on the DM, by attacker. Tied to the turn it came from: once
+     * that turn is over (or its hit window closed) the hold is stale and nothing is waiting any more.
+     */
+    private static final Map<UUID, TurnState> awaitingDmApproval = new HashMap<>();
+
+    private static boolean isAwaitingDm(Combatant attacker) {
+        TurnState held = awaitingDmApproval.get(attacker.getId());
+        if (held != null && held == attacker.getTurnState() && held.isDamagePending()) return true;
+        awaitingDmApproval.remove(attacker.getId());
+        return false;
+    }
+
+    /**
+     * Send a player's damage to the DM with [Apply] / [Deny] instead of applying it (#175). Nothing
+     * changes until the DM clicks. Deny leaves the hit's damage window open so they can roll again.
+     */
+    private static void holdForDm(CombatSession session, Combatant attacker, Combatant target, int damage,
+                                  String type, boolean crit, Player roller) {
+        TurnState heldTurn = attacker.getTurnState();
+        awaitingDmApproval.put(attacker.getId(), heldTurn);
+        String what = damage + (type != null && !type.isBlank() ? " " + type : "") + " damage"
+                + (crit ? " (crit)" : "") + " to " + target.getDisplayName();
+        roller.sendMessage(Component.text("Sent to the DM: " + what + ".", NamedTextColor.GRAY));
+
+        var once = net.kyori.adventure.text.event.ClickCallback.Options.builder()
+                .uses(1).lifetime(java.time.Duration.ofMinutes(15)).build();
+        Component ask = Component.text("⚔ " + attacker.getDisplayName() + " deals " + what + ". ", NamedTextColor.GOLD)
+                .append(Component.text("[Apply]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .hoverEvent(HoverEvent.showText(Component.text("It lands: " + target.getDisplayName() + " takes it")))
+                        .clickEvent(ClickEvent.callback(a -> {
+                            if (awaitingDmApproval.get(attacker.getId()) != heldTurn) return; // superseded
+                            awaitingDmApproval.remove(attacker.getId());
+                            if (!session.isActive() || attacker.getTurnState() != heldTurn || !heldTurn.isDamagePending()) {
+                                if (a instanceof Player p) p.sendMessage(Component.text("That hit's moment has passed (the turn or fight ended).", NamedTextColor.GRAY));
+                                return;
+                            }
+                            applyHit(session, attacker, target, damage, type, crit);
+                        }, once)))
+                .append(Component.text(" "))
+                .append(Component.text("[Deny]", NamedTextColor.RED, TextDecoration.UNDERLINED)
+                        .hoverEvent(HoverEvent.showText(Component.text("Doesn't land; they can roll the damage again")))
+                        .clickEvent(ClickEvent.callback(a -> {
+                            if (awaitingDmApproval.get(attacker.getId()) != heldTurn) return;
+                            awaitingDmApproval.remove(attacker.getId());
+                            Player p = attacker.getPlayer();
+                            if (p != null) p.sendMessage(Component.text("The DM didn't take that damage roll — roll it again.", NamedTextColor.YELLOW));
+                        }, once)));
+        for (Player dm : io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs()) dm.sendMessage(ask);
     }
 
     private void handleHeal(Player dm, String[] args) {

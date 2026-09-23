@@ -169,6 +169,23 @@ languages, spells, AC) and your inventory.
 - [ ] **Out of range, as DM** (possessing a creature, `/combat attack` at something too far) →
       "... out of range [Attack anyway]" → click → the attack goes ahead.
 
+## Surprise tool & damage approval (new)
+
+- [ ] DM combat toolbar → **Surprised (ambush)** (firework star) in slot 6; hover it → what Surprised
+      means and when to use it. Start a fight, add a goblin, right-click it with the tool → "Goblin is
+      Surprised: …", **[S]** on the tracker. Right-click again → no longer surprised. On someone not in
+      the fight → "Add them first". With no fight → "Start a fight first".
+- [ ] Out-of-combat Fire Bolt → [Start combat] → the hint mentions the Surprise tool.
+- [ ] **Damage approval (default on):** as a player, hit and `/combat damage … autoRoll` → "Sent to
+      the DM: 7 fire damage to Goblin." Nothing changes yet. The DM gets **[Apply]** / **[Deny]**.
+  - Apply → the goblin takes it, the tracker updates, the hit can't be applied twice.
+  - Deny → the player is told to roll again; `/combat damage` works again for the same hit.
+  - While it's waiting, a second `/combat damage` says it's with the DM.
+  - End the turn with it still waiting → clicking Apply later says the moment has passed, and next turn
+    the player's damage isn't blocked.
+  - The DM's own `/combat damage` (a creature's hit) applies straight away.
+  - `combat.damage_needs_dm_approval: false` in config.yml (restart) → players' damage applies at once.
+
 ## Viewing & DM notes (new)
 
 - [ ] **View tool, right-click** a creature → a chat card: name (size, type), HP, AC, speed,
