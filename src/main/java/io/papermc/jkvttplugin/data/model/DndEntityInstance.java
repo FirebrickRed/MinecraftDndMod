@@ -125,7 +125,71 @@ public class DndEntityInstance {
         this.instanceId = instanceId;
         INSTANCE_REGISTRY.put(armorStand, this);
         UUID_REGISTRY.put(instanceId, this);
+        restoreConditionsAndAc(armorStand.getPersistentDataContainer());
         updateDeathVisual(); // a restored corpse should load tipped over
+    }
+
+    // ==================== CONDITIONS & AC (#175) ====================
+
+    /** Conditions on this creature, in or out of a fight (like a character's, on their sheet). */
+    private final java.util.Set<String> conditions = new java.util.LinkedHashSet<>();
+    /** The DM's temporary AC change, or null. */
+    private AcAdjustment acAdjustment;
+    /** A permanent AC for this one creature ("this guard has a shield"), or null for the stat block's (#194). */
+    private Integer acOverride;
+
+    public java.util.Set<String> getConditions() { return java.util.Collections.unmodifiableSet(conditions); }
+    public boolean hasCondition(String id) { return id != null && conditions.contains(id.toLowerCase()); }
+
+    public boolean addCondition(String id) {
+        if (id == null || !conditions.add(id.toLowerCase())) return false;
+        persist();
+        return true;
+    }
+
+    public boolean removeCondition(String id) {
+        if (id == null || !conditions.remove(id.toLowerCase())) return false;
+        persist();
+        return true;
+    }
+
+    public AcAdjustment getAcAdjustment() { return acAdjustment; }
+
+    public void setAcAdjustment(AcAdjustment adjustment) {
+        this.acAdjustment = adjustment != null && adjustment.amount() == 0 ? null : adjustment;
+        persist();
+    }
+
+    public Integer getAcOverride() { return acOverride; }
+
+    /** Set this creature's own AC, or null to go back to the stat block's. */
+    public void setAcOverride(Integer ac) {
+        this.acOverride = ac;
+        persist();
+    }
+
+    /** This creature's AC before any temporary change: its own override, else the stat block's. */
+    public int getBaseArmorClass() {
+        return acOverride != null ? acOverride : (template != null ? template.getArmorClass() : 10);
+    }
+
+    /** AC as it stands: base plus any DM adjustment. */
+    public int getArmorClass() {
+        return getBaseArmorClass() + (acAdjustment != null ? acAdjustment.amount() : 0);
+    }
+
+    private void restoreConditionsAndAc(PersistentDataContainer pdc) {
+        String conds = pdc.get(key("dnd_conditions"), PersistentDataType.STRING);
+        if (conds != null) for (String id : conds.split(",")) if (!id.isBlank()) conditions.add(id.trim());
+        String adj = pdc.get(key("dnd_ac_adjustment"), PersistentDataType.STRING);
+        if (adj != null && adj.contains(":")) {
+            try {
+                int amount = Integer.parseInt(adj.substring(0, adj.indexOf(':')));
+                AcAdjustment.Until until = AcAdjustment.Until.parse(adj.substring(adj.indexOf(':') + 1));
+                if (until != null && amount != 0) acAdjustment = new AcAdjustment(amount, until);
+            } catch (NumberFormatException ignored) {}
+        }
+        acOverride = pdc.get(key("dnd_ac_override"), PersistentDataType.INTEGER);
     }
 
     // ==================== PERSISTENCE (Issue #89) ====================
@@ -186,6 +250,13 @@ public class DndEntityInstance {
         pdc.set(key("dnd_current_hp"), PersistentDataType.INTEGER, currentHp);
         pdc.set(key("dnd_max_hp"), PersistentDataType.INTEGER, maxHp);
         pdc.set(key("dnd_is_dead"), PersistentDataType.BYTE, (byte) (isDead ? 1 : 0));
+        if (conditions.isEmpty()) pdc.remove(key("dnd_conditions"));
+        else pdc.set(key("dnd_conditions"), PersistentDataType.STRING, String.join(",", conditions));
+        if (acAdjustment == null) pdc.remove(key("dnd_ac_adjustment"));
+        else pdc.set(key("dnd_ac_adjustment"), PersistentDataType.STRING,
+                acAdjustment.amount() + ":" + acAdjustment.until().name().toLowerCase());
+        if (acOverride == null) pdc.remove(key("dnd_ac_override"));
+        else pdc.set(key("dnd_ac_override"), PersistentDataType.INTEGER, acOverride);
     }
 
     // ==================== STATIC REGISTRY METHODS ====================

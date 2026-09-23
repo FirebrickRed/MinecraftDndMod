@@ -111,7 +111,7 @@ public class EntityStatBlockMenu {
         builder.addKeyValue("Hit Points", instance.getCurrentHp() + "/" + instance.getMaxHp(), NamedTextColor.RED);
 
         // AC
-        builder.addKeyValue("Armor Class", String.valueOf(template.getArmorClass()), NamedTextColor.YELLOW);
+        builder.addKeyValue("Armor Class", String.valueOf(instance.getArmorClass()), NamedTextColor.YELLOW);
 
         // Speed
         builder.addKeyValue("Speed", template.getSpeed() + " ft", NamedTextColor.GREEN);

@@ -214,18 +214,44 @@ public class Combatant {
     public boolean isUnconscious() { return isUnconscious; }
     public void setUnconscious(boolean unconscious) { isUnconscious = unconscious; }
 
-    // ==================== CONDITIONS (Issue #103) ====================
-    public java.util.Set<String> getConditions() { return conditions; }
-    public boolean addCondition(String id) { return conditions.add(id); }
-    public boolean removeCondition(String id) { return conditions.remove(id); }
-    public boolean hasCondition(String id) { return conditions.contains(id); }
+    // ==================== CONDITIONS (#103, owned by the sheet / creature since #175) ====================
+    // Conditions belong to the character sheet or the creature, which outlive this combatant: being
+    // poisoned by a trap before a fight, or still prone after one. The set here is only a snapshot,
+    // used for a player who's offline in a restored fight (the same pattern as death, #101).
+
+    /** The conditions as they stand, read-only. Change them with add/removeCondition. */
+    public java.util.Set<String> getConditions() {
+        CharacterSheet sheet = isPlayer() ? getCharacterSheet() : null;
+        if (sheet != null) return sheet.getConditions();
+        DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
+        if (entity != null) return entity.getConditions();
+        return java.util.Collections.unmodifiableSet(conditions);
+    }
+
+    public boolean addCondition(String id) {
+        CharacterSheet sheet = isPlayer() ? getCharacterSheet() : null;
+        if (sheet != null) return sheet.addCondition(id);
+        DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
+        if (entity != null) return entity.addCondition(id);
+        return conditions.add(id);
+    }
+
+    public boolean removeCondition(String id) {
+        CharacterSheet sheet = isPlayer() ? getCharacterSheet() : null;
+        if (sheet != null) return sheet.removeCondition(id);
+        DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
+        if (entity != null) return entity.removeCondition(id);
+        return conditions.remove(id);
+    }
+
+    public boolean hasCondition(String id) { return id != null && getConditions().contains(id.toLowerCase()); }
 
     /** True if a condition sets this creature's speed to 0 (Restrained, Paralyzed, …) (#150). */
     public boolean isImmobilized() { return anyCondition(true); }
     /** True if a condition prevents actions/reactions (Incapacitated, Stunned, …) (#150). */
     public boolean cannotAct() { return anyCondition(false); }
     private boolean anyCondition(boolean movement) {
-        for (String id : conditions) {
+        for (String id : getConditions()) {
             io.papermc.jkvttplugin.data.model.DndCondition c = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(id);
             if (c != null && (movement ? c.isNoMovement() : c.isNoActions())) return true;
         }
@@ -233,11 +259,28 @@ public class Combatant {
     }
     /** The display name of the first condition blocking actions, or null. */
     public String actionBlockingCondition() {
-        for (String id : conditions) {
+        for (String id : getConditions()) {
             io.papermc.jkvttplugin.data.model.DndCondition c = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(id);
             if (c != null && c.isNoActions()) return c.getName();
         }
         return null;
+    }
+
+    // ==================== DM AC ADJUSTMENT (#175) ====================
+
+    /** The DM's temporary AC change on the sheet / creature, or null. */
+    public io.papermc.jkvttplugin.data.model.AcAdjustment getAcAdjustment() {
+        CharacterSheet sheet = isPlayer() ? getCharacterSheet() : null;
+        if (sheet != null) return sheet.getAcAdjustment();
+        DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
+        return entity != null ? entity.getAcAdjustment() : null;
+    }
+
+    public void setAcAdjustment(io.papermc.jkvttplugin.data.model.AcAdjustment adjustment) {
+        CharacterSheet sheet = isPlayer() ? getCharacterSheet() : null;
+        if (sheet != null) { sheet.setAcAdjustment(adjustment); return; }
+        DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
+        if (entity != null) entity.setAcAdjustment(adjustment);
     }
 
     // ==================== DEATH (Issue #101) ====================
@@ -481,14 +524,14 @@ public class Combatant {
         return getBaseArmorClass() + tempAcBonus;
     }
 
-    /** AC from armor and Dex alone, without a spell's temporary bonus. */
+    /** AC without a spell's temporary bonus: armor and Dex (or the creature's own AC), plus any DM adjustment. */
     public int getBaseArmorClass() {
         if (isPlayer()) {
             CharacterSheet sheet = getCharacterSheet();
             return sheet != null ? sheet.getArmorClass() : 10;
         } else {
             DndEntityInstance entity = getEntityInstance();
-            return entity != null ? entity.getTemplate().getArmorClass() : 10;
+            return entity != null ? entity.getArmorClass() : 10;
         }
     }
 

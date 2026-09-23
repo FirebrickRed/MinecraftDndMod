@@ -141,6 +141,18 @@ languages, spells, AC) and your inventory.
 - [ ] **Utility spells** (Light, Thaumaturgy) still just announce.
 - [ ] The spellbook, out of combat, fills `/character cast …`, and its hover explains the above.
 
+## Conditions outlast the fight (new)
+
+Until `/dm adjust` lands you can only add conditions in a fight (`/combat condition`), so:
+
+- [ ] In a fight, make a player **Poisoned** and a creature **Prone**; also have someone **Dodge**.
+      `/combat finished` → Dodging ends, but the table sees "X is still Poisoned after the fight"
+      and "Goblin is still Prone after the fight".
+- [ ] Still poisoned, out of combat: a skill or ability check from the sheet says "↯ Disadvantage:
+      Poisoned" and rolls 2d20-keep-lower. A saving throw doesn't.
+- [ ] Restrained (added in a fight, kept after): a DEX save from the sheet is at disadvantage.
+- [ ] Start a **new** fight with the same creature → the scoreboard still shows its condition tag.
+
 ## Entities & shops
 
 - [ ] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
@@ -185,6 +197,8 @@ languages, spells, AC) and your inventory.
 
 Set these up, `/stop`, start the server, then check:
 
+- [ ] A character still Poisoned before the restart is still Poisoned after; so is a creature (start
+      a fight after the restart and look at its scoreboard tag).
 - [ ] Your finished characters still list their chosen languages, tools and racial spell picks
       (high elf rogue still casts Fire Bolt with INT; astral elf still uses Wisdom).
 - [ ] A dead character is still dead; their body is still there.

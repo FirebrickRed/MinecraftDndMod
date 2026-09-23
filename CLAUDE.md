@@ -717,6 +717,14 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     to spectator (previous mode kept in their PDC) until revived or `/character create`. Revive removes the
     body and offers the DM [Teleport them to the body], never an automatic teleport; a stale body is
     cleared on chunk load.
+  - **Conditions and the DM's AC adjustment live on the sheet / creature too (#175).** `CharacterSheet`
+    and `DndEntityInstance` own `conditions` and an `AcAdjustment` (amount + how long: next turn, short
+    rest, long rest, until removed), persisted (`conditions:` / `acAdjustment:`, and PDC for creatures).
+    `Combatant.getConditions()` / `addCondition` read and write through to the owner; its own set is
+    only a snapshot for an offline player in a restored fight. A fight's end removes only turn-scoped
+    conditions (`until_next_turn`, e.g. Dodging), so a poisoned character stays poisoned. Sheet rolls
+    apply `self_check` / `save_disadvantage` out of combat (`RollOptionsMenuHandler.penaltyReason`).
+    A creature can also have its own permanent AC (`acOverride`, first slice of #194).
   - **Characters are never erased by the game.** A player's `/character delete` is a request the DM
     approves; deletion archives the file to `Saved/Characters/Deleted/`. Other people's sheets are DM-only.
 

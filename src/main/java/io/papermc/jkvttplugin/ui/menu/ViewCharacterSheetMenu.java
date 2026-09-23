@@ -115,6 +115,10 @@ public class ViewCharacterSheetMenu {
             if (character.getEquippedShield() != null) {
                 lore.addLine("Shield: +" + character.getEquippedShield().getBaseAC(), NamedTextColor.AQUA);
             }
+            // A DM adjustment (#175): in the total, so say where it came from and how long it lasts.
+            if (character.getAcAdjustment() != null) {
+                lore.addLine("DM: " + character.getAcAdjustment().describe(), NamedTextColor.LIGHT_PURPLE);
+            }
             // #209: say what unproficient armor costs, where the player looks at their armor.
             if (character.armorPenaltyReason() != null) {
                 lore.blankLine()

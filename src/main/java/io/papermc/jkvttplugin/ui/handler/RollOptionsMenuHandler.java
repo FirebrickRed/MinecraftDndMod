@@ -77,7 +77,7 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         String modeWord = switch (mode) { case ADVANTAGE -> "adv "; case DISADVANTAGE -> "dis "; default -> ""; };
         String manualCmd = "/character check " + type + " " + value + " " + modeWord + "manualRoll ";
         String autoCmd = "/character check " + type + " " + value + " " + modeWord + "autoRoll";
-        mode = withArmor(character, type, value, mode); // show the armor disadvantage before they roll (#209)
+        mode = withPenalties(character, type, value, mode); // show armor/condition disadvantage before they roll (#209, #175)
         String advNote = switch (mode) {
             case ADVANTAGE -> " (advantage)";
             case DISADVANTAGE -> " (disadvantage)";
@@ -112,11 +112,12 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         io.papermc.jkvttplugin.combat.Advantage advantage = pending != null
                 ? pending.advantage() : io.papermc.jkvttplugin.combat.Advantage.NONE;
         if (pending == null && chosen != null) advantage = chosen; // the sheet menu's own adv/dis pick
-        // Unproficient armor: STR/DEX checks, saves and skills roll with disadvantage (#209).
-        if (armorApplies(character, type, value)) {
+        // Unproficient armor (STR/DEX, #209) or a condition (Poisoned, #175) → disadvantage.
+        String penalty = penaltyReason(character, type, value);
+        if (penalty != null) {
             advantage = advantage.with(false);
             Player owner = Bukkit.getPlayer(character.getPlayerId());
-            if (owner != null) owner.sendMessage(Component.text("↯ Disadvantage: " + character.armorPenaltyReason() + ".", NamedTextColor.RED));
+            if (owner != null) owner.sendMessage(Component.text("↯ Disadvantage: " + penalty + ".", NamedTextColor.RED));
         }
         RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown,
                 character.rerollsNat1(), advantage, forceAuto);
@@ -147,15 +148,20 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
         };
     }
 
-    /** True when unproficient armor imposes disadvantage on this roll (STR or DEX, #209). */
-    private static boolean armorApplies(CharacterSheet character, String type, String value) {
+    /**
+     * Why this roll is at disadvantage, or null: unproficient armor on a STR/DEX roll (#209), or a
+     * condition on the character (Poisoned on checks, Restrained on DEX saves, #175). One place, so
+     * the prompt, the roll and the message all agree.
+     */
+    private static String penaltyReason(CharacterSheet character, String type, String value) {
         Ability a = abilityOf(type, value);
-        return a != null && character.armorPenaltyApplies(a);
+        if (a != null && character.armorPenaltyApplies(a)) return character.armorPenaltyReason();
+        return character.conditionDisadvantageOn("SAVE".equals(type), a);
     }
 
-    /** Fold the armor disadvantage into a menu roll mode (5e: advantage + disadvantage → normal). */
-    private static RollMode withArmor(CharacterSheet character, String type, String value, RollMode mode) {
-        if (!armorApplies(character, type, value)) return mode;
+    /** Fold a disadvantage into a menu roll mode (5e: advantage + disadvantage → normal). */
+    private static RollMode withPenalties(CharacterSheet character, String type, String value, RollMode mode) {
+        if (penaltyReason(character, type, value) == null) return mode;
         return switch (mode) {
             case ADVANTAGE -> RollMode.NORMAL;
             default -> RollMode.DISADVANTAGE;
@@ -282,7 +288,7 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
      * @param value the enum name (e.g. "STEALTH", "STRENGTH")
      */
     public static void performRoll(CharacterSheet character, String type, String value, RollMode mode) {
-        switch (withArmor(character, type, value, mode)) { // unproficient armor → STR/DEX disadvantage (#209)
+        switch (withPenalties(character, type, value, mode)) { // armor (#209) or a condition (#175) → disadvantage
             case NORMAL -> rollNormal(character, type, value);
             case ADVANTAGE -> rollAdvantage(character, type, value);
             case DISADVANTAGE -> rollDisadvantage(character, type, value);

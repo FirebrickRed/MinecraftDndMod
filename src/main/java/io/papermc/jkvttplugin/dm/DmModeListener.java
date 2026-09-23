@@ -312,7 +312,7 @@ public class DmModeListener implements Listener {
         DndEntity t = inst.getTemplate();
         dm.sendMessage(Component.empty());
         dm.sendMessage(Component.text("━━━ " + inst.getDisplayName() + " (" + t.getName() + ") ━━━", NamedTextColor.GOLD, TextDecoration.BOLD));
-        dm.sendMessage(Component.text("AC " + t.getArmorClass()
+        dm.sendMessage(Component.text("AC " + inst.getArmorClass()
                 + "  |  HP " + inst.getCurrentHp() + "/" + inst.getMaxHp()
                 + "  |  Speed " + t.getSpeed() + " ft", NamedTextColor.WHITE));
         List<DndAttack> attacks = t.getAttacks();

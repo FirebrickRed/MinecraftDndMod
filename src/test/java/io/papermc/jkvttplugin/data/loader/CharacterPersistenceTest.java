@@ -51,6 +51,20 @@ class CharacterPersistenceTest {
         assertTrue(back.getLanguages().containsAll(List.of("deep_speech", "draconic")));
     }
 
+    /** Poisoned by a trap before the restart is still poisoned after it; a DM AC change too (#175). */
+    @Test
+    void conditionsAndAcAdjustmentSurvive() {
+        CharacterSheet c = character("human", null, "fighter", "soldier", scores());
+        int gear = c.getArmorClass();
+        c.addCondition("poisoned");
+        c.setAcAdjustment(new io.papermc.jkvttplugin.data.model.AcAdjustment(1,
+                io.papermc.jkvttplugin.data.model.AcAdjustment.Until.SHORT_REST));
+        CharacterSheet back = roundTrip(c);
+        assertTrue(back.hasCondition("poisoned"));
+        assertEquals(gear + 1, back.getArmorClass(), "the adjustment isn't folded into the saved base AC");
+        assertEquals(io.papermc.jkvttplugin.data.model.AcAdjustment.Until.SHORT_REST, back.getAcAdjustment().until());
+    }
+
     /** A racial spell pick isn't in the race YAML, so the file has to carry it (and its ability). */
     @Test
     void chosenInnateSpellsSurvive() {

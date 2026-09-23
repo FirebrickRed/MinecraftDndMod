@@ -247,7 +247,7 @@ public class CharacterPersistenceLoader {
         data.put("backgroundName", sheet.getBackground() != null ? sheet.getBackground().getId() : null);
         data.put("currentHealth", sheet.getCurrentHealth());
         data.put("maxHealth", sheet.getMaxHealth());
-        data.put("armorClass", sheet.getArmorClass());
+        data.put("armorClass", sheet.getGearArmorClass());
         if (sheet.getTempHealth() > 0) data.put("tempHealth", sheet.getTempHealth());
         if (sheet.isRelentlessEnduranceUsed()) data.put("relentlessEnduranceUsed", true);
         // Dying / dead (#101): written only when there's something to say, so a healthy sheet's
@@ -284,6 +284,16 @@ public class CharacterPersistenceLoader {
         }
         if (!sheet.getExpertise().isEmpty()) {
             data.put("expertise", new ArrayList<>(sheet.getExpertise()));
+        }
+        // Conditions and a DM AC adjustment live on the character now, in or out of a fight (#175).
+        if (!sheet.getConditions().isEmpty()) {
+            data.put("conditions", new ArrayList<>(sheet.getConditions()));
+        }
+        if (sheet.getAcAdjustment() != null) {
+            Map<String, Object> adj = new LinkedHashMap<>();
+            adj.put("amount", sheet.getAcAdjustment().amount());
+            adj.put("until", sheet.getAcAdjustment().until().name().toLowerCase());
+            data.put("acAdjustment", adj);
         }
         // Racial spell picks (a high elf's wizard cantrip): spell id → casting ability.
         if (!sheet.getChosenInnateSpells().isEmpty()) {
@@ -477,6 +487,14 @@ public class CharacterPersistenceLoader {
             // Restore creation-time tool / language picks (#17).
             sheet.restoreChosenProficiencies(stringList(data.get("chosenTools")), stringList(data.get("chosenLanguages")));
             sheet.restoreExpertise(stringList(data.get("expertise")));
+            sheet.restoreConditions(stringList(data.get("conditions")));
+            if (data.get("acAdjustment") instanceof Map<?, ?> adj) {
+                var until = io.papermc.jkvttplugin.data.model.AcAdjustment.Until.parse(String.valueOf(adj.get("until")));
+                int amount = parseIntOrDefault(adj.get("amount"), 0);
+                if (until != null && amount != 0) {
+                    sheet.restoreAcAdjustment(new io.papermc.jkvttplugin.data.model.AcAdjustment(amount, until));
+                }
+            }
             if (data.get("chosenInnateSpells") instanceof Map<?, ?> innate) {
                 Map<String, Ability> picks = new LinkedHashMap<>();
                 for (Map.Entry<?, ?> e : innate.entrySet()) {

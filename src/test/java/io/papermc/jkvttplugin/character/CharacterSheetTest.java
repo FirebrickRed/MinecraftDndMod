@@ -22,6 +22,43 @@ class CharacterSheetTest {
         return a;
     }
 
+    // ---------- conditions and the DM's AC adjustment live on the sheet (#175) ----------
+
+    /** Poisoned outside a fight: checks at disadvantage. Restrained: DEX saves too. */
+    @Test
+    void conditionsPutRollsAtDisadvantageOutOfCombat() {
+        CharacterSheet c = character("human", null, "fighter", "soldier", scores());
+        assertNull(c.conditionDisadvantageOn(false, Ability.WISDOM));
+        c.addCondition("poisoned");
+        assertEquals("Poisoned", c.conditionDisadvantageOn(false, Ability.WISDOM), "checks");
+        assertNull(c.conditionDisadvantageOn(true, Ability.DEXTERITY), "poison doesn't touch saves");
+
+        c.removeCondition("poisoned");
+        c.addCondition("restrained");
+        assertEquals("Restrained", c.conditionDisadvantageOn(true, Ability.DEXTERITY));
+        assertNull(c.conditionDisadvantageOn(true, Ability.WISDOM));
+    }
+
+    @Test
+    void aDmAcAdjustmentAddsAndEndsWhenItSays() {
+        CharacterSheet c = character("human", null, "fighter", "soldier", scores());
+        int gear = c.getArmorClass();
+        c.setAcAdjustment(new io.papermc.jkvttplugin.data.model.AcAdjustment(2,
+                io.papermc.jkvttplugin.data.model.AcAdjustment.Until.LONG_REST));
+        assertEquals(gear + 2, c.getArmorClass());
+        assertEquals(gear, c.getGearArmorClass(), "the base stays what the armor gives");
+
+        c.shortRest();
+        assertEquals(gear + 2, c.getArmorClass(), "a short rest doesn't end a long-rest adjustment");
+        c.longRest();
+        assertEquals(gear, c.getArmorClass(), "a long rest does");
+
+        c.setAcAdjustment(new io.papermc.jkvttplugin.data.model.AcAdjustment(-1,
+                io.papermc.jkvttplugin.data.model.AcAdjustment.Until.REMOVED));
+        c.longRest();
+        assertEquals(gear - 1, c.getArmorClass(), "'until you remove it' outlasts rests, and can be negative");
+    }
+
     // ---------- racial spells ----------
 
     /** A tiefling rogue's Thaumaturgy is theirs to cast, with CHA; the cast paths only checked class lists. */

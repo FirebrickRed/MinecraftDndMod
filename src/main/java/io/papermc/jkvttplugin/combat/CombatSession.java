@@ -533,6 +533,12 @@ public class CombatSession {
      * cast on someone else's turn would quietly keep protecting them for the rest of the fight (#147).
      */
     private void expireTempAc(Combatant c) {
+        var adj = c.getAcAdjustment();
+        if (adj != null && adj.until() == io.papermc.jkvttplugin.data.model.AcAdjustment.Until.NEXT_TURN) {
+            c.setAcAdjustment(null); // a DM "until their next turn" (#175)
+            broadcast(Component.text("⟳ " + c.getDisplayName(true) + "'s DM AC adjustment ends — AC is back to "
+                    + c.getArmorClass() + ".", NamedTextColor.GRAY));
+        }
         if (!c.hasTempAc()) return;
         String source = c.clearTempAc();
         broadcast(Component.text("⟳ " + c.getDisplayName(true) + "'s " + (source == null ? "AC bonus" : source)
@@ -873,9 +879,28 @@ public class CombatSession {
             }
             c.clearTurnState();
             DeathSaveHandler.removeProne(c);
-            // Clear any Minecraft effects our conditions applied, so they don't linger post-combat (#103).
-            for (String id : c.getConditions()) setConditionEffect(c, ConditionLoader.get(id), false);
-            c.getConditions().clear();
+            // Turn-scoped conditions (Dodging, Disengaging) end with the fight; real ones (Poisoned,
+            // Prone) stay on the character or creature, with their effects (#175). They used to be
+            // wiped, so a fight quietly cured everything.
+            for (String id : new ArrayList<>(c.getConditions())) {
+                DndCondition cond = ConditionLoader.get(id);
+                if (cond != null && !cond.isUntilNextTurn()) continue;
+                setConditionEffect(c, cond, false);
+                c.removeCondition(id);
+            }
+            if (!c.getConditions().isEmpty()) {
+                List<String> still = new ArrayList<>();
+                for (String id : c.getConditions()) {
+                    DndCondition cond = ConditionLoader.get(id);
+                    still.add(cond != null ? cond.getName() : id);
+                }
+                broadcast(Component.text(c.getDisplayName() + " is still " + String.join(", ", still)
+                        + " after the fight.", NamedTextColor.LIGHT_PURPLE));
+            }
+            var adj = c.getAcAdjustment();
+            if (adj != null && adj.until() == io.papermc.jkvttplugin.data.model.AcAdjustment.Until.NEXT_TURN) {
+                c.setAcAdjustment(null);
+            }
 
             // Active effects (buffs/debuffs) end when the fight does (#70) — most are combat-scoped.
             // Clear them, drop their visual potions, and tell the table what wore off.

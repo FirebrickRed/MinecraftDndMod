@@ -1233,9 +1233,74 @@ public class CharacterSheet {
         abilityScores.put(ability, value);
     }
 
+    /** AC as it stands: armor, shield and Dex, plus any DM adjustment. */
     public int getArmorClass() {
+        return armorClass + (acAdjustment != null ? acAdjustment.amount() : 0);
+    }
+
+    /** AC from armor, shield and Dex alone, without a DM adjustment. */
+    public int getGearArmorClass() {
         return armorClass;
     }
+
+    // ==================== CONDITIONS & DM AC ADJUSTMENT (#175) ====================
+
+    /**
+     * Conditions live on the character, not on a fight's combatant, so being poisoned by a trap in a
+     * corridor is recorded (and still there when a fight starts), and a real condition outlasts the
+     * fight it started in. Only turn-scoped ones (Dodging) end with the fight.
+     */
+    private final Set<String> conditions = new LinkedHashSet<>();
+    private AcAdjustment acAdjustment;
+
+    public Set<String> getConditions() { return Collections.unmodifiableSet(conditions); }
+    public boolean hasCondition(String id) { return id != null && conditions.contains(id.toLowerCase()); }
+
+    public boolean addCondition(String id) {
+        if (id == null || !conditions.add(id.toLowerCase())) return false;
+        persist();
+        return true;
+    }
+
+    public boolean removeCondition(String id) {
+        if (id == null || !conditions.remove(id.toLowerCase())) return false;
+        persist();
+        return true;
+    }
+
+    /**
+     * The condition putting a roll at disadvantage, or null: Poisoned on ability checks (its
+     * {@code self_check: disadvantage}), Restrained on DEX saves ({@code save_disadvantage}). Checks
+     * and skills and tool checks are "checks"; {@code save} asks about saving throws.
+     */
+    public String conditionDisadvantageOn(boolean save, Ability ability) {
+        for (String id : conditions) {
+            DndCondition c = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(id);
+            if (c == null) continue;
+            if (save) {
+                if (ability != null && c.getSaveDisadvantage().contains(ability.name().toLowerCase())) return c.getName();
+            } else if ("disadvantage".equalsIgnoreCase(c.getSelfCheck())) {
+                return c.getName();
+            }
+        }
+        return null;
+    }
+
+    /** Put saved conditions back on load (no save while loading). */
+    public void restoreConditions(Collection<String> ids) {
+        if (ids != null) for (String id : ids) if (id != null && !id.isBlank()) conditions.add(id.toLowerCase());
+    }
+
+    public AcAdjustment getAcAdjustment() { return acAdjustment; }
+
+    /** Set (or with null, clear) the DM's AC adjustment. */
+    public void setAcAdjustment(AcAdjustment adjustment) {
+        this.acAdjustment = adjustment != null && adjustment.amount() == 0 ? null : adjustment;
+        persist();
+    }
+
+    /** Put a saved adjustment back on load (no save while loading). */
+    public void restoreAcAdjustment(AcAdjustment adjustment) { this.acAdjustment = adjustment; }
 
     public int getInitiative() {
         // ToDo: update to account for other potential areas of initiative increases
@@ -1887,6 +1952,7 @@ public class CharacterSheet {
         breakConcentration();
         activeEffects.clear(); // a long rest ends any lingering buffs/debuffs (Effect Engine, #70)
         relentlessEnduranceUsed = false; // Half-Orc Relentless Endurance recharges on a long rest
+        if (acAdjustment != null && acAdjustment.endsOnLongRest()) acAdjustment = null; // a DM "until a long rest" (#175)
 
         currentHealth = totalHealth;
         tempHealth = 0;
@@ -1910,6 +1976,8 @@ public class CharacterSheet {
                 innateSpell.resetUses(proficiencyBonus);
             }
         }
+
+        if (acAdjustment != null && acAdjustment.endsOnShortRest()) acAdjustment = null; // a DM "until a short rest" (#175)
 
         // Warlocks recover Pact Magic slots on short rest
         // ToDo: Implement when Warlock-specific slot recovery is added
