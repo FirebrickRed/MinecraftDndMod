@@ -169,6 +169,28 @@ languages, spells, AC) and your inventory.
 - [ ] **Out of range, as DM** (possessing a creature, `/combat attack` at something too far) →
       "... out of range [Attack anyway]" → click → the attack goes ahead.
 
+## Viewing & DM notes (new)
+
+- [ ] **View tool, right-click** a creature → a chat card: name (size, type), HP, AC, speed,
+      conditions (hover for rules), notes, and [Full view] / [Adjust] / [Add a note]. On a player →
+      the same for their character (race and class, concentration). Right-clicking with it no longer
+      opens the sheet directly; the Full view has a button for that.
+- [ ] Give someone a DM AC adjustment and (in a fight) Shield → the card's AC explains both:
+      "(+1 (DM, until a long rest); +5 Shield, until their turn)". A creature with its own AC says
+      "own AC, stat block says 12".
+- [ ] A downed character → "Down, dying — death saves: 1 ✔ / 2 ✖". A dead one → "☠ DEAD".
+- [ ] **Sneak + right-click** (or `/dm view <who> full`) → the Full view menu:
+  - a player: their real inventory in the same layout as theirs (backpack, hotbar row, armor, off-hand),
+    and you can't take or move anything;
+  - a creature: what it carries, each with "Found with a DC 12 Investigation" or "In plain sight";
+  - [Character sheet] / [Stat block] opens it; [Adjust] opens the Adjust menu; [Add a note…] gives
+    you a fill-in line.
+- [ ] `/dm note Balin add owes the party a favour` → shows in Balin's card and Full view, **after**
+      his YAML `dm_notes`. `/dm note Balin clear` removes only yours. `/dm note Balin` lists them.
+- [ ] Notes on a **character** survive a restart. The player never sees them: not on their sheet,
+      not anywhere.
+- [ ] `/dm view The Kindler` (unquoted) works; `/dm view` as a non-DM is refused.
+
 ## Conditions outlast the fight (new)
 
 Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.

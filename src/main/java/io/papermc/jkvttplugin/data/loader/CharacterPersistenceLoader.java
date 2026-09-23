@@ -285,6 +285,9 @@ public class CharacterPersistenceLoader {
         if (!sheet.getExpertise().isEmpty()) {
             data.put("expertise", new ArrayList<>(sheet.getExpertise()));
         }
+        if (!sheet.getDmNotes().isEmpty()) {
+            data.put("dmNotes", new ArrayList<>(sheet.getDmNotes())); // DM-only; the player never sees these
+        }
         // Conditions and a DM AC adjustment live on the character now, in or out of a fight (#175).
         if (!sheet.getConditions().isEmpty()) {
             data.put("conditions", new ArrayList<>(sheet.getConditions()));
@@ -488,6 +491,7 @@ public class CharacterPersistenceLoader {
             sheet.restoreChosenProficiencies(stringList(data.get("chosenTools")), stringList(data.get("chosenLanguages")));
             sheet.restoreExpertise(stringList(data.get("expertise")));
             sheet.restoreConditions(stringList(data.get("conditions")));
+            sheet.restoreDmNotes(stringList(data.get("dmNotes")));
             if (data.get("acAdjustment") instanceof Map<?, ?> adj) {
                 var until = io.papermc.jkvttplugin.data.model.AcAdjustment.Until.parse(String.valueOf(adj.get("until")));
                 int amount = parseIntOrDefault(adj.get("amount"), 0);

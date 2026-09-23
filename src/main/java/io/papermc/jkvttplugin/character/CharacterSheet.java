@@ -1286,6 +1286,30 @@ public class CharacterSheet {
         return null;
     }
 
+    // ==================== DM NOTES (#175) ====================
+
+    /** The DM's private notes on this character ("owes the thieves' guild"). Never shown to the player. */
+    private final List<String> dmNotes = new ArrayList<>();
+
+    public List<String> getDmNotes() { return Collections.unmodifiableList(dmNotes); }
+
+    public void addDmNote(String note) {
+        if (note == null || note.isBlank()) return;
+        dmNotes.add(note.trim());
+        persist();
+    }
+
+    public void clearDmNotes() {
+        if (dmNotes.isEmpty()) return;
+        dmNotes.clear();
+        persist();
+    }
+
+    /** Put saved notes back on load (no save while loading). */
+    public void restoreDmNotes(Collection<String> notes) {
+        if (notes != null) for (String n : notes) if (n != null && !n.isBlank()) dmNotes.add(n);
+    }
+
     /** Put saved conditions back on load (no save while loading). */
     public void restoreConditions(Collection<String> ids) {
         if (ids != null) for (String id : ids) if (id != null && !id.isBlank()) conditions.add(id.toLowerCase());

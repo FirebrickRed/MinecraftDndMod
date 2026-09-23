@@ -86,7 +86,8 @@ public class MenuClickListener implements Listener {
                 || holder.getType() == MenuType.SKILLS_MENU
                 || holder.getType() == MenuType.ROLL_OPTIONS_MENU
                 || holder.getType() == MenuType.SPELL_CASTING
-                || holder.getType() == MenuType.DM_ADJUST;
+                || holder.getType() == MenuType.DM_ADJUST
+                || holder.getType() == MenuType.DM_VIEW;
         // ToDo: check if this can be simplified
 
         // Fetch or create session (centralized, avoiding duplicate service calls in handlers)
@@ -110,6 +111,12 @@ public class MenuClickListener implements Listener {
         if (holder.getType() == MenuType.DM_ADJUST) {
             if (action == MenuAction.ADJUST) {
                 io.papermc.jkvttplugin.ui.menu.AdjustMenu.handleClick(player, holder.getSessionId(), payload, event.getClick());
+            }
+            return;
+        }
+        if (holder.getType() == MenuType.DM_VIEW) {
+            if (action == MenuAction.DM_VIEW) {
+                io.papermc.jkvttplugin.ui.menu.DmViewMenu.handleClick(player, holder.getSessionId(), payload);
             }
             return;
         }

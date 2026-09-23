@@ -178,7 +178,29 @@ public class DndEntityInstance {
         return getBaseArmorClass() + (acAdjustment != null ? acAdjustment.amount() : 0);
     }
 
+    // ==================== DM NOTES (#175) ====================
+
+    /** Notes the DM wrote on this one creature in-game (the template's {@code dm_notes:} are separate). */
+    private final java.util.List<String> dmNotes = new java.util.ArrayList<>();
+    /** Separates notes in the saved string: a character no one types. */
+    private static final String NOTE_SEPARATOR = "\u001F";
+
+    public java.util.List<String> getDmNotes() { return java.util.Collections.unmodifiableList(dmNotes); }
+
+    public void addDmNote(String note) {
+        if (note == null || note.isBlank()) return;
+        dmNotes.add(note.trim());
+        persist();
+    }
+
+    public void clearDmNotes() {
+        dmNotes.clear();
+        persist();
+    }
+
     private void restoreConditionsAndAc(PersistentDataContainer pdc) {
+        String notes = pdc.get(key("dnd_dm_notes"), PersistentDataType.STRING);
+        if (notes != null) for (String n : notes.split(NOTE_SEPARATOR)) if (!n.isBlank()) dmNotes.add(n);
         String conds = pdc.get(key("dnd_conditions"), PersistentDataType.STRING);
         if (conds != null) for (String id : conds.split(",")) if (!id.isBlank()) conditions.add(id.trim());
         String adj = pdc.get(key("dnd_ac_adjustment"), PersistentDataType.STRING);
@@ -260,6 +282,8 @@ public class DndEntityInstance {
         if (acAdjustment == null) pdc.remove(key("dnd_ac_adjustment"));
         else pdc.set(key("dnd_ac_adjustment"), PersistentDataType.STRING,
                 acAdjustment.amount() + ":" + acAdjustment.until().name().toLowerCase());
+        if (dmNotes.isEmpty()) pdc.remove(key("dnd_dm_notes"));
+        else pdc.set(key("dnd_dm_notes"), PersistentDataType.STRING, String.join(NOTE_SEPARATOR, dmNotes));
         if (acOverride == null) pdc.remove(key("dnd_ac_override"));
         else pdc.set(key("dnd_ac_override"), PersistentDataType.INTEGER, acOverride);
     }

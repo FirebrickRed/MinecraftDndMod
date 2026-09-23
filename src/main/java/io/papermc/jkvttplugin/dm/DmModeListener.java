@@ -2,12 +2,8 @@ package io.papermc.jkvttplugin.dm;
 
 import io.papermc.jkvttplugin.JkVttPlugin;
 import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
-import io.papermc.jkvttplugin.character.CharacterSheet;
-import io.papermc.jkvttplugin.character.CharacterSheetManager;
-import io.papermc.jkvttplugin.data.model.DndAttack;
 import io.papermc.jkvttplugin.data.model.DndEntity;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
-import io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -28,7 +24,6 @@ import org.bukkit.util.RayTraceResult;
 
 import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 /** Drives the DM-mode tools (Issue #85 redesign): the View tool, the Exit tool, and crash recovery. */
 public class DmModeListener implements Listener {
@@ -64,6 +59,7 @@ public class DmModeListener implements Listener {
         } else if (DmModeManager.TOOL_BACK.equals(tool)) {
             DmModeManager.giveTools(player);
         } else if (DmModeManager.TOOL_VIEW.equals(tool)) {
+            if (toolDebounced(player)) return; // this click already handled via the entity event
             RayTraceResult hit = player.rayTraceEntities(10);
             if (hit != null && hit.getHitEntity() != null) {
                 view(player, hit.getHitEntity());
@@ -206,6 +202,7 @@ public class DmModeListener implements Listener {
         String tool = DmModeManager.getToolType(player.getInventory().getItemInMainHand());
         if (DmModeManager.TOOL_VIEW.equals(tool)) {
             event.setCancelled(true);
+            if (toolDebounced(player)) return;
             view(player, event.getRightClicked());
         } else if (DmModeManager.TOOL_ADJUST.equals(tool)) {
             event.setCancelled(true);
@@ -311,39 +308,26 @@ public class DmModeListener implements Listener {
         return true;
     }
 
+    /**
+     * The View tool (#175): right-click → the quick look in chat (HP, AC and its changes, conditions,
+     * notes); sneak + right-click → the full view (inventory, notes, sheet / stat block).
+     */
     private void view(Player dm, Entity target) {
         if (!DMManager.isDM(dm)) return;
-
-        if (target instanceof Player targetPlayer) {
-            UUID charId = ActiveCharacterTracker.getActiveCharacterId(targetPlayer);
-            if (charId == null) {
-                List<CharacterSheet> chars = CharacterSheetManager.getPlayerCharacters(targetPlayer.getUniqueId());
-                if (chars != null && !chars.isEmpty()) charId = chars.get(0).getCharacterId();
-            }
-            if (charId != null) {
-                ViewCharacterSheetMenu.open(dm, charId);
-            } else {
-                dm.sendMessage(Component.text(targetPlayer.getName() + " has no character.", NamedTextColor.GRAY));
-            }
-        } else if (target instanceof ArmorStand stand) {
-            DndEntityInstance inst = DndEntityInstance.getByArmorStand(stand);
-            if (inst != null) statBlock(dm, inst);
+        io.papermc.jkvttplugin.combat.CombatTargets.Target t = null;
+        if (target instanceof Player p && ActiveCharacterTracker.getActiveCharacter(p) != null) {
+            t = io.papermc.jkvttplugin.combat.CombatTargets.forPlayer(p);
+        } else if (target instanceof Player p) {
+            dm.sendMessage(Component.text(p.getName() + " has no character.", NamedTextColor.GRAY));
+            return;
+        } else if (target instanceof ArmorStand stand && DndEntityInstance.getByArmorStand(stand) != null) {
+            t = io.papermc.jkvttplugin.combat.CombatTargets.forEntity(DndEntityInstance.getByArmorStand(stand));
         }
+        if (t == null) return;
+        if (dm.isSneaking()) io.papermc.jkvttplugin.ui.menu.DmViewMenu.open(dm, t.combatant().getId());
+        else ViewCommand.quick(dm, t);
     }
 
-    private void statBlock(Player dm, DndEntityInstance inst) {
-        DndEntity t = inst.getTemplate();
-        dm.sendMessage(Component.empty());
-        dm.sendMessage(Component.text("━━━ " + inst.getDisplayName() + " (" + t.getName() + ") ━━━", NamedTextColor.GOLD, TextDecoration.BOLD));
-        dm.sendMessage(Component.text("AC " + inst.getArmorClass()
-                + "  |  HP " + inst.getCurrentHp() + "/" + inst.getMaxHp()
-                + "  |  Speed " + t.getSpeed() + " ft", NamedTextColor.WHITE));
-        List<DndAttack> attacks = t.getAttacks();
-        if (attacks != null && !attacks.isEmpty()) {
-            dm.sendMessage(Component.text("Attacks: "
-                    + attacks.stream().map(DndAttack::getName).collect(Collectors.joining(", ")), NamedTextColor.AQUA));
-        }
-    }
 
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {

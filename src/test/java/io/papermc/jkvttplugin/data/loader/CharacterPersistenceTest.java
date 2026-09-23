@@ -65,6 +65,19 @@ class CharacterPersistenceTest {
         assertEquals(io.papermc.jkvttplugin.data.model.AcAdjustment.Until.SHORT_REST, back.getAcAdjustment().until());
     }
 
+    /** The DM's notes on a character are saved with it (and only /dm view shows them). */
+    @Test
+    void dmNotesSurvive() {
+        CharacterSheet c = character("human", null, "fighter", "soldier", scores());
+        c.addDmNote("owes the thieves' guild 50 gp");
+        c.addDmNote("  ");
+        c.addDmNote("the cultists know her real name");
+        CharacterSheet back = roundTrip(c);
+        assertEquals(List.of("owes the thieves' guild 50 gp", "the cultists know her real name"), back.getDmNotes());
+        back.clearDmNotes();
+        assertTrue(roundTrip(back).getDmNotes().isEmpty());
+    }
+
     /** A racial spell pick isn't in the race YAML, so the file has to carry it (and its ability). */
     @Test
     void chosenInnateSpellsSurvive() {

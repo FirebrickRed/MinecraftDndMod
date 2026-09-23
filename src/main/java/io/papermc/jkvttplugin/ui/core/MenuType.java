@@ -6,5 +6,6 @@ public enum MenuType {
     SPELL_CASTING,
     SKILLS_MENU,
     ROLL_OPTIONS_MENU,
-    DM_ADJUST                   // the DM's Adjust menu for one creature or character (#175); holder id = combatant id
+    DM_ADJUST,                  // the DM's Adjust menu for one creature or character (#175); holder id = combatant id
+    DM_VIEW                     // the DM's full view of one creature or character (#175); read-only; holder id = combatant id
 }

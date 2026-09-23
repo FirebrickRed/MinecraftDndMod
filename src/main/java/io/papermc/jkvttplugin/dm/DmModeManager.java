@@ -151,7 +151,7 @@ public class DmModeManager {
         PossessionManager.clearWornGear(player); // drop any possessed entity's armor when back on the toolbar
         clearHotbar(player);
         player.getInventory().setItem(0, tool(Material.SPYGLASS, TOOL_VIEW, "View",
-                "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
+                "Right-click someone → a quick look in chat (HP, AC, conditions)", "Sneak + right-click → the full view (inventory, DM notes)"));
         player.getInventory().setItem(1, adjustTool());
         player.getInventory().setItem(2, tool(Material.IRON_SWORD, TOOL_PAGE_COMBAT, "Combat Tools",
                 "Right-click to open the combat toolbar", "(Start, Add/Remove, Initiative, Possess, Move)"));
@@ -184,7 +184,7 @@ public class DmModeManager {
                 "(in combat: only on that entity's turn, counts vs speed)"));
         player.getInventory().setItem(7, adjustTool());
         player.getInventory().setItem(6, tool(Material.SPYGLASS, TOOL_VIEW, "View",
-                "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
+                "Right-click someone → a quick look in chat (HP, AC, conditions)", "Sneak + right-click → the full view (inventory, DM notes)"));
         player.getInventory().setItem(8, tool(Material.ARROW, TOOL_BACK, "◀ Back",
                 "Right-click to return to the tool categories"));
     }
@@ -196,7 +196,7 @@ public class DmModeManager {
                 "Right-click a block (chest, door, wall…) to mark it", "locked / hidden / add a description",
                 "(players then interact through you — /dm object commands too)"));
         player.getInventory().setItem(2, tool(Material.SPYGLASS, TOOL_VIEW, "View",
-                "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
+                "Right-click someone → a quick look in chat (HP, AC, conditions)", "Sneak + right-click → the full view (inventory, DM notes)"));
         player.getInventory().setItem(6, adjustTool());
         player.getInventory().setItem(4, tool(Material.EGG, TOOL_SPAWN, "Spawn Entity",
                 "Right-click to pick an entity to spawn", "(it appears where you stand — use Move to place it)"));
