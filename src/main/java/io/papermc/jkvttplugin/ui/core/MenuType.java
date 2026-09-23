@@ -5,5 +5,6 @@ public enum MenuType {
     CREATE_CHARACTER,           // Single-pane character creation (Issue #121)
     SPELL_CASTING,
     SKILLS_MENU,
-    ROLL_OPTIONS_MENU
+    ROLL_OPTIONS_MENU,
+    DM_ADJUST                   // the DM's Adjust menu for one creature or character (#175); holder id = combatant id
 }

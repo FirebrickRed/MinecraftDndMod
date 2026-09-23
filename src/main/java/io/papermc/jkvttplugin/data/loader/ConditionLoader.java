@@ -17,7 +17,7 @@ import static io.papermc.jkvttplugin.util.Util.normalize;
 
 /** Loads D&D conditions from DMContent/Conditions/*.yml (Issue #103). */
 public class ConditionLoader {
-    // LinkedHashMap so /combat condition list keeps YAML order.
+    // LinkedHashMap so the Adjust menu and /dm adjust list conditions in YAML order.
     private static final Map<String, DndCondition> loaded = new LinkedHashMap<>();
     private static final Logger LOGGER = Logger.getLogger("ConditionLoader");
 

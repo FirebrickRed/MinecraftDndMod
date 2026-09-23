@@ -14,6 +14,7 @@ public enum MenuAction {
     SWITCH_CHOICE_TAB,       // Switch to different category tab in tabbed choices menu
     TOGGLE_CHOICE_OPTION,    // Toggle option selection in merged choice
     CHOICE_PAGE,             // Page through a choices sub-tab too long for one screen (payload: page number)
+    ADJUST,                  // DM Adjust menu (#175): payload says what was clicked (hp, ac, cond:<id>, fill:<what>, until:<how long>)
     SELECT_RACIAL_BONUS_DISTRIBUTION,  // Choose +2/+1 or +1/+1/+1
     APPLY_RACIAL_BONUS,                // Apply racial bonus to ability
     CHOOSE_SPELL,

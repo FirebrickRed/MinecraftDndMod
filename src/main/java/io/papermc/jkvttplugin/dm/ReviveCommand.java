@@ -51,7 +51,7 @@ public class ReviveCommand implements CommandExecutor, TabCompleter {
 
         if (!who.isDead()) {
             sender.sendMessage(Component.text(who.getDisplayName() + " isn't dead"
-                    + (who.getCurrentHp() <= 0 ? " — they're dying or stable; heal them with /dm hp instead." : "."),
+                    + (who.getCurrentHp() <= 0 ? " — they're dying or stable; heal them with /dm adjust instead." : "."),
                     NamedTextColor.YELLOW));
             return true;
         }

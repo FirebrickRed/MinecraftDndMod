@@ -60,7 +60,7 @@ public final class NameUtil {
     /**
      * <b>The</b> way a command reads a name that may have spaces. A quoted name is read to its closing
      * quote ({@link #takeName}); an unquoted one is every word up to the first of the command's
-     * {@code stopWords} (its next keyword, like {@code damage} in {@code /dm hp The Kindler damage 5})
+     * {@code stopWords} (its next keyword, like {@code hp} in {@code /dm adjust The Kindler hp -5})
      * or the end. The first word is always part of the name, even if it's also a keyword.
      *
      * <p>Use this rather than {@code args[i]}: a raw argument is one word, so "The Kindler" arrives

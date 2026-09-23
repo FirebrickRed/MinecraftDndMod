@@ -101,7 +101,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "action" -> handleAction(player, args);
             case "bonusaction" -> handleBonusAction(player, args);
             case "movement" -> handleMovement(player, args);
-            case "condition" -> handleCondition(player, args);
             case "cast" -> handleCast(player, args);
             case "save" -> handleSave(player, args);
             case "concentration" -> handleConcentration(player, args);
@@ -109,7 +108,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "use" -> handleUse(player, args);
             case "reaction", "reactions" -> handleReaction(player, args);
             case "damage" -> handleDamage(player, args);
-            case "override" -> handleDamage(player, args); // DM-only (not in PLAYER_ALLOWED): apply corrective damage anytime
             case "heal" -> handleHeal(player, args);
             case "temphp" -> handleTempHp(player, args);
             case "deathsave" -> handleDeathSave(player, args);
@@ -1568,91 +1566,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         return actionable || !reactionSpells.isEmpty();
     }
 
-    // ==================== CONDITIONS (Issue #103) ====================
-
-    private void handleCondition(Player dm, String[] args) {
-        CombatSession session = getActiveSession(dm);
-        if (session == null) return;
-        if (args.length < 2) {
-            dm.sendMessage(Component.text("Usage: /combat condition <target> [add|remove <condition>]  |  /combat condition list", NamedTextColor.RED));
-            return;
-        }
-        if (args[1].equalsIgnoreCase("list")) {
-            dm.sendMessage(Component.text("Conditions: ", NamedTextColor.GOLD)
-                    .append(Component.text(io.papermc.jkvttplugin.data.loader.ConditionLoader.getAll().stream()
-                            .map(io.papermc.jkvttplugin.data.model.DndCondition::getName)
-                            .collect(java.util.stream.Collectors.joining(", ")), NamedTextColor.GRAY)));
-            return;
-        }
-
-        // Find an add/remove keyword; everything before it is the target name.
-        int kw = -1;
-        for (int i = 1; i < args.length; i++) {
-            if (args[i].equalsIgnoreCase("add") || args[i].equalsIgnoreCase("remove")) { kw = i; break; }
-        }
-        if (kw == -1) { // just view the target's conditions
-            Combatant target = findCombatantByName(session, joinArgs(args, 1));
-            if (target == null) { dm.sendMessage(Component.text("Combatant not found: " + joinArgs(args, 1), NamedTextColor.RED)); return; }
-            showConditions(dm, target);
-            return;
-        }
-
-        String targetName = joinArgsRange(args, 1, kw);
-        if (kw + 1 >= args.length) { dm.sendMessage(Component.text("Name a condition, e.g. /combat condition <target> add prone", NamedTextColor.RED)); return; }
-        Combatant target = findCombatantByName(session, targetName);
-        if (target == null) { dm.sendMessage(Component.text("Combatant not found: " + targetName, NamedTextColor.RED)); return; }
-
-        io.papermc.jkvttplugin.data.model.DndCondition cond = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(args[kw + 1]);
-        if (cond == null) { dm.sendMessage(Component.text("Unknown condition: " + args[kw + 1] + " (try /combat condition list)", NamedTextColor.RED)); return; }
-
-        if (args[kw].equalsIgnoreCase("add")) {
-            if (target.addCondition(cond.getId())) {
-                session.setConditionEffect(target, cond, true); // apply any Minecraft effect (#103)
-                session.broadcast(Component.text(target.getDisplayName(true) + " is now ", NamedTextColor.YELLOW)
-                        .append(conditionText(cond)));
-                // Incapacitated ends concentration outright, no save (PHB 203).
-                if (target.cannotAct()) ConcentrationManager.onIncapacitated(session, target, "they were " + cond.getName().toLowerCase());
-            } else {
-                dm.sendMessage(Component.text(target.getDisplayName() + " already has " + cond.getName() + ".", NamedTextColor.GRAY));
-            }
-        } else {
-            if (target.removeCondition(cond.getId())) {
-                session.setConditionEffect(target, cond, false);
-                session.broadcast(Component.text(target.getDisplayName(true) + " is no longer " + cond.getName() + ".", NamedTextColor.GRAY));
-            } else {
-                dm.sendMessage(Component.text(target.getDisplayName() + " doesn't have " + cond.getName() + ".", NamedTextColor.GRAY));
-            }
-        }
-        session.updateScoreboard();
-    }
-
-    private void showConditions(Player dm, Combatant target) {
-        if (target.getConditions().isEmpty()) {
-            dm.sendMessage(Component.text(target.getDisplayName() + " has no conditions.", NamedTextColor.GRAY));
-            return;
-        }
-        Component msg = Component.text(target.getDisplayName() + "'s conditions: ", NamedTextColor.GOLD);
-        boolean first = true;
-        for (String id : target.getConditions()) {
-            io.papermc.jkvttplugin.data.model.DndCondition c = io.papermc.jkvttplugin.data.loader.ConditionLoader.get(id);
-            if (c == null) continue;
-            if (!first) msg = msg.append(Component.text(", ", NamedTextColor.GRAY));
-            msg = msg.append(conditionText(c));
-            first = false;
-        }
-        dm.sendMessage(msg);
-    }
-
-    /** A condition name with its rules on hover. */
-    private Component conditionText(io.papermc.jkvttplugin.data.model.DndCondition c) {
-        Component rules = Component.text(c.getName(), NamedTextColor.AQUA, TextDecoration.BOLD);
-        for (String line : c.getRules()) {
-            rules = rules.append(Component.text("\n• " + line, NamedTextColor.GRAY));
-        }
-        return Component.text(c.getName(), NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                .hoverEvent(HoverEvent.showText(rules));
-    }
-
     /** Join args[start, end) into a space-separated (quote-stripped) string. */
     private String joinArgsRange(String[] args, int start, int end) {
         StringBuilder sb = new StringBuilder();
@@ -1872,6 +1785,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleAttack(Player player, String[] args) {
+        handleAttack(player, args, false);
+    }
+
+    /** @param rangeWaived the DM clicked [Attack anyway] on an out-of-range attack */
+    private void handleAttack(Player player, String[] args, boolean rangeWaived) {
         CombatSession session = resolveSession(player);
         if (session == null) return;
 
@@ -2007,9 +1925,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         // Range check: are you close enough to swing / within weapon/attack range?
-        // (showMods previews modifiers, and a DM may bypass with --force.)
-        boolean force = hasFlag(args, "--force") && isDM;
-        if (!showMods && !force) {
+        // (showMods previews modifiers; a DM out of range gets an [Attack anyway] button instead of a flag.)
+        if (!showMods && !rangeWaived) {
             String rangeError;
             if (attacker.isPlayer()) {
                 DndWeapon rangeWeapon = AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName);
@@ -2020,8 +1937,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 rangeError = entityAttackRangeError(attacker, target, atk);
             }
             if (rangeError != null) {
-                if (isDM) rangeError += "  (DM: add --force to attack anyway.)";
-                player.sendMessage(Component.text(rangeError, NamedTextColor.RED));
+                Component msg = Component.text(rangeError + " ", NamedTextColor.RED);
+                if (isDM) {
+                    String[] again = args.clone();
+                    msg = msg.append(Component.text("[Attack anyway]", NamedTextColor.GOLD, TextDecoration.UNDERLINED)
+                            .hoverEvent(HoverEvent.showText(Component.text("DM: make this attack despite the range")))
+                            .clickEvent(ClickEvent.callback(a -> handleAttack(player, again, true),
+                                    net.kyori.adventure.text.event.ClickCallback.Options.builder().uses(1)
+                                            .lifetime(java.time.Duration.ofMinutes(5)).build())));
+                }
+                player.sendMessage(msg);
                 return;
             }
         }
@@ -2365,7 +2290,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         CombatSession session = resolveSession(dm);
         if (session == null) return;
 
-        // Players may apply damage only on their own turn; the DM (and /combat override) may anytime.
+        // Players may apply damage only on their own turn; the DM may anytime.
         boolean isDM = isDM(dm) || dm.hasPermission("jkvtt.dm");
         if (!isDM) {
             Combatant current = session.getCurrentCombatant();
@@ -2375,19 +2300,17 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // /combat damage applies the damage from ONE attack hit. /combat override is the DM's
-        // escape hatch to correct HP anytime and skips this gate.
-        boolean isOverride = args.length > 0 && args[0].equalsIgnoreCase("override");
+        // /combat damage applies the damage from ONE attack hit. Changing HP by fiat is /dm adjust.
         Combatant attacker = session.getCurrentCombatant();
-        if (!isOverride) {
+        {
             TurnState ts = attacker != null ? attacker.getTurnState() : null;
             if (ts == null || !ts.isDamagePending()) {
                 dm.sendMessage(Component.text("No attack hit to apply damage for — use /combat attack first.", NamedTextColor.YELLOW));
-                dm.sendMessage(Component.text("(DM: use /combat override to correct HP directly.)", NamedTextColor.GRAY));
+                dm.sendMessage(Component.text("(DM: change HP directly with /dm adjust <who>.)", NamedTextColor.GRAY));
                 return;
             }
             // A reaction window is open on this hit (#195): the target may still cast Shield, so the
-            // damage waits rather than being applied and unwound. /combat override stays available.
+            // damage waits rather than being applied and unwound. /dm adjust stays available.
             if (ReactionWindow.isBlocking(attacker.getId())) {
                 ReactionWindow.explainBlock(dm, attacker.getId());
                 return;
@@ -2397,7 +2320,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // Damage roll: manualRoll <n> (you rolled it) / autoRoll [dice] (game rolls) / total <n>.
         // For autoRoll the game rolls the damage dice: use the dice you gave, else the ones remembered
         // from the hit that opened this window — so a normal hit needs nothing typed after 'autoRoll'.
-        String pendingDice = (!isOverride && attacker != null && attacker.getTurnState() != null)
+        String pendingDice = (attacker != null && attacker.getTurnState() != null)
                 ? attacker.getTurnState().getPendingDamageDice() : "";
         String rollStr;
         if (hasFlag(args, "autoRoll")) {
@@ -2416,13 +2339,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // Damage type: no need to type it — default to the type of the hit that opened this window.
         // 'type <t>' still overrides (e.g. a rider of a different type, like the Hex necrotic die).
         String type = valueAfterAny(args, "type");
-        if (type == null && !isOverride && attacker != null && attacker.getTurnState() != null) {
+        if (type == null && attacker != null && attacker.getTurnState() != null) {
             String pending = attacker.getTurnState().getPendingDamageType();
             if (pending != null && !pending.isBlank()) type = pending;
         }
         // Crit comes from the attack that opened this damage window, not a flag (matters only vs a
         // downed creature: a critical hit while they're down is 2 death-save failures, not 1).
-        boolean crit = !isOverride && attacker != null && attacker.getTurnState() != null
+        boolean crit = attacker != null && attacker.getTurnState() != null
                 && attacker.getTurnState().isPendingDamageCrit();
 
         List<String> positional = collectPositionalArgs(args, 1);
@@ -2440,8 +2363,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // The pending window belongs to the creature that was actually hit. Naming a different one
         // used to apply that hit's damage to whoever you typed — a confirmed playtest bug where a
         // player hit Meepo, typed "/combat damage Yeek", and Yeek took the damage. Refuse rather
-        // than guess; /combat override remains the DM's way to correct HP on anyone.
-        if (!isOverride && attacker != null && attacker.getTurnState() != null) {
+        // than guess; /dm adjust remains the DM's way to correct HP on anyone.
+        if (attacker != null && attacker.getTurnState() != null) {
             UUID hitId = attacker.getTurnState().getPendingDamageTargetId();
             if (hitId != null && !hitId.equals(target.getId())) {
                 Combatant actual = null;
@@ -2460,9 +2383,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // Consistent with attack rolls: --roll is what you physically rolled on the damage dice, and
         // the game adds the pending bonus (e.g. +3 STR). A dice *formula* (contains 'd') is still
         // rolled as-is for DM convenience; --total is the final number with nothing added.
-        int pendingBonus = (!isOverride && attacker != null && attacker.getTurnState() != null)
+        int pendingBonus = (attacker != null && attacker.getTurnState() != null)
                 ? attacker.getTurnState().getPendingDamageBonus() : 0;
-        String pendingLabel = (!isOverride && attacker != null && attacker.getTurnState() != null)
+        String pendingLabel = (attacker != null && attacker.getTurnState() != null)
                 ? attacker.getTurnState().getPendingDamageLabel() : "";
         int damage;
         if (rollStr != null) {
@@ -2486,7 +2409,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         // Halve on a successful save vs a save spell (#123).
-        if (!isOverride && attacker != null && attacker.getTurnState() != null && attacker.getTurnState().isPendingDamageHalf()) {
+        if (attacker != null && attacker.getTurnState() != null && attacker.getTurnState().isPendingDamageHalf()) {
             int full = damage;
             damage = Math.max(0, damage / 2);
             dm.sendMessage(Component.text("Saved — half damage: " + full + " → " + damage + ".", NamedTextColor.GRAY));
@@ -2496,7 +2419,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         session.refreshHpDisplays(target);
 
         // Consume the hit's damage window so it can't be applied again this turn.
-        if (!isOverride && attacker != null && attacker.getTurnState() != null) {
+        if (attacker != null && attacker.getTurnState() != null) {
             attacker.getTurnState().clearDamagePending();
         }
     }
@@ -2909,8 +2832,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             .append(Component.text(" - Show your to-hit breakdown, don't attack", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat damage <target> [amt | manualRoll <n> | autoRoll <dice>]", NamedTextColor.RED)
             .append(Component.text(" - Apply damage (type is auto)", NamedTextColor.GRAY)));
-        player.sendMessage(Component.text("/combat override <target> [amt | manualRoll <n>]", NamedTextColor.RED)
-            .append(Component.text(" - DM: apply corrective damage anytime", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat heal <target> [amt | manualRoll <n>]", NamedTextColor.GREEN)
             .append(Component.text(" - Restore HP (DM)", NamedTextColor.GRAY)));
         player.sendMessage(Component.text("/combat temphp <target> <amt>", NamedTextColor.AQUA)
@@ -2948,8 +2869,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Subcommands
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
-                "reveal", "hide", "action", "bonusAction", "movement", "condition", "cast", "save", "attack",
-                "reactions", "concentration", "damage", "override", "heal", "temphp", "deathsave", "use"));
+                "reveal", "hide", "action", "bonusAction", "movement", "cast", "save", "attack",
+                "reactions", "concentration", "damage", "heal", "temphp", "deathsave", "use"));
             return filterCompletions(completions, args[0]);
         }
 
@@ -2971,7 +2892,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     }
                     // Add entity names would need entity registry iteration
                 }
-                case "remove", "surprise", "endturn", "turn", "action", "attack", "damage", "override", "heal", "temphp", "deathsave" -> {
+                case "remove", "surprise", "endturn", "turn", "action", "attack", "damage", "heal", "temphp", "deathsave" -> {
                     // Suggest combatants in session
                     if (session != null) {
                         for (Combatant c : session.getCombatants()) {
@@ -2981,10 +2902,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 }
                 case "movement" -> {
                     completions.add("undo");
-                }
-                case "condition" -> {
-                    completions.add("list");
-                    if (session != null) for (Combatant c : session.getCombatants()) completions.add(c.getDisplayName());
                 }
                 case "cast" -> {
                     // Suggest the current caster's known spells/cantrips (by id), plus 'cancel' for a ritual.
@@ -3071,12 +2988,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 completions.addAll(List.of("10", "20", "30", "50"));
             } else if (args[0].equalsIgnoreCase("initiative")) {
                 completions.add("set");
-            } else if (args[0].equalsIgnoreCase("condition")) {
-                completions.add("add");
-                completions.add("remove");
-                for (io.papermc.jkvttplugin.data.model.DndCondition c : io.papermc.jkvttplugin.data.loader.ConditionLoader.getAll()) {
-                    completions.add(c.getId());
-                }
             } else if (args[0].equalsIgnoreCase("cast")) {
                 if (session != null) for (Combatant c : session.getCombatants()) completions.add(c.getDisplayName());
                 // Offer --ritual for a ritual spell (cast it as a multi-turn channel, #156).
@@ -3091,15 +3002,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return filterCompletions(completions, args[3]);
         }
 
-        // Condition name after add/remove (any depth, since the target may be multi-word).
-        if (args[0].equalsIgnoreCase("condition") && args.length >= 3
-                && (args[args.length - 2].equalsIgnoreCase("add") || args[args.length - 2].equalsIgnoreCase("remove"))) {
-            for (io.papermc.jkvttplugin.data.model.DndCondition c : io.papermc.jkvttplugin.data.loader.ConditionLoader.getAll()) {
-                completions.add(c.getId());
-            }
-            return filterCompletions(completions, args[args.length - 1]);
-        }
-
         // Attack tab completion for weapon/attack names and flags
         if (args[0].equalsIgnoreCase("attack") && args.length >= 3) {
             String lastArg = args[args.length - 1];
@@ -3108,12 +3010,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // After a value-taking roll keyword/flag, don't suggest anything
             if (RollService.isRollKeyword(prevArg) && !prevArg.equalsIgnoreCase("autoRoll")) {
                 return completions;
-            }
-
-            // If typing a legacy flag (--force remains until DM overrides are reworked)
-            if (lastArg.startsWith("--")) {
-                completions.addAll(List.of("--force"));
-                return filterCompletions(completions, lastArg);
             }
 
             // Build the set of valid weapons/attacks for the current attacker.
@@ -3141,13 +3037,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 completions.addAll(choices);
             } else {
                 // Weapon chosen — now the roll input makes sense (new keywords, plus legacy flags).
-                completions.addAll(List.of("manualRoll", "autoRoll", "total", "showModifiers", "--force"));
+                completions.addAll(List.of("manualRoll", "autoRoll", "total", "showModifiers"));
             }
             return filterCompletions(completions, lastArg);
         }
 
         // Damage/heal/temphp flag + damage-type completion
-        if (args.length >= 3 && (args[0].equalsIgnoreCase("damage") || args[0].equalsIgnoreCase("override")
+        if (args.length >= 3 && (args[0].equalsIgnoreCase("damage")
                 || args[0].equalsIgnoreCase("heal") || args[0].equalsIgnoreCase("temphp"))) {
             String lastArg = args[args.length - 1];
             String prevArg = args[args.length - 2];
@@ -3160,9 +3056,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     "lightning", "acid", "poison", "necrotic", "radiant", "psychic", "thunder", "force"));
                 return filterCompletions(completions, lastArg);
             }
-            // Offer the roll keywords once a target is named (damage/override/heal take a roll; damage adds type).
+            // Offer the roll keywords once a target is named (damage/heal take a roll; damage adds type).
             if (args.length >= 3 && !RollService.isRollKeyword(lastArg)) {
-                if (args[0].equalsIgnoreCase("damage") || args[0].equalsIgnoreCase("override")) {
+                if (args[0].equalsIgnoreCase("damage")) {
                     completions.addAll(List.of("manualRoll", "autoRoll", "total", "type"));
                 } else if (args[0].equalsIgnoreCase("heal")) {
                     completions.addAll(List.of("manualRoll", "autoRoll", "total"));

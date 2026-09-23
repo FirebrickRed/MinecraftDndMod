@@ -85,7 +85,8 @@ public class MenuClickListener implements Listener {
         boolean isViewMenu = holder.getType() == MenuType.VIEW_CHARACTER_SHEET
                 || holder.getType() == MenuType.SKILLS_MENU
                 || holder.getType() == MenuType.ROLL_OPTIONS_MENU
-                || holder.getType() == MenuType.SPELL_CASTING;
+                || holder.getType() == MenuType.SPELL_CASTING
+                || holder.getType() == MenuType.DM_ADJUST;
         // ToDo: check if this can be simplified
 
         // Fetch or create session (centralized, avoiding duplicate service calls in handlers)
@@ -103,6 +104,14 @@ public class MenuClickListener implements Listener {
                     return;
                 }
             }
+        }
+
+        // The DM Adjust menu (#175) acts on a creature or character, not a creation session.
+        if (holder.getType() == MenuType.DM_ADJUST) {
+            if (action == MenuAction.ADJUST) {
+                io.papermc.jkvttplugin.ui.menu.AdjustMenu.handleClick(player, holder.getSessionId(), payload, event.getClick());
+            }
+            return;
         }
 
         // Single-pane creation needs the click type (left = +1 ability, right = -1)

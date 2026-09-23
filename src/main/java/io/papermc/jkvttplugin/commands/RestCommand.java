@@ -46,8 +46,8 @@ public class RestCommand implements CommandExecutor, TabCompleter {
         }
         if (restType.equals("long") && character.getCurrentHealth() <= 0) {
             sender.sendMessage(Component.text(character.getCharacterName() + " is at 0 HP, and a long rest needs at least 1 "
-                    + "when it starts (PHB p.186). A stable character regains 1 HP after 1d4 hours: /dm hp "
-                    + character.getCharacterName() + " heal 1", NamedTextColor.RED));
+                    + "when it starts (PHB p.186). A stable character regains 1 HP after 1d4 hours: /dm adjust "
+                    + character.getCharacterName() + " hp +1", NamedTextColor.RED));
             return true;
         }
 

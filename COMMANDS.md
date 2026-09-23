@@ -56,7 +56,6 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `movement [undo]` | Check / undo movement this turn |
 | `attack <target> [weapon] [stab\|throw] [flags]` | **Hit check only**: resolves HIT/MISS/CRIT, and on a hit prompts you with the `/combat damage` command to run. With no weapon you get clickable weapon buttons. Thrown weapons default by distance (#192) |
 | `damage <target> [amount] [flags]` | Apply damage — a **player on their own turn**, or the **DM** anytime |
-| `override <target> [amount] [flags]` | **DM-only:** apply corrective/extra damage anytime (e.g. a forgotten modifier) |
 | `heal <target> [amount \| manualRoll <n> \| autoRoll <dice> \| total <n>]` | Restore HP |
 | `temphp <target> <amount>` | Grant temporary HP |
 | `deathsave [<player>] [manualRoll <d20> \| autoRoll]` | Roll a death save (DM may roll for a downed player). Three failures and the character is **dead**, on the sheet, so it outlasts the fight: see `/dm revive` |
@@ -64,7 +63,6 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `cast <ritual_spell> --ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
 | `save [target] [manualRoll <d20> | autoRoll]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
 | `concentration [target] [autoRoll | manualRoll <d20> | total <n>]` | The CON save to keep a concentration spell (or a channelled ritual) going after taking damage. The prompt says what you add before you roll |
-| `condition <target> [add\|remove <cond>]` · `condition list` | DM: tag/clear conditions on a combatant (#103, #150) |
 | `reactions` | List reactions — a player sees their own; the **DM sees a whole-table roster** (#147) |
 | `reactions [<reactor>] <attack|pass>` | Take/pass a provoked opportunity attack (usually the ⚡ end-of-turn buttons) (#147) |
 | `reactions pass` | Decline a **held** reaction — this is what releases the attacker's damage (#195) |
@@ -108,9 +106,9 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 - `total <n>` — a final total you already worked out; nothing is added.
 - Give nothing in physical-dice mode and you get a clickable prompt; in auto-roll mode the game rolls.
 
-**Damage roll** (`/combat damage`, `heal`, `override`): `manualRoll <n>` (the number you rolled on the damage dice) · `autoRoll <dice>` (the game rolls those dice, e.g. `autoRoll 2d6`) · `total <n>` · a bare `<amount>` for flat damage. The **damage type is automatic** (taken from the hit); add `type <slashing|fire|…>` only to override it. Crit carries over from the attack — no flag.
+**Damage roll** (`/combat damage`, `heal`): `manualRoll <n>` (the number you rolled on the damage dice) · `autoRoll <dice>` (the game rolls those dice, e.g. `autoRoll 2d6`) · `total <n>` · a bare `<amount>` for flat damage. The **damage type is automatic** (taken from the hit); add `type <slashing|fire|…>` only to override it. Crit carries over from the attack — no flag.
 
-**Other attack options:** `showModifiers` (show your to-hit breakdown without attacking) · `--force` (DM override, reworking later).
+**Other attack options:** `showModifiers` (show your to-hit breakdown without attacking). Out of range, a DM gets an **[Attack anyway]** button (there is no `--force`).
 
 ### Entities & items — `/dm entity <subcommand>`
 | Subcommand | What it does |
@@ -120,7 +118,6 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `list` | List spawned entities with their coordinates and world (flagged when it isn't yours) |
 | `remove <name>` · `remove all\|dead` · `remove type <creature_type>` · `remove radius <blocks>` | Despawn one or many entities |
 | `rename <current> <new>` | Rename a spawned entity, keeping its HP, shop stock and loot. Quote names with spaces — an ambiguous unquoted split is refused, not guessed |
-| `maxhp <name> <hp>` | Set a creature's max HP, e.g. to hit dice you rolled at the table. The spawn message's **[Use my own roll]** fills it in. An unhurt creature is topped up to the new max |
 | `revive <name> [hp]` | Bring a dead entity back (default full HP). Same path as `/dm revive`, so it rejoins a fight in progress |
 | `teleport <name> [x y z]` | Teleport an entity to you (or to coordinates) |
 | `info <name>` | Show an entity's stat block |
@@ -138,9 +135,13 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 |---|---|
 | `add\|remove\|list` | Manage who is a DM (`add`/`remove` op only) |
 | `give <player> <item_id> [amount]` | Give a D&D item. The player is required and first (use your own name for yourself) |
-| `hp <character\|creature> <damage\|heal\|temp\|set> <amount> [type <t>]` · `hp <name> full` | **Change HP anywhere**, in or out of combat (#175). The amount can be dice (`2d10`). Same engine as combat: resistances, downing, death saves and saving all still happen; out of combat the message goes to the target and the DMs |
+| `adjust <character\|creature>` | **Opens the Adjust menu** (#175), the DM's hands on one creature or character, in or out of a fight. Also the **Adjust** tool (blaze rod) in DM mode: right-click someone. HP (click ±1, shift ±5, set exactly, full, temp, max HP for creatures, drop to 0, revive), AC (click ±1 **temporary**, you pick how long: next turn / short rest / long rest / until removed; shift-click ±1 **permanent**, creatures only), conditions (click to toggle), hide/reveal in a fight |
+| `adjust <who> hp <n> \| +<n> \| -<n or dice> [type <t>]` | Set HP / heal / damage (`-2d6 type fire` rolls and shows the dice). Same HP path as a hit: resistances, downing, death |
+| `adjust <who> full` · `temp <n>` · `maxhp <n>` · `down` · `revive [hp]` | Full HP · temp HP · a creature's max HP (e.g. hit dice you rolled; the spawn message's **[Use my own roll]** fills it in) · drop to 0 · back from the dead |
+| `adjust <who> ac +1 [until next_turn\|short_rest\|long_rest\|removed]` · `ac clear` · `ac set <n>` · `ac reset` | Temporary AC change (asks how long if you don't say) · clear it · a creature's own AC for good · back to its stat block |
+| `adjust <who> condition <name>` · `condition add\|remove <name>` | Toggle / add / remove a condition. Conditions live on the character or creature: they work out of combat and outlast a fight (only Dodging-type ones end with it) |
 | `revive <character\|creature> [hp]` | **The only way back from death** (#101), standing in for Revivify / Raise Dead. Default 1 HP. Healing, rests and the fight ending never revive anyone. Damage at 0 HP is a failed death save (two on a crit); massive damage (left over past 0 HP ≥ max HP) kills outright |
-| `mode` | Enter/exit **DM mode**: your inventory is swapped for the DM toolbar (View, Possess, Move, Add/Remove Combatant, Spawn Entity, Exploration tools) and restored on exit |
+| `mode` | Enter/exit **DM mode**: your inventory is swapped for the DM toolbar (View, Adjust, Possess, Move, Add/Remove Combatant, Spawn Entity, Exploration tools) and restored on exit |
 | `check <player> <ability\|save\|skill> <name> [dc <n>] [adv\|dis]` | Prompt a player to roll. The result comes to **you** (graded vs the DC if given) with a **[Share]** button. `promptcheck` is an alias (#186) |
 | `check <player> tool <tool> [ability] [dc <n>] [adv\|dis]` | A check **with a tool** (#207): the ability modifier + proficiency if they have the tool, **doubled with expertise**. The ability defaults to the item's `check_ability:` (thieves' tools → DEX); name it for other tools (`tool smiths_tools int dc 12`). You're told first whether they're proficient and whether they're carrying the tools. Picking a lock is `tool thieves_tools`, not Sleight of Hand (PHB p.154). A **failed** graded thieves' tools check breaks one set by default (BG3-style); set `objects.thieves_tools_break` to `on_fail`, `always` or `never` in config.yml (#210). |
 | `check <A> <skill> vs <B> <skill> [autoRoll \| manualRoll <n> \| total <n>]` | Contested check. Either side can be a character (rolls their own die) or a **spawned creature** (the DM rolls: add the roll words inline, or click **[Roll it]** / **[I rolled…]**). The creature uses its stat-block `skills:` bonus, else its ability modifier. The winner comes back to the DM with **[Share]**; a tie changes nothing (PHB p.174). |

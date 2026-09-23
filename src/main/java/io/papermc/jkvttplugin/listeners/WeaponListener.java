@@ -414,8 +414,8 @@ public class WeaponListener implements Listener {
             if ("out".equals(status[1])) {
                 // Out of range: show it, but DON'T make it clickable — no accidental out-of-range shots.
                 msg = msg.append(Component.text("  [" + atk + "]" + status[0], NamedTextColor.GRAY)
-                        .hoverEvent(HoverEvent.showText(Component.text("Out of range — move closer, or type"
-                                + " /combat attack … --force to override."))));
+                        .hoverEvent(HoverEvent.showText(Component.text("Out of range — move closer. (Typing the attack anyway "
+                                + "gives you an [Attack anyway] button.)"))));
                 continue;
             }
             NamedTextColor color = "long".equals(status[1]) ? NamedTextColor.YELLOW : NamedTextColor.GREEN;

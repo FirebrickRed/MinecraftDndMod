@@ -70,6 +70,12 @@ public class DmModeListener implements Listener {
             } else {
                 player.sendActionBar(Component.text("Look at a player or entity to view them.", NamedTextColor.GRAY));
             }
+        } else if (DmModeManager.TOOL_ADJUST.equals(tool)) {
+            if (toolDebounced(player)) return; // this click already handled via the entity event
+            RayTraceResult hit = player.rayTraceEntities(10);
+            if (hit == null || hit.getHitEntity() == null || !adjust(player, hit.getHitEntity())) {
+                player.sendActionBar(Component.text("Look at a player or creature to adjust them.", NamedTextColor.GRAY));
+            }
         } else if (DmModeManager.TOOL_POSSESS.equals(tool)) {
             if (toolDebounced(player)) return; // this click already handled via the entity event
             RayTraceResult hit = player.rayTraceEntities(10);
@@ -201,6 +207,10 @@ public class DmModeListener implements Listener {
         if (DmModeManager.TOOL_VIEW.equals(tool)) {
             event.setCancelled(true);
             view(player, event.getRightClicked());
+        } else if (DmModeManager.TOOL_ADJUST.equals(tool)) {
+            event.setCancelled(true);
+            if (toolDebounced(player)) return;
+            adjust(player, event.getRightClicked());
         } else if (DmModeManager.TOOL_POSSESS.equals(tool) && event.getRightClicked() instanceof ArmorStand stand) {
             event.setCancelled(true);
             if (toolDebounced(player)) return;
@@ -286,6 +296,19 @@ public class DmModeListener implements Listener {
             event.setCancelled(true);
             PossessionManager.toggleSelfModel(event.getPlayer());
         }
+    }
+
+    /** Open the Adjust menu (#175) on a player's character or a creature. False if it's neither. */
+    private boolean adjust(Player dm, Entity target) {
+        if (!DMManager.isDM(dm)) return false;
+        UUID id = null;
+        if (target instanceof Player p && ActiveCharacterTracker.getActiveCharacter(p) != null) id = p.getUniqueId();
+        else if (target instanceof ArmorStand stand && DndEntityInstance.getByArmorStand(stand) != null) {
+            id = DndEntityInstance.getByArmorStand(stand).getInstanceId();
+        }
+        if (id == null) return false;
+        io.papermc.jkvttplugin.ui.menu.AdjustMenu.open(dm, id);
+        return true;
     }
 
     private void view(Player dm, Entity target) {

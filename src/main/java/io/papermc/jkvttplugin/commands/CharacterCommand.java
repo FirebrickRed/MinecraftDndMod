@@ -287,14 +287,12 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * {@code /character cast <spell> [target]} out of combat (#152, first slice).
+     * {@code /character cast <spell> [target]} out of combat (#152).
      *
-     * <p>What this does and doesn't do: it announces the cast to everyone nearby and to the DMs,
-     * spends the slot or innate use, handles concentration, and — for a spell with damage or
-     * healing dice — hands the DM a filled-in {@code /dm hp} so the effect goes through the one
-     * damage path ({@code DamageHandler}, #175) rather than a second one. It does <b>not</b> resolve
-     * the spell: no attack roll, no save, no area. That's the rest of #152, and a DM narrating the
-     * outcome is the intended workflow until then.
+     * <p>A harmful spell goes to {@code OutOfCombatAttack}: the DM decides at a creature (start a
+     * fight, let it happen, deny), and a spell at a thing rolls to hit for the DM to judge. Healing
+     * rolls and applies. Anything else (Light, Detect Magic) announces and spends the slot, and the
+     * DM narrates the effect.
      *
      * <p>In combat this defers to {@code /combat cast}, which does resolve rolls.
      */

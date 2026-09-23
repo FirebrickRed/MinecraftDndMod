@@ -1024,7 +1024,7 @@ public class CombatSession {
      * Apply or remove a condition's Minecraft potion effect on a player combatant (#103). No-op for
      * conditions without a minecraft_effect, or for entities (they have no player to affect).
      */
-    public void setConditionEffect(Combatant c, DndCondition cond, boolean on) {
+    public static void setConditionEffect(Combatant c, DndCondition cond, boolean on) {
         if (cond == null || cond.getMinecraftEffect() == null || c == null) return;
         // Route to the player who's living the condition: the player combatant, or the DM possessing
         // an afflicted entity (so a blinded kobold blinds the DM controlling it) (#103).

@@ -194,7 +194,7 @@ public final class ObjectInteraction {
                 .append(dmButton("[Call the save]", "/dm check " + player.getName() + " save " + save + dc,
                         "They roll it; you get the result privately"))
                 .append(Component.text(" "))
-                .append(dmButton("[Apply damage]", "/dm hp " + player.getName() + " damage " + o.trapDamage + " type ",
+                .append(dmButton("[Apply damage]", "/dm adjust " + player.getName() + " hp -" + o.trapDamage + " type ",
                         "Fills the damage command — add a type (piercing, fire, …) and Enter"));
         toDms(header);
         toDms(buttons);

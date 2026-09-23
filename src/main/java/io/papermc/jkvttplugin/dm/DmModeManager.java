@@ -33,6 +33,7 @@ public class DmModeManager {
 
     /** DM tool identifiers (stored on the item's PDC). */
     public static final String TOOL_VIEW = "view";
+    public static final String TOOL_ADJUST = "adjust";
     public static final String TOOL_POSSESS = "possess";
     public static final String TOOL_START = "combat_start";
     public static final String TOOL_ADD = "combat_add";
@@ -151,6 +152,7 @@ public class DmModeManager {
         clearHotbar(player);
         player.getInventory().setItem(0, tool(Material.SPYGLASS, TOOL_VIEW, "View",
                 "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
+        player.getInventory().setItem(1, adjustTool());
         player.getInventory().setItem(2, tool(Material.IRON_SWORD, TOOL_PAGE_COMBAT, "Combat Tools",
                 "Right-click to open the combat toolbar", "(Start, Add/Remove, Initiative, Possess, Move)"));
         // Possess is also on the combat page, but it isn't only a combat action — a DM puppets an
@@ -180,6 +182,7 @@ public class DmModeManager {
         player.getInventory().setItem(4, tool(Material.LEATHER_BOOTS, TOOL_MOVE, "Move",
                 "Right-click entities to select them (they glow)", "then right-click the ground to send them there",
                 "(in combat: only on that entity's turn, counts vs speed)"));
+        player.getInventory().setItem(7, adjustTool());
         player.getInventory().setItem(6, tool(Material.SPYGLASS, TOOL_VIEW, "View",
                 "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
         player.getInventory().setItem(8, tool(Material.ARROW, TOOL_BACK, "◀ Back",
@@ -194,10 +197,18 @@ public class DmModeManager {
                 "(players then interact through you — /dm object commands too)"));
         player.getInventory().setItem(2, tool(Material.SPYGLASS, TOOL_VIEW, "View",
                 "Right-click a player → their character sheet", "Right-click an entity → its stat block"));
+        player.getInventory().setItem(6, adjustTool());
         player.getInventory().setItem(4, tool(Material.EGG, TOOL_SPAWN, "Spawn Entity",
                 "Right-click to pick an entity to spawn", "(it appears where you stand — use Move to place it)"));
         player.getInventory().setItem(8, tool(Material.ARROW, TOOL_BACK, "◀ Back",
                 "Right-click to return to the tool categories"));
+    }
+
+    /** The Adjust tool (#175): on every page, since fixing HP or a condition isn't only a combat job. */
+    private static ItemStack adjustTool() {
+        return tool(Material.BLAZE_ROD, TOOL_ADJUST, "Adjust",
+                "Right-click a player or creature → change HP, AC, conditions",
+                "(the same as /dm adjust <who>)");
     }
 
     /** Clear the hotbar (slots 0-8) before laying out a page — the real inventory is safely stashed. */

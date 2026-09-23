@@ -2,6 +2,7 @@ package io.papermc.jkvttplugin.character;
 
 import io.papermc.jkvttplugin.TestContent;
 import io.papermc.jkvttplugin.data.loader.ArmorLoader;
+import io.papermc.jkvttplugin.data.model.AcAdjustment.Until;
 import io.papermc.jkvttplugin.data.model.DndArmor;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
@@ -57,6 +58,17 @@ class CharacterSheetTest {
                 io.papermc.jkvttplugin.data.model.AcAdjustment.Until.REMOVED));
         c.longRest();
         assertEquals(gear - 1, c.getArmorClass(), "'until you remove it' outlasts rests, and can be negative");
+    }
+
+    /** How long a DM AC change lasts, however it's typed. */
+    @Test
+    void acAdjustmentDurationsParse() {
+        assertEquals(Until.LONG_REST, Until.parse("long"));
+        assertEquals(Until.LONG_REST, Until.parse("long_rest"));
+        assertEquals(Until.SHORT_REST, Until.parse("Short Rest"));
+        assertEquals(Until.NEXT_TURN, Until.parse("next"));
+        assertEquals(Until.REMOVED, Until.parse("removed"));
+        assertNull(Until.parse("forever"));
     }
 
     // ---------- racial spells ----------

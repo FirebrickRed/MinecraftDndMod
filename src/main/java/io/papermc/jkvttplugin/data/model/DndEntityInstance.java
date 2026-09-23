@@ -198,6 +198,11 @@ public class DndEntityInstance {
         return new NamespacedKey(JkVttPlugin.getInstance(), name);
     }
 
+    /** A live creature by its instance id (a combatant id), or null. */
+    public static DndEntityInstance getById(UUID id) {
+        return id == null ? null : UUID_REGISTRY.get(id);
+    }
+
     /** Every live instance (for save-on-shutdown). */
     public static Collection<DndEntityInstance> getAll() {
         return new ArrayList<>(UUID_REGISTRY.values());

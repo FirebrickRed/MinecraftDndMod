@@ -106,15 +106,15 @@ languages, spells, AC) and your inventory.
   - two tied initiatives in turn order; "Round: N" at the bottom with no number.
 - [ ] **Death:** down yourself, fail three death saves → "has DIED", turn skipped.
   - `/combat finished`, new fight → still `[DEAD]`, still skipped.
-  - `/dm hp <you> heal 10`, `/character rest long`, `/dm rest <you> long` all refuse.
+  - `/dm adjust <you> hp +10`, `/character rest long`, `/dm rest <you> long` all refuse.
   - The sheet's HP slot shows a skull "DEAD". `/dm revive <you>` → 1 HP, turns return.
-- [ ] **Massive damage:** `/dm hp <c> damage <current + max HP>` → dies outright.
+- [ ] **Massive damage:** `/dm adjust <c> hp -<current + max HP>` → dies outright.
 - [ ] **Dying carries over:** fail one save, `/combat finished`, new fight → still 1 failure.
 - [ ] `/dm entity revive <creature>` mid-fight → its turns come back.
 - [ ] **The body:** a dead character leaves a tipped-over head "☠ <name>" where they fell.
       As DM, right-click it → [Revive] and [Remove body]. Can't punch it or take the head.
 - [ ] Walk away until the chunk unloads, `/dm revive <c>`, walk back → the body is gone.
-- [ ] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP". `/dm hp <c> heal 1`
+- [ ] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP". `/dm adjust <c> hp +1`
       → now works.
 
 ## Attacks outside a fight (new)
@@ -141,9 +141,37 @@ languages, spells, AC) and your inventory.
 - [ ] **Utility spells** (Light, Thaumaturgy) still just announce.
 - [ ] The spellbook, out of combat, fills `/character cast …`, and its hover explains the above.
 
+## The Adjust menu & `/dm adjust` (new)
+
+- [ ] `/dm mode` → the **Adjust** tool (blaze rod) is on the main toolbar and both pages. Right-click
+      a creature or a player → "Adjust: <name>". Right-clicking nothing (or a cow) → an action-bar hint.
+- [ ] **HP tile:** click → +1, right-click → −1, shift → ±5. In a fight, the scoreboard and the
+      player's open sheet update. **Set HP exactly…** / **Temp HP…** / **Max HP…** (creatures)
+      close the menu and give you a [click to type the number] line.
+- [ ] **Drop to 0 HP:** a creature dies; a character goes down and starts death saves. On a dead one,
+      **Revive (1 HP)** appears and works.
+- [ ] **AC, temporary:** click the AC tile with no adjustment yet → "for how long?" (next turn only
+      in a fight). Pick "until a long rest" → AC +1, and the sheet's AC tile says "DM: +1 (until a
+      long rest)". Click again → +2 (keeps the duration). Right-click → back down. **Clear** removes it.
+      A long rest ends it; "until you remove it" survives rests.
+- [ ] **AC, permanent (creatures):** shift-click → the creature's own AC goes up by 1 for good, and
+      the tile says "Own AC 13 (stat block says 12)". **Back to the stat block's AC** undoes it. On a
+      player, shift-click says their AC comes from armor.
+- [ ] **Conditions:** click Poisoned → it glows, "✔ Poisoned", the table (or the player and you) is
+      told. Click again → removed. Blinded on a player → they get the blindness effect.
+- [ ] **Typed:** `/dm adjust The Kindler hp 12` (set), `hp +5`, `hp -2d6 type fire`, `full`,
+      `temp 5`, `maxhp 30`, `ac +1 until short_rest`, `ac +1` (asks how long), `ac set 16`,
+      `ac reset`, `condition poisoned` (toggle), `condition add prone`, `down`, `revive`.
+      Tab completes each step.
+- [ ] **Gone:** `/dm hp`, `/combat damage override`, `/combat condition`, `/dm entity maxhp` and
+      `--force` are unknown now. A trap's **[Apply damage]** fills `/dm adjust … hp -…`. A spawn's
+      **[Use my own roll]** fills `/dm adjust … maxhp`.
+- [ ] **Out of range, as DM** (possessing a creature, `/combat attack` at something too far) →
+      "... out of range [Attack anyway]" → click → the attack goes ahead.
+
 ## Conditions outlast the fight (new)
 
-Until `/dm adjust` lands you can only add conditions in a fight (`/combat condition`), so:
+Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 - [ ] In a fight, make a player **Poisoned** and a creature **Prone**; also have someone **Dodge**.
       `/combat finished` → Dodging ends, but the table sees "X is still Poisoned after the fight"
@@ -165,16 +193,16 @@ Until `/dm adjust` lands you can only add conditions in a fight (`/combat condit
 
 - [ ] **Names with spaces, one reader for all** (`/dm entity spawn alira "The Kindler"`, or rename
       something to "The Kindler"):
-  - `/dm hp "The Kindler" damage 5` and `/dm hp The Kindler damage 5` both work;
+  - `/dm adjust "The Kindler" hp -5` and `/dm adjust The Kindler hp -5` both work;
   - `/dm check Balin Ironforge save dex` (and quoted) works; so does `/dm check clear Balin Ironforge`;
   - `/dm check <you> insight vs Balin Ironforge deception` works, quoted or not;
   - `/dm resource restore "Balin Ironforge" rage` and `/character delete "Balin Ironforge"` work.
-- [ ] **Ambiguous names:** spawn two goblins → `/dm hp Goblin damage 1` says "'Goblin' could be
+- [ ] **Ambiguous names:** spawn two goblins → `/dm adjust Goblin hp -1` says "'Goblin' could be
       Goblin #1, Goblin #2 — name the one you mean" (it used to hit whichever came first).
-      `/dm hp Goblin 2 damage 1` hits #2 (the `#` is optional).
+      `/dm adjust Goblin 2 hp -1` hits #2 (the `#` is optional).
 - [ ] **Checks show the work:** `/dm check <you> save dex` → `d20(16) +3[DEX] +2[Prof] = 21`.
       [Share] shares the same line.
-- [ ] `/dm hp <who> damage 2d10` shows the dice. A flat `damage 7` doesn't pretend to roll.
+- [ ] `/dm adjust <who> hp -2d10` shows the dice. A flat `hp -7` doesn't pretend to roll.
 - [ ] `/dm rest <character> long`; `/dm resource restore <character> all`;
       `/dm resource consume <character> <res> 1`.
 - [ ] Tab: `/dm ` shows add/remove/list + give/check/rest/resource/reload; `/dm resource ` shows
@@ -202,7 +230,7 @@ Set these up, `/stop`, start the server, then check:
 - [ ] Your finished characters still list their chosen languages, tools and racial spell picks
       (high elf rogue still casts Fire Bolt with INT; astral elf still uses Wisdom).
 - [ ] A dead character is still dead; their body is still there.
-- [ ] `/dm hp <c> temp 7` before → still 7 temp HP after.
+- [ ] `/dm adjust <c> temp 7` before → still 7 temp HP after.
 - [ ] Half-orc dropped to 0 before (held at 1 by Relentless) → drop them again after, they fall.
 - [ ] **A fight survives:** before, get into round 2 with a condition on someone and a player at
       0 HP (check `plugins/jkvttplugin/CombatSessions/` has a file). After:
@@ -268,8 +296,8 @@ Fire Bolt on an NPC out of combat skips the attack roll and fills in `/dm hp`.
 The Fire Bolt prompt let me change the target name.
   → gone: out-of-combat spells no longer hand you a `/dm hp`.
 `/dm hp` should use autoRoll / manualRoll / total. Why damage, heal *and* hp?
-  → agreed: `/dm hp`, `/combat damage override` and `/dm entity maxhp` become `/dm adjust` (a menu +
-    a command + a DM-mode tool). Next up, after conditions move onto the sheet (#175).
+  → done: `/dm hp`, `/combat damage override`, `/combat condition`, `/dm entity maxhp` and `--force`
+    are replaced by `/dm adjust` (a menu + a command + a DM-mode tool). See *The Adjust menu*.
 Use the `/combat` commands out of combat, with "you're not in combat, OK?" for the DM.
   → done for attacks and spells: the DM gets [Start combat] / [Let it happen] / [Deny].
 

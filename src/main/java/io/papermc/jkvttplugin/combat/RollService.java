@@ -55,7 +55,7 @@ public final class RollService {
      * Flags still parsed somewhere in {@code /combat}. Anything else starting with {@code --} is
      * dead syntax — either a stale prompt or a player's muscle memory from before #183.
      */
-    private static final java.util.Set<String> LIVE_FLAGS = java.util.Set.of("--force", "--hidden", "--radius");
+    private static final java.util.Set<String> LIVE_FLAGS = java.util.Set.of("--hidden", "--radius");
 
     /** Parse without diagnostics. Prefer the {@code CommandSender} overload so stale syntax is caught. */
     public static RollInput parseInput(String[] args) {
