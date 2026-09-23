@@ -423,6 +423,7 @@ public class CombatSession {
             first.startNewTurn(first.getLocation());
             applyGlowEffect(first);
             sendActionBar(first); // show action/movement budget immediately on turn 1
+            OutOfCombatAttack.offerOpening(first); // the attack that started this fight (#152)
         }
 
         updateScoreboard();
@@ -517,6 +518,7 @@ public class CombatSession {
             tickTurnStartEffects(current); // advance buff/debuff durations, expire the lapsed ones (#70)
             RitualManager.onTurnStart(this, current); // advance/complete/break a channelled ritual (#156)
             sendActionBar(current); // show action/movement budget immediately when the turn begins
+            OutOfCombatAttack.offerOpening(current); // the attack that started this fight (#152)
         }
 
         updateScoreboard();

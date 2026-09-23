@@ -92,4 +92,19 @@ class RacesSpellsAndEntitiesTest {
         assertNotNull(alira, "alira");
         assertNotNull(alira.getHitDice(), "hit_dice, not a 10 HP default");
     }
+
+    /**
+     * Out of combat (#152), a harmful spell asks the DM first (start a fight, let it happen, or roll
+     * at a thing); healing and utility spells don't need anyone's say.
+     */
+    @Test
+    void harmfulSpellsAreTheOnesThatAskTheDm() {
+        TestContent.load();
+        for (String id : java.util.List.of("fire_bolt", "sacred_flame", "magic_missile", "charm_person")) {
+            assertTrue(io.papermc.jkvttplugin.combat.OutOfCombatAttack.isHarmful(SpellLoader.getSpell(id)), id);
+        }
+        for (String id : java.util.List.of("cure_wounds", "light")) {
+            assertFalse(io.papermc.jkvttplugin.combat.OutOfCombatAttack.isHarmful(SpellLoader.getSpell(id)), id);
+        }
+    }
 }

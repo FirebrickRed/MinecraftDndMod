@@ -117,6 +117,30 @@ languages, spells, AC) and your inventory.
 - [ ] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP". `/dm hp <c> heal 1`
       → now works.
 
+## Attacks outside a fight (new)
+
+- [ ] **Fire Bolt at a creature, out of combat:** `/character cast fire_bolt The Kindler` (or leave
+      the name off and look at her). You're told "asking the DM"; you get **[Start combat]**,
+      **[Let it happen]**, **[Deny]**. No slot is spent yet.
+  - **Deny** → the caster is told; nothing happens.
+  - **Let it happen** → the caster gets roll buttons; the attack roll shows `vs AC`; on a hit,
+    roll damage (`/character damage`), and her HP drops. A miss ends it.
+  - **Start combat** → a fight opens in setup with both of you. Add someone else, mark someone
+    surprised, roll initiative. On the caster's first turn: "Your opening move: Fire Bolt at The
+    Kindler [do it]".
+- [ ] **A save spell** (Sacred Flame) with Let it happen → the DM sees the DC, **[Call the save]**
+      (characters), **[Failed: damage]** / **[Saved: …]**.
+- [ ] **At a thing:** look at a torch or a wall, `/character cast fire_bolt` with no name → "You're
+      not aiming at a creature. Cast it anyway?" → **[Cast it]** → roll → the DM sees "N to hit"
+      and "they're looking at the wall torch" (plus its annotation, if it has one) and **[Ask for
+      damage]**. Damage rolled at a thing hurts nobody.
+- [ ] **Healing:** `/character cast cure_wounds <someone>` → roll prompt → they heal. No DM
+      prompt. Too far away → "about N ft away" refusal.
+- [ ] **A weapon:** left-click a creature with a sword out of combat → the DM gets **[Start
+      combat]** / **[Deny]** (no one-off for weapons). The creature takes no damage from the click.
+- [ ] **Utility spells** (Light, Thaumaturgy) still just announce.
+- [ ] The spellbook, out of combat, fills `/character cast …`, and its hover explains the above.
+
 ## Entities & shops
 
 - [ ] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
@@ -225,13 +249,15 @@ Standardize names: one place for creature names, one for player names.
     and players (`CharacterResolver`). A test now fails the build if a command hands a raw word to
     a finder. Ambiguous names ask "which one?" instead of guessing.
 Fire Bolt on an NPC out of combat skips the attack roll and fills in `/dm hp`.
-  → known gap: out-of-combat casting only announces, it never rolls (#152). Proposal in chat.
+  → fixed (#152): the DM decides (start combat / let it happen / deny), the attack roll comes
+    first, then damage. See *Attacks outside a fight*.
 The Fire Bolt prompt let me change the target name.
-  → it's a filled-in `/dm hp` you can edit, so yes. Goes away with the proposal above.
+  → gone: out-of-combat spells no longer hand you a `/dm hp`.
 `/dm hp` should use autoRoll / manualRoll / total. Why damage, heal *and* hp?
-  → proposal in chat (ties into #175, DM overrides).
+  → agreed: `/dm hp`, `/combat damage override` and `/dm entity maxhp` become `/dm adjust` (a menu +
+    a command + a DM-mode tool). Next up, after conditions move onto the sheet (#175).
 Use the `/combat` commands out of combat, with "you're not in combat, OK?" for the DM.
-  → proposal in chat.
+  → done for attacks and spells: the DM gets [Start combat] / [Let it happen] / [Deny].
 
 ---
 

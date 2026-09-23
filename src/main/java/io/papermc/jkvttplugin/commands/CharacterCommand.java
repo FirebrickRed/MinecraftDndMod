@@ -45,7 +45,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final ShortRestCommand shortRestExec = new ShortRestCommand();
     private final LongRestCommand longRestExec = new LongRestCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "rest", "give", "delete", "loot", "check", "cast", "drink", "reply");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "rest", "give", "delete", "loot", "check", "cast", "damage", "drink", "reply");
     private final DrinkCommand drinkExec = new DrinkCommand();
 
     @Override
@@ -118,6 +118,12 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "reply" -> {
                 return handleReply(sender, rest);
+            }
+            case "damage" -> {
+                // Finish an out-of-combat hit: the roll the attack or the DM asked for.
+                if (sender instanceof Player p) io.papermc.jkvttplugin.combat.OutOfCombatAttack.damage(p, rest);
+                else sender.sendMessage(Component.text("Only players roll damage.", NamedTextColor.RED));
+                return true;
             }
             default -> {
                 sender.sendMessage(Component.text("Unknown subcommand: " + sub, NamedTextColor.RED));
@@ -336,43 +342,26 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        String target = words.length >= 2 ? NameUtil.joinArgs(words, 1) : null;
+        // The target runs up to a roll keyword; with none typed, it's whatever the caster is looking at.
+        NameUtil.TakenName typed = words.length >= 2
+                ? NameUtil.readName(words, 1, List.of("autoroll", "manualroll", "total")) : null;
+        String target = typed != null && !io.papermc.jkvttplugin.combat.RollService.isRollKeyword(typed.value())
+                ? typed.value() : null;
 
-        // Concentration: a new concentration spell drops the old one, same as in combat.
-        if (spell.isConcentration() && sheet.isConcentrating()) {
-            io.papermc.jkvttplugin.data.model.DndSpell was = sheet.getConcentratingOn();
-            sheet.breakConcentration();
-            player.sendMessage(Component.text("Concentration on " + was.getName() + " ends.", NamedTextColor.YELLOW));
+        // Harmful spells need the DM's say (start a fight, let it happen, or a thing on the wall);
+        // healing rolls and applies. Both go through the normal roll prompts and the one HP path.
+        if (io.papermc.jkvttplugin.combat.OutOfCombatAttack.isHarmful(spell) || spell.isHealing()) {
+            return io.papermc.jkvttplugin.combat.OutOfCombatAttack.cast(player, sheet, spell, castLevel, target,
+                    io.papermc.jkvttplugin.combat.RollService.parseInput(rest, player), cost);
         }
-        cost.spend(sheet, spell);
-        if (spell.isConcentration()) sheet.setConcentratingOn(spell);
 
-        String who = sheet.getCharacterName();
-        Component announce = Component.text("✨ " + who + " casts " + spell.getName()
+        // Everything else (Light, Detect Magic, Message…): cast it and the DM narrates.
+        io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, cost);
+        Component announce = Component.text("✨ " + sheet.getCharacterName() + " casts " + spell.getName()
                 + (target != null ? " on " + target : "") + ".", NamedTextColor.LIGHT_PURPLE);
         announceNearby(player, announce);
-
-        String spent = cost.spentLabel(sheet);
-        if (!spent.isEmpty()) {
-            player.sendMessage(Component.text("   Spent " + spent + ".", NamedTextColor.GRAY));
-        }
         if (spell.isConcentration()) {
             player.sendMessage(Component.text("   Concentrating on " + spell.getName() + ".", NamedTextColor.GRAY));
-        }
-
-        // Damage or healing dice: give the DM the command rather than a second HP path (#175).
-        String dice = spell.isHealing() ? spell.getHealing()
-                : (spell.getDamage() != null && !spell.getDamage().isBlank() ? spell.getDamage() : null);
-        if (dice != null) {
-            String verb = spell.isHealing() ? "heal" : "damage";
-            String quoted = target == null ? "<who>" : (target.contains(" ") ? "\"" + target + "\"" : target);
-            String cmd = "/dm hp " + quoted + " " + verb + " " + dice
-                    + (!spell.isHealing() && spell.getDamageType() != null ? " type " + spell.getDamageType() : "");
-            Component prompt = Component.text("   DM: ", NamedTextColor.GRAY)
-                    .append(Component.text("[apply " + dice + " " + verb + "]", NamedTextColor.GREEN, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
-                            .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))
-                            .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text("Fills: " + cmd))));
-            for (Player dm : io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs()) dm.sendMessage(prompt);
         }
         return true;
     }

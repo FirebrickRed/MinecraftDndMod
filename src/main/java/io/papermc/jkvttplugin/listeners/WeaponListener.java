@@ -193,7 +193,8 @@ public class WeaponListener implements Listener {
         if (tryPossessedAttack(player, event.getEntity())) { event.setCancelled(true); return; }
 
         CombatSession session = CombatSession.getSessionForPlayer(player.getUniqueId());
-        if (session == null || session.isSetupPhase()) return;
+        if (session == null) { outOfCombatSwing(player, event); return; }
+        if (session.isSetupPhase()) return;
 
         Combatant target = combatantFor(session, event.getEntity(), player);
         if (target == null) return; // hit something that isn't a combatant — leave vanilla alone
@@ -205,6 +206,28 @@ public class WeaponListener implements Listener {
         AttackContext ctx = contextFor(player);
         if (ctx == null) return; // not their turn, or not holding a weapon — nothing to prompt
         promptAttack(player, ctx, target);
+    }
+
+    /**
+     * Out of a fight, swinging a D&D weapon at a creature or a character asks the DM whether it
+     * starts one (#152). The hit itself never lands: nobody takes damage from a physical click.
+     */
+    private void outOfCombatSwing(Player player, EntityDamageByEntityEvent event) {
+        String weaponId = ItemUtil.getItemId(player.getInventory().getItemInMainHand());
+        DndWeapon weapon = weaponId != null ? WeaponLoader.getWeapon(weaponId) : null;
+        if (weapon == null) return;
+        Combatant target = null;
+        if (event.getEntity() instanceof org.bukkit.entity.ArmorStand stand
+                && io.papermc.jkvttplugin.data.model.DndEntityInstance.getByArmorStand(stand) != null) {
+            target = io.papermc.jkvttplugin.combat.CombatTargets.forEntity(
+                    io.papermc.jkvttplugin.data.model.DndEntityInstance.getByArmorStand(stand)).combatant();
+        } else if (event.getEntity() instanceof Player other
+                && io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(other) != null) {
+            target = io.papermc.jkvttplugin.combat.CombatTargets.forPlayer(other).combatant();
+        }
+        if (target == null) return; // a cow, a zombie: vanilla Minecraft
+        event.setCancelled(true);
+        io.papermc.jkvttplugin.combat.OutOfCombatAttack.weaponAttack(player, weapon.getName(), weaponId, target);
     }
 
     // ==================== SHARED ====================

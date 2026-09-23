@@ -103,8 +103,8 @@ public class SpellCastingMenuListener implements Listener {
      * Close the menu and fill the right cast command in chat.
      *
      * <p>In a fight that's {@code /combat cast}, which resolves the attack roll, save or area
-     * (#196). Outside one it's {@code /character cast}, which announces the spell, spends the slot
-     * and hands the DM the damage/healing command (#152, first slice).
+     * (#196). Outside one it's {@code /character cast}: a harmful spell asks the DM (start a fight, let it
+     * happen, or roll at a thing), healing rolls and applies, anything else announces (#152).
      *
      * <p>Nothing is consumed here. The menu used to deduct the slot itself, which meant the
      * in-combat route spent nothing at all and the out-of-combat route spent a slot for a message
@@ -127,7 +127,8 @@ public class SpellCastingMenuListener implements Listener {
         String cmd = upcast
                 ? base + (needsTarget ? " <target>" : "") + " level " + castingLevel
                 : base + (needsTarget ? " " : "");
-        String where = inCombat ? "then pick your roll mode." : "the DM applies the effect.";
+        String where = inCombat ? "then pick your roll mode."
+                : "or leave it blank to cast at what you're looking at. An attack on a creature asks the DM first.";
         String hover = needsTarget && !upcast
                 ? "Fills: " + cmd + "<target> — " + where
                 : "Fills: " + cmd;
