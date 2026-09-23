@@ -5,10 +5,12 @@ fails), copy `build/libs/*.jar` into the server's `plugins/`, restart. Load the 
 
 **How this is laid out**
 
+- **One box = one thing to do and one thing to look for.** If a box needs setup, the setup is in
+  the section's intro or the box above it.
 - **Part 1** is everything you can do alone, as the DM, with your own character.
 - **Part 2** needs a second account that is **not** a DM (a friend, or a second account you `/deop`).
-- Inside each part, rows are grouped by area: creation, finished character, combat, entities and
-  shops, DM tools. **Restart checks** are batched at the end of Part 1 so you restart once.
+  Locks are here too: a DM walks through locks by design, so only a player can test them.
+- **Restart checks** are batched at the end of Part 1 so you restart once.
 - Tick a row with `[X]`. Ticked rows get deleted at the next round (git keeps the history).
 - Notes go in **Playtest notes** at the bottom, newest on top.
 
@@ -18,270 +20,265 @@ fails), copy `build/libs/*.jar` into the server's `plugins/`, restart. Load the 
 
 ## Character creation
 
-- [ ] `/character create` → the creation menu opens.
-- [ ] **Selected options** (a glass pane *or* a real item like a Rapier) → the name turns
-      **bold green "✔ Name"**, and the first line under it says "✔ Selected — click to deselect".
-      Same on the Spells tab. Picked in another section → yellow name, "Selected in another
-      section" first.
-- [ ] **Already-known options** (a language you have, a cantrip you took elsewhere) show as a
-      **red knowledge book**, not a gray pane, so they don't vanish into the background.
-- [ ] **Paging:** Rock Gnome Artificer → Tools tab → ◀ Previous page / Page 1 of 2 / Next page ▶
-      in the bottom row. Page 2 starts with the section header marked "(continued)". Switching
-      sub-tab goes back to page 1.
-- [ ] **Alphabetical:** skills, tools, languages and the high elf's Wizard Cantrip are A→Z.
-      Equipment keeps its order.
-- [ ] **Rogue Expertise** is one header pane: "Expertise — Choose 2 more". Hover it → "Only
-      skills and tools you're proficient in are offered".
-- [ ] **Rock Gnome + Artificer:** Tinker's Tools shows **once** under Granted ("From: Rock Gnome +
-      Artificer") with a yellow "Granted twice…" note. The *Replace duplicate Tinker's Tools*
-      pick offers **every** tool you don't have, including artisan's tools, instruments and
-      gaming sets. The artificer's pick and an Archaeologist's tool pick stay **separate**
-      sections.
-- [ ] Pick the same tool in two tool sections → the second shows "Selected in another
-      section"; clicking it there moves the pick.
-- [ ] **High elf wizard:** pick Acid Splash as the Wizard Cantrip → on the Spells tab it's a
-      knowledge book, "Already known from Wizard Cantrip". The other way round works too.
-- [ ] **Astral elf** (any class): the Extra tab has "Astral Fire Cantrip: Spellcasting Ability"
-      (Intelligence / Wisdom / Charisma), and Finish waits for it.
-- [ ] **Backgrounds:**
-  - Guild Artisan / Folk Hero → one *Artisan's Tools* pick. Entertainer → same with an instrument.
-  - Outlander → instrument pick, proficiency only (no item after finishing).
-  - Soldier → gaming-set proficiency pick **plus** a separate Dice / Cards gear pick.
+- [ ] Human Monk Entertainer → the choice headers say where each pick comes from: "Monk: Artisan's
+      Tools or Musical Instrument — …" and "Entertainer: Musical Instrument — …".
+- [ ] A pick two sources share (Rock Gnome + Artificer's duplicate) → its header names both,
+      "Rock Gnome + Artificer: …".
 
-## Finished character
+## Finished characters
 
-Finish each of these combos, then check the sheet (Proficiency Bonus tile's tools and
-languages, spells, AC) and your inventory.
+Finish the combo, then look at the sheet and your inventory.
 
-- [ ] **Tiefling Rogue, Urchin**
-  - `/character cast thaumaturgy` works out of combat (it used to say "doesn't know").
-  - Breastplate on → casting refused. Leather back on → casts.
-  - Right-click thieves' tools → "You cannot use this type of focus!"
-  - A sheet skill roll for an expertise skill shows `+4[Expertise]`.
-- [ ] **Rock Gnome Artificer, Sage**
-  - The tool you picked as the Tinker's Tools replacement is on the sheet.
-  - Right-click thieves' tools → the spell menu opens.
-- [ ] **High Elf Wizard, Noble**
-  - Wizard Cantrip + class cantrips, no double pick. Both languages and the gaming set on the
-    sheet. Spells tab picks are in the spellbook.
-- [ ] **High Elf Rogue** (any background)
-  - Pick Fire Bolt as the Wizard Cantrip → `/character cast fire_bolt` works and uses INT.
-- [ ] **Astral Elf** (any class): pick Sacred Flame + Wisdom → `/combat cast sacred_flame <target>`
-      uses your WIS for the save DC.
-- [ ] **Mountain Dwarf Fighter, Guild Artisan**
-  - The artisan's-tool pick gives the proficiency **and** the tool item.
-  - Heavy armor, no penalty.
-- [ ] **Guild Artisan / Folk Hero / Entertainer:** the picked tool or instrument is in your kit.
-- [ ] `/character rest short` and `/character rest long` recover as before.
-- [ ] Press **Q** holding the sheet or the Create Character paper → it drops; nothing opens.
-- [ ] **Armor proficiency:** a wizard in chain mail →
-  - a chat warning, and the sheet's AC tile says "⚠ not proficient with Chain Mail";
-  - STR/DEX skill rolls from the sheet say "(disadvantage)"; `/dm check <wizard> save dex` too;
-    a WIS check doesn't;
-  - take it off → all normal. A fighter in it → no penalty. Mountain dwarf wizard: scale mail
-    fine, chain mail penalized.
-- [ ] **Sheet adv/dis with physical dice:** click a skill → "Roll with advantage" → the filled
-      command has `adv`, and the result shows two d20s.
+- [ ] **Rock Gnome Artificer, Sage:** the tool you picked as the Tinker's Tools replacement is on the sheet.
+- [ ] **Rock Gnome Artificer:** looking at the sky, right-click thieves' tools → the spell menu opens.
+- [ ] **High Elf Wizard, Noble:** Wizard Cantrip and class cantrips are both there, no double pick.
+- [ ] **High Elf Wizard, Noble:** both languages and the gaming set are on the sheet.
+- [ ] **High Elf Wizard, Noble:** your Spells-tab picks are in the spellbook.
+- [ ] **High Elf Rogue** with Fire Bolt as the Wizard Cantrip → `/character cast fire_bolt` works and uses INT.
+- [ ] **Astral Elf** with Sacred Flame + Wisdom → `/combat cast sacred_flame <target>` uses WIS for the DC.
+- [ ] **Mountain Dwarf Fighter, Guild Artisan:** the artisan's-tool pick gives the proficiency **and** the item.
+- [ ] **Mountain Dwarf Fighter:** heavy armor on, no penalty.
+- [ ] **Folk Hero:** the picked tool is in your kit.
+- [ ] **Entertainer:** the picked instrument is in your kit.
+- [ ] `/character rest short` recovers as before.
+- [ ] `/character rest long` recovers as before.
+- [ ] Press **Q** holding the sheet → it drops; nothing opens.
+- [ ] Press **Q** holding the Create Character paper → it drops; nothing opens.
+- [ ] **Tiefling Rogue:** right-click thieves' tools with no chest in view → nothing happens, no
+      "cannot use this type of focus" message.
+- [ ] **Tiefling Rogue:** right-click a chest holding thieves' tools → the chest's own [Open it] /
+      [Ask for a check] prompt, not a focus message.
+
+## The sheet's skills and rolls
+
+On a Tiefling Rogue with Expertise in Persuasion (or any expertise skill):
+
+- [ ] Skills menu, hover the expertise skill → "✦ Expertise (proficiency ×2)", not "Proficient".
+- [ ] Same hover → the bonus broken down, e.g. `+4[CHA] +4[Prof ×2]`.
+- [ ] Hover a plain proficient skill → e.g. `+1[WIS] +2[Prof]`.
+- [ ] Hover a saving throw → its breakdown too.
+- [ ] Click a skill → no menu opens; chat shows the bonus and **[Normal] [Advantage] [Disadvantage]**.
+- [ ] Click **[Advantage]** → the roll shows both dice and "advantage", e.g. `[9, 15] advantage`.
+- [ ] Click **[Disadvantage]** → both dice, keeps the lower.
+- [ ] The buttons still work after a couple of rolls (they don't go dead after one click).
+- [ ] `/character check skill persuasion adv autoRoll` → both d20s shown, not just one.
+- [ ] **Wizard in chain mail:** the chat line for a DEX skill says it's at disadvantage (armor).
+- [ ] **Wizard in chain mail:** a WIS check doesn't.
+- [ ] **Wizard in chain mail:** the sheet's AC tile says "⚠ not proficient with Chain Mail".
+- [ ] **Wizard in chain mail:** `/dm check <wizard> save dex` is at disadvantage.
+- [ ] **Wizard in chain mail:** take it off → all normal again.
+- [ ] **Fighter in chain mail:** no penalty.
+- [ ] **Mountain dwarf wizard:** scale mail fine, chain mail penalized.
+
+## Casting from the spellbook and `/character cast`
+
+- [ ] `/character cast ` + Tab → your cantrips, spells and racial spells (Thaumaturgy for a tiefling).
+- [ ] `/character cast fire_bolt ` + Tab → creature and player names.
+- [ ] Click Thaumaturgy in the spellbook → the chat line's spell name is underlined; hover it →
+      level, school, casting time, range, duration and what it does.
 
 ## Combat
 
-- [ ] **Bows:** on your turn, left-click toward a distant enemy (not touching them) → you get the
-      filled-in `/combat attack`.
-- [ ] **Armor penalty in a fight** (wizard in chain mail): a weapon attack shows "↯ disadvantage"
-      with an "Armor (you)" reminder; initiative rolls with disadvantage; `/combat cast` refuses.
+- [ ] **Bows:** on your turn, left-click toward a distant enemy (not touching them) → the filled-in `/combat attack`.
+- [ ] **Wizard in chain mail:** a weapon attack shows "↯ disadvantage" with an "Armor (you)" reminder.
+- [ ] **Wizard in chain mail:** initiative rolls with disadvantage.
+- [ ] **Wizard in chain mail:** `/combat cast` refuses.
 - [ ] `/combat add <someone>` mid-fight → the table sees their initiative roll.
-- [ ] `/combat rollforinitiative` → each line shows `[d20] +N (DEX) = total`. Unproficient armor →
-      `[disadvantage: a/b]`.
-- [ ] **Dice show:** `/combat damage <t> autoRoll 2d6` → "🎲 2d6: [4, 3] = 7" before the damage.
-      Same for `/combat heal <t> autoRoll 2d4`, a healing potion with auto-roll, Cure Wounds.
-- [ ] `/combat damage` / `/combat heal` with `manualRoll 7` and with a bad value (`manualRoll abc`)
-      → sensible messages.
-- [ ] **Scoreboard, setup:** combatants in the order added, no numbers on the right, "Add
-      combatants..." at the bottom. Two creatures with the same name → two lines.
-- [ ] **Scoreboard, in the fight:**
-  - green **→** on the current turn; initiative as the red number;
-  - players' HP green / yellow / red below ½ and ¼; `+N` temp HP in aqua;
-  - **[S]** surprised; downed → red ☠ and green/red death-save dots; **[DEAD]**;
-  - purple condition tag; pink ✦N while channelling a ritual;
-  - two tied initiatives in turn order; "Round: N" at the bottom with no number.
-- [ ] **Death:** down yourself, fail three death saves → "has DIED", turn skipped.
-  - `/combat finished`, new fight → still `[DEAD]`, still skipped.
-  - `/dm adjust <you> hp +10`, `/character rest long`, `/dm rest <you> long` all refuse.
-  - The sheet's HP slot shows a skull "DEAD". `/dm revive <you>` → 1 HP, turns return.
-- [ ] **Massive damage:** `/dm adjust <c> hp -<current + max HP>` → dies outright.
-- [ ] **Dying carries over:** fail one save, `/combat finished`, new fight → still 1 failure.
+- [ ] `/combat rollforinitiative` → each line shows `[d20] +N (DEX) = total`.
+- [ ] Same, in unproficient armor → `[disadvantage: a/b]`.
+- [ ] `/combat damage <t> autoRoll 2d6` → "🎲 2d6: [4, 3] = 7" before the damage.
+- [ ] `/combat heal <t> autoRoll 2d4` → the dice show.
+- [ ] A healing potion with auto-roll → the dice show.
+- [ ] Cure Wounds → the dice show.
+- [ ] `/combat damage <t> manualRoll 7` → 7 damage.
+- [ ] `/combat damage <t> manualRoll abc` → a sensible error.
+- [ ] **Scoreboard, setup:** combatants in the order added, no numbers on the right, "Add combatants..." at the bottom.
+- [ ] **Scoreboard, setup:** two creatures with the same name → two lines.
+- [ ] **Scoreboard, fight:** green **→** on the current turn; initiative is the red number.
+- [ ] **Scoreboard, fight:** players' HP green / yellow / red below ½ and ¼.
+- [ ] **Scoreboard, fight:** temp HP shows as `+N` in aqua.
+- [ ] **Scoreboard, fight:** **[S]** on someone surprised.
+- [ ] **Scoreboard, fight:** downed → red ☠ and green/red death-save dots.
+- [ ] **Scoreboard, fight:** dead → **[DEAD]**.
+- [ ] **Scoreboard, fight:** a purple condition tag.
+- [ ] **Scoreboard, fight:** pink ✦N while channelling a ritual.
+- [ ] **Scoreboard, fight:** two tied initiatives in turn order.
+- [ ] **Scoreboard, fight:** "Round: N" at the bottom with no number on the right.
+- [ ] **Out of range, as DM** (possessing a creature, attacking something too far) → "... out of
+      range [Attack anyway]"; click → the attack goes ahead.
+
+## Death
+
+- [ ] Down yourself, fail three death saves → "has DIED", turn skipped.
+- [ ] `/combat finished`, new fight → still `[DEAD]`, still skipped.
+- [ ] Dead: `/dm adjust <you> hp +10` refuses.
+- [ ] Dead: `/character rest long` refuses.
+- [ ] Dead: `/dm rest <you> long` refuses.
+- [ ] Dead: the sheet's HP slot shows a skull "DEAD".
+- [ ] `/dm revive <you>` → 1 HP, turns return.
+- [ ] `/dm adjust <c> hp -<current + max HP>` → dies outright (massive damage).
+- [ ] Fail one save, `/combat finished`, new fight → still 1 failure.
 - [ ] `/dm entity revive <creature>` mid-fight → its turns come back.
-- [ ] **The body:** a dead character leaves a tipped-over head "☠ <name>" where they fell.
-      As DM, right-click it → [Revive] and [Remove body]. Can't punch it or take the head.
+- [ ] A dead character leaves a tipped-over head "☠ <name>" where they fell.
+- [ ] As DM, right-click the body → [Revive] and [Remove body].
+- [ ] You can't punch the body or take the head.
 - [ ] Walk away until the chunk unloads, `/dm revive <c>`, walk back → the body is gone.
-- [ ] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP". `/dm adjust <c> hp +1`
-      → now works.
+- [ ] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP".
+- [ ] Then `/dm adjust <c> hp +1` → the long rest works.
+- [ ] A DM already in spectator mode for their own reasons isn't pulled out of it by deaths.
 
-## Attacks outside a fight (new)
+## Attacks outside a fight
 
-- [ ] **Fire Bolt at a creature, out of combat:** `/character cast fire_bolt The Kindler` (or leave
-      the name off and look at her). You're told "asking the DM"; you get **[Start combat]**,
-      **[Let it happen]**, **[Deny]**. No slot is spent yet.
-  - **Deny** → the caster is told; nothing happens.
-  - **Let it happen** → the caster gets roll buttons; the attack roll shows `vs AC`; on a hit,
-    roll damage (`/character damage`), and her HP drops. A miss ends it.
-  - **Start combat** → a fight opens in setup with both of you. Add someone else, mark someone
-    surprised, roll initiative. On the caster's first turn: "Your opening move: Fire Bolt at The
-    Kindler [do it]".
-- [ ] **A save spell** (Sacred Flame) with Let it happen → the DM sees the DC, **[Call the save]**
-      (characters), **[Failed: damage]** / **[Saved: …]**.
-- [ ] **At a thing:** look at a torch or a wall, `/character cast fire_bolt` with no name → "You're
-      not aiming at a creature. Cast it anyway?" → **[Cast it]** → roll → the DM sees "N to hit"
-      and "they're looking at the wall torch" (plus its annotation, if it has one) and **[Ask for
-      damage]**. Damage rolled at a thing hurts nobody.
-- [ ] **Healing:** `/character cast cure_wounds <someone>` → roll prompt → they heal. No DM
-      prompt. Too far away → "about N ft away" refusal.
-- [ ] **A weapon:** left-click a creature with a sword out of combat → the DM gets **[Start
-      combat]** / **[Deny]** (no one-off for weapons). The creature takes no damage from the click.
-- [ ] **Utility spells** (Light, Thaumaturgy) still just announce.
+- [ ] `/character cast fire_bolt The Kindler` out of combat → "asking the DM"; you get **[Start
+      combat]** / **[Let it happen]** / **[Deny]**. No slot spent yet.
+- [ ] Same, leaving the name off and looking at her → same prompt.
+- [ ] **[Deny]** → the caster is told; nothing happens.
+- [ ] **[Let it happen]** → the caster gets roll buttons; the attack roll shows `vs AC`.
+- [ ] Let it happen, a hit → roll damage (`/character damage`), her HP drops.
+- [ ] Let it happen, a miss → it ends there.
+- [ ] **[Start combat]** → a fight opens in setup with both of you, and the hint mentions the Surprise tool.
+- [ ] After Start combat, on the caster's first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
+- [ ] Sacred Flame with Let it happen → the DM sees the DC, **[Call the save]**, **[Failed: damage]** / **[Saved: …]**.
+- [ ] Look at a wall, `/character cast fire_bolt` → "You're not aiming at a creature. Cast it anyway?" [Cast it].
+- [ ] Cast it → the DM sees "N to hit", "they're looking at the wall torch" and **[Ask for damage]**.
+- [ ] Damage rolled at a thing hurts nobody.
+- [ ] `/character cast cure_wounds <someone>` → roll prompt → they heal, no DM prompt.
+- [ ] Same, too far away → "about N ft away" refusal.
+- [ ] Left-click a creature with a sword out of combat → the DM gets **[Start combat]** / **[Deny]**.
+- [ ] That click doesn't damage the creature.
 - [ ] The spellbook, out of combat, fills `/character cast …`, and its hover explains the above.
 
-## The Adjust menu & `/dm adjust` (new)
+## The Adjust menu & `/dm adjust`
 
-- [ ] `/dm mode` → the **Adjust** tool (blaze rod) is on the main toolbar and both pages. Right-click
-      a creature or a player → "Adjust: <name>". Right-clicking nothing (or a cow) → an action-bar hint.
-- [ ] **HP tile:** click → +1, right-click → −1, shift → ±5. In a fight, the scoreboard and the
-      player's open sheet update. **Set HP exactly…** / **Temp HP…** / **Max HP…** (creatures)
-      close the menu and give you a [click to type the number] line.
-- [ ] **Drop to 0 HP:** a creature dies; a character goes down and starts death saves. On a dead one,
-      **Revive (1 HP)** appears and works.
-- [ ] **AC, temporary:** click the AC tile with no adjustment yet → "for how long?" (next turn only
-      in a fight). Pick "until a long rest" → AC +1, and the sheet's AC tile says "DM: +1 (until a
-      long rest)". Click again → +2 (keeps the duration). Right-click → back down. **Clear** removes it.
-      A long rest ends it; "until you remove it" survives rests.
-- [ ] **AC, permanent (creatures):** shift-click → the creature's own AC goes up by 1 for good, and
-      the tile says "Own AC 13 (stat block says 12)". **Back to the stat block's AC** undoes it. On a
-      player, shift-click says their AC comes from armor.
-- [ ] **Conditions:** click Poisoned → it glows, "✔ Poisoned", the table (or the player and you) is
-      told. Click again → removed. Blinded on a player → they get the blindness effect.
-- [ ] **Typed:** `/dm adjust The Kindler hp 12` (set), `hp +5`, `hp -2d6 type fire`, `full`,
-      `temp 5`, `maxhp 30`, `ac +1 until short_rest`, `ac +1` (asks how long), `ac set 16`,
-      `ac reset`, `condition poisoned` (toggle), `condition add prone`, `down`, `revive`.
-      Tab completes each step.
-- [ ] **Gone:** `/dm hp`, `/combat damage override`, `/combat condition`, `/dm entity maxhp` and
-      `--force` are unknown now. A trap's **[Apply damage]** fills `/dm adjust … hp -…`. A spawn's
-      **[Use my own roll]** fills `/dm adjust … maxhp`.
-- [ ] **Out of range, as DM** (possessing a creature, `/combat attack` at something too far) →
-      "... out of range [Attack anyway]" → click → the attack goes ahead.
+- [ ] HP tile: click → +1; right-click → −1; shift → ±5.
+- [ ] In a fight, an HP change updates the scoreboard and the player's open sheet.
+- [ ] **Set HP exactly…** → closes the menu, gives a [click to type the number] line.
+- [ ] **Temp HP…** → same.
+- [ ] **Max HP…** (creatures) → same.
+- [ ] Creature AC tile, shift-click → own AC +1, "Own AC 13 (stat block says 12)".
+- [ ] **Back to the stat block's AC** undoes it.
+- [ ] Player AC tile, shift-click → says their AC comes from armor.
+- [ ] The rules text on a condition tile is wrapped, not one long line.
+- [ ] `/dm hp` is an unknown command.
+- [ ] `/combat damage override` is gone.
+- [ ] `/combat condition` is gone.
+- [ ] `/dm entity maxhp` is gone.
+- [ ] `--force` is gone.
+- [ ] A trap's **[Apply damage]** fills `/dm adjust … hp -…`.
+- [ ] A spawn's **[Use my own roll]** fills `/dm adjust … maxhp`.
 
-## Surprise tool & damage approval (new)
+## Surprise tool & damage approval
 
-- [ ] DM combat toolbar → **Surprised (ambush)** (firework star) in slot 6; hover it → what Surprised
-      means and when to use it. Start a fight, add a goblin, right-click it with the tool → "Goblin is
-      Surprised: …", **[S]** on the tracker. Right-click again → no longer surprised. On someone not in
-      the fight → "Add them first". With no fight → "Start a fight first".
-- [ ] Out-of-combat Fire Bolt → [Start combat] → the hint mentions the Surprise tool.
-- [ ] **Damage goes through normally:** as a player, hit and `/combat damage … autoRoll` → it lands at
-      once. No DM prompt.
-- [ ] **After a reaction window** (hit someone who knows Shield, they pass or cast) → the player's
-      `/combat damage` says "Sent to the DM: …"; you get **[Apply]** / **[Deny]**.
-  - Apply → it lands and the tracker updates. Deny → the player rolls again for the same hit.
-  - While waiting, a second `/combat damage` says it's with the DM. End the turn while it waits →
-    Apply later says the moment has passed, and next turn isn't blocked.
-- [ ] **Refused, with [Ask the DM]:** `/combat damage <t> manualRoll 7` off your turn (e.g. an
-      opportunity attack), after a miss, or naming a different creature than you hit → the refusal ends
-      with **[Ask the DM]**. Click → you get "X asks to deal 7 damage to Goblin (off their turn)"
-      with [Apply] (lands as typed, no modifiers) / [Deny] (the player is told).
-- [ ] The DM's own `/combat damage` never waits. `combat.damage_approval: always` → every player hit
-      asks you; `off` → none do (reactions included).
+- [ ] DM combat toolbar → **Surprised (ambush)** (firework star) in slot 6; its hover explains Surprised.
+- [ ] In a fight, right-click a goblin with it → "Goblin is Surprised: …", **[S]** on the tracker.
+- [ ] Right-click again → no longer surprised.
+- [ ] On someone not in the fight → "Add them first".
+- [ ] With no fight → "Start a fight first".
+- [ ] The DM's own `/combat damage` lands at once, never waits.
+- [ ] `combat.damage_approval: off` in config → nothing ever asks you.
 
-## Viewing & DM notes (new)
+## Viewing & DM notes
 
-- [ ] **View tool, right-click** a creature → a chat card: name (size, type), HP, AC, speed,
-      conditions (hover for rules), notes, and [Full view] / [Adjust] / [Add a note]. On a player →
-      the same for their character (race and class, concentration). Right-clicking with it no longer
-      opens the sheet directly; the Full view has a button for that.
-- [ ] Give someone a DM AC adjustment and (in a fight) Shield → the card's AC explains both:
-      "(+1 (DM, until a long rest); +5 Shield, until their turn)". A creature with its own AC says
-      "own AC, stat block says 12".
-- [ ] A downed character → "Down, dying — death saves: 1 ✔ / 2 ✖". A dead one → "☠ DEAD".
-- [ ] **Sneak + right-click** (or `/dm view <who> full`) → the Full view menu:
-  - a player: their real inventory in the same layout as theirs (backpack, hotbar row, armor, off-hand),
-    and you can't take or move anything;
-  - a creature: what it carries, each with "Found with a DC 12 Investigation" or "In plain sight";
-  - [Character sheet] / [Stat block] opens it; [Adjust] opens the Adjust menu; [Add a note…] gives
-    you a fill-in line.
-- [ ] `/dm note Balin add owes the party a favour` → shows in Balin's card and Full view, **after**
-      his YAML `dm_notes`. `/dm note Balin clear` removes only yours. `/dm note Balin` lists them.
-- [ ] Notes on a **character** survive a restart. The player never sees them: not on their sheet,
-      not anywhere.
-- [ ] `/dm view The Kindler` (unquoted) works; `/dm view` as a non-DM is refused.
+- [ ] View tool, right-click a creature → chat card: name (size, type), HP, AC, speed, conditions,
+      notes, [Full view] / [Adjust] / [Add a note].
+- [ ] Hover a condition on the card → its rules, wrapped.
+- [ ] View tool on your own character → race and class, concentration.
+- [ ] Right-clicking with the View tool no longer opens the sheet directly; Full view has a button for it.
+- [ ] A DM AC adjustment plus Shield → the card's AC explains both.
+- [ ] A creature with its own AC → "own AC, stat block says 12".
+- [ ] A downed character → "Down, dying — death saves: 1 ✔ / 2 ✖".
+- [ ] A dead one → "☠ DEAD".
+- [ ] Sneak + right-click a player → Full view with their real inventory; you can't take or move anything.
+- [ ] Full view of a creature → what it carries, "Found with a DC 12 Investigation" / "In plain sight".
+- [ ] Full view → [Character sheet] / [Stat block] opens it.
+- [ ] Full view → [Adjust] opens the Adjust menu.
+- [ ] Full view → [Add a note…] gives a fill-in line.
+- [ ] `/dm view <who> full` opens the same Full view.
+- [ ] `/dm note Balin add owes the party a favour` → shows on Balin's card, **after** his YAML `dm_notes`.
+- [ ] `/dm note Balin` lists the notes.
+- [ ] `/dm note Balin clear` removes only yours.
+- [ ] Spawn one wolf, `/dm note Wolf add hungry`, View tool on that wolf → the note is there.
+- [ ] `/dm view The Kindler` (unquoted) works.
 
-## Conditions outlast the fight (new)
+## Conditions outlast the fight
 
 Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
-- [ ] In a fight, make a player **Poisoned** and a creature **Prone**; also have someone **Dodge**.
-      `/combat finished` → Dodging ends, but the table sees "X is still Poisoned after the fight"
-      and "Goblin is still Prone after the fight".
-- [ ] Still poisoned, out of combat: a skill or ability check from the sheet says "↯ Disadvantage:
-      Poisoned" and rolls 2d20-keep-lower. A saving throw doesn't.
-- [ ] Restrained (added in a fight, kept after): a DEX save from the sheet is at disadvantage.
-- [ ] Start a **new** fight with the same creature → the scoreboard still shows its condition tag.
+- [ ] Someone Dodging, `/combat finished` → Dodging ends.
+- [ ] A Poisoned player, `/combat finished` → "X is still Poisoned after the fight".
+- [ ] A Prone goblin, `/combat finished` → "Goblin is still Prone after the fight".
+- [ ] Still Poisoned: a skill check from the sheet says "↯ Disadvantage: Poisoned" and rolls two d20s.
+- [ ] Still Poisoned: a saving throw doesn't.
+- [ ] Restrained (kept from a fight): a DEX save from the sheet is at disadvantage.
+- [ ] New fight with the same goblin → the scoreboard still shows Prone.
+- [ ] At the start of a turn, the condition hover is wrapped.
 
 ## Entities & shops
 
 - [ ] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
-- [ ] **Contested vs an NPC:** `/dm entity spawn balin_blacksmith`, then
-      `/dm check <you> insight vs Balin deception` → your roll prompt, plus **[Roll it] /
-      [I rolled…]** labelled "+1 CHA". The winner comes back with [Share]. Also inline with
-      `autoRoll`, and a guard's Perception (`+2 Perception`).
+- [ ] Spawn `wolf` twice → they're named "Wolf" and "Wolf #2".
+- [ ] `/dm entity spawn kobold Meepo` twice → "Meepo" and "Meepo #2".
+- [ ] `/dm entity rename ` + Tab → **every** creature (The Kindler, Alira, …), not just Balin.
+- [ ] `/dm entity teleport ` + Tab → every creature.
+- [ ] `/dm entity info ` + Tab → every creature.
+- [ ] `/dm entity trade ` + Tab → only merchants.
+- [ ] `/dm entity revive ` + Tab → only dead creatures.
+- [ ] Names with spaces tab-complete in quotes (`"The Kindler"`).
+- [ ] `/dm check <you> insight vs Balin deception` → your roll prompt, plus **[Roll it] / [I rolled…]** labelled "+1 CHA".
+- [ ] Same, answered → the winner with [Share].
+- [ ] Same, with `autoRoll` inline.
+- [ ] A guard's Perception in a contest → `+2 Perception`.
 
 ## DM tools
 
-- [ ] **Names with spaces, one reader for all** (`/dm entity spawn alira "The Kindler"`, or rename
-      something to "The Kindler"):
-  - `/dm adjust "The Kindler" hp -5` and `/dm adjust The Kindler hp -5` both work;
-  - `/dm check Balin Ironforge save dex` (and quoted) works; so does `/dm check clear Balin Ironforge`;
-  - `/dm check <you> insight vs Balin Ironforge deception` works, quoted or not;
-  - `/dm resource restore "Balin Ironforge" rage` and `/character delete "Balin Ironforge"` work.
-- [ ] **Ambiguous names:** spawn two goblins → `/dm adjust Goblin hp -1` says "'Goblin' could be
-      Goblin #1, Goblin #2 — name the one you mean" (it used to hit whichever came first).
-      `/dm adjust Goblin 2 hp -1` hits #2 (the `#` is optional).
-- [ ] **Checks show the work:** `/dm check <you> save dex` → `d20(16) +3[DEX] +2[Prof] = 21`.
-      [Share] shares the same line.
-- [ ] `/dm adjust <who> hp -2d10` shows the dice. A flat `hp -7` doesn't pretend to roll.
-- [ ] `/dm rest <character> long`; `/dm resource restore <character> all`;
-      `/dm resource consume <character> <res> 1`.
-- [ ] Tab: `/dm ` shows add/remove/list + give/check/rest/resource/reload; `/dm resource ` shows
-      restore/consume.
-- [ ] **Thieves' tools on a lock:** `/dm object lock` a chest, click [Open it] as your rogue →
-      your ping has **[Thieves' tools]** and "proficient (expertise), carrying them". Click it,
-      add a DC → `+4[Thieves' Tools ×2]`. A non-proficient character → just `+DEX`.
-- [ ] **Thieves' tools break on a fail** (default `on_fail`): carry 2 sets, `tool thieves_tools dc 25`
-      and fail → one set gone, you're told. DC 5 pass → nothing breaks. No DC → never breaks.
-      Try `always` and `never` in config.yml.
-- [ ] **Keys:** look at a chest, `/dm object key brass_key` → "The Brass Key opens the Chest".
-  - Without the key, [Open it] → locked; the ping says "they aren't carrying it".
-  - `/dm give <you> brass_key`, [Open it] → opens, "X unlocks the chest with the Brass Key",
-    you keep the key, and it stays open for everyone.
-  - `key iron_key single-use` → the key is used up. A trapped chest still springs first.
-    `key` on a sealed block refuses.
-- [ ] A DM already in spectator mode for their own reasons isn't pulled out of it by deaths.
+Spawn alira as "The Kindler" first (`/dm entity spawn alira "The Kindler"`).
+
+- [ ] `/dm adjust "The Kindler" hp -5` works.
+- [ ] `/dm adjust The Kindler hp -5` works.
+- [ ] `/dm check Balin Ironforge save dex` works (a creature now, not an error).
+- [ ] `/dm check "Balin Ironforge" save dex` works.
+- [ ] A creature check with no roll → the DM gets [Roll it] / [I rolled…].
+- [ ] `/dm check Balin Ironforge save dex dc 12 autoRoll` → the result graded against the DC, with [Share with players].
+- [ ] `/dm check Balin Ironforge skill perception` uses his Perception bonus.
+- [ ] `/dm check clear Balin Ironforge` works.
+- [ ] `/dm check <you> insight vs Balin Ironforge deception` works, quoted or not.
+- [ ] `/dm resource restore "Balin Ironforge" rage` works.
+- [ ] `/character delete "Balin Ironforge"` works.
+- [ ] Spawn two goblins, rename both to "Snik" → `/dm adjust Snik hp -1` says "'Snik' could be … — name the one you mean".
+- [ ] Two spawned goblins (Goblin, Goblin #2) → `/dm adjust Goblin 2 hp -1` hits #2; `Goblin` hits the first.
+- [ ] `/dm rest <character> long` works.
+- [ ] `/dm resource restore <character> all` works.
+- [ ] `/dm resource consume <character> <res> 1` works.
+- [ ] Annotate tool on a chest → the menu has **[Describe…]**, **[Trap…]**, **[Key…]**.
+- [ ] Click **[Describe…]** → the chat bar holds `/dm object desc ` with the current description.
+- [ ] Click **[Trap…]** → the chat bar holds `/dm object trap `.
+- [ ] Click **[Key…]** → the chat bar holds `/dm object key `.
+- [ ] Look at a chest, `/dm object key brass_key` → "The Brass Key opens the Chest".
+- [ ] `/dm object key` on a sealed block refuses.
+- [ ] **Thieves' tools break on a fail:** carry 2 sets, `/dm check <you> tool thieves_tools dc 25`, fail → one set gone, you're told.
+- [ ] DC 5, pass → nothing breaks.
+- [ ] No DC → never breaks.
+- [ ] `on_fail: always` / `never` in config.yml behave as named.
 
 ## Restart checks (do these together, one restart)
 
 Set these up, `/stop`, start the server, then check:
 
-- [ ] A character still Poisoned before the restart is still Poisoned after; so is a creature (start
-      a fight after the restart and look at its scoreboard tag).
-- [ ] Your finished characters still list their chosen languages, tools and racial spell picks
-      (high elf rogue still casts Fire Bolt with INT; astral elf still uses Wisdom).
+- [ ] A character Poisoned before → still Poisoned after.
+- [ ] A creature Prone before → start a fight after, its scoreboard tag is still there.
+- [ ] Your finished characters still list their chosen languages, tools and racial spell picks.
+- [ ] High elf rogue still casts Fire Bolt with INT; astral elf still uses Wisdom.
 - [ ] A dead character is still dead; their body is still there.
 - [ ] `/dm adjust <c> temp 7` before → still 7 temp HP after.
 - [ ] Half-orc dropped to 0 before (held at 1 by Relentless) → drop them again after, they fall.
-- [ ] **A fight survives:** before, get into round 2 with a condition on someone and a player at
-      0 HP (check `plugins/jkvttplugin/CombatSessions/` has a file). After:
-  - console says "Restored combat … round 2, X's turn"; on join you get "Combat is still on";
-  - the scoreboard is back, the downed player is prone, the condition is listed;
-  - the current combatant can attack → damage with no errors;
-  - a raging barbarian is still raging (sheet, halved slashing, red tint);
-  - `/combat finished` → the file is gone.
+- [ ] A note on a **character** (`/dm note <character> add …`) is still there after.
+- [ ] **A fight survives** (set up: round 2, a condition on someone, a player at 0 HP; check
+      `plugins/jkvttplugin/CombatSessions/` has a file): console says "Restored combat … round 2, X's turn".
+- [ ] On join → "Combat is still on".
+- [ ] The scoreboard is back, the downed player is prone, the condition is listed.
+- [ ] The current combatant can attack → damage with no errors.
+- [ ] A raging barbarian is still raging (sheet, halved slashing, red tint).
+- [ ] `/combat finished` → the combat file is gone.
 
 ---
 
@@ -289,32 +286,60 @@ Set these up, `/stop`, start the server, then check:
 
 ## Permissions
 
-- [ ] `/roll 2d6+3` works as a non-op player.
-- [ ] `/character create Bob` is refused. `/character list all` lists **their own** characters;
-      Tab offers `all` but no player names.
-- [ ] **`/dm list` with every DM offline** → lists offline ops as `[OP] name (Offline)`.
+- [ ] `/roll 2d6+3` works.
+- [ ] `/character create Bob` is refused.
+- [ ] `/character list all` lists **their own** characters; Tab offers `all` but no player names.
+- [ ] `/dm view` is refused.
+- [ ] `/dm list` with every DM offline → offline ops as `[OP] name (Offline)`.
 
 ## Their character
 
-- [ ] **Sheets are private:** `/character view <your character>` → "You can only view your own
-      characters"; Tab only suggests theirs. Right-clicking your sheet paper → "This isn't your
-      character sheet".
-- [ ] **Deleting needs you:** they run `/character delete <theirs>` → "Asked the DM"; you get
-      [Approve] / [Deny]. Deny → kept. Approve → gone, and the file is in
-      `plugins/jkvttplugin/Saved/Characters/Deleted/`. With you offline → refused.
-- [ ] **Giving a character:** `/character give <them> <your character>` → **[Give …]**; click →
-      it's theirs (their `/character list`, their paper opens it), your paper is gone, the gear
-      stayed with you. Refused while either of you is in a fight.
+- [ ] `/character view <your character>` → "You can only view your own characters".
+- [ ] `/character view ` + Tab → only theirs.
+- [ ] Right-clicking your sheet paper → "This isn't your character sheet".
+- [ ] A DM note on their character → they never see it (sheet, card, anywhere).
+- [ ] They `/character delete <theirs>` → "Asked the DM"; you get [Approve] / [Deny].
+- [ ] Deny → kept.
+- [ ] Approve → gone; the file is in `plugins/jkvttplugin/Saved/Characters/Deleted/`.
+- [ ] With you offline → delete refused.
+- [ ] `/character give <them> <your character>` → **[Give …]**; click → it's theirs, your paper is gone, the gear stayed with you.
+- [ ] `/character give` while either of you is in a fight → refused.
 - [ ] `/character give <them> <their character>` → they receive the sheet paper.
+
+## Damage approval (they attack, you approve)
+
+- [ ] They hit and `/combat damage … autoRoll` → lands at once, no DM prompt.
+- [ ] They hit someone who knows Shield, the reaction window closes, they `/combat damage` → "Sent to
+      the DM"; you get **[Apply]** / **[Deny]**.
+- [ ] [Apply] → it lands, the tracker updates.
+- [ ] [Deny] → they roll again for the same hit.
+- [ ] While waiting, a second `/combat damage` → "it's with the DM".
+- [ ] They end the turn while it waits → [Apply] later says the moment has passed; next turn isn't blocked.
+- [ ] `/combat damage <t> manualRoll 7` off their turn → refused, with **[Ask the DM]**.
+- [ ] Click [Ask the DM] → you get "X asks to deal 7 damage to Goblin (off their turn)".
+- [ ] [Apply] on that → lands as typed. [Deny] → they're told.
+- [ ] `combat.damage_approval: always` → every hit of theirs asks you.
+
+## Locks, keys and thieves' tools (a DM walks through locks, so use their character)
+
+- [ ] `/dm object lock` a chest; they click [Open it] → it stays shut and you get a ping.
+- [ ] A rogue with thieves' tools → the ping has **[Thieves' tools]** and "proficient (expertise), carrying them".
+- [ ] Click [Thieves' tools], add a DC → `+4[Thieves' Tools ×2]` in the breakdown.
+- [ ] A character without the proficiency → just `+DEX`.
+- [ ] `/dm object key brass_key` on the chest; without the key → locked, the ping says "they aren't carrying it".
+- [ ] `/dm give <them> brass_key`, [Open it] → opens, "X unlocks the chest with the Brass Key".
+- [ ] They keep the key, and the chest stays open for everyone.
+- [ ] `key iron_key single-use` → the key is used up.
+- [ ] A trapped, keyed chest → the trap still springs first.
 
 ## Death, from the player's side
 
 - [ ] They die (three failed saves) → spectator mode with a message.
-  - `/dm revive <them>` → back in adventure mode, body gone, you get **[Teleport them to the
-    body]** (no automatic teleport). Click → they land at the body.
-  - Dead, they run `/character create` → adventure mode, creation menu works.
-- [ ] They right-click someone else's body → "The body of …" + [Ask for a check]; you get a
-      [call a check] ping (medicine / investigation / religion suggested).
+- [ ] `/dm revive <them>` → back in adventure mode, body gone.
+- [ ] You get **[Teleport them to the body]** (no automatic teleport); click → they land at it.
+- [ ] Dead, they run `/character create` → adventure mode, the creation menu works.
+- [ ] They right-click someone else's body → "The body of …" + [Ask for a check].
+- [ ] You get a [call a check] ping (medicine / investigation / religion suggested).
 
 ---
 
@@ -322,27 +347,63 @@ Set these up, `/stop`, start the server, then check:
 
 (`→` lines are Claude's status. New notes go at the top.)
 
+**2026-09-23**
+
+Human Monk Entertainer asks for "artisan tool or musical instrument" — correct?
+  → yes. The PHB monk picks one artisan's tool or instrument, and the Entertainer picks an
+    instrument too, so there are two picks.
+Note which source gives each choice (I didn't know the monk gave stuff).
+  → done: every choice header now starts with its source, "Monk: …", "Entertainer: …".
+`/character cast thaumaturgy` doesn't tab-complete.
+  → done: Tab offers the spells you know, then targets.
+Expertise skills say "Proficient".
+  → fixed: "✦ Expertise (proficiency ×2)".
+Skill click: [normal] [advantage] [disadvantage] instead of a new menu.
+  → done: clicking a skill, check or save puts those three buttons in chat. The menu is gone.
+Skill hover should list the sources (Perception: +1 WIS, +2 prof).
+  → done: the tile shows the breakdown, so the "show modifier" chat line is gone.
+Put these in the character sheet redesign, or baby chunks?
+  → baby chunks, as they come up; the three above are the first.
+Persuasion says +4[CHA] +4[Expertise].
+  → that's right: expertise doubles your +2 proficiency. Relabelled `+4[Prof ×2]` so it reads that way.
+`/character check skill persuasion adv autoRoll` doesn't look like advantage.
+  → it was rolling two d20s, but only showed the kept one. Now shows both, `[9, 15] advantage`.
+Word-wrap condition texts.
+  → done: Adjust menu, view card and turn-start hovers.
+`/dm entity rename` only suggests Balin; Alira doesn't autofill.
+  → fixed: rename/teleport/info were sharing the merchants-only list. Now every creature.
+`/dm check Balin the Smith save dex` → "no character or player named…".
+  → creatures now work: the DM gets [Roll it] / [I rolled…] with the creature's own bonus.
+Two Meepos / two Wolves: the command hit the first, no "which one?".
+  → fixed two ways: a new spawn with a taken name gets numbered ("Wolf #2"), and two identical
+    names (after a rename) now ask instead of guessing.
+Annotate tool: trap and desc clickable with the command filled in.
+  → done: [Describe…] / [Trap…] / [Key…].
+I can still open a locked chest (probably because I'm DM).
+  → yes, by design. Lock tests moved to Part 2.
+Right-click thieves' tools at a chest says "cannot use this type of focus".
+  → fixed: the focus leaves chests and doors alone, and says nothing if you can't cast with it.
+DM note on a wolf didn't show in the View tool.
+  → almost certainly the other wolf (both were named "Wolf", and the note went to the first one).
+    Numbered names fix it; there's a row in *Viewing & DM notes* to confirm.
+Spellbook: make the spell name in chat hoverable with what it does.
+  → done.
+
 **2026-09-22 (evening)**
 
 Already-known spell (high elf) is a gray pane and blends in.
-  → now a knowledge book, for every already-known tile. See *Character creation*.
+  → now a knowledge book, for every already-known tile.
 `/dm hp "The Kindler"` reads the quote as part of the name.
-  → fixed. See *DM tools → Names with spaces*.
+  → fixed. See *DM tools*.
 Standardize names: one place for creature names, one for player names.
-  → done. One reader (`NameUtil.readName`) and one finder per kind: creatures
-    (`DndEntityInstance.findByName`), combatants (`CombatSession.getCombatantByName`), characters
-    and players (`CharacterResolver`). A test now fails the build if a command hands a raw word to
-    a finder. Ambiguous names ask "which one?" instead of guessing.
+  → done. One reader (`NameUtil.readName`) and one finder per kind. A test fails the build if a
+    command hands a raw word to a finder.
 Fire Bolt on an NPC out of combat skips the attack roll and fills in `/dm hp`.
-  → fixed (#152): the DM decides (start combat / let it happen / deny), the attack roll comes
-    first, then damage. See *Attacks outside a fight*.
-The Fire Bolt prompt let me change the target name.
-  → gone: out-of-combat spells no longer hand you a `/dm hp`.
+  → fixed (#152). See *Attacks outside a fight*.
 `/dm hp` should use autoRoll / manualRoll / total. Why damage, heal *and* hp?
-  → done: `/dm hp`, `/combat damage override`, `/combat condition`, `/dm entity maxhp` and `--force`
-    are replaced by `/dm adjust` (a menu + a command + a DM-mode tool). See *The Adjust menu*.
+  → replaced by `/dm adjust`. See *The Adjust menu*.
 Use the `/combat` commands out of combat, with "you're not in combat, OK?" for the DM.
-  → done for attacks and spells: the DM gets [Start combat] / [Let it happen] / [Deny].
+  → done for attacks and spells.
 
 ---
 

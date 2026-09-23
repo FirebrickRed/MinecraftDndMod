@@ -7,7 +7,6 @@ import io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.ui.action.MenuAction;
-import io.papermc.jkvttplugin.ui.menu.RollOptionsMenu;
 import io.papermc.jkvttplugin.ui.menu.SkillsMenu;
 import io.papermc.jkvttplugin.ui.menu.SpellCastingMenu;
 import io.papermc.jkvttplugin.ui.menu.ViewCharacterSheetMenu;
@@ -53,9 +52,8 @@ public class ViewCharacterSheetHandler implements MenuClickHandler {
                     return;
                 }
 
-                // Open roll options menu with skill enum
-                // Menu will look up character and calculate breakdown
-                RollOptionsMenu.openForSkillCheck(player, characterId, skill);
+                // One chat line with [Normal] [Advantage] [Disadvantage], not a second menu
+                offer(player, characterId, "SKILL", skill.name());
             }
             case ROLL_ABILITY_CHECK -> {
                 // Parse ability enum from payload
@@ -66,8 +64,8 @@ public class ViewCharacterSheetHandler implements MenuClickHandler {
                     return;
                 }
 
-                // Open roll options menu for ability check
-                RollOptionsMenu.openForAbilityCheck(player, characterId, ability);
+                // Same chat line for an ability check
+                offer(player, characterId, "CHECK", ability.name());
             }
             case ROLL_SAVING_THROW -> {
                 // Parse ability enum from payload
@@ -78,9 +76,19 @@ public class ViewCharacterSheetHandler implements MenuClickHandler {
                     return;
                 }
 
-                // Open roll options menu for saving throw
-                RollOptionsMenu.openForSavingThrow(player, characterId, ability);
+                // Same chat line for a saving throw
+                offer(player, characterId, "SAVE", ability.name());
             }
         }
+    }
+
+    /** Sheet click on a skill, check or save: the chat roll line (your own character only). */
+    private static void offer(Player player, UUID characterId, String type, String value) {
+        CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
+        if (character == null) {
+            player.sendMessage(Component.text("You can only roll for your own character.", NamedTextColor.GRAY));
+            return;
+        }
+        RollOptionsMenuHandler.offerRoll(player, character, type, value);
     }
 }

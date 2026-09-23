@@ -312,7 +312,7 @@ public class DndClass {
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
-        ChoiceContributor.contribute(playerChoices, "class", out);
+        ChoiceContributor.contribute(playerChoices, getName(), out); // the real name, so a header can say "Monk:"
     }
 
     /**

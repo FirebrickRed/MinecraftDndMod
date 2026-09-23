@@ -124,6 +124,9 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Usage: /dm check <player> <ability|save|skill|tool> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
             return true;
         }
+        // A spawned creature rolls too (a goblin's DEX save against a trap): the DM rolls for it.
+        DndEntityInstance creature = DndEntityInstance.findByName(args[0]);
+        if (creature != null) return creatureCheck(sender, creature, args);
         // Accept either a player username or a character name (forgiving resolver, #108).
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, args[0]);
         if (sheet == null) return true;
@@ -365,6 +368,78 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
     private static String signed(int n) { return n >= 0 ? "+" + n : String.valueOf(n); }
 
     /**
+     * {@code /dm check <creature> <ability|save|skill> <name> [dc <n>] [adv|dis] [autoRoll|manualRoll <n>|total <n>]}:
+     * the DM rolls for a creature. The modifier is its ability modifier, or its listed skill bonus.
+     * (Stat blocks don't carry saving-throw proficiencies yet, so a save is the ability modifier.)
+     * With no roll given, the DM gets [Roll it] / [I rolled…]; the result comes back graded against
+     * the DC if there is one, with [Share].
+     */
+    private boolean creatureCheck(CommandSender sender, DndEntityInstance creature, String[] args) {
+        DndEntity t = creature.getTemplate();
+        String category = args[1].toLowerCase();
+        int mod;
+        String label, source;
+        switch (category) {
+            case "ability", "check", "save", "saving", "savingthrow" -> {
+                Ability a = resolveAbility(args[2]);
+                if (a == null) { sender.sendMessage(invalidAbility(args[2])); return true; }
+                mod = t.getAbilityModifier(a);
+                boolean save = category.startsWith("sav");
+                label = a.getAbbreviation() + (save ? " save" : " check");
+                source = a.getAbbreviation();
+            }
+            case "skill" -> {
+                Skill s = resolveSkill(args[2]);
+                if (s == null) { sender.sendMessage(Component.text("Unknown skill: " + args[2], NamedTextColor.RED)); return true; }
+                mod = t.getSkillBonus(s);
+                label = s.getDisplayName();
+                source = t.listsSkill(s) ? s.getDisplayName() : s.getAbility().getAbbreviation();
+            }
+            default -> {
+                sender.sendMessage(Component.text("A creature rolls an ability check, a save or a skill.", NamedTextColor.RED));
+                return true;
+            }
+        }
+        Integer dc = null;
+        io.papermc.jkvttplugin.combat.Advantage adv = io.papermc.jkvttplugin.combat.Advantage.NONE;
+        for (int i = 3; i < args.length; i++) {
+            String a = args[i].toLowerCase();
+            if (a.equals("adv") || a.equals("advantage")) adv = adv.with(true);
+            else if (a.equals("dis") || a.equals("disadvantage")) adv = adv.with(false);
+            else if (a.equals("dc") && i + 1 < args.length) {
+                try { dc = Integer.parseInt(args[i + 1]); } catch (NumberFormatException ignored) {}
+            }
+        }
+        String name = creature.getDisplayName();
+        String base = "/dm check " + (name.contains(" ") ? "\"" + name + "\"" : name) + " " + category + " " + args[2]
+                + (dc != null ? " dc " + dc : "") + (adv.isAdvantage() ? " adv" : adv.isDisadvantage() ? " dis" : "") + " ";
+        RollService.RollInput input = RollService.parseInput(args, sender);
+        RollService.RollResult r = input.isEmpty() ? null
+                : RollService.resolve(input, mod, signed(mod) + "[" + source + "]", false, adv);
+        if (r == null) {
+            sender.sendMessage(Component.text("🎲 " + name + "'s " + label + " (" + signed(mod) + " " + source + ")"
+                            + (dc != null ? ", DC " + dc : "") + (adv.affectsRoll() ? ", " + adv.label() : "") + ": ", NamedTextColor.GOLD)
+                    .append(Component.text("[Roll it]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                            .clickEvent(ClickEvent.runCommand(base + "autoRoll"))
+                            .hoverEvent(HoverEvent.showText(Component.text("Roll 1d20 " + signed(mod)))))
+                    .append(Component.text("  "))
+                    .append(Component.text("[I rolled…]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                            .clickEvent(ClickEvent.suggestCommand(base + "manualRoll "))
+                            .hoverEvent(HoverEvent.showText(Component.text("Type the d20 you rolled; the modifier is added.")))));
+            return true;
+        }
+        String result = name + " — " + label + ": " + r.breakdown();
+        String graded = dc == null ? "" : (r.total() >= dc ? "  ✔ success vs DC " + dc : "  ✖ fails DC " + dc);
+        String token = CheckManager.stashShare(result);
+        sender.sendMessage(Component.text("🎲 " + result, NamedTextColor.GRAY)
+                .append(Component.text(graded, r.total() >= (dc == null ? 0 : dc) ? NamedTextColor.GREEN : NamedTextColor.RED))
+                .append(Component.text("  "))
+                .append(Component.text("[Share with players]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand("/dm check share " + token))));
+        return true;
+    }
+
+    /**
      * "Thieves' Tools: proficient (expertise), carrying" — for the DM, before the roll. Carrying is
      * checked on the player's live inventory by item id; a vehicle has no item, so it's skipped.
      */
@@ -422,7 +497,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         for (int i = 0; i < args.length - 1; i++) if (args[i].equalsIgnoreCase("vs")) { vsIdx = i; break; }
         if (vsIdx >= 0) {
             int pos = args.length - 1 - vsIdx;
-            if (pos == 1) out.addAll(CombatTargets.suggestions());
+            if (pos == 1) return CombatTargets.suggestions(args[args.length - 1]);
             else if (pos == 2) for (Skill s : Skill.values()) out.add(s.name().toLowerCase());
             else if (pos == 3) out.addAll(List.of("autoRoll", "manualRoll", "total"));
             return filter(out, args[args.length - 1]);

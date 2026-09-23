@@ -46,6 +46,20 @@ public class DndCondition {
     public void setName(String name) { this.name = name; }
 
     public List<String> getRules() { return rules; }
+
+    /** The rules as bulleted lines wrapped to {@code width}, for a hover or a tooltip. */
+    public String rulesText(int width) {
+        StringBuilder sb = new StringBuilder();
+        for (String r : rules) {
+            boolean first = true;
+            for (String part : io.papermc.jkvttplugin.util.Util.wrapText(r, width)) {
+                if (sb.length() > 0) sb.append('\n');
+                sb.append(first ? "• " : "  ").append(part);
+                first = false;
+            }
+        }
+        return sb.toString();
+    }
     public void setRules(List<String> rules) { this.rules = rules != null ? rules : new ArrayList<>(); }
 
     public boolean isUntilNextTurn() { return untilNextTurn; }

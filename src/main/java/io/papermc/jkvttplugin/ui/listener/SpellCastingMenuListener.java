@@ -99,6 +99,22 @@ public class SpellCastingMenuListener implements Listener {
         routeToCastCommand(player, spell, castingLevel);
     }
 
+    /** What a spell does, for hovering its name in chat: level and school, the basics, the text. */
+    private static Component spellSummary(DndSpell spell) {
+        Component c = Component.text(spell.getName(), NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text("\n" + (spell.getLevel() == 0 ? "Cantrip" : "Level " + spell.getLevel())
+                        + (spell.getSchool() != null ? " · " + spell.getSchool() : ""), NamedTextColor.GRAY));
+        String basics = "Casting: " + spell.getCastingTime() + " · Range: " + spell.getRange() + " · " + spell.getDuration();
+        c = c.append(Component.text("\n" + basics, NamedTextColor.DARK_AQUA));
+        if (spell.getDescription() != null && !spell.getDescription().isBlank()) {
+            c = c.append(Component.text("\n"));
+            for (String line : io.papermc.jkvttplugin.util.Util.wrapText(spell.getDescription(), 45)) {
+                c = c.append(Component.text("\n" + line, NamedTextColor.WHITE));
+            }
+        }
+        return c;
+    }
+
     /**
      * Close the menu and fill the right cast command in chat.
      *
@@ -134,8 +150,10 @@ public class SpellCastingMenuListener implements Listener {
                 : "Fills: " + cmd;
         if (upcast) hover += "\nCast from a level " + castingLevel + " slot"
                 + (needsTarget ? " — replace <target> before sending." : ".");
-        player.sendMessage(Component.text("✨ Cast " + spell.getName()
-                        + (upcast ? " (level " + castingLevel + ")" : "") + " — ", NamedTextColor.LIGHT_PURPLE)
+        player.sendMessage(Component.text("✨ Cast ", NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text(spell.getName(), NamedTextColor.LIGHT_PURPLE, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(spellSummary(spell))))
+                .append(Component.text((upcast ? " (level " + castingLevel + ")" : "") + " — ", NamedTextColor.LIGHT_PURPLE))
                 .append(Component.text(needsTarget ? "[click, then name your target]" : "[click to cast]",
                         NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
                         .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))

@@ -108,7 +108,7 @@ class CharacterSheetTest {
         rogue.restoreExpertise(List.of("thieves_tools", "stealth"));
         assertEquals(7, rogue.getToolCheckBonus(Ability.DEXTERITY, "THIEVES_TOOLS"), "expertise doubles; any spelling");
         assertEquals(7, rogue.getSkillBonus(Skill.STEALTH));
-        assertEquals("+3[DEX] +4[Expertise]", rogue.getSkillBonusBreakdown(Skill.STEALTH));
+        assertEquals("+3[DEX] +4[Prof ×2]", rogue.getSkillBonusBreakdown(Skill.STEALTH));
         assertEquals(3, rogue.getSkillBonus(Skill.ACROBATICS), "no proficiency, no expertise");
     }
 

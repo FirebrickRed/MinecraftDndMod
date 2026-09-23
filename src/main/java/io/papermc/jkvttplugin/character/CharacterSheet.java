@@ -1356,7 +1356,7 @@ public class CharacterSheet {
 
     /**
      * Gets a formatted breakdown of a skill bonus for display in chat.
-     * Examples: "+3[DEX] +2[Prof]" (proficient), "+3[DEX] +4[Expertise]", "+2[DEX]" (not proficient)
+     * Examples: "+3[DEX] +2[Prof]" (proficient), "+3[DEX] +4[Prof ×2]" (expertise), "+2[DEX]" (not proficient)
      *
      * @param skill The skill to get the breakdown for
      * @return Formatted string showing ability modifier and proficiency bonus if applicable
@@ -1374,9 +1374,9 @@ public class CharacterSheet {
                  .append(skill.getAbility().getAbbreviation())
                  .append("]");
 
-        // Add proficiency if applicable: " +2[Prof]", or doubled " +4[Expertise]"
+        // Add proficiency if applicable: " +2[Prof]", or doubled by expertise " +4[Prof ×2]"
         if (profBonus > 0) {
-            breakdown.append(" +").append(profBonus).append(hasExpertise(skill.name()) ? "[Expertise]" : "[Prof]");
+            breakdown.append(" +").append(profBonus).append(hasExpertise(skill.name()) ? "[Prof ×2]" : "[Prof]");
         }
 
         return breakdown.toString();

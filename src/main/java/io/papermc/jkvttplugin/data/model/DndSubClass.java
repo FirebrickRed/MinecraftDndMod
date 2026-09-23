@@ -288,7 +288,7 @@ public class DndSubClass {
      * Adds subclass-specific player choices (e.g., Knowledge Domain skills/languages).
      */
     public void contributeChoices(List<PendingChoice<?>> out) {
-        ChoiceContributor.contribute(playerChoices, "subclass", out);
+        ChoiceContributor.contribute(playerChoices, getName(), out); // the real name, so a header can say which subclass
     }
 
     /**

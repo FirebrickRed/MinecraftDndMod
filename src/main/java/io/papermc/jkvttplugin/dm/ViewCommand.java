@@ -88,7 +88,7 @@ public class ViewCommand implements CommandExecutor, TabCompleter {
                 String name = cond != null ? cond.getName() : id;
                 if (!first) conds = conds.append(Component.text(", ", NamedTextColor.GRAY));
                 conds = conds.append(Component.text(name, NamedTextColor.YELLOW, TextDecoration.UNDERLINED)
-                        .hoverEvent(HoverEvent.showText(Component.text(cond != null ? String.join("\n", cond.getRules()) : id))));
+                        .hoverEvent(HoverEvent.showText(Component.text(cond != null ? cond.rulesText(45) : id))));
                 first = false;
             }
             to.sendMessage(conds);
@@ -148,7 +148,7 @@ public class ViewCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!DMManager.isDM(sender)) return List.of();
-        if (args.length == 1) return filter(CombatTargets.suggestions(), args[0]);
+        if (args.length == 1) return CombatTargets.suggestions(args[0]);
         return filter(WORDS, args[args.length - 1]);
     }
 

@@ -523,7 +523,9 @@ public class CharacterCreationMenu {
                         : "All chosen  (" + choice.getProgressText() + ") ✓";
                 // Name the choice on its header so a bare "Choose 1 more" isn't a mystery (e.g. what a
                 // dragonborn's Draconic Ancestry pick is for).
-                String headerText = title != null ? title + " — " + progress : progress;
+                // Say who offers it ("Monk:"), or a class pick and a background pick look alike.
+                String from = sourcesOf(choice);
+                String headerText = (from.isEmpty() ? "" : from + ": ") + (title != null ? title + " — " + progress : progress);
                 ItemStack header = sectionHeader(headerText, choice.getStatusColor());
                 // For expertise, the "known" set is everything NOT yet proficient — dozens of entries,
                 // and the wrong label. The header says what the rule is instead of listing them.
@@ -596,6 +598,16 @@ public class CharacterCreationMenu {
             ItemUtil.tagAction(next, MenuAction.CHOICE_PAGE, String.valueOf(current + 1));
             inv.setItem(53, next);
         }
+    }
+
+    /** Who offers a choice ("Monk", or "High Elf + Noble" for a merged pool); empty for a duplicate replacement. */
+    private static String sourcesOf(MergedChoice choice) {
+        java.util.LinkedHashSet<String> names = new java.util.LinkedHashSet<>();
+        for (PendingChoice<?> pc : choice.getSourcePendingChoices()) {
+            String s = pc.getSource();
+            if (s != null && !s.isBlank() && !s.equalsIgnoreCase("duplicate")) names.add(s);
+        }
+        return String.join(" + ", names);
     }
 
     private static boolean offers(MergedChoice choice, String key) {

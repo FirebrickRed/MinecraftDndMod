@@ -1,14 +1,10 @@
 package io.papermc.jkvttplugin.ui.handler;
 
-import io.papermc.jkvttplugin.character.CharacterCreationSession;
 import io.papermc.jkvttplugin.character.CharacterSheet;
-import io.papermc.jkvttplugin.character.CharacterSheetManager;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
-import io.papermc.jkvttplugin.ui.action.MenuAction;
 import io.papermc.jkvttplugin.combat.RollService;
 import io.papermc.jkvttplugin.config.PluginConfig;
-import io.papermc.jkvttplugin.ui.menu.SkillsMenu;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -21,42 +17,41 @@ import org.bukkit.entity.Player;
 import java.util.UUID;
 
 /**
- * Handles roll options menu clicks - performs dice rolls and announces results.
- * Supports skills, ability checks, and saving throws using payload prefixes:
- * - "SKILL:STEALTH" for skill rolls
- * - "CHECK:STRENGTH" for ability checks
- * - "SAVE:DEXTERITY" for saving throws
+ * Out-of-combat skill, check, save and tool rolls for a character: the sheet's chat roll line
+ * ({@link #offerRoll}), /character check, and DM-called checks (#186). Types are "SKILL", "CHECK",
+ * "SAVE" and "TOOL", with the skill or ability as the value.
  */
-public class RollOptionsMenuHandler implements MenuClickHandler {
+public class RollOptionsMenuHandler {
 
-    @Override
-    public void handleClick(Player player, CharacterCreationSession session, UUID characterId, MenuAction action, String payload) {
-        CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
-        if (character == null) return;
-
-        // Handle cancel - return to skills menu
-        if (action == MenuAction.CANCEL_ROLL) {
-            SkillsMenu.open(player, characterId);
-            return;
-        }
-
-        if (payload == null || !payload.contains(":")) return;
-
-        // Close inventory after clicking
+    /**
+     * Clicking a skill, check or save on the sheet: one chat line instead of a second menu,
+     * "🎲 Persuasion +8 (+4[CHA] +4[Prof ×2]) [Normal] [Advantage] [Disadvantage]". The bonus and
+     * where it comes from are right there, and each button rolls (or, with physical dice, prompts)
+     * exactly as the old menu's buttons did. A penalty (armor, a condition) is named up front.
+     */
+    public static void offerRoll(Player player, CharacterSheet character, String type, String value) {
+        RollInfo info = getRollInfo(character, type, value);
         player.closeInventory();
-
-        // Parse payload: "TYPE:VALUE"
-        String[] parts = payload.split(":", 2);
-        String type = parts[0];
-        String value = parts[1];
-
-        // Route based on roll action and type
-        switch (action) {
-            case ROLL_NORMAL -> rollOrPrompt(player, character, type, value, RollMode.NORMAL);
-            case ROLL_ADVANTAGE -> rollOrPrompt(player, character, type, value, RollMode.ADVANTAGE);
-            case ROLL_DISADVANTAGE -> rollOrPrompt(player, character, type, value, RollMode.DISADVANTAGE);
-            case SHOW_MODIFIER -> showModifier(character, type, value);
+        var reusable = net.kyori.adventure.text.event.ClickCallback.Options.builder()
+                .uses(net.kyori.adventure.text.event.ClickCallback.UNLIMITED_USES)
+                .lifetime(java.time.Duration.ofMinutes(10)).build();
+        Component line = Component.text("🎲 " + info.displayName + " " + (info.bonus >= 0 ? "+" : "") + info.bonus + " ", NamedTextColor.GOLD)
+                .append(Component.text("(" + info.breakdown.trim() + ") ", NamedTextColor.GRAY));
+        String penalty = penaltyReason(character, type, value);
+        if (penalty != null) line = line.append(Component.text("↯ disadvantage: " + penalty + " ", NamedTextColor.RED));
+        for (RollMode mode : RollMode.values()) {
+            String label = switch (mode) { case NORMAL -> "[Normal]"; case ADVANTAGE -> "[Advantage]"; case DISADVANTAGE -> "[Disadvantage]"; };
+            NamedTextColor color = switch (mode) { case NORMAL -> NamedTextColor.WHITE; case ADVANTAGE -> NamedTextColor.GREEN; case DISADVANTAGE -> NamedTextColor.RED; };
+            line = line.append(Component.text(label, color, TextDecoration.UNDERLINED)
+                    .hoverEvent(HoverEvent.showText(Component.text(switch (mode) {
+                        case NORMAL -> "Roll one d20";
+                        case ADVANTAGE -> "Roll two d20 and keep the higher";
+                        case DISADVANTAGE -> "Roll two d20 and keep the lower";
+                    })))
+                    .clickEvent(ClickEvent.callback(a -> rollOrPrompt(player, character, type, value, mode), reusable)))
+                    .append(Component.text(" "));
         }
+        player.sendMessage(line);
     }
 
     /** Physical mode: prompt the player to roll in chat. Auto mode: roll it for them (as before). */
@@ -98,6 +93,10 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
                         .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20" + (mode == RollMode.NORMAL ? "" : " (" + mode.name().toLowerCase() + ", 2d20)") + " and adds " + bonusStr + ".")))));
     }
 
+    /** The "[advantage: 15/10]" note RollService puts on a roll it made with two dice. */
+    private static final java.util.regex.Pattern ADV_DICE =
+            java.util.regex.Pattern.compile("\\[(advantage|disadvantage): (\\d+)/(\\d+)\\]", java.util.regex.Pattern.CASE_INSENSITIVE);
+
     /**
      * Resolve a physical skill/check/save roll (via RollService) and broadcast it. Returns false if
      * physical mode still needs a die (the caller should prompt).
@@ -134,6 +133,15 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
             return true;
         }
         String dice = r.providedTotal() ? "total" : String.valueOf(r.d20());
+        // Advantage or disadvantage the game rolled: show both dice and say which, or a real advantage
+        // roll reads exactly like a normal one (the playtest thought adv was being ignored).
+        java.util.regex.Matcher both = ADV_DICE.matcher(r.breakdown());
+        if (both.find()) {
+            boolean adv = both.group(1).equalsIgnoreCase("advantage");
+            broadcastRoll(character, info, r.total(), "[" + both.group(2) + ", " + both.group(3) + "]",
+                    adv ? "advantage" : "disadvantage", adv ? NamedTextColor.GREEN : NamedTextColor.RED);
+            return true;
+        }
         broadcastRoll(character, info, r.total(), dice, null, null);
         return true;
     }
@@ -354,21 +362,6 @@ public class RollOptionsMenuHandler implements MenuClickHandler {
                 .append(Component.text(" (d20: " + diceResult + " ", NamedTextColor.DARK_GRAY))
                 .append(Component.text(info.breakdown, NamedTextColor.GRAY))
                 .append(Component.text(")", NamedTextColor.DARK_GRAY));
-
-        Bukkit.broadcast(message);
-    }
-
-    /**
-     * Just show the modifier with breakdown (for manual rolling with physical dice)
-     */
-    private static void showModifier(CharacterSheet character, String type, String value) {
-        RollInfo info = getRollInfo(character, type, value);
-
-        Component message = Component.text(character.getCharacterName(), NamedTextColor.AQUA)
-                .append(Component.text("'s ", NamedTextColor.GRAY))
-                .append(Component.text(info.displayName, NamedTextColor.YELLOW))
-                .append(Component.text(" modifier: ", NamedTextColor.GRAY))
-                .append(Component.text(info.breakdown, NamedTextColor.WHITE));
 
         Bukkit.broadcast(message);
     }

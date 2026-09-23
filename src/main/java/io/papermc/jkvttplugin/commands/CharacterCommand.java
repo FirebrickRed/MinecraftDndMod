@@ -520,11 +520,24 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "cast" -> {
                 if (rest.length == 1) {
-                    List<String> spells = new ArrayList<>();
-                    for (io.papermc.jkvttplugin.data.model.DndSpell s : io.papermc.jkvttplugin.data.loader.SpellLoader.getAllSpells()) {
-                        if (s.isSocial() && s.getId().startsWith(rest[0].toLowerCase())) spells.add(s.getId());
+                    // Every spell the active character can cast: class cantrips and spells, and racial
+                    // ones (a tiefling's Thaumaturgy), which the old list of chat spells left out.
+                    java.util.Set<String> spells = new java.util.TreeSet<>();
+                    CharacterSheet sheet = sender instanceof Player p
+                            ? io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(p) : null;
+                    if (sheet != null) {
+                        for (var s : sheet.getKnownCantrips()) spells.add(s.getId());
+                        for (var s : sheet.getKnownSpells()) spells.add(s.getId());
+                        for (var i : sheet.getAvailableInnateSpells()) if (i.getSpellId() != null) spells.add(i.getSpellId().toLowerCase());
                     }
-                    return spells;
+                    List<String> out = new ArrayList<>();
+                    for (String id : spells) if (id.startsWith(rest[0].toLowerCase())) out.add(id);
+                    return out;
+                }
+                if (rest.length == 2) {
+                    io.papermc.jkvttplugin.data.model.DndSpell s =
+                            io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(io.papermc.jkvttplugin.util.Util.normalize(rest[0]));
+                    if (s != null && !s.isSocial()) return io.papermc.jkvttplugin.combat.CombatTargets.suggestions(rest[1]);
                 }
                 if (rest.length == 2) {
                     io.papermc.jkvttplugin.data.model.DndSpell s =

@@ -22,7 +22,7 @@ public final class ChoiceContributor {
 
     private ChoiceContributor() {}
 
-    /** Adds a PendingChoice for every usable entry, tagged with {@code source} ("race", "class", …). */
+    /** Adds a PendingChoice for every usable entry, tagged with {@code source}: who offers it ("Monk", "High Elf"). */
     public static void contribute(List<ChoiceEntry> entries, String source, List<PendingChoice<?>> out) {
         if (entries == null) return;
         for (ChoiceEntry e : entries) {

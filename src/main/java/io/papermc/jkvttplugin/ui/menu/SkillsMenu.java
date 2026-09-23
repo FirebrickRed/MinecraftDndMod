@@ -125,14 +125,18 @@ public class SkillsMenu {
         // Lore: proficiency status + click hint
         LoreBuilder lore = LoreBuilder.create();
 
-        if (proficient) {
+        if (character.hasExpertise(skill.name())) {
+            lore.addLine("✦ Expertise (proficiency ×2)", NamedTextColor.GOLD);
+        } else if (proficient) {
             lore.addLine("✓ Proficient", NamedTextColor.GREEN);
         } else {
             lore.addLine("  Not Proficient", NamedTextColor.DARK_GRAY);
         }
+        // Where the number comes from, so a roll needs no separate "show modifier" step.
+        lore.addLine(character.getSkillBonusBreakdown(skill).trim(), NamedTextColor.GRAY);
 
         lore.blankLine()
-                .addLine("Click to roll!", NamedTextColor.YELLOW);
+                .addLine("Click to roll (normal, advantage or disadvantage)", NamedTextColor.YELLOW);
 
         // Create clickable item with ROLL_SKILL action
         // Payload is the skill enum name (e.g., "STEALTH")
@@ -197,6 +201,7 @@ public class SkillsMenu {
         } else {
             lore.addLine("  Not Proficient", NamedTextColor.DARK_GRAY);
         }
+        lore.addLine(character.getSaveBreakdown(ability).trim(), NamedTextColor.GRAY);
 
         lore.blankLine()
                 .addLine("Click to roll " + ability.getAbbreviation() + " save", NamedTextColor.YELLOW);

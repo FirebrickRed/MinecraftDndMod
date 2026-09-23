@@ -146,8 +146,15 @@ public final class NameUtil {
         String ql = q.toLowerCase();
         if (ql.isEmpty()) return null;
 
-        // 1. exact on primary
-        for (T it : items) if (q.equalsIgnoreCase(primaryName.apply(it))) return it;
+        // 1. exact on primary: unique too. Two creatures really called "Meepo" can't be told apart by
+        //    that name, so it's ambiguous rather than "whichever came first".
+        T exact = null;
+        for (T it : items) {
+            if (!q.equalsIgnoreCase(primaryName.apply(it))) continue;
+            if (exact != null) return null; // ambiguous
+            exact = it;
+        }
+        if (exact != null) return exact;
 
         // 2. '#'-normalized on primary
         String qn = hashless(ql);

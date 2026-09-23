@@ -129,4 +129,11 @@ class NameUtilTest {
         assertNull(match("Gob"), "two goblins share the prefix");
         assertNull(match("Nobody"));
     }
+
+    /** Two creatures really named "Meepo": the name can't tell them apart, so neither is picked. */
+    @Test
+    void twoIdenticalNamesMatchNothing() {
+        var meepos = java.util.List.of(new Named("Meepo", "Kobold"), new Named("Meepo", "Kobold"));
+        assertNull(NameUtil.matchByName(meepos, "Meepo", Named::name, Named::base));
+    }
 }

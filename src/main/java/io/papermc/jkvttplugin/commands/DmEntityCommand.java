@@ -141,7 +141,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         // Generate name if not provided
-        String finalName = generateName(template, customName);
+        String finalName = uniqueName(generateName(template, customName)); // "Meepo" twice → Meepo #1, Meepo #2
 
         // Roll HP
         int maxHp = rollHitPoints(template, sender, finalName);
@@ -419,23 +419,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Re-key the tracking map. It's keyed on the lowercased display name, so leaving the old key
-        // in place would have /dm entity info|teleport|trade answering to a name nobody can see.
-        spawnedEntities.values().removeIf(e -> e == instance);
-        spawnedEntities.put(generateTrackingKey(newName), instance);
-
-        instance.rename(newName);
-
-        // Keep an in-progress fight in step: the initiative tracker addresses creatures by name.
-        boolean inCombat = false;
-        CombatSession session = CombatSession.getSessionForEntity(instance.getArmorStand());
-        if (session != null) {
-            Combatant combatant = session.getCombatantById(instance.getInstanceId());
-            if (combatant != null) {
-                session.renameCombatant(combatant, newName);
-                inCombat = true;
-            }
-        }
+        boolean inCombat = applyRename(instance, newName);
 
         sender.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
                 .append(Component.text(oldName, NamedTextColor.GRAY))
@@ -444,6 +428,71 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         if (inCombat) {
             sender.sendMessage(Component.text("Initiative tracker updated.", NamedTextColor.GRAY));
         }
+    }
+
+    /**
+     * Rename a live creature everywhere: the tracking map, its body and nameplate, and a fight's
+     * tracker. Returns true if it's in a fight.
+     */
+    private static boolean applyRename(DndEntityInstance instance, String newName) {
+        // Re-key the tracking map. It's keyed on the lowercased display name, so leaving the old key
+        // in place would have /dm entity info|teleport|trade answering to a name nobody can see.
+        spawnedEntities.values().removeIf(e -> e == instance);
+        spawnedEntities.put(generateTrackingKey(newName), instance);
+
+        instance.rename(newName);
+
+        // Keep an in-progress fight in step: the initiative tracker addresses creatures by name.
+        CombatSession session = CombatSession.getSessionForEntity(instance.getArmorStand());
+        if (session != null) {
+            Combatant combatant = session.getCombatantById(instance.getInstanceId());
+            if (combatant != null) {
+                session.renameCombatant(combatant, newName);
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Tab suggestions: live creatures (the same registry names are looked up in) matching what's
+     * typed so far. A name with spaces is suggested in quotes, so the arguments after it still parse.
+     */
+    private static List<String> creatureNames(java.util.function.Predicate<DndEntityInstance> which, String typed) {
+        String prefix = typed.startsWith("\"") ? typed.substring(1).toLowerCase() : typed.toLowerCase();
+        List<String> out = new ArrayList<>();
+        for (DndEntityInstance i : DndEntityInstance.getAll()) {
+            String name = i.getDisplayName();
+            if (name == null || !which.test(i) || !name.toLowerCase().startsWith(prefix)) continue;
+            out.add(name.contains(" ") ? "\"" + name + "\"" : name);
+        }
+        out.sort(String.CASE_INSENSITIVE_ORDER);
+        return out;
+    }
+
+    /**
+     * A name no live creature has. Two creatures called "Meepo" (or two unnamed wolves) used to share
+     * one name, so every command hit whichever came first and the other couldn't be named at all. Now
+     * the second spawn is "Meepo #2" and the first becomes "Meepo #1", the way a fight numbers them.
+     */
+    private static String uniqueName(String base) {
+        java.util.regex.Pattern numbered = java.util.regex.Pattern.compile(
+                "^" + java.util.regex.Pattern.quote(base) + " #(\\d+)$", java.util.regex.Pattern.CASE_INSENSITIVE);
+        DndEntityInstance plain = null;
+        int highest = 0;
+        for (DndEntityInstance i : DndEntityInstance.getAll()) {
+            String name = i.getDisplayName();
+            if (name == null) continue;
+            if (name.equalsIgnoreCase(base)) plain = i;
+            java.util.regex.Matcher m = numbered.matcher(name);
+            if (m.matches()) highest = Math.max(highest, Integer.parseInt(m.group(1)));
+        }
+        if (plain == null && highest == 0) return base;
+        if (plain != null) {
+            applyRename(plain, base + " #" + (highest + 1));
+            highest++;
+        }
+        return base + " #" + (highest + 1);
     }
 
     /**
@@ -1674,37 +1723,22 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                     suggestions.add("dead");
                     suggestions.add("type");
                     suggestions.add("radius");
-                    suggestions.addAll(spawnedEntities.values().stream()
-                            .map(DndEntityInstance::getDisplayName)
-                            .toList());
-                    return suggestions.stream()
-                            .filter(s -> s.toLowerCase().startsWith(args[1].toLowerCase()))
-                            .collect(Collectors.toList());
+                    List<String> keywords = suggestions.stream()
+                            .filter(s -> s.startsWith(args[1].toLowerCase())).collect(Collectors.toList());
+                    keywords.addAll(creatureNames(e -> true, args[1]));
+                    return keywords;
 
                 case "rename":
                 case "teleport":
+                case "info":
+                    return creatureNames(e -> true, args[1]);
+
                 case "trade":
                     // Only merchants: trading with anyone else just fails with "is not a merchant".
-                    return spawnedEntities.values().stream()
-                            .filter(e -> e.getTemplate().hasShop())
-                            .map(DndEntityInstance::getDisplayName)
-                            .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
-                            .collect(Collectors.toList());
-
-                case "info":
-                    // Suggest spawned entity names
-                    return spawnedEntities.values().stream()
-                            .map(DndEntityInstance::getDisplayName)
-                            .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
-                            .collect(Collectors.toList());
+                    return creatureNames(e -> e.getTemplate().hasShop(), args[1]);
 
                 case "revive":
-                    // Suggest only dead entities
-                    return spawnedEntities.values().stream()
-                            .filter(DndEntityInstance::isDead)
-                            .map(DndEntityInstance::getDisplayName)
-                            .filter(name -> name.toLowerCase().startsWith(args[1].toLowerCase()))
-                            .collect(Collectors.toList());
+                    return creatureNames(DndEntityInstance::isDead, args[1]);
 
                 case "shop":
                     // Suggest shop actions (Issue #76 - added adjust, discount, markup, reset)
@@ -1726,12 +1760,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             }
 
             if (args[0].equalsIgnoreCase("shop")) {
-                // Suggest merchant names
-                return spawnedEntities.values().stream()
-                        .filter(e -> e.getTemplate().hasShop())
-                        .map(DndEntityInstance::getDisplayName)
-                        .filter(name -> name.toLowerCase().startsWith(args[2].toLowerCase()))
-                        .collect(Collectors.toList());
+                return creatureNames(e -> e.getTemplate().hasShop(), args[2]);
             }
         }
 

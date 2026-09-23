@@ -73,7 +73,7 @@ public class NoteCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!DMManager.isDM(sender)) return List.of();
-        if (args.length == 1) return ViewCommand.filter(CombatTargets.suggestions(), args[0]);
+        if (args.length == 1) return CombatTargets.suggestions(args[0]);
         String[] a = NameUtil.collapseName(args, 0, WORDS);
         return a.length == 2 ? ViewCommand.filter(WORDS, a[1]) : List.of();
     }

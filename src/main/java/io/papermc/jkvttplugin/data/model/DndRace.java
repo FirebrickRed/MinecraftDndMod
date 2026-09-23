@@ -286,7 +286,7 @@ public class DndRace {
     }
 
     public void contributeChoices(List<PendingChoice<?>> out) {
-        ChoiceContributor.contribute(playerChoices, "race", out);
+        ChoiceContributor.contribute(playerChoices, getName(), out); // the real name, so a header can say "High Elf:"
     }
 
     /**

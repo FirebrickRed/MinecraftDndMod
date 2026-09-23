@@ -73,9 +73,6 @@ public class ReviveCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!DMManager.isDM(sender) || args.length != 1) return List.of();
-        String prefix = args[0].toLowerCase(Locale.ROOT);
-        return CombatTargets.suggestions().stream()
-                .filter(n -> n.toLowerCase(Locale.ROOT).startsWith(prefix))
-                .toList();
+        return CombatTargets.suggestions(args[0]);
     }
 }

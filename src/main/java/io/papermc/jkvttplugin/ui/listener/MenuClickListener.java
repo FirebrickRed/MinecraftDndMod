@@ -31,7 +31,6 @@ public class MenuClickListener implements Listener {
 
     // Stateless singleton handlers (no instance state, safe to reuse)
     private static final ViewCharacterSheetHandler VIEW_SHEET_HANDLER = new ViewCharacterSheetHandler();
-    private static final RollOptionsMenuHandler ROLL_OPTIONS_HANDLER = new RollOptionsMenuHandler();
     private static final CharacterCreationHandler CREATION_HANDLER = new CharacterCreationHandler();
 
     private final Map<MenuType, MenuClickHandler> handlers = new EnumMap<>(MenuType.class);
@@ -41,7 +40,6 @@ public class MenuClickListener implements Listener {
         handlers.put(MenuType.CREATE_CHARACTER, CREATION_HANDLER);
         handlers.put(MenuType.VIEW_CHARACTER_SHEET, VIEW_SHEET_HANDLER);
         handlers.put(MenuType.SKILLS_MENU, VIEW_SHEET_HANDLER);
-        handlers.put(MenuType.ROLL_OPTIONS_MENU, ROLL_OPTIONS_HANDLER);
     }
 
     /** Click-and-drag across a menu is a separate event from a click; it must not move items either. */
@@ -81,10 +79,9 @@ public class MenuClickListener implements Listener {
 
         Player player = (Player) event.getWhoClicked();
 
-        // Some menus (VIEW_CHARACTER_SHEET, SKILLS_MENU, ROLL_OPTIONS_MENU, SPELL_CASTING) work with finalized characters, not sessions
+        // Some menus (VIEW_CHARACTER_SHEET, SKILLS_MENU, SPELL_CASTING, DM_*) work with finalized characters, not sessions
         boolean isViewMenu = holder.getType() == MenuType.VIEW_CHARACTER_SHEET
                 || holder.getType() == MenuType.SKILLS_MENU
-                || holder.getType() == MenuType.ROLL_OPTIONS_MENU
                 || holder.getType() == MenuType.SPELL_CASTING
                 || holder.getType() == MenuType.DM_ADJUST
                 || holder.getType() == MenuType.DM_VIEW;

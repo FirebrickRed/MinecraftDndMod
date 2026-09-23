@@ -270,7 +270,7 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
         CombatSession.setConditionEffect(who, cond, on);
         announce(t, Component.text(who.getDisplayName() + (on ? " is now " + cond.getName() + "." : " is no longer " + cond.getName() + "."),
                 on ? NamedTextColor.YELLOW : NamedTextColor.GRAY)
-                .hoverEvent(HoverEvent.showText(Component.text(String.join("\n", cond.getRules())))), sender);
+                .hoverEvent(HoverEvent.showText(Component.text(cond.rulesText(45)))), sender);
         // Incapacitated (or anything that stops actions) ends concentration outright, no save (PHB p.203).
         if (on && who.cannotAct()) {
             if (t.inCombat()) ConcentrationManager.onIncapacitated(t.session(), who, "they were " + cond.getName().toLowerCase());
@@ -361,7 +361,7 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
     @Override
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!DMManager.isDM(sender)) return List.of();
-        if (args.length == 1) return filter(CombatTargets.suggestions(), args[0]);
+        if (args.length == 1) return CombatTargets.suggestions(args[0]);
         String[] a = NameUtil.collapseName(args, 0, ACTIONS);
         if (a.length == 2) return filter(ACTIONS, a[1]);
         if (a.length == 3) {

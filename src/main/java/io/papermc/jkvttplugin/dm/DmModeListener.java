@@ -182,7 +182,23 @@ public class DmModeListener implements Listener {
                 .append(Component.text(" "))
                 .append(button("[Info]", "/dm object info", "Show its annotation"));
         player.sendMessage(opts);
-        player.sendMessage(Component.text("  (describe: /dm object desc <text>  ·  trap: /dm object trap <dmg> [save] [dc]  — while looking at it)", NamedTextColor.DARK_GRAY));
+        // The ones that need typing: click to get the command filled in, then finish it and Enter
+        // (keep looking at the block). A description already there is filled in to edit.
+        String desc = o != null && !o.description.isEmpty() ? o.description : "";
+        player.sendMessage(Component.text("  ", NamedTextColor.GRAY)
+                .append(fill("[Describe…]", "/dm object desc " + desc, "What players see when they look closer"))
+                .append(Component.text(" "))
+                .append(fill("[Trap…]", "/dm object trap ", "Damage, then an optional save and DC: 2d6 dex 13"))
+                .append(Component.text(" "))
+                .append(fill("[Key…]", "/dm object key ", "The item that opens it: iron_key, brass_key, … (add single-use to use it up)"))
+                .append(Component.text("  (keep looking at it)", NamedTextColor.DARK_GRAY)));
+    }
+
+    /** A button that fills a command in chat to finish typing (for the ones that need a value). */
+    private static Component fill(String label, String cmd, String hover) {
+        return Component.text(label, NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(hover + "\nFills: " + cmd)));
     }
 
     /** One choice in the pick-one opening row: the active one is marked and inert, the rest are clickable. */

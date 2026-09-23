@@ -1086,7 +1086,7 @@ public class CombatSession {
             if (cond == null) continue;
             if (!first) msg = msg.append(Component.text(", ", NamedTextColor.GRAY));
             Component rules = Component.text(cond.getName(), NamedTextColor.AQUA);
-            for (String line : cond.getRules()) rules = rules.append(Component.text("\n• " + line, NamedTextColor.GRAY));
+            rules = rules.append(Component.text("\n" + cond.rulesText(45), NamedTextColor.GRAY));
             msg = msg.append(Component.text(cond.getName(), NamedTextColor.AQUA)
                     .hoverEvent(HoverEvent.showText(rules)));
             first = false;

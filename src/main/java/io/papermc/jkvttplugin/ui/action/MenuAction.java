@@ -39,11 +39,6 @@ public enum MenuAction {
     ROLL_SAVING_THROW,
 
     // ===== Roll Options Actions =====
-    ROLL_NORMAL,
-    ROLL_ADVANTAGE,
-    ROLL_DISADVANTAGE,
-    SHOW_MODIFIER,
-    CANCEL_ROLL,
 
     // ===== Spell Casting Actions =====
     CAST_CANTRIP,

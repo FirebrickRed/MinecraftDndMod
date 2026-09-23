@@ -26,25 +26,24 @@ public class SpellFocusListener implements Listener {
 
         ItemStack item = event.getItem();
         if (!isSpellFocus(item)) return;
-
-        event.setCancelled(true);
         Player player = event.getPlayer();
 
-        CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(player);
-        if (sheet == null || !sheet.hasSpells()) {
-            player.sendMessage("You don't know any spells!");
-            return;
-        }
+        // Right-clicking a chest or door with thieves' tools (or anything that doubles as a focus) is
+        // using the block, not casting: leave it to the chest's [Open it] / [Ask for a check] prompt.
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock() != null
+                && (event.getClickedBlock().getState() instanceof org.bukkit.block.Container
+                    || event.getClickedBlock().getType().isInteractable())) return;
 
         // A class with no spellcasting has no focus type, so only a component pouch works for it.
-        // Skipping the check for them let a tiefling rogue cast through thieves' tools.
+        // For someone who can't cast through this item (a rogue's thieves' tools), it's just a tool:
+        // say nothing and let the click through, rather than "You cannot use this type of focus!".
+        CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(player);
         String focusType = getFocusType(item);
-        String classRequirement = sheet.getMainClass() != null && sheet.getMainClass().getSpellcastingInfo() != null
+        String classRequirement = sheet != null && sheet.getMainClass() != null && sheet.getMainClass().getSpellcastingInfo() != null
                 ? sheet.getMainClass().getSpellcastingInfo().getSpellcastingFocusType() : null;
-        if (!canUseThisFocus(focusType, classRequirement)) {
-            player.sendMessage("You cannot use this type of focus!");
-            return;
-        }
+        if (sheet == null || !sheet.hasSpells() || !canUseThisFocus(focusType, classRequirement)) return;
+
+        event.setCancelled(true);
 
         SpellCastingMenu.open(player, sheet);
     }

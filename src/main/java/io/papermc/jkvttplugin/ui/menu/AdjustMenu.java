@@ -113,7 +113,13 @@ public final class AdjustMenu {
             boolean has = c.hasCondition(cond.getId());
             List<Component> lore = new ArrayList<>();
             lore.add(line(has ? "✔ Has it — click to remove" : "Click to add", has ? NamedTextColor.GREEN : NamedTextColor.GRAY));
-            for (String r : cond.getRules()) lore.add(line("• " + r, NamedTextColor.DARK_GRAY));
+            for (String r : cond.getRules()) {
+                boolean first = true;
+                for (String part : io.papermc.jkvttplugin.util.Util.wrapText(r, 40)) {
+                    lore.add(line((first ? "• " : "  ") + part, NamedTextColor.DARK_GRAY));
+                    first = false;
+                }
+            }
             ItemStack it = tile(has ? Material.LIME_DYE : Material.GRAY_DYE, (has ? "✔ " : "") + cond.getName(),
                     has ? NamedTextColor.GREEN : NamedTextColor.WHITE, lore, "cond:" + cond.getId());
             if (has) it.editMeta(m -> m.setEnchantmentGlintOverride(true));

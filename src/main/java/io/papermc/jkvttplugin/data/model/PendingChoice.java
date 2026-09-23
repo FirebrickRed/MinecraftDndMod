@@ -13,7 +13,7 @@ public class PendingChoice<T> {
     private final String title;
 
     private final PlayersChoice<T> playersChoice;
-    private final String source; // e.g. "race", "class", "background"
+    private final String source; // who offers it: "Monk", "High Elf", "Entertainer" (or "duplicate")
 
     private final LinkedHashSet<T> chosen = new LinkedHashSet<>();
 

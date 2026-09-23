@@ -109,15 +109,30 @@ public final class CombatTargets {
         int slash = raw.indexOf('/');
         return (slash > 0 && slash < raw.length() - 1) ? raw.substring(slash + 1).trim() : raw;
     }
+    /** {@link #suggestions()} that match what's typed so far, ignoring a leading quote on either side. */
+    public static List<String> suggestions(String typed) {
+        String t = typed == null ? "" : (typed.startsWith("\"") ? typed.substring(1) : typed).toLowerCase();
+        List<String> out = new ArrayList<>();
+        for (String s : suggestions()) {
+            String bare = s.startsWith("\"") ? s.substring(1) : s;
+            if (bare.toLowerCase().startsWith(t)) out.add(s);
+        }
+        return out;
+    }
+
     /** Names a DM can target right now — spawned creatures plus the characters of online players. */
     public static List<String> suggestions() {
         List<String> out = new ArrayList<>();
         for (DndEntityInstance instance : DndEntityInstance.getAll()) {
-            if (instance.getDisplayName() != null) out.add(instance.getDisplayName());
+            String n = instance.getDisplayName();
+            if (n != null) out.add(n.contains(" ") ? "\"" + n + "\"" : n); // quoted, so later arguments still parse
         }
         for (Player online : Bukkit.getOnlinePlayers()) {
             CharacterSheet sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(online);
-            if (sheet != null && sheet.getCharacterName() != null) out.add(sheet.getCharacterName());
+            if (sheet != null && sheet.getCharacterName() != null) {
+                String n = sheet.getCharacterName();
+                out.add(n.contains(" ") ? "\"" + n + "\"" : n);
+            }
         }
         return out;
     }
