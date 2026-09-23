@@ -57,11 +57,14 @@ combat:
   # false = the weapon never leaves your hand (BG-style infinite). Separate from track_ammunition.
   track_thrown_weapons: true
 
-  # A player's /combat damage waits for the DM (#175): you get [Apply] / [Deny] with the number, the
-  # type and the target before any HP changes, and Deny lets them roll it again. On by default while
-  # combat is being playtested (damage went wrong around reactions once); set false once you trust it.
-  # The DM's own /combat damage (for creatures) never waits.
-  damage_needs_dm_approval: true
+  # When a player's /combat damage waits for the DM's [Apply] / [Deny] (#175):
+  #   reactions  (default) only a hit that opened a reaction window (a Shield chance, #195): a playtest
+  #              saw damage go wrong there
+  #   always     every hit a player applies
+  #   off        never
+  # Either way, when /combat damage is refused (not your turn, no hit to apply, the wrong target) the
+  # player gets an [Ask the DM] button instead of a dead end. The DM's own damage never waits.
+  damage_approval: reactions
 
 # Interactive objects the DM annotates with /dm object (#185).
 objects:

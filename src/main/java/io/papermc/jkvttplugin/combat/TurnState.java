@@ -30,6 +30,8 @@ public class TurnState {
     private boolean pendingDamageCrit;
     // The pending damage should be halved when applied (e.g. a successful save vs a save spell). (#123)
     private boolean pendingDamageHalf;
+    // A reaction window opened on this hit (#195), so its damage goes to the DM for [Apply] (#175).
+    private boolean pendingDamageAfterReaction;
 
     private double movementUsed;      // feet moved this turn
     private final int movementBudget; // max feet (from speed)
@@ -93,7 +95,10 @@ public class TurnState {
         this.pendingDamageBonus = damageBonus;
         this.pendingDamageLabel = damageBonusLabel == null ? "" : damageBonusLabel;
         this.pendingDamageCrit = crit;
+        this.pendingDamageAfterReaction = false;
     }
+    public void markReactionOnHit() { this.pendingDamageAfterReaction = true; }
+    public boolean isPendingDamageAfterReaction() { return pendingDamageAfterReaction; }
     public boolean isDamagePending() { return pendingDamageTargetId != null; }
     public UUID getPendingDamageTargetId() { return pendingDamageTargetId; }
     public int getPendingDamageBonus() { return pendingDamageBonus; }
@@ -113,6 +118,7 @@ public class TurnState {
         this.pendingDamageDice = "";
         this.pendingDamageCrit = false;
         this.pendingDamageHalf = false;
+        this.pendingDamageAfterReaction = false;
     }
 
     // ==================== MOVEMENT ====================

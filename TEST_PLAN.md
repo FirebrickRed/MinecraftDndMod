@@ -176,15 +176,19 @@ languages, spells, AC) and your inventory.
       Surprised: …", **[S]** on the tracker. Right-click again → no longer surprised. On someone not in
       the fight → "Add them first". With no fight → "Start a fight first".
 - [ ] Out-of-combat Fire Bolt → [Start combat] → the hint mentions the Surprise tool.
-- [ ] **Damage approval (default on):** as a player, hit and `/combat damage … autoRoll` → "Sent to
-      the DM: 7 fire damage to Goblin." Nothing changes yet. The DM gets **[Apply]** / **[Deny]**.
-  - Apply → the goblin takes it, the tracker updates, the hit can't be applied twice.
-  - Deny → the player is told to roll again; `/combat damage` works again for the same hit.
-  - While it's waiting, a second `/combat damage` says it's with the DM.
-  - End the turn with it still waiting → clicking Apply later says the moment has passed, and next turn
-    the player's damage isn't blocked.
-  - The DM's own `/combat damage` (a creature's hit) applies straight away.
-  - `combat.damage_needs_dm_approval: false` in config.yml (restart) → players' damage applies at once.
+- [ ] **Damage goes through normally:** as a player, hit and `/combat damage … autoRoll` → it lands at
+      once. No DM prompt.
+- [ ] **After a reaction window** (hit someone who knows Shield, they pass or cast) → the player's
+      `/combat damage` says "Sent to the DM: …"; you get **[Apply]** / **[Deny]**.
+  - Apply → it lands and the tracker updates. Deny → the player rolls again for the same hit.
+  - While waiting, a second `/combat damage` says it's with the DM. End the turn while it waits →
+    Apply later says the moment has passed, and next turn isn't blocked.
+- [ ] **Refused, with [Ask the DM]:** `/combat damage <t> manualRoll 7` off your turn (e.g. an
+      opportunity attack), after a miss, or naming a different creature than you hit → the refusal ends
+      with **[Ask the DM]**. Click → you get "X asks to deal 7 damage to Goblin (off their turn)"
+      with [Apply] (lands as typed, no modifiers) / [Deny] (the player is told).
+- [ ] The DM's own `/combat damage` never waits. `combat.damage_approval: always` → every player hit
+      asks you; `off` → none do (reactions included).
 
 ## Viewing & DM notes (new)
 

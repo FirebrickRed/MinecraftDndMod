@@ -55,7 +55,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `use <feature>` | Activate a class/racial feature, e.g. `use rage` (Effect Engine, #70) |
 | `movement [undo]` | Check / undo movement this turn |
 | `attack <target> [weapon] [stab\|throw] [flags]` | **Hit check only**: resolves HIT/MISS/CRIT, and on a hit prompts you with the `/combat damage` command to run. With no weapon you get clickable weapon buttons. Thrown weapons default by distance (#192) |
-| `damage <target> [amount] [flags]` | Apply damage — a **player on their own turn**, or the **DM** anytime. With `combat.damage_needs_dm_approval: true` (the default) a player's damage goes to the DM as **[Apply]** / **[Deny]** first; Deny lets them roll again |
+| `damage <target> [amount] [flags]` | Apply damage — a **player on their own turn**, or the **DM** anytime. It applies straight away, except after a hit that opened a **reaction window**: then the DM gets **[Apply]** / **[Deny]** first (`combat.damage_approval`: `reactions` default, `always`, `off`). When it's refused (not your turn, no hit to apply, the wrong target) the player gets **[Ask the DM]**, and the DM decides |
 | `heal <target> [amount \| manualRoll <n> \| autoRoll <dice> \| total <n>]` | Restore HP |
 | `temphp <target> <amount>` | Grant temporary HP |
 | `deathsave [<player>] [manualRoll <d20> \| autoRoll]` | Roll a death save (DM may roll for a downed player). Three failures and the character is **dead**, on the sheet, so it outlasts the fight: see `/dm revive` |

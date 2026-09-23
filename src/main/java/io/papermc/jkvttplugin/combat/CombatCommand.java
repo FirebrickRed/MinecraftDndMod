@@ -2300,7 +2300,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (!isDM) {
             Combatant current = session.getCurrentCombatant();
             if (current == null || !current.isPlayer() || !current.getId().equals(dm.getUniqueId())) {
-                dm.sendMessage(Component.text("You can only apply damage on your own turn.", NamedTextColor.RED));
+                refuseWithAskDm(dm, session, args, "You can only apply damage on your own turn.", "off their turn");
                 return;
             }
         }
@@ -2314,8 +2314,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         {
             TurnState ts = attacker != null ? attacker.getTurnState() : null;
             if (ts == null || !ts.isDamagePending()) {
-                dm.sendMessage(Component.text("No attack hit to apply damage for — use /combat attack first.", NamedTextColor.YELLOW));
-                dm.sendMessage(Component.text("(DM: change HP directly with /dm adjust <who>.)", NamedTextColor.GRAY));
+                if (isDM) {
+                    dm.sendMessage(Component.text("No attack hit to apply damage for — use /combat attack first.", NamedTextColor.YELLOW));
+                    dm.sendMessage(Component.text("(Change HP directly with /dm adjust <who>.)", NamedTextColor.GRAY));
+                } else {
+                    refuseWithAskDm(dm, session, args, "No attack hit to apply damage for (a miss, or no attack yet).", "with no hit to apply");
+                }
                 return;
             }
             // A reaction window is open on this hit (#195): the target may still cast Shield, so the
@@ -2382,9 +2386,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 dm.sendMessage(Component.text("✗ Your attack hit " + actualName + ", not "
                         + target.getDisplayName() + " — damage goes to the creature you hit.", NamedTextColor.RED));
                 String quoted = actualName.contains(" ") ? "\"" + actualName + "\"" : actualName;
-                dm.sendMessage(Component.text("   [apply it to " + actualName + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                Component fix = Component.text("   [apply it to " + actualName + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand("/combat damage " + quoted + " "))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: /combat damage " + quoted))));
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: /combat damage " + quoted)));
+                // Sometimes the other creature really is meant (a cleave, a DM ruling): let the DM decide.
+                Component ask = isDM ? null : askDmButton(dm, session, args, "on " + target.getDisplayName()
+                        + ", though their hit was on " + actualName);
+                dm.sendMessage(ask == null ? fix : fix.append(Component.text("  ")).append(ask));
                 return;
             }
         }
@@ -2424,12 +2432,77 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             dm.sendMessage(Component.text("Saved — half damage: " + full + " → " + damage + ".", NamedTextColor.GRAY));
         }
 
-        // A player's damage waits for the DM's [Apply] when the table uses that setting (#175).
-        if (!isDM && io.papermc.jkvttplugin.config.PluginConfig.isDamageNeedsDmApproval() && attacker != null) {
+        // A player's damage waits for the DM's [Apply] (#175): after a reaction window by default, or
+        // on every hit, or never (combat.damage_approval).
+        var approval = io.papermc.jkvttplugin.config.PluginConfig.getDamageApproval();
+        boolean afterReaction = attacker != null && attacker.getTurnState() != null
+                && attacker.getTurnState().isPendingDamageAfterReaction();
+        if (!isDM && attacker != null && (approval == io.papermc.jkvttplugin.config.PluginConfig.DamageApproval.ALWAYS
+                || (approval == io.papermc.jkvttplugin.config.PluginConfig.DamageApproval.REACTIONS && afterReaction))) {
             holdForDm(session, attacker, target, damage, type, crit, dm);
             return;
         }
         applyHit(session, attacker, target, damage, type, crit);
+    }
+
+    /** A refused /combat damage for a player: the reason, plus [Ask the DM] if there's something to ask for. */
+    private void refuseWithAskDm(Player roller, CombatSession session, String[] args, String reason, String context) {
+        Component msg = Component.text(reason + " ", NamedTextColor.RED);
+        Component ask = askDmButton(roller, session, args, context);
+        roller.sendMessage(ask == null ? msg : msg.append(ask));
+    }
+
+    /**
+     * [Ask the DM] for damage the game won't apply on its own (#175): off-turn (an opportunity attack),
+     * with no hit recorded, or on a creature other than the one hit. It carries exactly what the player
+     * typed; the DM gets [Apply] / [Deny], and Apply goes through the same HP path as /dm adjust. Null
+     * when there's no target or amount to ask about (then the usual usage message is enough).
+     */
+    private Component askDmButton(Player roller, CombatSession session, String[] args, String context) {
+        List<String> positional = collectPositionalArgs(args, 1);
+        if (positional.isEmpty()) return null;
+        AmountAndTarget at = parseAmountAndTarget(session, roller, positional);
+        if (at == null) return null;
+        String spec;
+        Integer total = getFlagValueInt(args, "total");
+        String manual = valueAfterAny(args, "manualroll");
+        String autoDice = hasFlag(args, "autoRoll") ? valueAfterAny(args, "autoroll") : null;
+        if (total != null) spec = String.valueOf(total);
+        else if (manual != null) spec = manual.trim();
+        else if (autoDice != null && autoDice.toLowerCase().contains("d")) spec = autoDice.trim();
+        else if (at.flat() != null) spec = String.valueOf(at.flat());
+        else {
+            roller.sendMessage(Component.text("To ask the DM, say how much: add manualRoll <n>, autoRoll <dice> or an amount.", NamedTextColor.GRAY));
+            return null;
+        }
+        String type = valueAfterAny(args, "type");
+        Combatant target = at.target();
+        String who = roller.getName();
+        Combatant self = session.getCombatantById(roller.getUniqueId());
+        if (self != null) who = self.getDisplayName();
+        String asker = who;
+        String what = spec + (type != null ? " " + type : "") + " damage to " + target.getDisplayName();
+
+        var once = net.kyori.adventure.text.event.ClickCallback.Options.builder()
+                .uses(1).lifetime(java.time.Duration.ofMinutes(15)).build();
+        return Component.text("[Ask the DM]", NamedTextColor.GOLD, TextDecoration.UNDERLINED)
+                .hoverEvent(HoverEvent.showText(Component.text("Ask the DM to let " + what + " through")))
+                .clickEvent(ClickEvent.callback(a -> {
+                    roller.sendMessage(Component.text("Asked the DM about " + what + ".", NamedTextColor.GRAY));
+                    Component req = Component.text("⚔ " + asker + " asks to deal " + what + " (" + context + "). ", NamedTextColor.GOLD)
+                            .append(Component.text("[Apply]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                                    .hoverEvent(HoverEvent.showText(Component.text("It lands, as typed (no modifiers added)")))
+                                    .clickEvent(ClickEvent.callback(d -> {
+                                        if (!(d instanceof Player dmPlayer)) return;
+                                        io.papermc.jkvttplugin.dm.AdjustCommand.hp(dmPlayer,
+                                                new CombatTargets.Target(target, session.isActive() ? session : null), "-" + spec, type);
+                                    }, once)))
+                            .append(Component.text(" "))
+                            .append(Component.text("[Deny]", NamedTextColor.RED, TextDecoration.UNDERLINED)
+                                    .clickEvent(ClickEvent.callback(d -> roller.sendMessage(
+                                            Component.text("The DM didn't let that damage through.", NamedTextColor.YELLOW)), once)));
+                    for (Player dm : io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs()) dm.sendMessage(req);
+                }, once));
     }
 
     /** Apply a hit's damage and close its damage window so it can't land twice. */

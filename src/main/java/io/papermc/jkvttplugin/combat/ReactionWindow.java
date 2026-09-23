@@ -104,6 +104,7 @@ public final class ReactionWindow {
                         attackTotal, target.getArmorClass()));
         window.waiting.add(target.getId());
         open.put(attacker.getId(), window);
+        if (attacker.getTurnState() != null) attacker.getTurnState().markReactionOnHit(); // its damage asks the DM (#175)
 
         session.broadcast(Component.text("⚡ Reaction window — ", NamedTextColor.GOLD, TextDecoration.BOLD)
                 .append(Component.text(target.getDisplayName(true) + " was hit (" + attackTotal + " vs AC "
