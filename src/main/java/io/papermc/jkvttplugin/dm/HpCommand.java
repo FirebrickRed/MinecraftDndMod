@@ -4,6 +4,7 @@ import io.papermc.jkvttplugin.combat.CombatTargets;
 import io.papermc.jkvttplugin.combat.Combatant;
 import io.papermc.jkvttplugin.combat.DamageHandler;
 import io.papermc.jkvttplugin.util.DiceRoller;
+import io.papermc.jkvttplugin.util.NameUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import org.bukkit.command.Command;
@@ -40,6 +41,8 @@ public class HpCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Only a DM can change hit points directly.", NamedTextColor.RED));
             return true;
         }
+        // "The Kindler" (quoted or not) is one name; it ends at the action word.
+        args = NameUtil.collapseName(args, 0, ACTIONS);
         if (args.length < 2) {
             usage(sender);
             return true;

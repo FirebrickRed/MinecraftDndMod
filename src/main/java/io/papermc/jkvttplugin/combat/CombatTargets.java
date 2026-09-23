@@ -72,11 +72,17 @@ public final class CombatTargets {
 
         // A spawned creature first: entity names are the ones a DM is most likely to be pointing at,
         // and a character with the same name still resolves through the explicit Owner/Name form.
-        DndEntityInstance entity = findEntity(raw);
+        DndEntityInstance entity = DndEntityInstance.findByName(raw);
         if (entity != null) return forEntity(entity);
 
         if (!hasCharacterNamed(raw)) {
-            sender.sendMessage(Component.text("No character or spawned creature called '" + raw + "'.", NamedTextColor.RED));
+            List<String> several = DndEntityInstance.namesMatching(raw);
+            if (several.size() > 1) {
+                sender.sendMessage(Component.text("'" + raw + "' could be " + String.join(", ", several)
+                        + " — name the one you mean.", NamedTextColor.RED));
+            } else {
+                sender.sendMessage(Component.text("No character or spawned creature called '" + raw + "'.", NamedTextColor.RED));
+            }
             return null;
         }
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, raw); // reports ambiguity itself
@@ -103,19 +109,6 @@ public final class CombatTargets {
         int slash = raw.indexOf('/');
         return (slash > 0 && slash < raw.length() - 1) ? raw.substring(slash + 1).trim() : raw;
     }
-
-    /** Spawned creature by display name: exact match first, then a unique prefix. */
-    public static DndEntityInstance findEntity(String name) {
-        List<DndEntityInstance> prefix = new ArrayList<>();
-        for (DndEntityInstance instance : DndEntityInstance.getAll()) {
-            String display = instance.getDisplayName();
-            if (display == null) continue;
-            if (display.equalsIgnoreCase(name)) return instance;
-            if (display.toLowerCase().startsWith(name.toLowerCase())) prefix.add(instance);
-        }
-        return prefix.size() == 1 ? prefix.get(0) : null;
-    }
-
     /** Names a DM can target right now — spawned creatures plus the characters of online players. */
     public static List<String> suggestions() {
         List<String> out = new ArrayList<>();

@@ -12,6 +12,7 @@ import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.dm.CheckManager;
 import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler;
+import io.papermc.jkvttplugin.util.NameUtil;
 import io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -48,6 +49,17 @@ import java.util.UUID;
  */
 public class CheckCommand implements CommandExecutor, TabCompleter {
 
+    /** Words that end a name before the check type: {@code /dm check <name> <type> ...}. */
+    private static final List<String> CHECK_TYPES = List.of("ability", "check", "save", "saving", "savingthrow", "skill", "tool");
+    /** Words that end a name in {@code /dm check clear <name> [skill|all]}. */
+    private static final List<String> CLEAR_STOP_WORDS = clearStopWords();
+
+    private static List<String> clearStopWords() {
+        List<String> out = new ArrayList<>(List.of("all"));
+        for (Skill s : Skill.values()) out.add(s.name().toLowerCase());
+        return out;
+    }
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!DMManager.isDM(sender)) {
@@ -62,6 +74,10 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         // Clear a lingering/held check (e.g. an old Stealth value). Not gated to any skill.
+        // clear / active take a character name that may have spaces ("Balin Ironforge").
+        if (args.length >= 2 && (args[0].equalsIgnoreCase("clear") || args[0].equalsIgnoreCase("active"))) {
+            args = NameUtil.collapseName(args, 1, CLEAR_STOP_WORDS);
+        }
         if (args.length >= 2 && args[0].equalsIgnoreCase("clear")) {
             CharacterSheet s = CharacterResolver.resolveOrError(sender, args[1]);
             if (s == null) return true;
@@ -102,6 +118,12 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // The name runs up to the check type, so "Balin Ironforge save dex" works quoted or not.
+        args = NameUtil.collapseName(args, 0, CHECK_TYPES);
+        if (args.length < 3) {
+            sender.sendMessage(Component.text("Usage: /dm check <player> <ability|save|skill|tool> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
+            return true;
+        }
         // Accept either a player username or a character name (forgiving resolver, #108).
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, args[0]);
         if (sheet == null) return true;
@@ -263,7 +285,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
 
     /** Creature first (the name a DM is most likely pointing at), then a character; same order as CombatTargets. */
     private ContestSide resolveContestSide(CommandSender sender, String name) {
-        DndEntityInstance creature = CombatTargets.findEntity(io.papermc.jkvttplugin.util.NameUtil.stripQuotes(name.trim()));
+        DndEntityInstance creature = DndEntityInstance.findByName(name);
         if (creature != null) return new ContestSide(null, null, creature);
         CharacterSheet sheet = CharacterResolver.resolveOrError(sender, name);
         if (sheet == null) return null;

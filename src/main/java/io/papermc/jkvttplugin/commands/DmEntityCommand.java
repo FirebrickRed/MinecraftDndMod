@@ -1500,40 +1500,14 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         sender.sendMessage(Component.text("✓ Removed " + removed + " orphaned D&D entity stand(s).", NamedTextColor.GREEN));
     }
 
-    /**
-     * Find a spawned entity whose display name matches exactly (case-insensitive). Unlike
-     * {@link #findEntity} this does no prefix matching — used where a wrong guess would be silent,
-     * such as deciding where an unquoted rename splits current name from new name.
-     */
+    /** Exact display name only: where a wrong guess would be silent, like splitting an unquoted rename. */
     private DndEntityInstance findEntityExact(String name) {
-        if (name == null || name.isBlank()) return null;
-        for (DndEntityInstance instance : spawnedEntities.values()) {
-            if (name.equalsIgnoreCase(instance.getDisplayName())) {
-                return instance;
-            }
-        }
-        return null;
+        return DndEntityInstance.findByExactName(name);
     }
 
-    /**
-     * Find entity by name (case-insensitive, handles #suffix).
-     */
+    /** A creature by name: the one shared lookup (exact, "Wolf 2" = "Wolf #2", template name, unique prefix). */
     private DndEntityInstance findEntity(String name) {
-        String normalized = name.toLowerCase();
-
-        // Exact match
-        if (spawnedEntities.containsKey(normalized)) {
-            return spawnedEntities.get(normalized);
-        }
-
-        // Partial match (ignoring #suffix)
-        for (Map.Entry<String, DndEntityInstance> entry : spawnedEntities.entrySet()) {
-            if (entry.getKey().startsWith(normalized)) {
-                return entry.getValue();
-            }
-        }
-
-        return null;
+        return DndEntityInstance.findByName(name);
     }
 
     /**

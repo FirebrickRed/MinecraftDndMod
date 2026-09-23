@@ -139,6 +139,42 @@ public class DndEntityInstance {
         return new ArrayList<>(UUID_REGISTRY.values());
     }
 
+    /**
+     * <b>The</b> creature-by-name lookup: every command that takes a creature's name comes here, so
+     * they all match the same way ({@link io.papermc.jkvttplugin.util.NameUtil#matchByName}: exact,
+     * "Wolf 2" = "Wolf #2", the template name, then a <i>unique</i> prefix or substring). Null when
+     * nothing matches or the name fits more than one creature.
+     */
+    public static DndEntityInstance findByName(String name) {
+        return io.papermc.jkvttplugin.util.NameUtil.matchByName(UUID_REGISTRY.values(), name,
+                DndEntityInstance::getDisplayName, i -> i.getTemplate() != null ? i.getTemplate().getName() : null);
+    }
+
+    /**
+     * Display names of every creature the name could mean, for the "which one?" message when
+     * {@link #findByName} comes back empty because the name fits several ("Goblin" → Goblin #1, #2).
+     */
+    public static java.util.List<String> namesMatching(String name) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        if (name == null || name.isBlank()) return out;
+        String q = io.papermc.jkvttplugin.util.NameUtil.stripQuotes(name.trim()).toLowerCase();
+        for (DndEntityInstance i : UUID_REGISTRY.values()) {
+            String display = i.getDisplayName();
+            String base = i.getTemplate() != null ? i.getTemplate().getName() : null;
+            if ((display != null && display.toLowerCase().contains(q)) || q.equalsIgnoreCase(base)) out.add(display);
+        }
+        out.sort(String::compareToIgnoreCase);
+        return out;
+    }
+
+    /** Exact display name only (case-insensitive), for places where a guess would be silent and wrong. */
+    public static DndEntityInstance findByExactName(String name) {
+        if (name == null || name.isBlank()) return null;
+        String n = io.papermc.jkvttplugin.util.NameUtil.stripQuotes(name.trim());
+        for (DndEntityInstance i : UUID_REGISTRY.values()) if (n.equalsIgnoreCase(i.getDisplayName())) return i;
+        return null;
+    }
+
     /** Write this instance's state onto its armor stand's PDC so it survives a restart. */
     public void persist() {
         if (armorStand == null || !armorStand.isValid()) return;

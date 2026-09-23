@@ -69,6 +69,12 @@ public class CharacterCreationMenu {
 
     private CharacterCreationMenu() {}
 
+    /**
+     * The tile for something the character already has and can't pick again. Not a gray pane: that's
+     * the background filler, and a known spell or skill drawn in it disappeared into the background.
+     */
+    private static final Material KNOWN_TILE = Material.KNOWLEDGE_BOOK;
+
     private static final int CONTENT_START = 9;
     private static final int CONTENT_END = 44;   // inclusive
     private static final String[] TABS = {"race", "class", "background", "abilities", "choices", "spells", "name"};
@@ -532,7 +538,7 @@ public class CharacterCreationMenu {
                     if (shownFree.contains(knownKey)) continue; // already shown as a grant
                     // A cantrip pick only needs to flag the cantrips it offers, not every class spell.
                     if (choice.getCategory() == ChoiceCategory.SPELL && !offers(choice, knownKey)) continue;
-                    ItemStack known = plain(Material.GRAY_STAINED_GLASS_PANE, Component.text(choice.displayFor(knownKey), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+                    ItemStack known = plain(KNOWN_TILE, Component.text(choice.displayFor(knownKey), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
                     known.editMeta(m -> m.lore(List.of(Component.text("Already known (can't select)", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false))));
                     tiles.add(known);
                     sectionOf.add(header);
@@ -895,7 +901,7 @@ public class CharacterCreationMenu {
             String key = Util.normalize(spell.getName());
             String via = knownElsewhere.get(key);
             if (via != null && !session.hasSpell(key)) {
-                ItemStack known = plain(Material.GRAY_STAINED_GLASS_PANE, Component.text(spell.getName(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+                ItemStack known = plain(KNOWN_TILE, Component.text(spell.getName(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
                 known.editMeta(m -> m.lore(List.of(Component.text("Already known from " + via + " (can't select)", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false))));
                 inv.setItem(slot++, known);
                 continue;

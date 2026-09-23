@@ -2789,26 +2789,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         return NameUtil.matchByName(candidates, name, DndEntityInstance::getDisplayName);
     }
 
-    /**
-     * Find a combatant by name in the session.
-     * Supports names with spaces via case-insensitive partial matching.
-     */
+    /** A combatant by name: the session's one lookup ({@link CombatSession#getCombatantByName}). */
     private Combatant findCombatantByName(CombatSession session, String name) {
-        // Shared match cascade (#140): exact → #-normalized → base name → startsWith → unique contains.
-        Combatant match = NameUtil.matchByName(session.getCombatants(), name,
-                Combatant::getDisplayName, Combatant::getBaseName);
-        if (match != null) return match;
-
-        // A player combatant is stored under its CHARACTER name, but the DM (and the DM-mode Add
-        // tool) often refers to it by the Minecraft account name — "/combat remove <MCName>" used to
-        // fail with "Combatant not found". Fall back to matching an online player's name.
-        for (Combatant c : session.getCombatants()) {
-            if (c.isPlayer() && c.getPlayer() != null
-                    && c.getPlayer().getName().equalsIgnoreCase(name)) {
-                return c;
-            }
-        }
-        return null;
+        return session.getCombatantByName(name);
     }
 
     /** Whether a target word means "the caster themselves". */

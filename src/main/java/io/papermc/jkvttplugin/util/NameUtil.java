@@ -57,6 +57,48 @@ public final class NameUtil {
         return new TakenName(merged.toString(), args.length, true); // unclosed quote: take what is there
     }
 
+    /**
+     * <b>The</b> way a command reads a name that may have spaces. A quoted name is read to its closing
+     * quote ({@link #takeName}); an unquoted one is every word up to the first of the command's
+     * {@code stopWords} (its next keyword, like {@code damage} in {@code /dm hp The Kindler damage 5})
+     * or the end. The first word is always part of the name, even if it's also a keyword.
+     *
+     * <p>Use this rather than {@code args[i]}: a raw argument is one word, so "The Kindler" arrives
+     * as {@code "The} and nothing matches. {@code NameReadingTest} fails the build if a command hands
+     * a raw argument to a name finder.
+     *
+     * @param stopWords keywords that end an unquoted name, compared case-insensitively; empty = to the end
+     */
+    public static TakenName readName(String[] args, int from, Collection<String> stopWords) {
+        if (args == null || from < 0 || from >= args.length) return null;
+        if (args[from].startsWith("\"")) return takeName(args, from);
+        int end = from + 1;
+        while (end < args.length && !isStopWord(args[end], stopWords)) end++;
+        return new TakenName(String.join(" ", java.util.Arrays.copyOfRange(args, from, end)), end, false);
+    }
+
+    /**
+     * {@link #readName} for commands that read their arguments by position: returns a copy of
+     * {@code args} with the name at {@code from} merged into that one slot (quotes stripped), so
+     * {@code ["\"The", "Kindler\"", "damage", "5"]} becomes {@code ["The Kindler", "damage", "5"]}
+     * and {@code args[1]} is still the action.
+     */
+    public static String[] collapseName(String[] args, int from, Collection<String> stopWords) {
+        TakenName name = readName(args, from, stopWords);
+        if (name == null) return args;
+        String[] out = new String[from + 1 + (args.length - name.nextIndex())];
+        System.arraycopy(args, 0, out, 0, from);
+        out[from] = name.value();
+        System.arraycopy(args, name.nextIndex(), out, from + 1, args.length - name.nextIndex());
+        return out;
+    }
+
+    private static boolean isStopWord(String word, Collection<String> stopWords) {
+        if (stopWords == null || word.startsWith("--")) return word.startsWith("--");
+        for (String stop : stopWords) if (stop.equalsIgnoreCase(word)) return true;
+        return false;
+    }
+
     /** Join {@code args[from..]} into one space-separated name, stripping surrounding quotes. */
     public static String joinArgs(String[] args, int from) {
         if (args == null || from >= args.length) return "";
@@ -92,9 +134,10 @@ public final class NameUtil {
 
     /**
      * Match one item from a collection by name using a consistent cascade: exact (case-insensitive)
-     * on the primary name, then with '#' spacing normalized (so "Wolf 2" == "Wolf #2"), then exact on
-     * the secondary/base name, then startsWith on the primary, then a UNIQUE contains. Returns null
-     * if nothing matches — or if a contains-match is ambiguous (more than one item contains the term).
+     * on the primary name, then with the '#' optional (so "Wolf 2" == "Wolf #2"), then a UNIQUE exact
+     * on the secondary/base name, then a UNIQUE startsWith, then a UNIQUE contains. Returns null if
+     * nothing matches, or if the best kind of match fits more than one item: acting on the wrong
+     * goblin without a word is worse than asking the DM to be more specific.
      */
     public static <T> T matchByName(Collection<T> items, String query,
                                     Function<T, String> primaryName, Function<T, String> secondaryName) {
@@ -107,22 +150,33 @@ public final class NameUtil {
         for (T it : items) if (q.equalsIgnoreCase(primaryName.apply(it))) return it;
 
         // 2. '#'-normalized on primary
-        String qn = ql.replaceAll("\\s*#\\s*", "#");
+        String qn = hashless(ql);
         for (T it : items) {
             String p = primaryName.apply(it);
-            if (p != null && p.toLowerCase().replaceAll("\\s*#\\s*", "#").equals(qn)) return it;
+            if (p != null && hashless(p.toLowerCase()).equals(qn)) return it;
         }
 
-        // 3. exact on the secondary/base name
+        // 3. exact on the secondary/base name — unique, or "Goblin" would pick one of three goblins
         if (secondaryName != null) {
-            for (T it : items) if (q.equalsIgnoreCase(secondaryName.apply(it))) return it;
+            T base = null;
+            for (T it : items) {
+                if (!q.equalsIgnoreCase(secondaryName.apply(it))) continue;
+                if (base != null) return null; // ambiguous
+                base = it;
+            }
+            if (base != null) return base;
         }
 
-        // 4. startsWith on primary
+        // 4. unique startsWith on primary. It used to take the first hit, so "Gob" hit whichever
+        //    goblin came first, and a command acted on the wrong creature without a word.
+        T prefix = null;
         for (T it : items) {
             String p = primaryName.apply(it);
-            if (p != null && p.toLowerCase().startsWith(ql)) return it;
+            if (p == null || !p.toLowerCase().startsWith(ql)) continue;
+            if (prefix != null) return null; // ambiguous
+            prefix = it;
         }
+        if (prefix != null) return prefix;
 
         // 5. unique contains on primary
         T contains = null;
@@ -134,6 +188,11 @@ public final class NameUtil {
             }
         }
         return contains;
+    }
+
+    /** "Wolf #2", "Wolf 2" and "Wolf#2" all become "wolf 2": the number sign is optional when typing. */
+    private static String hashless(String s) {
+        return s.replace("#", " ").replaceAll("\\s+", " ").trim();
     }
 
     /** Match convenience for items that have only one name. */

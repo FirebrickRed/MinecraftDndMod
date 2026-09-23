@@ -269,16 +269,19 @@ public class CombatSession {
     }
 
     /**
-     * Get a combatant by name (case-insensitive).
-     * Also searches by base name for convenience.
-     * @param name Name to search for
-     * @return Combatant or null if not found
+     * <b>The</b> combatant-by-name lookup for this fight: the shared match rules
+     * ({@link io.papermc.jkvttplugin.util.NameUtil#matchByName}: exact, "Wolf 2" = "Wolf #2", base
+     * name, then a unique prefix or substring), then a player's Minecraft account name, since a player
+     * combatant goes by their character's name but a DM often types the account. Null when nothing
+     * matches or the name fits more than one combatant.
      */
     public Combatant getCombatantByName(String name) {
+        Combatant match = io.papermc.jkvttplugin.util.NameUtil.matchByName(combatants, name,
+                Combatant::getDisplayName, Combatant::getBaseName);
+        if (match != null || name == null) return match;
+        String account = io.papermc.jkvttplugin.util.NameUtil.stripQuotes(name.trim());
         for (Combatant c : combatants) {
-            if (c.getDisplayName().equalsIgnoreCase(name)) {
-                return c;
-            }
+            if (c.isPlayer() && c.getPlayer() != null && c.getPlayer().getName().equalsIgnoreCase(account)) return c;
         }
         return null;
     }

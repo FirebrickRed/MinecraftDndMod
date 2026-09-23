@@ -66,4 +66,67 @@ class NameUtilTest {
         assertEquals("\"Balin", NameUtil.stripQuotes("\"Balin"));
         assertEquals("Balin's Blade", NameUtil.stripQuotes("Balin's Blade"));
     }
+
+    // ---------- readName / collapseName: the one reader ----------
+
+    private static final java.util.List<String> HP_ACTIONS = java.util.List.of("damage", "heal", "temp", "set", "full");
+
+    /** The playtest bug: /dm hp "The Kindler" damage 5 read the name as "The. */
+    @Test
+    void aQuotedNameReadsToItsClosingQuote() {
+        String[] a = NameUtil.collapseName(args("\"The Kindler\" damage 5"), 0, HP_ACTIONS);
+        assertArrayEquals(new String[]{"The Kindler", "damage", "5"}, a);
+    }
+
+    @Test
+    void anUnquotedNameReadsUpToTheCommandsNextKeyword() {
+        String[] a = NameUtil.collapseName(args("The Kindler DAMAGE 5"), 0, HP_ACTIONS);
+        assertArrayEquals(new String[]{"The Kindler", "DAMAGE", "5"}, a, "stop words ignore case");
+        assertArrayEquals(new String[]{"Meepo", "heal", "3"}, NameUtil.collapseName(args("Meepo heal 3"), 0, HP_ACTIONS));
+    }
+
+    @Test
+    void theFirstWordIsAlwaysTheName() {
+        NameUtil.TakenName n = NameUtil.readName(args("heal heal 3"), 0, HP_ACTIONS);
+        assertEquals("heal", n.value());
+        assertEquals(1, n.nextIndex());
+    }
+
+    @Test
+    void collapseKeepsWhatComesBefore() {
+        String[] a = NameUtil.collapseName(args("clear Balin Ironforge stealth"), 1, java.util.List.of("stealth", "all"));
+        assertArrayEquals(new String[]{"clear", "Balin Ironforge", "stealth"}, a);
+    }
+
+    @Test
+    void noStopWordsReadsToTheEnd() {
+        assertEquals("Balin Ironforge", NameUtil.readName(args("Balin Ironforge"), 0, java.util.List.of()).value());
+    }
+
+    // ---------- matchByName: one match or none ----------
+
+    private record Named(String name, String base) {}
+
+    private static final java.util.List<Named> GOBLINS = java.util.List.of(
+            new Named("Goblin #1", "Goblin"), new Named("Goblin #2", "Goblin"), new Named("Balin Ironforge", "Balin"));
+
+    private static Named match(String q) {
+        return NameUtil.matchByName(GOBLINS, q, Named::name, Named::base);
+    }
+
+    @Test
+    void anExactOrNumberedNameMatches() {
+        assertEquals("Goblin #2", match("goblin #2").name());
+        assertEquals("Goblin #2", match("Goblin 2").name(), "'Goblin 2' = 'Goblin #2'");
+        assertEquals("Balin Ironforge", match("Balin").name(), "a unique base name");
+        assertEquals("Balin Ironforge", match("Bal").name(), "a unique prefix");
+    }
+
+    /** It used to take the first hit, so a command could act on whichever goblin came first. */
+    @Test
+    void anAmbiguousNameMatchesNothing() {
+        assertNull(match("Goblin"), "two goblins share the base name");
+        assertNull(match("Gob"), "two goblins share the prefix");
+        assertNull(match("Nobody"));
+    }
 }
