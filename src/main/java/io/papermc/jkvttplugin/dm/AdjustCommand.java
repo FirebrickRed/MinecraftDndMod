@@ -126,7 +126,9 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text(who.getDisplayName() + " is already at " + current + " HP.", NamedTextColor.GRAY));
             return;
         }
-        if (target < current) DamageHandler.applyDamage(t.session(), who, current - target, null, false);
+        // Lowering goes through the damage path, where temp HP soak first. Push through them too, or
+        // "set HP to 12" would land above 12 (and "drop to 0" would leave them standing).
+        if (target < current) DamageHandler.applyDamage(t.session(), who, current - target + who.getTempHp(), null, false);
         else DamageHandler.applyHealing(t.session(), who, target - current);
         refresh(t);
     }
@@ -362,7 +364,7 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
     public List<String> onTabComplete(CommandSender sender, Command command, String alias, String[] args) {
         if (!DMManager.isDM(sender)) return List.of();
         if (args.length == 1) return CombatTargets.suggestions(args[0]);
-        String[] a = NameUtil.collapseName(args, 0, ACTIONS);
+        String[] a = NameUtil.collapseForCompletion(args, 0, ACTIONS);
         if (a.length == 2) return filter(ACTIONS, a[1]);
         if (a.length == 3) {
             return switch (a[1].toLowerCase(Locale.ROOT)) {

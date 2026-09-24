@@ -136,4 +136,18 @@ class NameUtilTest {
         var meepos = java.util.List.of(new Named("Meepo", "Kobold"), new Named("Meepo", "Kobold"));
         assertNull(NameUtil.matchByName(meepos, "Meepo", Named::name, Named::base));
     }
+
+    /** The playtest bug: "/dm check Balin the Smith <TAB>" offered dc/adv/dis, because it counted words. */
+    @Test
+    void completionPutsTheCursorAfterTheNameQuotedOrNot() {
+        java.util.List<String> stops = java.util.List.of("save", "skill");
+        // Tab completion hands over a trailing "" for the word being typed, so keep it (split -1).
+        String[] unquoted = NameUtil.collapseForCompletion("Balin the Smith ".split(" ", -1), 0, stops);
+        String[] quoted = NameUtil.collapseForCompletion("\"Balin the Smith\" ".split(" ", -1), 0, stops);
+        assertArrayEquals(new String[]{"Balin the Smith", ""}, unquoted);
+        assertArrayEquals(new String[]{"Balin the Smith", ""}, quoted);
+        // After the check type, the next slot is the check's own argument either way.
+        assertArrayEquals(new String[]{"Balin the Smith", "save", "d"},
+                NameUtil.collapseForCompletion("Balin the Smith save d".split(" ", -1), 0, stops));
+    }
 }

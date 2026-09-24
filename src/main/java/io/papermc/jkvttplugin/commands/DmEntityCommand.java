@@ -87,7 +87,6 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "trade" -> handleTrade(sender, args);
             case "shop" -> handleShop(sender, args);
             case "spawngroup" -> handleSpawnGroup(sender, args);
-            case "cleanup" -> handleCleanup(sender, args);
             default -> sendHelp(sender);
         }
 
@@ -1451,6 +1450,9 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
      * no-ops unless the stand is one of ours, carries saved instance data, and isn't already
      * registered. Returns the restored instance, or null.
      */
+    /** Instance ids already reported as having a missing template, so the warning shows once. */
+    private static final java.util.Set<String> WARNED_MISSING_TEMPLATE = new java.util.HashSet<>();
+
     public static DndEntityInstance rehydrate(ArmorStand stand) {
         if (stand == null || !stand.isValid()) return null;
         var pdc = stand.getPersistentDataContainer();
@@ -1462,7 +1464,17 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         if (idStr == null || templateId == null) return null; // damaged save: skip it rather than throw on chunk load
 
         DndEntity template = EntityLoader.getEntity(templateId);
-        if (template == null) return null; // template no longer exists
+        if (template == null) {
+            // Its YAML id was renamed or deleted. Left alone rather than removed, so a typo in a
+            // /dm reload can't wipe creatures out; said once per stand so chunk loads don't spam.
+            if (WARNED_MISSING_TEMPLATE.add(idStr)) {
+                var loc = stand.getLocation();
+                io.papermc.jkvttplugin.JkVttPlugin.getInstance().getLogger().warning("A saved creature uses entity id '" + templateId
+                        + "', which no longer exists, so it wasn't restored. Put the id back, or remove its stand at "
+                        + loc.getWorld().getName() + " " + loc.getBlockX() + " " + loc.getBlockY() + " " + loc.getBlockZ() + ".");
+            }
+            return null;
+        }
 
         String name = pdc.getOrDefault(key("dnd_display_name"), PersistentDataType.STRING, templateId);
         int maxHp = pdc.getOrDefault(key("dnd_max_hp"), PersistentDataType.INTEGER, 1);
@@ -1491,24 +1503,6 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             }
         }
         return restored;
-    }
-
-    /**
-     * Remove orphaned D&D entity armor stands — marked stands the plugin no longer tracks
-     * (e.g. left over after a server restart). Safe: only touches stands carrying our marker.
-     */
-    private void handleCleanup(CommandSender sender, String[] args) {
-        int removed = 0;
-        for (org.bukkit.World world : Bukkit.getWorlds()) {
-            for (ArmorStand stand : world.getEntitiesByClass(ArmorStand.class)) {
-                if (!stand.getPersistentDataContainer().has(DND_ENTITY_KEY, PersistentDataType.BYTE)) continue;
-                if (DndEntityInstance.getByArmorStand(stand) == null) {   // marked but untracked = orphan
-                    stand.remove();
-                    removed++;
-                }
-            }
-        }
-        sender.sendMessage(Component.text("✓ Removed " + removed + " orphaned D&D entity stand(s).", NamedTextColor.GREEN));
     }
 
     /** Exact display name only: where a wrong guess would be silent, like splitting an unquoted rename. */
@@ -1702,7 +1696,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             // Subcommands
-            return List.of("spawn", "list", "remove", "rename", "revive", "teleport", "info", "trade", "shop", "spawngroup", "cleanup").stream()
+            return List.of("spawn", "list", "remove", "rename", "revive", "teleport", "info", "trade", "shop", "spawngroup").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }

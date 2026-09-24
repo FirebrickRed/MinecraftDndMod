@@ -31,7 +31,8 @@ import java.util.UUID;
  * right-click with the View tool. Read-only: nothing here can be taken or moved.
  *
  * <pre>
- *  row 0     summary · sheet / stat block · notes · add a note · adjust
+ *  row 0     summary · sheet, or a creature's stat block (stats, abilities, attacks, YAML notes)
+ *            · DM notes · add a note · adjust
  *  rows 1-4  a character's inventory (backpack, then hotbar), or what a creature carries and drops
  *  row 5     a character's armor and off-hand
  * </pre>
@@ -59,9 +60,18 @@ public final class DmViewMenu {
 
         inv.setItem(0, tile(creature != null ? Material.ARMOR_STAND : Material.PLAYER_HEAD, c.getDisplayName(),
                 NamedTextColor.GOLD, List.of(AdjustCommand.summary(c)), null));
-        inv.setItem(2, creature != null
-                ? tile(Material.WRITABLE_BOOK, "Stat block", NamedTextColor.YELLOW, lines("Abilities, attacks, senses"), "statblock")
-                : tile(Material.WRITABLE_BOOK, "Character sheet", NamedTextColor.YELLOW, lines("Their full sheet"), "sheet"));
+        if (creature != null) {
+            // The stat block is only a few tiles, so it sits right here rather than behind a second menu.
+            var template = creature.getTemplate();
+            inv.setItem(1, EntityStatBlockMenu.buildBasicStatsItem(creature, template));
+            inv.setItem(2, EntityStatBlockMenu.buildAbilitiesItem(template));
+            if (!template.getAttacks().isEmpty()) inv.setItem(3, EntityStatBlockMenu.buildAttacksItem(template));
+            if (template.getDmNotes() != null && !template.getDmNotes().isEmpty()) {
+                inv.setItem(6, EntityStatBlockMenu.buildDmNotesItem(template));
+            }
+        } else {
+            inv.setItem(2, tile(Material.WRITABLE_BOOK, "Character sheet", NamedTextColor.YELLOW, lines("Their full sheet"), "sheet"));
+        }
 
         List<String> notes = ViewCommand.notesFor(c);
         List<Component> noteLore = new ArrayList<>();
@@ -114,9 +124,6 @@ public final class DmViewMenu {
         switch (payload) {
             case "sheet" -> {
                 if (c.getCharacterSheet() != null) ViewCharacterSheetMenu.open(dm, c.getCharacterSheet().getCharacterId());
-            }
-            case "statblock" -> {
-                if (c.getEntityInstance() != null) EntityStatBlockMenu.open(dm, c.getEntityInstance());
             }
             case "adjust" -> AdjustMenu.open(dm, targetId);
             case "note" -> {

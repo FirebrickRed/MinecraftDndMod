@@ -98,7 +98,7 @@ public class EntityStatBlockMenu {
         return item;
     }
 
-    private static ItemStack buildBasicStatsItem(DndEntityInstance instance, DndEntity template) {
+    static ItemStack buildBasicStatsItem(DndEntityInstance instance, DndEntity template) {
         ItemStack item = new ItemStack(Material.SHIELD);
         ItemMeta meta = item.getItemMeta();
 
@@ -121,7 +121,7 @@ public class EntityStatBlockMenu {
         return item;
     }
 
-    private static ItemStack buildAbilitiesItem(DndEntity template) {
+    static ItemStack buildAbilitiesItem(DndEntity template) {
         ItemStack item = new ItemStack(Material.BOOK);
         ItemMeta meta = item.getItemMeta();
 
@@ -144,7 +144,7 @@ public class EntityStatBlockMenu {
         return item;
     }
 
-    private static ItemStack buildAttacksItem(DndEntity template) {
+    static ItemStack buildAttacksItem(DndEntity template) {
         ItemStack item = new ItemStack(Material.IRON_SWORD);
         ItemMeta meta = item.getItemMeta();
 
@@ -166,7 +166,7 @@ public class EntityStatBlockMenu {
         return item;
     }
 
-    private static ItemStack buildDmNotesItem(DndEntity template) {
+    static ItemStack buildDmNotesItem(DndEntity template) {
         ItemStack item = new ItemStack(Material.WRITABLE_BOOK);
         ItemMeta meta = item.getItemMeta();
 

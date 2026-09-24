@@ -93,6 +93,15 @@ class RollsAndChecksTest {
     }
 
     @Test
+    void naturalTwentyAndOneAreCalledOutInTheBreakdown() {
+        assertTrue(RollService.resolve(20, null, 3, "+3[DEX]", false, Advantage.NONE, false).breakdown().endsWith("NATURAL 20!"));
+        assertTrue(RollService.resolve(1, null, 3, "+3[DEX]", false, Advantage.NONE, false).breakdown().endsWith("NATURAL 1"));
+        assertFalse(RollService.resolve(19, null, 3, "+3[DEX]", false, Advantage.NONE, false).breakdown().contains("NATURAL"));
+        // A provided total has no die to see, so nothing to call out.
+        assertFalse(RollService.resolve(null, 20, 3, "+3[DEX]", false, Advantage.NONE, false).breakdown().contains("NATURAL"));
+    }
+
+    @Test
     void rollWordsParse() {
         assertEquals(12, RollService.parseInput(new String[]{"insight", "manualRoll", "12"}).providedRoll());
         assertEquals(18, RollService.parseInput(new String[]{"total", "18"}).providedTotal());

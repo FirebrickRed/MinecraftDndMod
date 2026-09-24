@@ -185,6 +185,15 @@ public final class RollService {
         }
         int total = d20 + modifier;
         return new RollResult(d20, total, false, d20 == 20, d20 == 1,
-                "d20(" + d20 + ") " + modLabel + " = " + total + advNote + luck);
+                "d20(" + d20 + ") " + modLabel + " = " + total + advNote + luck + natCallout(d20));
+    }
+
+    /**
+     * " — NATURAL 20!" / " — NATURAL 1" for the kept die, so every roll that shows its work calls it
+     * out. Only a callout: on a check or save a nat 20 isn't an automatic success (PHB p.7), so the
+     * DM still grades it against the DC.
+     */
+    public static String natCallout(int keptD20) {
+        return keptD20 == 20 ? " — NATURAL 20!" : keptD20 == 1 ? " — NATURAL 1" : "";
     }
 }

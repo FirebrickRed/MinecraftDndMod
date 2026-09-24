@@ -72,6 +72,9 @@ public class DndEntityInstance {
      */
     private int maxHp;
 
+    /** Temporary hit points (PHB p.198): soak damage first, don't stack, lost on death. */
+    private int tempHp;
+
     /**
      * Whether this entity is dead (HP reached 0).
      * Dead entities can be looted but don't act in combat.
@@ -212,6 +215,7 @@ public class DndEntityInstance {
             } catch (NumberFormatException ignored) {}
         }
         acOverride = pdc.get(key("dnd_ac_override"), PersistentDataType.INTEGER);
+        tempHp = isDead ? 0 : pdc.getOrDefault(key("dnd_temp_hp"), PersistentDataType.INTEGER, 0);
     }
 
     // ==================== PERSISTENCE (Issue #89) ====================
@@ -276,6 +280,8 @@ public class DndEntityInstance {
         pdc.set(key("dnd_display_name"), PersistentDataType.STRING, displayName == null ? "" : displayName);
         pdc.set(key("dnd_current_hp"), PersistentDataType.INTEGER, currentHp);
         pdc.set(key("dnd_max_hp"), PersistentDataType.INTEGER, maxHp);
+        if (tempHp > 0) pdc.set(key("dnd_temp_hp"), PersistentDataType.INTEGER, tempHp);
+        else pdc.remove(key("dnd_temp_hp"));
         pdc.set(key("dnd_is_dead"), PersistentDataType.BYTE, (byte) (isDead ? 1 : 0));
         if (conditions.isEmpty()) pdc.remove(key("dnd_conditions"));
         else pdc.set(key("dnd_conditions"), PersistentDataType.STRING, String.join(",", conditions));
@@ -329,9 +335,12 @@ public class DndEntityInstance {
 
     public void takeDamage(int damage) {
         boolean wasDead = isDead;
-        currentHp = Math.max(0, currentHp - damage);
+        int absorbed = Math.min(tempHp, Math.max(0, damage));
+        tempHp -= absorbed;
+        currentHp = Math.max(0, currentHp - (damage - absorbed));
         if (currentHp == 0) {
             isDead = true;
+            tempHp = 0;
         }
         persist();
         if (isDead && !wasDead) applyCorpse(true); else updateDeathVisual();
@@ -440,6 +449,14 @@ public class DndEntityInstance {
     }
 
     public int getCurrentHp() { return currentHp; }
+    public int getTempHp() { return tempHp; }
+
+    /** Temp HP don't stack: the creature keeps whichever is higher (PHB p.198). The dead can't gain any. */
+    public void grantTempHp(int amount) {
+        if (isDead || amount <= 0) return;
+        tempHp = Math.max(tempHp, amount);
+        persist();
+    }
     public void setCurrentHp(int currentHp) { this.currentHp = Math.max(0, Math.min(maxHp, currentHp)); persist(); }
 
     public int getMaxHp() { return maxHp; }

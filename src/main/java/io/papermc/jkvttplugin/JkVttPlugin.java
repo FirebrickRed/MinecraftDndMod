@@ -202,7 +202,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         // Entities are NOT despawned on shutdown: their state rides on the armor stand's persistent
         // data (persisted just above), Minecraft saves the stands with the world, and on next boot
         // restoreAll() + the chunk-load listener re-register them (Issue #89). Deleting them here
-        // would defeat that persistence — use /dm entity cleanup to clear genuine orphans instead.
+        // would defeat that persistence. A stand whose YAML id is gone is skipped with a console warning.
         getLogger().info("D&D Plugin has been disabled!");
     }
 

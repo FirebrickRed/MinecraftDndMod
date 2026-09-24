@@ -42,8 +42,6 @@ Finish the combo, then look at the sheet and your inventory.
 - [ ] **Entertainer:** the picked instrument is in your kit.
 - [ ] `/character rest short` recovers as before.
 - [ ] `/character rest long` recovers as before.
-- [ ] Press **Q** holding the sheet → it drops; nothing opens.
-- [ ] Press **Q** holding the Create Character paper → it drops; nothing opens.
 - [ ] **Tiefling Rogue:** right-click thieves' tools with no chest in view → nothing happens, no
       "cannot use this type of focus" message.
 - [ ] **Tiefling Rogue:** right-click a chest holding thieves' tools → the chest's own [Open it] /
@@ -51,17 +49,8 @@ Finish the combo, then look at the sheet and your inventory.
 
 ## The sheet's skills and rolls
 
-On a Tiefling Rogue with Expertise in Persuasion (or any expertise skill):
+Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX rolls.
 
-- [ ] Skills menu, hover the expertise skill → "✦ Expertise (proficiency ×2)", not "Proficient".
-- [ ] Same hover → the bonus broken down, e.g. `+4[CHA] +4[Prof ×2]`.
-- [ ] Hover a plain proficient skill → e.g. `+1[WIS] +2[Prof]`.
-- [ ] Hover a saving throw → its breakdown too.
-- [ ] Click a skill → no menu opens; chat shows the bonus and **[Normal] [Advantage] [Disadvantage]**.
-- [ ] Click **[Advantage]** → the roll shows both dice and "advantage", e.g. `[9, 15] advantage`.
-- [ ] Click **[Disadvantage]** → both dice, keeps the lower.
-- [ ] The buttons still work after a couple of rolls (they don't go dead after one click).
-- [ ] `/character check skill persuasion adv autoRoll` → both d20s shown, not just one.
 - [ ] **Wizard in chain mail:** the chat line for a DEX skill says it's at disadvantage (armor).
 - [ ] **Wizard in chain mail:** a WIS check doesn't.
 - [ ] **Wizard in chain mail:** the sheet's AC tile says "⚠ not proficient with Chain Mail".
@@ -70,12 +59,20 @@ On a Tiefling Rogue with Expertise in Persuasion (or any expertise skill):
 - [ ] **Fighter in chain mail:** no penalty.
 - [ ] **Mountain dwarf wizard:** scale mail fine, chain mail penalized.
 
+## Natural 1s and 20s
+
+Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1`).
+
+- [ ] A sheet skill roll on a 20 → the chat line ends in gold **NATURAL 20!**; on a 1, red **NATURAL 1**.
+- [ ] A DM-called check (`/dm check <you> skill stealth`, answered `manualRoll 20`) → the DM's
+      result says **NATURAL 20!**, and it's still graded against the DC (not an auto-success).
+- [ ] A creature check (`/dm check Balin Ironforge save dex manualRoll 1`) → **NATURAL 1**.
+- [ ] `total 20` → no callout (there's no die to see).
+
 ## Casting from the spellbook and `/character cast`
 
 - [ ] `/character cast ` + Tab → your cantrips, spells and racial spells (Thaumaturgy for a tiefling).
 - [ ] `/character cast fire_bolt ` + Tab → creature and player names.
-- [ ] Click Thaumaturgy in the spellbook → the chat line's spell name is underlined; hover it →
-      level, school, casting time, range, duration and what it does.
 
 ## Combat
 
@@ -150,19 +147,19 @@ On a Tiefling Rogue with Expertise in Persuasion (or any expertise skill):
 
 ## The Adjust menu & `/dm adjust`
 
-- [ ] HP tile: click → +1; right-click → −1; shift → ±5.
 - [ ] In a fight, an HP change updates the scoreboard and the player's open sheet.
-- [ ] **Set HP exactly…** → closes the menu, gives a [click to type the number] line.
-- [ ] **Temp HP…** → same.
-- [ ] **Max HP…** (creatures) → same.
-- [ ] Creature AC tile, shift-click → own AC +1, "Own AC 13 (stat block says 12)".
-- [ ] **Back to the stat block's AC** undoes it.
+- [ ] **Temp HP…** → closes the menu, gives a fill-in line.
+- [ ] **Creature temp HP:** `/dm adjust Balin Ironforge temp 5` → "gains 5 temporary HP"; the
+      Adjust header and the view card show `+5 temp`.
+- [ ] Then `/dm adjust Balin Ironforge hp -3` → "Temp HP absorbed 3", his real HP unchanged.
+- [ ] `temp 2` while he has 5 → stays 5 (temp HP don't stack; the higher one wins).
+- [ ] In a fight, a creature's temp HP shows as `+N` on the scoreboard.
+- [ ] **Set HP exactly** to a lower number while someone has temp HP → they land on exactly that
+      number, temp HP gone (it used to soak part and leave them higher).
+- [ ] **Drop to 0 HP** on a creature with temp HP → it dies.
 - [ ] Player AC tile, shift-click → says their AC comes from armor.
-- [ ] The rules text on a condition tile is wrapped, not one long line.
-- [ ] `/dm hp` is an unknown command.
 - [ ] `/combat damage override` is gone.
 - [ ] `/combat condition` is gone.
-- [ ] `/dm entity maxhp` is gone.
 - [ ] `--force` is gone.
 - [ ] A trap's **[Apply damage]** fills `/dm adjust … hp -…`.
 - [ ] A spawn's **[Use my own roll]** fills `/dm adjust … maxhp`.
@@ -179,20 +176,15 @@ On a Tiefling Rogue with Expertise in Persuasion (or any expertise skill):
 
 ## Viewing & DM notes
 
-- [ ] View tool, right-click a creature → chat card: name (size, type), HP, AC, speed, conditions,
-      notes, [Full view] / [Adjust] / [Add a note].
-- [ ] Hover a condition on the card → its rules, wrapped.
 - [ ] View tool on your own character → race and class, concentration.
-- [ ] Right-clicking with the View tool no longer opens the sheet directly; Full view has a button for it.
 - [ ] A DM AC adjustment plus Shield → the card's AC explains both.
 - [ ] A creature with its own AC → "own AC, stat block says 12".
 - [ ] A downed character → "Down, dying — death saves: 1 ✔ / 2 ✖".
 - [ ] A dead one → "☠ DEAD".
 - [ ] Sneak + right-click a player → Full view with their real inventory; you can't take or move anything.
 - [ ] Full view of a creature → what it carries, "Found with a DC 12 Investigation" / "In plain sight".
-- [ ] Full view → [Character sheet] / [Stat block] opens it.
-- [ ] Full view → [Adjust] opens the Adjust menu.
-- [ ] Full view → [Add a note…] gives a fill-in line.
+- [ ] Full view of a creature → the top row holds its stat block: stats, abilities, attacks (and the
+      YAML's DM notes if it has any). No separate [Stat block] button.
 - [ ] `/dm view <who> full` opens the same Full view.
 - [ ] `/dm note Balin add owes the party a favour` → shows on Balin's card, **after** his YAML `dm_notes`.
 - [ ] `/dm note Balin` lists the notes.
@@ -216,14 +208,12 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 ## Entities & shops
 
 - [ ] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
-- [ ] Spawn `wolf` twice → they're named "Wolf" and "Wolf #2".
-- [ ] `/dm entity spawn kobold Meepo` twice → "Meepo" and "Meepo #2".
-- [ ] `/dm entity rename ` + Tab → **every** creature (The Kindler, Alira, …), not just Balin.
-- [ ] `/dm entity teleport ` + Tab → every creature.
-- [ ] `/dm entity info ` + Tab → every creature.
-- [ ] `/dm entity trade ` + Tab → only merchants.
-- [ ] `/dm entity revive ` + Tab → only dead creatures.
-- [ ] Names with spaces tab-complete in quotes (`"The Kindler"`).
+- [ ] `/dm check ` + Tab and `/dm adjust ` + Tab → the **same** list, multi-word names in quotes (`"The Kindler"`).
+- [ ] `/dm check Balin Ironforge ` + Tab (unquoted) → `ability / save / skill` (no `tool` for a creature).
+- [ ] `/dm check "Balin Ironforge" ` + Tab → the same.
+- [ ] `/dm check Balin Ironforge save dex ` + Tab → `dc / adv / dis / autoRoll / manualRoll / total`.
+- [ ] `/dm adjust The Kindler ` + Tab (unquoted) → the actions (`hp`, `temp`, …).
+- [ ] `/dm entity cleanup` is gone (unknown subcommand, not in Tab).
 - [ ] `/dm check <you> insight vs Balin deception` → your roll prompt, plus **[Roll it] / [I rolled…]** labelled "+1 CHA".
 - [ ] Same, answered → the winner with [Share].
 - [ ] Same, with `autoRoll` inline.
@@ -233,26 +223,14 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 Spawn alira as "The Kindler" first (`/dm entity spawn alira "The Kindler"`).
 
-- [ ] `/dm adjust "The Kindler" hp -5` works.
-- [ ] `/dm adjust The Kindler hp -5` works.
-- [ ] `/dm check Balin Ironforge save dex` works (a creature now, not an error).
-- [ ] `/dm check "Balin Ironforge" save dex` works.
 - [ ] A creature check with no roll → the DM gets [Roll it] / [I rolled…].
-- [ ] `/dm check Balin Ironforge save dex dc 12 autoRoll` → the result graded against the DC, with [Share with players].
-- [ ] `/dm check Balin Ironforge skill perception` uses his Perception bonus.
-- [ ] `/dm check clear Balin Ironforge` works.
-- [ ] `/dm check <you> insight vs Balin Ironforge deception` works, quoted or not.
+- [ ] `/dm check clear Balin Ironforge` → "is a creature. Only characters have held checks…".
+- [ ] `/dm check clear ` + Tab → only characters, no creatures.
+- [ ] `/dm check clear <your character>` → clears your held checks.
 - [ ] `/dm resource restore "Balin Ironforge" rage` works.
-- [ ] `/character delete "Balin Ironforge"` works.
-- [ ] Spawn two goblins, rename both to "Snik" → `/dm adjust Snik hp -1` says "'Snik' could be … — name the one you mean".
-- [ ] Two spawned goblins (Goblin, Goblin #2) → `/dm adjust Goblin 2 hp -1` hits #2; `Goblin` hits the first.
 - [ ] `/dm rest <character> long` works.
 - [ ] `/dm resource restore <character> all` works.
 - [ ] `/dm resource consume <character> <res> 1` works.
-- [ ] Annotate tool on a chest → the menu has **[Describe…]**, **[Trap…]**, **[Key…]**.
-- [ ] Click **[Describe…]** → the chat bar holds `/dm object desc ` with the current description.
-- [ ] Click **[Trap…]** → the chat bar holds `/dm object trap `.
-- [ ] Click **[Key…]** → the chat bar holds `/dm object key `.
 - [ ] Look at a chest, `/dm object key brass_key` → "The Brass Key opens the Chest".
 - [ ] `/dm object key` on a sealed block refuses.
 - [ ] **Thieves' tools break on a fail:** carry 2 sets, `/dm check <you> tool thieves_tools dc 25`, fail → one set gone, you're told.
@@ -270,6 +248,10 @@ Set these up, `/stop`, start the server, then check:
 - [ ] High elf rogue still casts Fire Bolt with INT; astral elf still uses Wisdom.
 - [ ] A dead character is still dead; their body is still there.
 - [ ] `/dm adjust <c> temp 7` before → still 7 temp HP after.
+- [ ] `/dm adjust Balin Ironforge temp 4` before → Balin still has 4 temp HP after.
+- [ ] **A creature whose id is gone:** spawn `wolf`, stop the server, rename `id: wolf` in its YAML,
+      start → the console warns once, naming `wolf` and the stand's coordinates; the wolf isn't restored.
+      (Put the id back afterwards → it restores on the next start.)
 - [ ] Half-orc dropped to 0 before (held at 1 by Relentless) → drop them again after, they fall.
 - [ ] A note on a **character** (`/dm note <character> add …`) is still there after.
 - [ ] **A fight survives** (set up: round 2, a condition on someone, a player at 0 HP; check
@@ -344,8 +326,36 @@ Set these up, `/stop`, start the server, then check:
 ---
 
 # Playtest notes
-
 (`→` lines are Claude's status. New notes go at the top.)
+
+**2026-09-24**
+
+Call out nat 1s and nat 20s.
+  → done: every roll that shows its dice ends in **NATURAL 20!** / **NATURAL 1**. It's only a
+    callout; a nat 20 on a check isn't an automatic success. See *Natural 1s and 20s*.
+Gray out temp HP for entities since they can't have it?
+  → there was no rule against it, we just never stored it. Creatures have temp HP now. Also fixed
+    "set HP" landing too high when someone had temp HP. See *The Adjust menu*.
+Ticket: standardize how every command suggests a name (`/dm check` unquoted, `/dm adjust` quoted).
+  → #215. `/dm check` and `/dm adjust` already share one list (quoted) and accept both spellings;
+    #215 covers the rest (mostly `/combat`).
+Same for every [Roll it] / [I rolled…].
+  → #216: one helper builds every roll prompt (8 wordings across 12 files today).
+`/dm check Balin the Smith` only prompts adv / dc / dis.
+  → a bug: Tab counted words, so a three-word name put you three slots ahead. Fixed; you now get
+    ability / save / skill next. See *Entities & shops*.
+`/dm check clear Balin Ironforge` only works for players.
+  → by design, but the message was bad: held checks are characters' rolls kept for you, and a
+    creature's check is your own roll, so a creature never has any. It now says so.
+Entity or player in the usage text?
+  → **creature**: `<character|creature>`, `<character>` when only characters work. `/dm check` done;
+    the rest is in #215.
+Full view should show the stat block instead of a separate menu.
+  → done: a creature's stat block is in the Full view's top row.
+What decides what goes to the console?
+  → nothing on purpose; fights never reach it. A real game log is #217 (low priority).
+Still need `/dm entity cleanup`?
+  → removed. A creature whose YAML id you renamed now gets a console warning instead.
 
 **2026-09-23**
 

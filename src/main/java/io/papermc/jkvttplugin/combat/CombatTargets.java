@@ -111,9 +111,27 @@ public final class CombatTargets {
     }
     /** {@link #suggestions()} that match what's typed so far, ignoring a leading quote on either side. */
     public static List<String> suggestions(String typed) {
+        return matching(suggestions(), typed);
+    }
+
+    /** Only the characters of online players, for commands that can't take a creature. */
+    public static List<String> characterSuggestions(String typed) {
+        List<String> out = new ArrayList<>();
+        for (Player online : Bukkit.getOnlinePlayers()) {
+            CharacterSheet sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(online);
+            if (sheet != null && sheet.getCharacterName() != null) out.add(quoted(sheet.getCharacterName()));
+        }
+        return matching(out, typed);
+    }
+
+    private static String quoted(String name) {
+        return name.contains(" ") ? "\"" + name + "\"" : name; // quoted, so later arguments still parse
+    }
+
+    private static List<String> matching(List<String> names, String typed) {
         String t = typed == null ? "" : (typed.startsWith("\"") ? typed.substring(1) : typed).toLowerCase();
         List<String> out = new ArrayList<>();
-        for (String s : suggestions()) {
+        for (String s : names) {
             String bare = s.startsWith("\"") ? s.substring(1) : s;
             if (bare.toLowerCase().startsWith(t)) out.add(s);
         }
@@ -125,15 +143,9 @@ public final class CombatTargets {
         List<String> out = new ArrayList<>();
         for (DndEntityInstance instance : DndEntityInstance.getAll()) {
             String n = instance.getDisplayName();
-            if (n != null) out.add(n.contains(" ") ? "\"" + n + "\"" : n); // quoted, so later arguments still parse
+            if (n != null) out.add(quoted(n));
         }
-        for (Player online : Bukkit.getOnlinePlayers()) {
-            CharacterSheet sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(online);
-            if (sheet != null && sheet.getCharacterName() != null) {
-                String n = sheet.getCharacterName();
-                out.add(n.contains(" ") ? "\"" + n + "\"" : n);
-            }
-        }
+        out.addAll(characterSuggestions(""));
         return out;
     }
 }

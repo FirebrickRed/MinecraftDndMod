@@ -139,10 +139,10 @@ public class RollOptionsMenuHandler {
         if (both.find()) {
             boolean adv = both.group(1).equalsIgnoreCase("advantage");
             broadcastRoll(character, info, r.total(), "[" + both.group(2) + ", " + both.group(3) + "]",
-                    adv ? "advantage" : "disadvantage", adv ? NamedTextColor.GREEN : NamedTextColor.RED);
+                    adv ? "advantage" : "disadvantage", adv ? NamedTextColor.GREEN : NamedTextColor.RED, r.d20());
             return true;
         }
-        broadcastRoll(character, info, r.total(), dice, null, null);
+        broadcastRoll(character, info, r.total(), dice, null, null, r.d20());
         return true;
     }
 
@@ -311,7 +311,7 @@ public class RollOptionsMenuHandler {
         RollInfo info = getRollInfo(character, type, value);
         int total = d20 + info.bonus;
 
-        broadcastRoll(character, info, total, String.valueOf(d20), null, null);
+        broadcastRoll(character, info, total, String.valueOf(d20), null, null, d20);
     }
 
     /**
@@ -324,7 +324,7 @@ public class RollOptionsMenuHandler {
         RollInfo info = getRollInfo(character, type, value);
         int total = higher + info.bonus;
 
-        broadcastRoll(character, info, total, "[" + d20_1 + ", " + d20_2 + "]", "advantage", NamedTextColor.GREEN);
+        broadcastRoll(character, info, total, "[" + d20_1 + ", " + d20_2 + "]", "advantage", NamedTextColor.GREEN, higher);
     }
 
     /**
@@ -337,7 +337,7 @@ public class RollOptionsMenuHandler {
         RollInfo info = getRollInfo(character, type, value);
         int total = lower + info.bonus;
 
-        broadcastRoll(character, info, total, "[" + d20_1 + ", " + d20_2 + "]", "disadvantage", NamedTextColor.RED);
+        broadcastRoll(character, info, total, "[" + d20_1 + ", " + d20_2 + "]", "disadvantage", NamedTextColor.RED, lower);
     }
 
     /**
@@ -346,7 +346,7 @@ public class RollOptionsMenuHandler {
      *      or: "[CharName] rolled Stealth with advantage: 18 (d20: [15, 10] +3[DEX] +2[Prof])"
      */
     private static void broadcastRoll(CharacterSheet character, RollInfo info, int total,
-                                       String diceResult, String rollType, NamedTextColor rollTypeColor) {
+                                       String diceResult, String rollType, NamedTextColor rollTypeColor, int keptD20) {
         Component message = Component.text(character.getCharacterName(), NamedTextColor.AQUA)
                 .append(Component.text(" rolled ", NamedTextColor.GRAY))
                 .append(Component.text(info.displayName, NamedTextColor.YELLOW));
@@ -362,6 +362,10 @@ public class RollOptionsMenuHandler {
                 .append(Component.text(" (d20: " + diceResult + " ", NamedTextColor.DARK_GRAY))
                 .append(Component.text(info.breakdown, NamedTextColor.GRAY))
                 .append(Component.text(")", NamedTextColor.DARK_GRAY));
+        String nat = RollService.natCallout(keptD20);
+        if (!nat.isEmpty()) {
+            message = message.append(Component.text(nat, keptD20 == 20 ? NamedTextColor.GOLD : NamedTextColor.DARK_RED, TextDecoration.BOLD));
+        }
 
         Bukkit.broadcast(message);
     }

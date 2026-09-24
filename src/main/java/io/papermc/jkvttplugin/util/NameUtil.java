@@ -93,6 +93,19 @@ public final class NameUtil {
         return out;
     }
 
+    /**
+     * {@link #collapseName} for a tab completer: the word being typed (the last one) is never folded
+     * into the name, so {@code Balin the Smith <TAB>} and {@code "Balin the Smith" <TAB>} both put the
+     * cursor on the argument after the name, and a completer reads positions the same way either way.
+     */
+    public static String[] collapseForCompletion(String[] args, int from, Collection<String> stopWords) {
+        if (args == null || args.length <= from + 1) return args;
+        String[] head = collapseName(java.util.Arrays.copyOf(args, args.length - 1), from, stopWords);
+        String[] out = java.util.Arrays.copyOf(head, head.length + 1);
+        out[head.length] = args[args.length - 1];
+        return out;
+    }
+
     private static boolean isStopWord(String word, Collection<String> stopWords) {
         if (stopWords == null || word.startsWith("--")) return word.startsWith("--");
         for (String stop : stopWords) if (stop.equalsIgnoreCase(word)) return true;

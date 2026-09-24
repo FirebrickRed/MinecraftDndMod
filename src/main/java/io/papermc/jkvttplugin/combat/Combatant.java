@@ -585,13 +585,14 @@ public class Combatant {
         return entity != null ? entity.getMaxHp() : 0;
     }
 
-    /** Temporary hit points (players only; entities always report 0). */
+    /** Temporary hit points, from the character's sheet or the creature's instance. */
     public int getTempHp() {
         if (isPlayer()) {
             CharacterSheet sheet = getCharacterSheet();
             return sheet != null ? sheet.getTempHealth() : 0;
         }
-        return 0;
+        DndEntityInstance entity = getEntityInstance();
+        return entity != null ? entity.getTempHp() : 0;
     }
 
     // ==================== ACTIVE EFFECTS (Effect Engine, #70) ====================
@@ -737,7 +738,7 @@ public class Combatant {
         }
     }
 
-    /** Grant temporary HP. Only players track temp HP; returns false for entities. */
+    /** Grant temporary HP (the higher of old and new, PHB p.198). False when there's no one to give it to. */
     public boolean grantTempHp(int amount) {
         if (isPlayer()) {
             CharacterSheet sheet = getCharacterSheet();
@@ -745,8 +746,12 @@ public class Combatant {
                 sheet.setTemporaryHp(amount);
                 return true;
             }
+            return false;
         }
-        return false;
+        DndEntityInstance entity = getEntityInstance();
+        if (entity == null || entity.isDead()) return false;
+        entity.grantTempHp(amount);
+        return true;
     }
 
     /** Damage types this combatant resists (half damage). */

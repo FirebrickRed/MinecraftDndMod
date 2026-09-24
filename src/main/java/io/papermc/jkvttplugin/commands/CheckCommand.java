@@ -77,6 +77,16 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         // clear / active take a character name that may have spaces ("Balin Ironforge").
         if (args.length >= 2 && (args[0].equalsIgnoreCase("clear") || args[0].equalsIgnoreCase("active"))) {
             args = NameUtil.collapseName(args, 1, CLEAR_STOP_WORDS);
+            // Held checks are a character's rolls kept for the DM. A creature's check is the DM's own
+            // roll and is never held, so there's nothing to clear or list; say so rather than "not found".
+            DndEntityInstance creature = DndEntityInstance.findByName(args[1]);
+            if (creature != null && io.papermc.jkvttplugin.character.CharacterSheetManager
+                    .findAllCharactersByName(NameUtil.stripQuotes(args[1])).isEmpty()) {
+                sender.sendMessage(Component.text(creature.getDisplayName() + " is a creature. Only characters have held checks"
+                        + " (a creature's roll is yours, and isn't kept), so there's nothing to "
+                        + args[0].toLowerCase() + ".", NamedTextColor.GRAY));
+                return true;
+            }
         }
         if (args.length >= 2 && args[0].equalsIgnoreCase("clear")) {
             CharacterSheet s = CharacterResolver.resolveOrError(sender, args[1]);
@@ -111,17 +121,17 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             return handleContest(sender, args, vsIdx);
         }
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /dm check <player> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
-            sender.sendMessage(Component.text("       /dm check <player> tool <tool> [ability] [dc <n>]   (e.g. tool thieves_tools dc 15)", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("Usage: /dm check <character|creature> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("       /dm check <character> tool <tool> [ability] [dc <n>]   (e.g. tool thieves_tools dc 15)", NamedTextColor.GRAY));
             sender.sendMessage(Component.text("       /dm check <A> <skillA> vs <B> <skillB> [autoRoll|manualRoll <n>]   (contested; A/B can be a creature)", NamedTextColor.GRAY));
-            sender.sendMessage(Component.text("       /dm check clear <player> [skill|all]  ·  /dm check active <player>", NamedTextColor.GRAY));
+            sender.sendMessage(Component.text("       /dm check clear <character> [skill|all]  ·  /dm check active <character>", NamedTextColor.GRAY));
             return true;
         }
 
         // The name runs up to the check type, so "Balin Ironforge save dex" works quoted or not.
         args = NameUtil.collapseName(args, 0, CHECK_TYPES);
         if (args.length < 3) {
-            sender.sendMessage(Component.text("Usage: /dm check <player> <ability|save|skill|tool> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm check <character|creature> <ability|save|skill|tool> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
             return true;
         }
         // A spawned creature rolls too (a goblin's DEX save against a trap): the DM rolls for it.
@@ -496,29 +506,43 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         int vsIdx = -1;
         for (int i = 0; i < args.length - 1; i++) if (args[i].equalsIgnoreCase("vs")) { vsIdx = i; break; }
         if (vsIdx >= 0) {
-            int pos = args.length - 1 - vsIdx;
-            if (pos == 1) return CombatTargets.suggestions(args[args.length - 1]);
-            else if (pos == 2) for (Skill s : Skill.values()) out.add(s.name().toLowerCase());
+            List<String> skills = new ArrayList<>();
+            for (Skill s : Skill.values()) skills.add(s.name().toLowerCase());
+            String[] a = NameUtil.collapseForCompletion(args, vsIdx + 1, skills);
+            int pos = a.length - 1 - vsIdx;
+            if (pos == 1) return CombatTargets.suggestions(a[a.length - 1]);
+            else if (pos == 2) out.addAll(skills);
             else if (pos == 3) out.addAll(List.of("autoRoll", "manualRoll", "total"));
-            return filter(out, args[args.length - 1]);
+            return filter(out, a[a.length - 1]);
         }
 
-        switch (args.length) {
-            case 1 -> {
-                out.addAll(List.of("clear", "active"));
-                for (Player p : Bukkit.getOnlinePlayers()) out.add(p.getName());
-                // A creature can open a contest too (Balin's Deception vs Zek's Insight).
-                for (DndEntityInstance e : DndEntityInstance.getAll()) {
-                    if (e.getDisplayName() != null) out.add(e.getDisplayName());
-                }
+        // Names are suggested and read exactly as /dm adjust does: the same quoted list, and the name
+        // collapsed into one slot, so "Balin the Smith" and "\"Balin the Smith\"" land on the same argument.
+        if (args.length == 1) {
+            out.addAll(filter(List.of("clear", "active"), args[0]));
+            out.addAll(CombatTargets.suggestions(args[0]));
+            return out;
+        }
+        if (args[0].equalsIgnoreCase("clear") || args[0].equalsIgnoreCase("active")) {
+            String[] a = NameUtil.collapseForCompletion(args, 1, CLEAR_STOP_WORDS);
+            if (a.length == 2) return CombatTargets.characterSuggestions(a[1]); // held checks are characters' only
+            if (a.length == 3 && a[0].equalsIgnoreCase("clear")) {
+                out.add("all");
+                for (Skill s : Skill.values()) out.add(s.name().toLowerCase());
+                return filter(out, a[2]);
             }
+            return out;
+        }
+        List<String> nameStops = new ArrayList<>(CHECK_TYPES);
+        for (Skill s : Skill.values()) nameStops.add(s.name().toLowerCase());
+        args = NameUtil.collapseForCompletion(args, 0, nameStops);
+        boolean creature = DndEntityInstance.findByName(args[0]) != null;
+
+        switch (args.length) {
             case 2 -> {
-                if (args[0].equalsIgnoreCase("clear") || args[0].equalsIgnoreCase("active")) {
-                    for (Player p : Bukkit.getOnlinePlayers()) out.add(p.getName());
-                } else {
-                    out.addAll(List.of("ability", "save", "skill", "tool"));
-                    for (Skill s : Skill.values()) out.add(s.name().toLowerCase()); // contested: <A> <skillA> vs …
-                }
+                out.addAll(List.of("ability", "save", "skill"));
+                if (!creature) out.add("tool"); // a stat block has no tool proficiencies
+                for (Skill s : Skill.values()) out.add(s.name().toLowerCase()); // contested: <A> <skillA> vs …
             }
             case 3 -> {
                 String cat = args[1].toLowerCase();
@@ -532,11 +556,15 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
                     out.add("vs"); // contested continuation
                 }
             }
-            case 4 -> {
-                if (args[1].equalsIgnoreCase("tool")) out.addAll(List.of("str", "dex", "con", "int", "wis", "cha"));
+            default -> {
+                // After the check: its options, in any order. "dc" wants a number next.
+                String prev = args[args.length - 2].toLowerCase();
+                if (prev.equals("dc") || prev.equals("manualroll") || prev.equals("total")) return out;
+                if (args.length == 4 && args[1].equalsIgnoreCase("tool")) out.addAll(List.of("str", "dex", "con", "int", "wis", "cha"));
                 out.addAll(List.of("dc", "adv", "dis"));
+                // A creature's check is the DM's roll, so it can be answered inline.
+                if (creature) out.addAll(List.of("autoRoll", "manualRoll", "total"));
             }
-            default -> { /* no suggestions */ }
         }
         return filter(out, args[args.length - 1]);
     }

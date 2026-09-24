@@ -297,7 +297,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
         if (DMManager.isDM(sender)) {
             sender.sendMessage(Component.text("DM tools:", NamedTextColor.GOLD));
             sender.sendMessage(Component.text("/dm give <player> <item_id> [amount]", NamedTextColor.AQUA));
-            sender.sendMessage(Component.text("/dm check <player> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm check <character|creature> <ability|save|skill> <name> [dc <n>] [adv|dis]", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm check <A> <skillA> vs <B> <skillB>   (contested)", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm object <lock|unlock|seal|hide|reveal|desc|trap|loot|clear|info>   (look at a block)", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm adjust <character|creature> [hp|temp|maxhp|ac|condition|down|revive …]", NamedTextColor.AQUA)
@@ -308,7 +308,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
                     .append(Component.text("  - DM-only notes", NamedTextColor.GRAY)));
             sender.sendMessage(Component.text("/dm revive <character|creature> [hp]", NamedTextColor.AQUA)
                     .append(Component.text("  - the only way back from death", NamedTextColor.GRAY)));
-            sender.sendMessage(Component.text("/dm entity <spawn|list|remove|rename|revive|teleport|info|trade|shop|cleanup>", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm entity <spawn|list|remove|rename|revive|teleport|info|trade|shop>", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm rest <character> <short|long>", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm resource <restore|consume> <character> ...", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm reload", NamedTextColor.AQUA)
