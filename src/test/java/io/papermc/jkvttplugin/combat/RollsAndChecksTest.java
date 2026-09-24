@@ -76,7 +76,7 @@ class RollsAndChecksTest {
         RollService.RollResult r = RollService.resolve(14, null, 5, "+5[Deception]", false, Advantage.NONE, false);
         assertEquals(19, r.total());
         assertEquals(14, r.d20());
-        assertEquals("d20(14) +5[Deception] = 19", r.breakdown());
+        assertEquals("🎲 you rolled 14 +5[Deception] = 19", r.breakdown());
     }
 
     @Test

@@ -114,27 +114,15 @@ public final class ConcentrationManager {
                 .append(Component.text(target.getDisplayName(true) + " must hold " + what
                         + " together: DC " + dc + " CON save.", NamedTextColor.YELLOW)));
 
-        Component ask = Component.text("◈ Roll a CON save vs DC " + dc + " — you add " + sign + bonus
-                        + " (" + breakdown + "): ", NamedTextColor.GOLD)
-                .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand("/combat concentration manualRoll "))
-                        .hoverEvent(HoverEvent.showText(Component.text(
-                                "Fills: /combat concentration manualRoll <your d20>\nThe game adds " + sign + bonus + "."))))
-                .append(Component.text("  ", NamedTextColor.GRAY))
-                .append(Component.text("[or let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand("/combat concentration autoRoll"))
-                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls the d20 and adds " + sign + bonus + "."))));
-
+        String adds = sign + bonus + " (" + breakdown + ")";
         if (target.isPlayer() && target.getPlayer() != null) {
-            target.getPlayer().sendMessage(ask);
+            target.getPlayer().sendMessage(RollPrompt.line("◈ Roll a CON save vs DC " + dc + ":", NamedTextColor.GOLD,
+                    "/combat concentration ", "d20", adds));
         } else {
             String quoted = target.getDisplayName().contains(" ")
                     ? "\"" + target.getDisplayName() + "\"" : target.getDisplayName();
-            session.sendToDM(Component.text("◈ Roll " + target.getDisplayName(true) + "'s CON save (DC " + dc
-                            + ", they add " + sign + bonus + ") — ", NamedTextColor.GOLD)
-                    .append(Component.text("[click, then type the d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                            .clickEvent(ClickEvent.suggestCommand("/combat concentration " + quoted + " manualRoll "))
-                            .hoverEvent(HoverEvent.showText(Component.text("Rolls the concentration save for the creature.")))));
+            session.sendToDM(RollPrompt.line("◈ Roll " + target.getDisplayName(true) + "'s CON save (DC " + dc + "):",
+                    NamedTextColor.GOLD, "/combat concentration " + quoted + " ", "d20", adds));
         }
     }
 

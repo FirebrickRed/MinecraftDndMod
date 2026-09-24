@@ -34,7 +34,24 @@ public class CharacterSheetItemListener implements Listener {
         if (clicked != null && clicked.getType().isInteractable()) return;
 
         event.setCancelled(true);
+        open(player, item);
+    }
 
+    /**
+     * Right-clicking while looking at a creature (or another player) is a different Minecraft event,
+     * so the sheet never opened with anyone in front of you. Anything that already handled the click
+     * (looting a body, a DM tool, a corpse) cancels it first, and then this stays out of the way.
+     */
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGH, ignoreCancelled = true)
+    public void onInteractEntity(org.bukkit.event.player.PlayerInteractEntityEvent event) {
+        if (event.getHand() != EquipmentSlot.HAND) return;
+        ItemStack item = event.getPlayer().getInventory().getItemInMainHand();
+        if (!CharacterSheetManager.isCharacterSheetItem(item)) return;
+        event.setCancelled(true);
+        open(event.getPlayer(), item);
+    }
+
+    private void open(Player player, ItemStack item) {
         if (CharacterSheetManager.isBlankCharacterSheet(item)) {
             handleCharacterCreation(player);
         } else {

@@ -327,7 +327,7 @@ public class DndSubRace {
         builder.addLanguageChoices(null, playerChoices);
 
         // Description (flavor text)
-        builder.addDescription(description, 50);
+        builder.addDescription(description, Util.WRAP_WIDTH);
 
         return builder.build();
     }

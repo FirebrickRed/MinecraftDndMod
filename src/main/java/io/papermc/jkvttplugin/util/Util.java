@@ -151,6 +151,28 @@ public class Util {
     }
 
     /**
+     * <b>The</b> wrap width for every tooltip, lore line and chat hover. One number, so text wrapped in
+     * the spellbook, a condition hover and an item tooltip lines up the same way. Use
+     * {@link #wrapText(String)} rather than picking a width.
+     */
+    public static final int WRAP_WIDTH = 45;
+
+    /**
+     * {@link #wrapText(String, int)} at {@link #WRAP_WIDTH}, keeping paragraph breaks: each line of
+     * the source is wrapped on its own, and a blank line between paragraphs stays a blank line.
+     */
+    public static List<String> wrapText(String text) {
+        List<String> lines = new ArrayList<>();
+        if (text == null || text.isBlank()) return lines;
+        String[] paragraphs = text.strip().split("\\R");
+        for (String p : paragraphs) {
+            if (p.isBlank()) { if (!lines.isEmpty() && !lines.get(lines.size() - 1).isEmpty()) lines.add(""); continue; }
+            lines.addAll(wrapText(p.strip(), WRAP_WIDTH));
+        }
+        return lines;
+    }
+
+    /**
      * Wraps text to fit within a specified line length, breaking on word boundaries.
      * Useful for wrapping long descriptions in item lore tooltips.
      *

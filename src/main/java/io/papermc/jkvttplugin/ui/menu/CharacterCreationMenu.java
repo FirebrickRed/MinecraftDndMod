@@ -865,12 +865,13 @@ public class CharacterCreationMenu {
         for (int lvl = 1; lvl <= 5; lvl++) if (hasSpellSlotAtLevel(info, lvl)) levels.add(lvl);
         if (levels.isEmpty()) { inv.setItem(22, label("No spells available for this class yet.")); return; }
 
-        // Prepared casters (Cleric, Druid) choose their initial PREPARED spells from the whole list
-        // and can swap them on a long rest; "known" casters and the Wizard's spellbook are fixed
-        // picks. Either way the count is computed per class (#113).
+        // Prepared casters (Cleric, Druid) choose their PREPARED spells from the whole list; "known"
+        // casters and the Wizard's spellbook are fixed picks. Either way the count is computed per
+        // class (#113). RAW a prepared caster changes them after a long rest; that isn't built yet
+        // (#218), so the label doesn't promise it.
         boolean preparesFromList = info.getSpellsKnownByLevel() == null || info.getSpellsKnownByLevel().isEmpty();
         if (preparesFromList && levels.contains(1)) {
-            inv.setItem(49, label("You prepare these from the full list — you can swap them on a long rest."));
+            inv.setItem(49, label("You prepare these from your class's full spell list."));
         }
 
         int active = session.getActiveSpellLevel();
@@ -923,7 +924,8 @@ public class CharacterCreationMenu {
                     .decoration(TextDecoration.ITALIC, false).decoration(TextDecoration.BOLD, sel));
             List<Component> lore = new ArrayList<>();
             lore.add(Component.text(sel ? "✔ Selected — click to remove" : "Click to select", sel ? NamedTextColor.GREEN : NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
-            lore.add(Component.text("School: " + spell.getSchool(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            lore.add(Component.empty());
+            lore.addAll(spell.detailLore()); // the same description the spellbook shows
             it.editMeta(m -> {
                 m.lore(lore);
                 if (sel) { m.addEnchant(Enchantment.UNBREAKING, 1, true); m.addItemFlags(ItemFlag.HIDE_ENCHANTS); }

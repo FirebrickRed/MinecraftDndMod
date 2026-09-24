@@ -75,7 +75,9 @@ public class PossessionManager {
 
         possessedByDm.put(dm.getUniqueId(), stand);
         dm.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
-        dm.hideEntity(JkVttPlugin.getInstance(), stand); // hide our own body so it doesn't block our view
+        // Your own model sits on your camera, so it's hidden from you unless you've asked to see it
+        // (F toggles it; the choice sticks for the next possession). Everyone else always sees it.
+        if (!selfModelVisible.contains(dm.getUniqueId())) dm.hideEntity(JkVttPlugin.getInstance(), stand);
         applyScale(dm, instance.getTemplate().getSize()); // stand at the entity's height (sword lines up)
         io.papermc.jkvttplugin.combat.CombatSession.applyPossessedConditionEffects(dm, stand, true); // inherit its conditions (#103)
         giveEntityKit(dm, instance);
@@ -96,6 +98,10 @@ public class PossessionManager {
 
         dm.sendMessage(Component.text("You are now possessing " + instance.getDisplayName()
                 + " — sneak to stop.", NamedTextColor.GREEN));
+        dm.sendMessage(Component.text(selfModelVisible.contains(dm.getUniqueId())
+                ? "You can see its model: F hides it, F5 for third-person."
+                : "Its model is hidden from you (the others see it): F shows it, then F5 for third-person.",
+                NamedTextColor.GRAY));
     }
 
     /** Stop possessing and restore the DM toolbar. */
@@ -132,7 +138,6 @@ public class PossessionManager {
     }
 
     public static boolean endPossession(Player dm, boolean silent) {
-        selfModelVisible.remove(dm.getUniqueId());
         ArmorStand stand = possessedByDm.remove(dm.getUniqueId());
         BukkitRunnable task = followTasks.remove(dm.getUniqueId());
         if (task != null) task.cancel();

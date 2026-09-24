@@ -120,7 +120,7 @@ public final class OutOfCombatAttack {
             Component ask = Component.text("You're not aiming at a creature. Cast " + spell.getName() + " anyway? ", NamedTextColor.YELLOW)
                     .append(button("[Cast it]", NamedTextColor.GREEN, "Go ahead: roll to hit, and the DM decides what happens",
                             a -> { permits.put(player.getUniqueId(), new Permit(spell.getId(), null, System.currentTimeMillis()));
-                                   rollPrompt(player, retry); }))
+                                   rollPrompt(player, sheet, spell, retry); }))
                     .append(Component.text("  "))
                     .append(button("[Cancel]", NamedTextColor.GRAY, "Don't cast it", a -> player.sendMessage(
                             Component.text("Cancelled.", NamedTextColor.GRAY))));
@@ -138,7 +138,8 @@ public final class OutOfCombatAttack {
 
         if (spell.isAttackRoll()) {
             RollService.RollResult r = attackRoll(player, sheet, spell, caster.attackAdvantageAgainst(target), roll, caster.rerollsNat1());
-            if (r == null) { rollPrompt(player, retry); return true; }
+            if (r == null) { rollPrompt(player, sheet, spell, retry); return true; }
+            permits.remove(player.getUniqueId()); // one "let it happen" is one cast; the next asks again
             commit(player, sheet, spell, cost);
             int ac = target.getArmorClass();
             boolean hit = RollService.hits(r, ac);
@@ -149,6 +150,7 @@ public final class OutOfCombatAttack {
             return true;
         }
 
+        permits.remove(player.getUniqueId());
         commit(player, sheet, spell, cost);
         if (spell.isSaveSpell()) {
             Ability save = parseAbility(spell.getSaveType());
@@ -193,7 +195,7 @@ public final class OutOfCombatAttack {
         String at = aim.objectLabel != null ? aim.objectLabel : "nothing in particular";
         if (spell.isAttackRoll()) {
             RollService.RollResult r = attackRoll(player, sheet, spell, Advantage.NONE, roll, false);
-            if (r == null) { rollPrompt(player, retry); return true; }
+            if (r == null) { rollPrompt(player, sheet, spell, retry); return true; }
             commit(player, sheet, spell, cost);
             permits.remove(player.getUniqueId());
             tell(player, Component.text("✨ " + who + " casts " + spell.getName() + " at " + at + ": "
@@ -222,21 +224,27 @@ public final class OutOfCombatAttack {
         String name = aim.target != null ? aim.targetName() : sheet.getCharacterName();
         if (aim.target != null && !inRange(player, aim, spell)) return true;
         int mod = modFor(sheet, spell);
+        String modLabel = signed(mod) + "[" + abilityAbbr(sheet, spell) + "]";
         Integer amount;
-        if (roll.providedTotal() != null) amount = roll.providedTotal();
-        else if (roll.providedRoll() != null) amount = roll.providedRoll() + mod;
-        else if (roll.forceAuto() || io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) {
+        String work;
+        if (roll.providedTotal() != null) {
+            amount = roll.providedTotal();
+            work = RollPrompt.yourTotal(amount);
+        } else if (roll.providedRoll() != null) {
+            amount = roll.providedRoll() + mod;
+            work = RollPrompt.youRolled(roll.providedRoll(), modLabel, amount);
+        } else if (roll.forceAuto() || io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) {
             DiceRoller.Rolled r = DiceRoller.rollOrFlat(spell.getHealing());
             if (r == null) { player.sendMessage(Component.text(spell.getName() + " has no healing dice.", NamedTextColor.RED)); return true; }
-            tell(player, Component.text(r.display(), NamedTextColor.GRAY));
             amount = r.total() + mod;
+            work = RollPrompt.gameRolled(spell.getHealing(), r.breakdown(), modLabel, amount);
         } else {
             String cmd = "/character cast " + spell.getId() + (aim.target != null ? " " + quote(name) : "") + " ";
-            player.sendMessage(Component.text("Roll " + spell.getHealing() + " (the game adds your " + signed(mod) + "): ", NamedTextColor.YELLOW)
-                    .append(fill("[I rolled…]", cmd + "manualRoll ")).append(Component.text(" "))
-                    .append(fill("[Let the game roll]", cmd + "autoRoll")));
+            player.sendMessage(RollPrompt.line("💚 Roll " + spell.getName() + " (" + spell.getHealing() + "):", NamedTextColor.GREEN,
+                    cmd, spell.getHealing(), modLabel));
             return true;
         }
+        tell(player, Component.text(work, NamedTextColor.GRAY));
         commit(player, sheet, spell, cost);
         tell(player, Component.text("✨ " + sheet.getCharacterName() + " casts " + spell.getName() + " on " + name + ".", NamedTextColor.LIGHT_PURPLE));
         DamageHandler.applyHealing(target.session(), target.combatant(), Math.max(1, amount));
@@ -250,11 +258,8 @@ public final class OutOfCombatAttack {
                                     String objectLabel, boolean half) {
         String dice = spell.getDamage() == null ? "" : (crit ? AttackHandler.doubleDice(spell.getDamage()) : spell.getDamage());
         pendingDamage.put(caster.getUniqueId(), new PendingDamage(spell.getName(), dice, spell.getDamageType(), target, objectLabel, half));
-        caster.sendMessage(Component.text("Roll " + (dice.isBlank() ? "damage" : dice) + (half ? " (halved)" : "") + " for "
-                        + spell.getName() + ": ", NamedTextColor.YELLOW)
-                .append(fill("[I rolled…]", "/character damage manualRoll "))
-                .append(Component.text(" "))
-                .append(fill("[Let the game roll]", "/character damage autoRoll")));
+        caster.sendMessage(RollPrompt.line("💥 Roll " + (dice.isBlank() ? "damage" : dice) + (half ? " (halved)" : "") + " for "
+                + spell.getName() + ":", NamedTextColor.YELLOW, "/character damage ", dice.isBlank() ? "the damage" : dice, null));
     }
 
     /** {@code /character damage [autoRoll | manualRoll <n> | total <n> | <n>]} — finish an out-of-combat hit. */
@@ -266,20 +271,22 @@ public final class OutOfCombatAttack {
         }
         RollService.RollInput in = RollService.parseInput(args, player);
         Integer amount = null;
-        if (in.providedTotal() != null) amount = in.providedTotal();
-        else if (in.providedRoll() != null) amount = in.providedRoll();
+        String work = null;
+        if (in.providedTotal() != null) { amount = in.providedTotal(); work = RollPrompt.yourTotal(amount); }
+        else if (in.providedRoll() != null) { amount = in.providedRoll(); work = RollPrompt.youRolled(amount, null, amount); }
         else if (in.forceAuto()) {
             DiceRoller.Rolled r = DiceRoller.rollOrFlat(p.dice());
             if (r == null) { player.sendMessage(Component.text("There are no dice to roll — type the amount.", NamedTextColor.RED)); return; }
-            tell(player, Component.text(r.display(), NamedTextColor.GRAY));
             amount = r.total();
+            work = RollPrompt.gameRolled(p.dice(), r.breakdown(), null, amount);
         } else if (args.length > 0) {
-            try { amount = Integer.parseInt(args[args.length - 1].trim()); } catch (NumberFormatException ignored) {}
+            try { amount = Integer.parseInt(args[args.length - 1].trim()); work = RollPrompt.yourTotal(amount); } catch (NumberFormatException ignored) {}
         }
         if (amount == null) {
             player.sendMessage(Component.text("Usage: /character damage autoRoll | manualRoll <n> | total <n>", NamedTextColor.RED));
             return;
         }
+        tell(player, Component.text(work, NamedTextColor.GRAY));
         pendingDamage.remove(player.getUniqueId());
         int dealt = p.half() ? amount / 2 : amount;
         String type = p.damageType() != null ? " " + p.damageType() : "";
@@ -320,35 +327,80 @@ public final class OutOfCombatAttack {
      */
     private static void askDm(Player attacker, String what, Combatant target, String label, String heldCommand,
                               Runnable letItHappen) {
-        List<Player> dms = DMManager.getOnlineDMs();
-        if (dms.isEmpty()) {
+        if (DMManager.getOnlineDMs().isEmpty()) {
             attacker.sendMessage(Component.text("Attacking outside a fight needs the DM, and no DM is online.", NamedTextColor.RED));
             return;
         }
-        attacker.sendMessage(Component.text("You're not in a fight — asking the DM.", NamedTextColor.GRAY));
         UUID attackerId = attacker.getUniqueId();
         String targetArg = target.isPlayer() && target.getPlayer() != null ? target.getPlayer().getName() : target.getDisplayName();
 
         Component ask = Component.text("⚔ " + what + ". You're not in a fight. ", NamedTextColor.GOLD)
-                .append(button("[Start combat]", NamedTextColor.RED, "Start a fight with both of them. Add anyone else and mark "
+                .append(requestButton(attackerId, "[Start combat]", NamedTextColor.RED, "Start a fight with both of them. Add anyone else and mark "
                         + "who's surprised before rolling initiative. The attack comes back on their first turn.",
-                        a -> { if (a instanceof Player dm) startCombat(dm, attackerId, targetArg, label, heldCommand); }))
+                        dm -> startCombat(dm, attackerId, targetArg, label, heldCommand)))
                 .append(Component.text(" "));
         if (letItHappen != null) {
-            ask = ask.append(button("[Let it happen]", NamedTextColor.GREEN, "Resolve it once, no fight: attack roll, then damage",
-                    a -> letItHappen.run())).append(Component.text(" "));
+            ask = ask.append(requestButton(attackerId, "[Let it happen]", NamedTextColor.GREEN, "Resolve it once, no fight: attack roll, then damage",
+                    dm -> letItHappen.run())).append(Component.text(" "));
         }
-        ask = ask.append(button("[Deny]", NamedTextColor.GRAY, "It doesn't happen", a -> {
+        ask = ask.append(requestButton(attackerId, "[Deny]", NamedTextColor.GRAY, "It doesn't happen", dm -> {
             Player p = Bukkit.getPlayer(attackerId);
             if (p != null) p.sendMessage(Component.text("The DM stops that.", NamedTextColor.GRAY));
         }));
-        for (Player dm : dms) dm.sendMessage(ask);
+        sendRequest(attacker, label, "You're not in a fight — asking the DM.", ask);
+    }
+
+    // ==================== ONE OPEN REQUEST PER PLAYER ====================
+
+    /**
+     * What a player is waiting on the DM for. Players spam commands and click everything, so each
+     * player has at most one open request: the same one again isn't re-sent to the DM, and a
+     * different one replaces it (the old buttons then say so instead of acting).
+     */
+    private record Request(String label, int id, long at) {}
+
+    private static final Map<UUID, Request> requests = new HashMap<>();
+    private static int nextRequestId = 1;
+    private static final long REQUEST_REPEAT_MS = Duration.ofMinutes(2).toMillis();
+
+    private static void sendRequest(Player from, String label, String toPlayer, Component toDms) {
+        Request open = requests.get(from.getUniqueId());
+        if (open != null && open.label().equals(label) && System.currentTimeMillis() - open.at() < REQUEST_REPEAT_MS) {
+            from.sendMessage(Component.text("Still waiting on the DM for " + label + ".", NamedTextColor.GRAY));
+            return;
+        }
+        if (open != null) {
+            from.sendMessage(Component.text("(That replaces your earlier request: " + open.label() + ".)", NamedTextColor.DARK_GRAY));
+        }
+        requests.put(from.getUniqueId(), new Request(label, nextRequestId++, System.currentTimeMillis()));
+        from.sendMessage(Component.text(toPlayer, NamedTextColor.GRAY));
+        toDms(toDms);
+    }
+
+    /** A DM button on a player's request: acts only while that request is still the open one. */
+    private static Component requestButton(UUID playerId, String text, NamedTextColor color, String hover,
+                                           java.util.function.Consumer<Player> onClick) {
+        // The id this button belongs to is the one about to be issued (buttons are built just before sendRequest).
+        final int mine = nextRequestId;
+        return button(text, color, hover, a -> {
+            if (!(a instanceof Player dm)) return;
+            Request open = requests.get(playerId);
+            if (open == null || open.id() != mine) {
+                dm.sendMessage(Component.text("That request was already answered or replaced by a newer one.", NamedTextColor.GRAY));
+                return;
+            }
+            requests.remove(playerId);
+            onClick.accept(dm);
+        });
     }
 
     private static void grant(Player caster, DndSpell spell, UUID targetId, String retry) {
         permits.put(caster.getUniqueId(), new Permit(spell.getId(), targetId, System.currentTimeMillis()));
         caster.sendMessage(Component.text("The DM lets it happen.", NamedTextColor.GREEN));
-        rollPrompt(caster, retry);
+        CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(caster);
+        // Only an attack spell rolls to hit; a save spell (Sacred Flame) just goes off.
+        if (spell.isAttackRoll() && sheet != null) rollPrompt(caster, sheet, spell, retry);
+        else caster.sendMessage(Component.text("   ", NamedTextColor.GRAY).append(fill("[cast it]", retry.trim())));
     }
 
     private static void startCombat(Player dm, UUID attackerId, String targetArg, String label, String heldCommand) {
@@ -418,9 +470,42 @@ public final class OutOfCombatAttack {
         if (there == null || !there.getWorld().equals(player.getWorld())) return true;
         double distFeet = there.distance(player.getLocation()) * 5.0;
         if (distFeet <= feet + 5) return true;
-        player.sendMessage(Component.text(aim.targetName() + " is about " + Math.round(distFeet) + " ft away — "
-                + spell.getName() + " reaches " + range + ".", NamedTextColor.RED));
+        UUID targetId = aim.target.combatant().getId();
+        Permit ok = rangeOverrides.get(player.getUniqueId());
+        if (ok != null && ok.covers(spell, targetId)) return true; // spent in commit(): one override, one cast
+        String where = aim.targetName() + " is about " + Math.round(distFeet) + " ft away — " + spell.getName() + " reaches " + range;
+        player.sendMessage(Component.text(where + ". ", NamedTextColor.RED)
+                .append(button("[Ask the DM]", NamedTextColor.AQUA, "Ask the DM to let it reach anyway (they may be closer than the game thinks)",
+                        a -> askRange(player, spell, aim, targetId, where))));
         return false;
+    }
+
+    /** DM-approved "close enough": this spell at this target, once, within {@link #GOOD_FOR_MS}. */
+    private static final Map<UUID, Permit> rangeOverrides = new HashMap<>();
+
+    private static void askRange(Player player, DndSpell spell, Aim aim, UUID targetId, String where) {
+        if (DMManager.getOnlineDMs().isEmpty()) {
+            player.sendMessage(Component.text("No DM is online to ask.", NamedTextColor.RED));
+            return;
+        }
+        UUID id = player.getUniqueId();
+        CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(player);
+        String who = sheet != null ? sheet.getCharacterName() : player.getName();
+        String retry = "/character cast " + spell.getId() + " " + quote(aim.targetName()) + " ";
+        Component ask = Component.text("📏 " + who + " asks to cast " + spell.getName() + " on " + aim.targetName()
+                        + " out of reach (" + where.substring(where.indexOf("about")) + "). ", NamedTextColor.GOLD)
+                .append(requestButton(id, "[Allow]", NamedTextColor.GREEN, "Close enough: let it reach this once", dm -> {
+                    rangeOverrides.put(id, new Permit(spell.getId(), targetId, System.currentTimeMillis()));
+                    Player p = Bukkit.getPlayer(id);
+                    if (p != null) p.sendMessage(Component.text("The DM says it reaches. ", NamedTextColor.GREEN)
+                            .append(fill("[cast it]", retry)));
+                }))
+                .append(Component.text(" "))
+                .append(requestButton(id, "[Deny]", NamedTextColor.GRAY, "It doesn't reach", dm -> {
+                    Player p = Bukkit.getPlayer(id);
+                    if (p != null) p.sendMessage(Component.text("The DM says it doesn't reach.", NamedTextColor.GRAY));
+                }));
+        sendRequest(player, spell.getName() + " out of reach", "Asked the DM whether it reaches.", ask);
     }
 
     // ==================== HELPERS ====================
@@ -447,6 +532,7 @@ public final class OutOfCombatAttack {
 
     /** Spend the slot or use and handle concentration: only once the spell actually goes off. */
     public static void commit(Player player, CharacterSheet sheet, DndSpell spell, SpellCost cost) {
+        rangeOverrides.remove(player.getUniqueId());
         if (spell.isConcentration() && sheet.isConcentrating()) {
             DndSpell was = sheet.getConcentratingOn();
             sheet.breakConcentration();
@@ -458,11 +544,16 @@ public final class OutOfCombatAttack {
         if (!spent.isEmpty()) player.sendMessage(Component.text("   Spent " + spent + ".", NamedTextColor.GRAY));
     }
 
-    private static void rollPrompt(Player player, String retry) {
-        player.sendMessage(Component.text("Roll your d20: ", NamedTextColor.YELLOW)
-                .append(fill("[I rolled…]", retry + "manualRoll "))
-                .append(Component.text(" "))
-                .append(fill("[Let the game roll]", retry + "autoRoll")));
+    private static void rollPrompt(Player player, CharacterSheet sheet, DndSpell spell, String retry) {
+        int mod = sheet.getProficiencyBonus() + modFor(sheet, spell);
+        player.sendMessage(RollPrompt.line("🎲 Roll to hit with " + spell.getName() + ":", NamedTextColor.YELLOW, retry, "d20",
+                signed(mod) + " (" + signed(modFor(sheet, spell)) + " " + abilityAbbr(sheet, spell) + ", +" + sheet.getProficiencyBonus() + " proficiency)"));
+    }
+
+    /** "INT", "WIS": the ability this character casts this spell with. */
+    private static String abilityAbbr(CharacterSheet sheet, DndSpell spell) {
+        Ability a = sheet.castingAbilityFor(spell);
+        return a != null ? a.getAbbreviation() : "Spell";
     }
 
     /** The caster, every DM, and anyone within 30 blocks: an attack out of combat is public. */

@@ -3,6 +3,7 @@ package io.papermc.jkvttplugin.ui.handler;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
+import io.papermc.jkvttplugin.combat.RollPrompt;
 import io.papermc.jkvttplugin.combat.RollService;
 import io.papermc.jkvttplugin.config.PluginConfig;
 import io.papermc.jkvttplugin.util.DiceRoller;
@@ -70,32 +71,17 @@ public class RollOptionsMenuHandler {
         // Carry the menu's adv/dis pick in the command, or physical mode rolls it normal. The manual
         // form puts it before manualRoll so the player's typed d20 still lands last.
         String modeWord = switch (mode) { case ADVANTAGE -> "adv "; case DISADVANTAGE -> "dis "; default -> ""; };
-        String manualCmd = "/character check " + type + " " + value + " " + modeWord + "manualRoll ";
-        String autoCmd = "/character check " + type + " " + value + " " + modeWord + "autoRoll";
+        String base = "/character check " + type + " " + value + " " + modeWord;
         mode = withPenalties(character, type, value, mode); // show armor/condition disadvantage before they roll (#209, #175)
-        String advNote = switch (mode) {
-            case ADVANTAGE -> " (advantage)";
-            case DISADVANTAGE -> " (disadvantage)";
-            default -> "";
+        String dice = switch (mode) {
+            case ADVANTAGE -> "d20 (advantage: two, keeping the higher)";
+            case DISADVANTAGE -> "d20 (disadvantage: two, keeping the lower)";
+            default -> "d20";
         };
-        String advHover = switch (mode) {
-            case ADVANTAGE -> "\nAdvantage: the game rolls two d20 and keeps the higher.";
-            case DISADVANTAGE -> "\nDisadvantage: the game rolls two d20 and keeps the lower.";
-            default -> "";
-        };
-        player.sendMessage(Component.text("🎲 Roll " + info.displayName + advNote + " — ", NamedTextColor.GOLD)
-                .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(manualCmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd + "<your d20> — the game adds " + bonusStr + "." + advHover))))
-                .append(Component.text("  ", NamedTextColor.GRAY))
-                .append(Component.text("[or let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(autoCmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20" + (mode == RollMode.NORMAL ? "" : " (" + mode.name().toLowerCase() + ", 2d20)") + " and adds " + bonusStr + ".")))));
+        String advNote = mode == RollMode.NORMAL ? "" : " (" + mode.name().toLowerCase() + ")";
+        player.sendMessage(RollPrompt.line("🎲 Roll " + info.displayName + advNote + ":", NamedTextColor.GOLD,
+                base, dice, bonusStr + " (" + info.breakdown + ")"));
     }
-
-    /** The "[advantage: 15/10]" note RollService puts on a roll it made with two dice. */
-    private static final java.util.regex.Pattern ADV_DICE =
-            java.util.regex.Pattern.compile("\\[(advantage|disadvantage): (\\d+)/(\\d+)\\]", java.util.regex.Pattern.CASE_INSENSITIVE);
 
     /**
      * Resolve a physical skill/check/save roll (via RollService) and broadcast it. Returns false if
@@ -132,17 +118,7 @@ public class RollOptionsMenuHandler {
             }
             return true;
         }
-        String dice = r.providedTotal() ? "total" : String.valueOf(r.d20());
-        // Advantage or disadvantage the game rolled: show both dice and say which, or a real advantage
-        // roll reads exactly like a normal one (the playtest thought adv was being ignored).
-        java.util.regex.Matcher both = ADV_DICE.matcher(r.breakdown());
-        if (both.find()) {
-            boolean adv = both.group(1).equalsIgnoreCase("advantage");
-            broadcastRoll(character, info, r.total(), "[" + both.group(2) + ", " + both.group(3) + "]",
-                    adv ? "advantage" : "disadvantage", adv ? NamedTextColor.GREEN : NamedTextColor.RED, r.d20());
-            return true;
-        }
-        broadcastRoll(character, info, r.total(), dice, null, null, r.d20());
+        broadcastRoll(character, info, r, advantage);
         return true;
     }
 
@@ -296,77 +272,38 @@ public class RollOptionsMenuHandler {
      * @param value the enum name (e.g. "STEALTH", "STRENGTH")
      */
     public static void performRoll(CharacterSheet character, String type, String value, RollMode mode) {
-        switch (withPenalties(character, type, value, mode)) { // armor (#209) or a condition (#175) → disadvantage
-            case NORMAL -> rollNormal(character, type, value);
-            case ADVANTAGE -> rollAdvantage(character, type, value);
-            case DISADVANTAGE -> rollDisadvantage(character, type, value);
-        }
+        // The game rolls it, through the same resolver as a typed roll: armor/condition disadvantage,
+        // Lucky and a pending DM check all apply the same way (this used to roll its own dice).
+        io.papermc.jkvttplugin.combat.Advantage adv = switch (mode) {
+            case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
+            case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
+            default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
+        };
+        resolvePhysical(character, type, value, null, null, true, adv);
     }
 
     /**
-     * Roll 1d20 + bonus with breakdown
+     * The table's line for a sheet roll: "Zek rolled Stealth with advantage: 18  (🎲 d20 [9, 15]
+     * advantage +3[DEX] +2[Prof] = 18)". The work in brackets is {@link RollPrompt}'s wording, so it
+     * reads the same as every other roll; a natural 1 or 20 is pulled out and shown loud.
      */
-    private static void rollNormal(CharacterSheet character, String type, String value) {
-        int d20 = rollD20();
-        RollInfo info = getRollInfo(character, type, value);
-        int total = d20 + info.bonus;
-
-        broadcastRoll(character, info, total, String.valueOf(d20), null, null, d20);
-    }
-
-    /**
-     * Roll 2d20 (take higher) + bonus with breakdown
-     */
-    private static void rollAdvantage(CharacterSheet character, String type, String value) {
-        int d20_1 = rollD20();
-        int d20_2 = rollD20();
-        int higher = Math.max(d20_1, d20_2);
-        RollInfo info = getRollInfo(character, type, value);
-        int total = higher + info.bonus;
-
-        broadcastRoll(character, info, total, "[" + d20_1 + ", " + d20_2 + "]", "advantage", NamedTextColor.GREEN, higher);
-    }
-
-    /**
-     * Roll 2d20 (take lower) + bonus with breakdown
-     */
-    private static void rollDisadvantage(CharacterSheet character, String type, String value) {
-        int d20_1 = rollD20();
-        int d20_2 = rollD20();
-        int lower = Math.min(d20_1, d20_2);
-        RollInfo info = getRollInfo(character, type, value);
-        int total = lower + info.bonus;
-
-        broadcastRoll(character, info, total, "[" + d20_1 + ", " + d20_2 + "]", "disadvantage", NamedTextColor.RED, lower);
-    }
-
-    /**
-     * Unified message builder for all roll types.
-     * Formats: "[CharName] rolled Stealth: 18 (d20: 13 +3[DEX] +2[Prof])"
-     *      or: "[CharName] rolled Stealth with advantage: 18 (d20: [15, 10] +3[DEX] +2[Prof])"
-     */
-    private static void broadcastRoll(CharacterSheet character, RollInfo info, int total,
-                                       String diceResult, String rollType, NamedTextColor rollTypeColor, int keptD20) {
+    private static void broadcastRoll(CharacterSheet character, RollInfo info, RollService.RollResult r,
+                                      io.papermc.jkvttplugin.combat.Advantage advantage) {
         Component message = Component.text(character.getCharacterName(), NamedTextColor.AQUA)
                 .append(Component.text(" rolled ", NamedTextColor.GRAY))
                 .append(Component.text(info.displayName, NamedTextColor.YELLOW));
-
-        // Add "with advantage/disadvantage" if present
-        if (rollType != null) {
+        if (advantage != null && advantage.affectsRoll() && !r.providedTotal()) {
             message = message.append(Component.text(" with ", NamedTextColor.GRAY))
-                    .append(Component.text(rollType, rollTypeColor));
+                    .append(Component.text(advantage.label(), advantage.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
         }
-
+        String nat = r.providedTotal() ? "" : RollService.natCallout(r.d20());
+        String work = nat.isEmpty() ? r.breakdown() : r.breakdown().replace(nat, "");
         message = message.append(Component.text(": ", NamedTextColor.GRAY))
-                .append(Component.text(total, NamedTextColor.WHITE))
-                .append(Component.text(" (d20: " + diceResult + " ", NamedTextColor.DARK_GRAY))
-                .append(Component.text(info.breakdown, NamedTextColor.GRAY))
-                .append(Component.text(")", NamedTextColor.DARK_GRAY));
-        String nat = RollService.natCallout(keptD20);
+                .append(Component.text(r.total(), NamedTextColor.WHITE))
+                .append(Component.text("  (" + work + ")", NamedTextColor.GRAY));
         if (!nat.isEmpty()) {
-            message = message.append(Component.text(nat, keptD20 == 20 ? NamedTextColor.GOLD : NamedTextColor.DARK_RED, TextDecoration.BOLD));
+            message = message.append(Component.text(nat, r.d20() == 20 ? NamedTextColor.GOLD : NamedTextColor.DARK_RED, TextDecoration.BOLD));
         }
-
         Bukkit.broadcast(message);
     }
 
@@ -414,12 +351,6 @@ public class RollOptionsMenuHandler {
         };
     }
 
-    /**
-     * Roll a d20 (1-20) using the DiceRoller utility
-     */
-    private static int rollD20() {
-        return DiceRoller.rollDice(1, 20);
-    }
 
     /**
      * Helper record to bundle roll information

@@ -107,15 +107,24 @@ public class DrinkCommand implements CommandExecutor {
         RollService.RollInput input = RollService.parseInput(args, player);
         String dice = item.getHealing();
 
-        if (input.providedTotal() != null) return Math.max(0, input.providedTotal());
-        if (input.providedRoll() != null) return Math.max(0, input.providedRoll() + flatBonus(dice));
+        if (input.providedTotal() != null) {
+            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.yourTotal(input.providedTotal()), NamedTextColor.GRAY));
+            return Math.max(0, input.providedTotal());
+        }
+        if (input.providedRoll() != null) {
+            int flat = flatBonus(dice), total = input.providedRoll() + flat;
+            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.youRolled(input.providedRoll(),
+                    flat == 0 ? null : (flat > 0 ? "+" : "") + flat, total), NamedTextColor.GRAY));
+            return Math.max(0, total);
+        }
         if (input.forceAuto() || PluginConfig.isAutoRoll()) {
             DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(dice);
             if (rolled == null) {
                 player.sendMessage(Component.text(item.getName() + " has an unreadable healing value ('" + dice + "').", NamedTextColor.RED));
                 return null;
             }
-            player.sendMessage(Component.text(rolled.display(), NamedTextColor.GRAY)); // the game rolled it: show the dice
+            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.gameRolled(dice, rolled.breakdown(), null, rolled.total()),
+                    NamedTextColor.GRAY)); // the game rolled it: show the dice
             return Math.max(0, rolled.total());
         }
         promptRoll(player, item);
@@ -125,14 +134,10 @@ public class DrinkCommand implements CommandExecutor {
     /** Ask for the roll the same way every other physical-dice prompt does: fill chat, don't act. */
     public static void promptRoll(Player player, DndItem item) {
         String base = "/character drink " + item.getId() + " ";
-        player.sendMessage(Component.text("🧪 " + item.getName() + " heals " + item.getHealing() + " — ", NamedTextColor.GREEN)
-                .append(Component.text("[click, then type your roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(base + "manualRoll "))
-                        .hoverEvent(HoverEvent.showText(Component.text("Roll " + item.getHealing() + " yourself, then type the dice total."))))
-                .append(Component.text("  ", NamedTextColor.GRAY))
-                .append(Component.text("[or let the game roll]", NamedTextColor.YELLOW, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(base + "autoRoll"))
-                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls " + item.getHealing() + " for you.")))));
+        int flat = flatBonus(item.getHealing());
+        String dice = item.getHealing().replaceAll("[+-]\\s*\\d+\\s*$", "").trim();
+        player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("🧪 " + item.getName() + " heals " + item.getHealing() + ":",
+                NamedTextColor.GREEN, base, dice, flat == 0 ? null : (flat > 0 ? "+" : "") + flat));
     }
 
     /** The "+2" in "2d4+2" — added to a hand-rolled dice total. */

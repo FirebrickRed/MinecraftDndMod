@@ -241,10 +241,19 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                 }
             }
             default -> {
-                // Multiple names support: /dm entity remove name1 name2 name3
+                // One name with spaces ("The Kindler", quoted or not) or several one-word names
+                // (wolf guard Marcus). The whole line as one name wins when it names a creature; each
+                // word used to be looked up alone, so a quoted name matched nothing.
                 List<String> names = new ArrayList<>();
-                for (int i = 1; i < args.length; i++) {
-                    names.add(args[i]);
+                String whole = NameUtil.joinArgs(args, 1);
+                if (DndEntityInstance.findByName(whole) != null) {
+                    names.add(whole);
+                } else {
+                    for (int i = 1; i < args.length; ) {
+                        NameUtil.TakenName n = NameUtil.takeName(args, i);
+                        names.add(n.value());
+                        i = n.nextIndex();
+                    }
                 }
                 removeByNames(sender, names);
             }
@@ -1610,7 +1619,9 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         for (String name : names) {
             DndEntityInstance instance = findEntity(name);
-            if (instance != null) {
+            if (instance == null) {
+                sender.sendMessage(Component.text("No creature called '" + name + "'.", NamedTextColor.RED));
+            } else {
                 String key = spawnedEntities.entrySet().stream()
                         .filter(e -> e.getValue() == instance)
                         .map(Map.Entry::getKey)

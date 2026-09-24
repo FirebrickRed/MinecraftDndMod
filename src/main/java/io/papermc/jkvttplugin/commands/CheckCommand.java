@@ -6,6 +6,7 @@ import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.data.model.enums.ToolRegistry;
 import io.papermc.jkvttplugin.combat.CombatTargets;
+import io.papermc.jkvttplugin.combat.RollPrompt;
 import io.papermc.jkvttplugin.combat.RollService;
 import io.papermc.jkvttplugin.data.model.DndEntity;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
@@ -325,19 +326,12 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
 
     private static String modText(CheckManager.Side side) { return signed(side.modifier) + " " + side.modSource; }
 
-    /** The DM's prompt for an NPC side: [Roll it] runs autoRoll; [I rolled…] pre-fills manualRoll. */
+    /** The DM's prompt for an NPC side of a contest. */
     private void promptNpcRoll(CommandSender sender, CheckManager.Contest contest, int index) {
         CheckManager.Side side = contest.side(index);
         String base = "/dm check npcroll " + contest.id + " " + (index + 1) + " ";
-        Component msg = Component.text("🎲 " + side.name + "'s " + side.label + " (" + modText(side) + "): ", NamedTextColor.GOLD)
-                .append(Component.text("[Roll it]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.runCommand(base + "autoRoll"))
-                        .hoverEvent(HoverEvent.showText(Component.text("Roll 1d20 " + modText(side)))))
-                .append(Component.text("  "))
-                .append(Component.text("[I rolled…]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(base + "manualRoll "))
-                        .hoverEvent(HoverEvent.showText(Component.text("Type the d20 you rolled; the modifier is added."))));
-        sender.sendMessage(msg);
+        sender.sendMessage(RollPrompt.line("🎲 " + side.name + "'s " + side.label + ":", NamedTextColor.GOLD,
+                base, "d20", modText(side)));
     }
 
     private boolean handleNpcRoll(CommandSender sender, String[] args) {
@@ -427,15 +421,10 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         RollService.RollResult r = input.isEmpty() ? null
                 : RollService.resolve(input, mod, signed(mod) + "[" + source + "]", false, adv);
         if (r == null) {
-            sender.sendMessage(Component.text("🎲 " + name + "'s " + label + " (" + signed(mod) + " " + source + ")"
-                            + (dc != null ? ", DC " + dc : "") + (adv.affectsRoll() ? ", " + adv.label() : "") + ": ", NamedTextColor.GOLD)
-                    .append(Component.text("[Roll it]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                            .clickEvent(ClickEvent.runCommand(base + "autoRoll"))
-                            .hoverEvent(HoverEvent.showText(Component.text("Roll 1d20 " + signed(mod)))))
-                    .append(Component.text("  "))
-                    .append(Component.text("[I rolled…]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                            .clickEvent(ClickEvent.suggestCommand(base + "manualRoll "))
-                            .hoverEvent(HoverEvent.showText(Component.text("Type the d20 you rolled; the modifier is added.")))));
+            sender.sendMessage(RollPrompt.line("🎲 " + name + "'s " + label
+                            + (dc != null ? ", DC " + dc : "") + (adv.affectsRoll() ? ", " + adv.label() : "") + ":", NamedTextColor.GOLD,
+                    base, adv.affectsRoll() ? "d20 (" + adv.label() + ": two, keeping the " + (adv.isAdvantage() ? "higher" : "lower") + ")" : "d20",
+                    signed(mod) + " " + source));
             return true;
         }
         String result = name + " — " + label + ": " + r.breakdown();

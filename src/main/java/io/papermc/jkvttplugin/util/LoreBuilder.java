@@ -199,14 +199,15 @@ public class LoreBuilder {
     }
 
     /**
-     * Adds word-wrapped text with default 50-character width.
-     * This is the standard width for most D&D content tooltips.
+     * Adds word-wrapped text at the standard {@link Util#WRAP_WIDTH}, keeping paragraph breaks.
+     * Prefer this over picking a width.
      *
      * @param text The text to wrap
      * @param color Color for all wrapped lines
      */
     public LoreBuilder addWrappedText(String text, NamedTextColor color) {
-        return addWrappedText(text, 50, color);
+        if (text != null && !text.isBlank()) Util.wrapText(text).forEach(line -> addLine(line, color));
+        return this;
     }
 
     /**

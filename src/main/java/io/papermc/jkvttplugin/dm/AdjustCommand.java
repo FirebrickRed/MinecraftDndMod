@@ -272,7 +272,7 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
         CombatSession.setConditionEffect(who, cond, on);
         announce(t, Component.text(who.getDisplayName() + (on ? " is now " + cond.getName() + "." : " is no longer " + cond.getName() + "."),
                 on ? NamedTextColor.YELLOW : NamedTextColor.GRAY)
-                .hoverEvent(HoverEvent.showText(Component.text(cond.rulesText(45)))), sender);
+                .hoverEvent(HoverEvent.showText(Component.text(cond.rulesText(io.papermc.jkvttplugin.util.Util.WRAP_WIDTH)))), sender);
         // Incapacitated (or anything that stops actions) ends concentration outright, no save (PHB p.203).
         if (on && who.cannotAct()) {
             if (t.inCombat()) ConcentrationManager.onIncapacitated(t.session(), who, "they were " + cond.getName().toLowerCase());

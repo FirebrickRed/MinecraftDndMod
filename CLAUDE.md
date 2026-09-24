@@ -399,6 +399,22 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
   - Works for weapons, armor, items, and custom content
 - **Shop Commands:** DM entity commands for creating/managing shops (see Commands section)
 
+### UI standards: one helper per thing
+
+Players read the same kinds of text over and over, so each kind has **one** builder. Before
+writing a message, a hover or a prompt, use the helper; if it can't do what you need, extend it.
+Hand-rolled copies drifted into ten wordings of the same roll button, which is what these replace.
+
+| What | Use | Not |
+|---|---|---|
+| **A roll prompt** (d20 or dice, player's or the DM's for a creature) | `RollPrompt.line(lead, color, base, dice, bonus)`: always `[I rolled…] [Roll it] [My total…]` (no total button when nothing is added). `RollPromptTest` fails the build if another file builds its own. | your own `[let the game roll]` |
+| **A roll result** | `RollPrompt.gameRolled` / `youRolled` / `yourTotal` ("🎲 2d6 [4, 3] +3[CHA] = 10", "🎲 you rolled 7 +3 = 10", "🎲 your total: 10"). A d20 through `RollService.resolve` already does this, plus the nat 1/20 callout. | "d20(14)…", "(provided total)" |
+| **Wrapped text** (lore, hovers) | `Util.wrapText(text)` / `LoreBuilder.addWrappedText(text, color)`: `Util.WRAP_WIDTH`, paragraph breaks kept | a width of your own |
+| **What a spell does** | `DndSpell.detailLore()`, used by the spellbook item, the creation tile and the chat hover | a new summary |
+| **Reading a name** | `NameUtil.readName` / `collapseName` (quoted or not); a creature via `DndEntityInstance.findByName`, a character via `CharacterResolver` | `args[i]` |
+| **Suggesting names** | `CombatTargets.suggestions(typed)` / `characterSuggestions(typed)`, positions via `NameUtil.collapseForCompletion` (#215 moves the rest) | raw `getDisplayName()` lists |
+| **Asking the DM** (out of combat) | `OutOfCombatAttack.sendRequest` + `requestButton`: one open request per player, a repeat isn't re-sent, a new one replaces the old | a fresh DM message per click |
+
 ### Key Design Patterns
 
 **Player Choice System:**
@@ -410,7 +426,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 **ItemStack Creation:**
 - `ItemUtil` provides centralized item creation with NBT tags
 - D&D objects (`DndWeapon`, `DndArmor`, `DndItem`, `DndSpell`) can create their own `ItemStack` representations
-- NBT tags used to identify items (e.g., `weapon_id`, `armor_id`, `spell_name`)
+- Every item is identified by the one shared `item_id` tag (`ItemUtil.getItemId`), never `weapon_id` / `armor_id`
 
 **Session Management:**
 - Active character creation sessions stored in `CharacterCreationService`

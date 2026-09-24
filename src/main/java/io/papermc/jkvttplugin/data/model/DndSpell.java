@@ -277,6 +277,19 @@ public class DndSpell {
     }
 
     public ItemStack createItemStack() {
+        // The vanilla item everyone sees: an explicit `material:` if given, else a level-based default.
+        Material base = material != null ? material : getSpellMaterial();
+        ItemStack item = Util.createItem(Component.text(name, getSpellLevelColor()), detailLore(), null, 1, base);
+        return finishItem(item);
+    }
+
+    /**
+     * <b>The</b> description of a spell, wherever one is shown: level and school, casting time,
+     * range, components, duration, concentration/ritual, the rules text and "At Higher Levels",
+     * wrapped at {@link Util#WRAP_WIDTH}. The spellbook item, the character-creation tile and the chat
+     * hover all use this, so a spell reads the same everywhere.
+     */
+    public List<Component> detailLore() {
         LoreBuilder lore = LoreBuilder.create();
 
         // Spell level and school
@@ -317,17 +330,10 @@ public class DndSpell {
                 .addLine("At Higher Levels:", NamedTextColor.LIGHT_PURPLE)
                 .addWrappedText(higherLevels, NamedTextColor.LIGHT_PURPLE);
         }
+        return lore.build();
+    }
 
-        // The vanilla item everyone sees: an explicit `material:` if given, else a level-based default.
-        Material base = material != null ? material : getSpellMaterial();
-
-        ItemStack item = Util.createItem(
-                Component.text(name, getSpellLevelColor()),
-                lore.build(),
-                null,
-                1,
-                base
-        );
+    private ItemStack finishItem(ItemStack item) {
         // Only overlay a resource-pack model when one is explicitly supplied (avoids purple placeholders).
         if (customModel != null && !customModel.isBlank()) {
             io.papermc.jkvttplugin.util.ItemUtil.applyModel(item, customModel);

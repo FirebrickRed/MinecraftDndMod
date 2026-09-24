@@ -341,10 +341,11 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         }
 
         // The target runs up to a roll keyword; with none typed, it's whatever the caster is looking at.
-        NameUtil.TakenName typed = words.length >= 2
+        // readName always keeps the first word, so a roll keyword there ("manualRoll 20" while looking
+        // at a wall) means no target was typed, not a creature called "manualRoll 20".
+        NameUtil.TakenName typed = words.length >= 2 && !io.papermc.jkvttplugin.combat.RollService.isRollKeyword(words[1])
                 ? NameUtil.readName(words, 1, List.of("autoroll", "manualroll", "total")) : null;
-        String target = typed != null && !io.papermc.jkvttplugin.combat.RollService.isRollKeyword(typed.value())
-                ? typed.value() : null;
+        String target = typed != null ? typed.value() : null;
 
         // Harmful spells need the DM's say (start a fight, let it happen, or a thing on the wall);
         // healing rolls and applies. Both go through the normal roll prompts and the one HP path.

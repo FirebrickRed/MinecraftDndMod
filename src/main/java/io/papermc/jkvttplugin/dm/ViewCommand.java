@@ -88,7 +88,7 @@ public class ViewCommand implements CommandExecutor, TabCompleter {
                 String name = cond != null ? cond.getName() : id;
                 if (!first) conds = conds.append(Component.text(", ", NamedTextColor.GRAY));
                 conds = conds.append(Component.text(name, NamedTextColor.YELLOW, TextDecoration.UNDERLINED)
-                        .hoverEvent(HoverEvent.showText(Component.text(cond != null ? cond.rulesText(45) : id))));
+                        .hoverEvent(HoverEvent.showText(Component.text(cond != null ? cond.rulesText(io.papermc.jkvttplugin.util.Util.WRAP_WIDTH) : id))));
                 first = false;
             }
             to.sendMessage(conds);

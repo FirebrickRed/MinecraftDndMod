@@ -8,6 +8,12 @@ prints that command's own help.
 > **DM authorization:** "DM" = a server op, a player with the `jkvtt.dm` permission
 > node, or a player added via `/dm add`. Op is required only for `/dm add`/`/dm remove`.
 
+> **Every roll prompt is the same three buttons** (#216): **[I rolled…]** fills `manualRoll ` (type
+> your dice; the game adds your bonus), **[Roll it]** runs `autoRoll` (the game rolls and adds it),
+> **[My total…]** fills `total ` (type the final number, bonuses included; not offered when nothing
+> is added). The result says where the number came from: `🎲 d20 [14] +5 = 19`,
+> `🎲 you rolled 14 +5 = 19`, or `🎲 your total: 19`.
+
 ---
 
 ## 👤 Player commands (anyone)
@@ -22,7 +28,7 @@ prints that command's own help.
 | `/character loot <check> <d20>` | Search a body you right-clicked (usually filled by the prompt) |
 | `/character check <type> <value> [manualRoll <n> \| autoRoll]` | Resolve a skill/ability/save roll (usually filled by the sheet prompt) |
 | `/character cast <spell> [target] [message…]` | Cast a chat/social spell — Message, Speak with Animals (#151) |
-| `/character cast <spell> [target] [level <n>] [autoRoll \| manualRoll <n> \| total <n>]` | **Out of combat** (#152). Leave the target blank to aim at what you're looking at. **At a creature or character:** the DM gets **[Start combat]** (a fight with both of you; the DM adds others and marks surprise; your spell comes back on your first turn), **[Let it happen]** (attack roll, then damage, no fight) or **[Deny]**. **At a thing** (a torch on the wall): "Cast it anyway?", you roll to hit, and the DM sees the roll and what you aimed at, with **[Ask for damage]**. **Healing** rolls and applies. Anything else announces. The slot is spent only when the spell goes off. Clicking a spell in your spellbook fills this in |
+| `/character cast <spell> [target] [level <n>] [autoRoll \| manualRoll <n> \| total <n>]` | **Out of combat** (#152). Leave the target blank to aim at what you're looking at. **At a creature or character:** the DM gets **[Start combat]** (a fight with both of you; the DM adds others and marks surprise; your spell comes back on your first turn), **[Let it happen]** (attack roll, then damage, no fight) or **[Deny]**. **At a thing** (a torch on the wall): "Cast it anyway?", you roll to hit, and the DM sees the roll and what you aimed at, with **[Ask for damage]**. **Healing** rolls and applies. Anything else announces. The slot is spent only when the spell goes off. **One [Let it happen] covers one cast**: the next one asks again. **Out of reach** (Cure Wounds at 18 ft): the refusal has **[Ask the DM]**, and if the DM allows it you get **[cast it]**. While a request is open, asking again doesn't re-ping the DM, and a different request replaces it. Clicking a spell in your spellbook fills this in |
 | `/character damage <autoRoll \| manualRoll <n> \| total <n>>` | Roll the damage for an out-of-combat hit (the prompt fills it in). In a fight it's `/combat damage` |
 | `/character drink <item_id> [autoRoll \| manualRoll <n> \| total <n>]` | Drink a healing item. Clicking the potion fills this in for you; in combat it costs your Action |
 | `/character reply <message…>` | Free reply to the last Message/Sending you received (usually the **[reply]** button) |
@@ -116,7 +122,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `spawn <entityId> [name] [x y z]` | Spawn an entity (from `DMContent/Entities/`), optionally named / placed. Also the DM-mode **Spawn Entity** tool |
 | `spawngroup <groupId>` | ⚠️ **Not implemented** — prints a notice (#79) |
 | `list` | List spawned entities with their coordinates and world (flagged when it isn't yours) |
-| `remove <name>` · `remove all\|dead` · `remove type <creature_type>` · `remove radius <blocks>` | Despawn one or many entities |
+| `remove <name>` · `remove all\|dead` · `remove type <creature_type>` · `remove radius <blocks>` | Despawn one or many entities. A name with spaces works quoted or not (`remove "The Kindler"`); several one-word names can go in one line (`remove wolf guard`) |
 | `rename <current> <new>` | Rename a spawned entity, keeping its HP, shop stock and loot. Quote names with spaces — an ambiguous unquoted split is refused, not guessed |
 | `revive <name> [hp]` | Bring a dead entity back (default full HP). Same path as `/dm revive`, so it rejoins a fight in progress |
 | `teleport <name> [x y z]` | Teleport an entity to you (or to coordinates) |

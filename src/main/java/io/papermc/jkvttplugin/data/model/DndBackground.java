@@ -131,7 +131,7 @@ public class DndBackground {
                     NamedTextColor.GOLD);
         }
 
-        builder.addDescription(description, 60);
+        builder.addDescription(description, Util.WRAP_WIDTH);
         return builder.build();
     }
 

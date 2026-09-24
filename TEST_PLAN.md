@@ -20,17 +20,17 @@ fails), copy `build/libs/*.jar` into the server's `plugins/`, restart. Load the 
 
 ## Character creation
 
-- [ ] Human Monk Entertainer → the choice headers say where each pick comes from: "Monk: Artisan's
-      Tools or Musical Instrument — …" and "Entertainer: Musical Instrument — …".
-- [ ] A pick two sources share (Rock Gnome + Artificer's duplicate) → its header names both,
-      "Rock Gnome + Artificer: …".
+- [ ] Spells tab, hover a spell → the same description as the spellbook: level and school, casting
+      time, range, components, duration, then the rules text, wrapped (no line runs off the screen).
+- [ ] A spell with "At Higher Levels" (Cure Wounds) shows that part too.
+- [ ] Cleric's Spells tab, bottom label → "You prepare these from your class's full spell list"
+      (it no longer promises swapping on a long rest; that's #218).
+- [ ] Item tooltips (a weapon, a potion) and condition hovers wrap at the same width as spells.
 
 ## Finished characters
 
 Finish the combo, then look at the sheet and your inventory.
 
-- [ ] **Rock Gnome Artificer, Sage:** the tool you picked as the Tinker's Tools replacement is on the sheet.
-- [ ] **Rock Gnome Artificer:** looking at the sky, right-click thieves' tools → the spell menu opens.
 - [ ] **High Elf Wizard, Noble:** Wizard Cantrip and class cantrips are both there, no double pick.
 - [ ] **High Elf Wizard, Noble:** both languages and the gaming set are on the sheet.
 - [ ] **High Elf Wizard, Noble:** your Spells-tab picks are in the spellbook.
@@ -72,7 +72,6 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 ## Casting from the spellbook and `/character cast`
 
 - [ ] `/character cast ` + Tab → your cantrips, spells and racial spells (Thaumaturgy for a tiefling).
-- [ ] `/character cast fire_bolt ` + Tab → creature and player names.
 
 ## Combat
 
@@ -126,24 +125,42 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 
 ## Attacks outside a fight
 
-- [ ] `/character cast fire_bolt The Kindler` out of combat → "asking the DM"; you get **[Start
-      combat]** / **[Let it happen]** / **[Deny]**. No slot spent yet.
-- [ ] Same, leaving the name off and looking at her → same prompt.
-- [ ] **[Deny]** → the caster is told; nothing happens.
-- [ ] **[Let it happen]** → the caster gets roll buttons; the attack roll shows `vs AC`.
-- [ ] Let it happen, a hit → roll damage (`/character damage`), her HP drops.
-- [ ] Let it happen, a miss → it ends there.
-- [ ] **[Start combat]** → a fight opens in setup with both of you, and the hint mentions the Surprise tool.
 - [ ] After Start combat, on the caster's first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
 - [ ] Sacred Flame with Let it happen → the DM sees the DC, **[Call the save]**, **[Failed: damage]** / **[Saved: …]**.
-- [ ] Look at a wall, `/character cast fire_bolt` → "You're not aiming at a creature. Cast it anyway?" [Cast it].
-- [ ] Cast it → the DM sees "N to hit", "they're looking at the wall torch" and **[Ask for damage]**.
-- [ ] Damage rolled at a thing hurts nobody.
-- [ ] `/character cast cure_wounds <someone>` → roll prompt → they heal, no DM prompt.
-- [ ] Same, too far away → "about N ft away" refusal.
-- [ ] Left-click a creature with a sword out of combat → the DM gets **[Start combat]** / **[Deny]**.
+- [ ] Left-click a creature with a sword out of combat, **in survival** → the DM gets **[Start
+      combat]** / **[Deny]** (it used to do nothing: creatures can't take a survival hit).
+- [ ] Swing five times in a row → the DM is asked once ("Still waiting on the DM…" for you).
+- [ ] **[Let it happen]** a Fire Bolt at The Kindler, finish it, cast again → the DM is asked again
+      (one permission is one cast; it used to last 10 minutes).
+- [ ] **[Let it happen]** a Sacred Flame → you get **[cast it]**, not a d20 prompt (a save spell
+      doesn't roll to hit).
+- [ ] Cast at The Kindler twice before the DM answers → the second says "Still waiting on the DM".
+- [ ] Cast Fire Bolt at her, then something else at someone else before the DM answers → "That
+      replaces your earlier request"; the DM's old buttons now say "already answered or replaced".
+- [ ] Looking at a wall: `/character cast fire_bolt manualRoll 20` → the wall prompt, not "No
+      character called 'manualRoll 20'".
+- [ ] Same with `autoRoll 1d20` → works.
+- [ ] `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Ask the DM]**.
+- [ ] Click it → the DM gets "📏 … out of reach (about 18 ft away …)" **[Allow]** / **[Deny]**.
+- [ ] [Allow] → you get **[cast it]**; it goes through once. Casting again from there refuses again.
+- [ ] [Deny] → "The DM says it doesn't reach".
+
+## Roll prompts (one wording everywhere, #216)
+
+Every prompt is **[I rolled…] [Roll it] [My total…]**, and the result says where the number came
+from: `🎲 d20 [14] +5 = 19` (the game), `🎲 you rolled 14 +5 = 19`, `🎲 your total: 19`.
+
+- [ ] Sheet skill (physical-dice mode) → the three buttons; hover each: what it does, the bonus spelled out.
+- [ ] `/dm check <you> save dex` → the same three buttons.
+- [ ] `/dm check Balin Ironforge save dex` (a creature) → the same three buttons, for you.
+- [ ] Out-of-combat Fire Bolt, Cure Wounds and `/character damage` → the same (damage has no
+      [My total…], since nothing is added to it).
+- [ ] In a fight: initiative, an attack (left-click), damage, a save, a concentration save → the same.
+- [ ] A healing potion (`/character drink`) → the same.
+- [ ] **[Roll it]** runs straight away; the other two put the command in your chat bar.
+- [ ] Advantage, game-rolled → `🎲 d20 [9, 15] advantage +3[DEX] = 18` (both dice, one line).
+- [ ] Sheet roll in auto mode, with a Halfling rolling a 1 → Lucky rerolls it (it didn't before).
 - [ ] That click doesn't damage the creature.
-- [ ] The spellbook, out of combat, fills `/character cast …`, and its hover explains the above.
 
 ## The Adjust menu & `/dm adjust`
 
@@ -214,7 +231,20 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 - [ ] `/dm check Balin Ironforge save dex ` + Tab → `dc / adv / dis / autoRoll / manualRoll / total`.
 - [ ] `/dm adjust The Kindler ` + Tab (unquoted) → the actions (`hp`, `temp`, …).
 - [ ] `/dm entity cleanup` is gone (unknown subcommand, not in Tab).
-- [ ] `/dm check <you> insight vs Balin deception` → your roll prompt, plus **[Roll it] / [I rolled…]** labelled "+1 CHA".
+- [ ] `/dm entity remove "The Kindler"` → removes her (it said "Removed 0" before).
+- [ ] `/dm entity remove The Kindler` → the same.
+- [ ] `/dm entity remove wolf guard` (two spawned) → both go.
+- [ ] `/dm entity remove nobody` → "No creature called 'nobody'".
+- [ ] Possess a creature → the message says its model is hidden from you and **F** shows it.
+- [ ] Press F, F5 → you see the model you're possessing. Stop, possess another → still visible
+      (the choice sticks); F again hides it.
+- [ ] **Looking at a creature**, right-click the character sheet → the sheet opens.
+- [ ] Same with your spellcasting focus → the spellbook opens.
+- [ ] Right-clicking a **dead** creature with the sheet in hand → still loots (the body wins).
+- [ ] Dungeoneer's Pack in your inventory: click another item onto it, or it onto an item →
+      nothing goes in, "Packs don't hold other items".
+- [ ] Something already inside a pack from before → you can still take it out.
+- [ ] `/dm check <you> insight vs Balin deception` → your roll prompt, plus the roll buttons labelled "+1 CHA" (now **[I rolled…] [Roll it] [My total…]**).
 - [ ] Same, answered → the winner with [Share].
 - [ ] Same, with `autoRoll` inline.
 - [ ] A guard's Perception in a contest → `+2 Perception`.
@@ -223,7 +253,7 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 Spawn alira as "The Kindler" first (`/dm entity spawn alira "The Kindler"`).
 
-- [ ] A creature check with no roll → the DM gets [Roll it] / [I rolled…].
+- [ ] A creature check with no roll → the DM gets the three roll buttons.
 - [ ] `/dm check clear Balin Ironforge` → "is a creature. Only characters have held checks…".
 - [ ] `/dm check clear ` + Tab → only characters, no creatures.
 - [ ] `/dm check clear <your character>` → clears your held checks.
@@ -326,7 +356,54 @@ Set these up, `/stop`, start the server, then check:
 ---
 
 # Playtest notes
+
 (`→` lines are Claude's status. New notes go at the top.)
+
+**2026-09-24 (second round)**
+
+`/dm entity remove "The Kindler"` → "Removed 0"; unquoted works.
+  → fixed. It looked each word up on its own, so unquoted worked by luck ("Kindler" alone matched)
+    and quoted matched nothing. It now reads the name like every other command, and says which
+    names it couldn't find.
+Stop making me invisible when I possess, or a toggle?
+  → the toggle already existed (press **F** while possessing) but nothing told you. The possess
+    message says so now, and your choice sticks between possessions. You staying invisible is what
+    lets everyone else see the creature instead of you, so that part stays.
+Spell info in creation, word wrapped.
+  → done: a spell tile shows the full description (the same one as the spellbook).
+Standards for wrapping, spell info, names…?
+  → yes: CLAUDE.md now has a "UI standards: one helper per thing" table (roll prompts, roll
+    results, wrapping, spell text, names, asking the DM). One wrap width everywhere, paragraph
+    breaks kept. Tests fail the build if roll buttons get hand-built again.
+No prepared spells? Ticket?
+  → half: creation picks the right number, but nothing lets a Cleric/Druid change them after a long
+    rest, and a Wizard can cast all 6 spellbook spells instead of INT+1 of them. Ticketed as #218.
+    The Spells tab was also promising "swap them on a long rest", which isn't true yet; fixed.
+Can't open my sheet or spellbook while looking at a creature.
+  → fixed: right-clicking a creature is a different Minecraft event and the sheet and focus
+    only listened for the other one. Looting a body still takes priority.
+Second Fire Bolt at The Kindler went through without asking the DM.
+  → a bug: one [Let it happen] lasted 10 minutes for that spell and target. Now it covers one cast.
+Hold one request so spam doesn't pile up on the DM?
+  → yes: each player has one open request. The same one again isn't re-sent ("Still waiting on
+    the DM"), a different one replaces it, and the DM's old buttons say it was replaced. I'd keep it
+    at "latest wins" rather than a queue: a queue fills the DM's chat with things the player
+    has already given up on.
+`/character cast fire_bolt manualRoll 20` (at a wall) → "No creature called 'manualRoll 20'".
+  → fixed; `autoRoll 1d20` was the same bug.
+Out of reach: let the DM override.
+  → done: the refusal has [Ask the DM], and [Allow] hands you [cast it] for one cast. Only out of
+    combat for now; in a fight the DM already has [Attack anyway] when possessing.
+Three roll options, one wording, one shared function.
+  → done (#216, closed): [I rolled…] [Roll it] [My total…] everywhere, results read
+    `🎲 d20 [14] +5 = 19` / `🎲 you rolled 14 +5 = 19` / `🎲 your total: 19`. [My total…] only shows
+    when the game would add something. See *Roll prompts*.
+Put things in a Dungeoneer's Pack by accident; block it?
+  → done: packs take nothing in (you can still take out what's there). Temporary until packs unpack
+    into their contents; logged in #193.
+Left-click with a sword neither damages nor prompts combat.
+  → a bug, not a DM thing: creatures are invulnerable stands, so a survival hit never fires the
+    event the prompt listened to. It now listens to the swing itself.
 
 **2026-09-24**
 

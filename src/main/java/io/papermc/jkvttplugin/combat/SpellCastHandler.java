@@ -345,23 +345,15 @@ public class SpellCastHandler {
 
     /** Send the target's controller a clickable prompt to roll the pending save. */
     private static void promptSave(CombatSession session, Combatant target, Ability ability) {
-        String cmd = "/combat save manualRoll ";
-        Component prompt = Component.text("🛡 Roll a " + ability.getAbbreviation() + " saving throw — ", NamedTextColor.GOLD)
-                .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(cmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds your save bonus."))))
-                .append(Component.text("  ", NamedTextColor.GRAY))
-                .append(Component.text("[or let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand("/combat save autoRoll"))
-                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls the save (with advantage/disadvantage)."))));
+        int bonus = saveBonus(target, ability);
+        String adds = (bonus >= 0 ? "+" : "") + bonus + " (" + ability.getAbbreviation() + " save)";
         if (target.isPlayer() && target.getPlayer() != null) {
-            target.getPlayer().sendMessage(prompt);
+            target.getPlayer().sendMessage(RollPrompt.line("🛡 Roll a " + ability.getAbbreviation() + " saving throw:",
+                    NamedTextColor.GOLD, "/combat save ", "d20", adds));
         } else {
             // Entity: the DM rolls the save for it.
-            session.sendToDM(Component.text("Roll " + target.getDisplayName(true) + "'s save: ", NamedTextColor.GOLD)
-                    .append(Component.text("[click, then type the d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                            .clickEvent(ClickEvent.suggestCommand("/combat save " + quoted(target.getDisplayName()) + " manualRoll "))
-                            .hoverEvent(HoverEvent.showText(Component.text("Rolls the save for the entity.")))));
+            session.sendToDM(RollPrompt.line("🛡 Roll " + target.getDisplayName(true) + "'s " + ability.getAbbreviation() + " save:",
+                    NamedTextColor.GOLD, "/combat save " + quoted(target.getDisplayName()) + " ", "d20", adds));
         }
     }
 
@@ -432,19 +424,8 @@ public class SpellCastHandler {
     /** Prompt a caster to roll their healing dice (physical mode). */
     private static void promptHealingRoll(Player player, Combatant target, DndSpell spell) {
         String base = "/combat cast " + spell.getId() + " " + quoted(target.getDisplayName()) + " ";
-        String manualCmd = base + "manualRoll ";
-        String autoCmd = base + "autoRoll";
-        player.sendMessage(Component.text("💚 Roll " + spell.getName() + " (" + spell.getHealing() + ") on "
-                + target.getDisplayName() + " — ", NamedTextColor.GREEN)
-                .append(Component.text("[click, then type your roll]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(manualCmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd
-                                + "<your " + spell.getHealing() + " result> — the game adds your spellcasting modifier."))))
-                .append(Component.text(" / ", NamedTextColor.DARK_GRAY))
-                .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(autoCmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls " + spell.getHealing()
-                                + " and adds your spellcasting modifier.")))));
+        player.sendMessage(RollPrompt.line("💚 Roll " + spell.getName() + " (" + spell.getHealing() + ") on "
+                + target.getDisplayName() + ":", NamedTextColor.GREEN, base, spell.getHealing(), "your spellcasting modifier"));
     }
 
     /** Range error for a single-target spell, or null if in range / unknown. Touch=5 ft, Self=self only. */

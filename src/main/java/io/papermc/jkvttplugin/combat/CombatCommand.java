@@ -447,15 +447,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private void promptInitiativeRoll(Player player, Combatant combatant) {
         int bonus = combatant.getInitiativeBonus();
         String bonusStr = bonus >= 0 ? "+" + bonus : String.valueOf(bonus);
-        String cmd = "/combat initiative manualRoll ";
-        player.sendMessage(Component.text("⚔ Roll for initiative — ", NamedTextColor.GOLD)
-                .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(cmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<your d20> — the game adds your " + bonusStr + " (DEX).")))));
-        player.sendMessage(Component.text("   or ", NamedTextColor.GRAY)
-                .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand("/combat initiative autoRoll"))
-                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20 and adds " + bonusStr + ".")))));
+        player.sendMessage(RollPrompt.line("⚔ Roll for initiative:", NamedTextColor.GOLD,
+                "/combat initiative ", "d20", bonusStr + " (DEX)"));
     }
 
     private void handleRollForInitiative(Player dm) {

@@ -112,7 +112,7 @@ public class DndArmor {
         if (description != null && !description.isEmpty()) {
             lore.add(Component.text(""));
             // Wrapped: one long line runs off the edge of the screen.
-            for (String line : Util.wrapText(description, 50)) lore.add(Component.text(line, NamedTextColor.YELLOW));
+            for (String line : Util.wrapText(description)) lore.add(Component.text(line, NamedTextColor.YELLOW));
         }
 
         ItemStack item = Util.createItem(

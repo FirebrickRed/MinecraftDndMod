@@ -160,32 +160,35 @@ public final class RollService {
     public static RollResult resolve(Integer providedRoll, Integer providedTotal, int modifier, String modLabel,
                                      boolean rerollNat1, Advantage advantage, boolean forceAuto) {
         if (providedTotal != null) {
-            return new RollResult(-1, providedTotal, true, false, false, providedTotal + " (provided total)");
+            return new RollResult(-1, providedTotal, true, false, false, RollPrompt.yourTotal(providedTotal));
         }
         if (advantage == null) advantage = Advantage.NONE;
 
         Integer d20 = providedRoll;
-        String advNote = "";
+        String shown = null; // the dice as the game rolled them: "[14]", or "[9, 15] advantage"
         if (d20 == null) {
             if (!forceAuto && !PluginConfig.isAutoRoll()) return null; // physical mode: caller prompts for a die
             if (!advantage.affectsRoll()) { // NONE or CANCELLED: one die
                 d20 = DiceRoller.rollDice(1, 20);
+                shown = "[" + d20 + "]";
             } else {
                 int a = DiceRoller.rollDice(1, 20);
                 int b = DiceRoller.rollDice(1, 20);
                 d20 = advantage.isAdvantage() ? Math.max(a, b) : Math.min(a, b);
-                advNote = " [" + advantage.label() + ": " + a + "/" + b + "]";
+                shown = "[" + a + ", " + b + "] " + advantage.label();
             }
         }
         String luck = "";
         if (rerollNat1 && d20 == 1) {
             int first = d20;
             d20 = DiceRoller.rollDice(1, 20);
-            luck = " [Lucky: reroll of " + first + "]";
+            luck = " [Lucky: the 1 was rerolled, " + d20 + " stands]";
         }
         int total = d20 + modifier;
-        return new RollResult(d20, total, false, d20 == 20, d20 == 1,
-                "d20(" + d20 + ") " + modLabel + " = " + total + advNote + luck + natCallout(d20));
+        String work = providedRoll != null
+                ? RollPrompt.youRolled(d20, modLabel, total)
+                : RollPrompt.gameRolled("d20", shown, modLabel, total);
+        return new RollResult(d20, total, false, d20 == 20, d20 == 1, work + luck + natCallout(d20));
     }
 
     /**

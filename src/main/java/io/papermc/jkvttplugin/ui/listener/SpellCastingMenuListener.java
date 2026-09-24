@@ -101,17 +101,9 @@ public class SpellCastingMenuListener implements Listener {
 
     /** What a spell does, for hovering its name in chat: level and school, the basics, the text. */
     private static Component spellSummary(DndSpell spell) {
-        Component c = Component.text(spell.getName(), NamedTextColor.LIGHT_PURPLE)
-                .append(Component.text("\n" + (spell.getLevel() == 0 ? "Cantrip" : "Level " + spell.getLevel())
-                        + (spell.getSchool() != null ? " · " + spell.getSchool() : ""), NamedTextColor.GRAY));
-        String basics = "Casting: " + spell.getCastingTime() + " · Range: " + spell.getRange() + " · " + spell.getDuration();
-        c = c.append(Component.text("\n" + basics, NamedTextColor.DARK_AQUA));
-        if (spell.getDescription() != null && !spell.getDescription().isBlank()) {
-            c = c.append(Component.text("\n"));
-            for (String line : io.papermc.jkvttplugin.util.Util.wrapText(spell.getDescription(), 45)) {
-                c = c.append(Component.text("\n" + line, NamedTextColor.WHITE));
-            }
-        }
+        // The same lines as the spellbook item and the creation tile (DndSpell.detailLore).
+        Component c = Component.text(spell.getName(), NamedTextColor.LIGHT_PURPLE);
+        for (Component line : spell.detailLore()) c = c.append(Component.newline()).append(line);
         return c;
     }
 

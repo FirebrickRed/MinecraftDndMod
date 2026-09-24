@@ -115,7 +115,7 @@ public final class AdjustMenu {
             lore.add(line(has ? "✔ Has it — click to remove" : "Click to add", has ? NamedTextColor.GREEN : NamedTextColor.GRAY));
             for (String r : cond.getRules()) {
                 boolean first = true;
-                for (String part : io.papermc.jkvttplugin.util.Util.wrapText(r, 40)) {
+                for (String part : io.papermc.jkvttplugin.util.Util.wrapText(r)) {
                     lore.add(line((first ? "• " : "  ") + part, NamedTextColor.DARK_GRAY));
                     first = false;
                 }

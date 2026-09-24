@@ -34,6 +34,19 @@ public class SpellFocusListener implements Listener {
                 && (event.getClickedBlock().getState() instanceof org.bukkit.block.Container
                     || event.getClickedBlock().getType().isInteractable())) return;
 
+        if (openSpellbook(player, item)) event.setCancelled(true);
+    }
+
+    /** The same, with a creature or a player in front of you (a separate Minecraft event). */
+    @EventHandler(priority = org.bukkit.event.EventPriority.HIGH, ignoreCancelled = true)
+    public void onRightClickEntity(org.bukkit.event.player.PlayerInteractEntityEvent event) {
+        if (event.getHand() != org.bukkit.inventory.EquipmentSlot.HAND) return;
+        ItemStack item = event.getPlayer().getInventory().getItemInMainHand();
+        if (isSpellFocus(item) && openSpellbook(event.getPlayer(), item)) event.setCancelled(true);
+    }
+
+    /** Opens the spellbook if this player can cast through this focus; false leaves the click alone. */
+    private boolean openSpellbook(Player player, ItemStack item) {
         // A class with no spellcasting has no focus type, so only a component pouch works for it.
         // For someone who can't cast through this item (a rogue's thieves' tools), it's just a tool:
         // say nothing and let the click through, rather than "You cannot use this type of focus!".
@@ -41,11 +54,9 @@ public class SpellFocusListener implements Listener {
         String focusType = getFocusType(item);
         String classRequirement = sheet != null && sheet.getMainClass() != null && sheet.getMainClass().getSpellcastingInfo() != null
                 ? sheet.getMainClass().getSpellcastingInfo().getSpellcastingFocusType() : null;
-        if (sheet == null || !sheet.hasSpells() || !canUseThisFocus(focusType, classRequirement)) return;
-
-        event.setCancelled(true);
-
+        if (sheet == null || !sheet.hasSpells() || !canUseThisFocus(focusType, classRequirement)) return false;
         SpellCastingMenu.open(player, sheet);
+        return true;
     }
 
     private boolean isSpellFocus(ItemStack item) {

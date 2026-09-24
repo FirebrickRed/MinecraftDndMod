@@ -58,6 +58,19 @@ public class WeaponListener implements Listener {
 
         if (tryPossessedAttack(player, null)) return;
 
+        // Out of a fight: a swing at a creature asks the DM (#152). This has to come from the swing,
+        // because spawned creatures are invulnerable stands and a survival player's hit on one never
+        // raises a damage event, so onLeftClickEntity alone never saw it.
+        if (CombatSession.getSessionForPlayer(player.getUniqueId()) == null) {
+            String weaponId = ItemUtil.getItemId(player.getInventory().getItemInMainHand());
+            DndWeapon weapon = weaponId != null ? WeaponLoader.getWeapon(weaponId) : null;
+            if (weapon != null && !weapon.isRanged()) {
+                Entity hit = traceEntity(player, rangeBlocks(weapon), null);
+                if (hit != null) outOfCombatSwing(player, hit);
+            }
+            return;
+        }
+
         AttackContext ctx = contextFor(player);
         if (ctx == null) return;
         Combatant target = traceTarget(player, ctx, (int) Math.ceil(rangeBlocks(ctx.weapon)));
@@ -193,7 +206,10 @@ public class WeaponListener implements Listener {
         if (tryPossessedAttack(player, event.getEntity())) { event.setCancelled(true); return; }
 
         CombatSession session = CombatSession.getSessionForPlayer(player.getUniqueId());
-        if (session == null) { outOfCombatSwing(player, event); return; }
+        if (session == null) {
+            if (outOfCombatSwing(player, event.getEntity())) event.setCancelled(true);
+            return;
+        }
         if (session.isSetupPhase()) return;
 
         Combatant target = combatantFor(session, event.getEntity(), player);
@@ -211,23 +227,27 @@ public class WeaponListener implements Listener {
     /**
      * Out of a fight, swinging a D&D weapon at a creature or a character asks the DM whether it
      * starts one (#152). The hit itself never lands: nobody takes damage from a physical click.
+     * Reached from the arm swing and, when Minecraft does raise one, the damage event; the ask is
+     * throttled in {@code weaponAttack}, so both firing for one click asks once.
+     *
+     * @return true when it was a D&D creature or character (so a damage event should be cancelled)
      */
-    private void outOfCombatSwing(Player player, EntityDamageByEntityEvent event) {
+    private boolean outOfCombatSwing(Player player, Entity entity) {
         String weaponId = ItemUtil.getItemId(player.getInventory().getItemInMainHand());
         DndWeapon weapon = weaponId != null ? WeaponLoader.getWeapon(weaponId) : null;
-        if (weapon == null) return;
+        if (weapon == null) return false;
         Combatant target = null;
-        if (event.getEntity() instanceof org.bukkit.entity.ArmorStand stand
+        if (entity instanceof org.bukkit.entity.ArmorStand stand
                 && io.papermc.jkvttplugin.data.model.DndEntityInstance.getByArmorStand(stand) != null) {
             target = io.papermc.jkvttplugin.combat.CombatTargets.forEntity(
                     io.papermc.jkvttplugin.data.model.DndEntityInstance.getByArmorStand(stand)).combatant();
-        } else if (event.getEntity() instanceof Player other
+        } else if (entity instanceof Player other
                 && io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(other) != null) {
             target = io.papermc.jkvttplugin.combat.CombatTargets.forPlayer(other).combatant();
         }
-        if (target == null) return; // a cow, a zombie: vanilla Minecraft
-        event.setCancelled(true);
+        if (target == null) return false; // a cow, a zombie: vanilla Minecraft
         io.papermc.jkvttplugin.combat.OutOfCombatAttack.weaponAttack(player, weapon.getName(), weaponId, target);
+        return true;
     }
 
     // ==================== SHARED ====================
@@ -275,9 +295,6 @@ public class WeaponListener implements Listener {
         String targetName = target.getDisplayName();
         String targetArg = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
         String base = "/combat attack " + targetArg + " " + ctx.weaponId + " ";
-        String manualCmd = base + "manualRoll ";
-        String autoCmd = base + "autoRoll";
-        String totalCmd = base + "total ";
 
         CharacterSheet sheet = ctx.attacker.getCharacterSheet();
         int mod = sheet != null ? AttackHandler.calculatePlayerAttackMod(sheet, ctx.weapon) : 0;
@@ -299,21 +316,8 @@ public class WeaponListener implements Listener {
             player.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));
         }
 
-        player.sendMessage(Component.text("⚔ Attack ", NamedTextColor.GOLD)
-                .append(Component.text(targetName, NamedTextColor.YELLOW))
-                .append(Component.text(" with " + ctx.weapon.getName() + " — ", NamedTextColor.GOLD))
-                .append(Component.text("[click, then type your d20]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(manualCmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + manualCmd + "<your d20>\nThe game adds your "
-                                + modShown + " to hit.")))));
-        player.sendMessage(Component.text("   the game adds your " + modShown + " to hit — or ", NamedTextColor.GRAY)
-                .append(Component.text("[let the game roll]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(autoCmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("The game rolls your d20 (with advantage/disadvantage) and adds " + modShown + "."))))
-                .append(Component.text(" / ", NamedTextColor.DARK_GRAY))
-                .append(Component.text("[type a final total]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(totalCmd))
-                        .hoverEvent(HoverEvent.showText(Component.text("If you already added your modifiers: " + totalCmd + "<your final total>")))));
+        player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("⚔ Attack " + targetName + " with " + ctx.weapon.getName() + ":",
+                NamedTextColor.GOLD, base, adv.affectsRoll() ? "d20 (" + adv.label() + ")" : "d20", modShown + " to hit"));
 
         // Throwable weapon (#192): say which way it'll go by default and offer the override, since
         // throwing at an adjacent enemy (or stabbing at range, futile) is the player's call.
