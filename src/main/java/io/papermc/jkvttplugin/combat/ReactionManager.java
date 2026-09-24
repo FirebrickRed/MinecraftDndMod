@@ -164,16 +164,18 @@ public final class ReactionManager {
         } else {
             buttons = buttons.append(Component.text("[take it — add your weapon] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.suggestCommand("/combat reactions " + reactor.getDisplayName() + " "))
-                    .hoverEvent(HoverEvent.showText(Component.text("Fill in your weapon (or 'unarmed') and your d20 roll."))));
+                    .hoverEvent(HoverEvent.showText(Component.text("Fill in your weapon (or 'unarmed'), press Enter, then choose how to roll."))));
         }
         return buttons.append(passButton(reactor));
     }
 
     private static Component attackButton(Combatant reactor, String attackName) {
         String base = "/combat reactions " + reactor.getDisplayName() + " " + attackName.toLowerCase().replace(" ", "_");
+        // Picks the attack only; pressing Enter then offers the usual roll buttons (RollPrompt.again),
+        // instead of assuming a physical die with "manualRoll".
         return Component.text("[" + attackName + "] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
-                .clickEvent(ClickEvent.suggestCommand(base + " manualRoll "))
-                .hoverEvent(HoverEvent.showText(Component.text("Attack with " + attackName + " — fills the command, then type your d20 roll.")));
+                .clickEvent(ClickEvent.suggestCommand(base + " "))
+                .hoverEvent(HoverEvent.showText(Component.text("Attack with " + attackName + ": fills the command. Press Enter, then choose how to roll.")));
     }
 
     private static Component passButton(Combatant reactor) {

@@ -66,7 +66,6 @@ public class RollOptionsMenuHandler {
     /** Send a clickable chat prompt asking the player to roll this check physically. */
     public static void promptSkillRoll(Player player, CharacterSheet character, String type, String value, RollMode mode) {
         RollInfo info = getRollInfo(character, type, value);
-        String bonusStr = info.bonus >= 0 ? "+" + info.bonus : String.valueOf(info.bonus);
         // Carry the menu's adv/dis pick in the command, or physical mode rolls it normal. The manual
         // form puts it before manualRoll so the player's typed d20 still lands last.
         String modeWord = switch (mode) { case ADVANTAGE -> "adv "; case DISADVANTAGE -> "dis "; default -> ""; };
@@ -79,7 +78,7 @@ public class RollOptionsMenuHandler {
         };
         String advNote = mode == RollMode.NORMAL ? "" : " (" + mode.name().toLowerCase() + ")";
         player.sendMessage(RollPrompt.line("🎲 Roll " + info.displayName + advNote + ":", NamedTextColor.GOLD,
-                base, dice, bonusStr + " (" + info.breakdown + ")"));
+                base, dice, info.breakdown));
     }
 
     /**
@@ -171,7 +170,7 @@ public class RollOptionsMenuHandler {
                             success ? NamedTextColor.GREEN : NamedTextColor.RED)
                     .append(Component.text(" (DC " + p.dc() + ")", NamedTextColor.DARK_GRAY));
         }
-        Component dmMsg = Component.text("🎲 " + shareText, NamedTextColor.GOLD)
+        Component dmMsg = Component.text(shareText, NamedTextColor.GOLD)
                 .append(verdict)
                 .append(Component.text("  "))
                 .append(Component.text("[Share with players]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
@@ -179,7 +178,7 @@ public class RollOptionsMenuHandler {
                         .hoverEvent(HoverEvent.showText(Component.text("Announce this roll to the table."))));
         Player dm = Bukkit.getPlayer(p.dmId());
         if (dm != null) dm.sendMessage(dmMsg);
-        else Bukkit.broadcast(Component.text("🎲 " + shareText, NamedTextColor.YELLOW)); // DM offline → announce
+        else Bukkit.broadcast(Component.text(shareText, NamedTextColor.YELLOW)); // DM offline → announce
     }
 
     /**

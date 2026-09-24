@@ -2,7 +2,6 @@ package io.papermc.jkvttplugin.combat;
 
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
-import io.papermc.jkvttplugin.util.DiceRoller;
 import io.papermc.jkvttplugin.data.loader.ConditionLoader;
 import io.papermc.jkvttplugin.data.model.DndCondition;
 import net.kyori.adventure.text.Component;
@@ -373,20 +372,12 @@ public class CombatSession {
      * own flat d20 for the display, which quietly skipped the armor disadvantage below.
      */
     public InitiativeRoll rollInitiativeFor(Combatant combatant) {
-        int roll = DiceRoller.rollDice(1, 20);
-        String note = "";
-        // Initiative is a DEX check, so unproficient armor gives disadvantage (#209): keep the lower.
-        var sheet = combatant.getCharacterSheet();
-        if (sheet != null && sheet.armorPenaltyApplies(io.papermc.jkvttplugin.data.model.enums.Ability.DEXTERITY)) {
-            int second = DiceRoller.rollDice(1, 20);
-            note = " [disadvantage: " + roll + "/" + second + "]";
-            roll = Math.min(roll, second);
-        }
-        int bonus = combatant.getInitiativeBonus();
-        int total = roll + bonus;
-        combatant.setInitiative(total);
-        return new InitiativeRoll(roll, total, "[" + roll + "] " + (bonus >= 0 ? "+" + bonus : bonus)
-                + " (DEX) = " + total + note);
+        // The same resolver and wording as every other d20 (#216): armor disadvantage, Lucky and the
+        // nat 1/20 callout all apply, and the line reads "🎲 d20 [14] +2[DEX] = 16".
+        RollService.RollResult r = RollService.resolve(null, null, combatant.getInitiativeBonus(),
+                combatant.initiativeBreakdown(), combatant.rerollsNat1(), combatant.initiativeAdvantage(), true);
+        combatant.setInitiative(r.total());
+        return new InitiativeRoll(r.d20(), r.total(), r.breakdown());
     }
 
     /** One initiative roll, with the line to show the table. */
@@ -1379,7 +1370,10 @@ public class CombatSession {
         } else if (c.isUnconscious()) {
             broadcast(Component.text(c.getDisplayName() + " is UNCONSCIOUS and must make a death saving throw.",
                     NamedTextColor.DARK_RED, TextDecoration.BOLD));
-            broadcast(Component.text("Type /combat deathsave", NamedTextColor.YELLOW));
+            // The roll buttons go to whoever rolls it: the downed player (the DM can still roll for them by name).
+            Player downed = c.getPlayer();
+            if (downed != null) downed.sendMessage(RollPrompt.line("💀 Roll your death save (10 or higher succeeds):",
+                    NamedTextColor.YELLOW, "/combat deathsave ", "d20", null));
         }
     }
 

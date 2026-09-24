@@ -414,15 +414,19 @@ public class AttackHandler {
                 dm.sendMessage(Component.text("Reach: " + attack.getReach(), NamedTextColor.GRAY));
             }
             dm.sendMessage(Component.text("Damage: " + attack.getDamage() + " " + attack.getDamageType(), NamedTextColor.GRAY));
-            dm.sendMessage(RollPrompt.again(dm, "Roll it:", "d20", "+" + toHit + "[" + attack.getName() + "]"));
+            dm.sendMessage(RollPrompt.again(dm, "Roll it:", "d20", (toHit >= 0 ? "+" : "") + toHit + "[" + attack.getName() + "]"));
             dm.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
             return false;
         }
 
         // Same resolver as player attacks — the entity just sources its numbers from the stat block,
         // including whether its attack throws a cosmetic projectile (#181).
-        return resolveAttack(session, attacker, target, toHit, "+" + toHit + "[ToHit]",
-                attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm, "", false,
+        // Both bonuses named for the attack, as the prompt names them: "+4[Scimitar]" to hit, and its
+        // damage formula's flat part ("1d6+2" → "+2[Scimitar]"), which is the creature's modifier.
+        int dmgFlat = splitDamageBonus(attack.getDamage())[0];
+        String dmgLabel = dmgFlat == 0 ? "" : (dmgFlat > 0 ? "+" : "") + dmgFlat + "[" + attack.getName() + "]";
+        return resolveAttack(session, attacker, target, toHit, (toHit >= 0 ? "+" : "") + toHit + "[" + attack.getName() + "]",
+                attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm, dmgLabel, false,
                 CombatVisuals.projectileFor(attack), forceAuto, null, 0, 0, null); // monsters do not track ammo
     }
 
@@ -492,7 +496,7 @@ public class AttackHandler {
                 target.getDisplayName(isViewerDM) + "!", NamedTextColor.WHITE));
 
         // Roll details
-        session.broadcast(Component.text("Roll: " + rollDetail, NamedTextColor.GRAY));
+        session.broadcast(Component.text("Attack roll: " + rollDetail, NamedTextColor.GRAY));
         session.broadcast(Component.text("vs AC " + targetAC, NamedTextColor.GRAY));
 
         // Result — attack resolves HIT/MISS only. Damage is a separate step (/combat damage).
@@ -545,23 +549,36 @@ public class AttackHandler {
     }
 
     /**
+     * A damage formula split into what you roll and what the game adds. A flat bonus is only split
+     * off when it has a named source ({@code bonusLabel}: "+3[STR] +2[Rage]", a creature's
+     * "+2[Scimitar]"). Otherwise it's part of the formula itself (Magic Missile's 1d4+1, like a
+     * potion's 2d4+2): you roll the whole thing and nothing is added, so nothing unlabelled is ever
+     * "added" in a prompt.
+     */
+    record DamageSplit(String dice, int bonus, String label) {
+        boolean hasDice() { return dice.toLowerCase().contains("d"); }
+    }
+
+    static DamageSplit splitDamage(String damageStr, String bonusLabel) {
+        String formula = damageStr == null ? "" : damageStr.trim();
+        if (bonusLabel == null || bonusLabel.isBlank()) return new DamageSplit(formula, 0, "");
+        return new DamageSplit(formula.replaceAll("[+-]\\s*\\d+\\s*$", "").trim(),
+                splitDamageBonus(formula)[0], bonusLabel.trim());
+    }
+
+    /**
      * Remember the hit on the attacker's turn state so {@code /combat damage} knows what to apply,
      * what type it is, and whether it was a crit. Split out from the prompt itself so a hit can be
      * recorded now and offered later, after a reaction window closes (#195).
      */
     private static void recordHit(Combatant attacker, Combatant target, String damageStr,
                                   String damageType, boolean isCrit, String bonusLabel) {
-        int[] split = splitDamageBonus(damageStr);
-        String dice = damageStr == null ? "" : damageStr.replaceAll("[+-]\\s*\\d+\\s*$", "").trim();
-        int bonus = split[0];
-        boolean hasDice = dice.toLowerCase().contains("d");
-        String bonusStr = bonus == 0 ? "" : (bonus > 0 ? " +" + bonus : " " + bonus);
-        String bonusShown = (bonusLabel != null && !bonusLabel.isEmpty()) ? " " + bonusLabel : bonusStr;
+        DamageSplit d = splitDamage(damageStr, bonusLabel);
         if (attacker.getTurnState() != null) {
-            attacker.getTurnState().markAttackHit(target.getId(), hasDice ? bonus : 0,
-                    hasDice ? bonusShown.trim() : "", isCrit);
+            attacker.getTurnState().markAttackHit(target.getId(), d.hasDice() ? d.bonus() : 0,
+                    d.hasDice() ? d.label() : "", isCrit);
             attacker.getTurnState().setPendingDamageType(damageType); // so /combat damage needs no 'type' (#183)
-            attacker.getTurnState().setPendingDamageDice(hasDice ? dice : ""); // so 'autoRoll' needs no dice (#183)
+            attacker.getTurnState().setPendingDamageDice(d.hasDice() ? d.dice() : ""); // so 'autoRoll' needs no dice (#183)
         }
     }
 
@@ -571,24 +588,13 @@ public class AttackHandler {
         String name = target.getDisplayName();
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
         // The damage type is auto-grabbed from this hit by /combat damage — no 'type' needed (#183).
-
-        // Split "1d8+3" into the dice you physically roll ("1d8") and the flat bonus (3). This mirrors
-        // attack rolls: you roll the dice, the game adds the known modifier via manualRoll <your result>.
-        int[] split = splitDamageBonus(damageStr);
-        String dice = damageStr == null ? "" : damageStr.replaceAll("[+-]\\s*\\d+\\s*$", "").trim();
-        int bonus = split[0];
-        boolean hasDice = dice.toLowerCase().contains("d");
-
-        // Labeled bonus for clarity (#168): "+5[STR] +2[Rage]" if we have it, else a bare "+N".
-        // (The pending-damage window itself was recorded by recordHit when the attack landed.)
-        String bonusStr = bonus == 0 ? "" : (bonus > 0 ? " +" + bonus : " " + bonus);
-        String bonusShown = (bonusLabel != null && !bonusLabel.isEmpty()) ? " " + bonusLabel : bonusStr;
+        DamageSplit d = splitDamage(damageStr, bonusLabel);
 
         Component prompt;
-        if (hasDice) {
+        if (d.hasDice()) {
             // autoRoll needs no dice typed: /combat damage remembers them from this hit.
-            prompt = RollPrompt.line("💥 Roll " + dice + " damage against " + name + ":", NamedTextColor.YELLOW,
-                    "/combat damage " + quoted + " ", dice, bonus == 0 ? null : bonusShown.trim());
+            prompt = RollPrompt.line("💥 Roll " + d.dice() + " damage against " + name + ":", NamedTextColor.YELLOW,
+                    "/combat damage " + quoted + " ", d.dice(), d.bonus() == 0 ? null : d.label());
         } else {
             // Flat damage (e.g. unarmed): nothing to roll — one click applies it.
             String amt = (damageStr == null || damageStr.isEmpty()) ? "1" : damageStr;

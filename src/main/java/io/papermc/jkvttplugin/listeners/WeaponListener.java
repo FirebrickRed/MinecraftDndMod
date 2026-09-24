@@ -302,7 +302,7 @@ public class WeaponListener implements Listener {
         // Show the source breakdown (e.g. "+4[STR] +2[Prof]") next to the total so the number isn't
         // a mystery — matching how the attack result and damage prompt now label their bonuses (#168).
         String breakdown = sheet != null ? AttackHandler.buildPlayerModBreakdown(sheet, ctx.weapon) : "";
-        String modShown = breakdown.isEmpty() ? modStr : modStr + " (" + breakdown + ")";
+        String modShown = breakdown.isEmpty() ? modStr : breakdown; // the same label the result shows
 
         // Surface advantage/disadvantage HERE, as the command is offered — not after the roll
         // resolves — so the player knows before they commit (#189 playtest). It's known now: it
@@ -317,7 +317,7 @@ public class WeaponListener implements Listener {
         }
 
         player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("⚔ Attack " + targetName + " with " + ctx.weapon.getName() + ":",
-                NamedTextColor.GOLD, base, adv.affectsRoll() ? "d20 (" + adv.label() + ")" : "d20", modShown + " to hit"));
+                NamedTextColor.GOLD, base, adv.affectsRoll() ? "d20 (" + adv.label() + ")" : "d20", modShown));
 
         // Throwable weapon (#192): say which way it'll go by default and offer the override, since
         // throwing at an adjacent enemy (or stabbing at range, futile) is the player's call.

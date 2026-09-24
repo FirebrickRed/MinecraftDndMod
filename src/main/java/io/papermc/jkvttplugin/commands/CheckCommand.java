@@ -69,7 +69,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         // [Share with players] button from a DM-first check result (#186).
         if (args.length >= 2 && args[0].equalsIgnoreCase("share")) {
             String msg = io.papermc.jkvttplugin.dm.CheckManager.takeShare(args[1]);
-            if (msg != null) Bukkit.broadcast(Component.text("🎲 " + msg, NamedTextColor.YELLOW));
+            if (msg != null) Bukkit.broadcast(Component.text(msg, NamedTextColor.YELLOW));
             else sender.sendMessage(Component.text("That roll was already shared or has expired.", NamedTextColor.GRAY));
             return true;
         }
@@ -323,7 +323,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         return new CheckManager.Side(s.creature().getInstanceId(), s.name(), skill.getDisplayName(), true, mod, source);
     }
 
-    private static String modText(CheckManager.Side side) { return signed(side.modifier) + " " + side.modSource; }
+    private static String modText(CheckManager.Side side) { return signed(side.modifier) + "[" + side.modSource + "]"; }
 
     /** The DM's prompt for an NPC side of a contest. */
     private void promptNpcRoll(CommandSender sender, CheckManager.Contest contest, int index) {
@@ -423,13 +423,13 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(RollPrompt.line("🎲 " + name + "'s " + label
                             + (dc != null ? ", DC " + dc : "") + (adv.affectsRoll() ? ", " + adv.label() : "") + ":", NamedTextColor.GOLD,
                     base, adv.affectsRoll() ? "d20 (" + adv.label() + ": two, keeping the " + (adv.isAdvantage() ? "higher" : "lower") + ")" : "d20",
-                    signed(mod) + " " + source));
+                    signed(mod) + "[" + source + "]"));
             return true;
         }
         String result = name + " — " + label + ": " + r.breakdown();
         String graded = dc == null ? "" : (r.total() >= dc ? "  ✔ success vs DC " + dc : "  ✖ fails DC " + dc);
         String token = CheckManager.stashShare(result);
-        sender.sendMessage(Component.text("🎲 " + result, NamedTextColor.GRAY)
+        sender.sendMessage(Component.text(result, NamedTextColor.GRAY)
                 .append(Component.text(graded, r.total() >= (dc == null ? 0 : dc) ? NamedTextColor.GREEN : NamedTextColor.RED))
                 .append(Component.text("  "))
                 .append(Component.text("[Share with players]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)

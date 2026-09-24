@@ -1,6 +1,5 @@
 package io.papermc.jkvttplugin.combat;
 
-import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -22,10 +21,14 @@ public class DeathSaveHandler {
     private static final int DEATH_SAVE_DC = 10;
 
     public static void rollDeathSave(CombatSession session, Combatant target, Integer providedRoll) {
-        int d20 = (providedRoll != null) ? providedRoll : DiceRoller.rollDice(1, 20);
+        // The shared resolver: the same "🎲 you rolled 14" / "🎲 d20 [14]" wording as every roll, and
+        // Halfling Lucky applies (a death save is a saving throw, PHB p.28).
+        RollService.RollResult r = RollService.resolve(providedRoll, null, 0, "", target.rerollsNat1(), Advantage.NONE, true);
+        int d20 = r.d20();
+        String work = r.breakdown().replace(RollService.natCallout(d20), ""); // the banners below say it louder
 
         session.broadcast(Component.empty());
-        session.broadcast(Component.text(target.getDisplayName() + " makes a death saving throw...", NamedTextColor.GRAY));
+        session.broadcast(Component.text(target.getDisplayName() + " makes a death saving throw: " + work, NamedTextColor.GRAY));
 
         if (d20 == 20) {
             // Natural 20: regain 1 HP and consciousness.
@@ -45,10 +48,10 @@ public class DeathSaveHandler {
             session.broadcast(Component.text("✗ NATURAL 1 — counts as TWO failures!", NamedTextColor.DARK_RED, TextDecoration.BOLD));
         } else if (d20 >= DEATH_SAVE_DC) {
             target.addDeathSaveSuccess();
-            session.broadcast(Component.text("Roll: " + d20 + " → SUCCESS (DC " + DEATH_SAVE_DC + ")", NamedTextColor.GREEN));
+            session.broadcast(Component.text("→ SUCCESS (DC " + DEATH_SAVE_DC + ")", NamedTextColor.GREEN));
         } else {
             target.addDeathSaveFailure(1);
-            session.broadcast(Component.text("Roll: " + d20 + " → FAILURE (DC " + DEATH_SAVE_DC + ")", NamedTextColor.RED));
+            session.broadcast(Component.text("→ FAILURE (DC " + DEATH_SAVE_DC + ")", NamedTextColor.RED));
         }
 
         // Resolve outcome.

@@ -39,7 +39,7 @@ public class RollDiceCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
-        sender.sendMessage(Component.text("🎲 " + rolled.get().expression() + ": ", NamedTextColor.GRAY)
+        sender.sendMessage(Component.text("🎲 " + rolled.get().expression() + " ", NamedTextColor.GRAY)
                 .append(Component.text(rolled.get().breakdown(), NamedTextColor.WHITE)));
         return true;
     }

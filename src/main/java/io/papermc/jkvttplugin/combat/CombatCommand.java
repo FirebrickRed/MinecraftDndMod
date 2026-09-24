@@ -432,7 +432,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         RollService.RollInput roll = RollService.parseInput(args, player);
         int bonus = self.getInitiativeBonus();
         RollService.RollResult r = RollService.resolve(roll.providedRoll(), roll.providedTotal(), bonus,
-                (bonus >= 0 ? "+" : "") + bonus + "[DEX]", self.rerollsNat1(), initiativeAdvantage(self), roll.forceAuto()); // initiative is a DEX check → Lucky applies
+                self.initiativeBreakdown(), self.rerollsNat1(), self.initiativeAdvantage(), roll.forceAuto()); // initiative is a DEX check → Lucky applies
         if (r == null) { // physical mode, no die supplied — prompt
             promptInitiativeRoll(player, self);
             return;
@@ -446,10 +446,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
     /** Clickable prompt asking a player to roll their initiative (physical or let the game roll). */
     private void promptInitiativeRoll(Player player, Combatant combatant) {
-        int bonus = combatant.getInitiativeBonus();
-        String bonusStr = bonus >= 0 ? "+" + bonus : String.valueOf(bonus);
         player.sendMessage(RollPrompt.line("⚔ Roll for initiative:", NamedTextColor.GOLD,
-                "/combat initiative ", "d20", bonusStr + " (DEX)"));
+                "/combat initiative ", "d20", combatant.initiativeBreakdown()));
     }
 
     private void handleRollForInitiative(Player dm) {
@@ -936,7 +934,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
         // Attacking spends the action itself — just point them to it (don't double-spend).
         if (name.equals("attack")) {
-            player.sendMessage(Component.text("Make your attack: right-click your weapon, or /combat attack <target> <weapon> manualRoll <d20>.", NamedTextColor.YELLOW));
+            player.sendMessage(Component.text("Make your attack: hold your weapon and left-click your target, or /combat attack <target> <weapon>.", NamedTextColor.YELLOW));
             return;
         }
         if (state.isActionUsed()) {
@@ -1096,13 +1094,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (p != null && p.equalsIgnoreCase("light")) return true;
         }
         return false;
-    }
-
-    /** Initiative is a DEX check, so unproficient armor gives it disadvantage (#209). */
-    private static Advantage initiativeAdvantage(Combatant c) {
-        CharacterSheet s = c.getCharacterSheet();
-        return s != null && s.armorPenaltyApplies(io.papermc.jkvttplugin.data.model.enums.Ability.DEXTERITY)
-                ? Advantage.DISADVANTAGE : Advantage.NONE;
     }
 
     // ==================== SPELLCASTING (Issue #123) ====================

@@ -20,9 +20,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-
 /**
  * {@code /character drink <item_id> [autoRoll | manualRoll <n> | total <n>]} — drink a healing item.
  *
@@ -34,9 +31,6 @@ import java.util.regex.Pattern;
  * <p>Any item with a {@code healing:} value is drinkable; there's no hardcoded potion list.
  */
 public class DrinkCommand implements CommandExecutor {
-
-    /** Trailing flat bonus on a dice expression: the "+2" of "2d4+2". */
-    private static final Pattern FLAT_BONUS = Pattern.compile("[+\\-]\\s*(\\d+)\\s*$");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -108,10 +102,11 @@ public class DrinkCommand implements CommandExecutor {
             return Math.max(0, input.providedTotal());
         }
         if (input.providedRoll() != null) {
-            int flat = flatBonus(dice), total = input.providedRoll() + flat;
-            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.youRolled(input.providedRoll(),
-                    flat == 0 ? null : (flat > 0 ? "+" : "") + flat + "[potion]", total), NamedTextColor.GRAY));
-            return Math.max(0, total);
+            // A potion's "+2" is part of its own formula, not a modifier the game adds: "I rolled"
+            // is what the whole 2d4+2 came to.
+            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.youRolled(input.providedRoll(), null,
+                    input.providedRoll()), NamedTextColor.GRAY));
+            return Math.max(0, input.providedRoll());
         }
         if (input.forceAuto() || PluginConfig.isAutoRoll()) {
             DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(dice);
@@ -130,19 +125,9 @@ public class DrinkCommand implements CommandExecutor {
     /** Ask for the roll the same way every other physical-dice prompt does: fill chat, don't act. */
     public static void promptRoll(Player player, DndItem item) {
         String base = "/character drink " + item.getId() + " ";
-        int flat = flatBonus(item.getHealing());
-        String dice = item.getHealing().replaceAll("[+-]\\s*\\d+\\s*$", "").trim();
+        // Nothing is added to a potion (its "+2" is part of the formula), so no bonus: two buttons.
         player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("🧪 " + item.getName() + " heals " + item.getHealing() + ":",
-                NamedTextColor.GREEN, base, dice, flat == 0 ? null : (flat > 0 ? "+" : "") + flat + "[potion]"));
-    }
-
-    /** The "+2" in "2d4+2" — added to a hand-rolled dice total. */
-    private static int flatBonus(String dice) {
-        if (dice == null) return 0;
-        Matcher m = FLAT_BONUS.matcher(dice.trim());
-        if (!m.find()) return 0;
-        int value = Integer.parseInt(m.group(1));
-        return dice.trim().contains("-") && m.group(0).trim().startsWith("-") ? -value : value;
+                NamedTextColor.GREEN, base, item.getHealing(), null));
     }
 
     private static ItemStack findInInventory(Player player, String itemId) {

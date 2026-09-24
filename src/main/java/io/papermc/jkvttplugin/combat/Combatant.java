@@ -136,6 +136,24 @@ public class Combatant {
      * Calculate initiative bonus for a player character.
      * Includes DEX modifier and features like Jack of All Trades.
      */
+    /**
+     * The initiative bonus, labelled by source for a roll and its prompt: "+2[DEX]", plus
+     * "+1[Jack of All Trades]" once that applies. Mirrors {@link #calculatePlayerInitiativeBonus}.
+     */
+    public String initiativeBreakdown() {
+        CharacterSheet sheet = isPlayer() ? getCharacterSheet() : null;
+        int dex = sheet != null ? sheet.getModifier(Ability.DEXTERITY) : initiativeBonus;
+        String out = (dex >= 0 ? "+" : "") + dex + "[DEX]";
+        if (sheet != null && hasJackOfAllTrades(sheet)) out += " +" + (sheet.getProficiencyBonus() / 2) + "[Jack of All Trades]";
+        return out;
+    }
+
+    /** Initiative is a DEX check, so unproficient armor gives disadvantage on it (#209). */
+    public Advantage initiativeAdvantage() {
+        CharacterSheet s = isPlayer() ? getCharacterSheet() : null;
+        return s != null && s.armorPenaltyApplies(Ability.DEXTERITY) ? Advantage.DISADVANTAGE : Advantage.NONE;
+    }
+
     private static int calculatePlayerInitiativeBonus(CharacterSheet sheet) {
         int bonus = sheet.getModifier(Ability.DEXTERITY);
 

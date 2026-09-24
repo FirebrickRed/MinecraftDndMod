@@ -166,7 +166,7 @@ public class LootManager {
         }
         table.removeAll(found);
 
-        player.sendMessage(Component.text("🎲 " + check.getDisplayName() + ": " + r.breakdown(), NamedTextColor.AQUA));
+        player.sendMessage(Component.text(check.getDisplayName() + ": " + r.breakdown(), NamedTextColor.AQUA));
 
         if (found.isEmpty()) {
             player.sendMessage(Component.text("...you find nothing you can take.", NamedTextColor.GRAY));

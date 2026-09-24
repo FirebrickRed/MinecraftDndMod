@@ -85,6 +85,22 @@ class RollPromptTest {
         assertTrue(r.display().startsWith("🎲 2d6 ["), r.display());
     }
 
+    /**
+     * A flat damage bonus is only "added by the game" when it has a named source. Magic Missile's
+     * +1 (like a potion's +2) is part of the formula you roll, so nothing unlabelled is ever added.
+     */
+    @Test
+    void anUnlabelledFlatIsPartOfTheFormula() {
+        AttackHandler.DamageSplit spell = AttackHandler.splitDamage("1d4+1", "");
+        assertEquals("1d4+1", spell.dice());
+        assertEquals(0, spell.bonus());
+
+        AttackHandler.DamageSplit sword = AttackHandler.splitDamage("1d8+3", "+3[STR]");
+        assertEquals("1d8", sword.dice());
+        assertEquals(3, sword.bonus());
+        assertEquals("+3[STR]", sword.label());
+    }
+
     /** The playtest found about ten wordings. A new prompt must use RollPrompt, not its own labels. */
     @Test
     void noOtherFileBuildsItsOwnRollButtons() throws IOException {

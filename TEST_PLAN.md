@@ -129,6 +129,7 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 - [ ] Sacred Flame with Let it happen → the DM sees the DC, **[Call the save]**, **[Failed: damage]** / **[Saved: …]**.
 - [ ] Left-click a creature with a sword out of combat, **in survival** → the DM gets **[Start
       combat]** / **[Deny]** (it used to do nothing: creatures can't take a survival hit).
+- [ ] That click doesn't damage the creature.
 - [ ] Swing five times in a row → the DM is asked once ("Still waiting on the DM…" for you).
 - [ ] **[Let it happen]** a Fire Bolt at The Kindler, finish it, cast again → the DM is asked again
       (one permission is one cast; it used to last 10 minutes).
@@ -147,20 +148,42 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 
 ## Roll prompts (one wording everywhere, #216)
 
-Every prompt is **[I rolled…] [Roll it] [My total…]**, and the result says where the number came
-from: `🎲 d20 [14] +5 = 19` (the game), `🎲 you rolled 14 +5 = 19`, `🎲 your total: 19`.
+Every prompt is **[I rolled…] [Roll it] [My total…]** ([My total…] only when the game adds
+something). Every bonus is **named by its source**, and the prompt and the result show the same
+label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14] +3[INT] +2[Prof] = 19`
+(the game rolled), `🎲 you rolled 14 +3[INT] +2[Prof] = 19`, or `🎲 your total: 19`.
 
-- [ ] Sheet skill (physical-dice mode) → the three buttons; hover each: what it does, the bonus spelled out.
+- [ ] Sheet skill (physical-dice mode) → the three buttons; the hover names the bonus (`+3[DEX] +2[Prof]`).
 - [ ] `/dm check <you> save dex` → the same three buttons.
-- [ ] `/dm check Balin Ironforge save dex` (a creature) → the same three buttons, for you.
-- [ ] Out-of-combat Fire Bolt, Cure Wounds and `/character damage` → the same (damage has no
-      [My total…], since nothing is added to it).
-- [ ] In a fight: initiative, an attack (left-click), damage, a save, a concentration save → the same.
-- [ ] A healing potion (`/character drink`) → the same.
+- [ ] `/dm check Balin Ironforge save dex` (a creature) → the same, labelled `+1[DEX]`.
+- [ ] A contest with a creature side → its button labelled `+5[Deception]` (listed skill) or `+1[CHA]`.
+- [ ] Out-of-combat Fire Bolt → `+3[INT] +2[Prof]`; Cure Wounds → `+3[WIS]`; `/character damage`
+      → two buttons, nothing added.
+- [ ] In a fight: initiative → `+2[DEX]`; an attack (left-click) → the weapon's breakdown; a save
+      and a concentration save → `+1[CON] +2[Prof]` (proficient) or just `+1[CON]`.
+- [ ] Spell attack in a fight → `+3[INT] +2[Prof]`, not `+5[Spell]`.
+- [ ] Cure Wounds in a fight → `+3[WIS]`, not "your spellcasting modifier"; **[Roll it]** heals
+      (it used to re-prompt in physical-dice mode); the table sees the roll line.
+- [ ] Upcast Cure Wounds with no roll (`/combat cast cure_wounds <t> level 2`) → the buttons keep `level 2`.
+- [ ] A creature's attack in a fight → to hit `+4[Scimitar]`, damage `+2[Scimitar]` (not `[ToHit]`).
+- [ ] Magic Missile → "Roll 1d4+1", two buttons, nothing added (the +1 is part of the spell).
+- [ ] A healing potion → "Roll 2d4+2", two buttons, nothing added (the +2 is the potion's).
+- [ ] Any game-rolled dice (damage, healing, a potion) → **one** `= total`, never `[5] = 5 +3 = 8`.
+- [ ] `/combat damage <t> autoRoll` → one line, `🎲 1d8 [6] +3[STR] = 9`.
+- [ ] Type a roll command with no roll words (physical-dice mode): `/combat attack <t> <weapon>`,
+      `/combat save`, `/combat concentration`, `/character loot investigation` → the three buttons
+      on that same command, not "type 'manualRoll <n>'".
+- [ ] Downed → the player gets **💀 Roll your death save** with [I rolled…] [Roll it]; the result
+      reads `… makes a death saving throw: 🎲 you rolled 14` → SUCCESS.
+- [ ] A Halfling rolling a 1 on a death save → Lucky rerolls it (it didn't before).
+- [ ] `/combat rollforinitiative` (DM) → each line `🎲 d20 [14] +2[DEX] = 16`.
+- [ ] Opportunity attack buttons → pick the attack, Enter, then the three roll buttons.
+- [ ] `/roll 2d6` → `🎲 2d6 [4, 3] = 7`.
+- [ ] Nowhere shows two dice icons (`🎲 … 🎲`), e.g. a shared check result or a loot roll.
 - [ ] **[Roll it]** runs straight away; the other two put the command in your chat bar.
 - [ ] Advantage, game-rolled → `🎲 d20 [9, 15] advantage +3[DEX] = 18` (both dice, one line).
-- [ ] Sheet roll in auto mode, with a Halfling rolling a 1 → Lucky rerolls it (it didn't before).
-- [ ] That click doesn't damage the creature.
+- [ ] Sheet roll in auto mode, with a Halfling rolling a 1 → Lucky rerolls it.
+- [ ] `/combat action attack` → says "left-click your target" (it said right-click).
 
 ## The Adjust menu & `/dm adjust`
 
