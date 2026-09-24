@@ -57,6 +57,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
+        RollPrompt.rememberCommand(sender, command.getName(), args); // so a missing roll re-asks on this exact line
 
         if (!(sender instanceof Player player)) {
             sender.sendMessage(Component.text("This command can only be used by players.", NamedTextColor.RED));
@@ -2399,18 +2400,27 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 ? attacker.getTurnState().getPendingDamageLabel() : "";
         int damage;
         if (rollStr != null) {
-            Integer rolled = rolledAmount(dm, rollStr);
-            if (rolled == null) return;
             // Either way, add the pending bonus the attack promised (+STR, +Rage, …) — the prompt
             // says "the game adds +N", so it must, whether the die was typed or auto-rolled (#168).
-            damage = rolled + pendingBonus;
-            if (pendingBonus != 0) {
-                String bonusShow = !pendingLabel.isEmpty() ? " " + pendingLabel
-                        : (pendingBonus > 0 ? " +" + pendingBonus : " " + pendingBonus);
-                dm.sendMessage(Component.text("Damage: " + rolled + bonusShow + " = " + damage, NamedTextColor.GRAY));
+            String bonusShow = pendingBonus == 0 ? null : !pendingLabel.isEmpty() ? pendingLabel
+                    : (pendingBonus > 0 ? "+" + pendingBonus : String.valueOf(pendingBonus));
+            String work;
+            if (rollStr.toLowerCase().contains("d")) { // the game rolls the dice
+                DiceRoller.Rolled r = DiceRoller.rollOrFlat(rollStr);
+                if (r == null) { dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED)); return; }
+                damage = r.total() + pendingBonus;
+                work = RollPrompt.gameRolled(rollStr, r.shown(), bonusShow, damage);
+            } else {                                   // you rolled them
+                int rolled;
+                try { rolled = Integer.parseInt(rollStr.trim()); }
+                catch (NumberFormatException e) { dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED)); return; }
+                damage = rolled + pendingBonus;
+                work = RollPrompt.youRolled(rolled, bonusShow, damage);
             }
+            dm.sendMessage(Component.text(work, NamedTextColor.GRAY));
         } else if (total != null) {
             damage = total;
+            dm.sendMessage(Component.text(RollPrompt.yourTotal(total), NamedTextColor.GRAY));
         } else if (flat != null) {
             damage = flat;
         } else {

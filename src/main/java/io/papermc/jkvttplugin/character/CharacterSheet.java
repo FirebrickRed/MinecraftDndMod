@@ -1717,6 +1717,19 @@ public class CharacterSheet {
         catch (IllegalArgumentException e) { return null; }
     }
 
+    /** The casting ability's modifier alone, labelled: "+3[WIS]". What healing adds to its dice. */
+    public String getSpellModBreakdown(DndSpell spell) {
+        Ability a = castingAbilityFor(spell);
+        if (a == null) return "+0";
+        int mod = getModifier(a);
+        return (mod >= 0 ? "+" : "") + mod + "[" + a.getAbbreviation() + "]";
+    }
+
+    /** A spell attack's bonus, labelled like every other roll: "+3[INT] +2[Prof]". */
+    public String getSpellAttackBreakdown(DndSpell spell) {
+        return getSpellModBreakdown(spell) + " +" + getProficiencyBonus() + "[Prof]";
+    }
+
     /**
      * Checks if the character has any innate spells available at the specified spell level.
      * This is used to determine whether spell level buttons should be shown in the UI

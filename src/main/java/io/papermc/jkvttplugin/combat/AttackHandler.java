@@ -6,7 +6,6 @@ import io.papermc.jkvttplugin.data.model.DndAttack;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
 import io.papermc.jkvttplugin.data.model.DndWeapon;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
-import io.papermc.jkvttplugin.util.DiceRoller;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
@@ -19,7 +18,6 @@ import org.bukkit.inventory.PlayerInventory;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -174,8 +172,7 @@ public class AttackHandler {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
-            commandUser.sendMessage(Component.text("Roll your d20, then add 'manualRoll <n>' — or 'autoRoll' to let the game roll (or left-click your target).",
-                    NamedTextColor.YELLOW));
+            commandUser.sendMessage(RollPrompt.again(commandUser, "⚔ Roll to hit " + target.getDisplayName() + ":", "d20", modBreakdown));
             return false;
         }
         int targetAC = target.getArmorClass();
@@ -417,7 +414,7 @@ public class AttackHandler {
                 dm.sendMessage(Component.text("Reach: " + attack.getReach(), NamedTextColor.GRAY));
             }
             dm.sendMessage(Component.text("Damage: " + attack.getDamage() + " " + attack.getDamageType(), NamedTextColor.GRAY));
-            dm.sendMessage(Component.text("Type 'manualRoll <d20>' to provide a roll, or 'autoRoll' to let the game roll.", NamedTextColor.DARK_GRAY));
+            dm.sendMessage(RollPrompt.again(dm, "Roll it:", "d20", "+" + toHit + "[" + attack.getName() + "]"));
             dm.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
             return false;
         }
@@ -655,7 +652,7 @@ public class AttackHandler {
             }
         }
 
-        player.sendMessage(Component.text("Type 'manualRoll <d20>' to provide a roll, or 'autoRoll' to let the game roll.", NamedTextColor.DARK_GRAY));
+        player.sendMessage(RollPrompt.again(player, "Roll it:", "d20", modBreakdown));
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
     }
 

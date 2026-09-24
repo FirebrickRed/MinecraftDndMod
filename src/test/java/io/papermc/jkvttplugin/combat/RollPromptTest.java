@@ -62,6 +62,29 @@ class RollPromptTest {
         assertTrue(r.breakdown().matches("🎲 d20 \\[\\d+, \\d+] advantage \\+3\\[DEX] = \\d+.*"), r.breakdown());
     }
 
+    /** "Where did the +5 come from": a spell's and a save's bonus are named, not lumped. */
+    @Test
+    void bonusesAreLabelledBySource() {
+        io.papermc.jkvttplugin.TestContent.load();
+        var wizard = io.papermc.jkvttplugin.TestContent.character("human", null, "wizard", "sage",
+                io.papermc.jkvttplugin.TestContent.scores(io.papermc.jkvttplugin.data.model.enums.Ability.INTELLIGENCE, 16));
+        var fireBolt = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell("fire_bolt");
+        assertEquals("+3[INT] +2[Prof]", wizard.getSpellAttackBreakdown(fireBolt));
+        assertEquals("+3[INT]", wizard.getSpellModBreakdown(fireBolt));
+        // Wizards are proficient in INT saves, not DEX saves.
+        assertTrue(wizard.getSaveBreakdown(io.papermc.jkvttplugin.data.model.enums.Ability.INTELLIGENCE).endsWith("+2[Prof]"));
+        assertFalse(wizard.getSaveBreakdown(io.papermc.jkvttplugin.data.model.enums.Ability.DEXTERITY).contains("Prof"));
+    }
+
+    /** Game-rolled dice show once, with one total: not "[5] = 5 +3[WIS] = 8". */
+    @Test
+    void gameRolledDiceHaveOneTotal() {
+        io.papermc.jkvttplugin.util.DiceRoller.Rolled r = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat("2d6");
+        String line = RollPrompt.gameRolled("2d6", r.shown(), "+3[WIS]", r.total() + 3);
+        assertEquals(1, line.chars().filter(ch -> ch == '=').count(), line);
+        assertTrue(r.display().startsWith("🎲 2d6 ["), r.display());
+    }
+
     /** The playtest found about ten wordings. A new prompt must use RollPrompt, not its own labels. */
     @Test
     void noOtherFileBuildsItsOwnRollButtons() throws IOException {

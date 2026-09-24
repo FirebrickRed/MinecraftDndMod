@@ -50,6 +50,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        io.papermc.jkvttplugin.combat.RollPrompt.rememberCommand(sender, cmd.getName(), args); // so a missing roll re-asks on this exact line
         if (args.length == 0) {
             sendUsage(sender);
             return true;
@@ -233,7 +234,10 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         }
         if (!io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.resolvePhysical(sheet, type, value,
                 input.providedRoll(), input.providedTotal(), input.forceAuto(), chosen)) {
-            player.sendMessage(Component.text("Provide your roll: 'manualRoll <your d20>', or 'autoRoll'.", NamedTextColor.YELLOW));
+            io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.promptSkillRoll(player, sheet, type, value,
+                    chosen.isAdvantage() ? io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode.ADVANTAGE
+                            : chosen.isDisadvantage() ? io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode.DISADVANTAGE
+                            : io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode.NORMAL);
         }
         return true;
     }

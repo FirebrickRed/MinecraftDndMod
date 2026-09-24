@@ -348,6 +348,20 @@ public class Combatant {
         return Ability.getModifier(entity.getTemplate().getAbilities().getOrDefault(Ability.CONSTITUTION, 10));
     }
 
+    /**
+     * A saving throw's bonus, labelled for a roll prompt and its result: a character's "+1[CON]
+     * +2[Prof]" from the sheet, a creature's "+3[DEX]" (stat blocks carry no save proficiencies yet).
+     */
+    public String saveBreakdown(Ability ability) {
+        if (isPlayer()) {
+            CharacterSheet sheet = getCharacterSheet();
+            if (sheet != null) return sheet.getSaveBreakdown(ability);
+        }
+        DndEntityInstance entity = getEntityInstance();
+        int mod = entity == null ? 0 : Ability.getModifier(entity.getTemplate().getAbilities().getOrDefault(ability, 10));
+        return (mod >= 0 ? "+" : "") + mod + "[" + ability.getAbbreviation() + "]";
+    }
+
     public int getDeathSaveSuccesses() {
         CharacterSheet s = sheetIfPlayer();
         return s != null ? s.getDeathSaveSuccesses() : deathSaveSuccesses;

@@ -40,14 +40,23 @@ public class DiceRoller {
     public record Rolled(String expression, java.util.List<Integer> dice, int modifier, int multiplier, int total) {
         /** "[4, 3] +3 = 10", or "([4, 3] +3) ×2 = 20" with a multiplier. A flat amount is just itself. */
         public String breakdown() {
-            if (dice.isEmpty()) return String.valueOf(total);
-            String sum = dice.toString() + (modifier > 0 ? " +" + modifier : modifier < 0 ? " " + modifier : "");
-            if (multiplier != 1) sum = "(" + sum + ") ×" + multiplier;
-            return sum + " = " + total;
+            return dice.isEmpty() ? String.valueOf(total) : shown() + " = " + total;
         }
 
         /**
-         * The line to show whenever <b>the game</b> rolled: "🎲 2d6+3: [4, 3] +3 = 10".
+         * The dice as rolled, without the total: "[4, 3] +3". This is the {@code shown} part of
+         * {@code RollPrompt.gameRolled}, which adds the bonus and the total itself.
+         */
+        public String shown() {
+            if (dice.isEmpty()) return String.valueOf(total);
+            String sum = dice.toString() + (modifier > 0 ? " +" + modifier : modifier < 0 ? " " + modifier : "");
+            if (multiplier != 1) sum = "(" + sum + ") ×" + multiplier;
+            return sum;
+        }
+
+        /**
+         * The line to show whenever <b>the game</b> rolled: "🎲 2d6+3 [4, 3] +3 = 10", the same shape
+         * as {@code RollPrompt.gameRolled}.
          *
          * <p>Use this everywhere the game rolls dice on someone's behalf. A bare total ("you take 7")
          * asks the table to trust the computer; the dice are what a physical table would see on the
@@ -55,7 +64,7 @@ public class DiceRoller {
          * which builds the same kind of breakdown with the modifiers named.)
          */
         public String display() {
-            return dice.isEmpty() ? "🎲 " + total : "🎲 " + expression + ": " + breakdown();
+            return dice.isEmpty() ? "🎲 " + total : "🎲 " + expression + " " + breakdown();
         }
     }
 

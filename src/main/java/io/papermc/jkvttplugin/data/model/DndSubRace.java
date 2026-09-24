@@ -1,7 +1,6 @@
 package io.papermc.jkvttplugin.data.model;
 
 import io.papermc.jkvttplugin.data.model.enums.Ability;
-import io.papermc.jkvttplugin.util.ChoiceUtil;
 import io.papermc.jkvttplugin.util.LoreBuilder;
 import io.papermc.jkvttplugin.util.Util;
 import net.kyori.adventure.text.Component;

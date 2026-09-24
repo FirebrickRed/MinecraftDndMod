@@ -24,7 +24,6 @@ import org.bukkit.util.RayTraceResult;
 
 import java.time.Duration;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -224,7 +223,7 @@ public final class OutOfCombatAttack {
         String name = aim.target != null ? aim.targetName() : sheet.getCharacterName();
         if (aim.target != null && !inRange(player, aim, spell)) return true;
         int mod = modFor(sheet, spell);
-        String modLabel = signed(mod) + "[" + abilityAbbr(sheet, spell) + "]";
+        String modLabel = sheet.getSpellModBreakdown(spell);
         Integer amount;
         String work;
         if (roll.providedTotal() != null) {
@@ -237,7 +236,7 @@ public final class OutOfCombatAttack {
             DiceRoller.Rolled r = DiceRoller.rollOrFlat(spell.getHealing());
             if (r == null) { player.sendMessage(Component.text(spell.getName() + " has no healing dice.", NamedTextColor.RED)); return true; }
             amount = r.total() + mod;
-            work = RollPrompt.gameRolled(spell.getHealing(), r.breakdown(), modLabel, amount);
+            work = RollPrompt.gameRolled(spell.getHealing(), r.shown(), modLabel, amount);
         } else {
             String cmd = "/character cast " + spell.getId() + (aim.target != null ? " " + quote(name) : "") + " ";
             player.sendMessage(RollPrompt.line("💚 Roll " + spell.getName() + " (" + spell.getHealing() + "):", NamedTextColor.GREEN,
@@ -278,7 +277,7 @@ public final class OutOfCombatAttack {
             DiceRoller.Rolled r = DiceRoller.rollOrFlat(p.dice());
             if (r == null) { player.sendMessage(Component.text("There are no dice to roll — type the amount.", NamedTextColor.RED)); return; }
             amount = r.total();
-            work = RollPrompt.gameRolled(p.dice(), r.breakdown(), null, amount);
+            work = RollPrompt.gameRolled(p.dice(), r.shown(), null, amount);
         } else if (args.length > 0) {
             try { amount = Integer.parseInt(args[args.length - 1].trim()); work = RollPrompt.yourTotal(amount); } catch (NumberFormatException ignored) {}
         }
@@ -522,7 +521,7 @@ public final class OutOfCombatAttack {
             player.sendMessage(Component.text("↯ You have " + adv.label() + " on this spell attack.",
                     adv.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
         }
-        return RollService.resolve(roll, mod, signed(mod) + "[Spell]", rerollNat1, adv);
+        return RollService.resolve(roll, mod, sheet.getSpellAttackBreakdown(spell), rerollNat1, adv);
     }
 
     private static int modFor(CharacterSheet sheet, DndSpell spell) {
@@ -545,15 +544,8 @@ public final class OutOfCombatAttack {
     }
 
     private static void rollPrompt(Player player, CharacterSheet sheet, DndSpell spell, String retry) {
-        int mod = sheet.getProficiencyBonus() + modFor(sheet, spell);
         player.sendMessage(RollPrompt.line("🎲 Roll to hit with " + spell.getName() + ":", NamedTextColor.YELLOW, retry, "d20",
-                signed(mod) + " (" + signed(modFor(sheet, spell)) + " " + abilityAbbr(sheet, spell) + ", +" + sheet.getProficiencyBonus() + " proficiency)"));
-    }
-
-    /** "INT", "WIS": the ability this character casts this spell with. */
-    private static String abilityAbbr(CharacterSheet sheet, DndSpell spell) {
-        Ability a = sheet.castingAbilityFor(spell);
-        return a != null ? a.getAbbreviation() : "Spell";
+                sheet.getSpellAttackBreakdown(spell)));
     }
 
     /** The caster, every DM, and anyone within 30 blocks: an attack out of combat is public. */
@@ -584,8 +576,6 @@ public final class OutOfCombatAttack {
     }
 
     private static String quote(String name) { return name.contains(" ") ? "\"" + name + "\"" : name; }
-
-    private static String signed(int n) { return n >= 0 ? "+" + n : String.valueOf(n); }
 
     private static Ability parseAbility(String name) {
         if (name == null) return null;

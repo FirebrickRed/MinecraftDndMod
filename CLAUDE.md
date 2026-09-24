@@ -409,6 +409,8 @@ Hand-rolled copies drifted into ten wordings of the same roll button, which is w
 |---|---|---|
 | **A roll prompt** (d20 or dice, player's or the DM's for a creature) | `RollPrompt.line(lead, color, base, dice, bonus)`: always `[I rolled…] [Roll it] [My total…]` (no total button when nothing is added). `RollPromptTest` fails the build if another file builds its own. | your own `[let the game roll]` |
 | **A roll result** | `RollPrompt.gameRolled` / `youRolled` / `yourTotal` ("🎲 2d6 [4, 3] +3[CHA] = 10", "🎲 you rolled 7 +3 = 10", "🎲 your total: 10"). A d20 through `RollService.resolve` already does this, plus the nat 1/20 callout. | "d20(14)…", "(provided total)" |
+| **The bonus a roll adds** | Labelled by source, the same string in the prompt and the result: `+3[INT] +2[Prof]`. Sheet: `getSaveBreakdown` / `getSkillBonusBreakdown` / `getSpellAttackBreakdown` / `getSpellModBreakdown`; either side: `Combatant.saveBreakdown`; weapons: `AttackHandler.buildPlayerModBreakdown` | `+5[Spell]`, "your spellcasting modifier" |
+| **A roll command typed without roll words** | `RollPrompt.again(sender, lead, dice, bonus)`: the three buttons on the exact line they typed (`/combat` and `/character` remember it) | "type 'manualRoll <n>', or 'autoRoll'" |
 | **Wrapped text** (lore, hovers) | `Util.wrapText(text)` / `LoreBuilder.addWrappedText(text, color)`: `Util.WRAP_WIDTH`, paragraph breaks kept | a width of your own |
 | **What a spell does** | `DndSpell.detailLore()`, used by the spellbook item, the creation tile and the chat hover | a new summary |
 | **Reading a name** | `NameUtil.readName` / `collapseName` (quoted or not); a creature via `DndEntityInstance.findByName`, a character via `CharacterResolver` | `args[i]` |

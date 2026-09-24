@@ -58,6 +58,32 @@ public final class RollPrompt {
         return Component.text(lead + " ", color).append(buttons(base, dice, bonus));
     }
 
+    // ==================== "YOU DIDN'T SAY HOW YOU'RE ROLLING" ====================
+    // A roll command typed without autoRoll / manualRoll / total (physical-dice mode) is answered deep
+    // in a call chain that doesn't know what was typed. The root commands remember the line, so the
+    // re-ask is the same three buttons on that exact command instead of "type 'manualRoll <n>'".
+
+    private static final java.util.Map<java.util.UUID, String> typed = new java.util.HashMap<>();
+
+    /** Called by a root command ({@code /combat}, {@code /character}) before it dispatches. */
+    public static void rememberCommand(org.bukkit.command.CommandSender sender, String label, String[] args) {
+        if (!(sender instanceof org.bukkit.entity.Player p)) return;
+        StringBuilder line = new StringBuilder("/" + label);
+        for (String a : args) {
+            // "showModifiers" only prints the info panel; the roll it offers is the real attack.
+            if (a.isBlank() || a.equalsIgnoreCase("showModifiers") || a.equalsIgnoreCase("showMods")) continue;
+            line.append(' ').append(a);
+        }
+        typed.put(p.getUniqueId(), line.append(' ').toString());
+    }
+
+    /** The buttons again, on the command this player just typed. Falls back to a plain hint if unknown. */
+    public static Component again(org.bukkit.command.CommandSender to, String lead, String dice, String bonus) {
+        String base = to instanceof org.bukkit.entity.Player p ? typed.get(p.getUniqueId()) : null;
+        if (base == null) return Component.text(lead + " Add autoRoll, manualRoll <n> or total <n>.", NamedTextColor.YELLOW);
+        return line(lead, NamedTextColor.YELLOW, base, dice, bonus);
+    }
+
     // ==================== RESULTS ====================
     // One wording per way of answering, so a roll always says where its number came from.
 

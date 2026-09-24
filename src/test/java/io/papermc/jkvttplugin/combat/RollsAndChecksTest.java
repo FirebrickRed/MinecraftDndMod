@@ -48,7 +48,7 @@ class RollsAndChecksTest {
         DiceRoller.Rolled r = DiceRoller.rollOrFlat("2d8+1");
         assertNotNull(r);
         assertEquals(2, r.dice().size());
-        assertTrue(r.display().startsWith("🎲 2d8+1: ["), r.display());
+        assertTrue(r.display().startsWith("🎲 2d8+1 ["), r.display());
         assertTrue(r.display().endsWith("= " + r.total()));
     }
 

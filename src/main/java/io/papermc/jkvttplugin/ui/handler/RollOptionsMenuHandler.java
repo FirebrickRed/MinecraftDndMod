@@ -6,7 +6,6 @@ import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.combat.RollPrompt;
 import io.papermc.jkvttplugin.combat.RollService;
 import io.papermc.jkvttplugin.config.PluginConfig;
-import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;

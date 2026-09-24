@@ -17,7 +17,6 @@ import io.papermc.jkvttplugin.util.NameUtil;
 import io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;

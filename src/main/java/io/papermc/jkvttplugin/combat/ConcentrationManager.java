@@ -5,8 +5,6 @@ import io.papermc.jkvttplugin.config.PluginConfig;
 import io.papermc.jkvttplugin.data.model.DndSpell;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.entity.Player;
@@ -106,24 +104,25 @@ public final class ConcentrationManager {
      * to add before they roll it, so the breakdown is part of the question, not the answer.
      */
     private static void prompt(CombatSession session, Combatant target, int dc, String what) {
-        int bonus = saveBonus(target);
-        String sign = bonus >= 0 ? "+" : "";
-        String breakdown = bonusBreakdown(target);
-
         session.broadcast(Component.text("◈ Concentration — ", NamedTextColor.LIGHT_PURPLE, TextDecoration.BOLD)
                 .append(Component.text(target.getDisplayName(true) + " must hold " + what
                         + " together: DC " + dc + " CON save.", NamedTextColor.YELLOW)));
 
-        String adds = sign + bonus + " (" + breakdown + ")";
         if (target.isPlayer() && target.getPlayer() != null) {
-            target.getPlayer().sendMessage(RollPrompt.line("◈ Roll a CON save vs DC " + dc + ":", NamedTextColor.GOLD,
-                    "/combat concentration ", "d20", adds));
+            target.getPlayer().sendMessage(saveButtons(target, "◈ Roll a CON save vs DC " + dc + ":"));
         } else {
-            String quoted = target.getDisplayName().contains(" ")
-                    ? "\"" + target.getDisplayName() + "\"" : target.getDisplayName();
-            session.sendToDM(RollPrompt.line("◈ Roll " + target.getDisplayName(true) + "'s CON save (DC " + dc + "):",
-                    NamedTextColor.GOLD, "/combat concentration " + quoted + " ", "d20", adds));
+            session.sendToDM(saveButtons(target, "◈ Roll " + target.getDisplayName(true) + "'s CON save (DC " + dc + "):"));
         }
+    }
+
+    /** The save's roll buttons: your own at {@code /combat concentration}, a creature's by name (the DM's roll). */
+    private static Component saveButtons(Combatant target, String lead) {
+        String base = "/combat concentration ";
+        if (!target.isPlayer()) {
+            String n = target.getDisplayName();
+            base += (n.contains(" ") ? "\"" + n + "\"" : n) + " ";
+        }
+        return RollPrompt.line(lead, NamedTextColor.GOLD, base, "d20", target.saveBreakdown(Ability.CONSTITUTION));
     }
 
     // ==================== RESOLUTION ====================
@@ -139,7 +138,7 @@ public final class ConcentrationManager {
         if (p == null || to == null) return;
         to.sendMessage(Component.text("◈ Hold — " + c.getDisplayName() + " still owes a DC " + p.dc()
                 + " CON save to keep " + p.what() + ".", NamedTextColor.GOLD));
-        to.sendMessage(Component.text("   /combat concentration autoRoll — or manualRoll <your d20>.", NamedTextColor.GRAY));
+        to.sendMessage(saveButtons(c, "   "));
     }
 
     /** Resolve the pending save. Players roll their own; the DM rolls for a creature. */
@@ -157,9 +156,9 @@ public final class ConcentrationManager {
                     + advantage.label() + ".", advantage.isAdvantage() ? NamedTextColor.GREEN : advantage.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
         }
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
-                (bonus >= 0 ? "+" : "") + bonus + "[CON]", target.rerollsNat1(), advantage, forceAuto);
+                target.saveBreakdown(Ability.CONSTITUTION), target.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
-            roller.sendMessage(Component.text("Add your roll: 'manualRoll <n>', or 'autoRoll'.", NamedTextColor.YELLOW));
+            roller.sendMessage(saveButtons(target, "◈ Roll " + target.getDisplayName() + "'s CON save:"));
             return;
         }
         pending.remove(target.getId());
@@ -220,20 +219,5 @@ public final class ConcentrationManager {
             return c.getCharacterSheet().getSavingThrowBonus(Ability.CONSTITUTION);
         }
         return c.getConstitutionModifier();
-    }
-
-    /** Spelled-out modifier, so a player with a physical die knows what they're adding and why. */
-    private static String bonusBreakdown(Combatant c) {
-        if (c.isPlayer() && c.getCharacterSheet() != null) {
-            CharacterSheet sheet = c.getCharacterSheet();
-            int mod = sheet.getModifier(Ability.CONSTITUTION);
-            String s = (mod >= 0 ? "+" : "") + mod + " CON";
-            if (sheet.isProficientInSave(Ability.CONSTITUTION)) {
-                s += ", +" + sheet.getProficiencyBonus() + " proficiency";
-            }
-            return s;
-        }
-        int mod = c.getConstitutionModifier();
-        return (mod >= 0 ? "+" : "") + mod + " CON";
     }
 }

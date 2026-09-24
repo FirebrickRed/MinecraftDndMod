@@ -6,11 +6,8 @@ import io.papermc.jkvttplugin.data.model.DndCondition;
 import io.papermc.jkvttplugin.data.model.DndSpell;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
-import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
 import java.util.HashMap;
@@ -65,18 +62,28 @@ public class SpellCastHandler {
         // Healing / temp HP spells (Cure Wounds, Healing Word, False Life…).
         if (spell.isHealing() || spell.grantsTempHp()) {
             Integer healAmount = null;
+            String work = null;
             if (spell.isHealing()) {
                 int abilityMod = sheet.getModifier(ability);
-                if (providedTotal != null) healAmount = providedTotal;                       // final total given
-                else if (providedRoll != null) healAmount = providedRoll + abilityMod;        // rolled dice given
-                else if (io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll())
-                    healAmount = rollAmount(spell.getHealing(), session) + abilityMod;        // game rolls it (and shows it)
-                else { promptHealingRoll(player, target, spell); return false; }              // physical: ask them to roll
+                String modLabel = sheet.getSpellModBreakdown(spell);
+                if (providedTotal != null) {                                                  // final total given
+                    healAmount = providedTotal;
+                    work = RollPrompt.yourTotal(healAmount);
+                } else if (providedRoll != null) {                                            // rolled dice given
+                    healAmount = providedRoll + abilityMod;
+                    work = RollPrompt.youRolled(providedRoll, modLabel, healAmount);
+                } else if (forceAuto || io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) { // game rolls it
+                    io.papermc.jkvttplugin.util.DiceRoller.Rolled rolled = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(spell.getHealing());
+                    int dice = rolled == null ? 0 : rolled.total();
+                    healAmount = dice + abilityMod;
+                    work = RollPrompt.gameRolled(spell.getHealing(), rolled == null ? "0" : rolled.shown(), modLabel, healAmount);
+                } else { promptHealingRoll(player, sheet, target, spell); return false; }     // physical: ask them to roll
                 healAmount = Math.max(1, healAmount);
             }
             session.broadcast(Component.empty());
             session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
                     + " on " + target.getDisplayName(true) + ".", NamedTextColor.LIGHT_PURPLE));
+            if (work != null) session.broadcast(Component.text(work, NamedTextColor.GRAY));
             if (healAmount != null) DamageHandler.applyHealing(session, target, healAmount);
             if (spell.grantsTempHp()) DamageHandler.applyTempHp(session, target, Math.max(0, rollAmount(spell.getTempHp(), session)));
             return true;
@@ -98,10 +105,11 @@ public class SpellCastHandler {
                 player.sendMessage(Component.text("↯ You have " + advantage.label() + " on this spell attack.",
                         advantage.isAdvantage() ? NamedTextColor.GREEN : advantage.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
             }
+            String attackLabel = sheet.getSpellAttackBreakdown(spell);
             RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, mod,
-                    (mod >= 0 ? "+" : "") + mod + "[Spell]", caster.rerollsNat1(), advantage, forceAuto);
+                    attackLabel, caster.rerollsNat1(), advantage, forceAuto);
             if (r == null) {
-                player.sendMessage(Component.text("Roll your d20: type 'manualRoll <n>', or 'autoRoll'.", NamedTextColor.YELLOW));
+                player.sendMessage(RollPrompt.again(player, "✨ Roll to hit with " + spell.getName() + ":", "d20", attackLabel));
                 return false;
             }
             int ac = target.getArmorClass();
@@ -345,8 +353,7 @@ public class SpellCastHandler {
 
     /** Send the target's controller a clickable prompt to roll the pending save. */
     private static void promptSave(CombatSession session, Combatant target, Ability ability) {
-        int bonus = saveBonus(target, ability);
-        String adds = (bonus >= 0 ? "+" : "") + bonus + " (" + ability.getAbbreviation() + " save)";
+        String adds = target.saveBreakdown(ability);
         if (target.isPlayer() && target.getPlayer() != null) {
             target.getPlayer().sendMessage(RollPrompt.line("🛡 Roll a " + ability.getAbbreviation() + " saving throw:",
                     NamedTextColor.GOLD, "/combat save ", "d20", adds));
@@ -372,10 +379,11 @@ public class SpellCastHandler {
             roller.sendMessage(Component.text("↯ " + target.getDisplayName() + " rolls this save with "
                     + advantage.label() + ".", advantage.isAdvantage() ? NamedTextColor.GREEN : advantage.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
         }
+        String label = target.saveBreakdown(ps.ability());
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
-                (bonus >= 0 ? "+" : "") + bonus + "[" + ps.ability().getAbbreviation() + "]", target.rerollsNat1(), advantage, forceAuto);
+                label, target.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
-            roller.sendMessage(Component.text("Add your roll: 'manualRoll <n>', or 'autoRoll'.", NamedTextColor.YELLOW));
+            roller.sendMessage(RollPrompt.again(roller, "🛡 Roll " + target.getDisplayName() + "'s " + ps.ability().getAbbreviation() + " save:", "d20", label));
             return;
         }
         pendingSaves.remove(target.getId());
@@ -421,11 +429,13 @@ public class SpellCastHandler {
         return 0;
     }
 
-    /** Prompt a caster to roll their healing dice (physical mode). */
-    private static void promptHealingRoll(Player player, Combatant target, DndSpell spell) {
-        String base = "/combat cast " + spell.getId() + " " + quoted(target.getDisplayName()) + " ";
-        player.sendMessage(RollPrompt.line("💚 Roll " + spell.getName() + " (" + spell.getHealing() + ") on "
-                + target.getDisplayName() + ":", NamedTextColor.GREEN, base, spell.getHealing(), "your spellcasting modifier"));
+    /**
+     * Prompt a caster to roll their healing dice (physical mode). Built on the command they typed,
+     * so an upcast ("level 2") survives into the roll.
+     */
+    private static void promptHealingRoll(Player player, CharacterSheet sheet, Combatant target, DndSpell spell) {
+        player.sendMessage(RollPrompt.again(player, "💚 Roll " + spell.getName() + " (" + spell.getHealing() + ") on "
+                + target.getDisplayName() + ":", spell.getHealing(), sheet.getSpellModBreakdown(spell)));
     }
 
     /** Range error for a single-target spell, or null if in range / unknown. Touch=5 ft, Self=self only. */

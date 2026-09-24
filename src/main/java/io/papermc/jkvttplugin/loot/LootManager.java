@@ -3,13 +3,7 @@ package io.papermc.jkvttplugin.loot;
 import io.papermc.jkvttplugin.character.ActiveCharacterTracker;
 import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.character.CharacterSheetManager;
-import io.papermc.jkvttplugin.data.loader.ArmorLoader;
-import io.papermc.jkvttplugin.data.loader.ItemLoader;
-import io.papermc.jkvttplugin.data.loader.WeaponLoader;
-import io.papermc.jkvttplugin.data.model.DndArmor;
 import io.papermc.jkvttplugin.data.model.DndEntityInstance;
-import io.papermc.jkvttplugin.data.model.DndItem;
-import io.papermc.jkvttplugin.data.model.DndWeapon;
 import io.papermc.jkvttplugin.data.model.LootEntry;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import net.kyori.adventure.text.Component;
@@ -120,11 +114,9 @@ public class LootManager {
             dm.sendMessage(Component.text(player.getName() + " has no active character.", NamedTextColor.RED));
             return;
         }
-        int mod = sheet.getSkillBonus(check);
-        String modStr = (mod >= 0 ? "+" + mod : String.valueOf(mod));
         String base = "/character loot " + check.name().toLowerCase() + " ";
         player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("🎲 The DM asks you to roll " + check.getDisplayName() + ":",
-                NamedTextColor.GOLD, base, "d20", modStr + " (" + check.getDisplayName() + ")"));
+                NamedTextColor.GOLD, base, "d20", sheet.getSkillBonusBreakdown(check)));
         dm.sendMessage(Component.text("Asked " + player.getName() + " to roll " + check.getDisplayName() + ".", NamedTextColor.GRAY));
     }
 
@@ -157,11 +149,12 @@ public class LootManager {
         }
 
         int mod = sheet.getSkillBonus(check);
+        String breakdown = sheet.getSkillBonusBreakdown(check);
         io.papermc.jkvttplugin.combat.RollService.RollResult r = io.papermc.jkvttplugin.combat.RollService.resolve(
-                providedRoll, providedTotal, mod, "+" + mod + "[" + check.getDisplayName() + "]",
+                providedRoll, providedTotal, mod, breakdown,
                 false, io.papermc.jkvttplugin.combat.Advantage.NONE, forceAuto);
         if (r == null) { // physical mode, no roll supplied
-            player.sendMessage(Component.text("Add your roll: 'manualRoll <d20>', or 'autoRoll'.", NamedTextColor.YELLOW));
+            player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.again(player, "🎲 Roll " + check.getDisplayName() + ":", "d20", breakdown));
             return;
         }
         int total = r.total();

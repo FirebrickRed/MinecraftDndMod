@@ -13,17 +13,13 @@ import io.papermc.jkvttplugin.data.model.DndItem;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import io.papermc.jkvttplugin.util.ItemUtil;
 import net.kyori.adventure.text.Component;
-import net.kyori.adventure.text.event.ClickEvent;
-import net.kyori.adventure.text.event.HoverEvent;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 
-import java.util.OptionalInt;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -114,7 +110,7 @@ public class DrinkCommand implements CommandExecutor {
         if (input.providedRoll() != null) {
             int flat = flatBonus(dice), total = input.providedRoll() + flat;
             player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.youRolled(input.providedRoll(),
-                    flat == 0 ? null : (flat > 0 ? "+" : "") + flat, total), NamedTextColor.GRAY));
+                    flat == 0 ? null : (flat > 0 ? "+" : "") + flat + "[potion]", total), NamedTextColor.GRAY));
             return Math.max(0, total);
         }
         if (input.forceAuto() || PluginConfig.isAutoRoll()) {
@@ -123,7 +119,7 @@ public class DrinkCommand implements CommandExecutor {
                 player.sendMessage(Component.text(item.getName() + " has an unreadable healing value ('" + dice + "').", NamedTextColor.RED));
                 return null;
             }
-            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.gameRolled(dice, rolled.breakdown(), null, rolled.total()),
+            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.gameRolled(dice, rolled.shown(), null, rolled.total()),
                     NamedTextColor.GRAY)); // the game rolled it: show the dice
             return Math.max(0, rolled.total());
         }
@@ -137,7 +133,7 @@ public class DrinkCommand implements CommandExecutor {
         int flat = flatBonus(item.getHealing());
         String dice = item.getHealing().replaceAll("[+-]\\s*\\d+\\s*$", "").trim();
         player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("🧪 " + item.getName() + " heals " + item.getHealing() + ":",
-                NamedTextColor.GREEN, base, dice, flat == 0 ? null : (flat > 0 ? "+" : "") + flat));
+                NamedTextColor.GREEN, base, dice, flat == 0 ? null : (flat > 0 ? "+" : "") + flat + "[potion]"));
     }
 
     /** The "+2" in "2d4+2" — added to a hand-rolled dice total. */
