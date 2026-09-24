@@ -64,21 +64,10 @@ public class SpellCastHandler {
             Integer healAmount = null;
             String work = null;
             if (spell.isHealing()) {
-                int abilityMod = sheet.getModifier(ability);
-                String modLabel = sheet.getSpellModBreakdown(spell);
-                if (providedTotal != null) {                                                  // final total given
-                    healAmount = providedTotal;
-                    work = RollPrompt.yourTotal(healAmount);
-                } else if (providedRoll != null) {                                            // rolled dice given
-                    healAmount = providedRoll + abilityMod;
-                    work = RollPrompt.youRolled(providedRoll, modLabel, healAmount);
-                } else if (forceAuto || io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) { // game rolls it
-                    io.papermc.jkvttplugin.util.DiceRoller.Rolled rolled = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(spell.getHealing());
-                    int dice = rolled == null ? 0 : rolled.total();
-                    healAmount = dice + abilityMod;
-                    work = RollPrompt.gameRolled(spell.getHealing(), rolled == null ? "0" : rolled.shown(), modLabel, healAmount);
-                } else { promptHealingRoll(player, sheet, target, spell); return false; }     // physical: ask them to roll
-                healAmount = Math.max(1, healAmount);
+                HealRoll heal = healRoll(sheet, spell, providedRoll, providedTotal, forceAuto);
+                if (heal == null) { promptHealingRoll(player, sheet, target, spell); return false; } // physical: ask them to roll
+                healAmount = heal.amount();
+                work = heal.work();
             }
             session.broadcast(Component.empty());
             session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
@@ -95,7 +84,7 @@ public class SpellCastHandler {
             session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
                     + " at " + target.getDisplayName(true) + " — it hits automatically.", NamedTextColor.LIGHT_PURPLE));
             AttackHandler.promptDamage(session, caster, target, spell.getDamage() == null ? "" : spell.getDamage(),
-                    spell.getDamageType(), false);
+                    spell.getDamageType(), false, flatLabel(spell.getDamage(), spell.getName()));
             return true;
         }
 
@@ -131,7 +120,7 @@ public class SpellCastHandler {
                 // Passing the roll total lets a reaction window open on the hit (#195) — Shield stops
                 // a Fire Bolt exactly as it stops a sword.
                 AttackHandler.promptDamage(session, caster, target, dmg == null ? "" : dmg,
-                        spell.getDamageType(), r.nat20(), "", r.total());
+                        spell.getDamageType(), r.nat20(), flatLabel(dmg, spell.getName()), r.total());
             } else {
                 session.broadcast(Component.text("MISS", NamedTextColor.RED));
             }
@@ -398,7 +387,7 @@ public class SpellCastHandler {
         if (success) {
             if ("half".equalsIgnoreCase(ps.saveEffect()) && ps.damage() != null) {
                 session.broadcast(Component.text(ps.spellName() + " deals half on a save.", NamedTextColor.GRAY));
-                AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false);
+                AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false, flatLabel(ps.damage(), ps.spellName()));
                 if (damageSource.getTurnState() != null) damageSource.getTurnState().setPendingDamageHalf(true);
             } else {
                 session.broadcast(Component.text(target.getDisplayName(true) + " shrugs it off.", NamedTextColor.GRAY));
@@ -406,7 +395,7 @@ public class SpellCastHandler {
             return;
         }
         // Failed save: full damage + any condition.
-        if (ps.damage() != null) AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false);
+        if (ps.damage() != null) AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false, flatLabel(ps.damage(), ps.spellName()));
         DndCondition cond = ps.conditionOnFail() != null ? ConditionLoader.get(ps.conditionOnFail()) : null;
         if (cond != null && target.addCondition(cond.getId())) {
             // Incapacitated ends concentration outright, no save (PHB 203).
@@ -420,6 +409,47 @@ public class SpellCastHandler {
     public static boolean hasPendingSave(UUID targetId) { return pendingSaves.containsKey(targetId); }
 
     // ==================== HELPERS ====================
+
+    /** A healing roll's amount and its result line. */
+    record HealRoll(int amount, String work) {}
+
+    /** What a healing spell adds to its dice: its own flat part if any ("+4[…]"), then the caster's modifier ("+3[WIS]"). */
+    static String healBonus(CharacterSheet sheet, DndSpell spell) {
+        String own = RollPrompt.split(spell.getHealing(), spell.getName()).label();
+        return (own != null ? own + " " : "") + sheet.getSpellModBreakdown(spell);
+    }
+
+    /** The dice a healing spell rolls, without its flat part ("1d8"). */
+    static String healDice(DndSpell spell) {
+        return RollPrompt.split(spell.getHealing(), spell.getName()).dice();
+    }
+
+    /**
+     * <b>The</b> healing roll, in or out of combat: a total as given, your dice plus what's added, or
+     * the game's roll. Null when nothing was given in physical-dice mode (the caller prompts).
+     */
+    static HealRoll healRoll(CharacterSheet sheet, DndSpell spell, Integer providedRoll, Integer providedTotal, boolean forceAuto) {
+        Ability ability = sheet.castingAbilityFor(spell);
+        int mod = ability != null ? sheet.getModifier(ability) : 0;
+        RollPrompt.Formula f = RollPrompt.split(spell.getHealing(), spell.getName());
+        String bonus = healBonus(sheet, spell);
+        if (providedTotal != null) return new HealRoll(Math.max(1, providedTotal), RollPrompt.yourTotal(providedTotal));
+        if (providedRoll != null) {
+            int amount = providedRoll + f.flat() + mod;
+            return new HealRoll(Math.max(1, amount), RollPrompt.youRolled(providedRoll, bonus, amount));
+        }
+        if (!forceAuto && !io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) return null;
+        io.papermc.jkvttplugin.util.DiceRoller.Rolled r = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(spell.getHealing());
+        int amount = (r == null ? 0 : r.total()) + mod;
+        String shown = r == null ? "0" : r.dice().isEmpty() ? String.valueOf(r.total()) : r.dice().toString();
+        return new HealRoll(Math.max(1, amount), RollPrompt.gameRolled(f.dice(), shown, bonus, amount));
+    }
+
+    /** A spell formula's own flat part, labelled with the spell ("+1[Magic Missile]"), or "" if none. */
+    private static String flatLabel(String damage, String spellName) {
+        String label = RollPrompt.split(damage, spellName).label();
+        return label == null ? "" : label;
+    }
 
     private static int saveBonus(Combatant c, Ability ability) {
         if (c.isPlayer() && c.getCharacterSheet() != null) return c.getCharacterSheet().getSavingThrowBonus(ability);
@@ -435,7 +465,7 @@ public class SpellCastHandler {
      */
     private static void promptHealingRoll(Player player, CharacterSheet sheet, Combatant target, DndSpell spell) {
         player.sendMessage(RollPrompt.again(player, "💚 Roll " + spell.getName() + " (" + spell.getHealing() + ") on "
-                + target.getDisplayName() + ":", spell.getHealing(), sheet.getSpellModBreakdown(spell)));
+                + target.getDisplayName() + ":", healDice(spell), healBonus(sheet, spell)));
     }
 
     /** Range error for a single-target spell, or null if in range / unknown. Touch=5 ft, Self=self only. */

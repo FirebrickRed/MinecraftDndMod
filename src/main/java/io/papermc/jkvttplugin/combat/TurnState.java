@@ -20,7 +20,7 @@ public class TurnState {
     // once per hit (no /combat damage spamming). Cleared at the start of each turn.
     private UUID pendingDamageTargetId;
     // The flat damage modifier for the pending hit (e.g. +3 STR). When the player supplies their
-    // physically-rolled damage dice via --roll <n>, the game adds this — mirroring attack rolls.
+    // physically-rolled damage dice via manualRoll <n>, the game adds this — mirroring attack rolls.
     private int pendingDamageBonus;
     private String pendingDamageLabel = ""; // labeled breakdown of the bonus, e.g. "+5[STR] +2[Rage]" (#168)
     private String pendingDamageType = "";  // the hit's damage type, so /combat damage needs no 'type' (#183)

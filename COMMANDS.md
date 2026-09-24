@@ -11,8 +11,10 @@ prints that command's own help.
 > **Every roll prompt is the same three buttons** (#216): **[I rolled…]** fills `manualRoll ` (type
 > your dice; the game adds your bonus), **[Roll it]** runs `autoRoll` (the game rolls and adds it),
 > **[My total…]** fills `total ` (type the final number, bonuses included; not offered when nothing
-> is added). The result says where the number came from: `🎲 d20 [14] +5 = 19`,
-> `🎲 you rolled 14 +5 = 19`, or `🎲 your total: 19`.
+> is added). Every bonus is named by its source, the same in the prompt and the result:
+> `+3[DEX] +2[Prof]`, a creature's `+4[Scimitar]`, a potion's own `+2[Potion of Healing]`. The result
+> says where the number came from: `🎲 d20 [14] +3[DEX] +2[Prof] = 19` (the game rolled),
+> `🎲 you rolled 14 +3[DEX] +2[Prof] = 19`, or `🎲 your total: 19`.
 
 ---
 

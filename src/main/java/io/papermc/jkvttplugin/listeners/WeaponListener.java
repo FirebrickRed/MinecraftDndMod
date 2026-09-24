@@ -28,8 +28,8 @@ import java.util.List;
 /**
  * Left-click-to-attack (#189, replacing the right-click of #115). On your turn in combat,
  * left-click while holding a weapon: either aim at your target (left-click air) or left-click the
- * enemy directly. You get a clickable message that pre-fills {@code /combat attack <target>
- * <weapon> manualRoll } so you only add your physical d20 roll; the game adds your attack
+ * enemy directly. You get the standard roll buttons (RollPrompt) on {@code /combat attack <target>
+ * <weapon>}: roll it yourself, let the game roll, or give a total; the game adds your attack
  * modifiers. The command still works standalone.
  *
  * <p>Attack moved off right-click because right-click was carrying three meanings at once — attack

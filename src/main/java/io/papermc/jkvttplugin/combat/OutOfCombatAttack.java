@@ -222,28 +222,16 @@ public final class OutOfCombatAttack {
         CombatTargets.Target target = aim.target != null ? aim.target : CombatTargets.forPlayer(player);
         String name = aim.target != null ? aim.targetName() : sheet.getCharacterName();
         if (aim.target != null && !inRange(player, aim, spell)) return true;
-        int mod = modFor(sheet, spell);
-        String modLabel = sheet.getSpellModBreakdown(spell);
-        Integer amount;
-        String work;
-        if (roll.providedTotal() != null) {
-            amount = roll.providedTotal();
-            work = RollPrompt.yourTotal(amount);
-        } else if (roll.providedRoll() != null) {
-            amount = roll.providedRoll() + mod;
-            work = RollPrompt.youRolled(roll.providedRoll(), modLabel, amount);
-        } else if (roll.forceAuto() || io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) {
-            DiceRoller.Rolled r = DiceRoller.rollOrFlat(spell.getHealing());
-            if (r == null) { player.sendMessage(Component.text(spell.getName() + " has no healing dice.", NamedTextColor.RED)); return true; }
-            amount = r.total() + mod;
-            work = RollPrompt.gameRolled(spell.getHealing(), r.shown(), modLabel, amount);
-        } else {
+        // The same healing roll as in a fight (SpellCastHandler.healRoll).
+        SpellCastHandler.HealRoll heal = SpellCastHandler.healRoll(sheet, spell, roll.providedRoll(), roll.providedTotal(), roll.forceAuto());
+        if (heal == null) {
             String cmd = "/character cast " + spell.getId() + (aim.target != null ? " " + quote(name) : "") + " ";
             player.sendMessage(RollPrompt.line("💚 Roll " + spell.getName() + " (" + spell.getHealing() + "):", NamedTextColor.GREEN,
-                    cmd, spell.getHealing(), modLabel));
+                    cmd, SpellCastHandler.healDice(spell), SpellCastHandler.healBonus(sheet, spell)));
             return true;
         }
-        tell(player, Component.text(work, NamedTextColor.GRAY));
+        int amount = heal.amount();
+        tell(player, Component.text(heal.work(), NamedTextColor.GRAY));
         commit(player, sheet, spell, cost);
         tell(player, Component.text("✨ " + sheet.getCharacterName() + " casts " + spell.getName() + " on " + name + ".", NamedTextColor.LIGHT_PURPLE));
         DamageHandler.applyHealing(target.session(), target.combatant(), Math.max(1, amount));
@@ -257,8 +245,10 @@ public final class OutOfCombatAttack {
                                     String objectLabel, boolean half) {
         String dice = spell.getDamage() == null ? "" : (crit ? AttackHandler.doubleDice(spell.getDamage()) : spell.getDamage());
         pendingDamage.put(caster.getUniqueId(), new PendingDamage(spell.getName(), dice, spell.getDamageType(), target, objectLabel, half));
+        // Roll the dice; the spell's own flat part (Magic Missile's +1) is added, labelled with the spell.
+        RollPrompt.Formula f = RollPrompt.split(dice, spell.getName());
         caster.sendMessage(RollPrompt.line("💥 Roll " + (dice.isBlank() ? "damage" : dice) + (half ? " (halved)" : "") + " for "
-                + spell.getName() + ":", NamedTextColor.YELLOW, "/character damage ", dice.isBlank() ? "the damage" : dice, null));
+                + spell.getName() + ":", NamedTextColor.YELLOW, "/character damage ", dice.isBlank() ? "the damage" : f.dice(), f.label()));
     }
 
     /** {@code /character damage [autoRoll | manualRoll <n> | total <n> | <n>]} — finish an out-of-combat hit. */
@@ -271,13 +261,17 @@ public final class OutOfCombatAttack {
         RollService.RollInput in = RollService.parseInput(args, player);
         Integer amount = null;
         String work = null;
+        RollPrompt.Formula f = RollPrompt.split(p.dice(), p.source()); // "1d4" + "+1[Magic Missile]"
         if (in.providedTotal() != null) { amount = in.providedTotal(); work = RollPrompt.yourTotal(amount); }
-        else if (in.providedRoll() != null) { amount = in.providedRoll(); work = RollPrompt.youRolled(amount, null, amount); }
-        else if (in.forceAuto()) {
+        else if (in.providedRoll() != null) {
+            amount = in.providedRoll() + f.flat();
+            work = RollPrompt.youRolled(in.providedRoll(), f.label(), amount);
+        } else if (in.forceAuto()) {
             DiceRoller.Rolled r = DiceRoller.rollOrFlat(p.dice());
             if (r == null) { player.sendMessage(Component.text("There are no dice to roll — type the amount.", NamedTextColor.RED)); return; }
             amount = r.total();
-            work = RollPrompt.gameRolled(p.dice(), r.shown(), null, amount);
+            String shown = r.dice().isEmpty() ? String.valueOf(r.total()) : r.dice().toString();
+            work = RollPrompt.gameRolled(f.dice(), shown, f.label(), amount);
         } else if (args.length > 0) {
             try { amount = Integer.parseInt(args[args.length - 1].trim()); work = RollPrompt.yourTotal(amount); } catch (NumberFormatException ignored) {}
         }

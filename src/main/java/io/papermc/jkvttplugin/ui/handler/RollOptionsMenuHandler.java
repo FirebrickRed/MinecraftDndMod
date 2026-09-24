@@ -160,7 +160,7 @@ public class RollOptionsMenuHandler {
             owner.sendMessage(Component.text("You rolled " + info.displayName + ": " + work
                     + " — sent to the DM.", NamedTextColor.GRAY));
         }
-        // Show the work, not just the number: "d20(16) +3[DEX] +2[Prof] = 21".
+        // Show the work, not just the number: "🎲 you rolled 16 +3[DEX] +2[Prof] = 21".
         String shareText = rollerName + " rolled " + info.displayName + ": " + work;
         String token = io.papermc.jkvttplugin.dm.CheckManager.stashShare(shareText);
         Component verdict = Component.empty();

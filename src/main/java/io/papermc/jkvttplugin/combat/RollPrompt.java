@@ -84,6 +84,29 @@ public final class RollPrompt {
         return line(lead, NamedTextColor.YELLOW, base, dice, bonus);
     }
 
+    // ==================== A FORMULA'S OWN FLAT BONUS ====================
+
+    /**
+     * A dice formula split into what you roll and its flat part, labelled by where it comes from:
+     * a Healing Potion's "2d4+2" is {@code 2d4} and {@code +2[Healing Potion]}, Magic Missile's
+     * "1d4+1" is {@code 1d4} and {@code +1[Magic Missile]}. Labelled with the thing itself, never
+     * [Prof] or an ability, so it can't be mistaken for a character bonus. {@code label} is null
+     * when there's no flat part.
+     */
+    public record Formula(String dice, int flat, String label) {}
+
+    public static Formula split(String formula, String source) {
+        String f = formula == null ? "" : formula.trim();
+        java.util.regex.Matcher m = FLAT.matcher(f);
+        if (!m.find() || !f.toLowerCase().contains("d")) return new Formula(f, 0, null);
+        int flat = Integer.parseInt(m.group(1).replaceAll("\\s", ""));
+        if (flat == 0) return new Formula(f, 0, null);
+        String dice = f.substring(0, m.start()).trim();
+        return new Formula(dice, flat, (flat > 0 ? "+" : "") + flat + "[" + source + "]");
+    }
+
+    private static final java.util.regex.Pattern FLAT = java.util.regex.Pattern.compile("([+-]\\s*\\d+)\\s*$");
+
     // ==================== RESULTS ====================
     // One wording per way of answering, so a roll always says where its number came from.
 

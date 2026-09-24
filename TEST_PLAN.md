@@ -158,7 +158,7 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] `/dm check Balin Ironforge save dex` (a creature) → the same, labelled `+1[DEX]`.
 - [ ] A contest with a creature side → its button labelled `+5[Deception]` (listed skill) or `+1[CHA]`.
 - [ ] Out-of-combat Fire Bolt → `+3[INT] +2[Prof]`; Cure Wounds → `+3[WIS]`; `/character damage`
-      → two buttons, nothing added.
+      for Fire Bolt (1d10) → two buttons, nothing added.
 - [ ] In a fight: initiative → `+2[DEX]`; an attack (left-click) → the weapon's breakdown; a save
       and a concentration save → `+1[CON] +2[Prof]` (proficient) or just `+1[CON]`.
 - [ ] Spell attack in a fight → `+3[INT] +2[Prof]`, not `+5[Spell]`.
@@ -166,8 +166,8 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       (it used to re-prompt in physical-dice mode); the table sees the roll line.
 - [ ] Upcast Cure Wounds with no roll (`/combat cast cure_wounds <t> level 2`) → the buttons keep `level 2`.
 - [ ] A creature's attack in a fight → to hit `+4[Scimitar]`, damage `+2[Scimitar]` (not `[ToHit]`).
-- [ ] Magic Missile → "Roll 1d4+1", two buttons, nothing added (the +1 is part of the spell).
-- [ ] A healing potion → "Roll 2d4+2", two buttons, nothing added (the +2 is the potion's).
+- [ ] Magic Missile → "Roll 1d4", the game adds `+1[Magic Missile]`, all three buttons (in and out of a fight).
+- [ ] A Potion of Healing → "Roll 2d4", the game adds `+2[Potion of Healing]`, all three buttons; [My total…] takes the number with the +2 already in.
 - [ ] Any game-rolled dice (damage, healing, a potion) → **one** `= total`, never `[5] = 5 +3 = 8`.
 - [ ] `/combat damage <t> autoRoll` → one line, `🎲 1d8 [6] +3[STR] = 9`.
 - [ ] Type a roll command with no roll words (physical-dice mode): `/combat attack <t> <weapon>`,

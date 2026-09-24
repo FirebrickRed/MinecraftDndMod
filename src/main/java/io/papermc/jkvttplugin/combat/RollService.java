@@ -119,7 +119,7 @@ public final class RollService {
      * @param providedRoll  the player's physically-rolled d20, or null
      * @param providedTotal a final total the player computed themselves, or null
      * @param modifier      the bonus to add to a rolled die
-     * @param modLabel      how the modifier reads in the breakdown, e.g. "+5[ToHit]" or "+3[STR]"
+     * @param modLabel      how the modifier reads in the breakdown, e.g. "+3[STR] +2[Prof]" or a creature's "+4[Scimitar]"
      * @return the result, or {@code null} when the config is PHYSICAL and no roll/total was given —
      *         the caller should then prompt the player to roll rather than resolving.
      */

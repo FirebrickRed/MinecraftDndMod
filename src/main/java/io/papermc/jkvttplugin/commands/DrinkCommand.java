@@ -5,6 +5,7 @@ import io.papermc.jkvttplugin.character.CharacterSheet;
 import io.papermc.jkvttplugin.combat.CombatTargets;
 import io.papermc.jkvttplugin.combat.Combatant;
 import io.papermc.jkvttplugin.combat.DamageHandler;
+import io.papermc.jkvttplugin.combat.RollPrompt;
 import io.papermc.jkvttplugin.combat.RollService;
 import io.papermc.jkvttplugin.combat.TurnState;
 import io.papermc.jkvttplugin.config.PluginConfig;
@@ -102,11 +103,11 @@ public class DrinkCommand implements CommandExecutor {
             return Math.max(0, input.providedTotal());
         }
         if (input.providedRoll() != null) {
-            // A potion's "+2" is part of its own formula, not a modifier the game adds: "I rolled"
-            // is what the whole 2d4+2 came to.
-            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.youRolled(input.providedRoll(), null,
-                    input.providedRoll()), NamedTextColor.GRAY));
-            return Math.max(0, input.providedRoll());
+            // "I rolled" is the dice (the 2d4); the game adds the potion's own +2, labelled as the potion's.
+            RollPrompt.Formula f = RollPrompt.split(dice, item.getName());
+            int total = input.providedRoll() + f.flat();
+            player.sendMessage(Component.text(RollPrompt.youRolled(input.providedRoll(), f.label(), total), NamedTextColor.GRAY));
+            return Math.max(0, total);
         }
         if (input.forceAuto() || PluginConfig.isAutoRoll()) {
             DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(dice);
@@ -114,7 +115,10 @@ public class DrinkCommand implements CommandExecutor {
                 player.sendMessage(Component.text(item.getName() + " has an unreadable healing value ('" + dice + "').", NamedTextColor.RED));
                 return null;
             }
-            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.gameRolled(dice, rolled.shown(), null, rolled.total()),
+            // Shown the same way as a typed roll: the dice, then the potion's own +2, labelled.
+            RollPrompt.Formula f = RollPrompt.split(dice, item.getName());
+            String shown = rolled.dice().isEmpty() ? String.valueOf(rolled.total()) : rolled.dice().toString();
+            player.sendMessage(Component.text(RollPrompt.gameRolled(f.dice(), shown, f.label(), rolled.total()),
                     NamedTextColor.GRAY)); // the game rolled it: show the dice
             return Math.max(0, rolled.total());
         }
@@ -125,9 +129,10 @@ public class DrinkCommand implements CommandExecutor {
     /** Ask for the roll the same way every other physical-dice prompt does: fill chat, don't act. */
     public static void promptRoll(Player player, DndItem item) {
         String base = "/character drink " + item.getId() + " ";
-        // Nothing is added to a potion (its "+2" is part of the formula), so no bonus: two buttons.
-        player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("🧪 " + item.getName() + " heals " + item.getHealing() + ":",
-                NamedTextColor.GREEN, base, item.getHealing(), null));
+        // Roll the dice; the potion's own +2 is added (labelled with the potion, not a character bonus).
+        RollPrompt.Formula f = RollPrompt.split(item.getHealing(), item.getName());
+        player.sendMessage(RollPrompt.line("🧪 " + item.getName() + " heals " + item.getHealing() + ":",
+                NamedTextColor.GREEN, base, f.dice(), f.label()));
     }
 
     private static ItemStack findInInventory(Player player, String itemId) {

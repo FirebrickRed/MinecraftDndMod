@@ -101,6 +101,21 @@ class RollPromptTest {
         assertEquals("+3[STR]", sword.label());
     }
 
+    /** A formula's own +2 is added for you, labelled with the thing it belongs to, never [Prof]. */
+    @Test
+    void aFormulasFlatPartIsLabelledWithItsSource() {
+        RollPrompt.Formula potion = RollPrompt.split("2d4+2", "Healing Potion");
+        assertEquals("2d4", potion.dice());
+        assertEquals(2, potion.flat());
+        assertEquals("+2[Healing Potion]", potion.label());
+        // …so a potion still gets all three buttons: the game adds that +2.
+        assertEquals("[I rolled…] [Roll it] [My total…]", plain(RollPrompt.buttons("/character drink healing_potion ", potion.dice(), potion.label())));
+
+        assertEquals("+1[Magic Missile]", RollPrompt.split("1d4+1", "Magic Missile").label());
+        assertNull(RollPrompt.split("1d10", "Fire Bolt").label());
+        assertEquals(0, RollPrompt.split("7", "Flat").flat(), "a plain number isn't dice plus a bonus");
+    }
+
     /** The playtest found about ten wordings. A new prompt must use RollPrompt, not its own labels. */
     @Test
     void noOtherFileBuildsItsOwnRollButtons() throws IOException {
@@ -111,7 +126,9 @@ class RollPromptTest {
                 String src = Files.readString(p);
                 for (String old : List.of("[let the game roll]", "[or let the game roll]", "[Let the game roll]",
                         "[click, then type your d20]", "[click, then type the d20]", "[click, then type your roll]",
-                        "[click, then type your damage roll]", "[type a final total]", "\"[I rolled…]\"", "\"[Roll it]\"")) {
+                        "[click, then type your damage roll]", "[type a final total]", "\"[I rolled…]\"", "\"[Roll it]\"",
+                        // plain-text re-asks and old result wordings, replaced by RollPrompt.again / its results
+                        "', or 'autoRoll'", "Type /combat deathsave", "(provided total)", "[ToHit]", "[Spell]\"")) {
                     if (src.contains(old)) offenders.add(p.getFileName() + ": " + old);
                 }
             }
