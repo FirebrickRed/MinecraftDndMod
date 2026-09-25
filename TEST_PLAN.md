@@ -157,7 +157,8 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Nowhere shows two dice icons (`🎲 … 🎲`), e.g. a shared check result or a loot roll.
 - [ ] Every roll button, **[Roll it]** included, only fills chat; nothing rolls until you press Enter.
 - [ ] Advantage, game-rolled → `🎲 d20 [9, 15] advantage +3[DEX] = 18` (both dice, one line).
-- [ ] Sheet roll in auto mode, with a Halfling rolling a 1 → Lucky rerolls it.
+- [ ] Sheet [Normal] / [Advantage] / [Disadvantage] → never rolls on the click, even in auto-roll mode: you get the three roll buttons.
+- [ ] Then [Roll it] + Enter, as a Halfling rolling a 1 → Lucky rerolls it.
 - [ ] `/combat action attack` → says "left-click your target" (it said right-click).
 
 ## The Adjust menu & `/dm adjust`

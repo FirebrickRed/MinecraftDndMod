@@ -5,7 +5,6 @@ import io.papermc.jkvttplugin.data.model.enums.Ability;
 import io.papermc.jkvttplugin.data.model.enums.Skill;
 import io.papermc.jkvttplugin.combat.RollPrompt;
 import io.papermc.jkvttplugin.combat.RollService;
-import io.papermc.jkvttplugin.config.PluginConfig;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.event.ClickEvent;
 import net.kyori.adventure.text.event.HoverEvent;
@@ -48,19 +47,10 @@ public class RollOptionsMenuHandler {
                         case ADVANTAGE -> "Roll two d20 and keep the higher";
                         case DISADVANTAGE -> "Roll two d20 and keep the lower";
                     })))
-                    .clickEvent(ClickEvent.callback(a -> rollOrPrompt(player, character, type, value, mode), reusable)))
+                    .clickEvent(ClickEvent.callback(a -> promptSkillRoll(player, character, type, value, mode), reusable)))
                     .append(Component.text(" "));
         }
         player.sendMessage(line);
-    }
-
-    /** Physical mode: prompt the player to roll in chat. Auto mode: roll it for them (as before). */
-    private static void rollOrPrompt(Player player, CharacterSheet character, String type, String value, RollMode mode) {
-        if (PluginConfig.isAutoRoll()) {
-            performRoll(character, type, value, mode);
-        } else {
-            promptSkillRoll(player, character, type, value, mode);
-        }
     }
 
     /** Send a clickable chat prompt asking the player to roll this check physically. */
@@ -263,22 +253,6 @@ public class RollOptionsMenuHandler {
 
     /** Roll mode for programmatic rolls outside the menu flow (Issue #61 - /check). */
     public enum RollMode { NORMAL, ADVANTAGE, DISADVANTAGE }
-
-    /**
-     * Perform a roll for a character without opening the menu (Issue #61).
-     * @param type  "SKILL", "CHECK", or "SAVE"
-     * @param value the enum name (e.g. "STEALTH", "STRENGTH")
-     */
-    public static void performRoll(CharacterSheet character, String type, String value, RollMode mode) {
-        // The game rolls it, through the same resolver as a typed roll: armor/condition disadvantage,
-        // Lucky and a pending DM check all apply the same way (this used to roll its own dice).
-        io.papermc.jkvttplugin.combat.Advantage adv = switch (mode) {
-            case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
-            case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
-            default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
-        };
-        resolvePhysical(character, type, value, null, null, true, adv);
-    }
 
     /**
      * The table's line for a sheet roll: "Zek rolled Stealth with advantage: 18  (🎲 d20 [9, 15]
