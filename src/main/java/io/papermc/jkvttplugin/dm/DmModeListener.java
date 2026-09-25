@@ -113,7 +113,10 @@ public class DmModeListener implements Listener {
             org.bukkit.block.Block b = event.getClickedBlock();
             if (b == null) b = player.getTargetBlockExact(6);
             if (b == null) player.sendActionBar(Component.text("Right-click a block to annotate it.", NamedTextColor.GRAY));
-            else showObjectMenu(player, b);
+            // Dialog pilot: the form by default, the old chat menu on sneak so the two can be compared.
+            // Whichever loses gets removed (logged in #193).
+            else if (player.isSneaking()) showObjectMenu(player, b);
+            else ObjectDialog.open(player, b);
         } else if (DmModeManager.TOOL_SPAWN.equals(tool)) {
             showSpawnMenu(player);
         }

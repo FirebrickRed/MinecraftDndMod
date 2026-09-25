@@ -56,4 +56,20 @@ class InteractiveObjectKeyTest {
             assertTrue(TagRegistry.itemsFor("key").contains(id), id + " tagged key");
         }
     }
+
+    /** The annotate dialog's "Saved the Chest: …" line says what the form set, the save as its three letters. */
+    @Test
+    void theDialogSummarySaysWhatWasSet() {
+        TestContent.load();
+        InteractiveObjectManager.Obj o = lockWithKey("brass_key");
+        o.hidden = true;
+        o.trapped = true;
+        o.trapDamage = "2d10";
+        o.trapSave = "dex";
+        o.trapDc = 13;
+        o.loot.add("gold_piece x10");
+        String s = ObjectDialog.summary(o);
+        assertTrue(s.startsWith("locked, hidden, trap 2d10 DEX DC 13 (armed), key "), s);
+        assertTrue(s.endsWith("1 loot"), s);
+    }
 }

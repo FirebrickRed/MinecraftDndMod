@@ -250,6 +250,26 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 - [ ] Same, with `autoRoll` inline.
 - [ ] A guard's Perception in a contest → `+2 Perception`.
 
+## Annotate tool: the dialog pilot
+
+The first dialog in the plugin. Right-click = the new form; sneak + right-click = the old chat
+buttons. Try both; whichever you like less gets removed.
+
+- [ ] Right-click a chest with the Annotate tool → a form opens: how it opens, hidden, description,
+      trap damage / save / DC / armed, key, loot. It shows the chest's current settings.
+- [ ] Fill it in, **look away**, then Save → it applies to that chest (not what you're looking at).
+- [ ] After Save, chat says "🔧 Saved the Chest: locked, trap 2d10 DEX DC 13 (armed), key …".
+- [ ] Right-click it again → the form shows what you saved.
+- [ ] A long description with line breaks → saved, and players see it.
+- [ ] Trap damage `banana` → a yellow note says it isn't dice; the rest still saves.
+- [ ] Sealed + a key → a note says a sealed block has no key; the key is left off.
+- [ ] Opens + a key → it saves as Locked (a key means a lock).
+- [ ] Loot `gold_piece x10, dagger, nonsense` → two entries saved, a note about "nonsense".
+- [ ] **Clear annotation** → it's a plain chest again.
+- [ ] Esc closes the form without changing anything.
+- [ ] Sneak + right-click → the old chat buttons, still working.
+- [ ] Which do you prefer? (Tell me in the notes.)
+
 ## DM tools
 
 Spawn alira as "The Kindler" first (`/dm entity spawn alira "The Kindler"`).

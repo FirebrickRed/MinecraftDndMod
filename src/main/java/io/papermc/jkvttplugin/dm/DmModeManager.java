@@ -199,8 +199,8 @@ public class DmModeManager {
     public static void giveExplorePage(Player player) {
         clearHotbar(player);
         player.getInventory().setItem(0, tool(Material.TRIPWIRE_HOOK, TOOL_OBJECT, "Annotate Object",
-                "Right-click a block (chest, door, wall…) to mark it", "locked / hidden / add a description",
-                "(players then interact through you — /dm object commands too)"));
+                "Right-click a block (chest, door, wall…): a form for", "locked / hidden / description / trap / key / loot",
+                "Sneak + right-click: the chat buttons instead", "(players then interact through you — /dm object commands too)"));
         player.getInventory().setItem(2, tool(Material.SPYGLASS, TOOL_VIEW, "View",
                 "Right-click someone → a quick look in chat (HP, AC, conditions)", "Sneak + right-click → the full view (inventory, DM notes)"));
         player.getInventory().setItem(6, adjustTool());
