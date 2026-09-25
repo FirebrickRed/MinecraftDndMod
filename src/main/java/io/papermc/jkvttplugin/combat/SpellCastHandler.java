@@ -468,7 +468,7 @@ public class SpellCastHandler {
 
     /** Range error for a single-target spell, or null if in range / unknown. Touch=5 ft, Self=self only. */
     private static String spellRangeError(Combatant caster, Combatant target, DndSpell spell) {
-        int rangeFeet = parseSpellRange(spell.getRange());
+        int rangeFeet = spell.getRangeFeet();
         if (rangeFeet < 0) return null; // unknown/unlimited → don't enforce
         if (rangeFeet == 0) {
             return target.getId().equals(caster.getId()) ? null : spell.getName() + " only targets you (range: Self).";
@@ -481,17 +481,6 @@ public class SpellCastHandler {
             return target.getDisplayName() + " is out of range — " + Math.round(feet) + " ft away (" + spell.getName() + " range: " + r + ").";
         }
         return null;
-    }
-
-    /** Parse a spell's range string to feet: Self→0, Touch→5, "60 feet"→60; -1 if unknown. */
-    private static int parseSpellRange(String range) {
-        if (range == null) return -1;
-        String r = range.trim().toLowerCase();
-        if (r.startsWith("self")) return 0;
-        if (r.startsWith("touch")) return 5;
-        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(r);
-        if (m.find()) return Integer.parseInt(m.group(1));
-        return -1;
     }
 
     /**

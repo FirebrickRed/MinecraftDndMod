@@ -199,6 +199,11 @@ public final class ContentValidator {
             checkAmount(where, "healing", s.getHealing());
             checkAmount(where, "temp_hp", s.getTempHp());
             checkAmount(where, "mark_damage", s.getMarkDamage());
+            // A range the game can't read isn't an error at cast time, it's silently "no limit". Say so now.
+            if (s.getRange() != null && !s.getRange().isBlank() && !DndSpell.isReadableRange(s.getRange())) {
+                warn(where + " has range '" + s.getRange() + "', which the game can't read, so it's never enforced."
+                        + " Use \"Self\", \"Touch\", \"N feet\", or Sight / Unlimited / Special.");
+            }
             boolean targeted = (s.isAttackRoll() || s.isSaveSpell()) && !s.isAoe() && !s.isMarkSpell();
             if (targeted && s.getRange() != null && s.getRange().trim().toLowerCase().startsWith("self")) {
                 warn(where + " is an attack/save spell with range '" + s.getRange() + "' — a Self range can only"

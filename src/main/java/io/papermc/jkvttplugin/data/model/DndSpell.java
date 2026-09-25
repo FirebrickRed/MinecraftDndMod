@@ -289,6 +289,37 @@ public class DndSpell {
      * wrapped at {@link Util#WRAP_WIDTH}. The spellbook item, the character-creation tile and the chat
      * hover all use this, so a spell reads the same everywhere.
      */
+    // ==================== RANGE ====================
+
+    /** Ranges with no distance to enforce: allowed, just never refused. */
+    private static final java.util.Set<String> UNLIMITED_RANGES = java.util.Set.of("sight", "unlimited", "special");
+    private static final java.util.regex.Pattern FEET =
+            java.util.regex.Pattern.compile("^(\\d+)\\s*(feet|foot|ft\\.?)$|^(\\d+)\\s*miles?$");
+
+    /**
+     * <b>The</b> reading of a spell's {@code range:}, used in and out of a fight: 0 = Self (the
+     * caster only; "Self (15-foot cone)" too), 5 = Touch, N = "N feet", and -1 when there's no
+     * distance to enforce (Sight, Unlimited, Special) or the text can't be read. {@link #isReadableRange}
+     * tells those last two apart, so a typo is reported at load instead of meaning "no limit".
+     */
+    public static int rangeFeet(String range) {
+        if (range == null) return -1;
+        String r = range.trim().toLowerCase();
+        if (r.startsWith("self")) return 0;
+        if (r.equals("touch")) return 5;
+        java.util.regex.Matcher m = FEET.matcher(r);
+        if (!m.matches()) return -1;
+        return m.group(1) != null ? Integer.parseInt(m.group(1)) : Integer.parseInt(m.group(3)) * 5280;
+    }
+
+    /** True if {@link #rangeFeet} understands this range, including the ones with no limit. */
+    public static boolean isReadableRange(String range) {
+        if (range == null || range.isBlank()) return false;
+        return rangeFeet(range) >= 0 || UNLIMITED_RANGES.contains(range.trim().toLowerCase());
+    }
+
+    public int getRangeFeet() { return rangeFeet(range); }
+
     /** The spell's name, hover it for {@link #detailLore()}: for "Zek casts <u>Fire Bolt</u> at…" lines in chat. */
     public Component hoverName(net.kyori.adventure.text.format.TextColor color) {
         Component hover = Component.text(name, getSpellLevelColor());

@@ -55,4 +55,18 @@ class WrapAndSpellTextTest {
         }
         assertTrue(tooLong.isEmpty(), "Lines past " + Util.WRAP_WIDTH + " chars:\n" + String.join("\n", tooLong));
     }
+
+    /** One range reader, in and out of a fight: Self, Touch, N feet; the rest is either "no limit" or unreadable. */
+    @Test
+    void spellRangesReadTheSameEverywhere() {
+        assertEquals(0, DndSpell.rangeFeet("Self"));
+        assertEquals(0, DndSpell.rangeFeet("Self (15-foot cone)"), "an area from you is still Self");
+        assertEquals(5, DndSpell.rangeFeet("Touch"));
+        assertEquals(60, DndSpell.rangeFeet("60 feet"));
+        assertEquals(60, DndSpell.rangeFeet("60 ft"));
+        assertEquals(-1, DndSpell.rangeFeet("Sight"));
+        assertTrue(DndSpell.isReadableRange("Sight"), "no limit, but understood");
+        assertFalse(DndSpell.isReadableRange("60 feat"), "a typo is reported at load, not silently unlimited");
+        assertFalse(DndSpell.isReadableRange("sixty feet"));
+    }
 }

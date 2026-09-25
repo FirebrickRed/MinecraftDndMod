@@ -114,25 +114,9 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         }
 
         // Parse optional custom name
-        String customName = null;
-        int coordStartIndex = 2;
-
-        // A name here may be quoted ("Marcus the Brave") or not (Meepo the Bold): unquoted, it runs
-        // until the coordinates start. It used to take one word, so "Meepo the Bold" spawned "Meepo".
-        NameUtil.TakenName named = NameUtil.takeName(args, 2);
-        if (named != null && named.quoted()) {
-            customName = named.value();
-            coordStartIndex = named.nextIndex();
-        } else if (named != null && !isCoordinate(named.value())) {
-            // Coordinates are the last three words when all three are coordinates; everything before
-            // them is the name. So "Guard 3" is a name, and "Guard 3 ~ 64 ~" is Guard 3 at ~ 64 ~.
-            int end = args.length;
-            if (args.length - 2 > 3 && isCoordinate(args[end - 1]) && isCoordinate(args[end - 2]) && isCoordinate(args[end - 3])) {
-                end -= 3;
-            }
-            customName = String.join(" ", java.util.Arrays.copyOfRange(args, 2, end));
-            coordStartIndex = end;
-        }
+        EntityNames.SpawnName parsed = EntityNames.parseSpawnName(args);
+        String customName = parsed.name();
+        int coordStartIndex = parsed.coordStart();
 
         // Parse location (default to player location if not specified)
         Location spawnLocation = player.getLocation();
@@ -253,7 +237,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
                 // One name with spaces ("The Kindler", quoted or not) or several one-word names
                 // (wolf guard Marcus). The whole line as one name wins when it names a creature; each
                 // word used to be looked up alone, so a quoted name matched nothing.
-                removeByNames(sender, splitCreatureNames(args, 1));
+                removeByNames(sender, EntityNames.splitCreatureNames(args, 1));
             }
         }
     }
@@ -1612,36 +1596,6 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
     /**
      * Remove entities by multiple names.
      */
-    /**
-     * Several creature names on one line, with or without quotes: {@code wolf #1 wolf #2},
-     * {@code The Kindler goblin}. At each word, take the longest run of words that names a creature
-     * ({@link DndEntityInstance#findByName}); a quoted span is always one name; a word that starts no
-     * name is kept alone so the caller can say it wasn't found. Word by word, "wolf #1 wolf #2"
-     * used to read as four names.
-     */
-    static List<String> splitCreatureNames(String[] args, int from) {
-        List<String> names = new ArrayList<>();
-        int i = from;
-        while (i < args.length) {
-            if (args[i].startsWith("\"")) {
-                NameUtil.TakenName quoted = NameUtil.takeName(args, i);
-                names.add(quoted.value());
-                i = quoted.nextIndex();
-                continue;
-            }
-            int take = 1;
-            for (int j = args.length; j > i + 1; j--) {
-                if (DndEntityInstance.findByName(String.join(" ", java.util.Arrays.copyOfRange(args, i, j))) != null) {
-                    take = j - i;
-                    break;
-                }
-            }
-            names.add(String.join(" ", java.util.Arrays.copyOfRange(args, i, i + take)));
-            i += take;
-        }
-        return names;
-    }
-
     private void removeByNames(CommandSender sender, List<String> names) {
         int count = 0;
 
@@ -1682,13 +1636,6 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             return current + Double.parseDouble(arg.substring(1));
         }
         return Double.parseDouble(arg);
-    }
-
-    /**
-     * Check if string is a coordinate (number or ~).
-     */
-    private boolean isCoordinate(String arg) {
-        return arg.startsWith("~") || arg.matches("-?\\d+(\\.\\d+)?");
     }
 
     /**

@@ -26,8 +26,6 @@ import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * Attacks and harmful spells outside a fight (#152).
@@ -455,18 +453,11 @@ public final class OutOfCombatAttack {
         return new Aim(null, label, obj != null ? obj.description : null);
     }
 
-    private static final Pattern FEET = Pattern.compile("(\\d+)\\s*(ft|feet|foot)", Pattern.CASE_INSENSITIVE);
-
     /** A spell's range against where the target stands (1 block = 5 ft, with a block of slack). */
     private static boolean inRange(Player player, Aim aim, DndSpell spell) {
         String range = spell.getRange() == null ? "" : spell.getRange().trim();
-        int feet;
-        if (range.equalsIgnoreCase("touch")) feet = 5;
-        else {
-            Matcher m = FEET.matcher(range);
-            if (!m.find()) return true; // Self, Sight, Unlimited…: not enforced
-            feet = Integer.parseInt(m.group(1));
-        }
+        int feet = spell.getRangeFeet(); // the one range reader, shared with /combat cast
+        if (feet <= 0) return true; // Self (an area from you), Sight, Unlimited…: not enforced out of a fight
         var there = aim.target.combatant().getLocation();
         if (there == null || !there.getWorld().equals(player.getWorld())) return true;
         double distFeet = there.distance(player.getLocation()) * 5.0;
