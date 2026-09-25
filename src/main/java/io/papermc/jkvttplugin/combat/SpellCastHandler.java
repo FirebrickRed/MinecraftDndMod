@@ -54,9 +54,7 @@ public class SpellCastHandler {
             player.sendMessage(Component.text("No spellcasting ability to cast " + spell.getName() + " with.", NamedTextColor.RED));
             return false;
         }
-        // Range: Touch = 5 ft, Self = only yourself, "N feet" = N. Unknown → not enforced.
-        String rangeErr = spellRangeError(caster, target, spell);
-        if (rangeErr != null) { player.sendMessage(Component.text(rangeErr, NamedTextColor.RED)); return false; }
+        if (!reaches(caster, target, player, spell)) return false;
         int mod = sheet.getProficiencyBonus() + sheet.getModifier(ability);
 
         // Healing / temp HP spells (Cure Wounds, Healing Word, False Life…).
@@ -153,6 +151,7 @@ public class SpellCastHandler {
                                    DndSpell spell, Ability choice) {
         CharacterSheet sheet = caster.getCharacterSheet();
         if (sheet == null) { player.sendMessage(Component.text("Only characters cast this spell.", NamedTextColor.RED)); return false; }
+        if (!reaches(caster, target, player, spell)) return false; // Hex reaches 90 ft; it wasn't checked at all
 
         if (sheet.isConcentrating() && sheet.getConcentratingOn() != spell) {
             session.broadcast(Component.text(caster.getDisplayName(true) + "'s concentration on "
@@ -466,21 +465,19 @@ public class SpellCastHandler {
                 + target.getDisplayName() + ":", healDice(spell), healBonus(sheet, spell)));
     }
 
-    /** Range error for a single-target spell, or null if in range / unknown. Touch=5 ft, Self=self only. */
-    private static String spellRangeError(Combatant caster, Combatant target, DndSpell spell) {
-        int rangeFeet = spell.getRangeFeet();
-        if (rangeFeet < 0) return null; // unknown/unlimited → don't enforce
-        if (rangeFeet == 0) {
-            return target.getId().equals(caster.getId()) ? null : spell.getName() + " only targets you (range: Self).";
-        }
-        org.bukkit.Location a = caster.getLocation(), t = target.getLocation();
-        if (a == null || t == null || a.getWorld() == null || !a.getWorld().equals(t.getWorld())) return null;
-        double feet = a.distance(t) * 5.0;
-        if (feet > rangeFeet + 2.5) {
-            String r = rangeFeet == 5 ? "touch" : rangeFeet + " ft";
-            return target.getDisplayName() + " is out of range — " + Math.round(feet) + " ft away (" + spell.getName() + " range: " + r + ").";
-        }
-        return null;
+    /**
+     * Does a single-target spell reach? The one rule ({@link Reach}); when it doesn't, the caster is
+     * told why and offered [Ask the DM] ([Do it anyway] for a DM), which hands back this command.
+     */
+    private static boolean reaches(Combatant caster, Combatant target, Player player, DndSpell spell) {
+        String why = Reach.spell(caster.getLocation(), target.getLocation(), target.getDisplayName(),
+                target.getId().equals(caster.getId()), spell);
+        String what = "spell:" + spell.getId();
+        if (why == null || Reach.isAllowed(player.getUniqueId(), what, target.getId())) return true;
+        String retry = RollPrompt.lastCommand(player);
+        Reach.refuse(player, why, what, target.getId(), spell.getName() + " on " + target.getDisplayName(),
+                retry != null ? retry : "/combat cast " + spell.getId() + " " + quoted(target.getDisplayName()));
+        return false;
     }
 
     /**

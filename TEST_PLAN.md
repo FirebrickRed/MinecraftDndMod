@@ -89,8 +89,15 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 - [ ] **Scoreboard, fight:** pink ✦N while channelling a ritual.
 - [ ] **Scoreboard, fight:** two tied initiatives in turn order.
 - [ ] **Scoreboard, fight:** "Round: N" at the bottom with no number on the right.
-- [ ] **Out of range, as DM** (possessing a creature, attacking something too far) → "... out of
-      range [Attack anyway]"; click → the attack goes ahead.
+- [ ] **Out of range, as DM** (possessing a creature, attacking something too far) → "… about N ft
+      away" **[Do it anyway]**; click → **[go again]** fills the attack; it goes through once.
+- [ ] **Out of reach in a fight, as a player:** a sword at someone 20 ft away → **[Ask the DM]**.
+- [ ] The DM gets **[Allow]** / **[Deny]**; Allow → you get **[go again]**, and the attack goes through.
+- [ ] Same with a spell in a fight (Cure Wounds from 20 ft) → [Ask the DM], then it goes through once.
+- [ ] Hex at someone 120 ft away → refused for range (it wasn't checked before).
+- [ ] A Self spell that targets (e.g. one with range Self, not an area) at someone else, out of a fight →
+      "only targets you" (only checked in a fight before).
+- [ ] Touch spells reach one block further than before in a fight (5 ft of slack, same as out of one).
 
 ## Death
 

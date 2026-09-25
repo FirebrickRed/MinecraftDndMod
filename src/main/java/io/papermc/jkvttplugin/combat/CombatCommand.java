@@ -1245,6 +1245,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         if (resolved) {
             cost.spend(casterSheet, spell);
+            Reach.spend(player.getUniqueId()); // a DM "close enough" covered this one cast
 
             // Concentration (PHB 203): a second concentration spell replaces the first. castMark
             // (Hex/Hunter's Mark) sets this itself, so don't tread on it.
@@ -1775,11 +1776,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     }
 
     private void handleAttack(Player player, String[] args) {
-        handleAttack(player, args, false);
-    }
-
-    /** @param rangeWaived the DM clicked [Attack anyway] on an out-of-range attack */
-    private void handleAttack(Player player, String[] args, boolean rangeWaived) {
         CombatSession session = resolveSession(player);
         if (session == null) return;
 
@@ -1914,29 +1910,25 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Range check: are you close enough to swing / within weapon/attack range?
-        // (showMods previews modifiers; a DM out of range gets an [Attack anyway] button instead of a flag.)
-        if (!showMods && !rangeWaived) {
-            String rangeError;
+        // Reach: the one rule (Reach), for players and creatures alike. Out of reach offers [Ask the DM]
+        // ([Do it anyway] when a DM is attacking), and the answer hands this command back.
+        if (!showMods) {
+            String rangeError, what;
             if (attacker.isPlayer()) {
                 DndWeapon rangeWeapon = AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName);
-                rangeError = attackRangeError(attacker, target, rangeWeapon);
+                rangeError = Reach.weapon(attacker.getLocation(), target.getLocation(), target.getDisplayName(), rangeWeapon);
+                what = "weapon:" + (rangeWeapon != null ? rangeWeapon.getId() : "unarmed");
             } else {
                 io.papermc.jkvttplugin.data.model.DndAttack atk =
                         AttackHandler.resolveEntityAttack(attacker, weaponOrAttackName);
-                rangeError = entityAttackRangeError(attacker, target, atk);
+                rangeError = Reach.creatureAttack(attacker.getLocation(), target.getLocation(), target.getDisplayName(), atk);
+                what = "attack:" + (atk != null ? atk.getName() : "attack");
             }
-            if (rangeError != null) {
-                Component msg = Component.text(rangeError + " ", NamedTextColor.RED);
-                if (isDM) {
-                    String[] again = args.clone();
-                    msg = msg.append(Component.text("[Attack anyway]", NamedTextColor.GOLD, TextDecoration.UNDERLINED)
-                            .hoverEvent(HoverEvent.showText(Component.text("DM: make this attack despite the range")))
-                            .clickEvent(ClickEvent.callback(a -> handleAttack(player, again, true),
-                                    net.kyori.adventure.text.event.ClickCallback.Options.builder().uses(1)
-                                            .lifetime(java.time.Duration.ofMinutes(5)).build())));
-                }
-                player.sendMessage(msg);
+            if (rangeError != null && !Reach.isAllowed(player.getUniqueId(), what, target.getId())) {
+                String retry = RollPrompt.lastCommand(player);
+                Reach.refuse(player, rangeError, what, target.getId(),
+                        attacker.getDisplayName() + " attacking " + target.getDisplayName(),
+                        retry != null ? retry : "/combat attack " + target.getDisplayName());
                 return;
             }
         }
@@ -1957,6 +1949,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         // Consume action + refresh action bar only for a real attack.
         if (resolved) {
+            Reach.spend(player.getUniqueId()); // a DM "close enough" covered this one attack
             TurnState state = attacker.getTurnState();
             if (state != null) {
                 state.useAction();
@@ -1975,53 +1968,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     }
 
     /**
-     * Returns an error message if the attacker is out of range of the target for this weapon,
-     * or null if the attack is in range (or positions can't be determined). 1 block ≈ 5 ft,
-     * with a half-square tolerance so diagonally-adjacent still counts as "in reach".
-     */
-    private String attackRangeError(Combatant attacker, Combatant target, DndWeapon weapon) {
-        Location a = attacker.getLocation();
-        Location t = target.getLocation();
-        if (a == null || t == null || a.getWorld() == null || !a.getWorld().equals(t.getWorld())) {
-            return null; // can't determine positions — don't block the attack
-        }
-        double feet = a.distance(t) * 5.0;
-        // The weapon's own reach in feet — so a homebrew 15 ft polearm reaches 15 ft, rather than
-        // everything with the Reach property being pinned at 10.
-        double reach = weapon != null ? weapon.getReachFeet() : 5.0;
-        double tolerance = 2.5;
-
-        boolean canThrowOrShoot = weapon != null && (weapon.isRanged() || weapon.hasProperty("thrown"));
-        if (canThrowOrShoot) {
-            if (weapon.isMelee() && feet <= reach + tolerance) return null; // used in melee
-            int max = weapon.getLongRange() > 0 ? weapon.getLongRange() : weapon.getNormalRange();
-            if (max > 0 && feet > max + tolerance) {
-                return target.getDisplayName() + " is out of range — " + fmtFeet(feet) + " away (max " + max + " ft).";
-            }
-            return null; // within range
-        }
-
-        // Melee / unarmed: must be within reach.
-        if (feet > reach + tolerance) {
-            return target.getDisplayName() + " is too far — " + fmtFeet(feet) + " away, but your reach is "
-                    + (int) reach + " ft. Move closer or use a ranged attack.";
-        }
-        return null;
-    }
-
-    private static String fmtFeet(double feet) { return String.format("%.0f ft", feet); }
-
-    /**
-     * If this is a ranged attack landing beyond its NORMAL range (but within long range), return a
-     * disadvantage advisory (5e long-range rule); else null. Works for player weapons and entity
-     * attacks (the "80/320 ft" form).
+     * A ranged attack past its normal range but within long range (PHB p.195) lands at disadvantage:
+     * the notice, or null. A player's weapon, or a creature's "80/320 ft" attack. Uses {@link Reach}.
      */
     private String longRangeNotice(Combatant attacker, Combatant target, String weaponOrAttackName, Player player) {
-        Location a = attacker.getLocation();
-        Location t = target.getLocation();
-        if (a == null || t == null || a.getWorld() == null || !a.getWorld().equals(t.getWorld())) return null;
-        double feet = a.distance(t) * 5.0;
-
         int normal, longR;
         if (attacker.isPlayer()) {
             DndWeapon w = AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName);
@@ -2029,57 +1979,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             normal = w.getNormalRange();
             longR = w.getLongRange();
         } else {
-            io.papermc.jkvttplugin.data.model.DndAttack atk =
-                    AttackHandler.resolveEntityAttack(attacker, weaponOrAttackName);
+            io.papermc.jkvttplugin.data.model.DndAttack atk = AttackHandler.resolveEntityAttack(attacker, weaponOrAttackName);
             if (atk == null || atk.getReach() == null || !atk.getReach().contains("/")) return null;
-            java.util.List<Integer> nums = new java.util.ArrayList<>();
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(atk.getReach());
-            while (m.find()) nums.add(Integer.parseInt(m.group(1)));
+            java.util.List<Integer> nums = Reach.numbers(atk.getReach());
             if (nums.size() < 2) return null;
             normal = nums.get(0);
             longR = nums.get(nums.size() - 1);
         }
-
-        double tolerance = 2.5;
-        if (normal > 0 && feet > normal + tolerance && (longR <= 0 || feet <= longR + tolerance)) {
-            return "⚠ Long range (" + fmtFeet(feet) + " > " + normal + " ft) — attack at DISADVANTAGE "
-                    + "(roll twice, use the lower).";
-        }
-        return null;
-    }
-
-    /**
-     * Range gate for an entity's attack, using its {@code reach} string ("5 ft", "10 ft.", or the
-     * ranged "80/320 ft" form). Null if in range or positions can't be determined.
-     */
-    private String entityAttackRangeError(Combatant attacker, Combatant target,
-                                          io.papermc.jkvttplugin.data.model.DndAttack attack) {
-        Location a = attacker.getLocation();
-        Location t = target.getLocation();
-        if (a == null || t == null || a.getWorld() == null || !a.getWorld().equals(t.getWorld())) {
-            return null;
-        }
-        double feet = a.distance(t) * 5.0;
-        double tolerance = 2.5;
-
-        String reach = attack != null ? attack.getReach() : null;
-        java.util.List<Integer> nums = new java.util.ArrayList<>();
-        if (reach != null) {
-            java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)").matcher(reach);
-            while (m.find()) nums.add(Integer.parseInt(m.group(1)));
-        }
-
-        if (nums.isEmpty()) { // no reach data → assume 5 ft melee
-            return feet > 5 + tolerance
-                    ? target.getDisplayName() + " is too far — " + fmtFeet(feet) + " away, but reach is 5 ft." : null;
-        }
-        boolean ranged = reach.contains("/"); // e.g. "80/320 ft"
-        int max = ranged ? nums.get(nums.size() - 1) : nums.get(0);
-        if (feet > max + tolerance) {
-            String kind = ranged ? "out of range" : "too far";
-            return target.getDisplayName() + " is " + kind + " — " + fmtFeet(feet) + " away (max " + max + " ft).";
-        }
-        return null;
+        return Reach.longRange(attacker.getLocation(), target.getLocation(), normal, longR);
     }
 
     /**

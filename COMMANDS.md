@@ -8,6 +8,10 @@ prints that command's own help.
 > **DM authorization:** "DM" = a server op, a player with the `jkvtt.dm` permission
 > node, or a player added via `/dm add`. Op is required only for `/dm add`/`/dm remove`.
 
+> **Reach is one rule** for spells and weapons, in and out of a fight: 1 block = 5 ft, plus 5 ft of
+> slack; a targeted Self spell reaches only you. Out of reach is never final: **[Ask the DM]** (a DM
+> acting gets **[Do it anyway]**), and an allowed action goes through once.
+
 > **Every roll prompt is the same three buttons** (#216), and **every one fills chat; none runs a
 > command** (press Enter): **[Roll it]** fills `autoRoll` (the game rolls and adds your bonus),
 > **[I rolled…]** fills `manualRoll ` (type your dice; the game adds your bonus),

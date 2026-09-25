@@ -100,7 +100,7 @@ public final class OutOfCombatAttack {
 
         if (aim.target != null) {
             // Reach first: nobody should be asked to start a fight over a Shocking Grasp from 30 ft.
-            if (!inRange(player, aim, spell)) return true;
+            if (!inRange(player, aim, spell, retry)) return true;
             // A creature or a character: that's a fight unless the DM says otherwise.
             if (!permitted(player, spell, aim.target.combatant().getId())) {
                 String combatCmd = "/combat cast " + spell.getId() + " " + quote(aim.targetName())
@@ -110,7 +110,7 @@ public final class OutOfCombatAttack {
                         () -> grant(player, spell, aim.target.combatant().getId(), retry));
                 return true;
             }
-            if (!inRange(player, aim, spell)) return true; // again: they may have walked off while the DM decided
+            if (!inRange(player, aim, spell, retry)) return true; // again: they may have walked off while the DM decided
             return resolveAtCreature(player, sheet, spell, aim, roll, cost, retry);
         }
 
@@ -227,7 +227,7 @@ public final class OutOfCombatAttack {
                                 RollService.RollInput roll, SpellCost cost) {
         CombatTargets.Target target = aim.target != null ? aim.target : CombatTargets.forPlayer(player);
         String name = aim.target != null ? aim.targetName() : sheet.getCharacterName();
-        if (aim.target != null && !inRange(player, aim, spell)) return true;
+        if (aim.target != null && !inRange(player, aim, spell, "/character cast " + spell.getId() + " " + quote(name))) return true;
         // The same healing roll as in a fight (SpellCastHandler.healRoll).
         SpellCastHandler.HealRoll heal = SpellCastHandler.healRoll(sheet, spell, roll.providedRoll(), roll.providedTotal(), roll.forceAuto());
         if (heal == null) {
@@ -334,63 +334,19 @@ public final class OutOfCombatAttack {
         String targetArg = target.isPlayer() && target.getPlayer() != null ? target.getPlayer().getName() : target.getDisplayName();
 
         Component ask = Component.text("⚔ " + what + ". You're not in a fight. ", NamedTextColor.GOLD)
-                .append(requestButton(attackerId, "[Start combat]", NamedTextColor.RED, "Start a fight with both of them. Add anyone else and mark "
+                .append(DmRequests.button(attackerId, "[Start combat]", NamedTextColor.RED, "Start a fight with both of them. Add anyone else and mark "
                         + "who's surprised before rolling initiative. The attack comes back on their first turn.",
                         dm -> startCombat(dm, attackerId, targetArg, label, heldCommand)))
                 .append(Component.text(" "));
         if (letItHappen != null) {
-            ask = ask.append(requestButton(attackerId, "[Let it happen]", NamedTextColor.GREEN, "Resolve it once, no fight: attack roll, then damage",
+            ask = ask.append(DmRequests.button(attackerId, "[Let it happen]", NamedTextColor.GREEN, "Resolve it once, no fight: attack roll, then damage",
                     dm -> letItHappen.run())).append(Component.text(" "));
         }
-        ask = ask.append(requestButton(attackerId, "[Deny]", NamedTextColor.GRAY, "It doesn't happen", dm -> {
+        ask = ask.append(DmRequests.button(attackerId, "[Deny]", NamedTextColor.GRAY, "It doesn't happen", dm -> {
             Player p = Bukkit.getPlayer(attackerId);
             if (p != null) p.sendMessage(Component.text("The DM stops that.", NamedTextColor.GRAY));
         }));
-        sendRequest(attacker, label, "You're not in a fight — asking the DM.", ask);
-    }
-
-    // ==================== ONE OPEN REQUEST PER PLAYER ====================
-
-    /**
-     * What a player is waiting on the DM for. Players spam commands and click everything, so each
-     * player has at most one open request: the same one again isn't re-sent to the DM, and a
-     * different one replaces it (the old buttons then say so instead of acting).
-     */
-    private record Request(String label, int id, long at) {}
-
-    private static final Map<UUID, Request> requests = new HashMap<>();
-    private static int nextRequestId = 1;
-    private static final long REQUEST_REPEAT_MS = Duration.ofMinutes(2).toMillis();
-
-    private static void sendRequest(Player from, String label, String toPlayer, Component toDms) {
-        Request open = requests.get(from.getUniqueId());
-        if (open != null && open.label().equals(label) && System.currentTimeMillis() - open.at() < REQUEST_REPEAT_MS) {
-            from.sendMessage(Component.text("Still waiting on the DM for " + label + ".", NamedTextColor.GRAY));
-            return;
-        }
-        if (open != null) {
-            from.sendMessage(Component.text("(That replaces your earlier request: " + open.label() + ".)", NamedTextColor.DARK_GRAY));
-        }
-        requests.put(from.getUniqueId(), new Request(label, nextRequestId++, System.currentTimeMillis()));
-        from.sendMessage(Component.text(toPlayer, NamedTextColor.GRAY));
-        toDms(toDms);
-    }
-
-    /** A DM button on a player's request: acts only while that request is still the open one. */
-    private static Component requestButton(UUID playerId, String text, NamedTextColor color, String hover,
-                                           java.util.function.Consumer<Player> onClick) {
-        // The id this button belongs to is the one about to be issued (buttons are built just before sendRequest).
-        final int mine = nextRequestId;
-        return button(text, color, hover, a -> {
-            if (!(a instanceof Player dm)) return;
-            Request open = requests.get(playerId);
-            if (open == null || open.id() != mine) {
-                dm.sendMessage(Component.text("That request was already answered or replaced by a newer one.", NamedTextColor.GRAY));
-                return;
-            }
-            requests.remove(playerId);
-            onClick.accept(dm);
-        });
+        DmRequests.send(attacker, label, "You're not in a fight — asking the DM.", ask);
     }
 
     private static void grant(Player caster, DndSpell spell, UUID targetId, String retry) {
@@ -453,51 +409,17 @@ public final class OutOfCombatAttack {
         return new Aim(null, label, obj != null ? obj.description : null);
     }
 
-    /** A spell's range against where the target stands (1 block = 5 ft, with a block of slack). */
-    private static boolean inRange(Player player, Aim aim, DndSpell spell) {
-        String range = spell.getRange() == null ? "" : spell.getRange().trim();
-        int feet = spell.getRangeFeet(); // the one range reader, shared with /combat cast
-        if (feet <= 0) return true; // Self (an area from you), Sight, Unlimited…: not enforced out of a fight
-        var there = aim.target.combatant().getLocation();
-        if (there == null || !there.getWorld().equals(player.getWorld())) return true;
-        double distFeet = there.distance(player.getLocation()) * 5.0;
-        if (distFeet <= feet + 5) return true;
-        UUID targetId = aim.target.combatant().getId();
-        Permit ok = rangeOverrides.get(player.getUniqueId());
-        if (ok != null && ok.covers(spell, targetId)) return true; // spent in commit(): one override, one cast
-        String where = aim.targetName() + " is about " + Math.round(distFeet) + " ft away — " + spell.getName() + " reaches " + range;
-        player.sendMessage(Component.text(where + ". ", NamedTextColor.RED)
-                .append(button("[Ask the DM]", NamedTextColor.AQUA, "Ask the DM to let it reach anyway (they may be closer than the game thinks)",
-                        a -> askRange(player, spell, aim, targetId, where))));
+    /**
+     * Does the spell reach? The one rule ({@link Reach}), with the DM's override: when it doesn't,
+     * the caster is told why and offered [Ask the DM] (or [Do it anyway], as a DM).
+     */
+    private static boolean inRange(Player player, Aim aim, DndSpell spell, String retry) {
+        Combatant target = aim.target.combatant();
+        String why = Reach.spell(player.getLocation(), target.getLocation(), aim.targetName(),
+                target.getId().equals(player.getUniqueId()), spell);
+        if (why == null || Reach.isAllowed(player.getUniqueId(), "spell:" + spell.getId(), target.getId())) return true;
+        Reach.refuse(player, why, "spell:" + spell.getId(), target.getId(), spell.getName() + " on " + aim.targetName(), retry.trim());
         return false;
-    }
-
-    /** DM-approved "close enough": this spell at this target, once, within {@link #GOOD_FOR_MS}. */
-    private static final Map<UUID, Permit> rangeOverrides = new HashMap<>();
-
-    private static void askRange(Player player, DndSpell spell, Aim aim, UUID targetId, String where) {
-        if (DMManager.getOnlineDMs().isEmpty()) {
-            player.sendMessage(Component.text("No DM is online to ask.", NamedTextColor.RED));
-            return;
-        }
-        UUID id = player.getUniqueId();
-        CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(player);
-        String who = sheet != null ? sheet.getCharacterName() : player.getName();
-        String retry = "/character cast " + spell.getId() + " " + quote(aim.targetName()) + " ";
-        Component ask = Component.text("📏 " + who + " asks to cast " + spell.getName() + " on " + aim.targetName()
-                        + " out of reach (" + where.substring(where.indexOf("about")) + "). ", NamedTextColor.GOLD)
-                .append(requestButton(id, "[Allow]", NamedTextColor.GREEN, "Close enough: let it reach this once", dm -> {
-                    rangeOverrides.put(id, new Permit(spell.getId(), targetId, System.currentTimeMillis()));
-                    Player p = Bukkit.getPlayer(id);
-                    if (p != null) p.sendMessage(Component.text("The DM says it reaches. ", NamedTextColor.GREEN)
-                            .append(fill("[cast it]", retry)));
-                }))
-                .append(Component.text(" "))
-                .append(requestButton(id, "[Deny]", NamedTextColor.GRAY, "It doesn't reach", dm -> {
-                    Player p = Bukkit.getPlayer(id);
-                    if (p != null) p.sendMessage(Component.text("The DM says it doesn't reach.", NamedTextColor.GRAY));
-                }));
-        sendRequest(player, spell.getName() + " out of reach", "Asked the DM whether it reaches.", ask);
     }
 
     // ==================== HELPERS ====================
@@ -524,7 +446,7 @@ public final class OutOfCombatAttack {
 
     /** Spend the slot or use and handle concentration: only once the spell actually goes off. */
     public static void commit(Player player, CharacterSheet sheet, DndSpell spell, SpellCost cost) {
-        rangeOverrides.remove(player.getUniqueId());
+        Reach.spend(player.getUniqueId()); // a DM "close enough" covers this one cast
         if (spell.isConcentration() && sheet.isConcentrating()) {
             DndSpell was = sheet.getConcentratingOn();
             sheet.breakConcentration();

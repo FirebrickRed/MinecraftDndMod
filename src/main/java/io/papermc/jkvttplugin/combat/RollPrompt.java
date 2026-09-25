@@ -84,6 +84,12 @@ public final class RollPrompt {
         typed.put(p.getUniqueId(), line.append(' ').toString());
     }
 
+    /** The command this player just typed ("/combat cast fire_bolt Goblin"), or null. For "go again" buttons. */
+    public static String lastCommand(org.bukkit.command.CommandSender sender) {
+        String line = sender instanceof org.bukkit.entity.Player p ? typed.get(p.getUniqueId()) : null;
+        return line == null ? null : line.trim();
+    }
+
     /** The buttons again, on the command this player just typed. Falls back to a plain hint if unknown. */
     public static Component again(org.bukkit.command.CommandSender to, String lead, String dice, String bonus) {
         String base = to instanceof org.bukkit.entity.Player p ? typed.get(p.getUniqueId()) : null;
