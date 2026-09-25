@@ -101,6 +101,8 @@ public final class OutOfCombatAttack {
                 + (castLevel != null ? " level " + castLevel : "") + " ";
 
         if (aim.target != null) {
+            // Reach first: nobody should be asked to start a fight over a Shocking Grasp from 30 ft.
+            if (!inRange(player, aim, spell)) return true;
             // A creature or a character: that's a fight unless the DM says otherwise.
             if (!permitted(player, spell, aim.target.combatant().getId())) {
                 String combatCmd = "/combat cast " + spell.getId() + " " + quote(aim.targetName())
@@ -110,7 +112,7 @@ public final class OutOfCombatAttack {
                         () -> grant(player, spell, aim.target.combatant().getId(), retry));
                 return true;
             }
-            if (!inRange(player, aim, spell)) return true;
+            if (!inRange(player, aim, spell)) return true; // again: they may have walked off while the DM decided
             return resolveAtCreature(player, sheet, spell, aim, roll, cost, retry);
         }
 
@@ -119,7 +121,7 @@ public final class OutOfCombatAttack {
             Component ask = Component.text("You're not aiming at a creature. Cast " + spell.getName() + " anyway? ", NamedTextColor.YELLOW)
                     .append(button("[Cast it]", NamedTextColor.GREEN, "Go ahead: roll to hit, and the DM decides what happens",
                             a -> { permits.put(player.getUniqueId(), new Permit(spell.getId(), null, System.currentTimeMillis()));
-                                   rollPrompt(player, sheet, spell, retry); }))
+                                   rollPrompt(player, sheet, spell, retry, Advantage.NONE); }))
                     .append(Component.text("  "))
                     .append(button("[Cancel]", NamedTextColor.GRAY, "Don't cast it", a -> player.sendMessage(
                             Component.text("Cancelled.", NamedTextColor.GRAY))));
@@ -136,13 +138,14 @@ public final class OutOfCombatAttack {
         String who = sheet.getCharacterName();
 
         if (spell.isAttackRoll()) {
-            RollService.RollResult r = attackRoll(player, sheet, spell, caster.attackAdvantageAgainst(target), roll, caster.rerollsNat1());
-            if (r == null) { rollPrompt(player, sheet, spell, retry); return true; }
+            Advantage adv = caster.attackAdvantageAgainst(target);
+            RollService.RollResult r = attackRoll(player, sheet, spell, adv, roll, caster.rerollsNat1());
+            if (r == null) { rollPrompt(player, sheet, spell, retry, adv); return true; }
             permits.remove(player.getUniqueId()); // one "let it happen" is one cast; the next asks again
             commit(player, sheet, spell, cost);
             int ac = target.getArmorClass();
             boolean hit = RollService.hits(r, ac);
-            tell(player, Component.text("✨ " + who + " casts " + spell.getName() + " at " + aim.targetName() + "!", NamedTextColor.LIGHT_PURPLE));
+            tell(player, spell.castLine("✨ " + who + " casts ", " at " + aim.targetName() + "!", NamedTextColor.LIGHT_PURPLE));
             tell(player, Component.text("Spell attack: " + r.breakdown() + " vs AC " + ac + " — " + (hit ? (r.nat20() ? "CRITICAL HIT!" : "HIT!") : "MISS"),
                     hit ? NamedTextColor.GREEN : NamedTextColor.RED));
             if (hit) offerDamage(player, spell, r.nat20(), aim.target, null, false);
@@ -155,15 +158,20 @@ public final class OutOfCombatAttack {
             Ability save = parseAbility(spell.getSaveType());
             int dc = 8 + sheet.getProficiencyBonus() + modFor(sheet, spell);
             String abbr = save != null ? save.getAbbreviation() : spell.getSaveType();
-            tell(player, Component.text("✨ " + who + " casts " + spell.getName() + " at " + aim.targetName()
+            tell(player, spell.castLine("✨ " + who + " casts ", " at " + aim.targetName()
                     + " — DC " + dc + " " + abbr + " save!", NamedTextColor.LIGHT_PURPLE));
             boolean hasDamage = spell.getDamage() != null && !spell.getDamage().isBlank();
             boolean halfOnSave = "half".equalsIgnoreCase(spell.getSaveEffect());
-            Component dm = Component.text("   DM: " + aim.targetName() + " makes a DC " + dc + " " + abbr + " save. ", NamedTextColor.GRAY);
-            if (target.isPlayer() && save != null) {
+            // Their bonus, spelled out, and [Call the save] for anyone: a player is prompted to roll, a
+            // creature's save is the DM's own roll, graded against the DC (/dm check handles both).
+            String bonus = save != null ? " (" + target.saveBreakdown(save) + ")" : "";
+            Component dm = Component.text("   DM: " + aim.targetName() + " makes a DC " + dc + " " + abbr + " save" + bonus + ". ", NamedTextColor.GRAY);
+            if (save != null) {
                 String check = "/dm check " + quote(aim.targetName()) + " save " + save.getAbbreviation().toLowerCase() + " dc " + dc;
                 dm = dm.append(Component.text("[Call the save]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(check)).hoverEvent(HoverEvent.showText(Component.text("Fills: " + check))))
+                        .clickEvent(ClickEvent.suggestCommand(check)).hoverEvent(HoverEvent.showText(Component.text(
+                                (target.isPlayer() ? "They roll it; the result comes back to you." : "You roll it for them.")
+                                        + "\nFills: " + check))))
                         .append(Component.text(" "));
             }
             if (hasDamage) {
@@ -183,7 +191,7 @@ public final class OutOfCombatAttack {
         }
 
         // Hits automatically (Magic Missile) or just deals damage.
-        tell(player, Component.text("✨ " + who + " casts " + spell.getName() + " at " + aim.targetName() + ".", NamedTextColor.LIGHT_PURPLE));
+        tell(player, spell.castLine("✨ " + who + " casts ", " at " + aim.targetName() + ".", NamedTextColor.LIGHT_PURPLE));
         offerDamage(player, spell, false, aim.target, null, false);
         return true;
     }
@@ -194,15 +202,15 @@ public final class OutOfCombatAttack {
         String at = aim.objectLabel != null ? aim.objectLabel : "nothing in particular";
         if (spell.isAttackRoll()) {
             RollService.RollResult r = attackRoll(player, sheet, spell, Advantage.NONE, roll, false);
-            if (r == null) { rollPrompt(player, sheet, spell, retry); return true; }
+            if (r == null) { rollPrompt(player, sheet, spell, retry, Advantage.NONE); return true; }
             commit(player, sheet, spell, cost);
             permits.remove(player.getUniqueId());
-            tell(player, Component.text("✨ " + who + " casts " + spell.getName() + " at " + at + ": "
+            tell(player, spell.castLine("✨ " + who + " casts ", " at " + at + ": "
                     + r.breakdown() + " to hit.", NamedTextColor.LIGHT_PURPLE));
         } else {
             commit(player, sheet, spell, cost);
             permits.remove(player.getUniqueId());
-            tell(player, Component.text("✨ " + who + " casts " + spell.getName() + " at " + at + ".", NamedTextColor.LIGHT_PURPLE));
+            tell(player, spell.castLine("✨ " + who + " casts ", " at " + at + ".", NamedTextColor.LIGHT_PURPLE));
         }
         Component dm = Component.text("   DM: they're looking at " + at + ". ", NamedTextColor.GRAY);
         if (aim.objectNote != null && !aim.objectNote.isBlank()) {
@@ -233,7 +241,7 @@ public final class OutOfCombatAttack {
         int amount = heal.amount();
         tell(player, Component.text(heal.work(), NamedTextColor.GRAY));
         commit(player, sheet, spell, cost);
-        tell(player, Component.text("✨ " + sheet.getCharacterName() + " casts " + spell.getName() + " on " + name + ".", NamedTextColor.LIGHT_PURPLE));
+        tell(player, spell.castLine("✨ " + sheet.getCharacterName() + " casts ", " on " + name + ".", NamedTextColor.LIGHT_PURPLE));
         DamageHandler.applyHealing(target.session(), target.combatant(), Math.max(1, amount));
         return true;
     }
@@ -392,7 +400,7 @@ public final class OutOfCombatAttack {
         caster.sendMessage(Component.text("The DM lets it happen.", NamedTextColor.GREEN));
         CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(caster);
         // Only an attack spell rolls to hit; a save spell (Sacred Flame) just goes off.
-        if (spell.isAttackRoll() && sheet != null) rollPrompt(caster, sheet, spell, retry);
+        if (spell.isAttackRoll() && sheet != null) rollPrompt(caster, sheet, spell, retry, Advantage.NONE);
         else caster.sendMessage(Component.text("   ", NamedTextColor.GRAY).append(fill("[cast it]", retry.trim())));
     }
 
@@ -537,8 +545,8 @@ public final class OutOfCombatAttack {
         if (!spent.isEmpty()) player.sendMessage(Component.text("   Spent " + spent + ".", NamedTextColor.GRAY));
     }
 
-    private static void rollPrompt(Player player, CharacterSheet sheet, DndSpell spell, String retry) {
-        player.sendMessage(RollPrompt.line("🎲 Roll to hit with " + spell.getName() + ":", NamedTextColor.YELLOW, retry, "d20",
+    private static void rollPrompt(Player player, CharacterSheet sheet, DndSpell spell, String retry, Advantage adv) {
+        player.sendMessage(RollPrompt.line("🎲 Roll to hit with " + spell.getName() + ":", NamedTextColor.YELLOW, retry, RollPrompt.d20(adv),
                 sheet.getSpellAttackBreakdown(spell)));
     }
 

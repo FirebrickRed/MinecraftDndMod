@@ -172,7 +172,7 @@ public class AttackHandler {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, attackMod, modBreakdown, attacker.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
             // Physical-roll mode with no die supplied — ask for one and DON'T spend the action.
-            commandUser.sendMessage(RollPrompt.again(commandUser, "⚔ Roll to hit " + target.getDisplayName() + ":", "d20", modBreakdown));
+            commandUser.sendMessage(RollPrompt.again(commandUser, "⚔ Roll to hit " + target.getDisplayName() + ":", RollPrompt.d20(advantage), modBreakdown));
             return false;
         }
         int targetAC = target.getArmorClass();

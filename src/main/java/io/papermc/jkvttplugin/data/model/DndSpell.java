@@ -289,6 +289,20 @@ public class DndSpell {
      * wrapped at {@link Util#WRAP_WIDTH}. The spellbook item, the character-creation tile and the chat
      * hover all use this, so a spell reads the same everywhere.
      */
+    /** The spell's name, hover it for {@link #detailLore()}: for "Zek casts <u>Fire Bolt</u> at…" lines in chat. */
+    public Component hoverName(net.kyori.adventure.text.format.TextColor color) {
+        Component hover = Component.text(name, getSpellLevelColor());
+        for (Component line : detailLore()) hover = hover.append(Component.newline()).append(line);
+        return Component.text(name, color)
+                .decoration(net.kyori.adventure.text.format.TextDecoration.UNDERLINED, true)
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(hover));
+    }
+
+    /** "{@code before}<spell, hoverable>{@code after}" in one color: the one way a cast is announced. */
+    public Component castLine(String before, String after, net.kyori.adventure.text.format.TextColor color) {
+        return Component.text(before, color).append(hoverName(color)).append(Component.text(after, color));
+    }
+
     public List<Component> detailLore() {
         LoreBuilder lore = LoreBuilder.create();
 
@@ -298,16 +312,16 @@ public class DndSpell {
 
         // Casting Details
         if (castingTime != null) {
-            lore.addLine("Casting Time: " + castingTime, NamedTextColor.GRAY);
+            lore.addWrappedText("Casting Time: " + castingTime, NamedTextColor.GRAY);
         }
         if (range != null) {
-            lore.addLine("Range: " + range, NamedTextColor.GRAY);
+            lore.addWrappedText("Range: " + range, NamedTextColor.GRAY);
         }
         if (components != null) {
-            lore.addLine("Components: " + components.toDisplayString(), NamedTextColor.GRAY);
+            lore.addWrappedText("Components: " + components.toDisplayString(), NamedTextColor.GRAY); // a material component can run long (Friends)
         }
         if (duration != null) {
-            lore.addLine("Duration: " + duration, NamedTextColor.GRAY);
+            lore.addWrappedText("Duration: " + duration, NamedTextColor.GRAY);
         }
 
         // Tags

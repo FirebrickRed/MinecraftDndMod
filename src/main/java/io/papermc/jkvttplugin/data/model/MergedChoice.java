@@ -219,9 +219,13 @@ public class MergedChoice {
                 }
             }
 
-            // If no source has capacity, use the first candidate (it will auto-replace oldest)
+            // Every source is full: replace in the one picked longest ago. Always taking the first
+            // source made a "choose 2" from two sources flip the same slot forever (languages, playtest).
             if (targetSource == null) {
                 targetSource = candidateSources.get(0);
+                for (PendingChoice<?> pc : candidateSources) {
+                    if (pc.lastPickAt() < targetSource.lastPickAt()) targetSource = pc;
+                }
             }
 
             // Toggle on the target source (only add to ONE source, not all)

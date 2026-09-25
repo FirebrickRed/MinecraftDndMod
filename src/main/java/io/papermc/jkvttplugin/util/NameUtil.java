@@ -175,6 +175,19 @@ public final class NameUtil {
             String p = primaryName.apply(it);
             if (p != null && hashless(p.toLowerCase()).equals(qn)) return it;
         }
+        // 2b. "#1" is the unnumbered original: the first wolf is "Wolf", the second "Wolf #2", so
+        //     "Wolf #1" / "Wolf 1" means the plain "Wolf" (nothing is literally called "#1").
+        if (qn.endsWith(" 1")) {
+            String base = qn.substring(0, qn.length() - 2);
+            T first = null;
+            for (T it : items) {
+                String p = primaryName.apply(it);
+                if (p == null || !hashless(p.toLowerCase()).equals(base)) continue;
+                if (first != null) return null; // ambiguous
+                first = it;
+            }
+            if (first != null) return first;
+        }
 
         // 3. exact on the secondary/base name — unique, or "Goblin" would pick one of three goblins
         if (secondaryName != null) {

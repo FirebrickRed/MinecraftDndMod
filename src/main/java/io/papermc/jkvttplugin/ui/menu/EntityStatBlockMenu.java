@@ -179,9 +179,9 @@ public class EntityStatBlockMenu {
             .decoration(TextDecoration.ITALIC, true));
         lore.add(Component.empty());
 
-        // Wrap DM notes for readability
-        for (String line : template.getDmNotes().split("\n")) {
-            lore.add(Component.text(line, NamedTextColor.GRAY));
+        // Wrapped at the standard width; paragraph breaks from the YAML are kept.
+        for (String line : io.papermc.jkvttplugin.util.Util.wrapText(template.getDmNotes())) {
+            lore.add(Component.text(line, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         }
 
         meta.lore(lore);

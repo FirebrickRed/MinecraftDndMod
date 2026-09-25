@@ -99,14 +99,6 @@ public class SpellCastingMenuListener implements Listener {
         routeToCastCommand(player, spell, castingLevel);
     }
 
-    /** What a spell does, for hovering its name in chat: level and school, the basics, the text. */
-    private static Component spellSummary(DndSpell spell) {
-        // The same lines as the spellbook item and the creation tile (DndSpell.detailLore).
-        Component c = Component.text(spell.getName(), NamedTextColor.LIGHT_PURPLE);
-        for (Component line : spell.detailLore()) c = c.append(Component.newline()).append(line);
-        return c;
-    }
-
     /**
      * Close the menu and fill the right cast command in chat.
      *
@@ -143,8 +135,7 @@ public class SpellCastingMenuListener implements Listener {
         if (upcast) hover += "\nCast from a level " + castingLevel + " slot"
                 + (needsTarget ? " — replace <target> before sending." : ".");
         player.sendMessage(Component.text("✨ Cast ", NamedTextColor.LIGHT_PURPLE)
-                .append(Component.text(spell.getName(), NamedTextColor.LIGHT_PURPLE, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
-                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(spellSummary(spell))))
+                .append(spell.hoverName(NamedTextColor.LIGHT_PURPLE))
                 .append(Component.text((upcast ? " (level " + castingLevel + ")" : "") + " — ", NamedTextColor.LIGHT_PURPLE))
                 .append(Component.text(needsTarget ? "[click, then name your target]" : "[click to cast]",
                         NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)

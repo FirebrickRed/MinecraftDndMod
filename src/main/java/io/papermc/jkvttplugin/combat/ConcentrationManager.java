@@ -122,7 +122,7 @@ public final class ConcentrationManager {
             String n = target.getDisplayName();
             base += (n.contains(" ") ? "\"" + n + "\"" : n) + " ";
         }
-        return RollPrompt.line(lead, NamedTextColor.GOLD, base, "d20", target.saveBreakdown(Ability.CONSTITUTION));
+        return RollPrompt.line(lead, NamedTextColor.GOLD, base, RollPrompt.d20(target.saveAdvantage(Ability.CONSTITUTION, SAVE_TAGS)), target.saveBreakdown(Ability.CONSTITUTION));
     }
 
     // ==================== RESOLUTION ====================

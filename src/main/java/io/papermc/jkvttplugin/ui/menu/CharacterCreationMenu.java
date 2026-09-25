@@ -752,6 +752,14 @@ public class CharacterCreationMenu {
             lore.add(Component.empty());
             lore.addAll(existingLore);
         }
+        // A spell pick (a high elf's cantrip) shows the same description as the Spells tab.
+        if (choice.getCategory() == ChoiceCategory.SPELL) {
+            DndSpell spell = SpellLoader.getSpell(optionKey);
+            if (spell != null) {
+                lore.add(Component.empty());
+                lore.addAll(spell.detailLore());
+            }
+        }
 
         boolean chosen = selected || isResolved;
         String plainName = item.getItemMeta().hasDisplayName()

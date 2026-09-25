@@ -20,20 +20,18 @@ fails), copy `build/libs/*.jar` into the server's `plugins/`, restart. Load the 
 
 ## Character creation
 
-- [ ] Spells tab, hover a spell → the same description as the spellbook: level and school, casting
-      time, range, components, duration, then the rules text, wrapped (no line runs off the screen).
-- [ ] A spell with "At Higher Levels" (Cure Wounds) shows that part too.
 - [ ] Cleric's Spells tab, bottom label → "You prepare these from your class's full spell list"
       (it no longer promises swapping on a long rest; that's #218).
 - [ ] Item tooltips (a weapon, a potion) and condition hovers wrap at the same width as spells.
+- [ ] High Elf: the Wizard Cantrip pick shows each cantrip's full description, like the Spells tab.
+- [ ] Friends (or any spell with a long material component) → the card stays narrow; the component wraps.
+- [ ] **Languages from two sources** (High Elf + Noble, one each): pick two, then keep picking → the
+      replaced language alternates (oldest goes), not the same slot every time.
 
 ## Finished characters
 
 Finish the combo, then look at the sheet and your inventory.
 
-- [ ] **High Elf Wizard, Noble:** Wizard Cantrip and class cantrips are both there, no double pick.
-- [ ] **High Elf Wizard, Noble:** both languages and the gaming set are on the sheet.
-- [ ] **High Elf Wizard, Noble:** your Spells-tab picks are in the spellbook.
 - [ ] **High Elf Rogue** with Fire Bolt as the Wizard Cantrip → `/character cast fire_bolt` works and uses INT.
 - [ ] **Astral Elf** with Sacred Flame + Wisdom → `/combat cast sacred_flame <target>` uses WIS for the DC.
 - [ ] **Mountain Dwarf Fighter, Guild Artisan:** the artisan's-tool pick gives the proficiency **and** the item.
@@ -51,23 +49,14 @@ Finish the combo, then look at the sheet and your inventory.
 
 Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX rolls.
 
-- [ ] **Wizard in chain mail:** the chat line for a DEX skill says it's at disadvantage (armor).
-- [ ] **Wizard in chain mail:** a WIS check doesn't.
-- [ ] **Wizard in chain mail:** the sheet's AC tile says "⚠ not proficient with Chain Mail".
-- [ ] **Wizard in chain mail:** `/dm check <wizard> save dex` is at disadvantage.
-- [ ] **Wizard in chain mail:** take it off → all normal again.
 - [ ] **Fighter in chain mail:** no penalty.
 - [ ] **Mountain dwarf wizard:** scale mail fine, chain mail penalized.
+- [ ] Skills menu, hover an ability's check tile → its breakdown (`+2[DEX]`), like the skills and saves.
 
 ## Natural 1s and 20s
 
 Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1`).
 
-- [ ] A sheet skill roll on a 20 → the chat line ends in gold **NATURAL 20!**; on a 1, red **NATURAL 1**.
-- [ ] A DM-called check (`/dm check <you> skill stealth`, answered `manualRoll 20`) → the DM's
-      result says **NATURAL 20!**, and it's still graded against the DC (not an auto-success).
-- [ ] A creature check (`/dm check Balin Ironforge save dex manualRoll 1`) → **NATURAL 1**.
-- [ ] `total 20` → no callout (there's no die to see).
 
 ## Casting from the spellbook and `/character cast`
 
@@ -127,38 +116,27 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 
 - [ ] After Start combat, on the caster's first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
 - [ ] Sacred Flame with Let it happen → the DM sees the DC, **[Call the save]**, **[Failed: damage]** / **[Saved: …]**.
-- [ ] Left-click a creature with a sword out of combat, **in survival** → the DM gets **[Start
-      combat]** / **[Deny]** (it used to do nothing: creatures can't take a survival hit).
-- [ ] That click doesn't damage the creature.
-- [ ] Swing five times in a row → the DM is asked once ("Still waiting on the DM…" for you).
-- [ ] **[Let it happen]** a Fire Bolt at The Kindler, finish it, cast again → the DM is asked again
-      (one permission is one cast; it used to last 10 minutes).
 - [ ] **[Let it happen]** a Sacred Flame → you get **[cast it]**, not a d20 prompt (a save spell
       doesn't roll to hit).
-- [ ] Cast at The Kindler twice before the DM answers → the second says "Still waiting on the DM".
-- [ ] Cast Fire Bolt at her, then something else at someone else before the DM answers → "That
-      replaces your earlier request"; the DM's old buttons now say "already answered or replaced".
-- [ ] Looking at a wall: `/character cast fire_bolt manualRoll 20` → the wall prompt, not "No
-      character called 'manualRoll 20'".
-- [ ] Same with `autoRoll 1d20` → works.
 - [ ] `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Ask the DM]**.
 - [ ] Click it → the DM gets "📏 … out of reach (about 18 ft away …)" **[Allow]** / **[Deny]**.
 - [ ] [Allow] → you get **[cast it]**; it goes through once. Casting again from there refuses again.
 - [ ] [Deny] → "The DM says it doesn't reach".
+- [ ] **Shocking Grasp at someone 20 ft away** → refused for range straight away; the DM is **not** asked
+      to start a fight first.
+- [ ] Burning Hands (or any save spell) at a creature out of combat → the DM line shows its bonus
+      (`DC 13 DEX save (+1[DEX])`) and **[Call the save]**, which gives you the roll buttons graded vs the DC.
+- [ ] Any "✨ Zek casts Magic Missile at …" line (in or out of a fight, and a plain `/character cast`
+      like Light) → hover the spell name → its description.
 
 ## Roll prompts (one wording everywhere, #216)
 
-Every prompt is **[I rolled…] [Roll it] [My total…]** ([My total…] only when the game adds
+Every prompt is **[Roll it] [I rolled…] [My total…]**, all three fill chat. Hover [My total…] → "roll 2d20 and keep the lower and add -1[DEX] yourself" when at disadvantage ([My total…] only when the game adds
 something). Every bonus is **named by its source**, and the prompt and the result show the same
 label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14] +3[INT] +2[Prof] = 19`
 (the game rolled), `🎲 you rolled 14 +3[INT] +2[Prof] = 19`, or `🎲 your total: 19`.
 
-- [ ] Sheet skill (physical-dice mode) → the three buttons; the hover names the bonus (`+3[DEX] +2[Prof]`).
-- [ ] `/dm check <you> save dex` → the same three buttons.
-- [ ] `/dm check Balin Ironforge save dex` (a creature) → the same, labelled `+1[DEX]`.
 - [ ] A contest with a creature side → its button labelled `+5[Deception]` (listed skill) or `+1[CHA]`.
-- [ ] Out-of-combat Fire Bolt → `+3[INT] +2[Prof]`; Cure Wounds → `+3[WIS]`; `/character damage`
-      for Fire Bolt (1d10) → two buttons, nothing added.
 - [ ] In a fight: initiative → `+2[DEX]`; an attack (left-click) → the weapon's breakdown; a save
       and a concentration save → `+1[CON] +2[Prof]` (proficient) or just `+1[CON]`.
 - [ ] Spell attack in a fight → `+3[INT] +2[Prof]`, not `+5[Spell]`.
@@ -166,21 +144,18 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       (it used to re-prompt in physical-dice mode); the table sees the roll line.
 - [ ] Upcast Cure Wounds with no roll (`/combat cast cure_wounds <t> level 2`) → the buttons keep `level 2`.
 - [ ] A creature's attack in a fight → to hit `+4[Scimitar]`, damage `+2[Scimitar]` (not `[ToHit]`).
-- [ ] Magic Missile → "Roll 1d4", the game adds `+1[Magic Missile]`, all three buttons (in and out of a fight).
-- [ ] A Potion of Healing → "Roll 2d4", the game adds `+2[Potion of Healing]`, all three buttons; [My total…] takes the number with the +2 already in.
 - [ ] Any game-rolled dice (damage, healing, a potion) → **one** `= total`, never `[5] = 5 +3 = 8`.
 - [ ] `/combat damage <t> autoRoll` → one line, `🎲 1d8 [6] +3[STR] = 9`.
 - [ ] Type a roll command with no roll words (physical-dice mode): `/combat attack <t> <weapon>`,
       `/combat save`, `/combat concentration`, `/character loot investigation` → the three buttons
       on that same command, not "type 'manualRoll <n>'".
-- [ ] Downed → the player gets **💀 Roll your death save** with [I rolled…] [Roll it]; the result
+- [ ] Downed → the player gets **💀 Roll your death save** with [Roll it] [I rolled…]; the result
       reads `… makes a death saving throw: 🎲 you rolled 14` → SUCCESS.
 - [ ] A Halfling rolling a 1 on a death save → Lucky rerolls it (it didn't before).
 - [ ] `/combat rollforinitiative` (DM) → each line `🎲 d20 [14] +2[DEX] = 16`.
 - [ ] Opportunity attack buttons → pick the attack, Enter, then the three roll buttons.
-- [ ] `/roll 2d6` → `🎲 2d6 [4, 3] = 7`.
 - [ ] Nowhere shows two dice icons (`🎲 … 🎲`), e.g. a shared check result or a loot roll.
-- [ ] **[Roll it]** runs straight away; the other two put the command in your chat bar.
+- [ ] Every roll button, **[Roll it]** included, only fills chat; nothing rolls until you press Enter.
 - [ ] Advantage, game-rolled → `🎲 d20 [9, 15] advantage +3[DEX] = 18` (both dice, one line).
 - [ ] Sheet roll in auto mode, with a Halfling rolling a 1 → Lucky rerolls it.
 - [ ] `/combat action attack` → says "left-click your target" (it said right-click).
@@ -200,7 +175,6 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Player AC tile, shift-click → says their AC comes from armor.
 - [ ] `/combat damage override` is gone.
 - [ ] `/combat condition` is gone.
-- [ ] `--force` is gone.
 - [ ] A trap's **[Apply damage]** fills `/dm adjust … hp -…`.
 - [ ] A spawn's **[Use my own roll]** fills `/dm adjust … maxhp`.
 
@@ -216,6 +190,7 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 
 ## Viewing & DM notes
 
+- [ ] A long DM note (YAML `dm_notes:` or `/dm note … add`) wraps in the Full view and the stat block tile.
 - [ ] View tool on your own character → race and class, concentration.
 - [ ] A DM AC adjustment plus Shield → the card's AC explains both.
 - [ ] A creature with its own AC → "own AC, stat block says 12".
@@ -225,12 +200,7 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Full view of a creature → what it carries, "Found with a DC 12 Investigation" / "In plain sight".
 - [ ] Full view of a creature → the top row holds its stat block: stats, abilities, attacks (and the
       YAML's DM notes if it has any). No separate [Stat block] button.
-- [ ] `/dm view <who> full` opens the same Full view.
-- [ ] `/dm note Balin add owes the party a favour` → shows on Balin's card, **after** his YAML `dm_notes`.
-- [ ] `/dm note Balin` lists the notes.
-- [ ] `/dm note Balin clear` removes only yours.
 - [ ] Spawn one wolf, `/dm note Wolf add hungry`, View tool on that wolf → the note is there.
-- [ ] `/dm view The Kindler` (unquoted) works.
 
 ## Conditions outlast the fight
 
@@ -247,6 +217,9 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 ## Entities & shops
 
+- [ ] `/dm entity spawn kobold Meepo the Bold` → named "Meepo the Bold" (no quotes needed).
+- [ ] `/dm entity spawn guard Guard 3` → "Guard 3"; `/dm entity spawn guard Guard 3 ~ ~ ~5` → "Guard 3" there.
+- [ ] Two wolves (Wolf, Wolf #2): `/dm entity remove wolf #1 wolf #2` → both go, no "couldn't find" lines.
 - [ ] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
 - [ ] `/dm check ` + Tab and `/dm adjust ` + Tab → the **same** list, multi-word names in quotes (`"The Kindler"`).
 - [ ] `/dm check Balin Ironforge ` + Tab (unquoted) → `ability / save / skill` (no `tool` for a creature).
@@ -254,9 +227,6 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 - [ ] `/dm check Balin Ironforge save dex ` + Tab → `dc / adv / dis / autoRoll / manualRoll / total`.
 - [ ] `/dm adjust The Kindler ` + Tab (unquoted) → the actions (`hp`, `temp`, …).
 - [ ] `/dm entity cleanup` is gone (unknown subcommand, not in Tab).
-- [ ] `/dm entity remove "The Kindler"` → removes her (it said "Removed 0" before).
-- [ ] `/dm entity remove The Kindler` → the same.
-- [ ] `/dm entity remove wolf guard` (two spawned) → both go.
 - [ ] `/dm entity remove nobody` → "No creature called 'nobody'".
 - [ ] Possess a creature → the message says its model is hidden from you and **F** shows it.
 - [ ] Press F, F5 → you see the model you're possessing. Stop, possess another → still visible
@@ -267,7 +237,7 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 - [ ] Dungeoneer's Pack in your inventory: click another item onto it, or it onto an item →
       nothing goes in, "Packs don't hold other items".
 - [ ] Something already inside a pack from before → you can still take it out.
-- [ ] `/dm check <you> insight vs Balin deception` → your roll prompt, plus the roll buttons labelled "+1 CHA" (now **[I rolled…] [Roll it] [My total…]**).
+- [ ] `/dm check <you> insight vs Balin deception` → your roll prompt, plus the roll buttons labelled `+1[CHA]` (now **[Roll it] [I rolled…] [My total…]**).
 - [ ] Same, answered → the winner with [Share].
 - [ ] Same, with `autoRoll` inline.
 - [ ] A guard's Perception in a contest → `+2 Perception`.
@@ -381,6 +351,41 @@ Set these up, `/stop`, start the server, then check:
 # Playtest notes
 
 (`→` lines are Claude's status. New notes go at the top.)
+
+**2026-09-24 (third round)**
+
+The High Elf's spell choice doesn't show the whole spell.
+  → fixed: a spell pick in the Choices tab shows the same description as the Spells tab.
+Friends' components make the card huge.
+  → fixed: every line of a spell card wraps now, not just the rules text. A test checks every spell.
+Cycle select on languages only ever replaces the same one.
+  → a bug: two one-pick sources (race + background) merged into "choose 2", and a new pick always
+    replaced the first source. It now replaces whichever was picked longest ago.
+Button order [Roll it] [I rolled…] [My total…].
+  → done, everywhere.
+[My total…] hover should say what to roll and add.
+  → done: "Type your final number: roll 2d20 and keep the lower and add -1[DEX] yourself."
+    Advantage/disadvantage is worked out for the prompt the same way the roll does.
+[Roll it] ran the command instead of filling chat.
+  → fixed: all three buttons only fill chat now, and a test fails the build if one ever runs.
+    (The sheet's own [Normal] / [Advantage] / [Disadvantage] line still rolls on click in auto-roll
+    mode; that's a menu pick, not a prompt. Say if that should fill chat too.)
+Shocking Grasp: the DM was asked to start a fight, then it said too far away.
+  → fixed: range is checked first; nobody is asked about a spell that can't reach.
+Skills menu: the ability check tile has no breakdown.
+  → added (`+2[DEX]`), like the skill and save tiles.
+Burning Hands: add the +1 DEX to [Failed: damage] / [Saved: half], or let us roll.
+  → both: the DM line shows the save bonus, and [Call the save] now works on creatures too. It
+    hands you the roll buttons, graded against the DC. (It only appeared for player targets.)
+"<player> casts <spell>" should make the spell hoverable.
+  → done: every cast line, in and out of a fight, including plain ones like Light.
+Word wrap DM notes on creatures.
+  → done, in the Full view and the stat block. (A comment there said it already wrapped. It didn't.)
+`/dm entity spawn kobold Meepo the Bold` named it "Meepo".
+  → fixed: an unquoted name runs to the end, or up to three trailing coordinates.
+`/dm entity remove wolf #1 wolf #2` removed both but complained about "#1" and "#2".
+  → fixed: it matches the longest run of words that names a creature, and "#1" now means the
+    unnumbered original (the first wolf is "Wolf", not "Wolf #1"), everywhere names are read.
 
 **2026-09-24 (second round)**
 

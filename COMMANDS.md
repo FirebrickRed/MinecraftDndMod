@@ -8,8 +8,9 @@ prints that command's own help.
 > **DM authorization:** "DM" = a server op, a player with the `jkvtt.dm` permission
 > node, or a player added via `/dm add`. Op is required only for `/dm add`/`/dm remove`.
 
-> **Every roll prompt is the same three buttons** (#216): **[I rolled…]** fills `manualRoll ` (type
-> your dice; the game adds your bonus), **[Roll it]** runs `autoRoll` (the game rolls and adds it),
+> **Every roll prompt is the same three buttons** (#216), and **every one fills chat; none runs a
+> command** (press Enter): **[Roll it]** fills `autoRoll` (the game rolls and adds your bonus),
+> **[I rolled…]** fills `manualRoll ` (type your dice; the game adds your bonus),
 > **[My total…]** fills `total ` (type the final number, bonuses included; not offered when nothing
 > is added). Every bonus is named by its source, the same in the prompt and the result:
 > `+3[DEX] +2[Prof]`, a creature's `+4[Scimitar]`, a potion's own `+2[Potion of Healing]`. The result

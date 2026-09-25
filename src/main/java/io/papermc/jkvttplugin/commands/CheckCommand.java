@@ -422,7 +422,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         if (r == null) {
             sender.sendMessage(RollPrompt.line("🎲 " + name + "'s " + label
                             + (dc != null ? ", DC " + dc : "") + (adv.affectsRoll() ? ", " + adv.label() : "") + ":", NamedTextColor.GOLD,
-                    base, adv.affectsRoll() ? "d20 (" + adv.label() + ": two, keeping the " + (adv.isAdvantage() ? "higher" : "lower") + ")" : "d20",
+                    base, RollPrompt.d20(adv),
                     signed(mod) + "[" + source + "]"));
             return true;
         }

@@ -317,7 +317,7 @@ public class WeaponListener implements Listener {
         }
 
         player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("⚔ Attack " + targetName + " with " + ctx.weapon.getName() + ":",
-                NamedTextColor.GOLD, base, adv.affectsRoll() ? "d20 (" + adv.label() + ")" : "d20", modShown));
+                NamedTextColor.GOLD, base, io.papermc.jkvttplugin.combat.RollPrompt.d20(adv), modShown));
 
         // Throwable weapon (#192): say which way it'll go by default and offer the override, since
         // throwing at an adjacent enemy (or stabbing at range, futile) is the player's call.

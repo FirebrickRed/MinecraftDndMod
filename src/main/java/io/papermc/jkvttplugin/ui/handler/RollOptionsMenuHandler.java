@@ -71,11 +71,11 @@ public class RollOptionsMenuHandler {
         String modeWord = switch (mode) { case ADVANTAGE -> "adv "; case DISADVANTAGE -> "dis "; default -> ""; };
         String base = "/character check " + type + " " + value + " " + modeWord;
         mode = withPenalties(character, type, value, mode); // show armor/condition disadvantage before they roll (#209, #175)
-        String dice = switch (mode) {
-            case ADVANTAGE -> "d20 (advantage: two, keeping the higher)";
-            case DISADVANTAGE -> "d20 (disadvantage: two, keeping the lower)";
-            default -> "d20";
-        };
+        String dice = RollPrompt.d20(switch (mode) {
+            case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
+            case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
+            default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
+        });
         String advNote = mode == RollMode.NORMAL ? "" : " (" + mode.name().toLowerCase() + ")";
         player.sendMessage(RollPrompt.line("🎲 Roll " + info.displayName + advNote + ":", NamedTextColor.GOLD,
                 base, dice, info.breakdown));

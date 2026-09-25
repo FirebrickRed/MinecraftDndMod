@@ -76,7 +76,11 @@ public final class DmViewMenu {
         List<String> notes = ViewCommand.notesFor(c);
         List<Component> noteLore = new ArrayList<>();
         if (notes.isEmpty()) noteLore.add(line("No notes yet.", NamedTextColor.DARK_GRAY));
-        for (String n : notes) noteLore.add(line("• " + n, NamedTextColor.GRAY));
+        for (String n : notes) {
+            // Wrapped at the standard width, continuation lines indented under the bullet.
+            List<String> wrapped = io.papermc.jkvttplugin.util.Util.wrapText(n);
+            for (int i = 0; i < wrapped.size(); i++) noteLore.add(line((i == 0 ? "• " : "  ") + wrapped.get(i), NamedTextColor.GRAY));
+        }
         noteLore.add(line("Only DMs ever see these.", NamedTextColor.DARK_AQUA));
         inv.setItem(4, tile(Material.PAPER, "DM notes (" + notes.size() + ")", NamedTextColor.DARK_AQUA, noteLore, null));
         inv.setItem(5, tile(Material.FEATHER, "Add a note…", NamedTextColor.AQUA, lines("Fills /dm note … add"), "note"));

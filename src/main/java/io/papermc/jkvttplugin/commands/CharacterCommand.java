@@ -360,8 +360,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
 
         // Everything else (Light, Detect Magic, Message…): cast it and the DM narrates.
         io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, cost);
-        Component announce = Component.text("✨ " + sheet.getCharacterName() + " casts " + spell.getName()
-                + (target != null ? " on " + target : "") + ".", NamedTextColor.LIGHT_PURPLE);
+        Component announce = spell.castLine("✨ " + sheet.getCharacterName() + " casts ", (target != null ? " on " + target : "") + ".", NamedTextColor.LIGHT_PURPLE);
         announceNearby(player, announce);
         if (spell.isConcentration()) {
             player.sendMessage(Component.text("   Concentrating on " + spell.getName() + ".", NamedTextColor.GRAY));

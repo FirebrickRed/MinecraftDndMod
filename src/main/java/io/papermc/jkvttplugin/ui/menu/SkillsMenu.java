@@ -98,18 +98,6 @@ public class SkillsMenu {
     }
 
     /**
-     * Adds an ability header item (shows ability name and modifier).
-     */
-    private static void addAbilityHeader(Inventory inventory, Ability ability, int slot) {
-        Material material = getMaterialForAbility(ability);
-        ItemStack headerItem = new ItemStack(material);
-        headerItem.editMeta(m -> {
-            m.displayName(Component.text(ability.toString(), NamedTextColor.AQUA));
-        });
-        inventory.setItem(slot, headerItem);
-    }
-
-    /**
      * Adds a skill item to the inventory at the specified slot.
      * Shows skill name, bonus, ability, and proficiency status.
      * Clickable to initiate a skill roll.
@@ -166,6 +154,7 @@ public class SkillsMenu {
 
         LoreBuilder lore = LoreBuilder.create()
                 .addLine("Ability Check", NamedTextColor.AQUA)
+                .addLine(character.getAbilityCheckBreakdown(ability), NamedTextColor.GRAY) // like the skill and save tiles
                 .blankLine()
                 .addLine("Click to roll " + ability.getAbbreviation() + " check", NamedTextColor.YELLOW);
 

@@ -11,15 +11,16 @@ import net.kyori.adventure.text.format.TextDecoration;
  * whether a d20 or damage dice, a player's or the DM's for a creature, is built here, so the buttons,
  * their order, colors and hover text never drift apart again.
  *
- * <p>Three ways to answer, always in this order:
+ * <p>Three ways to answer, always in this order, from least to most work for the player:
  * <ul>
+ *   <li><b>[Roll it]</b>: fills {@code <base>autoRoll}; the game rolls and adds the bonus.</li>
  *   <li><b>[I rolled…]</b>: fills {@code <base>manualRoll }; you type the dice, the game adds the bonus.</li>
- *   <li><b>[Roll it]</b>: runs {@code <base>autoRoll}; the game rolls and adds the bonus.</li>
  *   <li><b>[My total…]</b>: fills {@code <base>total }; you type the final number, bonuses included.
  *       Only offered when there is a bonus, since otherwise it's the same as [I rolled…].</li>
  * </ul>
- * And the result reads the same way for each: {@link #gameRolled}, {@link #youRolled}, {@link #yourTotal}.
- * {@code RollServiceTest}-style tests guard the wording; a grep for the labels should only find this file.
+ * Every button <b>fills chat, never runs</b>: the player presses Enter, so nothing happens on a stray
+ * click. And the result reads the same way for each: {@link #gameRolled}, {@link #youRolled},
+ * {@link #yourTotal}. {@code RollPromptTest} guards the wording and the order.
  */
 public final class RollPrompt {
 
@@ -33,24 +34,30 @@ public final class RollPrompt {
      * The three buttons.
      *
      * @param base  the command up to the roll words, ending in a space ({@code "/combat save "})
-     * @param dice  what's rolled, for the hover: {@code "d20"}, {@code "2d6"}
-     * @param bonus what the game adds, spelled out ({@code "+5 (+3 DEX, +2 proficiency)"}); null or
-     *              blank when nothing is added
+     * @param dice  what's rolled, for the hover: {@code "d20"}, {@code "2d6"}, or {@link #d20(Advantage)}
+     *              ("2d20 and keep the lower") so the hover says how to roll it
+     * @param bonus what the game adds, labelled ({@code "+3[DEX] +2[Prof]"}); null or blank when
+     *              nothing is added
      */
     public static Component buttons(String base, String dice, String bonus) {
         boolean hasBonus = bonus != null && !bonus.isBlank();
-        String adds = hasBonus ? "; the game adds " + bonus : "";
-        Component out = button(I_ROLLED, NamedTextColor.GREEN, ClickEvent.suggestCommand(base + "manualRoll "),
-                "Type what your " + dice + " came to" + adds + ".")
+        Component out = button(ROLL_IT, NamedTextColor.AQUA, ClickEvent.suggestCommand(base + "autoRoll"),
+                "The game rolls " + dice + (hasBonus ? " and adds " + bonus : "") + ".\nFills chat: press Enter.")
                 .append(Component.text(" "))
-                .append(button(ROLL_IT, NamedTextColor.AQUA, ClickEvent.runCommand(base + "autoRoll"),
-                        "The game rolls " + dice + (hasBonus ? " and adds " + bonus : "") + "."));
+                .append(button(I_ROLLED, NamedTextColor.GREEN, ClickEvent.suggestCommand(base + "manualRoll "),
+                        "Roll " + dice + " and type what it came to" + (hasBonus ? ";\nthe game adds " + bonus : "") + "."));
         if (hasBonus) {
             out = out.append(Component.text(" "))
                     .append(button(MY_TOTAL, NamedTextColor.YELLOW, ClickEvent.suggestCommand(base + "total "),
-                            "Type your final number, with your bonuses already added."));
+                            "Type your final number:\nroll " + dice + " and add " + bonus + " yourself."));
         }
         return out;
+    }
+
+    /** How to roll a d20 with this advantage, for a hover: "d20", "2d20 and keep the higher", "2d20 and keep the lower". */
+    public static String d20(Advantage advantage) {
+        if (advantage == null || !advantage.affectsRoll()) return "d20";
+        return advantage.isAdvantage() ? "2d20 and keep the higher" : "2d20 and keep the lower";
     }
 
     /** A lead-in line followed by {@link #buttons}: {@code "🛡 Roll a DEX save: [I rolled…] [Roll it] [My total…]"}. */

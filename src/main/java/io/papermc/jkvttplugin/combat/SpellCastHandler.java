@@ -70,8 +70,7 @@ public class SpellCastHandler {
                 work = heal.work();
             }
             session.broadcast(Component.empty());
-            session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
-                    + " on " + target.getDisplayName(true) + ".", NamedTextColor.LIGHT_PURPLE));
+            session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " on " + target.getDisplayName(true) + ".", NamedTextColor.LIGHT_PURPLE));
             if (work != null) session.broadcast(Component.text(work, NamedTextColor.GRAY));
             if (healAmount != null) DamageHandler.applyHealing(session, target, healAmount);
             if (spell.grantsTempHp()) DamageHandler.applyTempHp(session, target, Math.max(0, rollAmount(spell.getTempHp(), session)));
@@ -81,8 +80,7 @@ public class SpellCastHandler {
         // Auto-hit spells (Magic Missile): no attack roll, no save — straight to the damage step.
         if (spell.isAutoHit()) {
             session.broadcast(Component.empty());
-            session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
-                    + " at " + target.getDisplayName(true) + " — it hits automatically.", NamedTextColor.LIGHT_PURPLE));
+            session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — it hits automatically.", NamedTextColor.LIGHT_PURPLE));
             AttackHandler.promptDamage(session, caster, target, spell.getDamage() == null ? "" : spell.getDamage(),
                     spell.getDamageType(), false, flatLabel(spell.getDamage(), spell.getName()));
             return true;
@@ -98,14 +96,13 @@ public class SpellCastHandler {
             RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, mod,
                     attackLabel, caster.rerollsNat1(), advantage, forceAuto);
             if (r == null) {
-                player.sendMessage(RollPrompt.again(player, "✨ Roll to hit with " + spell.getName() + ":", "d20", attackLabel));
+                player.sendMessage(RollPrompt.again(player, "✨ Roll to hit with " + spell.getName() + ":", RollPrompt.d20(advantage), attackLabel));
                 return false;
             }
             int ac = target.getArmorClass();
             boolean hit = RollService.hits(r, ac);
             session.broadcast(Component.empty());
-            session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
-                    + " at " + target.getDisplayName(true) + "!", NamedTextColor.LIGHT_PURPLE));
+            session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + "!", NamedTextColor.LIGHT_PURPLE));
             session.broadcast(Component.text("Spell attack: " + r.breakdown() + " vs AC " + ac, NamedTextColor.GRAY));
             if (hit) {
                 session.broadcast(Component.text(r.nat20() ? "★ CRITICAL HIT! ★" : "HIT!", NamedTextColor.GREEN, TextDecoration.BOLD));
@@ -135,8 +132,7 @@ public class SpellCastHandler {
             }
             int dc = 8 + mod;
             session.broadcast(Component.empty());
-            session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
-                    + " at " + target.getDisplayName(true) + " — DC " + dc + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
+            session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — DC " + dc + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
             pendingSaves.put(target.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
                     spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell)));
             promptSave(session, target, saveAbility);
@@ -144,7 +140,7 @@ public class SpellCastHandler {
         }
 
         // Utility / non-damaging spell — announce; the DM narrates the effect (full utility casting is #152).
-        session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName() + ".", NamedTextColor.LIGHT_PURPLE));
+        session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", ".", NamedTextColor.LIGHT_PURPLE));
         return true;
     }
 
@@ -227,8 +223,7 @@ public class SpellCastHandler {
         for (Combatant t : affected) markAoeTarget(t); // show who's caught (no explicit target)
 
         session.broadcast(Component.empty());
-        session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " casts " + spell.getName()
-                + " (" + spell.getAoeShape() + ", " + spell.getAoeSize() + " ft) — " + affected.size()
+        session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " (" + spell.getAoeShape() + ", " + spell.getAoeSize() + " ft) — " + affected.size()
                 + " creature" + (affected.size() == 1 ? "" : "s") + " caught!", NamedTextColor.LIGHT_PURPLE));
 
         if (affected.isEmpty()) return;
@@ -343,13 +338,16 @@ public class SpellCastHandler {
     /** Send the target's controller a clickable prompt to roll the pending save. */
     private static void promptSave(CombatSession session, Combatant target, Ability ability) {
         String adds = target.saveBreakdown(ability);
+        // The same advantage the resolve step applies (conditions, Fey Ancestry…), so [My total…] says how to roll.
+        PendingSave ps = pendingSaves.get(target.getId());
+        String dice = RollPrompt.d20(target.saveAdvantage(ability, ps != null ? ps.saveTags() : java.util.Set.of()));
         if (target.isPlayer() && target.getPlayer() != null) {
             target.getPlayer().sendMessage(RollPrompt.line("🛡 Roll a " + ability.getAbbreviation() + " saving throw:",
-                    NamedTextColor.GOLD, "/combat save ", "d20", adds));
+                    NamedTextColor.GOLD, "/combat save ", dice, adds));
         } else {
             // Entity: the DM rolls the save for it.
             session.sendToDM(RollPrompt.line("🛡 Roll " + target.getDisplayName(true) + "'s " + ability.getAbbreviation() + " save:",
-                    NamedTextColor.GOLD, "/combat save " + quoted(target.getDisplayName()) + " ", "d20", adds));
+                    NamedTextColor.GOLD, "/combat save " + quoted(target.getDisplayName()) + " ", dice, adds));
         }
     }
 
@@ -372,7 +370,7 @@ public class SpellCastHandler {
         RollService.RollResult r = RollService.resolve(providedRoll, providedTotal, bonus,
                 label, target.rerollsNat1(), advantage, forceAuto);
         if (r == null) {
-            roller.sendMessage(RollPrompt.again(roller, "🛡 Roll " + target.getDisplayName() + "'s " + ps.ability().getAbbreviation() + " save:", "d20", label));
+            roller.sendMessage(RollPrompt.again(roller, "🛡 Roll " + target.getDisplayName() + "'s " + ps.ability().getAbbreviation() + " save:", RollPrompt.d20(advantage), label));
             return;
         }
         pendingSaves.remove(target.getId());

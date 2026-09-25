@@ -16,6 +16,9 @@ public class PendingChoice<T> {
     private final String source; // who offers it: "Monk", "High Elf", "Entertainer" (or "duplicate")
 
     private final LinkedHashSet<T> chosen = new LinkedHashSet<>();
+    /** When this choice last took a pick, so a full merged choice replaces the stalest source (not always the first). */
+    private long lastPickAt;
+    private static long pickSequence;
 
     private final Function<T, String> toKey;
     private final Function<String, T> fromKey;
@@ -119,9 +122,13 @@ public class PendingChoice<T> {
                 }
             }
             chosen.add(option);
+            lastPickAt = ++pickSequence;
             return true;
         }
     }
+
+    /** A counter, not a clock: higher = picked more recently. 0 = never picked. */
+    public long lastPickAt() { return lastPickAt; }
 
     public boolean toggleKey(String key, Set<T> alreadyOwned) {
         T option = fromKey.apply(key);

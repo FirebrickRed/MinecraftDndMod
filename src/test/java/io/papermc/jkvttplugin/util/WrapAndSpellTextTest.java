@@ -41,4 +41,18 @@ class WrapAndSpellTextTest {
                     "a tooltip line ran long: " + line);
         }
     }
+
+    /** Friends' long material component made its card huge: no spell's tooltip line runs past the width. */
+    @Test
+    void everySpellCardFitsTheStandardWidth() {
+        TestContent.load();
+        java.util.List<String> tooLong = new java.util.ArrayList<>();
+        for (DndSpell spell : SpellLoader.getAllSpells()) {
+            for (Component line : spell.detailLore()) {
+                String text = PlainTextComponentSerializer.plainText().serialize(line);
+                if (text.length() > Util.WRAP_WIDTH) tooLong.add(spell.getId() + ": " + text);
+            }
+        }
+        assertTrue(tooLong.isEmpty(), "Lines past " + Util.WRAP_WIDTH + " chars:\n" + String.join("\n", tooLong));
+    }
 }

@@ -447,7 +447,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     /** Clickable prompt asking a player to roll their initiative (physical or let the game roll). */
     private void promptInitiativeRoll(Player player, Combatant combatant) {
         player.sendMessage(RollPrompt.line("⚔ Roll for initiative:", NamedTextColor.GOLD,
-                "/combat initiative ", "d20", combatant.initiativeBreakdown()));
+                "/combat initiative ", RollPrompt.d20(combatant.initiativeAdvantage()), combatant.initiativeBreakdown()));
     }
 
     private void handleRollForInitiative(Player dm) {

@@ -173,4 +173,25 @@ class CharacterCreationTest {
         assertTrue(CharacterCreationHandler.missingSteps(s).contains("Expertise (not proficient in Stealth)"),
                 CharacterCreationHandler.missingSteps(s).toString());
     }
+
+    /**
+     * A "choose 2" merged from two one-pick sources (high elf + noble languages): once both are
+     * full, a new pick replaces the one picked longest ago. It always replaced the first source, so
+     * the same language slot flipped forever (playtest).
+     */
+    @Test
+    void aFullMergedChoiceReplacesTheOldestPick() {
+        CharacterCreationSession s = session("elf", "high_elf", "wizard", "noble");
+        MergedChoice languages = merged(s).stream()
+                .filter(m -> m.getCategory() == ChoiceCategory.LANGUAGE).findFirst().orElseThrow();
+        languages.toggleOption("dwarvish");
+        languages.toggleOption("giant");
+        languages.toggleOption("gnomish"); // replaces dwarvish, the oldest
+        assertFalse(languages.isSelected("dwarvish"));
+        assertTrue(languages.isSelected("giant"));
+        languages.toggleOption("goblin");  // replaces giant now, not gnomish again
+        assertFalse(languages.isSelected("giant"), "the other slot is replaced this time");
+        assertTrue(languages.isSelected("gnomish"));
+        assertTrue(languages.isSelected("goblin"));
+    }
 }

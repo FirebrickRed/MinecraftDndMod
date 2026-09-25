@@ -35,18 +35,22 @@ class RollPromptTest {
     @Test
     void threeButtonsWhenTheGameAddsABonus() {
         Component c = RollPrompt.buttons("/combat save ", "d20", "+3 (DEX save)");
-        assertEquals("[I rolled…] [Roll it] [My total…]", plain(c));
+        assertEquals("[Roll it] [I rolled…] [My total…]", plain(c));
         List<ClickEvent> clicks = clicks(c);
         assertEquals(3, clicks.size());
-        assertEquals(ClickEvent.suggestCommand("/combat save manualRoll "), clicks.get(0));
-        assertEquals(ClickEvent.runCommand("/combat save autoRoll"), clicks.get(1));
+        assertEquals(ClickEvent.suggestCommand("/combat save autoRoll"), clicks.get(0));
+        assertEquals(ClickEvent.suggestCommand("/combat save manualRoll "), clicks.get(1));
         assertEquals(ClickEvent.suggestCommand("/combat save total "), clicks.get(2));
+        // Every button fills chat; none runs the command (a stray click must never roll).
+        for (ClickEvent click : clicks) assertEquals(ClickEvent.Action.SUGGEST_COMMAND, click.action());
+        // [My total…] says what to roll and what to add, so nobody has to go look it up.
+        assertTrue(RollPrompt.d20(Advantage.DISADVANTAGE).contains("keep the lower"));
     }
 
     @Test
     void noTotalButtonWhenNothingIsAdded() {
         // With no bonus, "my total" is the same number as "I rolled", so it isn't offered.
-        assertEquals("[I rolled…] [Roll it]", plain(RollPrompt.buttons("/character damage ", "2d6", null)));
+        assertEquals("[Roll it] [I rolled…]", plain(RollPrompt.buttons("/character damage ", "2d6", null)));
     }
 
     @Test
@@ -109,7 +113,7 @@ class RollPromptTest {
         assertEquals(2, potion.flat());
         assertEquals("+2[Healing Potion]", potion.label());
         // …so a potion still gets all three buttons: the game adds that +2.
-        assertEquals("[I rolled…] [Roll it] [My total…]", plain(RollPrompt.buttons("/character drink healing_potion ", potion.dice(), potion.label())));
+        assertEquals("[Roll it] [I rolled…] [My total…]", plain(RollPrompt.buttons("/character drink healing_potion ", potion.dice(), potion.label())));
 
         assertEquals("+1[Magic Missile]", RollPrompt.split("1d4+1", "Magic Missile").label());
         assertNull(RollPrompt.split("1d10", "Fire Bolt").label());

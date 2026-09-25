@@ -150,4 +150,15 @@ class NameUtilTest {
         assertArrayEquals(new String[]{"Balin the Smith", "save", "d"},
                 NameUtil.collapseForCompletion("Balin the Smith save d".split(" ", -1), 0, stops));
     }
+
+    /** The first wolf is "Wolf" and the second "Wolf #2", so "wolf #1" means the plain one. */
+    @Test
+    void hashOneIsTheUnnumberedOriginal() {
+        java.util.List<String> wolves = java.util.List.of("Wolf", "Wolf #2");
+        assertEquals("Wolf", NameUtil.matchByName(wolves, "wolf #1", s -> s));
+        assertEquals("Wolf", NameUtil.matchByName(wolves, "wolf 1", s -> s));
+        assertEquals("Wolf #2", NameUtil.matchByName(wolves, "wolf #2", s -> s));
+        // A creature literally named "Wolf #1" still wins over the rule.
+        assertEquals("Wolf #1", NameUtil.matchByName(java.util.List.of("Wolf", "Wolf #1"), "wolf #1", s -> s));
+    }
 }
