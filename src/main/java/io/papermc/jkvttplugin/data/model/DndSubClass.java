@@ -39,7 +39,6 @@ public class DndSubClass {
     private int darkvision;                          // Darkvision range in feet (e.g., Shadow Magic: 120)
     private List<ChoiceEntry> playerChoices;             // Subclass-specific player choices (e.g., Knowledge Domain skills)
     private List<Map<String, String>> conditionalAdvantages;  // Conditional advantages (e.g., advantage on saves vs disease)
-    private Map<String, List<String>> conditionalBonusSpells; // Bonus spells dependent on player choice (e.g., Genie kind)
 
     public DndSubClass() {
     }
@@ -182,13 +181,6 @@ public class DndSubClass {
         this.conditionalAdvantages = conditionalAdvantages;
     }
 
-    public Map<String, List<String>> getConditionalBonusSpells() {
-        return conditionalBonusSpells;
-    }
-
-    public void setConditionalBonusSpells(Map<String, List<String>> conditionalBonusSpells) {
-        this.conditionalBonusSpells = conditionalBonusSpells;
-    }
 
     /** Resource-pack model name (from YAML {@code custom_model:}); null → vanilla fallback. */
     public String getCustomModel() {

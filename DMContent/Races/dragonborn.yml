@@ -28,33 +28,18 @@ player_choices:
     type: CUSTOM
     choose: 1
     options:
-      - Black (Acid, 5x30 ft. line, DEX save)
-      - Blue (Lightning, 5x30 ft. line, DEX save)
-      - Brass (Fire, 5x30 ft. line, DEX save)
-      - Bronze (Lightning, 5x30 ft. line, DEX save)
-      - Copper (Acid, 5x30 ft. line, DEX save)
-      - Gold (Fire, 15 ft. cone, DEX save)
-      - Green (Poison, 15 ft. cone, CON save)
-      - Red (Fire, 15 ft. cone, DEX save)
-      - Silver (Cold, 15 ft. cone, CON save)
-      - White (Cold, 15 ft. cone, CON save)
+      - { label: "Black (Acid, 5x30 ft. line, DEX save)", grants: { damage_resistances: [acid] } }
+      - { label: "Blue (Lightning, 5x30 ft. line, DEX save)", grants: { damage_resistances: [lightning] } }
+      - { label: "Brass (Fire, 5x30 ft. line, DEX save)", grants: { damage_resistances: [fire] } }
+      - { label: "Bronze (Lightning, 5x30 ft. line, DEX save)", grants: { damage_resistances: [lightning] } }
+      - { label: "Copper (Acid, 5x30 ft. line, DEX save)", grants: { damage_resistances: [acid] } }
+      - { label: "Gold (Fire, 15 ft. cone, DEX save)", grants: { damage_resistances: [fire] } }
+      - { label: "Green (Poison, 15 ft. cone, CON save)", grants: { damage_resistances: [poison] } }
+      - { label: "Red (Fire, 15 ft. cone, DEX save)", grants: { damage_resistances: [fire] } }
+      - { label: "Silver (Cold, 15 ft. cone, CON save)", grants: { damage_resistances: [cold] } }
+      - { label: "White (Cold, 15 ft. cone, CON save)", grants: { damage_resistances: [cold] } }
 
-# Mechanical trait implementations
-# Damage resistance: Linked to draconic ancestry choice
-damage_resistance:
-  type: linked
-  source_choice: draconic_ancestry
-  mapping:
-    "Black (Acid, 5x30 ft. line, DEX save)": acid
-    "Blue (Lightning, 5x30 ft. line, DEX save)": lightning
-    "Brass (Fire, 5x30 ft. line, DEX save)": fire
-    "Bronze (Lightning, 5x30 ft. line, DEX save)": lightning
-    "Copper (Acid, 5x30 ft. line, DEX save)": acid
-    "Gold (Fire, 15 ft. cone, DEX save)": fire
-    "Green (Poison, 15 ft. cone, CON save)": poison
-    "Red (Fire, 15 ft. cone, DEX save)": fire
-    "Silver (Cold, 15 ft. cone, CON save)": cold
-    "White (Cold, 15 ft. cone, CON save)": cold
+# Each ancestry option grants its resistance (#222); the breath weapon below picks its variant by the same label.
 
 # Breath Weapon (Effect Engine action, #70): activate with /combat use breath_weapon on your turn.
 # Costs one use (proficiency-bonus per long rest). The shape, save, and damage type come from the

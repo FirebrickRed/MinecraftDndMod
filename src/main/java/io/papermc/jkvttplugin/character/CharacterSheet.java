@@ -152,7 +152,7 @@ public class CharacterSheet {
         sheet.restoreChosenInnateSpells(session.chosenInnateSpells());
         sheet.loadSkillProficiencies(session);
         sheet.loadToolAndLanguageProficiencies(session);
-        sheet.applyLinkedResistances(); // now that CUSTOM choices (e.g. draconic ancestry) are known
+        sheet.applyChoiceGrants(); // now that CUSTOM choices are known: what each pick grants (#222)
         sheet.calculateHealth();
 
         sheet.grantStartingEquipment(session);
@@ -306,7 +306,7 @@ public class CharacterSheet {
             this.toolProficiencies.addAll(race.getToolProficiencies());
             this.languages.addAll(race.getLanguages());
             this.damageResistances.addAll(race.getDamageResistances());
-            this.innateSpells.addAll(race.getInnateSpells());
+            for (InnateSpell s : race.getInnateSpells()) this.innateSpells.add(s.copy()); // own copies: uses are per character
 
             // Add skill proficiencies from race (convert String to Skill enum)
             for (String skillName : race.getSkillProficiencies()) {
@@ -326,7 +326,7 @@ public class CharacterSheet {
             this.toolProficiencies.addAll(subrace.getToolProficiencies());
             this.languages.addAll(subrace.getLanguages());
             this.damageResistances.addAll(subrace.getDamageResistances());
-            this.innateSpells.addAll(subrace.getInnateSpells());
+            for (InnateSpell s : subrace.getInnateSpells()) this.innateSpells.add(s.copy());
 
             // Add skill proficiencies from subrace
             for (String skillName : subrace.getSkillProficiencies()) {
@@ -1962,16 +1962,42 @@ public class CharacterSheet {
     }
 
     /**
-     * Resolves a resistance the race links to a CUSTOM choice (e.g. dragonborn draconic ancestry →
-     * its element) now that the choice is known, and folds it into the permanent resistances. Safe to
-     * call more than once. Must run after the character's CUSTOM choices are populated (#51/#70).
+     * Gives the character what their custom-choice picks grant (#222): a dragonborn's ancestry → its
+     * resistance, a genasi's pick → the ability their racial spells use, a genie's kind → its spells.
+     * Must run after the CUSTOM choices are known (creation, and on load, since only the pick is
+     * saved). Safe to call more than once: everything it adds to is a set, or a set value.
      */
-    public void applyLinkedResistances() {
-        if (race == null || race.getLinkedResistanceChoice() == null) return;
-        String picked = getCustomChoice(race.getLinkedResistanceChoice());
-        if (picked == null) return;
-        String type = race.getLinkedResistanceMapping().get(picked.trim().toLowerCase());
-        if (type != null && !type.isBlank()) damageResistances.add(type);
+    public void applyChoiceGrants() {
+        applyChoiceGrants(race != null ? race.getPlayerChoices() : null, true);
+        applyChoiceGrants(subrace != null ? subrace.getPlayerChoices() : null, true);
+        applyChoiceGrants(dndClass != null ? dndClass.getPlayerChoices() : null, false);
+        applyChoiceGrants(subclass != null ? subclass.getPlayerChoices() : null, false);
+        applyChoiceGrants(background != null ? background.getPlayerChoices() : null, false);
+    }
+
+    private void applyChoiceGrants(List<ChoiceEntry> choices, boolean racial) {
+        if (choices == null) return;
+        for (ChoiceEntry entry : choices) {
+            if (entry.type() != PlayersChoice.ChoiceType.CUSTOM || entry.pc() == null) continue;
+            ChoiceGrants g = entry.pc().grantsFor(getCustomChoice(entry.id()));
+            if (g == null) continue;
+            damageResistances.addAll(g.damageResistances());
+            for (String spellId : g.bonusSpells()) {
+                DndSpell spell = SpellLoader.getSpell(spellId);
+                if (spell == null) continue;
+                if (spell.getLevel() == 0) knownCantrips.add(spell); else knownSpells.add(spell);
+            }
+            // The ability the race's own spells use (a genasi picks INT, WIS or CHA). Only the racial
+            // trait spells: a spell picked with its own casting_ability keeps that one.
+            if (g.innateCastingAbility() != null && racial) {
+                Set<String> racialIds = new HashSet<>();
+                if (race != null) for (InnateSpell s : race.getInnateSpells()) racialIds.add(s.getSpellId());
+                if (subrace != null) for (InnateSpell s : subrace.getInnateSpells()) racialIds.add(s.getSpellId());
+                for (InnateSpell s : innateSpells) {
+                    if (racialIds.contains(s.getSpellId())) s.setCastingAbility(g.innateCastingAbility());
+                }
+            }
+        }
     }
     public boolean hasAdvantageOn(String rollTag) {
         for (var e : activeEffects) if (e.givesAdvantageOn(rollTag)) return true;

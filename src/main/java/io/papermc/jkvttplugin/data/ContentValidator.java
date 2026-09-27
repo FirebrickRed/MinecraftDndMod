@@ -236,9 +236,6 @@ public final class ContentValidator {
                 String subWhere = where + " subclass '" + sub.getId() + "'";
                 referenceSpells(sub.getBonusSpells());
                 referenceSpells(sub.getAdditionalSpells());
-                if (sub.getConditionalBonusSpells() != null) {
-                    sub.getConditionalBonusSpells().values().forEach(this::referenceSpells);
-                }
                 checkSkillNames(subWhere + " skill_proficiencies", sub.getSkillProficiencies());
                 checkToolIds(subWhere + " tool_proficiencies", sub.getToolProficiencies());
                 checkChoices(subWhere, sub.getPlayerChoices());
@@ -363,6 +360,12 @@ public final class ContentValidator {
                                 + " (add it to DMContent/Languages.yml if it's homebrew).");
                     }
                 }
+            }
+            // What each custom option grants (#222).
+            for (var g : choice.pc().getGrants().entrySet()) {
+                String optWhere = choiceWhere + " option '" + g.getKey() + "'";
+                for (String p : g.getValue().problems()) warn(optWhere + " grants: " + p + ".");
+                referenceSpells(g.getValue().bonusSpells());
             }
         }
     }

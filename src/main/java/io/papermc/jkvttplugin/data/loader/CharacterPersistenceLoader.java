@@ -524,7 +524,7 @@ public class CharacterPersistenceLoader {
                         sheet.setCustomChoice(id, value);
                     }
                 }
-                sheet.applyLinkedResistances(); // e.g. dragonborn ancestry -> element resistance (#51)
+                sheet.applyChoiceGrants(); // what each pick grants: ancestry resistance, genasi ability, genie spells (#222)
             }
 
             // Restore current (remaining) spell slots (#31). Keys may load as Integer or String.

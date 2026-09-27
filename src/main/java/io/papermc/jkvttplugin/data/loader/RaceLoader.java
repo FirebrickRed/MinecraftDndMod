@@ -89,22 +89,6 @@ public class RaceLoader {
                 .features(io.papermc.jkvttplugin.effect.FeatureParser.parseFeatures(data.get("features")))
                 .conditionalAdvantages(io.papermc.jkvttplugin.data.loader.parser.RaceClassParser.parseConditionalAdvantages(data.get("conditional_advantages")));
 
-        // A resistance linked to a CUSTOM choice (e.g. draconic ancestry -> element). Resolved on the
-        // character once the ancestry is chosen; data-driven, so any race can link a resistance (#51).
-        if (data.get("damage_resistance") instanceof Map<?, ?> dr) {
-            String sourceChoice = dr.get("source_choice") instanceof String s ? s : null;
-            if (sourceChoice != null && dr.get("mapping") instanceof Map<?, ?> rawMap) {
-                Map<String, String> mapping = new java.util.HashMap<>();
-                for (Map.Entry<?, ?> e : rawMap.entrySet()) {
-                    if (e.getKey() != null && e.getValue() != null) {
-                        mapping.put(String.valueOf(e.getKey()).trim().toLowerCase(),
-                                String.valueOf(e.getValue()).trim().toLowerCase());
-                    }
-                }
-                builder.linkedResistanceChoice(sourceChoice).linkedResistanceMapping(mapping);
-            }
-        }
-
 
         DndRace dndRace = builder.build();
         return dndRace;

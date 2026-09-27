@@ -60,7 +60,6 @@ id and orphans every character saved with it. Pick the name first.
 | `traits` | — | Names shown under "Traits:" on the tile. **Display only.** A trait does nothing unless another field implements it. |
 | `languages`, `skill_proficiencies`, `tool_proficiencies`, `weapon_proficiencies`, `armor_proficiencies` | — | Automatic grants ([shared guide](authoring-character-options.md#automatic-grants)). |
 | `damage_resistances` | — | Damage types always resisted (`[poison]`). |
-| `damage_resistance` | — | A resistance **linked to a custom choice**, for dragonborn ancestry. See below. |
 | `innate_spells` | — | See below. |
 | `conditional_advantages` | — | `type: saving_throw` + `condition:` is applied: advantage on saves against that condition/tag (Fey Ancestry, Dwarven Resilience). Other types are display only. |
 | `features` | — | Usable features for the Effect Engine (#70), same format as a class's `features:`. See `dragonborn.yml` (Breath Weapon). |
@@ -77,7 +76,7 @@ five proficiency lists, `damage_resistances`, `innate_spells`, `player_choices` 
 work as on the race. Movement and vision **override** the race when set: `speed` and the other
 speeds apply when above 0, and `darkvision` replaces the race's value.
 
-A subrace has **no** `features`, `conditional_advantages` or linked `damage_resistance`. Put those on
+A subrace has **no** `features` or `conditional_advantages`. Put those on
 the race, or they're silently ignored.
 
 ## Innate spells
@@ -99,20 +98,29 @@ innate_spells:
 You don't need an `is_cantrip:` flag; it's only read for a spell id that isn't authored yet. (Before
 this, a `type: cantrip` line was silently ignored, and the tiefling's Thaumaturgy could never be cast.)
 
-## Linked resistance (dragonborn)
+## A choice that grants something (dragonborn, genasi)
+
+A `custom` choice's options can carry grants (#222): dragonborn ancestry → a resistance, a genasi's
+pick → the ability their racial spells use.
 
 ```yaml
 player_choices:
   - id: draconic_ancestry
     type: custom
     choose: 1
-    options: ["Red (Fire, 15 ft. cone, DEX save)", "Blue (Lightning, 5x30 ft. line, DEX save)"]
-damage_resistance:
-  source_choice: draconic_ancestry           # the choice id above
-  mapping:
-    "Red (Fire, 15 ft. cone, DEX save)": fire   # option text → damage type (text must match exactly)
-    "Blue (Lightning, 5x30 ft. line, DEX save)": lightning
+    options:
+      - { label: "Red (Fire, 15 ft. cone, DEX save)", grants: { damage_resistances: [fire] } }
+      - { label: "Blue (Lightning, 5x30 ft. line, DEX save)", grants: { damage_resistances: [lightning] } }
+  - id: genasi_spellcasting
+    type: custom
+    choose: 1
+    options:
+      - { label: Intelligence, grants: { innate_casting_ability: intelligence } }
+      - { label: Wisdom, grants: { innate_casting_ability: wisdom } }
 ```
+
+Every grant is listed in [`authoring-character-options.md`](authoring-character-options.md#options-that-grant-things-custom-222).
+The old `damage_resistance: {source_choice, mapping}` block is gone and read nowhere.
 
 ## Size
 

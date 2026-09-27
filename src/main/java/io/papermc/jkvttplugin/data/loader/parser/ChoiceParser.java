@@ -167,15 +167,44 @@ public final class ChoiceParser {
                 }
                 case "CUSTOM" -> {
                     type = PlayersChoice.ChoiceType.CUSTOM;
-                    var opts = ParseUtil.normalizeStringList(m.get("options"));
-                    pc = new PlayersChoice<>(choose, opts, type);
+                    // An option is text, or {label, grants} for what picking it gives (#222).
+                    List<String> opts = new ArrayList<>();
+                    Map<String, io.papermc.jkvttplugin.data.model.ChoiceGrants> grants = new java.util.LinkedHashMap<>();
+                    if (m.get("options") instanceof List<?> rawOpts) {
+                        for (Object o : rawOpts) {
+                            if (o instanceof String s && !s.isBlank()) {
+                                opts.add(s.trim().toLowerCase());
+                            } else if (o instanceof Map<?, ?> om) {
+                                String label = ParseUtil.asString(om.get("label"), null);
+                                if (label == null || label.isBlank()) {
+                                    io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] custom choice '" + id
+                                            + "' has an option with no label: — skipped.");
+                                    continue;
+                                }
+                                String key = label.trim().toLowerCase();
+                                opts.add(key);
+                                if (om.get("grants") instanceof Map<?, ?> gm) {
+                                    grants.put(key, io.papermc.jkvttplugin.data.model.ChoiceGrants.parse(gm));
+                                }
+                            }
+                        }
+                    }
+                    if (opts.isEmpty()) continue;
+                    pc = new PlayersChoice<>(choose, opts, type).grants(grants);
                 }
                 case "EQUIPMENT" -> {
                     type = PlayersChoice.ChoiceType.EQUIPMENT;
                     var opts = EquipmentParser.parseEquipmentOptions(m.get("options"));
                     pc = new PlayersChoice<>(choose, opts, type);
                 }
-                default -> { continue; }
+                default -> {
+                    // A type we don't know was dropped without a word, so the player never saw the
+                    // choice (the Genie's "type: other" genie kind). Say so.
+                    io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] choice '" + id + "' has type '"
+                            + typeString.toLowerCase() + "', which isn't one of skill, tool, expertise, language, spell, "
+                            + "custom, equipment — the choice is skipped.");
+                    continue;
+                }
             }
 
             if (m.containsKey("also_give") && pc.getType() != PlayersChoice.ChoiceType.TOOL) {

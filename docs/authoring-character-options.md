@@ -103,7 +103,7 @@ player_choices:
 | `language` | language names | any language |
 | `equipment` | item ids, tags, `id xN`, or `give: [a, b]` bundles (CLAUDE.md → *Equipment choices*) | nothing (the choice is dropped) |
 | `spell` | spell ids, **or** `spell_list: wizard` + `spell_level: 0` instead of options | — |
-| `custom` | free strings (draconic ancestry, a size) | nothing |
+| `custom` | text, or `{label, grants}` for what picking it gives (see below) | nothing |
 | `expertise` | skill ids, tool ids, tool tags, or the tag `skill` (every skill) | every skill |
 
 **Expertise** doubles the proficiency bonus on a skill or tool the character **already has**.
@@ -114,6 +114,35 @@ chat message; anything that still slips through blocks finishing with "Expertise
 in …)". The rogue's
 is `choose: 2`, `options: [skill, thieves_tools]` (PHB p.96: two skills, or one skill and thieves'
 tools). Expertise on thieves' tools shows up on `/dm check <p> tool thieves_tools` as `×2`.
+
+### Options that grant things (`custom`, #222)
+
+An option of a `custom` choice can carry what picking it gives:
+
+```yaml
+- id: genie_kind
+  title: Genie Kind
+  type: custom
+  choose: 1
+  options:
+    - { label: Efreeti, grants: { bonus_spells: [burning_hands, scorching_ray, fireball] } }
+    - { label: Marid, grants: { bonus_spells: [fog_cloud, blur, sleet_storm] } }
+```
+
+| Grant | Gives |
+|---|---|
+| `damage_resistances: [fire]` | resistance, like a race's `damage_resistances` (dragonborn ancestry) |
+| `innate_casting_ability: charisma` | the ability the race's own `innate_spells` are cast with (genasi). Only on a race or subrace choice |
+| `bonus_spells: [a, b]` | always-known spells, like a subclass's `bonus_spells` (the genie's kind) |
+
+- Only the pick is saved; what it grants is worked out again on every load, so editing the grants
+  in YAML reaches existing characters.
+- The `label` is what the player sees, and what a feature's `by_choice` variant is keyed by
+  (dragonborn's breath weapon). Plain text options still work and grant nothing.
+- A misspelt grant is a console warning on `/dm reload`. An unknown `type:` on a choice is also a
+  warning now; it used to drop the choice silently (the genie's `type: other`).
+- Skills, tools and languages aren't grants yet: they go through duplicate detection at creation,
+  so use a `skill` / `tool` / `language` choice for those.
 
 **Racial spell picks: `casting_ability:`.** A `type: spell` choice can name the ability the pick
 is cast with:

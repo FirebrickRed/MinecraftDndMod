@@ -23,6 +23,26 @@ public class InnateSpell {
         this.usesRemaining = this.uses;
     }
 
+    /**
+     * A character's own copy of a race's innate spell. The race holds one InnateSpell per trait, shared
+     * by every character of that race, so the uses left (and a chosen casting ability, #222) have to
+     * live on a copy: two tieflings mustn't share one Hellish Rebuke.
+     */
+    public InnateSpell copy() {
+        InnateSpell c = new InnateSpell();
+        c.spellId = spellId;
+        c.levelRequirement = levelRequirement;
+        c.isCantrip = isCantrip;
+        c.spellLevel = spellLevel;
+        c.uses = uses;
+        c.usesRemaining = usesRemaining;
+        c.scalesWithProficiency = scalesWithProficiency;
+        c.recovery = recovery;
+        c.castingAbility = castingAbility;
+        c.description = description;
+        return c;
+    }
+
     public String getSpellId() {
         return spellId;
     }

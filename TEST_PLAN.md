@@ -99,6 +99,13 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
       "only targets you" (only checked in a fight before).
 - [ ] Touch spells reach one block further than before in a fight (5 ft of slack, same as out of one).
 
+### Choices that grant things (#222)
+- [ ] Create a **fire genasi**: the Extra tab has **Spellcasting Ability** (Intelligence / Wisdom /
+      Charisma). Pick Charisma → the spellbook's Produce Flame uses CHA.
+- [ ] Create a **Genie warlock**: **Genie Kind** and **Genie's Vessel** now show (they never did).
+      Efreeti → Burning Hands is in the spellbook.
+- [ ] A **red dragonborn** still resists fire, and its breath weapon is still a fire cone.
+
 ### Monk and two-weapon fighting (#220, #221)
 - [ ] A monk with no armor: the sheet's AC tile says **Unarmored Defense: 10 + DEX + WIS**. Put on
       leather armor (chestplate slot) → the AC drops to leather's; take it off → back.

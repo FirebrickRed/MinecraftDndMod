@@ -183,7 +183,6 @@ subclasses:
     swimming_speed: 0
     player_choices: []                          # e.g. Knowledge Domain's skills/languages, Nature Domain's cantrip
     conditional_advantages: []                  # saving_throw + condition is applied (as on races)
-    conditional_bonus_spells: {}                # per-choice spells (Genie kind): parsed, not applied yet
     features_by_level: { 1: ["Dark One's Blessing. …"] }
     custom_model: fiend_icon
 ```

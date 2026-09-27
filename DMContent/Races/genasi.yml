@@ -28,13 +28,19 @@ player_choices:
     type: LANGUAGE
     choose: 1
     options: []
+  # The ability every genasi spell below is cast with; the player picks it (#222). The subraces'
+  # casting_ability: wisdom is only what's shown before this is picked.
+  - id: genasi_spellcasting
+    title: Spellcasting Ability
+    type: CUSTOM
+    choose: 1
+    options:
+      - { label: Intelligence, grants: { innate_casting_ability: intelligence } }
+      - { label: Wisdom, grants: { innate_casting_ability: wisdom } }
+      - { label: Charisma, grants: { innate_casting_ability: charisma } }
 
 # Each element's spells: a cantrip at 1st, a 1st- or 2nd-level spell at 3rd, a 2nd/3rd-level one at 5th,
 # each once per long rest (they can also be cast with spell slots the character has).
-#
-# The book lets the player pick Intelligence, Wisdom or Charisma as the casting ability for these.
-# That pick can't be expressed in YAML yet, so every element uses Wisdom for now (the monk's and
-# cleric's stat). Change casting_ability below if your table wants another. See #193 and #222.
 subraces:
   air:
     name: Air Genasi

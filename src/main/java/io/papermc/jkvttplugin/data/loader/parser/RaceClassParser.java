@@ -148,9 +148,6 @@ public final class RaceClassParser {
         // Parse conditional advantages (e.g., advantage on saves vs disease)
         subclass.setConditionalAdvantages(parseConditionalAdvantages(data.get("conditional_advantages")));
 
-        // Parse conditional bonus spells (e.g., Genie patron spells based on genie kind)
-        subclass.setConditionalBonusSpells(parseConditionalBonusSpells(data.get("conditional_bonus_spells"), className, id));
-
         return subclass;
     }
 
@@ -174,22 +171,5 @@ public final class RaceClassParser {
         return result;
     }
 
-    /**
-     * Parses conditional bonus spells from YAML with spell validation.
-     * Format: {dao: [spell1, spell2], djinni: [spell3, spell4], ...}
-     */
-    private static Map<String, List<String>> parseConditionalBonusSpells(Object input, String className, String subclassId) {
-        if (!(input instanceof Map<?, ?> map)) return Map.of();
-
-        Map<String, List<String>> result = new HashMap<>();
-        for (Map.Entry<?, ?> entry : map.entrySet()) {
-            if (entry.getKey() instanceof String choiceOption) {
-                List<String> spells = ParseUtil.normalizeStringList(entry.getValue());
-
-                result.put(choiceOption, spells);
-            }
-        }
-        return result;
-    }
 
 }

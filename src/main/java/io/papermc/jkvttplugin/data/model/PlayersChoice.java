@@ -90,6 +90,24 @@ public class PlayersChoice<T> {
         return this;
     }
 
+    /**
+     * What each option of a custom choice gives when picked (#222), by option (lower case, as the
+     * options are stored). An option with no {@code grants:} isn't in the map.
+     */
+    private Map<String, ChoiceGrants> grants = Map.of();
+
+    public PlayersChoice<T> grants(Map<String, ChoiceGrants> grants) {
+        this.grants = grants == null ? Map.of() : Map.copyOf(grants);
+        return this;
+    }
+
+    public Map<String, ChoiceGrants> getGrants() { return grants; }
+
+    /** What picking {@code option} gives, or null. */
+    public ChoiceGrants grantsFor(String option) {
+        return option == null ? null : grants.get(option.trim().toLowerCase());
+    }
+
     /** A race's own spell pick (fixed or player-chosen ability): it becomes an innate spell, not a class spell. */
     public boolean isRacialSpellPick() {
         return castingAbility != null || castingAbilityChoiceId != null;

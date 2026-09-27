@@ -359,7 +359,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - **Subclass Features:**
   - `bonus_spells` - Domain/expanded spells (always prepared/known, don't count against limit)
   - `additional_spells` - Bonus cantrips (e.g., Light cantrip for Light Domain)
-  - `conditional_bonus_spells` - Spells based on player choice (e.g., Genie patron type)
+  - Spells or other things based on a player choice (Genie kind): a `custom` choice whose options carry `grants:` (#222)
   - `proficiencies` - Armor, weapon, skill, tool proficiencies
   - `languages` - Additional languages granted
   - `darkvision`, `swimming_speed` - Enhanced senses/movement
@@ -603,7 +603,7 @@ Menu clicks are handled in `MenuClickListener.onMenuClick()` via switch on `Menu
 - ✅ Languages, darkvision, swimming speed from subclass
 - ✅ Player choices for subclass features (e.g., Knowledge Domain skills/languages)
 - ✅ Enhanced tooltips showing features, spells, proficiencies, and choices
-- ✅ Conditional bonus spells data structure (application pending)
+- ✅ Choice-based grants (#222): a custom option can grant resistances, bonus spells, or the racial spells' casting ability (Genie kind, dragonborn ancestry, genasi)
 - ✅ Display in character sheet viewer
 - ✅ Validation for Wizard level 2 subclass choice (deferred to level-up)
 
@@ -761,7 +761,7 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 - ❌ Level-up system (all characters are level 1)
 - ❌ Multiclassing
 - ❌ Feats
-- ❌ Conditional spell application (Genie patron, Lunar Sorcery)
+- ❌ Lunar Sorcery's per-phase spells: not authored (a `custom` choice with `grants:` can now express them, #222)
 - ⚠️ Conditional advantages — saving-throw ones apply (Fey Ancestry, Dwarven Resilience); other types are display only
 - ⚠️ Combat system — largely implemented: initiative, turn/action economy, attack/spell rolls, damage/healing, temp HP, death saves (#97–#101); conditions with advantage/disadvantage (#103); the Effect Engine (#70: active buffs like Rage, the breath-weapon action path, passive features like Lucky/Savage/Relentless, resistances); AoE aim preview (#173); Hex (#178); and the autoRoll/manualRoll/total command redesign (#183). Reaction windows that hold the damage until the target answers, and Shield actually moving AC (#195). Remaining/rough edges: enemy-visibility polish (#102), the rest of the action-economy menu (#176 — bonus actions list, actions still just markers), out-of-combat casting resolving rolls (#152), and assorted spell mechanics (#182). Combat survives a restart (#105, #165): a normal shutdown suspends the fight (snapshot + keep the file; `endCombat` is only `/combat finished`), it restores on boot, visuals return as players rejoin, and the interrupted turn restarts. Active effects like Rage save with the character (#212) and come back with the rounds they had left. Much of this is committed but largely un-playtested.
 - ❌ Equipment management (equip/unequip in-game)
@@ -796,7 +796,7 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 ## Notes
 
 - Race and class data is declarative in YAML - add new content without touching Java code
-- `conditional_advantages` of `type: saving_throw` are applied (advantage on saves vs that condition tag); other types, and `conditional_bonus_spells`, are parsed but not applied yet
+- `conditional_advantages` of `type: saving_throw` are applied (advantage on saves vs that condition tag); other types are parsed but not applied yet
 - Character sheets are read-only in-game (use commands for rest, no HP editing yet)
 - The NPC system is separate and allows spawning stat-block entities
 - **Known Bug Fix:** Class armor/weapon proficiencies now correctly applied to all characters (previously only racial/subclass proficiencies worked)
