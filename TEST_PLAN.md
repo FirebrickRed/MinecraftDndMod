@@ -108,7 +108,11 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 - [ ] Create a **fire genasi**: the Extra tab has **Spellcasting Ability** (Intelligence / Wisdom /
       Charisma). Pick Charisma → the spellbook's Produce Flame uses CHA.
 - [ ] Create a **Genie warlock**: **Genie Kind** and **Genie's Vessel** now show (they never did).
-      Efreeti → Burning Hands is in the spellbook.
+      Efreeti → Burning Hands is **offered in the spell step** (not handed over: see #228 below).
+- [ ] **Warlock patron spells (#228):** a Fiend warlock's spell step offers Burning Hands and Command
+      next to the warlock spells; taking one uses a pick (2 of 2). Their sheet doesn't know the rest.
+      The patron's tile says **Expanded Spell List (you may learn these)**. A cleric still gets their
+      domain spells for free.
 - [ ] A **red dragonborn** still resists fire, and its breath weapon is still a fire cone.
 
 ### Monk and two-weapon fighting (#220, #221)

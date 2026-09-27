@@ -357,7 +357,8 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
   - `DndClass.subclassLevel` - When subclass is chosen
   - `DndClass.subclassTypeName` - Display name (e.g., "Divine Domain", "Otherworldly Patron")
 - **Subclass Features:**
-  - `bonus_spells` - Domain/expanded spells (always prepared/known, don't count against limit)
+  - `bonus_spells` - Domain/oath spells (always prepared/known, don't count against limit)
+  - `expanded_spells` - A warlock patron's expanded list: added to what the player may PICK, each costs a pick (#228)
   - `additional_spells` - Bonus cantrips (e.g., Light cantrip for Light Domain)
   - Spells or other things based on a player choice (Genie kind): a `custom` choice whose options carry `grants:` (#222)
   - `proficiencies` - Armor, weapon, skill, tool proficiencies
@@ -476,7 +477,7 @@ options:
 2. Add subclass to `subclasses` map with:
    - `name` - Display name
    - `description` - Flavor text
-   - `bonus_spells` - Domain/expanded spells (list of spell IDs)
+   - `bonus_spells` - Domain/oath spells, free (list of spell IDs); `expanded_spells` for a patron-style "choose from" list
    - `additional_spells` - Bonus cantrips
    - `proficiencies` - Armor, weapon, skill, tool
    - `languages` - Additional languages

@@ -145,6 +145,35 @@ public class CharacterCreationSession {
         this.automaticGrants = (list == null) ? new ArrayList<>() : new ArrayList<>(list);
     }
 
+    /**
+     * Every spell this character may pick in the spell step (#228): the class's list, plus an
+     * expanded list from the subclass (a warlock patron) or from a custom pick's grants (the genie's
+     * kind). Expanded spells are options, not free spells: taking one uses a pick like any other.
+     */
+    public List<DndSpell> pickableSpells() {
+        Map<String, DndSpell> out = new LinkedHashMap<>();
+        for (DndSpell s : io.papermc.jkvttplugin.data.loader.SpellLoader.getSpellsForClass(selectedClass)) out.put(s.getId(), s);
+        List<String> expanded = new ArrayList<>();
+        DndClass cls = selectedClass == null ? null : io.papermc.jkvttplugin.data.loader.ClassLoader.getClass(selectedClass);
+        if (cls != null && selectedSubclass != null && cls.getSubclasses() != null) {
+            DndSubClass sub = cls.getSubclasses().get(selectedSubclass);
+            if (sub != null) expanded.addAll(sub.getExpandedSpells());
+        }
+        for (PendingChoice<?> pc : pendingChoices) {
+            PlayersChoice<?> choice = pc.getPlayersChoice();
+            if (choice == null || choice.getType() != PlayersChoice.ChoiceType.CUSTOM) continue;
+            for (Object picked : pc.getChosen()) {
+                ChoiceGrants g = picked instanceof String option ? choice.grantsFor(option) : null;
+                if (g != null) expanded.addAll(g.expandedSpells());
+            }
+        }
+        for (String id : expanded) {
+            DndSpell s = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(id);
+            if (s != null) out.putIfAbsent(s.getId(), s);
+        }
+        return new ArrayList<>(out.values());
+    }
+
     public PendingChoice<?> findPendingChoice(String id) {
         if (id == null) return null;
         for (var pc : pendingChoices) {

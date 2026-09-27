@@ -86,19 +86,60 @@ class ChoiceGrantsTest {
         assertNotSame(innate(a, "hellish_rebuke"), innate(b, "hellish_rebuke"));
     }
 
-    /** The genie's kind was `type: other`, which the parser dropped, so the kind (and its spells) never applied. */
+    /** The genie's kind was `type: other`, which the parser dropped, so the player never saw it. */
     @Test
-    void genieKindGrantsItsSpells() {
+    void genieKindIsAChoice() {
         var genie = ClassLoader.getClass("warlock").getSubclasses().get("the_genie");
         ChoiceEntry kind = choice(genie.getPlayerChoices(), "genie_kind");
         assertEquals(PlayersChoice.ChoiceType.CUSTOM, kind.type());
         assertEquals(List.of("dao", "djinni", "efreeti", "marid"), kind.pc().getOptions());
+    }
 
-        CharacterSheet w = CharacterSheet.loadFromData(UUID.randomUUID(), UUID.randomUUID(), "Test", "human", null,
-                "warlock", "the_genie", "acolyte", scores(), new HashSet<>(), Set.of(), Set.of(), 10, 10, 10);
-        pick(w, "genie_kind", "Efreeti");
-        assertTrue(w.getKnownSpells().contains(SpellLoader.getSpell("burning_hands")), "an efreeti's spell");
-        assertFalse(w.getKnownSpells().contains(SpellLoader.getSpell("thunderwave")), "not a djinni's");
+    // ---------- #228: a patron's spells are options to learn, not free spells ----------
+
+    private static CharacterCreationSession warlock(String patron) {
+        CharacterCreationSession s = session("human", null, "warlock", "acolyte");
+        s.setSelectedSubclass(patron);
+        io.papermc.jkvttplugin.character.CharacterCreationService.rebuildPendingChoices(s.getPlayerId());
+        return s;
+    }
+
+    private static boolean pickable(CharacterCreationSession s, String spellId) {
+        return s.pickableSpells().stream().anyMatch(sp -> sp.getId().equals(spellId));
+    }
+
+    /** A Fiend may learn Burning Hands (not a warlock spell otherwise), but doesn't know it for free. */
+    @Test
+    void fiendSpellsArePickableNotKnown() {
+        assertFalse(pickable(session("human", null, "warlock", "acolyte"), "burning_hands"), "not on the warlock list");
+        assertTrue(pickable(warlock("the_fiend"), "burning_hands"), "on the Fiend's expanded list");
+        assertTrue(pickable(warlock("the_fiend"), "eldritch_blast"), "the class list is still there");
+
+        CharacterSheet fiend = CharacterSheet.loadFromData(UUID.randomUUID(), UUID.randomUUID(), "Test", "human", null,
+                "warlock", "the_fiend", "acolyte", scores(), new HashSet<>(), Set.of(), Set.of(), 10, 10, 10);
+        assertFalse(fiend.getKnownSpells().contains(SpellLoader.getSpell("burning_hands")), "not known unless picked");
+    }
+
+    /** The genie's kind adds that kind's spells to the pick list, and only that kind's. */
+    @Test
+    void genieKindAddsItsSpellsToThePickList() {
+        CharacterCreationSession s = warlock("the_genie");
+        assertFalse(pickable(s, "burning_hands"), "no kind picked yet");
+        assertTrue(s.toggleChoiceByKey("genie_kind", "efreeti"));
+        assertTrue(pickable(s, "burning_hands"), "an efreeti's spell");
+        assertFalse(pickable(s, "thunderwave"), "not a djinni's");
+    }
+
+    /** A cleric's domain spells are the other rule: known for free (bonus_spells stays that). */
+    @Test
+    void domainSpellsAreStillFree() {
+        var cleric = ClassLoader.getClass("cleric");
+        var domain = cleric.getSubclasses().values().stream().filter(d -> !d.getBonusSpells().isEmpty()).findFirst().orElseThrow();
+        String spellId = domain.getBonusSpells().stream().filter(id -> SpellLoader.getSpell(id) != null).findFirst().orElseThrow();
+        CharacterSheet c = CharacterSheet.loadFromData(UUID.randomUUID(), UUID.randomUUID(), "Test", "human", null,
+                "cleric", domain.getId(), "acolyte", scores(), new HashSet<>(), Set.of(), Set.of(), 10, 10, 10);
+        var spell = SpellLoader.getSpell(spellId);
+        assertTrue(c.getKnownSpells().contains(spell) || c.getKnownCantrips().contains(spell), domain.getId() + " knows " + spellId);
     }
 
     @Test

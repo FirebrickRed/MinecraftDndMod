@@ -28,7 +28,8 @@ public class DndSubClass {
 
     // Subclass features and spells
     private Map<Integer, List<String>> featuresByLevel;  // Subclass features by level (e.g., 1: ["Channel Divinity: Preserve Life"])
-    private List<String> bonusSpells;                    // Domain spells, expanded spell list, etc. (always prepared/known)
+    private List<String> bonusSpells;                    // Domain / oath spells: always known or prepared, free (#228)
+    private List<String> expandedSpells = List.of();     // A warlock patron's expanded list: pickable, not free (#228)
     private List<String> additionalSpells;               // Cantrips always known (e.g., Light cantrip for Light Domain)
     private List<String> skillProficiencies;             // Additional skills granted (e.g., Knowledge Domain)
     private List<String> armorProficiencies;             // Additional armor proficiencies (rare, but some subclasses grant these)
@@ -92,6 +93,10 @@ public class DndSubClass {
     public void setFeaturesByLevel(Map<Integer, List<String>> featuresByLevel) {
         this.featuresByLevel = featuresByLevel;
     }
+
+    /** Spells added to what this class can PICK from (a warlock patron, PHB p.108); they grant nothing themselves. */
+    public List<String> getExpandedSpells() { return expandedSpells; }
+    public void setExpandedSpells(List<String> spells) { this.expandedSpells = spells == null ? List.of() : List.copyOf(spells); }
 
     public List<String> getBonusSpells() {
         return bonusSpells;
@@ -242,6 +247,16 @@ public class DndSubClass {
                 lore.addLine("• " + Util.prettify(spell), NamedTextColor.AQUA);
                 count++;
             }
+            lore.blankLine();
+        }
+
+        // Expanded spell list preview (a patron's: options to learn, not free spells)
+        if (!expandedSpells.isEmpty()) {
+            lore.addLine("Expanded Spell List (you may learn these):", NamedTextColor.LIGHT_PURPLE);
+            for (int i = 0; i < expandedSpells.size() && i < 4; i++) {
+                lore.addLine("• " + Util.prettify(expandedSpells.get(i)), NamedTextColor.AQUA);
+            }
+            if (expandedSpells.size() > 4) lore.addLine("...and " + (expandedSpells.size() - 4) + " more", NamedTextColor.DARK_GRAY);
             lore.blankLine();
         }
 

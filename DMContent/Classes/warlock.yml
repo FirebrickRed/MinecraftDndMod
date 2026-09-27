@@ -96,11 +96,14 @@ multiclass_requirements:
   Charisma: 13
 subclass_level: 1
 subclass_type_name: Otherworldly Patron
+# A patron's spells are an EXPANDED LIST (PHB p.108): extra options when you learn a warlock spell,
+# each still costing one of your spells known. That's expanded_spells. (A cleric's domain spells are
+# the other rule, always prepared for free: bonus_spells. additional_spells are free bonus cantrips.)
 subclasses:
   the_archfey:
     name: The Archfey
     description: "Your patron is a lord or lady of the fey"
-    bonus_spells:
+    expanded_spells:
       - faerie_fire
       - sleep
       - calm_emotions
@@ -117,7 +120,7 @@ subclasses:
   the_celestial:
     name: The Celestial
     description: "Your patron is a powerful being of the Upper Planes"
-    bonus_spells:
+    expanded_spells:
       - cure_wounds
       - guiding_bolt
       - flaming_sphere
@@ -137,7 +140,7 @@ subclasses:
   the_fathomless:
     name: The Fathomless
     description: "Your patron is an entity of the deep"
-    bonus_spells:
+    expanded_spells:
       - create_or_destroy_water
       - thunderwave
       - gust_of_wind
@@ -156,7 +159,7 @@ subclasses:
   the_fiend:
     name: The Fiend
     description: "Your patron is a fiendish being from the lower planes"
-    bonus_spells:
+    expanded_spells:
       - burning_hands
       - command
       - blindness_deafness
@@ -180,24 +183,24 @@ subclasses:
     name: The Genie
     description: "Your patron is a powerful genie"
     player_choices:
-      # Each kind adds its spells (#222). To pick at random, roll a d4 in the order listed.
+      # Each kind adds its spells to the ones you may learn (#222, #228). For a random kind, roll a d4 in this order.
       - id: genie_kind
         title: Genie Kind
         choose: 1
         type: custom
         options:
-          - { label: Dao, grants: { bonus_spells: [sanctuary, spike_growth, meld_into_stone, stone_shape, wall_of_stone] } }
-          - { label: Djinni, grants: { bonus_spells: [thunderwave, gust_of_wind, wind_wall, greater_invisibility, seeming] } }
-          - { label: Efreeti, grants: { bonus_spells: [burning_hands, scorching_ray, fireball, fire_shield, flame_strike] } }
-          - { label: Marid, grants: { bonus_spells: [fog_cloud, blur, sleet_storm, control_water, cone_of_cold] } }
+          - { label: Dao, grants: { expanded_spells: [sanctuary, spike_growth, meld_into_stone, stone_shape, wall_of_stone] } }
+          - { label: Djinni, grants: { expanded_spells: [thunderwave, gust_of_wind, wind_wall, greater_invisibility, seeming] } }
+          - { label: Efreeti, grants: { expanded_spells: [burning_hands, scorching_ray, fireball, fire_shield, flame_strike] } }
+          - { label: Marid, grants: { expanded_spells: [fog_cloud, blur, sleet_storm, control_water, cone_of_cold] } }
       - id: genie_vessel
         title: Genie's Vessel
         choose: 1
         type: custom
         options: [Oil lamp, Urn, Ring with a compartment, Stoppered bottle, Hollow statuette, Ornate lantern]
 #        can be used as a spellcasting focus, needs to give item
-    # Spells granted to ALL genie warlocks regardless of genie kind
-    bonus_spells:
+    # Every genie warlock may learn these, whatever the kind
+    expanded_spells:
       - detect_evil_and_good
       - phantasmal_force
       - create_food_and_water
@@ -210,7 +213,7 @@ subclasses:
   the_great_old_one:
     name: The Great Old One
     description: "Your patron is an ancient entity from beyond reality"
-    bonus_spells:
+    expanded_spells:
       - dissonant_whispers
       - tashas_hideous_laughter
       - detect_thoughts
@@ -227,7 +230,7 @@ subclasses:
   the_hexblade:
     name: The Hexblade
     description: "Your patron is a mysterious entity from the Shadowfell"
-    bonus_spells:
+    expanded_spells:
       - shield
       - wrathful_smite
       - blur
@@ -245,7 +248,7 @@ subclasses:
   the_undead:
     name: The Undead
     description: "Your patron is an undead entity of great power"
-    bonus_spells:
+    expanded_spells:
       - bane
       - false_life
       - blindness_deafness
@@ -262,7 +265,7 @@ subclasses:
   the_undying:
     name: The Undying
     description: ""
-    bonus_spells:
+    expanded_spells:
       - false_life
       - ray_of_sickness
       - blindness_deafness

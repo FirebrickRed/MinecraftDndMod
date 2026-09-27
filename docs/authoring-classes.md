@@ -189,7 +189,8 @@ subclasses:
   fiend:                                 # subclass id (the key)
     name: The Fiend
     description: "You have made a pact with a fiend…"
-    bonus_spells: [burning_hands, command]      # always known/prepared; don't count against the limit
+    expanded_spells: [burning_hands, command]   # a patron's list: may be LEARNED, each costs a pick
+    bonus_spells: []                            # a domain's/oath's: known or prepared for FREE
     additional_spells: [light]                  # bonus cantrips
     skill_proficiencies: []
     armor_proficiencies: [heavy_armor]
@@ -203,6 +204,12 @@ subclasses:
     features_by_level: { 1: ["Dark One's Blessing. …"] }
     custom_model: fiend_icon
 ```
+
+**Two spell rules, two keys (#228).** `bonus_spells` are simply known (or always prepared) and don't
+use up a pick: Cleric domains, Paladin oaths, Aberrant Mind / Clockwork Soul sorcerers. `expanded_spells`
+are added to the list the character **picks from** and cost a pick like any other: every warlock
+patron (PHB p.108, "choose from an expanded list"). Read the subclass's text: "you always have" or
+"you learn" → `bonus_spells`; "you can choose from" → `expanded_spells`.
 
 **Only `subclass_level: 1` subclasses are picked at creation** (Cleric, Warlock, Sorcerer). A level-2
 or level-3 subclass (Wizard, everyone else) waits for level-up, and nothing from it applies yet.

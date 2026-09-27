@@ -126,6 +126,7 @@ public final class RaceClassParser {
         // Parse bonus spells (domain spells, expanded spell list, etc.) — unknown ids are reported by ContentValidator
         List<String> bonusSpells = ParseUtil.normalizeStringList(data.get("bonus_spells"));
         subclass.setBonusSpells(bonusSpells);
+        subclass.setExpandedSpells(ParseUtil.normalizeStringList(data.get("expanded_spells")));
 
         // Parse additional spells (cantrips always known)
         List<String> additionalSpells = ParseUtil.normalizeStringList(data.get("additional_spells"));

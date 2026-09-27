@@ -16,17 +16,17 @@ import java.util.Set;
  * options:
  *   - { label: Wisdom, grants: { innate_casting_ability: wisdom } }          # genasi
  *   - { label: "Red (Fire, 15 ft. cone, DEX save)", grants: { damage_resistances: [fire] } }   # dragonborn
- *   - { label: Efreeti, grants: { bonus_spells: [burning_hands, scorching_ray] } }             # genie
+ *   - { label: Efreeti, grants: { expanded_spells: [burning_hands, scorching_ray] } }           # genie: pickable
  * </pre>
  *
  * Grants are re-derived from the saved pick on every load, like every other grant; only the pick
  * itself is saved.
  */
 public record ChoiceGrants(Ability innateCastingAbility, List<String> damageResistances,
-                           List<String> bonusSpells, List<String> problems) {
+                           List<String> bonusSpells, List<String> expandedSpells, List<String> problems) {
 
     /** The grant keys understood, for ContentValidator's message. */
-    public static final Set<String> KEYS = Set.of("innate_casting_ability", "damage_resistances", "bonus_spells");
+    public static final Set<String> KEYS = Set.of("innate_casting_ability", "damage_resistances", "bonus_spells", "expanded_spells");
 
     public static ChoiceGrants parse(Map<?, ?> m) {
         List<String> problems = new ArrayList<>();
@@ -45,6 +45,8 @@ public record ChoiceGrants(Ability innateCastingAbility, List<String> damageResi
         for (String r : ParseUtil.normalizeStringList(m.get("damage_resistances"))) resistances.add(r.trim().toLowerCase());
         List<String> spells = new ArrayList<>();
         for (String s : ParseUtil.normalizeStringList(m.get("bonus_spells"))) spells.add(s.trim().toLowerCase());
-        return new ChoiceGrants(ability, List.copyOf(resistances), List.copyOf(spells), List.copyOf(problems));
+        List<String> expanded = new ArrayList<>();
+        for (String s : ParseUtil.normalizeStringList(m.get("expanded_spells"))) expanded.add(s.trim().toLowerCase());
+        return new ChoiceGrants(ability, List.copyOf(resistances), List.copyOf(spells), List.copyOf(expanded), List.copyOf(problems));
     }
 }

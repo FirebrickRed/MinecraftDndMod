@@ -236,6 +236,7 @@ public final class ContentValidator {
                 String subWhere = where + " subclass '" + sub.getId() + "'";
                 referenceSpells(sub.getBonusSpells());
                 referenceSpells(sub.getAdditionalSpells());
+                referenceSpells(sub.getExpandedSpells());
                 checkSkillNames(subWhere + " skill_proficiencies", sub.getSkillProficiencies());
                 checkToolIds(subWhere + " tool_proficiencies", sub.getToolProficiencies());
                 checkChoices(subWhere, sub.getPlayerChoices());
@@ -373,6 +374,7 @@ public final class ContentValidator {
                 String optWhere = choiceWhere + " option '" + g.getKey() + "'";
                 for (String p : g.getValue().problems()) warn(optWhere + " grants: " + p + ".");
                 referenceSpells(g.getValue().bonusSpells());
+                referenceSpells(g.getValue().expandedSpells());
             }
         }
     }

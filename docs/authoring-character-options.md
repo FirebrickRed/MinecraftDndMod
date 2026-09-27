@@ -125,15 +125,16 @@ An option of a `custom` choice can carry what picking it gives:
   type: custom
   choose: 1
   options:
-    - { label: Efreeti, grants: { bonus_spells: [burning_hands, scorching_ray, fireball] } }
-    - { label: Marid, grants: { bonus_spells: [fog_cloud, blur, sleet_storm] } }
+    - { label: Efreeti, grants: { expanded_spells: [burning_hands, scorching_ray, fireball] } }
+    - { label: Marid, grants: { expanded_spells: [fog_cloud, blur, sleet_storm] } }
 ```
 
 | Grant | Gives |
 |---|---|
 | `damage_resistances: [fire]` | resistance, like a race's `damage_resistances` (dragonborn ancestry) |
 | `innate_casting_ability: charisma` | the ability the race's own `innate_spells` are cast with (genasi). Only on a race or subrace choice |
-| `bonus_spells: [a, b]` | always-known spells, like a subclass's `bonus_spells` (the genie's kind) |
+| `bonus_spells: [a, b]` | spells known for free, like a subclass's `bonus_spells` |
+| `expanded_spells: [a, b]` | spells added to what the character may **pick**, like a warlock patron's `expanded_spells` (the genie's kind) |
 
 - Only the pick is saved; what it grants is worked out again on every load, so editing the grants
   in YAML reaches existing characters.

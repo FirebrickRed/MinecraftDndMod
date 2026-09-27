@@ -885,7 +885,8 @@ public class CharacterCreationMenu {
         int active = session.getActiveSpellLevel();
         if (!levels.contains(active)) active = levels.get(0);
 
-        List<DndSpell> classSpells = SpellLoader.getSpellsForClass(session.getSelectedClass());
+        // The class list plus a patron's expanded spells (#228): the one list of what can be picked.
+        List<DndSpell> classSpells = session.pickableSpells();
 
         int[] tabSlots = centeredSlots(levels.size(), 9);
         for (int i = 0; i < levels.size() && i < tabSlots.length; i++) {
