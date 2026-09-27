@@ -44,6 +44,28 @@ class RacesSpellsAndEntitiesTest {
         assertTrue(RaceLoader.getRace("gnome").getSubraces().get("rock_gnome").getToolProficiencies().contains("tinkers_tools"));
     }
 
+    /** A fire genasi monk (the first player to ask for one) gets the element's traits, not just the name. */
+    @Test
+    void fireGenasiMonk() {
+        CharacterSheet c = character("genasi", "fire", "monk", "acolyte", scores(Ability.DEXTERITY, 16, Ability.WISDOM, 14));
+        assertEquals(30, c.getSpeed());
+        assertTrue(c.getDamageResistances().contains("fire"));
+        InnateSpell flame = innate(c.getInnateSpells(), "produce_flame");
+        assertTrue(flame.isCantrip() && flame.canCast(), "Produce Flame from level 1");
+        assertEquals(3, innate(c.getInnateSpells(), "burning_hands").getLevelRequirement());
+        assertEquals(60, RaceLoader.getRace("genasi").getDarkvision());
+    }
+
+    /** Each element overrides the right movement: air walks faster, water swims. */
+    @Test
+    void genasiElements() {
+        var subraces = RaceLoader.getRace("genasi").getSubraces();
+        assertEquals(java.util.Set.of("air", "earth", "fire", "water"), subraces.keySet());
+        assertEquals(35, character("genasi", "air", "monk", "acolyte", scores()).getSpeed());
+        assertEquals(30, subraces.get("water").getSwimmingSpeed());
+        assertTrue(character("genasi", "water", "monk", "acolyte", scores()).getDamageResistances().contains("acid"));
+    }
+
     /** Frostbite was defined twice and resolved as an attack; it's a CON save. */
     @Test
     void frostbiteIsASaveNotAnAttack() {

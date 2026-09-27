@@ -1,0 +1,131 @@
+name: Genasi
+creature_type: Humanoid
+# Source: Mordenkainen Presents: Monsters of the Multiverse (2022)
+description: Genasi carry the power of the elemental planes in their blood. Some descend from genies, others were touched by a surge of elemental energy, and the element shows in them - crackling hair, stone-grey skin, a flickering flame, or the smell of the sea.
+# Monsters of the Multiverse: the player places the bonuses (+2/+1 or +1/+1/+1) and picks their size.
+ability_scores:
+  choice:
+    distributions:
+      - [2, 1]
+      - [1, 1, 1]
+speed: 30
+darkvision: 60
+
+traits:
+  - Darkvision
+
+languages:
+  - Common
+
+player_choices:
+  - id: race_size
+    title: Size
+    type: CUSTOM
+    choose: 1
+    options: [small, medium]
+  - id: race_languages
+    title: Languages
+    type: LANGUAGE
+    choose: 1
+    options: []
+
+# Each element's spells: a cantrip at 1st, a 1st- or 2nd-level spell at 3rd, a 2nd/3rd-level one at 5th,
+# each once per long rest (they can also be cast with spell slots the character has).
+#
+# The book lets the player pick Intelligence, Wisdom or Charisma as the casting ability for these.
+# That pick can't be expressed in YAML yet, so every element uses Wisdom for now (the monk's and
+# cleric's stat). Change casting_ability below if your table wants another. See #193.
+subraces:
+  air:
+    name: Air Genasi
+    description: Wind follows you. Your hair drifts in a breeze no one else feels, and you never need to catch your breath.
+    speed: 35
+    traits:
+      - Unending Breath
+      - Lightning Resistance
+      - Mingle with the Wind
+    damage_resistances:
+      - lightning
+    innate_spells:
+      - spell_id: shocking_grasp
+        level_requirement: 1
+        casting_ability: wisdom
+      - spell_id: feather_fall
+        level_requirement: 3
+        uses: 1
+        recovery: long_rest
+        casting_ability: wisdom
+      - spell_id: levitate
+        level_requirement: 5
+        uses: 1
+        recovery: long_rest
+        casting_ability: wisdom
+        description: "No material components needed."
+
+  earth:
+    name: Earth Genasi
+    description: The patience of stone runs through you. Rough ground doesn't slow you, and you can harden your skin like rock.
+    traits:
+      - Earth Walk
+      - Merge with Stone
+    innate_spells:
+      - spell_id: blade_ward
+        level_requirement: 1
+        casting_ability: wisdom
+        description: "You can cast Blade Ward as a bonus action a number of times equal to your proficiency bonus per long rest."
+      - spell_id: pass_without_trace
+        level_requirement: 5
+        uses: 1
+        recovery: long_rest
+        casting_ability: wisdom
+        description: "No material components needed."
+
+  fire:
+    name: Fire Genasi
+    description: Heat rolls off you. Your hair may flicker like flame, and fire that would burn others only warms you.
+    traits:
+      - Fire Resistance
+      - Reach to Blaze
+    damage_resistances:
+      - fire
+    innate_spells:
+      - spell_id: produce_flame
+        level_requirement: 1
+        casting_ability: wisdom
+      - spell_id: burning_hands
+        level_requirement: 3
+        uses: 1
+        recovery: long_rest
+        casting_ability: wisdom
+      - spell_id: flame_blade
+        level_requirement: 5
+        uses: 1
+        recovery: long_rest
+        casting_ability: wisdom
+        description: "No material components needed."
+
+  water:
+    name: Water Genasi
+    description: The sea is in you. You breathe water as easily as air, and swim as well as you walk.
+    swimming_speed: 30
+    traits:
+      - Acid Resistance
+      - Amphibious
+      - Swim Speed
+      - Call to the Wave
+    damage_resistances:
+      - acid
+    innate_spells:
+      - spell_id: acid_splash
+        level_requirement: 1
+        casting_ability: wisdom
+      - spell_id: create_or_destroy_water
+        level_requirement: 3
+        uses: 1
+        recovery: long_rest
+        casting_ability: wisdom
+      - spell_id: water_walk
+        level_requirement: 5
+        uses: 1
+        recovery: long_rest
+        casting_ability: wisdom
