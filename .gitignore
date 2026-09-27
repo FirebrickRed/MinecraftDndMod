@@ -121,6 +121,8 @@ runs/
 # Dynamic saved data (characters, entities, shop stock)
 DMContent/Saved/
 ResourcePack/
+# The DM's world datapack (custom dimensions), kept locally like the resource pack
+Datapacks/
 
 # Generated resource-pack archive (build-resourcepack.ps1)
 jkvttresourcepack.zip
