@@ -331,6 +331,38 @@ public class CharacterCreationSession {
         }
     }
 
+    /**
+     * Drop spell picks that are no longer on the list this character picks from (#228): a patron's
+     * spell after switching patron, a genie kind's after changing kind. Otherwise the pick stays
+     * selected, using up a slot, with no tile to un-pick it from.
+     *
+     * @return display names of the spells dropped
+     */
+    public List<String> dropUnpickableSpells() {
+        Map<String, DndSpell> pickable = new HashMap<>();
+        for (DndSpell s : pickableSpells()) pickable.put(io.papermc.jkvttplugin.util.Util.normalize(s.getName()), s);
+        List<String> dropped = new ArrayList<>();
+        for (String key : new ArrayList<>(selectedCantrips)) {
+            if (!pickable.containsKey(key)) { removeSpell(key, 0); dropped.add(displayName(key)); }
+        }
+        for (Map.Entry<Integer, LinkedHashSet<String>> level : new ArrayList<>(spellsByLevel.entrySet())) {
+            for (String key : new ArrayList<>(level.getValue())) {
+                if (!pickable.containsKey(key)) { removeSpell(key, level.getKey()); dropped.add(displayName(key)); }
+            }
+        }
+        for (String key : new ArrayList<>(selectedSpells)) { // one with no level recorded
+            if (!pickable.containsKey(key)) { selectedSpells.remove(key); dropped.add(displayName(key)); }
+        }
+        return dropped;
+    }
+
+    private static String displayName(String spellKey) {
+        for (DndSpell s : io.papermc.jkvttplugin.data.loader.SpellLoader.getAllSpells()) {
+            if (io.papermc.jkvttplugin.util.Util.normalize(s.getName()).equals(spellKey)) return s.getName();
+        }
+        return spellKey;
+    }
+
     public int getSpellCount(int level) {
         if (level == 0) {
             return selectedCantrips.size();

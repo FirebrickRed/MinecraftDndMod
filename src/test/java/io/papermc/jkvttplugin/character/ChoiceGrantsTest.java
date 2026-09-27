@@ -130,6 +130,21 @@ class ChoiceGrantsTest {
         assertFalse(pickable(s, "thunderwave"), "not a djinni's");
     }
 
+    /** Switching patron takes the old patron's spell picks with it, instead of leaving a pick with no tile. */
+    @Test
+    void switchingPatronDropsItsSpellPicks() {
+        CharacterCreationSession s = warlock("the_fiend");
+        s.selectSpell("burning_hands", 1, 2);
+        s.selectSpell("hex", 1, 2); // a warlock spell: stays
+        assertTrue(s.dropUnpickableSpells().isEmpty(), "both are on a Fiend's list");
+
+        s.setSelectedSubclass("the_archfey");
+        assertEquals(List.of("Burning Hands"), s.dropUnpickableSpells());
+        assertFalse(s.hasSpell("burning_hands"));
+        assertTrue(s.hasSpell("hex"));
+        assertEquals(1, s.getSpellCount(1));
+    }
+
     /** A cleric's domain spells are the other rule: known for free (bonus_spells stays that). */
     @Test
     void domainSpellsAreStillFree() {

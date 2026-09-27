@@ -85,6 +85,7 @@ public class CharacterCreationHandler implements MenuClickHandler {
             case CHOOSE_SUBCLASS -> {
                 session.setSelectedSubclass(payload);
                 CharacterCreationService.rebuildPendingChoices(playerId);
+                reportDroppedSpells(player, session.dropUnpickableSpells()); // a patron's spells went with it (#228)
                 CharacterCreationMenu.open(player, sessionId);
             }
             case CHOOSE_BACKGROUND -> {
@@ -159,6 +160,7 @@ public class CharacterCreationHandler implements MenuClickHandler {
                     player.sendMessage(Component.text("Expertise in " + dropped + " removed: you're no longer proficient in it.",
                             NamedTextColor.YELLOW));
                 }
+                reportDroppedSpells(player, session.dropUnpickableSpells()); // e.g. a different genie kind (#228)
                 CharacterCreationMenu.open(player, sessionId);
             }
             case CHOICE_PAGE -> {
@@ -311,6 +313,13 @@ public class CharacterCreationHandler implements MenuClickHandler {
     }
 
     /** Modifier of the class's spellcasting ability from the session's (base) ability scores. */
+    /** Tell the player which spell picks went because they're no longer on their list (#228). */
+    private static void reportDroppedSpells(Player player, List<String> dropped) {
+        for (String name : dropped) {
+            player.sendMessage(Component.text(name + " removed from your spells: it isn't on your list any more.", NamedTextColor.YELLOW));
+        }
+    }
+
     private static int castingAbilityMod(SpellcastingInfo info, CharacterCreationSession session) {
         if (info.getCastingAbility() == null || session.getAbilityScores() == null) return 0;
         Ability ability = Ability.fromString(info.getCastingAbility());
