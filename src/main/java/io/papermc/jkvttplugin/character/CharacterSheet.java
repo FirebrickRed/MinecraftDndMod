@@ -41,6 +41,7 @@ public class CharacterSheet {
     private int currentHealth;
     private int tempHealth;
     private int armorClass;
+    private String acFormulaSource; // what set the AC when a formula beat armor / 10 + DEX (#220); derived, not saved
 
     // Event-driven persistence (#31): once a sheet is live (created or loaded), any state-changing
     // mutator flushes it straight to disk — no timed autosave. Stays false while the sheet is being
@@ -641,11 +642,47 @@ public class CharacterSheet {
             }
         }
 
-        if (equippedShield != null && equippedShield.isShield()) {
-            baseAC += equippedShield.getBaseAC();
+        boolean shield = equippedShield != null && equippedShield.isShield();
+        int shieldAC = shield ? equippedShield.getBaseAC() : 0;
+        baseAC += shieldAC;
+
+        // Another way to work out AC (Unarmored Defense, natural armor, Mage Armor; #220): the best one
+        // that applies wins, so a formula can only help. A shield adds on top unless it forbids one.
+        acFormulaSource = null;
+        for (var source : acFormulas()) {
+            var f = source.getValue();
+            if (!f.applies(equippedArmor != null, shield)) continue;
+            int ac = f.value(this::getModifier) + shieldAC;
+            if (ac > baseAC) {
+                baseAC = ac;
+                acFormulaSource = source.getKey() + ": " + f.describe();
+            }
         }
 
         armorClass = baseAC;
+    }
+
+    /**
+     * Every AC formula this character has, by the name of what grants it: passive features (read from
+     * the definition, so they're always on) and live effects (Mage Armor while it lasts).
+     */
+    private List<Map.Entry<String, io.papermc.jkvttplugin.effect.AcFormula>> acFormulas() {
+        List<Map.Entry<String, io.papermc.jkvttplugin.effect.AcFormula>> out = new ArrayList<>();
+        for (var f : getAllFeatures()) {
+            boolean passive = f.getActivation() == null || f.getActivation().equalsIgnoreCase("passive");
+            if (passive && f.hasApply() && f.getApplyTemplate().getArmorClass() != null) {
+                out.add(Map.entry(f.getName(), f.getApplyTemplate().getArmorClass()));
+            }
+        }
+        for (var e : activeEffects) {
+            if (e.getArmorClass() != null) out.add(Map.entry(e.getSourceName(), e.getArmorClass()));
+        }
+        return out;
+    }
+
+    /** "Unarmored Defense: 10 + DEX + WIS" when a formula set the AC (#220), or null for armor / 10 + DEX. */
+    public String getAcFormulaSource() {
+        return acFormulaSource;
     }
 
     private void initializeSpellSlots() {
@@ -1160,6 +1197,7 @@ public class CharacterSheet {
         resetDeathSaveTally();
         breakConcentration(); // nothing carries over from before the death
         activeEffects.clear();
+        calculateArmorClass();
         currentHealth = Math.max(1, Math.min(totalHealth, hp));
         persist();
         return true;
@@ -1772,11 +1810,15 @@ public class CharacterSheet {
         if (effect == null) return;
         if (!effect.stacks()) removeEffect(effect.getSourceId());
         activeEffects.add(effect);
+        calculateArmorClass(); // an effect can carry an AC formula (Mage Armor, #220)
         persist(); // effects save like HP and slots do (#212) — a crash right after raging keeps the Rage
     }
 
     public void removeEffect(String sourceId) {
-        if (activeEffects.removeIf(e -> e.getSourceId().equalsIgnoreCase(sourceId))) persist();
+        if (activeEffects.removeIf(e -> e.getSourceId().equalsIgnoreCase(sourceId))) {
+            calculateArmorClass();
+            persist();
+        }
     }
 
     /**
@@ -1792,6 +1834,7 @@ public class CharacterSheet {
         io.papermc.jkvttplugin.effect.ActiveEffect effect = feature.getApplyTemplate().copy();
         effect.restoreState(roundsRemaining, maintainedThisRound);
         activeEffects.add(effect);
+        calculateArmorClass();
         return true;
     }
 
@@ -1943,6 +1986,7 @@ public class CharacterSheet {
             if (e.tickTurnStartAndCheckExpiry()) { ended.add(e); return true; }
             return false;
         });
+        if (!ended.isEmpty()) calculateArmorClass();
         persist(); // rounds left changed (#212)
         return ended;
     }
@@ -1953,6 +1997,7 @@ public class CharacterSheet {
             if (e.endsOnRest(restType)) { ended.add(e); return true; }
             return false;
         });
+        if (!ended.isEmpty()) calculateArmorClass();
         return ended;
     }
 
@@ -1988,6 +2033,7 @@ public class CharacterSheet {
 
         breakConcentration();
         activeEffects.clear(); // a long rest ends any lingering buffs/debuffs (Effect Engine, #70)
+        calculateArmorClass();
         relentlessEnduranceUsed = false; // Half-Orc Relentless Endurance recharges on a long rest
         if (acAdjustment != null && acAdjustment.endsOnLongRest()) acAdjustment = null; // a DM "until a long rest" (#175)
 

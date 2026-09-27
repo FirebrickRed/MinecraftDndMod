@@ -102,6 +102,31 @@ and grants resistance plus bonus damage, activated with `/combat use rage`. The 
 depth (costs, durations, effects, AoE actions). Copy from `barbarian.yml` (Rage) or `dragonborn.yml`
 (Breath Weapon) until it gets a guide of its own.
 
+### Another way to work out AC (`armor_class`, #220)
+
+Unarmored Defense, natural armor and the like are a passive feature with an `armor_class:` effect:
+
+```yaml
+features:
+  - id: unarmored_defense
+    name: Unarmored Defense
+    activation: passive
+    apply:
+      effects:
+        armor_class: { base: 10, add: [dexterity, wisdom], requires: [no_armor, no_shield] }
+```
+
+| Key | Default | Meaning |
+|---|---|---|
+| `base` | 10 | The flat part (13 for natural armor, 17 for a tortle's shell). |
+| `add` | none | Ability modifiers added, **full names** (`dexterity`, not `dex`). |
+| `requires` | none | `no_armor` and/or `no_shield`. Leave `no_shield` off and a shield adds its +2 on top (a barbarian's does; a monk's doesn't). |
+
+The character's AC is the **best** of the normal calculation (armor or 10 + DEX, plus a shield) and
+every formula that applies, so a formula can only help. The sheet's AC tile names the one that won.
+It works on races' `features:` too (natural armor), and a live effect with a duration can carry one
+(Mage Armor). A misspelt ability or requirement is a console warning on `/dm reload`, not a guess.
+
 `features_by_level:` is **display text only**: the level-by-level feature list on the class tile.
 Its `type:`, `uses:` and `damage:` keys are descriptive and drive nothing. Put mechanics in `features:`.
 

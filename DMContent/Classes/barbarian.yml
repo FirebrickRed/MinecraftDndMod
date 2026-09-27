@@ -33,6 +33,13 @@ features:
         advantage_on: [str_checks, str_saves]          # (wiring for adv is a later slice)
         bonus_damage: { amount: 2, when: melee_str }    # +2 on melee STR hits
         minecraft_effect: STRENGTH                       # red-tint feedback while active
+  - id: unarmored_defense
+    name: Unarmored Defense
+    activation: passive
+    apply:
+      effects:
+        # 10 + DEX + CON with no armor on. A shield still counts (PHB p.48), so only armor is ruled out.
+        armor_class: { base: 10, add: [dexterity, constitution], requires: [no_armor] }
 features_by_level:
   1:
     - name: Rage

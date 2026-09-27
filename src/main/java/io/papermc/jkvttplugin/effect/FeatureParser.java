@@ -136,6 +136,7 @@ public final class FeatureParser {
         String minecraftEffect = null;
         int minecraftAmplifier = 0;
         Set<String> flags = new HashSet<>();
+        AcFormula armorClass = null;
         if (apply.get("effects") instanceof Map<?, ?> e) {
             resistances.addAll(ParseUtil.normalizeStringList(e.get("resistance")));
             advantageOn.addAll(ParseUtil.normalizeStringList(e.get("advantage_on")));
@@ -150,10 +151,11 @@ public final class FeatureParser {
             for (String flag : BOOLEAN_FLAGS) {
                 if (ParseUtil.asBoolean(e.get(flag), false)) flags.add(flag);
             }
+            if (e.get("armor_class") instanceof Map<?, ?> ac) armorClass = AcFormula.parse(ac);
         }
 
         return new ActiveEffect(featureId, featureName, resistances, advantageOn, disadvantageOn,
                 bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks,
-                rounds, maintainedBy, untilRest, untilUsed);
+                rounds, maintainedBy, untilRest, untilUsed, armorClass);
     }
 }

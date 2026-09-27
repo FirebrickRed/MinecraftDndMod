@@ -88,7 +88,10 @@ public class ViewCharacterSheetMenu {
                     .blankLine();
 
             // Show breakdown
-            if (character.getEquippedArmor() == null) {
+            if (character.getAcFormulaSource() != null) {
+                // A feature's own formula beat armor / 10 + DEX (#220): "Unarmored Defense: 10 + DEX + WIS"
+                lore.addLine(character.getAcFormulaSource(), NamedTextColor.YELLOW);
+            } else if (character.getEquippedArmor() == null) {
                 // Unarmored: 10 + DEX
                 lore.addLine("Base: 10", NamedTextColor.YELLOW);
                 String dexSign = dexMod >= 0 ? "+" : "";

@@ -229,6 +229,7 @@ public final class ContentValidator {
             checkEquipmentList(where + " starting_equipment", c.getStartingEquipment());
             checkSkillNames(where + " skills", c.getSkills());
             checkToolIds(where + " tool_proficiencies", c.getToolProficiencies());
+            checkFeatures(where, c.getFeatures());
             checkChoices(where, c.getPlayerChoices());
             if (c.getSubclasses() == null) continue;
             for (DndSubClass sub : c.getSubclasses().values()) {
@@ -245,12 +246,24 @@ public final class ContentValidator {
         }
     }
 
+    /** Effect Engine features (#70): what an effect block said that wasn't understood. */
+    private void checkFeatures(String where, List<io.papermc.jkvttplugin.effect.Feature> features) {
+        if (features == null) return;
+        for (var f : features) {
+            if (!f.hasApply() || f.getApplyTemplate().getArmorClass() == null) continue;
+            for (String p : f.getApplyTemplate().getArmorClass().getProblems()) {
+                warn(where + " feature '" + f.getId() + "' armor_class: " + p + ".");
+            }
+        }
+    }
+
     private void checkRaces() {
         for (DndRace r : RaceLoader.getAllRaces()) {
             String where = "Race '" + r.getId() + "'";
             referenceInnate(r.getInnateSpells());
             checkSkillNames(where + " skill_proficiencies", r.getSkillProficiencies());
             checkToolIds(where + " tool_proficiencies", r.getToolProficiencies());
+            checkFeatures(where, r.getFeatures());
             checkChoices(where, r.getPlayerChoices());
             if (r.getSubraces() == null) continue;
             for (DndSubRace sub : r.getSubraces().values()) {

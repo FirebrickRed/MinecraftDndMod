@@ -29,6 +29,7 @@ public class ActiveEffect {
     // constructor: a new always-on flag is just a new key both here and in FeatureParser.
     private final Set<String> flags;
     private final boolean stacks;              // false = a second copy refreshes instead of adding
+    private final AcFormula armorClass;        // another way to work out AC (Unarmored Defense, #220), or null
 
     // ---- duration ----
     private int roundsRemaining;               // -1 = no round timer (DM/rest-ended)
@@ -40,7 +41,8 @@ public class ActiveEffect {
     public ActiveEffect(String sourceId, String sourceName, Set<String> resistances, Set<String> advantageOn,
                         Set<String> disadvantageOn, int bonusDamage, String bonusDamageWhen,
                         String minecraftEffect, int minecraftAmplifier, Set<String> flags, boolean stacks,
-                        int roundsRemaining, Set<String> maintainedBy, String untilRest, boolean untilUsed) {
+                        int roundsRemaining, Set<String> maintainedBy, String untilRest, boolean untilUsed,
+                        AcFormula armorClass) {
         this.sourceId = sourceId;
         this.sourceName = sourceName;
         this.resistances = lower(resistances);
@@ -56,6 +58,7 @@ public class ActiveEffect {
         this.maintainedBy = lower(maintainedBy);
         this.untilRest = untilRest == null ? null : untilRest.toLowerCase();
         this.untilUsed = untilUsed;
+        this.armorClass = armorClass;
     }
 
     private static Set<String> lower(Set<String> in) {
@@ -68,7 +71,7 @@ public class ActiveEffect {
     public ActiveEffect copy() {
         return new ActiveEffect(sourceId, sourceName, resistances, advantageOn, disadvantageOn, bonusDamage,
                 bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks, roundsRemaining,
-                maintainedBy, untilRest, untilUsed);
+                maintainedBy, untilRest, untilUsed, armorClass);
     }
 
     /**
@@ -87,6 +90,8 @@ public class ActiveEffect {
     public boolean rerollsNat1() { return hasFlag("reroll_natural_1"); }
     public boolean hasExtraCritDie() { return hasFlag("extra_crit_die"); }
     public boolean enduresBelow1() { return hasFlag("endure_below_1"); }
+    /** An alternative AC formula this effect grants (#220), or null. */
+    public AcFormula getArmorClass() { return armorClass; }
 
     // ---- queries (read sites) ----
     public boolean resists(String damageType) {
@@ -135,6 +140,7 @@ public class ActiveEffect {
                 + (bonusDamageWhen != null ? " (" + bonusDamageWhen.replace('_', ' ') + ")" : ""));
         if (!advantageOn.isEmpty()) parts.add("Advantage on " + String.join(", ", advantageOn).replace('_', ' '));
         if (!disadvantageOn.isEmpty()) parts.add("Disadvantage on " + String.join(", ", disadvantageOn).replace('_', ' '));
+        if (armorClass != null) parts.add("AC " + armorClass.describe());
         return parts;
     }
 

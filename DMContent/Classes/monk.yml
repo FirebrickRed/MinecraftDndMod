@@ -17,6 +17,15 @@ class_resources:
     max_by_level: [0, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20]
     recovery: short_rest
     material: glowstone_dust
+# Structured, usable features (Effect Engine, #70). features_by_level below is display text only.
+features:
+  - id: unarmored_defense
+    name: Unarmored Defense
+    activation: passive
+    apply:
+      effects:
+        # 10 + DEX + WIS with no armor and no shield (PHB p.78).
+        armor_class: { base: 10, add: [dexterity, wisdom], requires: [no_armor, no_shield] }
 features_by_level:
   1:
     - name: Unarmored Defense

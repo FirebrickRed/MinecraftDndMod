@@ -34,7 +34,7 @@ player_choices:
 #
 # The book lets the player pick Intelligence, Wisdom or Charisma as the casting ability for these.
 # That pick can't be expressed in YAML yet, so every element uses Wisdom for now (the monk's and
-# cleric's stat). Change casting_ability below if your table wants another. See #193.
+# cleric's stat). Change casting_ability below if your table wants another. See #193 and #222.
 subraces:
   air:
     name: Air Genasi
