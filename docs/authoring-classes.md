@@ -102,6 +102,23 @@ and grants resistance plus bonus damage, activated with `/combat use rage`. The 
 depth (costs, durations, effects, AoE actions). Copy from `barbarian.yml` (Rage) or `dragonborn.yml`
 (Breath Weapon) until it gets a guide of its own.
 
+### Advantage and disadvantage (`advantage_on`, `disadvantage_on`, #223)
+
+An effect lists the rolls it affects by **roll tag**. Rage's is `advantage_on: [str_checks, str_saves]`.
+
+| Tag | Rolls |
+|---|---|
+| `str_checks` … `cha_checks` | that ability's checks, including its skills and tool checks |
+| `checks` | every ability check |
+| `str_saves` … `cha_saves` | that ability's saves |
+| `saves` | every save |
+| `attacks` | attack rolls |
+| `initiative` | initiative (a DEX check, so `dex_checks` covers it too) |
+
+It works on a passive feature (always on) and on a live effect (only while it lasts). The roll says
+where it came from ("↑ Advantage: Rage"), and advantage plus disadvantage cancel as usual. A
+misspelt tag is a console warning on `/dm reload`.
+
 ### Another way to work out AC (`armor_class`, #220)
 
 Unarmored Defense, natural armor and the like are a passive feature with an `armor_class:` effect:

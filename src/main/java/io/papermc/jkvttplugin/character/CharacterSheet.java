@@ -1999,13 +1999,22 @@ public class CharacterSheet {
             }
         }
     }
-    public boolean hasAdvantageOn(String rollTag) {
-        for (var e : activeEffects) if (e.givesAdvantageOn(rollTag)) return true;
-        return false;
+    /**
+     * The name of what gives advantage on a roll carrying any of {@code rollTags} (Rage on a STR
+     * check), from passive features and live effects, or null (#223). Tags: {@link io.papermc.jkvttplugin.effect.RollTags}.
+     */
+    public String effectAdvantageSource(List<String> rollTags) {
+        for (var e : standingEffects()) {
+            for (String t : rollTags) if (e.getValue().givesAdvantageOn(t)) return e.getKey();
+        }
+        return null;
     }
-    public boolean hasDisadvantageOn(String rollTag) {
-        for (var e : activeEffects) if (e.givesDisadvantageOn(rollTag)) return true;
-        return false;
+    /** As {@link #effectAdvantageSource}, for disadvantage. */
+    public String effectDisadvantageSource(List<String> rollTags) {
+        for (var e : standingEffects()) {
+            for (String t : rollTags) if (e.getValue().givesDisadvantageOn(t)) return e.getKey();
+        }
+        return null;
     }
     /**
      * Whether an always-on boolean primitive (e.g. "reroll_natural_1") is granted by a passive

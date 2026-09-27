@@ -256,6 +256,13 @@ public final class ContentValidator {
             }
             if (!f.hasApply()) continue;
             var e = f.getApplyTemplate();
+            java.util.Set<String> tags = new java.util.TreeSet<>(e.getAdvantageOn());
+            tags.addAll(e.getDisadvantageOn());
+            for (String t : tags) {
+                if (!io.papermc.jkvttplugin.effect.RollTags.ALL.contains(t)) {
+                    warn(at + " advantage_on/disadvantage_on: '" + t + "' isn't a roll tag (e.g. str_checks, dex_saves, saves, attacks, initiative).");
+                }
+            }
             if (e.getArmorClass() != null) {
                 for (String p : e.getArmorClass().getProblems()) warn(at + " armor_class: " + p + ".");
             }

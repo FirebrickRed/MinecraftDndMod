@@ -97,6 +97,8 @@ public class ActiveEffect {
     /** An alternative AC formula this effect grants (#220), or null. */
     public AcFormula getArmorClass() { return armorClass; }
     public UnarmedStrike getUnarmedStrike() { return unarmedStrike; }
+    public Set<String> getAdvantageOn() { return advantageOn; }
+    public Set<String> getDisadvantageOn() { return disadvantageOn; }
     public WeaponAbility getWeaponAbility() { return weaponAbility; }
 
     // ---- queries (read sites) ----

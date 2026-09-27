@@ -148,10 +148,19 @@ public class Combatant {
         return out;
     }
 
-    /** Initiative is a DEX check, so unproficient armor gives disadvantage on it (#209). */
+    /**
+     * Initiative is a DEX check: unproficient armor gives disadvantage on it (#209), and an effect on
+     * initiative or DEX checks gives either (#223).
+     */
     public Advantage initiativeAdvantage() {
         CharacterSheet s = isPlayer() ? getCharacterSheet() : null;
-        return s != null && s.armorPenaltyApplies(Ability.DEXTERITY) ? Advantage.DISADVANTAGE : Advantage.NONE;
+        if (s == null) return Advantage.NONE;
+        Advantage adv = Advantage.NONE;
+        if (s.armorPenaltyApplies(Ability.DEXTERITY)) adv = adv.with(false);
+        var tags = io.papermc.jkvttplugin.effect.RollTags.initiative();
+        if (s.effectAdvantageSource(tags) != null) adv = adv.with(true);
+        if (s.effectDisadvantageSource(tags) != null) adv = adv.with(false);
+        return adv;
     }
 
     private static int calculatePlayerInitiativeBonus(CharacterSheet sheet) {
@@ -667,6 +676,9 @@ public class Combatant {
         // here in that armor at all — casting is refused.)
         CharacterSheet s = getCharacterSheet();
         if (s != null && s.armorPenaltyReason() != null) adv = adv.with(false);
+        // An effect on attack rolls (#223).
+        if (s != null && s.effectAdvantageSource(io.papermc.jkvttplugin.effect.RollTags.attack()) != null) adv = adv.with(true);
+        if (s != null && s.effectDisadvantageSource(io.papermc.jkvttplugin.effect.RollTags.attack()) != null) adv = adv.with(false);
         return adv;
     }
 
@@ -685,6 +697,10 @@ public class Combatant {
         if (s != null && s.armorPenaltyReason() != null) {
             notes.add("Armor (you): disadvantage, " + s.armorPenaltyReason());
         }
+        String boon = s != null ? s.effectAdvantageSource(io.papermc.jkvttplugin.effect.RollTags.attack()) : null;
+        if (boon != null) notes.add(boon + " (you): advantage on attacks");
+        String bane = s != null ? s.effectDisadvantageSource(io.papermc.jkvttplugin.effect.RollTags.attack()) : null;
+        if (bane != null) notes.add(bane + " (you): disadvantage on attacks");
         return notes;
     }
 
@@ -702,6 +718,9 @@ public class Combatant {
         CharacterSheet s = getCharacterSheet();
         if (s != null && s.hasSaveAdvantageVs(tags)) adv = adv.with(true);
         if (s != null && s.armorPenaltyApplies(ability)) adv = adv.with(false); // #209: STR/DEX saves
+        // An effect on this save (Rage: STR saves, #223).
+        if (s != null && s.effectAdvantageSource(io.papermc.jkvttplugin.effect.RollTags.save(ability)) != null) adv = adv.with(true);
+        if (s != null && s.effectDisadvantageSource(io.papermc.jkvttplugin.effect.RollTags.save(ability)) != null) adv = adv.with(false);
         return adv;
     }
 

@@ -99,6 +99,11 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
       "only targets you" (only checked in a fight before).
 - [ ] Touch spells reach one block further than before in a fight (5 ft of slack, same as out of one).
 
+### Rage's advantage (#223)
+- [ ] A barbarian rages (`/combat use rage`), then rolls Athletics from the sheet: the line shows
+      **↑ advantage: Rage** and the roll is 2d20 keep-higher. A STR save in the fight too.
+- [ ] Not raging, or a DEX check while raging: a normal roll.
+
 ### Choices that grant things (#222)
 - [ ] Create a **fire genasi**: the Extra tab has **Spellcasting Ability** (Intelligence / Wisdom /
       Charisma). Pick Charisma → the spellbook's Produce Flame uses CHA.

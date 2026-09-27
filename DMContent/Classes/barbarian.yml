@@ -30,7 +30,7 @@ features:
       duration: { rounds: 10, maintained_by: [attacked, took_damage] }
       effects:
         resistance: [bludgeoning, piercing, slashing]  # halved while raging
-        advantage_on: [str_checks, str_saves]          # (wiring for adv is a later slice)
+        advantage_on: [str_checks, str_saves]          # Athletics and STR saves roll with advantage
         bonus_damage: { amount: 2, when: melee_str }    # +2 on melee STR hits
         minecraft_effect: STRENGTH                       # red-tint feedback while active
   - id: unarmored_defense

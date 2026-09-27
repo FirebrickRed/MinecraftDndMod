@@ -38,6 +38,8 @@ public class RollOptionsMenuHandler {
                 .append(Component.text("(" + info.breakdown.trim() + ") ", NamedTextColor.GRAY));
         String penalty = penaltyReason(character, type, value);
         if (penalty != null) line = line.append(Component.text("↯ disadvantage: " + penalty + " ", NamedTextColor.RED));
+        String boon = boonReason(character, type, value);
+        if (boon != null) line = line.append(Component.text("↑ advantage: " + boon + " ", NamedTextColor.GREEN));
         for (RollMode mode : RollMode.values()) {
             String label = switch (mode) { case NORMAL -> "[Normal]"; case ADVANTAGE -> "[Advantage]"; case DISADVANTAGE -> "[Disadvantage]"; };
             NamedTextColor color = switch (mode) { case NORMAL -> NamedTextColor.WHITE; case ADVANTAGE -> NamedTextColor.GREEN; case DISADVANTAGE -> NamedTextColor.RED; };
@@ -92,6 +94,13 @@ public class RollOptionsMenuHandler {
             Player owner = Bukkit.getPlayer(character.getPlayerId());
             if (owner != null) owner.sendMessage(Component.text("↯ Disadvantage: " + penalty + ".", NamedTextColor.RED));
         }
+        // An effect granting advantage (Rage on a STR check, #223).
+        String boon = boonReason(character, type, value);
+        if (boon != null) {
+            advantage = advantage.with(true);
+            Player owner = Bukkit.getPlayer(character.getPlayerId());
+            if (owner != null) owner.sendMessage(Component.text("↑ Advantage: " + boon + ".", NamedTextColor.GREEN));
+        }
         RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown,
                 character.rerollsNat1(), advantage, forceAuto);
         if (r == null) return false;
@@ -128,16 +137,31 @@ public class RollOptionsMenuHandler {
     private static String penaltyReason(CharacterSheet character, String type, String value) {
         Ability a = abilityOf(type, value);
         if (a != null && character.armorPenaltyApplies(a)) return character.armorPenaltyReason();
-        return character.conditionDisadvantageOn("SAVE".equals(type), a);
+        String condition = character.conditionDisadvantageOn("SAVE".equals(type), a);
+        if (condition != null) return condition;
+        return character.effectDisadvantageSource(rollTags(type, a));
     }
 
-    /** Fold a disadvantage into a menu roll mode (5e: advantage + disadvantage → normal). */
+    /** What gives this roll advantage (an effect such as Rage, #223), or null. */
+    private static String boonReason(CharacterSheet character, String type, String value) {
+        return character.effectAdvantageSource(rollTags(type, abilityOf(type, value)));
+    }
+
+    /** A save is a save; a skill, check or tool check is an ability check. */
+    private static java.util.List<String> rollTags(String type, Ability a) {
+        return "SAVE".equals(type) ? io.papermc.jkvttplugin.effect.RollTags.save(a) : io.papermc.jkvttplugin.effect.RollTags.check(a);
+    }
+
+    /** Fold a disadvantage and an advantage into a menu roll mode (5e: one of each cancels out). */
     private static RollMode withPenalties(CharacterSheet character, String type, String value, RollMode mode) {
-        if (penaltyReason(character, type, value) == null) return mode;
-        return switch (mode) {
-            case ADVANTAGE -> RollMode.NORMAL;
-            default -> RollMode.DISADVANTAGE;
+        io.papermc.jkvttplugin.combat.Advantage adv = switch (mode) {
+            case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
+            case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
+            default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
         };
+        if (penaltyReason(character, type, value) != null) adv = adv.with(false);
+        if (boonReason(character, type, value) != null) adv = adv.with(true);
+        return adv.isAdvantage() ? RollMode.ADVANTAGE : adv.isDisadvantage() ? RollMode.DISADVANTAGE : RollMode.NORMAL;
     }
 
     /** Report a DM-called check to the DM (with success/fail vs the private DC) + a Share button. */
