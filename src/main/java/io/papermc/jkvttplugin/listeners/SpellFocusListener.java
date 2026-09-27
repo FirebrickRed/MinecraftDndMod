@@ -31,8 +31,7 @@ public class SpellFocusListener implements Listener {
         // Right-clicking a chest or door with thieves' tools (or anything that doubles as a focus) is
         // using the block, not casting: leave it to the chest's [Open it] / [Ask for a check] prompt.
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK && event.getClickedBlock() != null
-                && (event.getClickedBlock().getState() instanceof org.bukkit.block.Container
-                    || event.getClickedBlock().getType().isInteractable())) return;
+                && io.papermc.jkvttplugin.util.Util.isUsableBlock(event.getClickedBlock())) return;
 
         if (openSpellbook(player, item)) event.setCancelled(true);
     }

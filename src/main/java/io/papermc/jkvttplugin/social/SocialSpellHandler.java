@@ -18,7 +18,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.List;
@@ -121,14 +121,14 @@ public class SocialSpellHandler implements Listener {
     // ==================== CHAT CAPTURE ====================
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onChat(AsyncPlayerChatEvent event) {
+    public void onChat(AsyncChatEvent event) {
         Pending p = pending.get(event.getPlayer().getUniqueId());
         if (p == null) return;
 
         event.setCancelled(true);
         pending.remove(event.getPlayer().getUniqueId());
         Player caster = event.getPlayer();
-        String words = event.getMessage().trim();
+        String words = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
         // Hop back to the main thread — chat events are async, but sending messages / effects isn't safe off it.
         Bukkit.getScheduler().runTask(JkVttPlugin.getInstance(), () -> {
             if (words.equalsIgnoreCase("cancel")) {

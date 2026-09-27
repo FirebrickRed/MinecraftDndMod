@@ -164,8 +164,10 @@ public class WeaponListener implements Listener {
         DndWeapon weapon = WeaponLoader.getWeapon(bowId);
         if (weapon == null || !weapon.isRanged()) return;
 
+        // Cancelling stops the shot. (setConsumeItem(false) used to sit here to hand the arrow back, but
+        // Paper documents it as not functional, so it never did; whether a refused draw costs an arrow is
+        // a TEST_PLAN check.) updateInventory resyncs the client, which may already show the arrow gone.
         event.setCancelled(true);
-        event.setConsumeItem(false); // the draw already took the arrow; don't let a refused shot spend it
         if (event.getEntity() instanceof Player shooter) {
             shooter.updateInventory();
             shooter.sendActionBar(Component.text(weapon.getName()

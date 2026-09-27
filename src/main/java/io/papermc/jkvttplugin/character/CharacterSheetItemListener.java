@@ -31,7 +31,7 @@ public class CharacterSheetItemListener implements Listener {
         // playtest hit as "chests won't open". Let vanilla have those clicks; the sheet still opens
         // on an air-click or a plain block.
         org.bukkit.block.Block clicked = event.getClickedBlock();
-        if (clicked != null && clicked.getType().isInteractable()) return;
+        if (io.papermc.jkvttplugin.util.Util.isUsableBlock(clicked)) return;
 
         event.setCancelled(true);
         open(player, item);

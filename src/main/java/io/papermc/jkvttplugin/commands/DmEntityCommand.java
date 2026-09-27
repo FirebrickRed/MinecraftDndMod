@@ -578,7 +578,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        player.openMerchant(merchant, true);
+        ShopGuiUtil.open(player, merchant, instance.getDisplayName());
     }
 
     // ==================== SHOP SUBCOMMAND ====================

@@ -287,7 +287,7 @@ public class ShopListener implements Listener {
 
         if (refreshedMerchant != null) {
             // Reopen merchant GUI with updated recipes
-            player.openMerchant(refreshedMerchant, true);
+            ShopGuiUtil.open(player, refreshedMerchant, entityInstance.getDisplayName());
         }
     }
 }

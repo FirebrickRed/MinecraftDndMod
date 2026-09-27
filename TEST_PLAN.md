@@ -99,6 +99,20 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
       "only targets you" (only checked in a fight before).
 - [ ] Touch spells reach one block further than before in a fight (5 ft of slack, same as out of one).
 
+### After the deprecation clean-up (replaced Paper APIs)
+- [ ] **Shop:** `/dm entity trade Balin` opens the trading screen titled "Balin"; buy and sell once
+      (the screen reopens with updated stock).
+- [ ] **Chat input:** the character-name step in creation takes your typed name; a Message spell
+      takes the words you type.
+- [ ] **Rage** still tints red (the Strength effect) and it goes when the rage ends.
+- [ ] **Item tooltips:** a sword, leather armor, a shield and a potion show only the D&D lines, no
+      vanilla "attack damage" / "Dyed" / banner / "No Effects" lines.
+- [ ] **Right-click with the sheet or a spell focus** on a chest, door, lever and crafting table uses
+      the block; on grass or stone it opens the sheet / spellbook (a fence now counts as plain block).
+- [ ] **Bow in combat:** draw and release a real bow shot → refused, nothing fires. Count your
+      arrows before and after: does a refused draw cost one? (The old "give it back" call never
+      worked, per Paper, so this is to find out, not a regression.)
+
 ### Rage's advantage (#223)
 - [ ] A barbarian rages (`/combat use rage`), then rolls Athletics from the sheet: the line shows
       **↑ advantage: Rage** and the roll is 2d20 keep-higher. A STR save in the fight too.

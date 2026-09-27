@@ -3,7 +3,6 @@ package io.papermc.jkvttplugin.util;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer;
 import org.bukkit.Material;
-import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 
@@ -23,16 +22,25 @@ import java.util.function.Function;
 // Option 2: Rename to be more specific: StringUtil, InventoryUtil, MenuItemUtil
 // Option 3: Split Util into ItemFactory, StringNormalizer, and InventoryHelper
 public class Util {
+    /**
+     * A Minecraft potion effect by its YAML name (STRENGTH, slowness, minecraft:blindness), or null if
+     * there's no such effect. The registry lookup replaces the deprecated PotionEffectType.getByName.
+     */
+    public static org.bukkit.potion.PotionEffectType effectType(String name) {
+        if (name == null || name.isBlank()) return null;
+        org.bukkit.NamespacedKey key = org.bukkit.NamespacedKey.fromString(name.trim().toLowerCase(java.util.Locale.ROOT));
+        return key == null ? null : org.bukkit.Registry.MOB_EFFECT.get(key);
+    }
+
     public static ItemStack createItem(Component displayName, List<Component> lore, String itemModelName, int quantity) {
         ItemStack item = quantity <= 0 ? new ItemStack(Material.PAPER) : new ItemStack(Material.PAPER, quantity);
         ItemMeta meta = item.getItemMeta();
 
         meta.displayName(displayName);
         meta.lore(lore);
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
         item.setItemMeta(meta);
+        hideVanillaTooltip(item);
         // NOTE: itemModelName is NOT applied here. `icon` means different things per item
         // type (a Material name for DndItem, a model name for weapons/armor), so applying it
         // blindly renders broken (purple) icons. Custom equipment models are opt-in via
@@ -46,11 +54,55 @@ public class Util {
 
         meta.displayName(displayName);
         meta.lore(lore);
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-        meta.addItemFlags(ItemFlag.HIDE_ADDITIONAL_TOOLTIP);
 
         item.setItemMeta(meta);
+        hideVanillaTooltip(item);
         return item; // see the single-arg overload: model application is intentionally omitted
+    }
+
+    /**
+     * Hide the vanilla tooltip lines a D&D item shouldn't show: Minecraft's attack damage and armor
+     * values, and the extra lines some materials add (a potion's "No Effects", dyed leather, a shield's
+     * banner, a book's author). One TooltipDisplay component, which replaced ItemFlag.HIDE_ATTRIBUTES and
+     * the removed HIDE_ADDITIONAL_TOOLTIP (the flags now write this same component).
+     */
+    public static void hideVanillaTooltip(ItemStack item) {
+        item.setData(io.papermc.paper.datacomponent.DataComponentTypes.TOOLTIP_DISPLAY,
+                io.papermc.paper.datacomponent.item.TooltipDisplay.tooltipDisplay()
+                        .addHiddenComponents(
+                                io.papermc.paper.datacomponent.DataComponentTypes.ATTRIBUTE_MODIFIERS,
+                                io.papermc.paper.datacomponent.DataComponentTypes.POTION_CONTENTS,
+                                io.papermc.paper.datacomponent.DataComponentTypes.DYED_COLOR,
+                                io.papermc.paper.datacomponent.DataComponentTypes.BANNER_PATTERNS,
+                                io.papermc.paper.datacomponent.DataComponentTypes.BASE_COLOR,
+                                io.papermc.paper.datacomponent.DataComponentTypes.WRITTEN_BOOK_CONTENT,
+                                io.papermc.paper.datacomponent.DataComponentTypes.STORED_ENCHANTMENTS,
+                                io.papermc.paper.datacomponent.DataComponentTypes.FIREWORKS,
+                                io.papermc.paper.datacomponent.DataComponentTypes.TRIM)
+                        .build());
+    }
+
+    /**
+     * A block a right-click means to <b>use</b>, so a held item (the character sheet, a spell focus)
+     * should leave the click alone: anything with an inventory, doors / trapdoors / gates, buttons
+     * and levers, beds, and the workstations. Replaces Material/BlockType.isInteractable(), which Paper
+     * deprecated with no replacement (it also counted fences and stairs, which nobody "uses").
+     */
+    public static boolean isUsableBlock(org.bukkit.block.Block block) {
+        if (block == null) return false;
+        if (block.getState() instanceof org.bukkit.block.Container) return true;
+        org.bukkit.block.data.BlockData data = block.getBlockData();
+        if (data instanceof org.bukkit.block.data.Openable
+                || data instanceof org.bukkit.block.data.type.Switch
+                || data instanceof org.bukkit.block.data.type.Bed) return true;
+        Material m = block.getType();
+        return org.bukkit.Tag.ANVIL.isTagged(m) || switch (m) {
+            case CRAFTING_TABLE, ENCHANTING_TABLE, LECTERN, BELL, NOTE_BLOCK, REPEATER, COMPARATOR,
+                 CARTOGRAPHY_TABLE, GRINDSTONE, LOOM, SMITHING_TABLE, STONECUTTER, BEACON, JUKEBOX,
+                 RESPAWN_ANCHOR, LODESTONE, ENDER_CHEST, CAULDRON, WATER_CAULDRON, LAVA_CAULDRON,
+                 CRAFTER, CAKE, FLOWER_POT, CHISELED_BOOKSHELF, DECORATED_POT -> true;
+            default -> false;
+        };
     }
 
     /** Parse a Bukkit Material by name (case-insensitive), returning {@code fallback} if null/blank/invalid. */

@@ -29,6 +29,19 @@ public class ShopGuiUtil {
     private static final Map<Merchant, DndEntityInstance> activeMerchants = new HashMap<>();
 
     /**
+     * Open the trading screen for {@code merchant}, titled with the merchant's name. MenuType.MERCHANT
+     * replaced the deprecated HumanEntity.openMerchant; not checking reach matches its old force=true.
+     */
+    public static void open(org.bukkit.entity.Player player, Merchant merchant, String title) {
+        var view = org.bukkit.inventory.MenuType.MERCHANT.builder()
+                .merchant(merchant)
+                .title(Component.text(title))
+                .checkReachable(false)
+                .build(player);
+        player.openInventory(view);
+    }
+
+    /**
      * Creates a Bukkit Merchant from a ShopConfig and entity instance.
      *
      * @param shopConfig The shop configuration to convert
@@ -42,7 +55,7 @@ public class ShopGuiUtil {
             return null;
         }
 
-        Merchant merchant = Bukkit.createMerchant(Component.text(merchantName));
+        Merchant merchant = Bukkit.createMerchant(); // the title goes on the screen, in open()
         List<MerchantRecipe> recipes = new ArrayList<>();
 
         // Convert each ShopItem to a MerchantRecipe (merchant selling TO player)
