@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 This is a Paper/Spigot Minecraft plugin that transforms Minecraft into a virtual tabletop for D&D 5th Edition. Players can create D&D characters following 5e rules, manage equipment, cast spells, and engage in combat mechanics—all within Minecraft.
 
-**Target Platform:** PaperMC 1.21.8 (Java 21)
+**Target Platform:** PaperMC 26.2 (Java 25). The build downloads JDK 25 itself (Gradle toolchain + foojay in `settings.gradle`); the server needs Java 25 to run.
 
 ## ⚠️ Pre-Alpha Development Status
 

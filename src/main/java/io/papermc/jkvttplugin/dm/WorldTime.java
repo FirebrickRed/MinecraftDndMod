@@ -90,10 +90,10 @@ public final class WorldTime {
     }
 
     public static boolean isRunning(World world) {
-        return !Boolean.FALSE.equals(world.getGameRuleValue(GameRule.DO_DAYLIGHT_CYCLE));
+        return !Boolean.FALSE.equals(world.getGameRuleValue(org.bukkit.GameRules.ADVANCE_TIME));
     }
 
     public static void setRunning(World world, boolean running) {
-        world.setGameRule(GameRule.DO_DAYLIGHT_CYCLE, running);
+        world.setGameRule(org.bukkit.GameRules.ADVANCE_TIME, running);
     }
 }

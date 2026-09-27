@@ -1,1 +1,7 @@
+plugins {
+    // Lets Gradle download the JDK the build asks for (Java 25 for Paper 26.x) into its own cache,
+    // so building doesn't depend on which Java happens to be installed.
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 rootProject.name = 'jkvttplugin'
