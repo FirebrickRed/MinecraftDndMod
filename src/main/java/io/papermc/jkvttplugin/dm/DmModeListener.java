@@ -56,6 +56,19 @@ public class DmModeListener implements Listener {
             DmModeManager.giveCombatPage(player);
         } else if (DmModeManager.TOOL_PAGE_EXPLORE.equals(tool)) {
             DmModeManager.giveExplorePage(player);
+        } else if (DmModeManager.TOOL_PAGE_TIME.equals(tool)) {
+            DmModeManager.giveTimePage(player);
+        } else if (DmModeManager.TOOL_TIME_TOGGLE.equals(tool)) {
+            player.performCommand("dm time " + (WorldTime.isRunning(player.getWorld()) ? "stop" : "start"));
+            DmModeManager.giveTimePage(player); // the toggle names the state it's in
+        } else if (DmModeManager.TOOL_TIME_10M.equals(tool) || DmModeManager.TOOL_TIME_1H.equals(tool)) {
+            int minutes = DmModeManager.TOOL_TIME_1H.equals(tool) ? 60 : 10;
+            TimeCommand.shift(player, player.getWorld(), player.isSneaking() ? -minutes : minutes, true);
+        } else if (DmModeManager.TOOL_TIME_CUSTOM.equals(tool)) {
+            TimeDialog.open(player);
+        } else if (DmModeManager.TOOL_RELEASE.equals(tool)) {
+            if (toolDebounced(player)) return; // this click already handled via the entity event
+            PossessionManager.unpossess(player);
         } else if (DmModeManager.TOOL_BACK.equals(tool)) {
             DmModeManager.giveTools(player);
         } else if (DmModeManager.TOOL_VIEW.equals(tool)) {
@@ -231,6 +244,10 @@ public class DmModeListener implements Listener {
             event.setCancelled(true);
             if (toolDebounced(player)) return;
             view(player, event.getRightClicked());
+        } else if (DmModeManager.TOOL_RELEASE.equals(tool)) {
+            event.setCancelled(true);
+            if (toolDebounced(player)) return;
+            PossessionManager.unpossess(player);
         } else if (DmModeManager.TOOL_ADJUST.equals(tool)) {
             event.setCancelled(true);
             if (toolDebounced(player)) return;
@@ -308,13 +325,6 @@ public class DmModeListener implements Listener {
 
         boolean member = session.getCombatants().stream().anyMatch(c -> c.getId().equals(id));
         dm.performCommand("combat " + (member ? "remove " : "add ") + name);
-    }
-
-    @EventHandler
-    public void onSneak(org.bukkit.event.player.PlayerToggleSneakEvent event) {
-        if (event.isSneaking() && PossessionManager.isPossessing(event.getPlayer().getUniqueId())) {
-            PossessionManager.unpossess(event.getPlayer());
-        }
     }
 
     /** While possessing, F (swap hands) toggles whether the DM can see their own model (F5 to view). */

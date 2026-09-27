@@ -47,6 +47,13 @@ public class DmModeManager {
     public static final String TOOL_PAGE_COMBAT = "page_combat";
     public static final String TOOL_PAGE_EXPLORE = "page_explore";
     public static final String TOOL_BACK = "page_back";
+    public static final String TOOL_PAGE_TIME = "page_time";
+    public static final String TOOL_TIME_TOGGLE = "time_toggle";
+    public static final String TOOL_TIME_10M = "time_10m";
+    public static final String TOOL_TIME_1H = "time_1h";
+    public static final String TOOL_TIME_CUSTOM = "time_custom";
+    // While possessing: the last hotbar slot lets go (sneak used to, which left the possessed NPC unable to sneak).
+    public static final String TOOL_RELEASE = "release";
 
     private static final Set<UUID> inDmMode = new HashSet<>();
 
@@ -95,9 +102,9 @@ public class DmModeManager {
      * crashed). Restore their real inventory and leave them OUT of DM mode.
      */
     public static void recoverOnJoin(Player player) {
-        // A crash mid-possession can leave the persisted invisibility/scale on the player even when
-        // no snapshot exists; always scrub those so nobody logs in invisible or shrunk.
-        PossessionManager.clearPossessionEffects(player);
+        // A crash mid-possession can leave possession's invisibility/scale on the player even when no
+        // snapshot exists; put back what they had before (a no-op if they weren't possessing).
+        PossessionManager.restoreEffectsBefore(player);
         if (snapshotFile(player.getUniqueId()).exists()) {
             inDmMode.remove(player.getUniqueId());
             player.getInventory().clear();
@@ -163,6 +170,8 @@ public class DmModeManager {
                 "Right-click an entity to control it", "Right-click again (or Exit) to let go"));
         player.getInventory().setItem(4, tool(Material.TRIPWIRE_HOOK, TOOL_PAGE_EXPLORE, "Exploration Tools",
                 "Right-click to open the exploration toolbar", "(Annotate Object, …)"));
+        player.getInventory().setItem(5, tool(Material.CLOCK, TOOL_PAGE_TIME, "Time",
+                "Right-click to open the time toolbar", "(stop or start the clock, move it forward)"));
         player.getInventory().setItem(8, tool(Material.BARRIER, TOOL_EXIT, "Exit DM Mode",
                 "Right-click to leave DM mode", "(gives your normal inventory back)"));
     }
@@ -176,10 +185,10 @@ public class DmModeManager {
         // NB: not a NAME_TAG — vanilla would stamp the tool's name onto the clicked mob.
         player.getInventory().setItem(1, tool(Material.BOOK, TOOL_ADD, "Add / Remove Combatant",
                 "Right-click a player or entity to add them (they glow)", "Right-click again to remove them"));
-        player.getInventory().setItem(2, tool(Material.CLOCK, TOOL_INITIATIVE, "Roll for Initiative",
+        player.getInventory().setItem(2, tool(Material.BELL, TOOL_INITIATIVE, "Roll for Initiative",
                 "Right-click to roll initiative", "(begins turns for everyone added)"));
         player.getInventory().setItem(3, tool(Material.LEAD, TOOL_POSSESS, "Possess",
-                "Right-click an entity → control it", "(you go invisible, it follows you; sneak to stop)"));
+                "Right-click an entity → control it", "(you go invisible, it follows you;", "the last hotbar slot lets go)"));
         player.getInventory().setItem(4, tool(Material.LEATHER_BOOTS, TOOL_MOVE, "Move",
                 "Right-click entities to select them (they glow)", "then right-click the ground to send them there",
                 "(in combat: only on that entity's turn, counts vs speed)"));
@@ -210,6 +219,33 @@ public class DmModeManager {
                 "Right-click to return to the tool categories"));
     }
 
+    /**
+     * Time page: stop/start the clock, move it forward (sneak = back), or a custom amount. The
+     * clock item names the state it's in, so the page is rebuilt after a toggle.
+     */
+    public static void giveTimePage(Player player) {
+        clearHotbar(player);
+        boolean running = WorldTime.isRunning(player.getWorld());
+        player.getInventory().setItem(0, running
+                ? tool(Material.REDSTONE_TORCH, TOOL_TIME_TOGGLE, "Stop the Clock",
+                        "The day is running on its own (20 real minutes a day)",
+                        "Right-click to stop it: time then only moves when you move it")
+                : tool(Material.LEVER, TOOL_TIME_TOGGLE, "Start the Clock",
+                        "The clock is stopped: time only moves when you move it",
+                        "Right-click to let the day run on its own again"));
+        player.getInventory().setItem(2, tool(Material.FEATHER, TOOL_TIME_10M, "+10 Minutes",
+                "Right-click: 10 minutes forward", "Sneak + right-click: 10 minutes back"));
+        player.getInventory().setItem(3, tool(Material.SUNFLOWER, TOOL_TIME_1H, "+1 Hour",
+                "Right-click: an hour forward", "Sneak + right-click: an hour back"));
+        player.getInventory().setItem(4, tool(Material.WRITABLE_BOOK, TOOL_TIME_CUSTOM, "Other Amount…",
+                "Right-click: pick hours and minutes, forward or back",
+                "(a rest moves it too: /dm rest all long 8h)"));
+        player.getInventory().setItem(8, tool(Material.ARROW, TOOL_BACK, "◀ Back",
+                "Right-click to return to the tool categories"));
+        player.sendActionBar(Component.text("🕰 " + WorldTime.now(player.getWorld()), NamedTextColor.YELLOW)
+                .append(Component.text(running ? "  (clock running)" : "  (clock stopped)", NamedTextColor.GRAY)));
+    }
+
     /** The Adjust tool (#175): on every page, since fixing HP or a condition isn't only a combat job. */
     private static ItemStack adjustTool() {
         return tool(Material.BLAZE_ROD, TOOL_ADJUST, "Adjust",
@@ -222,7 +258,7 @@ public class DmModeManager {
         for (int i = 0; i <= 8; i++) player.getInventory().setItem(i, null);
     }
 
-    private static ItemStack tool(Material material, String toolId, String name, String... loreLines) {
+    static ItemStack tool(Material material, String toolId, String name, String... loreLines) {
         ItemStack item = new ItemStack(material);
         ItemMeta meta = item.getItemMeta();
         meta.displayName(Component.text(name, NamedTextColor.AQUA, TextDecoration.BOLD).decoration(TextDecoration.ITALIC, false));

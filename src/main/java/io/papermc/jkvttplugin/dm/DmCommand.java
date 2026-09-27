@@ -35,6 +35,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final CheckCommand checkExec = new CheckCommand();
     private final ObjectCommand objectExec = new ObjectCommand();
     private final RestCommand restExec = new RestCommand();
+    private final TimeCommand timeExec = new TimeCommand();
     private final RestoreResourceCommand restoreExec = new RestoreResourceCommand();
     private final ConsumeResourceCommand consumeExec = new ConsumeResourceCommand();
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
@@ -45,7 +46,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final io.papermc.jkvttplugin.commands.DmEntityCommand entityExec = new io.papermc.jkvttplugin.commands.DmEntityCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "adjust", "view", "note", "revive", "entity", "object", "lootprompt", "rest", "resource", "reload", "mode", "animalreply");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "adjust", "view", "note", "revive", "entity", "object", "lootprompt", "rest", "time", "resource", "reload", "mode", "animalreply");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -70,6 +71,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "object" -> delegateDm(sender, command, label, args, objectExec);
             case "tp", "goto" -> handleTp(sender, args);
             case "rest" -> delegateDm(sender, command, label, args, restExec);
+            case "time" -> delegateDm(sender, command, label, args, timeExec);
             case "reload" -> delegateDm(sender, command, label, args, reloadExec);
             case "resource" -> handleResource(sender, command, label, args);
             case "mode" -> handleInventory(sender);
@@ -309,7 +311,10 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("/dm revive <character|creature> [hp]", NamedTextColor.AQUA)
                     .append(Component.text("  - the only way back from death", NamedTextColor.GRAY)));
             sender.sendMessage(Component.text("/dm entity <spawn|list|remove|rename|revive|teleport|info|trade|shop>", NamedTextColor.AQUA));
-            sender.sendMessage(Component.text("/dm rest <character> <short|long>", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm rest <character|all> <short|long> [time passed]", NamedTextColor.AQUA)
+                    .append(Component.text("  - run it when the rest is over", NamedTextColor.GRAY)));
+            sender.sendMessage(Component.text("/dm time [add <duration> | stop | start]", NamedTextColor.AQUA)
+                    .append(Component.text("  - the in-game clock (only you see the time)", NamedTextColor.GRAY)));
             sender.sendMessage(Component.text("/dm resource <restore|consume> <character> ...", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm reload", NamedTextColor.AQUA)
                     .append(Component.text("  - reload YAML content", NamedTextColor.GRAY)));
@@ -368,6 +373,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
                 case "entity" -> { return entityExec.onTabComplete(sender, command, label, sub); }
                 case "object" -> { return objectExec.onTabComplete(sender, command, label, sub); }
                 case "rest" -> { return restExec.onTabComplete(sender, command, label, sub); }
+                case "time" -> { return timeExec.onTabComplete(sender, command, label, sub); }
                 case "resource" -> {
                     if (args.length == 2) {
                         return java.util.stream.Stream.of("restore", "consume")

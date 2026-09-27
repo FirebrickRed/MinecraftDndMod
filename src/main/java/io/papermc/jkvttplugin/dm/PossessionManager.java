@@ -32,7 +32,12 @@ import java.util.UUID;
  * DM entity possession (Issue #78), rebuilt on {@link DndEntityInstance}. Replaces the old
  * NpcListener/NpcManager/NpcData system. A DM in DM mode holds the Possess tool and right-clicks an
  * entity to "become" it: they go invisible, the entity follows their movement, and their hotbar
- * swaps to the entity's kit. Sneak (or exit DM mode) to stop; the DM toolbar comes back.
+ * swaps to the entity's kit, with a Let go item in the last slot. Let go (or exit DM mode) to stop; the
+ * DM toolbar comes back. Sneaking is left alone, so the possessed creature can sneak like anyone.
+ *
+ * <p>Whatever invisibility and scale the DM had before possessing is put back afterwards, not
+ * cleared: a DM who was already invisible stays invisible. The "before" is kept on the player's PDC
+ * so a crash mid-possession restores it on the next login too.
  */
 public class PossessionManager {
 
@@ -73,6 +78,7 @@ public class PossessionManager {
         }
         if (isPossessing(dm.getUniqueId())) endPossession(dm, false); // switch targets cleanly
 
+        saveEffectsBefore(dm);
         possessedByDm.put(dm.getUniqueId(), stand);
         dm.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, Integer.MAX_VALUE, 1, false, false));
         // Your own model sits on your camera, so it's hidden from you unless you've asked to see it
@@ -97,7 +103,7 @@ public class PossessionManager {
         followTasks.put(dm.getUniqueId(), task);
 
         dm.sendMessage(Component.text("You are now possessing " + instance.getDisplayName()
-                + " — sneak to stop.", NamedTextColor.GREEN));
+                + " — the last hotbar slot lets go.", NamedTextColor.GREEN));
         dm.sendMessage(Component.text(selfModelVisible.contains(dm.getUniqueId())
                 ? "You can see its model: F hides it, F5 for third-person."
                 : "Its model is hidden from you (the others see it): F shows it, then F5 for third-person.",
@@ -145,19 +151,67 @@ public class PossessionManager {
         if (stand == null) return false;
         io.papermc.jkvttplugin.combat.CombatSession.applyPossessedConditionEffects(dm, stand, false); // drop inherited conditions
         if (stand.isValid()) dm.showEntity(JkVttPlugin.getInstance(), stand); // reveal our body again
-        clearPossessionEffects(dm);
+        restoreEffectsBefore(dm);
         return true;
     }
 
-    /**
-     * Remove the visual/physical side effects of possession (invisibility + shrunk scale). Safe to
-     * call any time — used both on a clean stop and on login recovery after a crash, where the
-     * in-memory possession state is gone but the persisted potion/attribute may linger on the player.
-     */
-    public static void clearPossessionEffects(Player dm) {
-        dm.removePotionEffect(PotionEffectType.INVISIBILITY);
+    // ==================== WHAT THE DM HAD BEFORE ====================
+
+    // Kept on the player (PDC), so it survives a crash mid-possession. The scale key doubles as the
+    // "was possessing" marker; invisibility is "duration,amplifier,ambient,particles,icon" or "" for none.
+    private static org.bukkit.NamespacedKey key(String name) {
+        return new org.bukkit.NamespacedKey(JkVttPlugin.getInstance(), name);
+    }
+
+    private static void saveEffectsBefore(Player dm) {
+        var pdc = dm.getPersistentDataContainer();
+        if (pdc.has(key("possess_scale"))) return; // already saved: switching bodies keeps the first "before"
         AttributeInstance scale = dm.getAttribute(Attribute.SCALE);
-        if (scale != null) scale.setBaseValue(1.0);
+        PotionEffect invis = dm.getPotionEffect(PotionEffectType.INVISIBILITY);
+        pdc.set(key("possess_scale"), org.bukkit.persistence.PersistentDataType.DOUBLE, scale != null ? scale.getBaseValue() : 1.0);
+        pdc.set(key("possess_invis"), org.bukkit.persistence.PersistentDataType.STRING, invis == null ? ""
+                : invis.getDuration() + "," + invis.getAmplifier() + "," + invis.isAmbient() + "," + invis.hasParticles() + "," + invis.hasIcon());
+        pdc.set(key("possess_at"), org.bukkit.persistence.PersistentDataType.LONG, System.currentTimeMillis());
+    }
+
+    /**
+     * Put back the invisibility and scale the DM had before possessing. Does nothing if they weren't
+     * possessing, so it's safe on every login: it only undoes what possession did, never an
+     * invisibility the DM gave themselves.
+     */
+    public static void restoreEffectsBefore(Player dm) {
+        var pdc = dm.getPersistentDataContainer();
+        Double scaleBefore = pdc.get(key("possess_scale"), org.bukkit.persistence.PersistentDataType.DOUBLE);
+        if (scaleBefore == null) return;
+        String invis = pdc.getOrDefault(key("possess_invis"), org.bukkit.persistence.PersistentDataType.STRING, "");
+        long at = pdc.getOrDefault(key("possess_at"), org.bukkit.persistence.PersistentDataType.LONG, System.currentTimeMillis());
+        pdc.remove(key("possess_scale"));
+        pdc.remove(key("possess_invis"));
+        pdc.remove(key("possess_at"));
+
+        AttributeInstance scale = dm.getAttribute(Attribute.SCALE);
+        if (scale != null) scale.setBaseValue(scaleBefore);
+        dm.removePotionEffect(PotionEffectType.INVISIBILITY);
+        if (invis.isEmpty()) return;
+        String[] p = invis.split(",");
+        try {
+            int left = remainingTicks(Integer.parseInt(p[0]), System.currentTimeMillis() - at);
+            if (left == 0) return; // it would have worn off while they were possessing
+            dm.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, left, Integer.parseInt(p[1]),
+                    Boolean.parseBoolean(p[2]), Boolean.parseBoolean(p[3]), Boolean.parseBoolean(p[4])));
+        } catch (RuntimeException e) {
+            JkVttPlugin.getInstance().getLogger().warning("Couldn't restore " + dm.getName() + "'s invisibility (" + invis + "): " + e.getMessage());
+        }
+    }
+
+    /**
+     * What's left of an effect that had {@code duration} ticks when possession began, {@code elapsedMs}
+     * ago (possession's own invisibility replaced it, so it didn't tick down meanwhile). Infinite stays
+     * infinite; 0 means it ran out.
+     */
+    static int remainingTicks(int duration, long elapsedMs) {
+        if (duration == PotionEffect.INFINITE_DURATION) return duration;
+        return (int) Math.max(0, duration - elapsedMs / 50);
     }
 
     // ==================== HEIGHT / AIM HIGHLIGHT ====================
@@ -233,7 +287,7 @@ public class PossessionManager {
                 org.bukkit.inventory.EquipmentSlot armorSlot = armorSlotFor(stack);
                 if (armorSlot != null) {
                     equip(dm, armorSlot, stack); // armor/shield auto-equips (visual only — AC is the stat block's)
-                } else if (slot <= 8) {
+                } else if (slot <= 7) {
                     dm.getInventory().setItem(slot++, stack);
                 }
             }
@@ -245,10 +299,13 @@ public class PossessionManager {
         if (attacks != null) {
             for (io.papermc.jkvttplugin.data.model.DndAttack a : attacks) {
                 if (a.getItem() != null && !a.getItem().isBlank()) continue; // weapon attack already in the kit
-                if (slot > 8) break;
+                if (slot > 7) break;
                 dm.getInventory().setItem(slot++, naturalAttackIcon(a));
             }
         }
+        // Slot 8 is always the way out, so the kit gets 0-7.
+        dm.getInventory().setItem(8, DmModeManager.tool(org.bukkit.Material.LEAD, DmModeManager.TOOL_RELEASE,
+                "Let go of " + instance.getDisplayName(), "Right-click to stop possessing", "(your DM toolbar comes back)"));
     }
 
     /** A named hotbar placeholder for a natural/spell attack (YAML `material:`, default BONE). */

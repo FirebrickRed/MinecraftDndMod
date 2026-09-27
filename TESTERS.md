@@ -159,14 +159,23 @@ Newest first. Tick these off after a build to confirm they work in-game.
 ### DM tools
 - [ ] **`/dm mode`** enters DM mode — your items are stashed and swapped for a **View** tool + **Exit** item.
 - [ ] **View tool**: right-click a **player** → their character sheet; right-click an **entity** → its stat block (DM-only).
-- [ ] **Possess tool**: right-click an entity → you go invisible, it follows you, your hotbar becomes its kit; **sneak** to stop.
+- [ ] **Possess tool**: right-click an entity → you go invisible, it follows you, your hotbar becomes its kit; the **Let go** item in the last slot stops. Sneaking just sneaks. If you were invisible before possessing, you still are after.
 - [ ] **Combat-setup tools** (#130): **Start Combat** (iron sword) begins an encounter; **Add/Remove**
       (book) right-click a player/entity to add (they glow), right-click again to remove; **Roll for
-      Initiative** (clock) starts turns. Whole encounter set up without typing commands.
+      Initiative** (bell) starts turns. Whole encounter set up without typing commands.
 - [ ] **Move tool** (#107, leather boots): right-click entities to **select** them (they glow), then
       right-click the ground to send them there. Works **out of combat** (free) and **in combat**
       (only on that entity's turn, counts vs its speed; `/combat movement undo` reverses). Multi-select
       several before moving.
+- [ ] **Time tool** (clock): the page shows the time in the action bar. Stop the clock → the sun
+      stays put; Start → it moves again (the item's name flips). +10 min / +1 hour move the sun; sneak
+      + right-click moves it back. **Other Amount…** opens a form: 2 h 30 min Forward lands 2:30 later.
+      Six +10 min clicks equal one +1 hour. `/dm time` shows the same time with buttons.
+- [ ] **Rest at the end** (`/dm rest all long 8h`): everyone online with a character gets the long
+      rest, the clock moves forward **8 hours once** (not once per character), and players see
+      "Long Rest Finished (8 hours)". A dead character is skipped with a reason; the others still rest.
+- [ ] **Invisible before possessing:** `/effect give @s invisibility infinite`, possess something,
+      let go → still invisible. Without the effect → visible again after letting go.
 - [ ] **Exit item** (or `/dm mode` again) restores your real inventory exactly.
 - [ ] **Crash-safe:** enter DM mode, then disconnect/kill the server → on rejoin you're OUT of DM mode with your real inventory back.
 
