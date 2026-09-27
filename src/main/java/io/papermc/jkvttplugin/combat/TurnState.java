@@ -16,6 +16,7 @@ public class TurnState {
     private boolean bonusActionUsed;
     private boolean reactionUsed;
     private boolean attackActionTaken; // took the Attack action (not just any action): unlocks a bonus attack
+    private int attacksLeftInAction;   // more attacks the Attack action still allows (Extra Attack, #153)
 
     // Set when an attack HITS; consumed by /combat damage so damage can only be applied
     // once per hit (no /combat damage spamming). Cleared at the start of each turn.
@@ -62,8 +63,17 @@ public class TurnState {
     public void useAction() { actionUsed = true; }
     public void useBonusAction() { bonusActionUsed = true; }
     public void useReaction() { reactionUsed = true; }
-    /** The Action was spent on an attack, which two-weapon fighting and Martial Arts build on. */
-    public void markAttackAction() { attackActionTaken = true; }
+    /**
+     * The Action was spent on the Attack action, which gives {@code attacksPerAction} attacks (1 until
+     * Extra Attack, #153); the first is being made now. Two-weapon fighting and Martial Arts build on it.
+     */
+    public void markAttackAction(int attacksPerAction) {
+        attackActionTaken = true;
+        attacksLeftInAction = Math.max(0, attacksPerAction - 1);
+    }
+    public int getAttacksLeftInAction() { return attacksLeftInAction; }
+    /** One of the Attack action's further attacks is being made. */
+    public void useExtraAttack() { if (attacksLeftInAction > 0) attacksLeftInAction--; }
     public boolean isAttackActionTaken() { return attackActionTaken; }
 
     public boolean isActionUsed() { return actionUsed; }

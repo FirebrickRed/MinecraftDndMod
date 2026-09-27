@@ -1237,15 +1237,26 @@ public class CombatSession {
         TurnState state = combatant.getTurnState();
         if (state == null) return;
 
+        int attacksLeft = state.getAttacksLeftInAction();
         Component actionPart = Component.text("Action: ", NamedTextColor.WHITE)
-            .append(state.isActionUsed()
+            .append(attacksLeft > 0
+                ? Component.text(attacksLeft + (attacksLeft == 1 ? " attack left" : " attacks left"), NamedTextColor.YELLOW)
+                : state.isActionUsed()
                 ? Component.text("USED", NamedTextColor.RED)
                 : Component.text("READY", NamedTextColor.GREEN));
 
-        Component bonusPart = Component.text(" | Bonus: ", NamedTextColor.WHITE)
-            .append(state.isBonusActionUsed()
-                ? Component.text("USED", NamedTextColor.RED)
-                : Component.text("READY", NamedTextColor.GREEN));
+        // The bonus action says what it's good for right now: the bonus attack that fits ("Martial
+        // Arts", "two-weapon fighting"), READY for a feature or spell, or — when there's nothing.
+        Component bonusPart = Component.text(" | Bonus: ", NamedTextColor.WHITE);
+        if (state.isBonusActionUsed()) {
+            bonusPart = bonusPart.append(Component.text("USED", NamedTextColor.RED));
+        } else {
+            String hint = combatant.isPlayer()
+                    ? BonusAttack.barHint(combatant.getCharacterSheet(), combatant.getPlayer(), state) : "";
+            bonusPart = bonusPart.append(hint == null ? Component.text("—", NamedTextColor.DARK_GRAY)
+                    : hint.isEmpty() ? Component.text("READY", NamedTextColor.GREEN)
+                    : Component.text("READY: " + hint, NamedTextColor.GREEN));
+        }
 
         double remaining = state.getMovementRemaining();
         NamedTextColor moveColor = remaining <= 0 ? NamedTextColor.RED

@@ -40,6 +40,7 @@ public final class PluginConfig {
     /** When a player's /combat damage waits for the DM's [Apply] (#175). */
     public enum DamageApproval { OFF, REACTIONS, ALWAYS }
     private static DamageApproval damageApproval = DamageApproval.REACTIONS;
+    private static boolean bonusAttackNeedsAttackAction = false; // false = BG3 house rule: any time you have the bonus action
     private static InteractionPrompt interactionPrompt = InteractionPrompt.ALL_CONTAINERS; // #185
     private static ThievesToolsBreak thievesToolsBreak = ThievesToolsBreak.ON_FAIL; // #210, BG3-style default
     private static boolean annotationGlow = true;     // outline annotated blocks for the annotating DM
@@ -89,6 +90,10 @@ public final class PluginConfig {
             default -> DamageApproval.REACTIONS;
         };
 
+        // A bonus-action attack (off-hand, Martial Arts): any time you have the bonus action (the
+        // default, BG3-style), or only after the Attack action this turn (the tabletop rule, PHB p.195).
+        bonusAttackNeedsAttackAction = "after_attack_action".equalsIgnoreCase(cfg.getString("combat.bonus_attack_timing", "any_time"));
+
         // Interaction prompt (#185). Unknown values fall back to all_containers rather than
         // silently disabling the prompt, since "off" leaks more than a misspelling should cost.
         interactionPrompt = switch (cfg.getString("objects.interaction_prompt", "all_containers").toLowerCase()) {
@@ -125,6 +130,9 @@ public final class PluginConfig {
 
     /** Whether a player's /combat damage waits for the DM to approve it (#175). */
     public static DamageApproval getDamageApproval() { return damageApproval; }
+
+    /** Whether a bonus-action attack has to come after the Attack action (combat.bonus_attack_timing). */
+    public static boolean isBonusAttackNeedsAttackAction() { return bonusAttackNeedsAttackAction; }
 
     public static RollMode getRollMode() { return rollMode; }
 

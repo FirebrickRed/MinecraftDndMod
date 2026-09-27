@@ -1008,6 +1008,70 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         session.sendActionBar(target);
     }
 
+    /** The D&D weapon in a hand, or null (an empty hand, or an item that isn't a weapon). */
+    private static DndWeapon heldWeapon(Player player, boolean mainHand) {
+        return BonusAttack.heldWeapon(player, mainHand);
+    }
+
+    /**
+     * {@code /combat attack} with no target: every attack this character can make right now, grouped
+     * by what it would cost. Each button fills {@code /combat attack <target> <weapon>}; the cost is
+     * worked out when the attack is made ({@link AttackCost}). A bonus one says {@code bonus}, so it
+     * uses the bonus action even while the Action is still free.
+     */
+    private void showAttackOptions(Player player, Combatant actor) {
+        CharacterSheet sheet = actor.getCharacterSheet();
+        TurnState state = actor.getTurnState();
+        player.sendMessage(Component.text("⚔ Attacks for " + actor.getDisplayName(), NamedTextColor.GOLD, TextDecoration.BOLD));
+
+        // With the Action (or the Attack action's further attacks).
+        if (state.getAttacksLeftInAction() > 0 || !state.isActionUsed()) {
+            String lead = state.getAttacksLeftInAction() > 0
+                    ? "  Attack action, " + state.getAttacksLeftInAction() + " more: " : "  With your Action: ";
+            Component row = Component.text(lead, NamedTextColor.GRAY);
+            List<String> ids = new ArrayList<>(AttackHandler.getWeaponIdsInInventory(player));
+            ids.add("unarmed");
+            for (String id : ids) {
+                DndWeapon w = "unarmed".equals(id) ? null : io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(id);
+                String name = w != null ? w.getName() : "Unarmed";
+                String cmd = "/combat attack <target> " + id;
+                row = row.append(Component.text("[" + name + "] ", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.suggestCommand(cmd))
+                        .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd
+                                + "\nOr hold it and left-click your target."))));
+            }
+            player.sendMessage(row);
+        } else {
+            player.sendMessage(Component.text("  Action: used", NamedTextColor.DARK_GRAY));
+        }
+
+        // With the bonus action: what fits right now (off-hand weapon, Martial Arts), regardless of timing.
+        if (state.isBonusActionUsed()) {
+            player.sendMessage(Component.text("  Bonus action: used", NamedTextColor.DARK_GRAY));
+            return;
+        }
+        boolean needsAttack = io.papermc.jkvttplugin.config.PluginConfig.isBonusAttackNeedsAttackAction();
+        DndWeapon main = heldWeapon(player, true), off = heldWeapon(player, false);
+        Component row = Component.text("  With your bonus action: ", NamedTextColor.GRAY);
+        boolean any = false;
+        List<DndWeapon> candidates = new ArrayList<>();
+        candidates.add(null); // an unarmed strike (Martial Arts)
+        if (off != null) candidates.add(off); // the off-hand weapon (two-weapon fighting)
+        for (DndWeapon w : candidates) {
+            BonusAttack.Verdict v = BonusAttack.check(sheet, w, main, off, true, false, false, false);
+            if (!v.allowed()) continue;
+            String id = w == null ? "unarmed" : w.getId();
+            String cmd = "/combat attack <target> " + id + " bonus";
+            boolean waits = needsAttack && !state.isAttackActionTaken();
+            row = row.append(Component.text("[" + (w == null ? "Unarmed" : w.getName()) + " (" + v.source() + ")] ",
+                            waits ? NamedTextColor.DARK_GRAY : NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                    .clickEvent(ClickEvent.suggestCommand(cmd))
+                    .hoverEvent(HoverEvent.showText(Component.text((waits ? "After your Attack action.\n" : "") + "Fills: " + cmd))));
+            any = true;
+        }
+        if (any) player.sendMessage(row);
+    }
+
     /**
      * The bonus actions this character actually has (#176): spells with a bonus-action casting time,
      * features activated as a bonus action (Rage, Second Wind), an off-hand attack if they're holding
@@ -1075,7 +1139,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage(Component.text("  ", NamedTextColor.GRAY)
                         .append(Component.text("[Off-hand attack: " + off.getName() + "]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                                 .clickEvent(ClickEvent.suggestCommand(cmd))
-                                .hoverEvent(HoverEvent.showText(Component.text("Two-weapon fighting, after the Attack action: no ability modifier on the damage.\nFills: " + cmd)))));
+                                .hoverEvent(HoverEvent.showText(Component.text("Two-weapon fighting: no ability modifier on the damage.\nFills: " + cmd)))));
                 any = true;
             }
         }
@@ -1825,19 +1889,20 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // "bonus": a bonus-action attack (two-weapon fighting, Martial Arts), checked once the weapon is
-        // known. It costs the bonus action, not the Action.
+        // What a character's attack costs (Action, a further attack of the Attack action, or the bonus
+        // action) is worked out once the weapon is known (AttackCost). "bonus" asks for the bonus action
+        // outright, for using it while the Action is still free.
         boolean bonusAttack = false;
         for (int i = 1; i < args.length; i++) if (args[i].equalsIgnoreCase("bonus")) bonusAttack = true;
 
-        // Action economy check (skip for showMods)
+        // Action economy check (skip for showMods). A creature's attack is always its Action.
         if (!showMods) {
             TurnState state = attacker.getTurnState();
             if (state == null) {
                 player.sendMessage(Component.text("No active turn state.", NamedTextColor.RED));
                 return;
             }
-            if (!bonusAttack && state.isActionUsed()) {
+            if (!attacker.isPlayer() && state.isActionUsed()) {
                 player.sendMessage(Component.text(attacker.getDisplayName() + " has already used their Action this turn.", NamedTextColor.YELLOW));
                 return;
             }
@@ -1845,8 +1910,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         // Collect positional args (after "attack", excluding flags and their values)
         List<String> positionalArgs = collectPositionalArgs(args, 1);
+        positionalArgs.removeIf(tok -> tok.equalsIgnoreCase("bonus"));
         if (positionalArgs.isEmpty()) {
-            player.sendMessage(Component.text("Usage: /combat attack <target> <weapon>  (use 'unarmed' for an unarmed strike)", NamedTextColor.RED));
+            if (attacker.isPlayer() && attacker.getCharacterSheet() != null && attacker.getTurnState() != null) {
+                showAttackOptions(player, attacker); // every attack they can make now, by what it costs
+            } else {
+                player.sendMessage(Component.text("Usage: /combat attack <target> <weapon>  (use 'unarmed' for an unarmed strike)", NamedTextColor.RED));
+            }
             return;
         }
 
@@ -1860,7 +1930,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             String tok = it.next();
             if (tok.equalsIgnoreCase("throw")) { throwMode = ThrownWeaponManager.Mode.THROW; it.remove(); }
             else if (tok.equalsIgnoreCase("stab")) { throwMode = ThrownWeaponManager.Mode.STAB; it.remove(); }
-            else if (tok.equalsIgnoreCase("bonus")) it.remove();
         }
 
         if (attacker.isPlayer()) {
@@ -1919,25 +1988,21 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // A bonus-action attack: only after the Attack action, and only with what allows one.
-        BonusAttack.Verdict bonusVerdict = null;
-        if (bonusAttack && !showMods) {
-            if (!attacker.isPlayer()) {
-                player.sendMessage(Component.text("A creature's bonus attack isn't tracked: make the attack, then /combat bonusAction used.", NamedTextColor.YELLOW));
-                return;
-            }
-            TurnState state = attacker.getTurnState();
-            bonusVerdict = BonusAttack.check(attacker.getCharacterSheet(),
+        // What pays for this attack (AttackCost): a character's is worked out, a creature's is its Action.
+        AttackCost.Decision cost = null;
+        if (!showMods && attacker.isPlayer()) {
+            cost = AttackCost.decide(attacker.getCharacterSheet(),
                     AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName),
-                    io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(
-                            io.papermc.jkvttplugin.util.ItemUtil.getItemId(player.getInventory().getItemInMainHand())),
-                    io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(
-                            io.papermc.jkvttplugin.util.ItemUtil.getItemId(player.getInventory().getItemInOffHand())),
-                    state.isAttackActionTaken(), state.isBonusActionUsed(), state.isDamagePending());
-            if (!bonusVerdict.allowed()) {
-                player.sendMessage(Component.text(bonusVerdict.refusal(), NamedTextColor.YELLOW));
+                    heldWeapon(player, true), heldWeapon(player, false),
+                    attacker.getTurnState(), bonusAttack,
+                    io.papermc.jkvttplugin.config.PluginConfig.isBonusAttackNeedsAttackAction());
+            if (!cost.allowed()) {
+                player.sendMessage(Component.text(cost.refusal(), NamedTextColor.YELLOW));
                 return;
             }
+        } else if (bonusAttack && !showMods) {
+            player.sendMessage(Component.text("A creature's bonus attack isn't tracked: make the attack, then /combat bonusAction used.", NamedTextColor.YELLOW));
+            return;
         }
 
         // Reach: the one rule (Reach), for players and creatures alike. Out of reach offers [Ask the DM]
@@ -1974,7 +2039,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         boolean resolved = attacker.isPlayer()
                 ? AttackHandler.executePlayerAttack(attacker, target, session, player,
                         weaponOrAttackName, providedRoll, providedTotal, showMods, roll.forceAuto(),
-                        bonusVerdict != null && bonusVerdict.kind() == BonusAttack.Kind.OFF_HAND)
+                        cost != null && cost.offHand())
                 : AttackHandler.executeEntityAttack(attacker, target, session, player,
                         weaponOrAttackName, providedRoll, providedTotal, showMods, roll.forceAuto());
 
@@ -1983,12 +2048,22 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             Reach.spend(player.getUniqueId()); // a DM "close enough" covered this one attack
             TurnState state = attacker.getTurnState();
             if (state != null) {
-                if (bonusVerdict != null) {
-                    state.useBonusAction();
-                    player.sendMessage(Component.text("⚡ Bonus action: " + bonusVerdict.source() + ".", NamedTextColor.GRAY));
-                } else {
-                    state.useAction();
-                    state.markAttackAction(); // unlocks a bonus attack (two-weapon fighting, Martial Arts)
+                AttackCost.Kind paidBy = cost != null ? cost.kind() : AttackCost.Kind.ACTION;
+                switch (paidBy) {
+                    case BONUS -> {
+                        state.useBonusAction();
+                        player.sendMessage(Component.text("⚡ That used your bonus action (" + cost.source() + ").", NamedTextColor.GRAY));
+                    }
+                    case EXTRA_ATTACK -> {
+                        state.useExtraAttack();
+                        player.sendMessage(Component.text("⚔ Another attack from your Attack action"
+                                + (state.getAttacksLeftInAction() > 0 ? " (" + state.getAttacksLeftInAction() + " more)." : "."), NamedTextColor.GRAY));
+                    }
+                    default -> {
+                        state.useAction();
+                        // The Attack action: unlocks a bonus attack, and Extra Attack's further attacks (#153).
+                        state.markAttackAction(attacker.isPlayer() ? AttackCost.attacksPerAction(attacker.getCharacterSheet()) : 1);
+                    }
                 }
                 session.sendActionBar(attacker);
             }

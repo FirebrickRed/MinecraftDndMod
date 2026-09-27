@@ -105,23 +105,23 @@ class MartialArtsTest {
     @Test
     void monkBonusStrikeComesAfterTheAttackAction() {
         CharacterSheet m = monk();
-        BonusAttack.Verdict before = BonusAttack.check(m, null, null, null, false, false, false);
+        BonusAttack.Verdict before = BonusAttack.check(m, null, null, null, false, false, false, true);
         assertFalse(before.allowed());
         assertTrue(before.refusal().contains("Attack action"), before.refusal());
 
-        BonusAttack.Verdict after = BonusAttack.check(m, null, null, null, true, false, false);
+        BonusAttack.Verdict after = BonusAttack.check(m, null, null, null, true, false, false, true);
         assertTrue(after.allowed(), after.refusal());
         assertEquals(BonusAttack.Kind.FEATURE, after.kind());
 
-        assertFalse(BonusAttack.check(m, null, null, null, true, true, false).allowed(), "bonus action already used");
-        assertFalse(BonusAttack.check(m, null, null, null, true, false, true).allowed(), "damage still to roll");
+        assertFalse(BonusAttack.check(m, null, null, null, true, true, false, true).allowed(), "bonus action already used");
+        assertFalse(BonusAttack.check(m, null, null, null, true, false, true, true).allowed(), "damage still to roll");
     }
 
     @Test
     void aShieldStopsTheMonkBonusStrike() {
         CharacterSheet m = monk();
         m.equipShield(ArmorLoader.getArmor("shield"));
-        assertFalse(BonusAttack.check(m, null, null, null, true, false, false).allowed());
+        assertFalse(BonusAttack.check(m, null, null, null, true, false, false, true).allowed());
     }
 
     /** Two-weapon fighting: the off-hand light weapon, and no positive ability modifier on the damage. */
@@ -129,14 +129,14 @@ class MartialArtsTest {
     void offHandAttackIsABonusActionWithoutTheModifier() {
         CharacterSheet f = character("genasi", "fire", "fighter", "acolyte", scores(Ability.DEXTERITY, 16));
         DndWeapon dagger = w("dagger");
-        BonusAttack.Verdict v = BonusAttack.check(f, dagger, w("shortsword"), dagger, true, false, false);
+        BonusAttack.Verdict v = BonusAttack.check(f, dagger, w("shortsword"), dagger, true, false, false, true);
         assertTrue(v.allowed(), v.refusal());
         assertEquals(BonusAttack.Kind.OFF_HAND, v.kind());
         assertEquals("1d4", AttackHandler.buildPlayerDamageString(f, dagger, true));
         assertEquals("1d4+3", AttackHandler.buildPlayerDamageString(f, dagger, false));
 
-        assertFalse(BonusAttack.check(f, w("longsword"), w("longsword"), dagger, true, false, false).allowed(),
+        assertFalse(BonusAttack.check(f, w("longsword"), w("longsword"), dagger, true, false, false, true).allowed(),
                 "the attack has to be with the off-hand weapon");
-        assertFalse(BonusAttack.check(f, null, dagger, dagger, true, false, false).allowed(), "a fighter has no bonus punch");
+        assertFalse(BonusAttack.check(f, null, dagger, dagger, true, false, false, true).allowed(), "a fighter has no bonus punch");
     }
 }

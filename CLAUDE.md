@@ -687,9 +687,13 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
   - **Bonus actions (#176):** `/combat bonusAction` with no argument lists what this character can
     actually do — bonus-action spells, features with `activation: bonus_action`, an off-hand attack
     when dual-wielding, a monk's bonus unarmed strike — each filling a command rather than firing it.
-    A bonus **attack** is `/combat attack <target> <weapon> bonus` (#221): it spends the bonus action
-    and is refused until the Attack action was taken this turn (`TurnState.markAttackAction`, not just
-    any Action; `BonusAttack.check` is the one rule). `bonusAction used` is the
+    **`/combat attack` works out what an attack costs** (`AttackCost.decide`): the Action (starting the
+    Attack action, `TurnState.markAttackAction`), then the Attack action's further attacks (Extra Attack,
+    #153; 1 per action until level-up), then the bonus action if a bonus attack fits the weapon
+    (`BonusAttack.check`: off-hand light weapon, or a feature with an `attack:` block). The word `bonus`
+    asks for the bonus action while the Action is still free. `combat.bonus_attack_timing`: `any_time`
+    (default, BG3) or `after_attack_action` (tabletop). The action bar names what the bonus action is
+    good for (`READY: Martial Arts`, or — when nothing). `bonusAction used` is the
     "anything else" escape hatch that just marks it spent. There is **no `/combat bonus`** — the
     short alias was removed so there's one spelling to learn and to document. `/combat action` with
     no argument is character-aware the same way (held weapon, Action-cost spells, Action features),

@@ -119,11 +119,16 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 - [ ] A monk with no armor: the sheet's AC tile says **Unarmored Defense: 10 + DEX + WIS**. Put on
       leather armor (chestplate slot) → the AC drops to leather's; take it off → back.
 - [ ] A monk's unarmed strike (`/combat attack <target> unarmed`) rolls **1d4 + DEX**, labelled [DEX].
-- [ ] `/combat bonusAction` before attacking: the **Martial Arts: bonus unarmed strike** button is
-      listed, but using it says to attack first. After the Attack action it goes through and spends
-      the bonus action, not the Action.
-- [ ] A fighter with a dagger in each hand: attack, then `/combat bonusAction` → **[Off-hand attack]**
-      goes through (before this it said the Action was already used), and its damage has no DEX.
+- [ ] **The game picks the cost.** A monk attacks unarmed twice with the same `/combat attack <target> unarmed`
+      (or left-click twice): the first uses the Action, the second says **"That used your bonus action
+      (Martial Arts: bonus unarmed strike)"**. A third is refused with the reason.
+- [ ] The action bar: before attacking, **Bonus: READY: Martial Arts…**; a fighter with nothing to
+      spend it on shows **Bonus: —**.
+- [ ] `/combat attack` with nothing after it lists attacks under **With your Action** and **With your
+      bonus action**.
+- [ ] BG3 order (default `combat.bonus_attack_timing: any_time`): a fighter with a dagger in each hand
+      uses the off-hand button first (`… dagger bonus`), then still has their Action. Its damage has no
+      DEX. Set `after_attack_action` and restart: the same button now says to attack first.
 
 ## Death
 

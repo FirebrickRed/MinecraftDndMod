@@ -66,6 +66,15 @@ combat:
   # player gets an [Ask the DM] button instead of a dead end. The DM's own damage never waits.
   damage_approval: reactions
 
+  # When a bonus-action attack (two-weapon fighting's off-hand attack, a monk's Martial Arts strike)
+  # can be made:
+  #   any_time             (default, as in Baldur's Gate 3) whenever you still have your bonus action,
+  #                        before or after your Action
+  #   after_attack_action  the tabletop rule (PHB p.195 and p.78): only after taking the Attack action
+  # /combat attack works out whether an attack uses your Action or your bonus action; add the word
+  # "bonus" to choose the bonus action while your Action is still free.
+  bonus_attack_timing: any_time
+
 # Interactive objects the DM annotates with /dm object (#185).
 objects:
   # Outline nearby annotated blocks for a DM holding the Annotate Object tool, colour-coded by what

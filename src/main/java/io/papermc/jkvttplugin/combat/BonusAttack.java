@@ -6,7 +6,8 @@ import io.papermc.jkvttplugin.effect.Feature;
 
 /**
  * Whether an attack can be made as a <b>bonus action</b> ({@code /combat attack <target> <weapon> bonus}).
- * Two things grant one, and both only after taking the Attack action this turn:
+ * Two things grant one. By the tabletop rules both come only after taking the Attack action this
+ * turn; {@code combat.bonus_attack_timing: any_time} (the default, as in BG3) drops that:
  * <ul>
  *   <li>two-weapon fighting: a light weapon in each hand, attacking with the off-hand one (PHB p.195).
  *       The damage then gets no positive ability modifier.</li>
@@ -32,9 +33,10 @@ public final class BonusAttack {
      * @param offHand  the weapon held in the off hand, or null
      */
     public static Verdict check(CharacterSheet sheet, DndWeapon weapon, DndWeapon mainHand, DndWeapon offHand,
-                                boolean attackActionTaken, boolean bonusActionUsed, boolean damagePending) {
+                                boolean attackActionTaken, boolean bonusActionUsed, boolean damagePending,
+                                boolean needsAttackAction) {
         if (bonusActionUsed) return Verdict.no("You've already used your bonus action this turn.");
-        if (!attackActionTaken) {
+        if (needsAttackAction && !attackActionTaken) {
             return Verdict.no("A bonus attack comes after taking the Attack action this turn (two-weapon fighting, Martial Arts). Attack first.");
         }
         if (damagePending) return Verdict.no("Roll the damage for your last hit first (/combat damage).");
@@ -58,6 +60,42 @@ public final class BonusAttack {
         String what = weapon == null ? "an unarmed strike" : "the " + weapon.getName();
         return Verdict.no("Nothing lets you make " + what + " as a bonus action. Two-weapon fighting needs a light "
                 + "weapon in each hand, attacking with the off-hand one; Martial Arts needs no armor or shield.");
+    }
+
+    /** Whether this character has anything to spend a bonus action on besides an attack: a feature or a spell. */
+    public static boolean hasBonusOptions(CharacterSheet sheet) {
+        if (sheet == null) return false;
+        for (Feature f : sheet.getAllFeatures()) {
+            if ("bonus_action".equalsIgnoreCase(f.getActivation())) return true;
+        }
+        java.util.Set<io.papermc.jkvttplugin.data.model.DndSpell> known = new java.util.HashSet<>(sheet.getKnownSpells());
+        known.addAll(sheet.getKnownCantrips());
+        for (var spell : known) {
+            if (spell.getCastingTime() != null && spell.getCastingTime().toLowerCase().contains("bonus")) return true;
+        }
+        return false;
+    }
+
+    /** The D&D weapon in a hand, or null (an empty hand, or an item that isn't a weapon). */
+    public static DndWeapon heldWeapon(org.bukkit.entity.Player player, boolean mainHand) {
+        String id = io.papermc.jkvttplugin.util.ItemUtil.getItemId(mainHand
+                ? player.getInventory().getItemInMainHand() : player.getInventory().getItemInOffHand());
+        return id == null ? null : io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(id);
+    }
+
+    /**
+     * What the action bar says about the bonus action: the bonus attack that fits right now ("Martial
+     * Arts"), "" when there's something else to spend it on (a feature, a spell), or null for nothing.
+     */
+    public static String barHint(CharacterSheet sheet, org.bukkit.entity.Player player, TurnState state) {
+        if (sheet == null || player == null) return "";
+        DndWeapon main = heldWeapon(player, true), off = heldWeapon(player, false);
+        boolean needs = io.papermc.jkvttplugin.config.PluginConfig.isBonusAttackNeedsAttackAction();
+        for (DndWeapon w : java.util.Arrays.asList(null, off)) {
+            Verdict v = check(sheet, w, main, off, state.isAttackActionTaken(), false, false, needs);
+            if (v.allowed()) return v.source();
+        }
+        return hasBonusOptions(sheet) ? "" : null;
     }
 
     /** True if a weapon has the Light property (two-weapon fighting). */
