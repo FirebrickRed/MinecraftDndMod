@@ -99,6 +99,16 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
       "only targets you" (only checked in a fight before).
 - [ ] Touch spells reach one block further than before in a fight (5 ft of slack, same as out of one).
 
+### Monk and two-weapon fighting (#220, #221)
+- [ ] A monk with no armor: the sheet's AC tile says **Unarmored Defense: 10 + DEX + WIS**. Put on
+      leather armor (chestplate slot) → the AC drops to leather's; take it off → back.
+- [ ] A monk's unarmed strike (`/combat attack <target> unarmed`) rolls **1d4 + DEX**, labelled [DEX].
+- [ ] `/combat bonusAction` before attacking: the **Martial Arts: bonus unarmed strike** button is
+      listed, but using it says to attack first. After the Attack action it goes through and spends
+      the bonus action, not the Action.
+- [ ] A fighter with a dagger in each hand: attack, then `/combat bonusAction` → **[Off-hand attack]**
+      goes through (before this it said the Action was already used), and its damage has no DEX.
+
 ## Death
 
 - [ ] Down yourself, fail three death saves → "has DIED", turn skipped.

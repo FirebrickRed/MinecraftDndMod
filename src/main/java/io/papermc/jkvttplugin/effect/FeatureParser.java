@@ -78,8 +78,10 @@ public final class FeatureParser {
                 action = parseAction(actionMap);
             }
 
+            FeatureAttack attack = m.get("attack") instanceof Map<?, ?> attackMap ? FeatureAttack.parse(attackMap) : null;
+
             out.add(new Feature(id, name, activation, target, costResource, costAmount, apply,
-                    action, grantedMax, grantedByProf, grantedRecovery));
+                    action, grantedMax, grantedByProf, grantedRecovery, attack));
         }
         return out;
     }
@@ -137,6 +139,8 @@ public final class FeatureParser {
         int minecraftAmplifier = 0;
         Set<String> flags = new HashSet<>();
         AcFormula armorClass = null;
+        UnarmedStrike unarmedStrike = null;
+        WeaponAbility weaponAbility = null;
         if (apply.get("effects") instanceof Map<?, ?> e) {
             resistances.addAll(ParseUtil.normalizeStringList(e.get("resistance")));
             advantageOn.addAll(ParseUtil.normalizeStringList(e.get("advantage_on")));
@@ -152,10 +156,12 @@ public final class FeatureParser {
                 if (ParseUtil.asBoolean(e.get(flag), false)) flags.add(flag);
             }
             if (e.get("armor_class") instanceof Map<?, ?> ac) armorClass = AcFormula.parse(ac);
+            if (e.get("unarmed_strike") instanceof Map<?, ?> us) unarmedStrike = UnarmedStrike.parse(us);
+            if (e.get("weapon_ability") instanceof Map<?, ?> wa) weaponAbility = WeaponAbility.parse(wa);
         }
 
         return new ActiveEffect(featureId, featureName, resistances, advantageOn, disadvantageOn,
                 bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks,
-                rounds, maintainedBy, untilRest, untilUsed, armorClass);
+                rounds, maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility);
     }
 }

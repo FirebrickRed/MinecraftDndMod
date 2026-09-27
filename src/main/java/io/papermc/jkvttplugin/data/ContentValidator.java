@@ -250,9 +250,28 @@ public final class ContentValidator {
     private void checkFeatures(String where, List<io.papermc.jkvttplugin.effect.Feature> features) {
         if (features == null) return;
         for (var f : features) {
-            if (!f.hasApply() || f.getApplyTemplate().getArmorClass() == null) continue;
-            for (String p : f.getApplyTemplate().getArmorClass().getProblems()) {
-                warn(where + " feature '" + f.getId() + "' armor_class: " + p + ".");
+            String at = where + " feature '" + f.getId() + "'";
+            if (f.isAttack()) {
+                for (String p : f.getAttack().problems()) warn(at + " attack: " + p + ".");
+                if (!f.getAttack().isUnarmed() && WeaponLoader.getWeapon(f.getAttack().weapon()) == null) {
+                    warn(at + " attack: weapon '" + f.getAttack().weapon() + "' isn't a defined weapon (or use unarmed).");
+                }
+            }
+            if (!f.hasApply()) continue;
+            var e = f.getApplyTemplate();
+            if (e.getArmorClass() != null) {
+                for (String p : e.getArmorClass().getProblems()) warn(at + " armor_class: " + p + ".");
+            }
+            if (e.getUnarmedStrike() != null) {
+                for (String p : e.getUnarmedStrike().getProblems()) warn(at + " unarmed_strike: " + p + ".");
+            }
+            if (e.getWeaponAbility() != null) {
+                for (String p : e.getWeaponAbility().getProblems()) warn(at + " weapon_ability: " + p + ".");
+                for (String w : e.getWeaponAbility().getWeapons()) {
+                    if (WeaponLoader.getWeapon(w) == null && !io.papermc.jkvttplugin.util.TagRegistry.isTag(w)) {
+                        warn(at + " weapon_ability: '" + w + "' is neither a weapon id nor a weapon tag.");
+                    }
+                }
             }
         }
     }

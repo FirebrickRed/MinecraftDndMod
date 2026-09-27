@@ -24,6 +24,7 @@ public class Feature {
     private final int costAmount;
     private final ActiveEffect applyTemplate; // the buff to apply, or null
     private final FeatureAction action;       // the area/save/damage projection, or null
+    private final FeatureAttack attack;       // the feature is an attack (Martial Arts' bonus strike, #221), or null
 
     // Optional resource pool this feature grants (materialized on the character). -1 max = none.
     private final int grantedResourceMax;         // fixed max, or -1 to use the prof-bonus flag
@@ -33,7 +34,7 @@ public class Feature {
     public Feature(String id, String name, String activation, String target,
                    String costResource, int costAmount, ActiveEffect applyTemplate,
                    FeatureAction action, int grantedResourceMax, boolean grantedResourceByProf,
-                   String grantedResourceRecovery) {
+                   String grantedResourceRecovery, FeatureAttack attack) {
         this.id = id;
         this.name = name;
         this.activation = activation;
@@ -45,6 +46,7 @@ public class Feature {
         this.grantedResourceMax = grantedResourceMax;
         this.grantedResourceByProf = grantedResourceByProf;
         this.grantedResourceRecovery = grantedResourceRecovery;
+        this.attack = attack;
     }
 
     public String getId() { return id; }
@@ -58,6 +60,8 @@ public class Feature {
     public boolean hasApply() { return applyTemplate != null; }
     public FeatureAction getAction() { return action; }
     public boolean hasAction() { return action != null; }
+    public FeatureAttack getAttack() { return attack; }
+    public boolean isAttack() { return attack != null; }
 
     /** True if this feature also defines the resource pool it draws from (to be materialized). */
     public boolean grantsResource() {

@@ -15,6 +15,7 @@ public class TurnState {
     private boolean actionUsed;
     private boolean bonusActionUsed;
     private boolean reactionUsed;
+    private boolean attackActionTaken; // took the Attack action (not just any action): unlocks a bonus attack
 
     // Set when an attack HITS; consumed by /combat damage so damage can only be applied
     // once per hit (no /combat damage spamming). Cleared at the start of each turn.
@@ -61,6 +62,9 @@ public class TurnState {
     public void useAction() { actionUsed = true; }
     public void useBonusAction() { bonusActionUsed = true; }
     public void useReaction() { reactionUsed = true; }
+    /** The Action was spent on an attack, which two-weapon fighting and Martial Arts build on. */
+    public void markAttackAction() { attackActionTaken = true; }
+    public boolean isAttackActionTaken() { return attackActionTaken; }
 
     public boolean isActionUsed() { return actionUsed; }
     public boolean isBonusActionUsed() { return bonusActionUsed; }

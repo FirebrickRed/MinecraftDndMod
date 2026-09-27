@@ -3,9 +3,7 @@ package io.papermc.jkvttplugin.effect;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
 
 import java.util.ArrayList;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.function.ToIntFunction;
 
 /**
@@ -18,19 +16,16 @@ import java.util.function.ToIntFunction;
  */
 public final class AcFormula {
 
-    /** The requirements a formula may list. */
-    public static final Set<String> REQUIREMENTS = Set.of("no_armor", "no_shield");
-
     private final int base;
     private final List<Ability> add;
-    private final Set<String> requires;
+    private final Requirements requires;
     // What the YAML said that wasn't understood, for ContentValidator to report.
     private final List<String> problems;
 
-    AcFormula(int base, List<Ability> add, Set<String> requires, List<String> problems) {
+    AcFormula(int base, List<Ability> add, Requirements requires, List<String> problems) {
         this.base = base;
         this.add = List.copyOf(add);
-        this.requires = Set.copyOf(requires);
+        this.requires = requires;
         this.problems = List.copyOf(problems);
     }
 
@@ -49,19 +44,13 @@ public final class AcFormula {
             else add.add(a);
         }
 
-        Set<String> requires = new LinkedHashSet<>();
-        for (String s : io.papermc.jkvttplugin.data.loader.util.ParseUtil.normalizeStringList(m.get("requires"))) {
-            String r = s.trim().toLowerCase();
-            if (REQUIREMENTS.contains(r)) requires.add(r);
-            else problems.add("requires '" + s + "' isn't one of " + String.join(", ", new java.util.TreeSet<>(REQUIREMENTS)));
-        }
+        Requirements requires = Requirements.parse(m.get("requires"), problems);
         return new AcFormula(base, add, requires, problems);
     }
 
     /** Whether this formula can be used right now. */
     public boolean applies(boolean wearingArmor, boolean holdingShield) {
-        if (wearingArmor && requires.contains("no_armor")) return false;
-        return !(holdingShield && requires.contains("no_shield"));
+        return requires.met(wearingArmor, holdingShield);
     }
 
     /** The AC this formula gives, before a shield. */
@@ -80,6 +69,6 @@ public final class AcFormula {
 
     public int getBase() { return base; }
     public List<Ability> getAdd() { return add; }
-    public Set<String> getRequires() { return requires; }
+    public Requirements getRequires() { return requires; }
     public List<String> getProblems() { return problems; }
 }

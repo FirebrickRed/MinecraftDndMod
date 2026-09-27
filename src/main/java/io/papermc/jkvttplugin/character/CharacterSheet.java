@@ -668,16 +668,63 @@ public class CharacterSheet {
      */
     private List<Map.Entry<String, io.papermc.jkvttplugin.effect.AcFormula>> acFormulas() {
         List<Map.Entry<String, io.papermc.jkvttplugin.effect.AcFormula>> out = new ArrayList<>();
-        for (var f : getAllFeatures()) {
-            boolean passive = f.getActivation() == null || f.getActivation().equalsIgnoreCase("passive");
-            if (passive && f.hasApply() && f.getApplyTemplate().getArmorClass() != null) {
-                out.add(Map.entry(f.getName(), f.getApplyTemplate().getArmorClass()));
-            }
-        }
-        for (var e : activeEffects) {
-            if (e.getArmorClass() != null) out.add(Map.entry(e.getSourceName(), e.getArmorClass()));
+        for (var e : standingEffects()) {
+            if (e.getValue().getArmorClass() != null) out.add(Map.entry(e.getKey(), e.getValue().getArmorClass()));
         }
         return out;
+    }
+
+    /**
+     * Every effect in force, by the name of what grants it: passive features (read from their
+     * definition, so they're always on and survive a rest) and live effects (Rage, Mage Armor).
+     */
+    private List<Map.Entry<String, io.papermc.jkvttplugin.effect.ActiveEffect>> standingEffects() {
+        List<Map.Entry<String, io.papermc.jkvttplugin.effect.ActiveEffect>> out = new ArrayList<>();
+        for (var f : getAllFeatures()) {
+            boolean passive = f.getActivation() == null || f.getActivation().equalsIgnoreCase("passive");
+            if (passive && f.hasApply()) out.add(Map.entry(f.getName(), f.getApplyTemplate()));
+        }
+        for (var e : activeEffects) out.add(Map.entry(e.getSourceName(), e));
+        return out;
+    }
+
+    private boolean holdingShield() {
+        return equippedShield != null && equippedShield.isShield();
+    }
+
+    /**
+     * What an unarmed strike does for this character (Martial Arts, #221), by the name of what grants
+     * it, or null for the default 1 + STR. With several, the biggest die at this level wins.
+     */
+    public Map.Entry<String, io.papermc.jkvttplugin.effect.UnarmedStrike> unarmedStrikeRule() {
+        Map.Entry<String, io.papermc.jkvttplugin.effect.UnarmedStrike> best = null;
+        int level = getTotalLevel();
+        for (var e : standingEffects()) {
+            var u = e.getValue().getUnarmedStrike();
+            if (u == null || u.dieAt(level) == null || !u.getRequires().met(equippedArmor != null, holdingShield())) continue;
+            if (best == null || io.papermc.jkvttplugin.effect.UnarmedStrike.faces(u.dieAt(level))
+                    > io.papermc.jkvttplugin.effect.UnarmedStrike.faces(best.getValue().dieAt(level))) {
+                best = Map.entry(e.getKey(), u);
+            }
+        }
+        return best;
+    }
+
+    /** The rule letting {@code weapon} use another ability or die (monk weapons, #221), or null. */
+    public Map.Entry<String, io.papermc.jkvttplugin.effect.WeaponAbility> weaponAbilityFor(DndWeapon weapon) {
+        if (weapon == null) return null;
+        for (var e : standingEffects()) {
+            var w = e.getValue().getWeaponAbility();
+            if (w != null && w.covers(weapon) && w.getRequires().met(equippedArmor != null, holdingShield())) {
+                return Map.entry(e.getKey(), w);
+            }
+        }
+        return null;
+    }
+
+    /** Whether a feature's own requirements (no armor, no shield) hold right now. */
+    public boolean meets(io.papermc.jkvttplugin.effect.Requirements requirements) {
+        return requirements == null || requirements.met(equippedArmor != null, holdingShield());
     }
 
     /** "Unarmored Defense: 10 + DEX + WIS" when a formula set the AC (#220), or null for armor / 10 + DEX. */

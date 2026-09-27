@@ -30,6 +30,8 @@ public class ActiveEffect {
     private final Set<String> flags;
     private final boolean stacks;              // false = a second copy refreshes instead of adding
     private final AcFormula armorClass;        // another way to work out AC (Unarmored Defense, #220), or null
+    private final UnarmedStrike unarmedStrike; // what an unarmed strike does (Martial Arts, #221), or null
+    private final WeaponAbility weaponAbility; // weapons that may use another ability / die (#221), or null
 
     // ---- duration ----
     private int roundsRemaining;               // -1 = no round timer (DM/rest-ended)
@@ -42,7 +44,7 @@ public class ActiveEffect {
                         Set<String> disadvantageOn, int bonusDamage, String bonusDamageWhen,
                         String minecraftEffect, int minecraftAmplifier, Set<String> flags, boolean stacks,
                         int roundsRemaining, Set<String> maintainedBy, String untilRest, boolean untilUsed,
-                        AcFormula armorClass) {
+                        AcFormula armorClass, UnarmedStrike unarmedStrike, WeaponAbility weaponAbility) {
         this.sourceId = sourceId;
         this.sourceName = sourceName;
         this.resistances = lower(resistances);
@@ -59,6 +61,8 @@ public class ActiveEffect {
         this.untilRest = untilRest == null ? null : untilRest.toLowerCase();
         this.untilUsed = untilUsed;
         this.armorClass = armorClass;
+        this.unarmedStrike = unarmedStrike;
+        this.weaponAbility = weaponAbility;
     }
 
     private static Set<String> lower(Set<String> in) {
@@ -71,7 +75,7 @@ public class ActiveEffect {
     public ActiveEffect copy() {
         return new ActiveEffect(sourceId, sourceName, resistances, advantageOn, disadvantageOn, bonusDamage,
                 bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks, roundsRemaining,
-                maintainedBy, untilRest, untilUsed, armorClass);
+                maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility);
     }
 
     /**
@@ -92,6 +96,8 @@ public class ActiveEffect {
     public boolean enduresBelow1() { return hasFlag("endure_below_1"); }
     /** An alternative AC formula this effect grants (#220), or null. */
     public AcFormula getArmorClass() { return armorClass; }
+    public UnarmedStrike getUnarmedStrike() { return unarmedStrike; }
+    public WeaponAbility getWeaponAbility() { return weaponAbility; }
 
     // ---- queries (read sites) ----
     public boolean resists(String damageType) {

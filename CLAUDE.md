@@ -685,7 +685,10 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     spell in a fight was free. The spellbook menu now only *fills a command*; it consumes nothing.
   - **Bonus actions (#176):** `/combat bonusAction` with no argument lists what this character can
     actually do — bonus-action spells, features with `activation: bonus_action`, an off-hand attack
-    when dual-wielding — each filling a command rather than firing it. `bonusAction used` is the
+    when dual-wielding, a monk's bonus unarmed strike — each filling a command rather than firing it.
+    A bonus **attack** is `/combat attack <target> <weapon> bonus` (#221): it spends the bonus action
+    and is refused until the Attack action was taken this turn (`TurnState.markAttackAction`, not just
+    any Action; `BonusAttack.check` is the one rule). `bonusAction used` is the
     "anything else" escape hatch that just marks it spent. There is **no `/combat bonus`** — the
     short alias was removed so there's one spelling to learn and to document. `/combat action` with
     no argument is character-aware the same way (held weapon, Action-cost spells, Action features),

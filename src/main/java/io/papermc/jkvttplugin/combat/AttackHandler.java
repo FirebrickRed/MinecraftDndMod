@@ -44,6 +44,19 @@ public class AttackHandler {
                                            CombatSession session, Player player,
                                            String weaponId, Integer providedRoll,
                                            Integer providedTotal, boolean showMods, boolean forceAuto) {
+        return executePlayerAttack(attacker, target, session, player, weaponId, providedRoll, providedTotal,
+                showMods, forceAuto, false);
+    }
+
+    /**
+     * @param offHand a two-weapon-fighting bonus attack (PHB p.195): no positive ability modifier on
+     *                the damage. A Martial Arts bonus strike isn't one; it adds the modifier as usual.
+     */
+    public static boolean executePlayerAttack(Combatant attacker, Combatant target,
+                                           CombatSession session, Player player,
+                                           String weaponId, Integer providedRoll,
+                                           Integer providedTotal, boolean showMods, boolean forceAuto,
+                                           boolean offHand) {
         CharacterSheet sheet = attacker.getCharacterSheet();
         if (sheet == null) {
             player.sendMessage(Component.text("No active character found.", NamedTextColor.RED));
@@ -77,7 +90,7 @@ public class AttackHandler {
         }
 
         // Build damage string, then hand off to the shared resolver.
-        String damageStr = buildPlayerDamageString(sheet, weapon);
+        String damageStr = buildPlayerDamageString(sheet, weapon, offHand);
         String damageType = (weapon != null) ? weapon.getDamageType() : "bludgeoning";
 
         // Effect bonus damage on a melee STR swing (e.g. Rage, #70). Unarmed and melee weapons count.
@@ -92,6 +105,7 @@ public class AttackHandler {
         // Labeled damage-bonus breakdown for clarity (#168): "+5[STR] +2[Rage]".
         Ability dmgAbility = resolveAttackAbility(sheet, weapon);
         int dmgAbilityMod = sheet.getModifier(dmgAbility);
+        if (offHand) dmgAbilityMod = Math.min(0, dmgAbilityMod); // matches the damage string
         String bonusLabel = dmgAbilityMod != 0
                 ? (dmgAbilityMod > 0 ? "+" : "") + dmgAbilityMod + "[" + dmgAbility.getAbbreviation() + "]" : "";
         String magicDmg = magicLabel(weapon, weapon != null ? weapon.getDamageBonus() : 0);
@@ -291,21 +305,27 @@ public class AttackHandler {
      * Resolve which ability to use for a weapon attack.
      * Finesse weapons use the better of STR or DEX.
      */
-    private static Ability resolveAttackAbility(CharacterSheet sheet, DndWeapon weapon) {
+    static Ability resolveAttackAbility(CharacterSheet sheet, DndWeapon weapon) {
         if (weapon == null) {
-            // Unarmed: always STR
-            return Ability.STRENGTH;
+            // Unarmed: STR, unless an effect says otherwise (Martial Arts: the better of STR and DEX, #221).
+            var rule = sheet.unarmedStrikeRule();
+            return rule != null ? rule.getValue().ability(sheet::getModifier) : Ability.STRENGTH;
         }
 
-        Ability primary = weapon.getPrimaryAbility();
-        if (primary != null) {
-            return primary;
+        Ability chosen = weapon.getPrimaryAbility();
+        if (chosen == null) {
+            // Finesse: use the better of STR or DEX
+            int strMod = sheet.getModifier(Ability.STRENGTH);
+            int dexMod = sheet.getModifier(Ability.DEXTERITY);
+            chosen = (dexMod >= strMod) ? Ability.DEXTERITY : Ability.STRENGTH;
         }
-
-        // Finesse: use the better of STR or DEX
-        int strMod = sheet.getModifier(Ability.STRENGTH);
-        int dexMod = sheet.getModifier(Ability.DEXTERITY);
-        return (dexMod >= strMod) ? Ability.DEXTERITY : Ability.STRENGTH;
+        // An effect may let this weapon use another ability (monk weapons, #221); only if it's better.
+        var rule = sheet.weaponAbilityFor(weapon);
+        if (rule != null) {
+            Ability alt = rule.getValue().ability(sheet::getModifier);
+            if (sheet.getModifier(alt) > sheet.getModifier(chosen)) chosen = alt;
+        }
+        return chosen;
     }
 
     /**
@@ -343,10 +363,22 @@ public class AttackHandler {
      * Example: "1d8+3" (longsword with +3 STR)
      */
     public static String buildPlayerDamageString(CharacterSheet sheet, DndWeapon weapon) {
+        return buildPlayerDamageString(sheet, weapon, false);
+    }
+
+    /**
+     * @param offHand a two-weapon-fighting bonus attack: a positive ability modifier isn't added to
+     *                the damage (a negative one still is, PHB p.195).
+     */
+    public static String buildPlayerDamageString(CharacterSheet sheet, DndWeapon weapon, boolean offHand) {
         Ability attackAbility = resolveAttackAbility(sheet, weapon);
         int abilityMod = sheet.getModifier(attackAbility);
+        if (offHand) abilityMod = Math.min(0, abilityMod);
 
         if (weapon == null) {
+            // An effect's unarmed-strike die (Martial Arts: 1d4 + DEX at 1st level, #221).
+            var rule = sheet.unarmedStrikeRule();
+            if (rule != null) return withFlat(rule.getValue().dieAt(sheet.getTotalLevel()), abilityMod);
             // Unarmed strike: 1 + STR modifier bludgeoning, minimum 1 (5e floor).
             int damage = Math.max(1, 1 + abilityMod);
             return damage + "";
@@ -355,6 +387,17 @@ public class AttackHandler {
         String baseDice = weapon.getDamage();
         if (baseDice == null || baseDice.isEmpty()) {
             return "1";
+        }
+        // A monk weapon rolls the Martial Arts die when it's bigger than its own (#221). Only a single
+        // die is compared, so a 2d6 weapon is never swapped for a 1d8.
+        var weaponRule = sheet.weaponAbilityFor(weapon);
+        if (weaponRule != null && weaponRule.getValue().usesUnarmedDieIfBigger()) {
+            var unarmed = sheet.unarmedStrikeRule();
+            int own = io.papermc.jkvttplugin.effect.UnarmedStrike.faces(baseDice);
+            if (unarmed != null && own > 0) {
+                String die = unarmed.getValue().dieAt(sheet.getTotalLevel());
+                if (io.papermc.jkvttplugin.effect.UnarmedStrike.faces(die) > own) baseDice = die;
+            }
         }
 
         // Ability modifier plus a magic weapon's damage bonus (#188), as one flat term (1d8+5).
@@ -365,6 +408,13 @@ public class AttackHandler {
             return baseDice + flat; // negative sign included
         }
         return baseDice;
+    }
+
+    /** "1d4+3", "1d4-1" or "1d4": dice with one flat term, the form the dice parser accepts. */
+    private static String withFlat(String dice, int flat) {
+        if (flat > 0) return dice + "+" + flat;
+        if (flat < 0) return dice + flat;
+        return dice;
     }
 
     // ==================== ENTITY ATTACKS ====================

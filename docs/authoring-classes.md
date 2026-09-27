@@ -127,6 +127,39 @@ every formula that applies, so a formula can only help. The sheet's AC tile name
 It works on races' `features:` too (natural armor), and a live effect with a duration can carry one
 (Mage Armor). A misspelt ability or requirement is a console warning on `/dm reload`, not a guess.
 
+### Unarmed strikes and monk weapons (`unarmed_strike`, `weapon_ability`, #221)
+
+Martial Arts in `monk.yml` is the worked example. Two passive effects and one bonus-action attack:
+
+```yaml
+  - id: martial_arts
+    activation: passive
+    apply:
+      effects:
+        unarmed_strike:
+          damage_by_level: [1d4, 1d4, 1d4, 1d4, 1d6, …]   # 20 entries; past the end, the last holds
+          ability: [strength, dexterity]                  # one, or a list: the better one is used
+          requires: [no_armor, no_shield]
+        weapon_ability:
+          weapons: [shortsword, simple_melee_weapon]      # weapon ids and/or weapon tags
+          exclude_properties: [two_handed, heavy]
+          ability: [strength, dexterity]
+          min_die: unarmed                                # roll the unarmed die when it's bigger
+          requires: [no_armor, no_shield]
+  - id: martial_arts_strike
+    name: "Martial Arts: bonus unarmed strike"
+    activation: bonus_action
+    attack: { weapon: unarmed, requires: [no_armor, no_shield] }
+```
+
+- Without an `unarmed_strike`, an unarmed strike is 1 + STR (PHB p.195).
+- `weapon_ability` only ever **helps**: the listed ability is used when its modifier beats the
+  weapon's own (STR, or the better of STR/DEX for finesse). A magic weapon counts as its `base:`.
+- A feature with an **`attack:`** block *is* an attack. `/combat use` and `/combat bonusAction` fill
+  `/combat attack <target> <weapon> bonus`, which is refused until the Attack action was taken this
+  turn, the same rule as two-weapon fighting's off-hand attack.
+- `requires` works as on `armor_class`. Misspelt keys are console warnings on `/dm reload`.
+
 `features_by_level:` is **display text only**: the level-by-level feature list on the class tile.
 Its `type:`, `uses:` and `damage:` keys are descriptive and drive nothing. Put mechanics in `features:`.
 
