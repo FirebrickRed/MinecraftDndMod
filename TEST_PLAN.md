@@ -38,8 +38,8 @@ Finish the combo, then look at the sheet and your inventory.
 - [ ] **Mountain Dwarf Fighter:** heavy armor on, no penalty.
 - [ ] **Folk Hero:** the picked tool is in your kit.
 - [ ] **Entertainer:** the picked instrument is in your kit.
-- [ ] `/character rest short` recovers as before.
-- [ ] `/character rest long` recovers as before.
+- [ ] `/dm rest <character> short` recovers as before (the player version is gone: rests are the DM's call).
+- [ ] `/dm rest <character> long` recovers as before; with no time given, the clock doesn't move.
 - [ ] **Tiefling Rogue:** right-click thieves' tools with no chest in view → nothing happens, no
       "cannot use this type of focus" message.
 - [ ] **Tiefling Rogue:** right-click a chest holding thieves' tools → the chest's own [Open it] /
@@ -104,7 +104,7 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 - [ ] Down yourself, fail three death saves → "has DIED", turn skipped.
 - [ ] `/combat finished`, new fight → still `[DEAD]`, still skipped.
 - [ ] Dead: `/dm adjust <you> hp +10` refuses.
-- [ ] Dead: `/character rest long` refuses.
+- [ ] Dead: `/dm rest <character> long` refuses.
 - [ ] Dead: `/dm rest <you> long` refuses.
 - [ ] Dead: the sheet's HP slot shows a skull "DEAD".
 - [ ] `/dm revive <you>` → 1 HP, turns return.

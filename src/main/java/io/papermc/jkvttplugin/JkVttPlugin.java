@@ -140,10 +140,6 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
                         .append(Component.text("/character view (or right-click the Character Sheet)", NamedTextColor.WHITE))
         );
         event.getPlayer().sendMessage(
-                Component.text("  • Rest: ", NamedTextColor.YELLOW)
-                        .append(Component.text("/character rest short|long", NamedTextColor.WHITE))
-        );
-        event.getPlayer().sendMessage(
                 Component.text("  • Roll Dice: ", NamedTextColor.YELLOW)
                         .append(Component.text("/roll 2d6+3", NamedTextColor.WHITE))
         );

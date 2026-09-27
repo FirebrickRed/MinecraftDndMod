@@ -42,10 +42,8 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final CreateCharacterCommand createExec = new CreateCharacterCommand();
     private final ViewSheetCommand viewExec = new ViewSheetCommand();
     private final GiveSheetCommand giveExec = new GiveSheetCommand();
-    private final ShortRestCommand shortRestExec = new ShortRestCommand();
-    private final LongRestCommand longRestExec = new LongRestCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "rest", "give", "delete", "loot", "check", "cast", "damage", "drink", "reply");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "give", "delete", "loot", "check", "cast", "damage", "drink", "reply");
     private final DrinkCommand drinkExec = new DrinkCommand();
 
     @Override
@@ -86,18 +84,6 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "list" -> {
                 return handleList(sender, rest);
-            }
-            case "rest" -> {
-                if (rest.length < 1) {
-                    sender.sendMessage(Component.text("Usage: /character rest <short|long>", NamedTextColor.RED));
-                    return true;
-                }
-                String kind = rest[0].toLowerCase();
-                String[] restArgs = Arrays.copyOfRange(rest, 1, rest.length);
-                if (kind.equals("short")) return shortRestExec.onCommand(sender, cmd, label, restArgs);
-                if (kind.equals("long")) return longRestExec.onCommand(sender, cmd, label, restArgs);
-                sender.sendMessage(Component.text("Rest type must be 'short' or 'long'.", NamedTextColor.RED));
-                return true;
             }
             case "give" -> {
                 return giveExec.onCommand(sender, cmd, label, rest);
@@ -469,8 +455,6 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text("view a character sheet", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("  /character list             ", NamedTextColor.YELLOW)
                 .append(Component.text("list your characters", NamedTextColor.GRAY)));
-        sender.sendMessage(Component.text("  /character rest <short|long>", NamedTextColor.YELLOW)
-                .append(Component.text("  take a rest", NamedTextColor.GRAY)));
         if (DMManager.isDM(sender)) {
             sender.sendMessage(Component.text("  /character create <player>  ", NamedTextColor.AQUA)
                     .append(Component.text("(DM) open creation for a player", NamedTextColor.GRAY)));
@@ -509,16 +493,6 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                         if (s.getCharacterName().toLowerCase().startsWith(rest[0].toLowerCase())) names.add(s.getCharacterName());
                     }
                     return names;
-                }
-                return List.of();
-            }
-            case "rest" -> {
-                if (rest.length == 1) {
-                    List<String> kinds = new ArrayList<>();
-                    for (String k : List.of("short", "long")) {
-                        if (k.startsWith(rest[0].toLowerCase())) kinds.add(k);
-                    }
-                    return kinds;
                 }
                 return List.of();
             }

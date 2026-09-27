@@ -93,7 +93,7 @@ class_resources:
 ```
 
 A resource whose max works out to 0 at the character's level isn't created (Action Surge before
-level 2). `/character rest short|long` recovers them.
+level 2). `/dm rest <character|all> short|long` recovers them (rests are the DM's call).
 
 ## Usable features (Effect Engine, #70)
 

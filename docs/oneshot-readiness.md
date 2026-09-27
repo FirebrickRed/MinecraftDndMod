@@ -38,7 +38,7 @@ The build is green (`gradlew clean build`, 2026-09-21), and it now runs 102 auto
 | **Effect Engine** | Rage, Dragonborn breath, Lucky, Relentless Endurance, Savage Attacks, racial resistances | Built |
 | **Death & dying** | 0 HP → downed + prone pose, can't jump, death saves, stabilize, heal back up | Prone ✅ |
 | **Loot** | DM-mediated corpse search, lootable held weapons, chest loot | Built |
-| **Rests** | `/character rest short\|long`, `/dm rest <character>`; slots, resources, innate spells | Built |
+| **Rests** | `/dm rest <character|all> <short|long> [time passed]` (DM-only, run at the end; moves the clock); slots, resources, innate spells ||long`, `/dm rest <character>`; slots, resources, innate spells | Built |
 
 ---
 

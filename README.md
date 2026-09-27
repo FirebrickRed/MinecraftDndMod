@@ -42,7 +42,7 @@ Characters are saved to disk and persist across restarts.
 ### Automatic 5e mechanics
 - **Racial traits:** innate spellcasting, darkvision, movement speeds, damage resistances, proficiencies, and languages
 - **Proficiency system:** weapon, armor, tool, skill, and language proficiencies merged from race, class, subclass, and background
-- **Rest system:** `/character rest short` and `/character rest long` recover HP, spell slots, and class resources per 5e rules
+- **Rest system:** the DM's `/dm rest <character|all> <short|long> [time passed]` recovers HP, spell slots, and class resources per 5e rules
 
 ### DM tools
 - **DM roles:** `/dm add|remove|list` grants DM-only powers
@@ -84,7 +84,6 @@ Commands are consolidated under four roots: `/character`, `/roll`, `/combat`, `/
 |---|---|---|
 | `/character create` | Player | Start character creation |
 | `/character view [name]` | Player | View a character sheet |
-| `/character rest <short\|long>` | Player | Recover resources (short / long rest) |
 | `/roll <XdY[+Z]>` | Player | Roll dice (e.g. `2d6+3`) |
 | `/dm <add\|remove\|list>` | Op | Manage who is a DM |
 | `/dm entity <spawn\|list\|remove\|teleport\|...>` | DM | Spawn & manage NPCs/monsters; create & run shops |

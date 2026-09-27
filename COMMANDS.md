@@ -30,8 +30,6 @@ prints that command's own help.
 | `/character view [name]` | Open your character sheet, or another of **your** characters by name. Other people's sheets are DM-only |
 | `/character list [all]` | List your characters (`all` is the same for a player; for a DM it lists the whole table with owners) |
 | `/character delete <name>` | **Ask the DM** to delete one of your characters ([Approve]/[Deny]; a DM deletes directly). The file is archived to `Saved/Characters/Deleted/`, never erased. Also removes that character's own gear; DM-given items stay |
-| `/character rest short` | Short rest — recover short-rest resources |
-| `/character rest long` | Long rest — full HP, spell slots, resources |
 | `/character loot <check> <d20>` | Search a body you right-clicked (usually filled by the prompt) |
 | `/character check <type> <value> [manualRoll <n> \| autoRoll]` | Resolve a skill/ability/save roll (usually filled by the sheet prompt) |
 | `/character cast <spell> [target] [message…]` | Cast a chat/social spell — Message, Speak with Animals (#151) |
@@ -171,7 +169,7 @@ Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combata
 | `tp <world> <x> <y> <z>` | Teleport (usually clicked from the coordinates in a DM notification) |
 | `lootprompt <player> <check>` | Call a loot check for a player searching a body (usually clicked, not typed) |
 | `animalreply <player> <message…>` | Voice the animals' reply to a Speak with Animals caster (usually clicked) |
-| `rest <character\|all> <short\|long> [time passed]` | **Run it when the rest is over**: that's when the benefits land. `all` rests every online player's active character at once. The time passed (`8h`, `1h`, `1h30m`) moves the in-game clock forward once, however many rested. Refused for a dead character; a long rest also needs at least 1 HP (PHB p.186) |
+| `rest <character\|all> <short\|long> [time passed]` | **Run it when the rest is over**: that's when the benefits land. `all` rests every online player's active character at once. The time passed (`8h`, `1h`, `1h30m`) moves the in-game clock forward once, however many rested; leave it off and the clock doesn't move. Rests are the DM's call: players have no rest command. Refused for a dead character; a long rest also needs at least 1 HP (PHB p.186) |
 | `time [add <duration> \| stop \| start]` | The in-game clock. No argument shows it (to you only; players just see the sun) with [+10 min] [+1 hour] [Stop the clock] buttons. `add 30m`, `add 1h30m`, `add -1h` to go back. `stop` freezes the day so time only moves when you move it. Also the **Time** tool (clock) in DM mode: stop or start the clock, +10 min, +1 hour (sneak = back), and a form for any other amount |
 | `resource restore <character> <name\|all>` | Restore a class resource |
 | `resource consume <character> <name> [amount]` | Spend a class resource |

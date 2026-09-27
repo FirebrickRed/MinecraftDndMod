@@ -150,6 +150,12 @@ public class RestCommand implements CommandExecutor, TabCompleter {
                         .append(Component.text("Hit Points: ", NamedTextColor.WHITE))
                         .append(Component.text("Already at full health", NamedTextColor.GREEN)));
             }
+            int totalSlots = 0;
+            for (int level = 1; level <= 9; level++) totalSlots += character.getMaxSpellSlots(level);
+            if (totalSlots > 0) {
+                player.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
+                        .append(Component.text("All spell slots restored", NamedTextColor.WHITE)));
+            }
             player.sendMessage(Component.empty());
         }
 

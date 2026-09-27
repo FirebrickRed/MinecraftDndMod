@@ -239,9 +239,9 @@ attacks, class resources, healing, temp HP, death saves.
 
 1. **The blade.** Loot Balin's stolen +2 longsword off the sorcerer (held-weapon loot), or reveal it in
    the annotated alcove: `/dm object give <player>`.
-2. **Rest.** `/character rest short` recovers short-rest resources (e.g. a Warlock's pact slot).
-   There are **no hit dice yet** (#52), so a short rest heals nothing. Do a
-   `/character rest long` to confirm full HP, spell slots and Rage uses come back.
+2. **Rest.** When the rest is over, `/dm rest all short 1h` recovers short-rest resources (e.g. a
+   Warlock's pact slot) and moves the clock an hour. There are **no hit dice yet** (#52), so a short
+   rest heals nothing. Then `/dm rest all long 8h` to confirm full HP, spell slots and Rage uses come back.
 3. **Return to Balin.** Turn in the blade → he pays up. Base reward `/dm give <player> gold_piece 50`;
    if a player read him in Act I and talked it up, add a second stack (a single `_piece` stack caps at
    64, so hand out large sums in multiple gives, or in platinum). Sell dungeon loot back at his shop.
@@ -249,7 +249,7 @@ attacks, class resources, healing, temp HP, death saves.
 **Before you shut the server down.** Combat state, entity HP, and corpses now persist and restore on
 restart (#89/#105/#31). Character HP saves on every change, but the *in-progress turn* resets and
 combat restore is unconfirmed (#165), so it's still tidiest to `/combat finished`, `/dm entity remove <name>` unwanted NPCs, and
-`/character rest long` or `close` before stopping. See Known rough edges.
+`/dm rest all long` or `close` before stopping. See Known rough edges.
 
 ✅ Covers: loot handoff, short/long rest recovery, resource restore, shop sell, save-on-close.
 

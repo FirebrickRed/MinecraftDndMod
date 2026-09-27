@@ -111,8 +111,8 @@ The plugin loads D&D content (races, classes, spells, weapons, armor, items) fro
 3. Character data persists to `plugins/jkvttplugin/Saved/Characters/` as YAML files
 
 ### Testing Character Features
-- `/character rest short` - Recover short rest resources and innate spells
-- `/character rest long` - Fully restore HP, spell slots, and all resources
+- `/dm rest <character|all> short [1h]` - Recover short rest resources and innate spells (DM-only; run it when the rest is over, the time moves the clock)
+- `/dm rest <character|all> long [8h]` - Fully restore HP, spell slots, and all resources
 - Right-click character sheet item to view character stats
 - Click ability scores to view skills and roll checks
 - Click skills to roll with advantage/disadvantage
@@ -381,7 +381,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - Resources defined in class YAML with recovery type (short rest, long rest, dawn)
 - Supports fixed amounts, ability modifiers, proficiency bonus, and formulas
 - Displayed in character sheet with current/max tracking
-- Recovered automatically via `/character rest short` and `/character rest long` commands
+- Recovered by `/dm rest <character|all> <short|long> [time passed]` (rests are the DM's call; there is no player rest command)
 
 **Shop System (Issue #75):**
 - Native Minecraft Merchant GUI integration for D&D economy
