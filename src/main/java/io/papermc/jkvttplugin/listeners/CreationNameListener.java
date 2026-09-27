@@ -11,7 +11,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.AsyncPlayerChatEvent;
+import io.papermc.paper.event.player.AsyncChatEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 
 import java.util.Map;
@@ -44,14 +44,14 @@ public class CreationNameListener implements Listener {
     }
 
     @EventHandler(priority = EventPriority.LOWEST)
-    public void onChat(AsyncPlayerChatEvent event) {
+    public void onChat(AsyncChatEvent event) {
         UUID playerId = event.getPlayer().getUniqueId();
         if (!awaiting.containsKey(playerId)) return;
 
         event.setCancelled(true);
         UUID sessionId = awaiting.remove(playerId);
         Player player = event.getPlayer();
-        String input = event.getMessage().trim();
+        String input = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(event.message()).trim();
 
         if (input.equalsIgnoreCase("cancel")) {
             reopen(player, sessionId);

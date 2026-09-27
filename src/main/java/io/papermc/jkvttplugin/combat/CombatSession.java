@@ -848,7 +848,7 @@ public class CombatSession {
             if (sheet != null) {
                 for (var e : sheet.getActiveEffects()) {
                     if (e.getMinecraftEffect() == null) continue;
-                    var type = org.bukkit.potion.PotionEffectType.getByName(e.getMinecraftEffect().toUpperCase());
+                    var type = io.papermc.jkvttplugin.util.Util.effectType(e.getMinecraftEffect());
                     if (type != null) player.addPotionEffect(new org.bukkit.potion.PotionEffect(
                             type, Integer.MAX_VALUE, e.getMinecraftAmplifier(), false, false));
                 }
@@ -907,7 +907,7 @@ public class CombatSession {
                     names.add(e.getSourceName());
                     if (c.isPlayer() && e.getMinecraftEffect() != null) {
                         Player p = c.getPlayer();
-                        var t = org.bukkit.potion.PotionEffectType.getByName(e.getMinecraftEffect().toUpperCase());
+                        var t = io.papermc.jkvttplugin.util.Util.effectType(e.getMinecraftEffect());
                         if (p != null && t != null) p.removePotionEffect(t);
                     }
                 }
@@ -1033,7 +1033,7 @@ public class CombatSession {
 
     private static void applyEffect(Player p, DndCondition cond, boolean on) {
         if (p == null || cond == null || cond.getMinecraftEffect() == null) return;
-        org.bukkit.potion.PotionEffectType type = org.bukkit.potion.PotionEffectType.getByName(cond.getMinecraftEffect());
+        org.bukkit.potion.PotionEffectType type = io.papermc.jkvttplugin.util.Util.effectType(cond.getMinecraftEffect());
         if (type == null) return;
         if (on) {
             p.addPotionEffect(new org.bukkit.potion.PotionEffect(type, Integer.MAX_VALUE,
@@ -1166,7 +1166,7 @@ public class CombatSession {
             if (c.isPlayer() && expired.getMinecraftEffect() != null) {
                 Player p = c.getPlayer();
                 org.bukkit.potion.PotionEffectType type =
-                        org.bukkit.potion.PotionEffectType.getByName(expired.getMinecraftEffect().toUpperCase());
+                        io.papermc.jkvttplugin.util.Util.effectType(expired.getMinecraftEffect());
                 if (p != null && type != null) p.removePotionEffect(type);
             }
             broadcast(Component.text(c.getDisplayName() + "'s " + expired.getSourceName() + " ended.", NamedTextColor.GRAY));

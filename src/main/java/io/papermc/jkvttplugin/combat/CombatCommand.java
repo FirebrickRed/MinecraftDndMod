@@ -1763,7 +1763,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             io.papermc.jkvttplugin.effect.ActiveEffect eff = feature.getApplyTemplate().copy();
             sheet.addEffect(eff);
             if (eff.getMinecraftEffect() != null) {
-                org.bukkit.potion.PotionEffectType type = org.bukkit.potion.PotionEffectType.getByName(eff.getMinecraftEffect().toUpperCase());
+                org.bukkit.potion.PotionEffectType type = io.papermc.jkvttplugin.util.Util.effectType(eff.getMinecraftEffect());
                 if (type != null) {
                     player.addPotionEffect(new org.bukkit.potion.PotionEffect(type, Integer.MAX_VALUE, eff.getMinecraftAmplifier(), false, false));
                 }
