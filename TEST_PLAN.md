@@ -11,6 +11,9 @@ fails), copy `build/libs/*.jar` into the server's `plugins/`, restart. Load the 
 - **Part 2** needs a second account that is **not** a DM (a friend, or a second account you `/deop`).
   Locks are here too: a DM walks through locks by design, so only a player can test them.
 - **Restart checks** are batched at the end of Part 1 so you restart once.
+- A section about one ticket's work names it in the heading, e.g. "Rage's advantage (#223)", so a
+  failure has an obvious place to be reported. New sections get one when a ticket exists; older
+  sections aren't being retrofitted.
 - Tick a row with `[X]`. Ticked rows get deleted at the next round (git keeps the history).
 - Notes go in **Playtest notes** at the bottom, newest on top.
 

@@ -298,7 +298,8 @@ public class PossessionManager {
         }
         // Slot 8 is always the way out, so the kit gets 0-7.
         dm.getInventory().setItem(8, DmModeManager.tool(org.bukkit.Material.LEAD, DmModeManager.TOOL_RELEASE,
-                "Let go of " + instance.getDisplayName(), "Right-click to stop possessing", "(your DM toolbar comes back)"));
+                "Let go of " + instance.getDisplayName(), "Right-click to stop possessing", "(your DM toolbar comes back)",
+                "F: show or hide its model for you", "F5: third-person, to watch it"));
     }
 
     /** A named hotbar placeholder for a natural/spell attack (YAML `material:`, default BONE). */
