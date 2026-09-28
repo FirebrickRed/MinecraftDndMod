@@ -136,6 +136,11 @@ An option of a `custom` choice can carry what picking it gives:
 | `bonus_spells: [a, b]` | spells known for free, like a subclass's `bonus_spells` |
 | `expanded_spells: [a, b]` | spells added to what the character may **pick**, like a warlock patron's `expanded_spells` (the genie's kind) |
 | `features: [ … ]` | Effect Engine features, written exactly as under a class's `features:` (the fighter's Fighting Style, #229). They're the character's own while the pick stands |
+| `languages: [draconic]` | languages the pick teaches (a ranger's favored enemy). One already known just stays known; there's no "pick another" yet |
+
+An option can also have a `description:` (`{ label: "Red (fire)", description: "…" }`), shown on its
+tile under the name. The tile also lists what the grants give ("✦ Always known: Cure Wounds"), so
+players can see what a pick means before taking it.
 
 - Only the pick is saved; what it grants is worked out again on every load, so editing the grants
   in YAML reaches existing characters.
