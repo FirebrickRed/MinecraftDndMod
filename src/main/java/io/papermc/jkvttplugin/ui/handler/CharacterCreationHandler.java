@@ -191,8 +191,7 @@ public class CharacterCreationHandler implements MenuClickHandler {
                 CharacterCreationMenu.open(player, sessionId);
             }
 
-            case OPEN_NAME_ANVIL -> player.sendMessage(Component.text(
-                    "Anvil naming is down for maintenance — use \"Name via chat\" for now.", NamedTextColor.YELLOW));
+            case OPEN_NAME_DIALOG -> io.papermc.jkvttplugin.listeners.CreationNameDialog.open(player, sessionId);
             case OPEN_NAME_CHAT -> CreationNameListener.request(player, sessionId);
 
             case CONFIRM_CHARACTER -> handleConfirm(player, session, sessionId);
@@ -399,7 +398,7 @@ public class CharacterCreationHandler implements MenuClickHandler {
             return;
         }
         if (session.getCharacterName() == null || session.getCharacterName().trim().isEmpty()) {
-            CreationNameListener.request(player, sessionId);
+            io.papermc.jkvttplugin.listeners.CreationNameDialog.open(player, sessionId); // Finish without a name: ask for one
             return;
         }
         completeCharacterCreation(player, session);

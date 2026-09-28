@@ -106,7 +106,10 @@ The plugin loads D&D content (races, classes, spells, weapons, armor, items) fro
    **"Create Character"** paper — right-clicking it re-opens the in-progress creation menu, so
    closing out isn't destructive. On completion the paper is swapped for the real Character Sheet.
 2. `CharacterSheetManager.giveCreationPaperIfAbsent` / `removeCreationPapers` manage that paper;
-   `CreationNameListener` handles the in-chat name step. (The old `CharacterNameListener` and
+   The name step has two ways, same rules (`CreationNameListener.validate`): **Name via form**, a
+   dialog (`CreationNameDialog`, also what Finish opens when there's no name), and **Name via chat**
+   (`CreationNameListener`). The form replaces the anvil idea: reliable anvil text input needed a
+   library (#121), and dialogs are Paper's own text box. (The old `CharacterNameListener` and
    `AnvilNameListener` were dead iterations and have been removed.)
 3. Character data persists to `plugins/jkvttplugin/Saved/Characters/` as YAML files
 

@@ -47,6 +47,13 @@ merges into main.
 
 ## Character creation
 
+### Naming a character
+- [ ] **Name via form** (the book, where the anvil button was) opens a box with your current name;
+      Save → the menu comes back showing the name. Cancel or Esc → the menu, name unchanged.
+- [ ] Type "ab" and Save → the form comes back saying it's too short.
+- [ ] **Name via chat** still works.
+- [ ] Press **Finish** with no name set → the form opens.
+
 ### Size, halflings and sorcerers
 - [ ] **A halfling is small:** create one → your body shrinks to about half a human's height. Log out
       and back in → still small. Switch to a Medium character (`/character view` → set active) →

@@ -23,8 +23,8 @@ import java.util.concurrent.ConcurrentHashMap;
  * name in chat, sets it on the session, and re-opens the creation menu — it does NOT finalize
  * the character (unlike the classic {@code CharacterNameListener}, where name was the last step).
  *
- * NOTE: an anvil GUI would be the nicer UX, but reliable anvil text input on Paper needs a
- * library (AnvilGUI) or NMS; that's a fast follow-up. Chat keeps creation working today.
+ * The other way to name a character is the form, {@link CreationNameDialog} (what the anvil GUI was
+ * meant to be). Both stay: some players will simply prefer typing in chat.
  */
 public class CreationNameListener implements Listener {
 
@@ -89,7 +89,8 @@ public class CreationNameListener implements Listener {
     }
 
     /** Returns an error message, or null if valid. Mirrors CharacterNameListener's rules. */
-    private static String validate(String name) {
+    /** The rules for a character name, shared with the form (CreationNameDialog). Null = fine. */
+    static String validate(String name) {
         if (name == null || name.isBlank()) return "Name cannot be blank.";
         if (name.length() < 3) return "Name must be at least 3 characters.";
         if (name.length() > 30) return "Name must be at most 30 characters.";

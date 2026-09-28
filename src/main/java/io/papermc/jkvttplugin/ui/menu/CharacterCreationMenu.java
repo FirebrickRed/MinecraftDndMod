@@ -970,13 +970,12 @@ public class CharacterCreationMenu {
 
         inv.setItem(13, label(set ? "Current name: " + name : "No name set yet — pick a way to enter one"));
 
-        List<Component> anvilLore = new ArrayList<>();
-        anvilLore.add(Component.text("Down for maintenance.", NamedTextColor.RED).decoration(TextDecoration.ITALIC, false));
-        anvilLore.add(Component.text("Use \"Name via chat\" for now →", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
-        ItemStack anvilBtn = plain(Material.ANVIL, Component.text("Name via anvil (down for maintenance)", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
-        anvilBtn.editMeta(m -> m.lore(anvilLore));
-        ItemUtil.tagAction(anvilBtn, MenuAction.OPEN_NAME_ANVIL, "name");
-        inv.setItem(21, anvilBtn);
+        List<Component> formLore = new ArrayList<>();
+        formLore.add(Component.text("Click to type it in a box.", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        ItemStack formBtn = plain(Material.WRITABLE_BOOK, Component.text("Name via form", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+        formBtn.editMeta(m -> m.lore(formLore));
+        ItemUtil.tagAction(formBtn, MenuAction.OPEN_NAME_DIALOG, "name");
+        inv.setItem(21, formBtn);
 
         List<Component> chatLore = new ArrayList<>();
         chatLore.add(Component.text("Prefer chat? Click and type your", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
