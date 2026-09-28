@@ -135,6 +135,21 @@ public class SpellCastingMenuListener implements Listener {
         player.closeInventory();
         boolean needsTarget = !spell.isAoe()
                 && !(spell.getRange() != null && spell.getRange().equalsIgnoreCase("Self"));
+        // On your turn in a fight (#179): a targeted spell is readied for a left-click on the target,
+        // as a weapon is, and an area spell goes straight to its aim preview (nothing is spent until
+        // the aim is confirmed). Off your turn (a reaction) it's still the filled command below.
+        io.papermc.jkvttplugin.combat.Combatant current = inCombat ? session.getCurrentCombatant() : null;
+        boolean myTurn = current != null && current.isPlayer() && current.getId().equals(player.getUniqueId());
+        if (myTurn && spell.isAoe()) {
+            boolean up = castingLevel > spell.getLevel() && spell.getLevel() > 0;
+            player.performCommand("combat cast " + spell.getId() + (up ? " level " + castingLevel : ""));
+            return;
+        }
+        if (myTurn && needsTarget) {
+            io.papermc.jkvttplugin.combat.SpellTargeting.ready(player, current, spell, castingLevel);
+            return;
+        }
+
         // A spell picked from a higher slot's page carries that level, so the command spends it.
         // "level N" has to come last (it stops target-name collection), so when there's both a
         // target and an upcast the command fills with a <target> placeholder to replace rather than

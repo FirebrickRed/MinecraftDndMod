@@ -55,6 +55,7 @@ public class WeaponListener implements Listener {
 
         Player player = event.getPlayer();
         if (io.papermc.jkvttplugin.combat.AreaTargeting.isAiming(player.getUniqueId())) return;
+        if (io.papermc.jkvttplugin.combat.SpellTargeting.onLeftClick(player, null)) return; // a readied spell (#179)
 
         if (tryPossessedAttack(player, null)) return;
 
@@ -92,6 +93,9 @@ public class WeaponListener implements Listener {
 
         // Mid-aim for an area effect (#173): right-click confirms it; don't also swing.
         if (io.papermc.jkvttplugin.combat.AreaTargeting.isAiming(player.getUniqueId())) return;
+
+        // A spell readied from the spellbook takes the click (#179).
+        if (io.papermc.jkvttplugin.combat.SpellTargeting.onLeftClick(player, null)) { event.setCancelled(true); return; }
 
         // Possessing an entity on its turn: attack AS the entity (left-click while aiming).
         if (tryPossessedAttack(player, null)) { event.setCancelled(true); return; }
@@ -203,6 +207,8 @@ public class WeaponListener implements Listener {
     @EventHandler(ignoreCancelled = true)
     public void onLeftClickEntity(EntityDamageByEntityEvent event) {
         if (!(event.getDamager() instanceof Player player)) return;
+
+        if (io.papermc.jkvttplugin.combat.SpellTargeting.onLeftClick(player, event.getEntity())) { event.setCancelled(true); return; } // #179
 
         // Possessing an entity on its turn: attack AS the entity (left-click the target directly).
         if (tryPossessedAttack(player, event.getEntity())) { event.setCancelled(true); return; }

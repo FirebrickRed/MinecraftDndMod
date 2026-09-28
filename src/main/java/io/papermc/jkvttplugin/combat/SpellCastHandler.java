@@ -183,7 +183,7 @@ public class SpellCastHandler {
      * Returns false so the command layer skips its own action-spend (the confirm handles it).
      */
     public static boolean castAoe(Combatant caster, CombatSession session, Player player, DndSpell spell,
-                                  Integer providedRoll, Integer providedTotal) {
+                                  Integer providedRoll, Integer providedTotal, Runnable afterConfirm) {
         CharacterSheet sheet = caster.getCharacterSheet();
         if (sheet == null) {
             player.sendMessage(Component.text("Only characters cast spells this way.", NamedTextColor.RED));
@@ -198,9 +198,7 @@ public class SpellCastHandler {
         if (ability == null) { player.sendMessage(Component.text("No spellcasting ability to cast " + spell.getName() + " with.", NamedTextColor.RED)); return false; }
         Runnable onConfirm = () -> {
             resolveAoeNow(caster, session, player, spell);
-            TurnState ts = caster.getTurnState();
-            if (ts != null && !ts.isActionUsed()) ts.useAction();
-            session.sendActionBar(caster);
+            afterConfirm.run(); // the slot, concentration and the action, as for any cast (#179)
         };
         AreaTargeting.begin(player, session, caster, spell.getName(), spell.getAoeShape(), spell.getAoeSize(),
                 spell.getAoeTargets(), onConfirm);

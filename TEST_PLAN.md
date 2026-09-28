@@ -327,11 +327,22 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] A fighter clicks **Second Wind** out of a fight → fills `/character use second_wind`. Passive tiles
       (Sneak Attack, Archery) aren't clickable. ← goes back to the sheet.
 
-## Possessed creatures attack by left-click (#179)
+## Casting by clicking, and possessed creatures by left-click (#179)
 
 - [ ] Possess a creature with attacks (`skeleton`): the hotbar item says "left-click a target". Hold the
       shortbow, left-click a player → the prompt lists **Shortbow first** and fills
       `/combat attack <them> Shortbow ` (you pick autoRoll/manualRoll after).
+- [ ] In a fight, on your turn: right-click your focus → spellbook → **Fire Bolt** → "Fire Bolt is ready: left-click
+      your target". Left-click a goblin → "✨ Fire Bolt at Goblin:" with [Roll it] [I rolled…] [My total…]; the
+      roll goes through as `/combat cast fire_bolt Goblin …`. Left-clicking a different creature first re-aims it.
+- [ ] A save spell (Sacred Flame, Hold Person) or Magic Missile the same way → one **[Cast it]** button instead of roll buttons.
+- [ ] Magic Missile from the **2nd-level** page → the click fills `… Goblin level 2 ` and spends a 2nd-level slot.
+- [ ] With a spell ready, [cancel] → left-click attacks with your weapon again. End your turn with one ready →
+      next turn, left-click is your weapon (it lapses with the turn).
+- [ ] Burning Hands / Thunderwave from the spellbook → the aim preview starts at once; right-click confirms.
+      **The slot is spent** (spellbook shows one fewer) and so is the Action. Cancel the aim instead → nothing
+      spent. (An area spell used to be free in a fight.)
+- [ ] Off your turn, Hellish Rebuke from the book still fills `/combat cast hellish_rebuke ` to type a name.
 
 ## Darkvision is night vision (#148)
 

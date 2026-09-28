@@ -1307,7 +1307,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         boolean resolved;
         if (spell.isAoe()) {
             // Area spell — aim (cone/line/burst from you, sphere where you look); no named target.
-            resolved = SpellCastHandler.castAoe(caster, session, player, spell, providedRoll, providedTotal);
+            // The aim is a preview: nothing is spent until it's confirmed, and then afterCast spends it all.
+            final Combatant aoeCaster = caster;
+            final boolean aoeReaction = spendReaction;
+            SpellCastHandler.castAoe(caster, session, player, spell, providedRoll, providedTotal,
+                    () -> afterCast(player, session, aoeCaster, casterSheet, spell, cost, aoeReaction));
+            resolved = false;
         } else {
             if (args.length < 3) { player.sendMessage(Component.text("Usage: /combat cast " + args[1] + " <target> [manualRoll <d20> | autoRoll]", NamedTextColor.RED)); return; }
             List<String> pos = collectPositionalArgs(args, 2);
@@ -1340,54 +1345,64 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        if (resolved) {
-            cost.spend(casterSheet, spell);
-            Reach.spend(player.getUniqueId()); // a DM "close enough" covered this one cast
+        if (resolved) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction);
+    }
 
-            // Concentration (PHB 203): a second concentration spell replaces the first. castMark
-            // (Hex/Hunter's Mark) sets this itself, so don't tread on it.
-            if (spell.isConcentration() && casterSheet != null && !spell.isMarkSpell()) {
-                if (casterSheet.isConcentrating() && casterSheet.getConcentratingOn() != spell) {
-                    session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + "'s concentration on "
-                            + casterSheet.getConcentratingOn().getName() + " ends.", NamedTextColor.GRAY));
-                }
-                casterSheet.setConcentratingOn(spell);
-                session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + " is concentrating on "
-                        + spell.getName() + ".", NamedTextColor.LIGHT_PURPLE));
+    /**
+     * A cast went through: spend the slot, start concentration, apply an AC bonus, and spend the action,
+     * bonus action or reaction. Run straight after a targeted spell resolves, and on an area spell's aim
+     * confirm (#179: an area spell used to return before this, so it never spent its slot).
+     */
+    private void afterCast(Player player, CombatSession session, Combatant caster, CharacterSheet casterSheet,
+                           io.papermc.jkvttplugin.data.model.DndSpell spell,
+                           io.papermc.jkvttplugin.character.SpellCost cost, boolean spendReaction) {
+        SpellTargeting.clear(player.getUniqueId()); // a readied spell is spent
+        cost.spend(casterSheet, spell);
+        Reach.spend(player.getUniqueId()); // a DM "close enough" covered this one cast
+
+        // Concentration (PHB 203): a second concentration spell replaces the first. castMark
+        // (Hex/Hunter's Mark) sets this itself, so don't tread on it.
+        if (spell.isConcentration() && casterSheet != null && !spell.isMarkSpell()) {
+            if (casterSheet.isConcentrating() && casterSheet.getConcentratingOn() != spell) {
+                session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + "'s concentration on "
+                        + casterSheet.getConcentratingOn().getName() + " ends.", NamedTextColor.GRAY));
             }
+            casterSheet.setConcentratingOn(spell);
+            session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + " is concentrating on "
+                    + spell.getName() + ".", NamedTextColor.LIGHT_PURPLE));
+        }
 
-            // An AC-raising spell (Shield +5, Shield of Faith +2) actually moves the number (#147).
-            // It lands on the caster: both are cast on yourself today, and an AC buff on someone
-            // else needs the targeted-buff work in #182.
-            if (spell.grantsAcBonus()) {
-                caster.grantTempAc(spell.getAcBonus(), spell.getName());
-                session.broadcast(Component.text("🛡 " + caster.getDisplayName(true) + "'s AC is now "
-                        + caster.getArmorClass() + " (+" + spell.getAcBonus() + " " + spell.getName() + ").",
-                        NamedTextColor.AQUA));
+        // An AC-raising spell (Shield +5, Shield of Faith +2) actually moves the number (#147).
+        // It lands on the caster: both are cast on yourself today, and an AC buff on someone
+        // else needs the targeted-buff work in #182.
+        if (spell.grantsAcBonus()) {
+            caster.grantTempAc(spell.getAcBonus(), spell.getName());
+            session.broadcast(Component.text("🛡 " + caster.getDisplayName(true) + "'s AC is now "
+                    + caster.getArmorClass() + " (+" + spell.getAcBonus() + " " + spell.getName() + ").",
+                    NamedTextColor.AQUA));
+        }
+
+        if (spendReaction) {
+            // The reaction is only spent once the cast actually goes through.
+            caster.setReactionAvailable(false);
+            ReactionManager.clearPending(caster); // if they were mid-OA, casting instead uses the reaction
+            session.broadcast(Component.text("⚡ " + caster.getDisplayName() + " casts " + spell.getName() + " as a reaction.", NamedTextColor.GOLD));
+            session.updateScoreboard();
+            // If this cast answered a held attack (#195), releasing the window re-checks the hit
+            // against the new AC and either sends the damage prompt or reports a miss.
+            if (ReactionWindow.isAwaiting(caster)) {
+                ReactionWindow.answer(caster, "casts " + spell.getName());
             }
-
-            if (spendReaction) {
-                // The reaction is only spent once the cast actually goes through.
-                caster.setReactionAvailable(false);
-                ReactionManager.clearPending(caster); // if they were mid-OA, casting instead uses the reaction
-                session.broadcast(Component.text("⚡ " + caster.getDisplayName() + " casts " + spell.getName() + " as a reaction.", NamedTextColor.GOLD));
-                session.updateScoreboard();
-                // If this cast answered a held attack (#195), releasing the window re-checks the hit
-                // against the new AC and either sends the damage prompt or reports a miss.
-                if (ReactionWindow.isAwaiting(caster)) {
-                    ReactionWindow.answer(caster, "casts " + spell.getName());
+        } else {
+            TurnState state = caster.getTurnState();
+            if (state != null) {
+                boolean bonusCast = spell.getCastingTime() != null && spell.getCastingTime().toLowerCase().contains("bonus");
+                if (bonusCast) {
+                    if (!state.isBonusActionUsed()) state.useBonusAction();
+                } else if (!state.isActionUsed()) {
+                    state.useAction();
                 }
-            } else {
-                TurnState state = caster.getTurnState();
-                if (state != null) {
-                    boolean bonusCast = spell.getCastingTime() != null && spell.getCastingTime().toLowerCase().contains("bonus");
-                    if (bonusCast) {
-                        if (!state.isBonusActionUsed()) state.useBonusAction();
-                    } else if (!state.isActionUsed()) {
-                        state.useAction();
-                    }
-                    session.sendActionBar(caster);
-                }
+                session.sendActionBar(caster);
             }
         }
     }
