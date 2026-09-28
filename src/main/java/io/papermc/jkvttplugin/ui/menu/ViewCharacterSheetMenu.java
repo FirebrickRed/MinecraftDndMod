@@ -62,12 +62,20 @@ public class ViewCharacterSheetMenu {
                 return;
             }
             m.displayName(Component.text(character.getCurrentHealth() + "/" + character.getMaxHealth() + " HP", NamedTextColor.RED));
+            // Hit Dice (#52): what's left to spend on a short rest.
+            Component hitDice = Component.text("Hit Dice: " + character.getHitDiceRemaining() + "/" + character.getHitDiceMax()
+                    + " (" + character.hitDieDice() + ")", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false);
             if (character.getCurrentHealth() <= 0) {
                 String state = character.isStable() ? "Stable (unconscious)" : "Dying";
                 m.lore(List.of(
                         Component.text(state, NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false),
                         Component.text("Death saves: " + character.getDeathSaveSuccesses() + " ✔  "
                                 + character.getDeathSaveFailures() + " ✘", NamedTextColor.GRAY)
+                                .decoration(TextDecoration.ITALIC, false),
+                        hitDice));
+            } else {
+                m.lore(List.of(hitDice,
+                        Component.text("Spent at the end of a short rest (/character hitdice).", NamedTextColor.DARK_GRAY)
                                 .decoration(TextDecoration.ITALIC, false)));
             }
         });

@@ -286,6 +286,20 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Then [Roll it] + Enter, as a Halfling rolling a 1 → Lucky rerolls it.
 - [ ] `/combat action attack` → says "left-click your target" (it said right-click).
 
+## Rests and Hit Dice (#52)
+
+- [ ] The sheet's HP tile says "Hit Dice: 1/1 (1d10)" for a fighter.
+- [ ] Take some damage, `/dm rest <you> short` → the summary lists Hit Dice, then
+      **💚 Spend a Hit Die (1 of 1 left, HP 5/12): [Roll it] [I rolled…] [My total…]**.
+- [ ] Answer it → heals the die + CON, HP goes up on the sheet, "Hit Dice left: 0 of 1".
+- [ ] `/character hitdice autoRoll` again → "No Hit Dice left. A long rest brings back half of them."
+- [ ] `/character hitdice` with no rest → "spent at the end of a short rest".
+- [ ] After a short rest, join a fight, then finish it → `/character hitdice` refuses (the fight ended the rest).
+- [ ] `/dm rest <you> long` → Hit Dice back to 1/1; Second Wind back too (it used to stay spent overnight).
+- [ ] **Warlock:** cast a 1st-level spell, `/dm rest <you> short` → "Pact Magic spell slots restored", and
+      the slot is back in the spellbook.
+- [ ] Restart after spending a Hit Die (before a long rest) → still 0/1.
+
 ## The Adjust menu & `/dm adjust`
 
 - [ ] In a fight, an HP change updates the scoreboard and the player's open sheet.

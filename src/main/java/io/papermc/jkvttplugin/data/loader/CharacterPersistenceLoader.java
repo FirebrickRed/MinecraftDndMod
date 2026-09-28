@@ -250,6 +250,8 @@ public class CharacterPersistenceLoader {
         data.put("armorClass", sheet.getGearArmorClass());
         if (sheet.getTempHealth() > 0) data.put("tempHealth", sheet.getTempHealth());
         if (sheet.isRelentlessEnduranceUsed()) data.put("relentlessEnduranceUsed", true);
+        // Hit Dice left (#52), only when some are spent; a missing key means all of them.
+        if (sheet.getHitDiceRemaining() < sheet.getHitDiceMax()) data.put("hitDice", sheet.getHitDiceRemaining());
         // Dying / dead (#101): written only when there's something to say, so a healthy sheet's
         // file doesn't change shape.
         if (sheet.isDead()) data.put("dead", true);
@@ -516,6 +518,7 @@ public class CharacterPersistenceLoader {
             sheet.restoreRestState(parseIntOrDefault(data.get("tempHealth"), 0),
                     Boolean.TRUE.equals(data.get("relentlessEnduranceUsed")));
             sheet.restoreDeathState(dsSuccesses, dsFailures, Boolean.TRUE.equals(data.get("dead")));
+            if (data.get("hitDice") != null) sheet.restoreHitDice(parseIntOrDefault(data.get("hitDice"), sheet.getHitDiceMax()));
 
             // Restore CUSTOM choice selections (#70) so feature actions resolve their variant.
             if (data.get("customChoices") instanceof Map<?, ?> ccMap) {

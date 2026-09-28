@@ -176,11 +176,26 @@ public class RestCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        if (restType.equals("short") && character.recoversSlotsOnShortRest()) {
+            hasRecoveredResources = true;
+            player.sendMessage(Component.text("✓ ", NamedTextColor.GREEN)
+                    .append(Component.text("Pact Magic spell slots restored", NamedTextColor.WHITE)));
+        }
         if (!hasRecoveredResources) {
             player.sendMessage(Component.text("No resources recovered.", NamedTextColor.GRAY));
         }
 
+        // Hit Dice (#52): a long rest brings back half; a short rest is when you spend them.
+        Component hd = Component.text("🎲 ", NamedTextColor.GREEN).append(Component.text("Hit Dice: ", NamedTextColor.WHITE))
+                .append(Component.text(character.getHitDiceRemaining() + "/" + character.getHitDiceMax()
+                        + " (" + character.hitDieDice() + " each)", NamedTextColor.GRAY));
+        player.sendMessage(hd);
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
+        if (restType.equals("short")) {
+            String refusal = CharacterCommand.hitDieRefusal(character);
+            if (refusal == null) player.sendMessage(CharacterCommand.hitDiePrompt(character));
+            else if (character.getCurrentHealth() < character.getMaxHealth()) player.sendMessage(Component.text(refusal, NamedTextColor.GRAY));
+        }
     }
 
     @Override

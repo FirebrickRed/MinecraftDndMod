@@ -2170,20 +2170,26 @@ public class CharacterSheet {
             spellSlots[i] = maxSpellSlots[i];
         }
 
-        // Restore class resources that recover on long rest
+        // Restore class resources that recover on a long rest, and the short-rest ones too ("when you
+        // finish a short or long rest"): Second Wind and Action Surge used to stay spent overnight.
         for (ClassResource resource : classResources) {
-            if (resource.getRecovery() == ClassResource.RecoveryType.LONG_REST) {
+            if (resource.getRecovery() == ClassResource.RecoveryType.LONG_REST
+                    || resource.getRecovery() == ClassResource.RecoveryType.SHORT_REST) {
                 resource.restore();
             }
         }
 
-        // Restore innate spells that recover on long rest
+        // Restore innate spells that recover on a long rest (or a short one)
         int proficiencyBonus = getProficiencyBonus();
         for (InnateSpell innateSpell : innateSpells) {
-            if ("long_rest".equalsIgnoreCase(innateSpell.getRecovery())) {
+            if ("long_rest".equalsIgnoreCase(innateSpell.getRecovery()) || "short_rest".equalsIgnoreCase(innateSpell.getRecovery())) {
                 innateSpell.resetUses(proficiencyBonus);
             }
         }
+
+        // Hit Dice (#52): back up to half your total (minimum 1), never above it.
+        hitDiceRemaining = Math.min(getHitDiceMax(), getHitDiceRemaining() + hitDiceRegainedOnLongRest());
+        shortRestOpen = false;
 
         breakConcentration();
         activeEffects.clear(); // a long rest ends any lingering buffs/debuffs (Effect Engine, #70)
@@ -2216,8 +2222,49 @@ public class CharacterSheet {
 
         if (acAdjustment != null && acAdjustment.endsOnShortRest()) acAdjustment = null; // a DM "until a short rest" (#175)
 
-        // Warlocks recover Pact Magic slots on short rest
-        // ToDo: Implement when Warlock-specific slot recovery is added
+        // Pact Magic: a warlock's slots come back on a short rest (slot_recovery: short_rest).
+        if (recoversSlotsOnShortRest()) {
+            for (int i = 0; i < 9; i++) spellSlots[i] = maxSpellSlots[i];
+        }
+
+        shortRestOpen = true; // they may spend Hit Dice now (#52)
         persist();
+    }
+
+    /** True for a class whose spell slots come back on a short rest (a warlock's Pact Magic). */
+    public boolean recoversSlotsOnShortRest() {
+        return dndClass != null && dndClass.getSpellcastingInfo() != null
+                && "short_rest".equalsIgnoreCase(dndClass.getSpellcastingInfo().getSlotRecovery());
+    }
+
+    // ==================== HIT DICE (#52) ====================
+
+    /** Hit Dice left; null means all of them (a new or never-rested character). */
+    private Integer hitDiceRemaining;
+    /**
+     * Set by a short rest and closed by a long rest or joining a fight: Hit Dice are spent "at the end
+     * of a short rest" (PHB p.186), so there's a window to spend them in. Not saved: a restart closes it.
+     */
+    private transient boolean shortRestOpen;
+
+    /** One Hit Die per level. */
+    public int getHitDiceMax() { return getTotalLevel(); }
+    public int getHitDiceRemaining() { return hitDiceRemaining == null ? getHitDiceMax() : Math.max(0, Math.min(hitDiceRemaining, getHitDiceMax())); }
+    /** The die: d10 for a fighter. */
+    public int getHitDie() { return dndClass != null ? dndClass.getHitDie() : 8; }
+    /** "1d10", the die one Hit Die rolls. */
+    public String hitDieDice() { return "1d" + getHitDie(); }
+    /** A long rest gives back half your total Hit Dice, rounded down, at least one (PHB p.186). */
+    public int hitDiceRegainedOnLongRest() { return Math.max(1, getHitDiceMax() / 2); }
+    public boolean isShortRestOpen() { return shortRestOpen; }
+    public void closeShortRest() { shortRestOpen = false; }
+    public void restoreHitDice(int remaining) { hitDiceRemaining = remaining; }
+
+    /** Use up one Hit Die (the caller rolls it and heals). False, changing nothing, if there are none left. */
+    public boolean spendHitDie() {
+        if (getHitDiceRemaining() <= 0) return false;
+        hitDiceRemaining = getHitDiceRemaining() - 1;
+        persist();
+        return true;
     }
 }

@@ -43,7 +43,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final ViewSheetCommand viewExec = new ViewSheetCommand();
     private final GiveSheetCommand giveExec = new GiveSheetCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "give", "delete", "loot", "check", "cast", "use", "damage", "drink", "reply");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "give", "delete", "loot", "check", "cast", "use", "hitdice", "damage", "drink", "reply");
     private final DrinkCommand drinkExec = new DrinkCommand();
 
     @Override
@@ -102,6 +102,11 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "use" -> {
                 return handleUse(sender, rest);
+            }
+            case "hitdice" -> {
+                if (sender instanceof Player p) spendHitDie(p, rest);
+                else sender.sendMessage(Component.text("Only players spend Hit Dice.", NamedTextColor.RED));
+                return true;
             }
             case "drink" -> {
                 return drinkExec.onCommand(sender, cmd, label, rest);
@@ -489,6 +494,71 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
+    /**
+     * {@code /character hitdice [autoRoll | manualRoll <n> | total <n>]}: spend one Hit Die at the end
+     * of a short rest (#52): its die + CON, healed. The rest's summary offers it; spend as many as you
+     * like, one at a time, until a long rest or a fight closes the window.
+     */
+    private void spendHitDie(Player player, String[] rest) {
+        CharacterSheet sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
+        if (sheet == null) {
+            player.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));
+            return;
+        }
+        String refusal = hitDieRefusal(sheet);
+        if (refusal != null) {
+            player.sendMessage(Component.text(refusal, NamedTextColor.YELLOW));
+            return;
+        }
+        int con = sheet.getModifier(io.papermc.jkvttplugin.data.model.enums.Ability.CONSTITUTION);
+        String conLabel = con == 0 ? null : (con > 0 ? "+" : "") + con + "[CON]";
+        var in = io.papermc.jkvttplugin.combat.RollService.parseInput(rest, player);
+        int healed;
+        String work;
+        if (in.providedTotal() != null) {
+            healed = in.providedTotal();
+            work = io.papermc.jkvttplugin.combat.RollPrompt.yourTotal(healed);
+        } else if (in.providedRoll() != null) {
+            healed = in.providedRoll() + con;
+            work = io.papermc.jkvttplugin.combat.RollPrompt.youRolled(in.providedRoll(), conLabel, healed);
+        } else if (in.forceAuto() || io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) {
+            var r = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(sheet.hitDieDice());
+            healed = r.total() + con;
+            work = io.papermc.jkvttplugin.combat.RollPrompt.gameRolled(sheet.hitDieDice(), r.shown(), conLabel, healed);
+        } else {
+            player.sendMessage(hitDiePrompt(sheet));
+            return;
+        }
+        sheet.spendHitDie();
+        player.sendMessage(Component.text("💚 Hit Die: " + work, NamedTextColor.GREEN));
+        var self = io.papermc.jkvttplugin.combat.CombatTargets.forPlayer(player);
+        if (self != null) io.papermc.jkvttplugin.combat.DamageHandler.applyHealing(null, self.combatant(), Math.max(0, healed));
+        // Another one, if there's any point.
+        if (hitDieRefusal(sheet) == null) player.sendMessage(hitDiePrompt(sheet));
+        else player.sendMessage(Component.text("Hit Dice left: " + sheet.getHitDiceRemaining() + " of " + sheet.getHitDiceMax() + ".", NamedTextColor.GRAY));
+    }
+
+    /** Why this character can't spend a Hit Die right now, or null if they can. */
+    public static String hitDieRefusal(CharacterSheet sheet) {
+        if (sheet.isDead()) return "The dead don't heal.";
+        if (io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(sheet.getPlayerId()) != null) {
+            return "Not in a fight: Hit Dice are spent at the end of a short rest.";
+        }
+        if (!sheet.isShortRestOpen()) return "Hit Dice are spent at the end of a short rest. Ask the DM for one (/dm rest).";
+        if (sheet.getHitDiceRemaining() <= 0) return "No Hit Dice left. A long rest brings back half of them.";
+        if (sheet.getCurrentHealth() >= sheet.getMaxHealth()) return "You're at full HP.";
+        return null;
+    }
+
+    /** "💚 Spend a Hit Die (1d10+2[CON], 1 of 1 left, HP 7/12): [Roll it] [I rolled…] [My total…]". */
+    public static Component hitDiePrompt(CharacterSheet sheet) {
+        int con = sheet.getModifier(io.papermc.jkvttplugin.data.model.enums.Ability.CONSTITUTION);
+        String conLabel = con == 0 ? null : (con > 0 ? "+" : "") + con + "[CON]";
+        return io.papermc.jkvttplugin.combat.RollPrompt.line("💚 Spend a Hit Die (" + sheet.getHitDiceRemaining() + " of "
+                        + sheet.getHitDiceMax() + " left, HP " + sheet.getCurrentHealth() + "/" + sheet.getMaxHealth() + "):",
+                NamedTextColor.GREEN, "/character hitdice ", sheet.hitDieDice(), conLabel);
+    }
+
     /** The features this character can use with /character use (their ids, for Tab). */
     private static List<String> usableFeatures(CharacterSheet sheet) {
         List<String> out = new ArrayList<>();
@@ -507,6 +577,8 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text("list your characters", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("  /character use <feature>    ", NamedTextColor.YELLOW)
                 .append(Component.text("Second Wind, Lay on Hands, Divine Sense outside a fight", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /character hitdice          ", NamedTextColor.YELLOW)
+                .append(Component.text("spend a Hit Die after a short rest", NamedTextColor.GRAY)));
         if (DMManager.isDM(sender)) {
             sender.sendMessage(Component.text("  /character create <player>  ", NamedTextColor.AQUA)
                     .append(Component.text("(DM) open creation for a player", NamedTextColor.GRAY)));

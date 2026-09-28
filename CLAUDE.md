@@ -388,6 +388,12 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - Supports fixed amounts, ability modifiers, proficiency bonus, and formulas
 - Displayed in character sheet with current/max tracking
 - Recovered by `/dm rest <character|all> <short|long> [time passed]` (rests are the DM's call; there is no player rest command)
+- A long rest restores short-rest resources too; a warlock's Pact Magic slots return on a short rest
+  (`slot_recovery: short_rest`).
+- **Hit Dice (#52):** one per level, the class's die (`CharacterSheet.getHitDiceRemaining`, saved as
+  `hitDice:` only when some are spent). A short rest opens a window (`isShortRestOpen`, not saved)
+  in which `/character hitdice` spends one (die + CON, the three roll buttons, healed through
+  `DamageHandler`); a long rest or joining a fight closes it. A long rest gives back half, at least 1.
 
 **Shop System (Issue #75):**
 - Native Minecraft Merchant GUI integration for D&D economy
@@ -792,7 +798,6 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 
 ### Planned Enhancements
 - Issue #70: Structured features system (usage tracking, action economy, save DCs, damage formulas)
-- Spell slot recovery for Warlocks (short rest pact magic)
 - Equipment inventory management
 - NPC interaction system
 - Encounter builder

@@ -171,6 +171,8 @@ public class CombatSession {
                 return false;  // Already in different combat
             }
             PLAYER_SESSIONS.put(combatant.getId(), this);
+            // A fight ends the short rest: its Hit Dice window closes (#52).
+            if (combatant.getCharacterSheet() != null) combatant.getCharacterSheet().closeShortRest();
         }
 
         combatants.add(combatant);
