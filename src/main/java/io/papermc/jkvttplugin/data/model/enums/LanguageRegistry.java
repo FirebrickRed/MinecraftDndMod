@@ -22,6 +22,12 @@ public final class LanguageRegistry {
             "Primordial", "Sylvan", "Undercommon"
     );
 
+    /**
+     * Class secrets (PHB): a druid knows Druidic and a rogue Thieves' Cant because of their class.
+     * They're real languages a sheet can hold, but never offered in "choose a language" picks.
+     */
+    private static final List<String> SECRET_LANGUAGES = List.of("Druidic", "Thieves' Cant");
+
     /** id → display name, in registration order. */
     private static final Map<String, String> languages = new LinkedHashMap<>();
 
@@ -49,14 +55,17 @@ public final class LanguageRegistry {
         return name != null ? name : Util.prettify(idOf(raw));
     }
 
-    /** Every registered language id. */
+    /** Every language id a player may pick (the class-secret ones aren't offered). */
     public static List<String> getAllLanguages() {
-        return new ArrayList<>(languages.keySet());
+        List<String> out = new ArrayList<>(languages.keySet());
+        for (String secret : SECRET_LANGUAGES) out.remove(idOf(secret));
+        return out;
     }
 
     public static void resetToDefault() {
         languages.clear();
         DEFAULT_LANGUAGES.forEach(LanguageRegistry::register);
+        SECRET_LANGUAGES.forEach(LanguageRegistry::register);
     }
 
     /**

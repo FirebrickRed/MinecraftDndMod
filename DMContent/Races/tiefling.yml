@@ -36,7 +36,7 @@ innate_spells:
     description: "You know the Thaumaturgy cantrip."
   - spell_id: hellish_rebuke
     level_requirement: 3  # Available at character level 3
-    spell_level: 1
+    spell_level: 2        # cast as a 2nd-level spell (PHB)
     uses: 1
     recovery: long_rest
     casting_ability: charisma

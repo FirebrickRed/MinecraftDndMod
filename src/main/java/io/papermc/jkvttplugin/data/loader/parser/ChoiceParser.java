@@ -199,10 +199,12 @@ public final class ChoiceParser {
                 }
                 default -> {
                     // A type we don't know was dropped without a word, so the player never saw the
-                    // choice (the Genie's "type: other" genie kind). Say so.
-                    io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] choice '" + id + "' has type '"
-                            + typeString.toLowerCase() + "', which isn't one of skill, tool, expertise, language, spell, "
-                            + "custom, equipment — the choice is skipped.");
+                    // choice (the Genie's "type: other" genie kind; the paladin's weapons had no type
+                    // at all). A content warning, so the clean-load test fails on it.
+                    io.papermc.jkvttplugin.data.ContentValidator.loadProblem("[ChoiceParser] choice '" + id + "' has "
+                            + (typeString.isEmpty() ? "no type:" : "type '" + typeString.toLowerCase() + "'")
+                            + ", which isn't one of skill, tool, expertise, language, spell, custom, equipment. "
+                            + "The choice is skipped.");
                     continue;
                 }
             }

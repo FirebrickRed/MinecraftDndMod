@@ -39,8 +39,9 @@ public class SpellsPreparedFormula {
         int abilityMod = getAbilityModifier(abilityScores, ability);
         int effectiveLevel = switch(levelType) {
             case FULL -> classLevel;
-            case HALF -> Math.max(1, classLevel / 2);
-            case THIRD -> Math.max(1, classLevel / 3);
+            // "half your level, rounded down" (PHB): 0 at level 1. The formula's `minimum` is the floor.
+            case HALF -> classLevel / 2;
+            case THIRD -> classLevel / 3;
         };
         return Math.max(abilityMod + effectiveLevel, minimum);
     }

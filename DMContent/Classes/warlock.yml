@@ -14,15 +14,15 @@ spellcasting:
   spellcasting_focus_type: arcane_focus
   spell_list: warlock
   spellcasting_level: 1
-  cantrips_known_by_level: [2,2,2,2,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4]
-  spells_known_by_level: [2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11]
+  cantrips_known_by_level: [2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4]
+  spells_known_by_level: [2,3,4,5,6,7,8,9,10,10,11,11,12,12,13,13,14,14,15,15]
   spell_slots_by_level:
-    1: [1,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2]
+    1: [1,2,2,2,2,2,2,2,2,2,3,3,3,3,3,3,4,4,4,4]   # the number of pact slots; their level is pact_slot_level_by_level
     2: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     3: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     4: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
     5: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-  pact_slot_level_by_level: [1,1,2,2,3,3,3,3,4,4,4,4,5,5,5,5,5,5,5,5]
+  pact_slot_level_by_level: [1,1,2,2,3,3,4,4,5,5,5,5,5,5,5,5,5,5,5,5]
   slot_recovery: short_rest
 features_by_level:
   1:
@@ -230,6 +230,9 @@ subclasses:
   the_hexblade:
     name: The Hexblade
     description: "Your patron is a mysterious entity from the Shadowfell"
+    # Hex Warrior. (Using CHA for attacks with a bonded weapon isn't wired yet.)
+    armor_proficiencies: [medium_armor, shields]
+    weapon_proficiencies: [martial_weapons]
     expanded_spells:
       - shield
       - wrathful_smite

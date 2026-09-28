@@ -74,6 +74,7 @@ subraces:
     traits:
       - Superior Darkvision
       - Stone Camouflage
+    languages: [Undercommon]
     # Superior Darkvision
     darkvision: 120
     # Stone Camouflage: Advantage on Stealth checks in rocky terrain

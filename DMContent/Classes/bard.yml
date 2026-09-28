@@ -18,6 +18,7 @@ tool_proficiencies: []
 class_resources:
   - name: Bardic Inspiration
     uses_ability: charisma
+    minimum: 1           # "a number of times equal to your Charisma modifier (a minimum of once)"
     recovery: long_rest  # Changes to short_rest at level 5 (Font of Inspiration)
     material: note_block
 spellcasting:
@@ -27,7 +28,7 @@ spellcasting:
   spellcasting_focus_type: musical_instrument
   spell_list: bard
   spellcasting_level: 1
-  cantrips_known_by_level: [2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+  cantrips_known_by_level: [2, 2, 2, 3, 3, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
   spells_known_by_level: [4, 5, 6, 7, 8, 9, 10, 11, 12, 14, 15, 15, 16, 18, 19, 19, 20, 22, 22, 22]
   spell_slots_by_level:
     1: [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
@@ -192,9 +193,7 @@ player_choices:
     choose: 1
     options:
       - lute
-      - flute
-      - drum
-      - lyre
+      - musical_instrument    # "a lute or any other musical instrument": every item tagged musical_instrument
   - id: class_equipment_3
     title: Adventuring Gear
     type: equipment

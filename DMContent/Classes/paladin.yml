@@ -5,9 +5,21 @@ primary_abilities:
   - Strength
   - Charisma
 saving_throws: [Wisdom, Charisma]
-armor_proficiencies: [shields]
+armor_proficiencies: [light_armor, medium_armor, heavy_armor, shields]
 weapon_proficiencies: [simple_weapons, martial_weapons]
 tool_proficiencies: []
+class_resources:
+  - name: Divine Sense
+    uses_ability: charisma
+    plus: 1                  # 1 + your Charisma modifier
+    minimum: 1
+    recovery: long_rest
+    material: ender_eye
+  - name: Lay on Hands
+    # A pool of hit points: 5 x paladin level.
+    max_by_level: [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
+    recovery: long_rest
+    material: golden_apple
 spellcasting:
   type: half_casting
   casting_ability: Charisma
@@ -23,43 +35,67 @@ spellcasting:
     minimum: 1
   spell_slots_by_level:
     1: [0,2,3,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4]
-    2: [0,0,0,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
-    3: [0,0,0,0,0,0,0,0,0,2,3,3,3,3,3,3,3,3,3,3]
-    4: [0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,2,3,3,3,3]
-    5: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,2,2]
+    2: [0,0,0,0,2,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
+    3: [0,0,0,0,0,0,0,0,2,2,3,3,3,3,3,3,3,3,3,3]
+    4: [0,0,0,0,0,0,0,0,0,0,0,0,1,1,2,2,3,3,3,3]
+    5: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,2,2]
   slot_recovery: long_rest
 features_by_level:
   1:
     - name: Divine Sense
       type: resource
-      uses: 1 + your charisma modifier per long rest
-      description: Sensing evil or good
+      description: As an action, until the end of your next turn you know the location of any celestial, fiend, or undead within 60 feet of you that is not behind total cover, and whether a place or object within 60 feet has been consecrated or desecrated. Uses 1 + your Charisma modifier per long rest.
     - name: Lay on Hands
       type: resource
-      uses: paladin level * 5 per long rest
-      description: healing stuff
+      description: You have a pool of healing power equal to 5 x your paladin level, restored on a long rest. As an action, touch a creature and restore hit points from the pool, or spend 5 points to cure it of one disease or neutralize one poison. It has no effect on undead and constructs.
+  2:
+    - name: Fighting Style
+      type: choice
+      description: You adopt a particular style of fighting as your specialty.
+    - name: Spellcasting
+      type: spellcasting
+      description: You prepare paladin spells using Charisma, a number equal to your Charisma modifier + half your paladin level (minimum 1).
+    - name: Divine Smite
+      type: action
+      description: When you hit with a melee weapon attack, you can expend a spell slot to deal 2d8 extra radiant damage, plus 1d8 per slot level above 1st (max 5d8), and 1d8 more against an undead or fiend.
+  3:
+    - name: Sacred Oath
+      type: subclass
+      description: You swear the oath that binds you as a paladin forever. Grants features at 3, 7, 15, and 20.
+    - name: Divine Health
+      type: passive
+      description: The divine magic flowing through you makes you immune to disease.
 starting_equipment: [chain_mail, holy_symbol]
 player_choices:
+  - id: class_skills
+    title: Class Skills
+    type: skill
+    choose: 2
+    options: [athletics, insight, intimidation, medicine, persuasion, religion]
   - id: class_equipment_1
-    title: Class Equipment 1
+    title: Weapons
+    type: equipment
     choose: 1
     options:
       - give: [martial_weapon, shield]
-      - give: [martial_weapon, martial_weapon]
+      - martial_weapon x2
   - id: class_equipment_2
-    title: Class Equipment 2
+    title: Secondary Weapon
+    type: equipment
     choose: 1
     options:
       - javelin x5
       - simple_melee_weapon
   - id: class_equipment_3
-    title: Class Equipment 3
+    title: Adventuring Gear
+    type: equipment
     choose: 1
     options:
       - priests_pack
       - explorers_pack
 custom_model: paladin_icon
 multiclass_requirements:
+  Strength: 13
   Charisma: 13
 subclass_level: 3
 subclasses:

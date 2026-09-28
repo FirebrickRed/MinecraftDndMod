@@ -187,11 +187,7 @@ subraces:
         choose: 1
         options: [dancing_lights, light, sacred_flame]  # Spell IDs (not display names)
         casting_ability: [intelligence, wisdom, charisma]  # the player picks one (MotM); adds an "…: Spellcasting Ability" choice
-      - id: subrace_languages
-        title: Extra Language
-        type: LANGUAGE
-        choose: 1
-        options: []
+    # Languages: Common and one other (Spelljammer). The elf's Elvish is that one, so no extra pick.
     # Starlight Step: Teleportation ability (functions like Misty Step but isn't a spell)
     # Uses scale with proficiency bonus (2/3/4/5/6 at levels 1/5/9/13/17)
     innate_spells:

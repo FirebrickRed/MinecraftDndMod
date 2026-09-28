@@ -22,13 +22,18 @@ spellcasting:
   spellcasting_focus_type: thieves_tools
   spell_list: artificer
   spellcasting_level: 1
-  cantrips_known_by_level: [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4]
+  spells_prepared_formula:     # INT modifier + half your artificer level, rounded down (minimum 1)
+    type: ability_plus_level
+    ability: Intelligence
+    level_type: half
+    minimum: 1
+  cantrips_known_by_level: [2, 2, 2, 2, 2, 2, 2, 2, 2, 3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 4]
   spell_slots_by_level:
     1: [2, 2, 3, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
-    2: [0, 0, 0, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
-    3: [0, 0, 0, 0, 0, 0, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
-    4: [0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 3, 3, 3, 3, 3]
-    5: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 2, 3, 3]
+    2: [0, 0, 0, 0, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    3: [0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
+    4: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2, 3, 3, 3, 3]
+    5: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 2, 2]
   slot_recovery: long_rest
 features_by_level:
   1:
@@ -166,11 +171,11 @@ player_choices:
     choose: 1
     options: [artisan_tool]
   - id: class_equipment_1
-    title: Primary Weapon
+    title: Two Simple Weapons
     type: equipment
     choose: 1
     options:
-      - simple_weapon
+      - simple_weapon x2        # two picks, can be different weapons
   - id: class_equipment_3
     title: Armor
     type: equipment

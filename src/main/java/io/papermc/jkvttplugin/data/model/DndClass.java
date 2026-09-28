@@ -290,6 +290,9 @@ public class DndClass {
                     max = maxByLevel.get(index);
                 }
             }
+            // "1 + your Charisma modifier" (Divine Sense) and "a minimum of once" (Bardic Inspiration).
+            if (def.get("plus") instanceof Number n) max += n.intValue();
+            if (def.get("minimum") instanceof Number n) max = Math.max(max, n.intValue());
 
             // Convert recovery string to enum
             ClassResource.RecoveryType recoveryType = ClassResource.RecoveryType.LONG_REST;

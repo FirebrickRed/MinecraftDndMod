@@ -79,14 +79,10 @@ public final class EquipmentParser {
                 // Bundle option: give: [ ... ] with an optional label.
                 List<EquipmentOption> parts = new ArrayList<>();
                 if (m.get("give") instanceof List<?> give) {
-                    for (Object part : give) {
-                        EquipmentOption p = parseGiveEntry(part);
-                        if (p != null) parts.add(p);
-                    }
+                    for (Object part : give) parts.addAll(parseGiveEntries(part));
                 } else {
                     // Allow a single scalar under give: for convenience.
-                    EquipmentOption p = parseGiveEntry(m.get("give"));
-                    if (p != null) parts.add(p);
+                    parts.addAll(parseGiveEntries(m.get("give")));
                 }
                 if (parts.isEmpty()) continue;
                 String label = ParseUtil.asString(m.get("label"), null);
@@ -95,11 +91,36 @@ public final class EquipmentParser {
                         : EquipmentOption.bundle(parts, label));
                 continue;
             }
-            // Scalar option: one item or tag.
-            EquipmentOption single = parseGiveEntry(opt);
-            if (single != null) out.add(single);
+            // Scalar option: one item or tag ("martial_weapon x2" is two picks, given together).
+            List<EquipmentOption> parts = parseGiveEntries(opt);
+            if (parts.size() == 1) out.add(parts.get(0));
+            else if (!parts.isEmpty()) out.add(EquipmentOption.bundle(parts, null));
         }
         return out;
+    }
+
+    /**
+     * A give-entry, with a tag's quantity spelled out: "martial_weapon x2" is two separate picks
+     * (the PHB's "two martial weapons" can be two different ones). An item keeps its quantity
+     * ("bolt x20" is one stack). The quantity used to be dropped on a tag, so it gave one weapon.
+     */
+    private static List<EquipmentOption> parseGiveEntries(Object node) {
+        EquipmentOption one = parseGiveEntry(node);
+        if (one == null) return List.of();
+        int copies = node instanceof String s && TagRegistry.isTag(Util.normalize(stripQty(s))) ? qtyOf(s) : 1;
+        List<EquipmentOption> out = new ArrayList<>();
+        for (int i = 0; i < copies; i++) out.add(i == 0 ? one : parseGiveEntry(node));
+        return out;
+    }
+
+    private static String stripQty(String token) {
+        Matcher qm = QTY_SUFFIX.matcher(token.trim());
+        return qm.matches() ? qm.group(1).trim() : token.trim();
+    }
+
+    private static int qtyOf(String token) {
+        Matcher qm = QTY_SUFFIX.matcher(token.trim());
+        return qm.matches() ? Integer.parseInt(qm.group(2)) : 1;
     }
 
     /** Parse one fixed starting-equipment token ({@code "gold_piece x15"}), same rules as a give-entry. */

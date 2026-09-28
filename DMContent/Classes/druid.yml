@@ -20,13 +20,14 @@ weapon_proficiencies:
   - slings
   - spears
 tool_proficiencies: [herbalism_kit]
+languages: [Druidic]   # a class secret: never offered in "choose a language"
 spellcasting:
   casting_ability: Wisdom
   preparation_type: prepared
   ritual_casting: true
   spellcasting_focus_type: druidic_focus
   spellcasting_level: 1
-  cantrips_known_by_level: [2,2,2,2,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4,4]
+  cantrips_known_by_level: [2,2,2,3,3,3,3,3,3,4,4,4,4,4,4,4,4,4,4,4]
   spells_prepared_formula:
     type: ability_plus_level
     ability: Wisdom
@@ -36,12 +37,12 @@ spellcasting:
     1: [2,3,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4,4]
     2: [0,0,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
     3: [0,0,0,0,2,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3]
-    4: [0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3,3,3]
-    5: [0,0,0,0,0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3]
-    6: [0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,1]
-    7: [0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1]
-    8: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1]
-    9: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1]
+    4: [0,0,0,0,0,0,1,2,3,3,3,3,3,3,3,3,3,3,3,3]
+    5: [0,0,0,0,0,0,0,0,1,2,2,2,2,2,2,2,2,3,3,3]
+    6: [0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,1,2,2]
+    7: [0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1,1,2]
+    8: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1,1,1]
+    9: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,1,1]
   slot_recovery: long_rest
 features_by_level:
   1:
@@ -128,7 +129,7 @@ player_choices:
     choose: 1
     options:
       - scimitar
-      - simple_weapon
+      - simple_melee_weapon
 custom_model: druid_icon
 multiclass_requirements:
   Wisdom: 13

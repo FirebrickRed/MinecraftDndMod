@@ -41,9 +41,24 @@ public final class ContentValidator {
 
     private ContentValidator() {}
 
+    /**
+     * Problems a loader noticed but could only skip past (a choice with no `type:` is dropped). Kept
+     * here so they count as content warnings, and fail the build's clean-load test, instead of
+     * being one log line. Drained by each {@link #validateAll}.
+     */
+    private static final List<String> loadProblems = new ArrayList<>();
+
+    public static synchronized void loadProblem(String message) {
+        loadProblems.add(message);
+    }
+
     /** Runs every check, logs each problem, and returns them (empty = a clean load). */
     public static List<String> validateAll() {
         ContentValidator v = new ContentValidator();
+        synchronized (ContentValidator.class) {
+            loadProblems.forEach(v::warn);
+            loadProblems.clear();
+        }
         v.checkWeapons();
         v.checkArmor();
         v.checkItems();

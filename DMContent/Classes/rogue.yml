@@ -36,6 +36,7 @@ weapon_proficiencies:
   - shortswords
 tool_proficiencies:
   - thieves_tools
+languages: ["Thieves' Cant"]   # a class secret: never offered in "choose a language"
 features_by_level:
   1:
     - name: Expertise

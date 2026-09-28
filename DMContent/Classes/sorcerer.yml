@@ -22,7 +22,7 @@ spellcasting:
   spellcasting_focus_type: arcane_focus
   spell_list: sorcerer
   spellcasting_level: 1
-  cantrips_known_by_level: [4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
+  cantrips_known_by_level: [4, 4, 4, 5, 5, 5, 5, 5, 5, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6, 6]
   spells_known_by_level: [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 12, 13, 13, 14, 14, 15, 15, 15, 15]
   spell_slots_by_level:
     1: [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]

@@ -32,13 +32,15 @@ player_choices:
 # Hippo Build: Swimming speed equal to walking speed
 swimming_speed: 30
 
-# Damage Dealer: Advantage on STR checks/saves when pushing, pulling, lifting, or breaking objects
-# (Requires special handling in skill system - Issue #63)
-conditional_advantages:
-  - type: ability_check
-    ability: strength
-    condition: pushing_pulling_lifting_breaking
-    description: "You have advantage on Strength checks and saves when pushing, pulling, lifting, or breaking objects."
+# Hippo Build: advantage on every Strength check and Strength save (and you count as Large for
+# carrying capacity). A feature, so the sheet and combat rolls both see it, like Rage's advantage.
+features:
+  - id: hippo_build
+    name: Hippo Build
+    activation: passive
+    apply:
+      effects:
+        advantage_on: [str_checks, str_saves]
 
 # Firearm Mastery: Proficiency with firearms, no loading property penalty
 # (Requires firearm system - Issue #63)

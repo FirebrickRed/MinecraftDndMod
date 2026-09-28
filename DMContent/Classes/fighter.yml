@@ -143,10 +143,19 @@ features_by_level:
     - name: Extra Attack
       update: true
       description: You can attack four times whenever you take the Attack action.
-starting_equipment:
-  - chain_mail
-  - shield
+starting_equipment: []   # all of the fighter's kit is chosen below (chain mail and the shield are options)
 player_choices:
+  - id: fighting_style
+    title: Fighting Style
+    type: custom
+    choose: 1
+    options:
+      - "Archery: +2 to attack rolls with ranged weapons"
+      - "Defense: +1 AC while wearing armor"
+      - "Dueling: +2 damage with a melee weapon in one hand and no other weapon"
+      - "Great Weapon Fighting: reroll 1s and 2s on damage dice with a two-handed or versatile melee weapon"
+      - "Protection: impose disadvantage on an attack against an ally within 5 feet (reaction, needs a shield)"
+      - "Two-Weapon Fighting: add your ability modifier to the off-hand attack's damage"
   - id: class_skills
     title: Class Skills
     type: skill
@@ -157,8 +166,8 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - give: [martial_melee_weapon, shield]
-      - martial_melee_weapon x2
+      - give: [martial_weapon, shield]
+      - martial_weapon x2       # two picks, can be different weapons
   - id: class_equipment_2
     title: Secondary Weapon
     type: equipment

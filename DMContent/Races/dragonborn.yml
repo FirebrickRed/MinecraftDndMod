@@ -2,11 +2,17 @@ name: Dragonborn
 creature_type: Humanoid
 source_url: "https://dnd5e.fandom.com/wiki/Dragonborn"
 description: Born of dragons, as their name proclaims, the dragonborn walk proudly through a world that greets them with fearful incomprehension. Shaped by draconic gods or the dragons themselves, dragonborn originally hatched from dragon eggs as a unique race.
+# PHB dragonborn. For the Fizban's Treasury of Dragons version, comment out the lines marked
+# "PHB" below and uncomment the "Fizban's" ones next to them: ability scores, breath weapon uses,
+# breath damage. Then /dm reload.
 ability_scores:
-  choice:
-    distributions:
-      - [2, 1]      # Flexible bonus allocation
-      - [1, 1, 1]   # Or spread across three abilities
+  fixed:              # PHB
+    Strength: 2       # PHB
+    Charisma: 1       # PHB
+  # choice:           # Fizban's: +2/+1 or +1/+1/+1 anywhere
+  #   distributions:
+  #     - [2, 1]
+  #     - [1, 1, 1]
 size: Medium
 speed: 30
 custom_model: dragonborn_icon
@@ -42,18 +48,20 @@ player_choices:
 # Each ancestry option grants its resistance (#222); the breath weapon below picks its variant by the same label.
 
 # Breath Weapon (Effect Engine action, #70): activate with /combat use breath_weapon on your turn.
-# Costs one use (proficiency-bonus per long rest). The shape, save, and damage type come from the
+# PHB: once per short or long rest. The shape, save, and damage type come from the
 # draconic ancestry the player picked at creation — a variant per option, resolved by `by_choice`.
 # Homebrew: add a new ancestry option + a matching variant here; no code change needed.
 features:
   - id: breath_weapon
     name: Breath Weapon
     activation: action
-    cost: { resource: breath_weapon, amount: 1, max: proficiency_bonus, recovery: long_rest }
+    cost: { resource: breath_weapon, amount: 1, max: 1, recovery: short_rest }                    # PHB
+    # cost: { resource: breath_weapon, amount: 1, max: proficiency_bonus, recovery: long_rest }  # Fizban's
     action:
       dc_ability: constitution   # DC = 8 + proficiency bonus + CON modifier
       save_effect: half          # a successful save takes half damage
-      damage: 2d6                # 1st-level breath damage (scales with level later, #70)
+      damage: 2d6                # PHB, 1st level (3d6 at 6th, 4d6 at 11th, 5d6 at 16th; scaling waits on level-up)
+      # damage: 1d10             # Fizban's, 1st level (and it replaces one attack rather than the whole action)
       targets: enemies
       by_choice: draconic_ancestry
       variants:

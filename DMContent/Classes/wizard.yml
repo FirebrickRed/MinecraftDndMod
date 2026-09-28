@@ -21,7 +21,7 @@ spellcasting:
   spellcasting_focus_type: arcane_focus
   spell_list: wizard
   spellcasting_level: 1
-  cantrips_known_by_level: [3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+  cantrips_known_by_level: [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
   spells_known_by_level: [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
   spell_slots_by_level:
     1: [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]

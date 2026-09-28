@@ -20,7 +20,7 @@ spellcasting:
   spellcasting_focus_type: holy_symbol
   spell_list: cleric
   spellcasting_level: 1
-  cantrips_known_by_level: [3, 3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
+  cantrips_known_by_level: [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
   spell_slots_by_level:
     1: [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
     2: [0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]
@@ -257,7 +257,13 @@ subclasses:
         type: skill
         choose: 2
         options: [arcana, history, nature, religion]
-#        your proficiency bonus is doubled for any ability check you make that uses either of those skills
+      # Blessings of Knowledge: your proficiency bonus is doubled for the two skills picked above.
+      # Only skills you're proficient in are offered, so it's those two (or the ones you had already).
+      - id: sub_class_expertise
+        title: "Blessings of Knowledge: expertise in the two skills above"
+        type: expertise
+        choose: 2
+        options: [arcana, history, nature, religion]
   nature_domain:
     name: Nature Domain
     description: "Channels the forces of nature"
@@ -453,6 +459,7 @@ subclasses:
       - heavy_armor
     weapon_proficiencies:
       - martial_weapons
+    darkvision: 300   # Eyes of Night
     features_by_level:
       1:
         - "Eyes of Night. Starting at 1st level, you can see through the deepest gloom. You have darkvision out to a range of 300 feet. In that radius, you can see in dim light as if it were bright light and in darkness as if it were dim light. As an action, you can magically share the darkvision of this feature with willing creatures you can see within 10 feet of you, up to a number of creatures equal to your Wisdom modifier (minimum of one creature). The shared darkvision lasts for 1 hour. Once you share it, you can't do so again until you finish a long rest, unless you expend a spell slot of any level to share it again."

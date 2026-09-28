@@ -86,6 +86,7 @@ subraces:
       - Duergar Resilience
       - Duergar Magic
       - Sunlight Sensitivity
+    languages: [Undercommon]
     # Superior Darkvision: Extended range
     darkvision: 120
     # Duergar Resilience: Advantage on saves vs illusions, charms, paralysis + poison resistance

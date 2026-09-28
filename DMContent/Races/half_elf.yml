@@ -10,11 +10,7 @@ ability_scores:
       - [1, 1]  # Choose two different abilities for +1 each
 size: Medium
 speed: 30
-
-# Half-elves need 6 hours for a long rest (per #160). Not enforced yet — long rests aren't
-# time-gated (see #45); this records the trait for when they are.
-rest_requirements:
-  long_rest_hours: 6
+# No rest_requirements: a half-elf sleeps 8 hours like a human (PHB). Only elves trance.
 custom_model: half_elf_icon
 
 # Display-only trait names
@@ -52,8 +48,3 @@ condition_immunities:
   - type: sleep
     magical_only: true
     description: "Magic can't put you to sleep."
-
-# Half-Elf rest: 6 hours for long rest (between human 8 and elf 4)
-rest_requirements:
-  long_rest_hours: 6
-  description: "Half-elves need 6 hours for a long rest."
