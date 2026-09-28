@@ -90,7 +90,7 @@ player_choices:
     choose: 1
     options:
       - give: [martial_weapon, shield]
-      - martial_weapon x2
+      - martial_weapon x2       # two picks, one at a time: they can be different weapons
   - id: class_equipment_2
     title: Secondary Weapon
     type: equipment

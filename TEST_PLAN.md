@@ -80,8 +80,14 @@ merges into main.
 - [ ] **Paladin:** a Class Skills pick (2), and Weapons / Secondary Weapon / Adventuring Gear picks.
       Finished: wearing the chain mail gives **no** "not proficient" warning.
 - [ ] **Paladin:** the sheet shows Divine Sense (1 + CHA uses) and Lay on Hands (5 points).
-- [ ] **Fighter:** a Fighting Style pick; **"Two martial weapons"** gives two of the weapon you pick
-      (one pick for now); no second chain mail or shield in your inventory.
+- [ ] **Fighter:** a Fighting Style pick; no second chain mail or shield in your inventory.
+- [ ] **Fighter, "Any Martial Weapon + Any Martial Weapon":** the list says "Pick 1 of 2", pick a longsword →
+      it stays open saying "Pick 2 of 2 … (so far: Longsword + Any Martial Weapon)", pick a warhammer →
+      the tile reads "✔ Longsword + Warhammer", and you get both.
+- [ ] Same, pick one then press Back → the tile says "So far: Longsword + …" and Finish still wants it;
+      click it → you carry on with the second pick.
+- [ ] "Any Martial Weapon + Shield" is still one pick. So is the cleric's "Light Crossbow + Bolt x20 /
+      any simple weapon", and the barbarian's "Handaxe x2" gives two handaxes with no pick at all.
 - [ ] **Ranger:** Favored Enemy, a language for it, and Natural Explorer picks; two simple melee weapons
       when you take that option; 20 arrows in one stack.
 - [ ] **Artificer:** at level 1 it prepares INT-modifier spells (one fewer than before); two simple
@@ -415,7 +421,7 @@ Set these up, `/stop`, start the server, then check:
 - [ ] On join → "Combat is still on".
 - [ ] The scoreboard is back, the downed player is prone, the condition is listed.
 - [ ] The current combatant can attack → damage with no errors.
-- [ ] A raging barbarian is still raging (sheet, halved slashing, red tint)
+- [ ] A raging barbarian is still raging (sheet, halved slashing, red tint).
 - [ ] `/combat finished` → the combat file is gone.
 
 ---
