@@ -138,7 +138,10 @@ public final class SneakAttack {
             String combined = ts.getPendingDamageDice().isBlank() ? dice : ts.getPendingDamageDice() + "+" + dice;
             ts.setPendingDamageDice(combined);
             ts.setPendingSneak(use);
-            session.broadcast(Component.text("🗡 The DM allows " + use.source() + ": +" + dice + " in that damage.", NamedTextColor.DARK_PURPLE));
+            // A second damage prompt on purpose (not #167): it names the new dice. The first one's
+            // buttons roll the same thing now, and either way the hit's damage lands once.
+            session.broadcast(Component.text("🗡 The DM allows " + use.source() + ": +" + dice
+                    + " in that damage. (The prompt below includes it; the earlier one rolls the same now.)", NamedTextColor.DARK_PURPLE));
             int bonus = ts.getPendingDamageBonus();
             String damageStr = combined + (bonus > 0 ? "+" + bonus : bonus < 0 ? String.valueOf(bonus) : "");
             AttackHandler.sendDamagePrompt(session, attacker, target, damageStr, ts.getPendingDamageType(),

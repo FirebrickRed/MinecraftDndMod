@@ -125,6 +125,11 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
 
 ## Combat
 
+- [ ] **One prompt per click (#167):** on your turn, left-click a kobold directly → exactly **one** attack
+      prompt. Then aim at it from a few blocks away and left-click the air → one prompt. With a bow,
+      left-click at a distant one → one prompt.
+- [ ] Same, after a hit: exactly one damage prompt (to you, and one to the DM). Applying it twice →
+      the second says "No attack hit to apply damage for".
 - [ ] **Wizard in chain mail:** a weapon attack shows "↯ disadvantage" with an "Armor (you)" reminder.
 - [ ] **Wizard in chain mail:** initiative rolls with disadvantage.
 - [ ] **Wizard in chain mail:** `/combat cast` refuses.
