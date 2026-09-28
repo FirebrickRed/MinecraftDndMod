@@ -26,6 +26,7 @@ That spawns, fights, dies and can be looted. Every other field has a default:
 | `hit_points` / `hit_dice` | 10 HP |
 | `armor_class` | 10 |
 | `speed` | 30 |
+| `darkvision` | 0 (none): feet; a DM possessing it gets night vision only if > 0 (#148) |
 | `abilities` | all 10 |
 | `skills` | none (every skill = the ability modifier) |
 | `attacks`, `inventory`, `loot`, `shop` | none |
@@ -71,6 +72,7 @@ kobold_sorcerer:
   # hit_dice: "5d6+10"           # …or dice, rolled per spawn. hit_dice wins if both are set.
   armor_class: 15
   speed: 30
+  darkvision: 60                 # feet; decides whether a possessing DM sees in the dark
 
   abilities:                     # FULL names only: `str: 7` is silently ignored
     strength: 7

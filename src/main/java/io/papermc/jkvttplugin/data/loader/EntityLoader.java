@@ -202,6 +202,12 @@ public class EntityLoader {
                 LOGGER.warning("[" + id + "] speed must be a whole number of feet — got '" + data.get("speed")
                         + "'. Falling back to 30.");
             }
+            if (data.get("darkvision") instanceof Integer dv) {
+                entity.setDarkvision(dv);
+            } else if (data.containsKey("darkvision")) {
+                LOGGER.warning("[" + id + "] darkvision must be a whole number of feet — got '" + data.get("darkvision")
+                        + "'. Treating it as none.");
+            }
 
             // Abilities: Parse from string keys to Ability enum
             Object abilitiesObj = data.get("abilities");

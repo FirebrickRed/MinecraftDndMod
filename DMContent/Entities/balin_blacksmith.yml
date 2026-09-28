@@ -16,6 +16,7 @@ size: medium
 hit_points: 45
 armor_class: 14
 speed: 25
+darkvision: 60      # feet; a DM possessing Balin sees in the dark (#148)
 
 abilities:
   strength: 16

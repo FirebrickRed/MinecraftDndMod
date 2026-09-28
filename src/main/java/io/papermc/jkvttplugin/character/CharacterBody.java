@@ -20,6 +20,9 @@ public final class CharacterBody implements Listener {
         // While possessing, the DM wears the creature's size; letting go puts back what they had.
         if (io.papermc.jkvttplugin.dm.PossessionManager.isPossessing(player.getUniqueId())) return;
         CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(player);
+        // Sight too (#148): darkvision → night vision. No character (a DM) → no night vision of ours,
+        // which also clears one left over from a creature possessed when the server went down.
+        CharacterSight.set(player, sheet != null && sheet.getDarkvision() > 0);
         if (sheet == null) return;
         AttributeInstance scale = player.getAttribute(Attribute.SCALE);
         if (scale != null) scale.setBaseValue(sheet.getSize().scale());

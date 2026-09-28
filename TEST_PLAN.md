@@ -333,6 +333,14 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       shortbow, left-click a player → the prompt lists **Shortbow first** and fills
       `/combat attack <them> Shortbow ` (you pick autoRoll/manualRoll after).
 
+## Darkvision is night vision (#148)
+
+- [ ] Make a dwarf/elf/tiefling active → night vision (no icon, no swirl); a cave at night is lit. Switch to
+      a human → it goes. Rejoin and die/respawn → it comes back for the dwarf.
+- [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
+- [ ] As a DM, possess `skeleton` (darkvision 60) → you see in the dark; possess `wolf` → you don't; let
+      go → back to your own character's sight (none if you have no character).
+
 ## Prepared spells (#218)
 
 - [ ] **Wizard spellbook:** an unprepared spell reads "In your spellbook, not prepared" and clicking it does

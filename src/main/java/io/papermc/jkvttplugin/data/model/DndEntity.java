@@ -81,6 +81,9 @@ public class DndEntity {
      */
     private int speed = 30;
 
+    /** Darkvision in feet (0 = none). A DM possessing the creature sees in the dark only if it can (#148). */
+    private int darkvision = 0;
+
     /**
      * The six D&D ability scores.
      * Map of Ability enum -> score value (typically 1-30, average 10).
@@ -195,6 +198,8 @@ public class DndEntity {
 
     public int getSpeed() { return speed; }
     public void setSpeed(int speed) { this.speed = speed; }
+    public int getDarkvision() { return darkvision; }
+    public void setDarkvision(int darkvision) { this.darkvision = darkvision; }
 
     public Map<Ability, Integer> getAbilities() { return abilities; }
     public void setAbilities(Map<Ability, Integer> abilities) { this.abilities = abilities != null ? abilities : new HashMap<>(); }

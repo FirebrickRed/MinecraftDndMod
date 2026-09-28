@@ -17,6 +17,7 @@ kobold:
   hit_dice: "2d6" # Smaller, weaker creatures
   armor_class: 12
   speed: 30
+  darkvision: 60
 
   abilities:
     strength: 7
@@ -58,6 +59,7 @@ kobold_sorcerer:
   hit_points: 27 # Fixed HP (no variance for this one)
   armor_class: 15
   speed: 30
+  darkvision: 60
 
   abilities:
     strength: 7

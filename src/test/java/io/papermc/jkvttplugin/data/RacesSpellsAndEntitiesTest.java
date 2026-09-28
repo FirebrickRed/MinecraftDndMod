@@ -129,4 +129,13 @@ class RacesSpellsAndEntitiesTest {
             assertFalse(io.papermc.jkvttplugin.combat.OutOfCombatAttack.isHarmful(SpellLoader.getSpell(id)), id);
         }
     }
+
+    /** #148: a creature's darkvision decides whether a DM possessing it sees in the dark. */
+    @Test
+    void entityDarkvisionIsReadAndDefaultsToNone() {
+        assertEquals(60, EntityLoader.getEntity("skeleton").getDarkvision());
+        assertEquals(0, EntityLoader.getEntity("wolf").getDarkvision());
+        assertEquals(60, TestContent.character("dwarf", "hill_dwarf", "fighter", "soldier", TestContent.scores()).getDarkvision());
+        assertEquals(0, TestContent.character("human", null, "fighter", "soldier", TestContent.scores()).getDarkvision());
+    }
 }

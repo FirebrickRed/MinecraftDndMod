@@ -85,6 +85,8 @@ public class PossessionManager {
         // (F toggles it; the choice sticks for the next possession). Everyone else always sees it.
         if (!selfModelVisible.contains(dm.getUniqueId())) dm.hideEntity(JkVttPlugin.getInstance(), stand);
         applyScale(dm, instance.getTemplate().getSize()); // stand at the entity's height (sword lines up)
+        // See as it sees (#148): night vision only if the creature has darkvision.
+        io.papermc.jkvttplugin.character.CharacterSight.set(dm, instance.getTemplate().getDarkvision() > 0);
         io.papermc.jkvttplugin.combat.CombatSession.applyPossessedConditionEffects(dm, stand, true); // inherit its conditions (#103)
         giveEntityKit(dm, instance);
 
@@ -152,6 +154,7 @@ public class PossessionManager {
         io.papermc.jkvttplugin.combat.CombatSession.applyPossessedConditionEffects(dm, stand, false); // drop inherited conditions
         if (stand.isValid()) dm.showEntity(JkVttPlugin.getInstance(), stand); // reveal our body again
         restoreEffectsBefore(dm);
+        io.papermc.jkvttplugin.character.CharacterBody.apply(dm); // back to their own character's sight
         return true;
     }
 

@@ -11,6 +11,7 @@ hit_points: 13
 hit_dice: "2d8+4"
 armor_class: 13     # armor scraps
 speed: 30
+darkvision: 60
 
 abilities:
   strength: 10
