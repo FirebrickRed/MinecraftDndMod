@@ -186,10 +186,22 @@ public class SpellCastingMenu {
                 lore.add(Component.text("⬆ Casting at " + Util.getOrdinal(selectedLevel) + " level", NamedTextColor.LIGHT_PURPLE));
             }
 
+            // A wizard's spellbook spell that isn't prepared today (#218): shown, marked, and only a
+            // ritual can be cast from here (as a ritual, no slot).
+            boolean unprepared = innateMatch == null && !io.papermc.jkvttplugin.character.PreparedSpells.isPrepared(sheet, spell);
+            if (unprepared) {
+                lore.add(0, Component.text("In your spellbook, not prepared", NamedTextColor.DARK_GRAY));
+                if (spell.isRitual()) lore.add(1, Component.text("Ritual: click to cast it as one (10 extra minutes, no slot)", NamedTextColor.LIGHT_PURPLE));
+            }
+
             meta.lore(lore);
             spellItem.setItemMeta(meta);
 
-            ItemUtil.tagAction(spellItem, MenuAction.CAST_SPELL, spell.getName() + ":" + selectedLevel);
+            if (unprepared) {
+                if (spell.isRitual()) ItemUtil.tagAction(spellItem, MenuAction.CAST_AS_RITUAL, spell.getId());
+            } else {
+                ItemUtil.tagAction(spellItem, MenuAction.CAST_SPELL, spell.getName() + ":" + selectedLevel);
+            }
             inventory.setItem(slot, spellItem);
             slot++;
         }
@@ -313,13 +325,17 @@ public class SpellCastingMenu {
             inventory.setItem(47, infoItem);
         }
 
-        // Slot 51: Prepare Spells (for prepared casters)
-        String prepType = spellcasting.getPreparationType();
-        if ("prepared".equalsIgnoreCase(prepType)) {
+        // Slot 51: Prepare Spells (for prepared casters, #218)
+        if (io.papermc.jkvttplugin.character.PreparedSpells.kind(sheet) != io.papermc.jkvttplugin.character.PreparedSpells.Kind.NONE) {
+            boolean canChange = io.papermc.jkvttplugin.character.PreparedSpells.canChangeNow(sheet);
             List<Component> lore = new ArrayList<>();
-            lore.add(Component.text("Manage your prepared spells", NamedTextColor.GRAY));
+            lore.add(Component.text("Prepared: " + io.papermc.jkvttplugin.character.PreparedSpells.prepared(sheet).size()
+                    + "/" + io.papermc.jkvttplugin.character.PreparedSpells.max(sheet), NamedTextColor.GRAY));
             lore.add(Component.text(""));
-            lore.add(Component.text("⚠ Not Yet Implemented", NamedTextColor.RED));
+            lore.add(canChange
+                    ? Component.text("Click to change them (you've just rested)", NamedTextColor.GREEN)
+                    : Component.text("Click to see them. You can change them", NamedTextColor.YELLOW));
+            if (!canChange) lore.add(Component.text("after a long rest.", NamedTextColor.YELLOW));
 
             ItemStack prepareItem = Util.createItem(
                     Component.text("Prepare Spells", NamedTextColor.YELLOW),
@@ -328,7 +344,7 @@ public class SpellCastingMenu {
                     1,
                     Material.WRITABLE_BOOK
             );
-
+            ItemUtil.tagAction(prepareItem, MenuAction.OPEN_PREPARE_SPELLS, null);
             inventory.setItem(51, prepareItem);
         }
 

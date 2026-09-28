@@ -250,6 +250,8 @@ public class CharacterPersistenceLoader {
         data.put("armorClass", sheet.getGearArmorClass());
         if (sheet.getTempHealth() > 0) data.put("tempHealth", sheet.getTempHealth());
         if (sheet.isRelentlessEnduranceUsed()) data.put("relentlessEnduranceUsed", true);
+        // A wizard's prepared spells (#218); missing means they've never prepared any.
+        if (sheet.getPreparedSpellIds() != null) data.put("preparedSpells", new ArrayList<>(sheet.getPreparedSpellIds()));
         // Hit Dice left (#52), only when some are spent; a missing key means all of them.
         if (sheet.getHitDiceRemaining() < sheet.getHitDiceMax()) data.put("hitDice", sheet.getHitDiceRemaining());
         // Dying / dead (#101): written only when there's something to say, so a healthy sheet's
@@ -519,6 +521,11 @@ public class CharacterPersistenceLoader {
                     Boolean.TRUE.equals(data.get("relentlessEnduranceUsed")));
             sheet.restoreDeathState(dsSuccesses, dsFailures, Boolean.TRUE.equals(data.get("dead")));
             if (data.get("hitDice") != null) sheet.restoreHitDice(parseIntOrDefault(data.get("hitDice"), sheet.getHitDiceMax()));
+            if (data.get("preparedSpells") instanceof List<?> prepared) {
+                Set<String> ids = new LinkedHashSet<>();
+                for (Object o : prepared) if (o != null) ids.add(o.toString().toLowerCase());
+                sheet.setPreparedSpellIds(ids);
+            }
 
             // Restore CUSTOM choice selections (#70) so feature actions resolve their variant.
             if (data.get("customChoices") instanceof Map<?, ?> ccMap) {

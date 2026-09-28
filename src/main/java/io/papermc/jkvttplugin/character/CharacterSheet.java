@@ -1762,6 +1762,19 @@ public class CharacterSheet {
         }
     }
 
+    /** A cleric/druid preparing a spell from their list (#218): it joins their known spells, and saves. */
+    public void prepareClassSpell(DndSpell spell) {
+        if (spell == null) return;
+        knownSpells.removeIf(k -> k.getId().equalsIgnoreCase(spell.getId()));
+        knownSpells.add(spell);
+        persist();
+    }
+
+    /** …and unpreparing one. */
+    public void unprepareClassSpell(DndSpell spell) {
+        if (spell != null && knownSpells.removeIf(k -> k.getId().equalsIgnoreCase(spell.getId()))) persist();
+    }
+
     public Set<DndSpell> getKnownSpells() {
         return knownSpells;
     }
@@ -2190,6 +2203,7 @@ public class CharacterSheet {
         // Hit Dice (#52): back up to half your total (minimum 1), never above it.
         hitDiceRemaining = Math.min(getHitDiceMax(), getHitDiceRemaining() + hitDiceRegainedOnLongRest());
         shortRestOpen = false;
+        longRestOpen = true; // they may change their prepared spells now (#218)
 
         breakConcentration();
         activeEffects.clear(); // a long rest ends any lingering buffs/debuffs (Effect Engine, #70)
@@ -2228,6 +2242,7 @@ public class CharacterSheet {
         }
 
         shortRestOpen = true; // they may spend Hit Dice now (#52)
+        longRestOpen = false; // the long rest's window to change prepared spells is over (#218)
         persist();
     }
 
@@ -2257,7 +2272,54 @@ public class CharacterSheet {
     /** A long rest gives back half your total Hit Dice, rounded down, at least one (PHB p.186). */
     public int hitDiceRegainedOnLongRest() { return Math.max(1, getHitDiceMax() / 2); }
     public boolean isShortRestOpen() { return shortRestOpen; }
-    public void closeShortRest() { shortRestOpen = false; }
+    /** A fight ends the rest: its Hit Dice and prepared-spell windows both close. */
+    public void closeShortRest() { shortRestOpen = false; longRestOpen = false; }
+
+    // ==================== PREPARED SPELLS (#218) ====================
+
+    /**
+     * Set by a long rest and closed by a fight or the next rest: when a prepared caster may change
+     * their prepared spells (PHB p.58). Not saved: a restart closes it.
+     */
+    private transient boolean longRestOpen;
+    public boolean isLongRestOpen() { return longRestOpen; }
+    /** A new character starts the adventure rested, so they can set up their prepared spells. */
+    public void openLongRestWindow() { longRestOpen = true; }
+
+    /**
+     * A wizard's prepared spells, by id: a subset of their spellbook ({@code knownSpells}). Null means
+     * they've never prepared any (a new wizard), which lets them prepare without a rest first. Only
+     * used for casters who prepare from a spellbook; a cleric's prepared spells are its known spells.
+     */
+    private Set<String> preparedSpellIds;
+    public Set<String> getPreparedSpellIds() { return preparedSpellIds; }
+    public void setPreparedSpellIds(Set<String> ids) {
+        this.preparedSpellIds = ids == null ? null : new LinkedHashSet<>(ids);
+        persist();
+    }
+
+    /**
+     * Spells always prepared that don't count against the number (PHB p.59): a subclass's
+     * {@code bonus_spells} and {@code additional_spells}, and ones a custom pick grants (Divine Soul's affinity).
+     */
+    public Set<String> alwaysPreparedSpellIds() {
+        Set<String> out = new HashSet<>();
+        if (subclass != null) {
+            if (subclass.getBonusSpells() != null) for (String id : subclass.getBonusSpells()) out.add(id.toLowerCase());
+            if (subclass.getAdditionalSpells() != null) for (String id : subclass.getAdditionalSpells()) out.add(id.toLowerCase());
+        }
+        for (List<ChoiceEntry> choices : java.util.Arrays.asList(race != null ? race.getPlayerChoices() : null,
+                subrace != null ? subrace.getPlayerChoices() : null, dndClass != null ? dndClass.getPlayerChoices() : null,
+                subclass != null ? subclass.getPlayerChoices() : null, background != null ? background.getPlayerChoices() : null)) {
+            if (choices == null) continue;
+            for (ChoiceEntry entry : choices) {
+                if (entry.type() != PlayersChoice.ChoiceType.CUSTOM || entry.pc() == null) continue;
+                ChoiceGrants g = entry.pc().grantsFor(getCustomChoice(entry.id()));
+                if (g != null) for (String id : g.bonusSpells()) out.add(id.toLowerCase());
+            }
+        }
+        return out;
+    }
     public void restoreHitDice(int remaining) { hitDiceRemaining = remaining; }
 
     /** Use up one Hit Die (the caller rolls it and heals). False, changing nothing, if there are none left. */

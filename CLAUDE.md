@@ -325,6 +325,16 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - `CharacterCreationSession` tracks selected cantrips and spells separately
 - `SpellFocusListener` handles spellcasting focus item interactions
 - Spellbook UI shows all known spells with spell slots by level
+- **Prepared spells (#218):** `character/PreparedSpells` is the one place. `kind()` is `CLASS_LIST`
+  (cleric, druid, paladin, artificer: prepared = known spells) or `SPELLBOOK` (wizard: `knownSpells`
+  is the book, `CharacterSheet.preparedSpellIds` the day's pick, saved as `preparedSpells:`).
+  **Every cast path asks `PreparedSpells.castRefusal(sheet, spell, asRitual)`**, not `knowsSpell`;
+  it also covers rituals (a wizard casts a book ritual unprepared, `/character cast <id> ritual` and
+  `/combat cast … --ritual`; others need it prepared). Changing them is `PrepareSpellsMenu`, allowed
+  while `isLongRestOpen()` (a long rest, or a new character; closed by a fight or the next rest).
+  A subclass's `bonus_spells` are always prepared and don't count. The rest summary
+  (`RestCommand.sendRestOptions`) lists what can be done during the rest: Hit Dice and Arcane
+  Recovery (`recover_slots:`) after a short one, changing prepared spells after a long one.
 
 **Equipment System:**
 - Weapons/armor/items have custom NBT data for identification — all via the shared `item_id` tag

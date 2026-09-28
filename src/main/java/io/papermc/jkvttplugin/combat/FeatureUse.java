@@ -30,7 +30,7 @@ public final class FeatureUse {
 
     /** Whether this is one of the features this class runs. */
     public static boolean handles(Feature f) {
-        return f.getHeal() != null || f.getSense() != null;
+        return f.getHeal() != null || f.getSense() != null || f.getRecoverSlots() != null;
     }
 
     /**
@@ -45,6 +45,7 @@ public final class FeatureUse {
             player.sendMessage(Component.text(f.getName() + " needs a '" + f.getCostResource() + "' resource this character doesn't have.", NamedTextColor.RED));
             return false;
         }
+        if (f.getRecoverSlots() != null) return recoverSlots(player, self, session, f, res, words);
         if (f.getSense() != null) return sense(player, self, session, f, res);
         if (f.getHeal().fromPool()) return layOnHands(player, self, session, f, res, words);
         return rollHeal(player, self, session, f, res, words);
@@ -85,6 +86,86 @@ public final class FeatureUse {
         say(player, session, Component.text("💚 " + self.getDisplayName() + " uses " + f.getName() + ". " + work, NamedTextColor.GREEN));
         DamageHandler.applyHealing(session, self, Math.max(0, total));
         return true;
+    }
+
+    // ==================== ARCANE RECOVERY: get spent slots back during a short rest ====================
+
+    /**
+     * Once a day, during a short rest, recover spent slots whose levels add up to at most half your
+     * level (rounded up), none of 6th level or higher (PHB p.115). {@code words} may name the levels
+     * ("1 1", "2"); with none, the highest spent slots that fit are chosen.
+     */
+    private static boolean recoverSlots(Player player, Combatant self, CombatSession session, Feature f, ClassResource res, String[] words) {
+        CharacterSheet sheet = self.getCharacterSheet();
+        if (session != null) {
+            player.sendMessage(Component.text(f.getName() + " happens during a short rest, not a fight.", NamedTextColor.YELLOW));
+            return false;
+        }
+        if (!sheet.isShortRestOpen()) {
+            player.sendMessage(Component.text(f.getName() + " happens during a short rest. Ask the DM for one (/dm rest).", NamedTextColor.YELLOW));
+            return false;
+        }
+        if (res != null && res.getCurrent() < f.getCostAmount()) {
+            player.sendMessage(Component.text("You've used " + f.getName() + " today; it comes back on a long rest.", NamedTextColor.YELLOW));
+            return false;
+        }
+        int budget = recoveryBudget(sheet);
+        int cap = f.getRecoverSlots().maxSlotLevel();
+        List<Integer> levels = new ArrayList<>();
+        for (String w : words) {
+            try { levels.add(Integer.parseInt(w.trim())); } catch (NumberFormatException ignored) { }
+        }
+        if (levels.isEmpty()) levels = autoPick(sheet, budget, cap);
+        // Check the whole pick before changing anything.
+        int total = 0;
+        int[] want = new int[10];
+        for (int lvl : levels) {
+            if (lvl < 1 || lvl > cap) { player.sendMessage(Component.text("Only slots of level 1 to " + cap + " come back this way.", NamedTextColor.YELLOW)); return false; }
+            total += lvl;
+            want[lvl]++;
+        }
+        if (levels.isEmpty()) { player.sendMessage(Component.text("You have no spent slots to recover.", NamedTextColor.GRAY)); return false; }
+        if (total > budget) {
+            player.sendMessage(Component.text("That's " + total + " levels of slots; " + f.getName() + " recovers up to " + budget + ".", NamedTextColor.YELLOW));
+            return false;
+        }
+        for (int lvl = 1; lvl <= 9; lvl++) {
+            int spent = sheet.getMaxSpellSlots(lvl) - sheet.getSpellSlotsRemaining(lvl);
+            if (want[lvl] > spent) {
+                player.sendMessage(Component.text("You haven't spent " + want[lvl] + " level " + lvl + " slot" + (want[lvl] > 1 ? "s" : "") + ".", NamedTextColor.YELLOW));
+                return false;
+            }
+        }
+        for (int lvl = 1; lvl <= 9; lvl++) {
+            if (want[lvl] > 0) sheet.setSpellSlotsRemaining(lvl, sheet.getSpellSlotsRemaining(lvl) + want[lvl]);
+        }
+        if (res != null) res.consume(f.getCostAmount());
+        StringBuilder got = new StringBuilder();
+        for (int lvl = 1; lvl <= 9; lvl++) if (want[lvl] > 0) got.append(got.length() > 0 ? ", " : "").append(want[lvl]).append(" × level ").append(lvl);
+        say(player, session, Component.text("📖 " + self.getDisplayName() + " uses " + f.getName() + ": recovers " + got + " spell slot"
+                + (levels.size() > 1 ? "s" : "") + ".", NamedTextColor.LIGHT_PURPLE));
+        return true;
+    }
+
+    /** Half the character's level, rounded up: 1 at level 1. */
+    public static int recoveryBudget(CharacterSheet sheet) {
+        return (sheet.getTotalLevel() + 1) / 2;
+    }
+
+    /** The highest spent slots that fit in {@code budget}, none above {@code cap}. */
+    static List<Integer> autoPick(CharacterSheet sheet, int budget, int cap) {
+        List<Integer> out = new ArrayList<>();
+        int left = budget;
+        for (int lvl = Math.min(cap, 9); lvl >= 1 && left > 0; lvl--) {
+            int spent = sheet.getMaxSpellSlots(lvl) - sheet.getSpellSlotsRemaining(lvl);
+            while (spent > 0 && lvl <= left) { out.add(lvl); left -= lvl; spent--; }
+        }
+        return out;
+    }
+
+    /** Whether there's anything for it to recover right now (the rest summary only offers it then). */
+    public static boolean hasSpentSlots(CharacterSheet sheet, int cap) {
+        return !autoPick(sheet, recoveryBudget(sheet), cap).isEmpty();
     }
 
     // ==================== LAY ON HANDS: spend points from the pool on a creature you touch ====================

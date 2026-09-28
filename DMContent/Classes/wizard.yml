@@ -14,15 +14,34 @@ weapon_proficiencies:
   - quarterstaff
   - light_crossbow
 tool_proficiencies: []
+class_resources:
+  - name: Arcane Recovery
+    max_by_level: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+    recovery: long_rest          # once a day
+    material: lapis_lazuli
+features:
+  # Arcane Recovery (#218): during a short rest, spent slots adding up to half your level (rounded
+  # up) come back, none of 6th level or higher. /character use arcane_recovery [levels…]; the short
+  # rest's summary offers it.
+  - id: arcane_recovery
+    name: Arcane Recovery
+    activation: short_rest
+    cost: { resource: arcane_recovery, amount: 1 }
+    recover_slots: { max_slot_level: 5 }
 spellcasting:
   casting_ability: Intelligence
-  preparation_type: prepared
-  ritual_casting: true
+  preparation_type: prepared     # prepared FROM the spellbook below (#218)
+  ritual_casting: true           # a wizard may cast a spellbook ritual without preparing it
   spellcasting_focus_type: arcane_focus
   spell_list: wizard
   spellcasting_level: 1
+  spells_prepared_formula:       # INT modifier + wizard level (minimum 1)
+    type: ability_plus_level
+    ability: Intelligence
+    level_type: full
+    minimum: 1
   cantrips_known_by_level: [3, 3, 3, 4, 4, 4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5, 5]
-  spells_known_by_level: [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]
+  spells_known_by_level: [6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 32, 34, 36, 38, 40, 42, 44]   # the spellbook's size
   spell_slots_by_level:
     1: [2, 3, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
     2: [0, 0, 2, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3, 3]

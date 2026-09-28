@@ -51,6 +51,16 @@ public class SpellCastingMenuListener implements Listener {
             case SELECT_SPELL_LEVEL -> handleSlotSelection(player, sheet, payload);
             case VIEW_CANTRIPS -> handleViewCantrips(player, sheet);
             case BREAK_CONCENTRATION -> handleConcentrationClick(player, sheet);
+            case OPEN_PREPARE_SPELLS -> io.papermc.jkvttplugin.ui.menu.PrepareSpellsMenu.open(player, sheet);
+            case CAST_AS_RITUAL -> {
+                // An unprepared ritual in a wizard's spellbook (#218): fill the ritual cast, no slot.
+                player.closeInventory();
+                String cmd = "/character cast " + payload + " ritual";
+                player.sendMessage(Component.text("✨ Cast it as a ritual (10 extra minutes, no slot) — ", NamedTextColor.LIGHT_PURPLE)
+                        .append(Component.text("[click to cast]", NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                                .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))
+                                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text("Fills: " + cmd)))));
+            }
             default -> {} // Ignore other actions
         }
     }

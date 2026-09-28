@@ -308,8 +308,31 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));
             return true;
         }
-        if (!sheet.knowsSpell(spell)) {
-            player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
+        // "ritual" casts it as a ritual (#218): 10 extra minutes, no slot. A wizard may do that with a
+        // spellbook spell they haven't prepared; a cleric or druid only with a prepared one.
+        boolean asRitual = false;
+        for (String w : rest) if (w.equalsIgnoreCase("ritual")) { asRitual = true; break; }
+        if (asRitual) rest = Arrays.stream(rest).filter(w -> !w.equalsIgnoreCase("ritual")).toArray(String[]::new);
+        String refusal = io.papermc.jkvttplugin.character.PreparedSpells.castRefusal(sheet, spell, asRitual);
+        if (refusal != null) {
+            player.sendMessage(Component.text(refusal, NamedTextColor.RED));
+            if (!asRitual && spell.isRitual() && io.papermc.jkvttplugin.character.PreparedSpells.castRefusal(sheet, spell, true) == null) {
+                String cmd = "/character cast " + spell.getId() + " ritual";
+                player.sendMessage(Component.text("   [cast it as a ritual]", NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                        .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))
+                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text("Fills: " + cmd))));
+            }
+            return true;
+        }
+        if (asRitual) {
+            // Out of a fight a ritual just takes longer: no slot, and the DM narrates the 10 minutes.
+            Component announce = spell.castLine("✨ " + sheet.getCharacterName() + " casts ",
+                    " as a ritual (10 extra minutes, no spell slot).", NamedTextColor.LIGHT_PURPLE);
+            announceNearby(player, announce);
+            if (spell.isConcentration()) {
+                sheet.setConcentratingOn(spell);
+                player.sendMessage(Component.text("   Concentrating on " + spell.getName() + ".", NamedTextColor.GRAY));
+            }
             return true;
         }
         // "level <n>" upcasts from a higher slot; everything before it is the target's name.

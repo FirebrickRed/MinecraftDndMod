@@ -96,8 +96,13 @@ public final class FeatureParser {
                         ParseUtil.asInt(s.get("range"), 60));
             }
 
+            // recover_slots: { max_slot_level: 5 } (Arcane Recovery)
+            Feature.RecoverSlots recover = m.get("recover_slots") instanceof Map<?, ?> r
+                    ? new Feature.RecoverSlots(ParseUtil.asInt(r.get("max_slot_level"), 5)) : null;
+
             out.add(new Feature(id, name, activation, target, costResource, costAmount, apply,
-                    action, grantedMax, grantedByProf, grantedRecovery, attack).withHealAndSense(heal, sense));
+                    action, grantedMax, grantedByProf, grantedRecovery, attack).withHealAndSense(heal, sense)
+                    .withRecoverSlots(recover));
         }
         return out;
     }

@@ -46,4 +46,10 @@ public enum MenuAction {
     SELECT_SPELL_LEVEL,
     VIEW_CANTRIPS,
     BREAK_CONCENTRATION,
+    OPEN_PREPARE_SPELLS,     // spellbook → the Prepare Spells menu (#218)
+    CAST_AS_RITUAL,          // spellbook: an unprepared ritual → fill "/character cast <id> ritual" (#218)
+
+    // ===== Prepare Spells (#218) =====
+    PREPARE_SPELL,           // payload: spell id; prepare or unprepare it
+    PREPARE_BACK,            // back to the spellbook
 }

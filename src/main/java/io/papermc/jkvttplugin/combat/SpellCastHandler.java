@@ -45,8 +45,9 @@ public class SpellCastHandler {
             player.sendMessage(Component.text("Only characters cast spells this way (an entity's spells are attacks — use /combat attack).", NamedTextColor.RED));
             return false;
         }
-        if (!sheet.knowsSpell(spell)) {
-            player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
+        String refusal = io.papermc.jkvttplugin.character.PreparedSpells.castRefusal(sheet, spell, false); // known and prepared (#218)
+        if (refusal != null) {
+            player.sendMessage(Component.text(refusal, NamedTextColor.RED));
             return false;
         }
         Ability ability = sheet.castingAbilityFor(spell);
@@ -187,8 +188,9 @@ public class SpellCastHandler {
             player.sendMessage(Component.text("Only characters cast spells this way.", NamedTextColor.RED));
             return false;
         }
-        if (!sheet.knowsSpell(spell)) {
-            player.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
+        String refusal = io.papermc.jkvttplugin.character.PreparedSpells.castRefusal(sheet, spell, false); // known and prepared (#218)
+        if (refusal != null) {
+            player.sendMessage(Component.text(refusal, NamedTextColor.RED));
             return false;
         }
         Ability ability = sheet.castingAbilityFor(spell);

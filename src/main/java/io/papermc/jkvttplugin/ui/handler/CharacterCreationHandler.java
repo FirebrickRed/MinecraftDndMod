@@ -425,6 +425,14 @@ public class CharacterCreationHandler implements MenuClickHandler {
             CharacterCreationService.removeSession(player.getUniqueId());
             player.closeInventory();
             player.sendMessage(Component.text("Character created! Right-click your Character Sheet to view it.", NamedTextColor.GREEN));
+            // A prepared caster starts rested (#218). A wizard has a spellbook and nothing prepared
+            // yet, so say so and offer the menu; a cleric's creation picks are already prepared.
+            sheet.openLongRestWindow();
+            if (io.papermc.jkvttplugin.character.PreparedSpells.kind(sheet) == io.papermc.jkvttplugin.character.PreparedSpells.Kind.SPELLBOOK) {
+                player.sendMessage(Component.text("📖 Your spellbook holds " + sheet.getKnownSpells().size() + " spells; prepare "
+                        + io.papermc.jkvttplugin.character.PreparedSpells.max(sheet) + " of them to cast today. ", NamedTextColor.LIGHT_PURPLE)
+                        .append(io.papermc.jkvttplugin.ui.menu.PrepareSpellsMenu.button(sheet)));
+            }
         } catch (Exception e) {
             player.sendMessage(Component.text("An error occurred while creating your character. Please try again.", NamedTextColor.RED));
             e.printStackTrace();

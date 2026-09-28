@@ -191,11 +191,39 @@ public class RestCommand implements CommandExecutor, TabCompleter {
                         + " (" + character.hitDieDice() + " each)", NamedTextColor.GRAY));
         player.sendMessage(hd);
         player.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
+        sendRestOptions(player, character, restType);
+    }
+
+    /**
+     * What this character can do now that the rest is over (#52, #218), each with its button. Open
+     * until they join a fight or rest again. Nothing listed means nothing to do.
+     */
+    private void sendRestOptions(Player player, CharacterSheet character, String restType) {
+        List<Component> options = new ArrayList<>();
         if (restType.equals("short")) {
-            String refusal = CharacterCommand.hitDieRefusal(character);
-            if (refusal == null) player.sendMessage(CharacterCommand.hitDiePrompt(character));
-            else if (character.getCurrentHealth() < character.getMaxHealth()) player.sendMessage(Component.text(refusal, NamedTextColor.GRAY));
+            if (CharacterCommand.hitDieRefusal(character) == null) options.add(CharacterCommand.hitDiePrompt(character));
+            var ar = character.getFeature("arcane_recovery");
+            var arRes = ar != null && ar.getCostResource() != null ? character.getResource(ar.getCostResource()) : null;
+            if (ar != null && ar.getRecoverSlots() != null && arRes != null && arRes.getCurrent() > 0
+                    && io.papermc.jkvttplugin.combat.FeatureUse.hasSpentSlots(character, ar.getRecoverSlots().maxSlotLevel())) {
+                String cmd = "/character use arcane_recovery";
+                options.add(Component.text("📖 Arcane Recovery (once a day): get back up to "
+                                + io.papermc.jkvttplugin.combat.FeatureUse.recoveryBudget(character) + " level(s) of spent slots. ", NamedTextColor.LIGHT_PURPLE)
+                        .append(Component.text("[Recover]", NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                                .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))
+                                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(
+                                        "Fills: " + cmd + "\nAdd slot levels to choose (e.g. 1 1); without them the highest that fit come back.")))));
+            }
+        } else if (io.papermc.jkvttplugin.character.PreparedSpells.kind(character) != io.papermc.jkvttplugin.character.PreparedSpells.Kind.NONE) {
+            options.add(Component.text("📖 Change your prepared spells ("
+                            + io.papermc.jkvttplugin.character.PreparedSpells.prepared(character).size() + "/"
+                            + io.papermc.jkvttplugin.character.PreparedSpells.max(character) + " prepared). ", NamedTextColor.LIGHT_PURPLE)
+                    .append(io.papermc.jkvttplugin.ui.menu.PrepareSpellsMenu.button(character)));
         }
+        if (options.isEmpty()) return;
+        player.sendMessage(Component.text("During this rest you can:", NamedTextColor.GOLD));
+        for (Component o : options) player.sendMessage(Component.text("  ").append(o));
+        player.sendMessage(Component.text("  (Until you join a fight or rest again.)", NamedTextColor.DARK_GRAY));
     }
 
     @Override

@@ -302,6 +302,27 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Then [Roll it] + Enter, as a Halfling rolling a 1 → Lucky rerolls it.
 - [ ] `/combat action attack` → says "left-click your target" (it said right-click).
 
+## Prepared spells (#218)
+
+- [ ] **New wizard:** finishing creation says "Your spellbook holds 6 spells; prepare N of them" with
+      **[Prepare spells]**. The menu shows the 6, "Prepared: 0/N"; click to prepare up to N, one more
+      says "unprepare one first".
+- [ ] **Wizard spellbook:** an unprepared spell reads "In your spellbook, not prepared" and clicking it does
+      nothing; an unprepared **ritual** (e.g. Detect Magic, Find Familiar) says "Ritual: click to cast it as one".
+- [ ] `/character cast <unprepared non-ritual>` → "…in your spellbook but not prepared…". An unprepared
+      ritual without `ritual` → the same, plus **[cast it as a ritual]**; with `ritual` → "casts … as a ritual
+      (10 extra minutes, no spell slot)" and no slot is spent.
+- [ ] In a fight, `/combat cast <unprepared ritual> --ritual` works for the wizard.
+- [ ] **Cleric:** the menu lists the whole cleric list at 1st level, domain spells last as "✦ Always
+      prepared (Life Domain)". Swap one after a long rest; the new one casts, the old one says "isn't prepared".
+- [ ] **Cleric:** an unprepared ritual can't be cast as one ("only a ritual they have prepared").
+- [ ] **The window:** `/dm rest <you> long` → the summary says "During this rest you can: 📖 Change your
+      prepared spells (3/4) [Prepare spells]". After a short rest, or once you join a fight, the menu is
+      view-only and says "after a long rest".
+- [ ] **Arcane Recovery:** wizard casts a 1st-level spell, `/dm rest <you> short` → the summary offers
+      "📖 Arcane Recovery… [Recover]"; use it → a level 1 slot back. Again → "used today". In a fight → refused.
+- [ ] Restart after preparing → the same spells are still prepared.
+
 ## Rests and Hit Dice (#52)
 
 - [ ] The sheet's HP tile says "Hit Dice: 1/1 (1d10)" for a fighter.

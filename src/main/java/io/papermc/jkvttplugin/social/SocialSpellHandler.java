@@ -75,8 +75,9 @@ public class SocialSpellHandler implements Listener {
             caster.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));
             return;
         }
-        if (!sheet.knowsSpell(spell)) {
-            caster.sendMessage(Component.text(sheet.getCharacterName() + " doesn't know " + spell.getName() + ".", NamedTextColor.RED));
+        String refusal = io.papermc.jkvttplugin.character.PreparedSpells.castRefusal(sheet, spell, false); // known and prepared (#218)
+        if (refusal != null) {
+            caster.sendMessage(Component.text(refusal, NamedTextColor.RED));
             return;
         }
         // Refuse off-turn (or out-of-actions) up front so we never prompt someone who can't cast.

@@ -77,6 +77,14 @@ spellcasting:
   slot_recovery: short_rest        # warlock pact magic; default long rest
 ```
 
+**Prepared casters (#218).** `preparation_type: prepared` with **no** `spells_known_by_level` (cleric,
+druid, paladin, artificer) prepares from the whole class list, up to their highest slot: their
+prepared spells are their known ones. **With** `spells_known_by_level` (wizard) that's the spellbook's
+size, and they prepare `spells_prepared_formula` of the book each day. Either way they change them
+in the Prepare Spells menu after a long rest (a new character starts rested). A subclass's
+`bonus_spells` are always prepared and don't count. `ritual_casting: true` lets them cast a ritual
+spell as a ritual (no slot): a wizard from the book, prepared or not; everyone else only if prepared.
+
 **Which spells a class can learn isn't set here.** Each spell lists its classes in its own YAML
 (`classes: [warlock, wizard]`). `spell_list:` and `pact_slot_level_by_level:` in shipped files
 aren't read.
@@ -223,6 +231,10 @@ features:
     cost: { resource: divine_sense, amount: 1 }
     sense: { creature_types: [celestial, fiend, undead], range: 60 }  # lists them by type and direction
 ```
+
+`recover_slots: { max_slot_level: 5 }` with `activation: short_rest` is Arcane Recovery (#218): during a
+short rest, spent slots adding up to half the character's level (rounded up) come back, none above
+that level. The short rest's summary offers it.
 
 These run from `/combat use <id>` on your turn (spending the action or bonus action) and from
 `/character use <id>` outside a fight. A rolled heal gets the usual three roll buttons. Nothing is

@@ -1230,6 +1230,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // Start a ritual channel (#156): /combat cast <ritual> --ritual
             if (hasFlag(args, "--ritual")) {
                 if (armorBlocksCasting(player, caster)) return;
+                // It never checked the caster knew it (#218): a wizard's book, a cleric's prepared list.
+                if (caster.getCharacterSheet() != null) {
+                    String refusal = io.papermc.jkvttplugin.character.PreparedSpells.castRefusal(caster.getCharacterSheet(), spell, true);
+                    if (refusal != null) { player.sendMessage(Component.text(refusal, NamedTextColor.RED)); return; }
+                }
                 RitualManager.begin(session, player, caster, spell);
                 return;
             }

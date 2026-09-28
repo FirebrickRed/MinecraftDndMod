@@ -93,4 +93,14 @@ public class Feature {
     }
     public Heal getHeal() { return heal; }
     public Sense getSense() { return sense; }
+
+    /**
+     * {@code recover_slots:} Arcane Recovery (#218): during a short rest, get back spent slots whose
+     * levels add up to at most half your level, rounded up, none higher than {@code maxSlotLevel}.
+     */
+    public record RecoverSlots(int maxSlotLevel) {}
+
+    private RecoverSlots recoverSlots;
+    public Feature withRecoverSlots(RecoverSlots r) { this.recoverSlots = r; return this; }
+    public RecoverSlots getRecoverSlots() { return recoverSlots; }
 }
