@@ -124,6 +124,7 @@ public final class RaceClassParser {
 
         // Parse features by level
         subclass.setFeaturesByLevel(ParseUtil.parseLevelStringListMap(data.get("features_by_level")));
+        subclass.setFeatureTextsByLevel(io.papermc.jkvttplugin.data.model.FeatureText.parseByLevel(data.get("features_by_level")));
 
         // Parse bonus spells (domain spells, expanded spell list, etc.) — unknown ids are reported by ContentValidator
         List<String> bonusSpells = ParseUtil.normalizeStringList(data.get("bonus_spells"));

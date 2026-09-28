@@ -664,6 +664,7 @@ Menu clicks are handled in `MenuClickListener.onMenuClick()` via switch on `Menu
 - ✅ Spellbook with spell slots tracking
 - ✅ Class resources display (Issue #25)
 - ✅ Race and subclass display
+- ✅ Features & Traits page (#65): race traits, class/subclass `features_by_level` text (`FeatureText`: a map `{name, description}` or a `"Name: text"` string, case kept), your picks, and every Effect Engine feature; a usable one fills its `/combat use` / `/character use` on click
 
 ### Shop System (Issue #75)
 - ✅ Native Minecraft Merchant GUI integration

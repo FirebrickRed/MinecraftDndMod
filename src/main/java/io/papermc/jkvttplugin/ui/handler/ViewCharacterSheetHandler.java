@@ -26,6 +26,11 @@ public class ViewCharacterSheetHandler implements MenuClickHandler {
     public void handleClick(Player player, CharacterCreationSession session, UUID characterId, MenuAction action, String payload) {
         switch (action) {
             case OPEN_SKILLS_MENU -> SkillsMenu.open(player, characterId);
+            case OPEN_FEATURES -> {
+                // DMs can open anyone's sheet, so look the character up by id, not by the viewer (#65).
+                CharacterSheet character = CharacterSheetManager.getCharacterById(characterId);
+                if (character != null) io.papermc.jkvttplugin.ui.menu.CharacterFeaturesMenu.open(player, character);
+            }
             case OPEN_SPELLBOOK -> {
                 // Get the character sheet to pass to SpellCastingMenu
                 CharacterSheet character = CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);

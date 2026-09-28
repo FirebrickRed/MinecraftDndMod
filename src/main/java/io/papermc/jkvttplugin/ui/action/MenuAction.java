@@ -50,6 +50,11 @@ public enum MenuAction {
     CAST_AS_RITUAL,          // spellbook: an unprepared ritual → fill "/character cast <id> ritual" (#218)
     SPELL_NOT_PREPARED,      // spellbook: an unprepared spell → say so, and how to prepare it (#218)
 
+    // ===== Features & Traits (#65) =====
+    OPEN_FEATURES,           // character sheet → the Features & Traits page
+    USE_FEATURE,             // payload: feature id → fill the command that uses it
+    FEATURES_BACK,           // back to the character sheet
+
     // ===== Prepare Spells (#218) =====
     PREPARE_SPELL,           // payload: spell id; prepare or unprepare it
     PREPARE_BACK,            // back to the spellbook

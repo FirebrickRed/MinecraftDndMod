@@ -274,6 +274,19 @@ public class ViewCharacterSheetMenu {
         );
         inventory.setItem(17, skillsButton);
 
+        // Slot 9: Features & Traits (#65): race traits, class/subclass features, and the usable ones
+        inventory.setItem(9, ItemUtil.createActionItem(
+                Material.NETHER_STAR,
+                Component.text("Features & Traits", NamedTextColor.GOLD),
+                LoreBuilder.create()
+                        .addLine("Your race's traits, your class features,", NamedTextColor.GRAY)
+                        .addLine("and the ones you can use (Rage, Breath", NamedTextColor.GRAY)
+                        .addLine("Weapon, Second Wind…)", NamedTextColor.GRAY)
+                        .build(),
+                MenuAction.OPEN_FEATURES,
+                null
+        ));
+
         // Slot 18: Spellbook button (for spellcasters only)
         if (character.hasSpells()) {
             int totalCantrips = character.getKnownCantrips().size();

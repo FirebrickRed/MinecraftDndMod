@@ -316,6 +316,23 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] `/dm check Zek skill athletics|acrobatics dc 13` → Zek gets both prompts ("pick how you go about
       it"); the one he rolls comes back to you, graded.
 
+## Features & Traits page (#65)
+
+- [ ] Character sheet → **Features & Traits** (nether star, slot 9). Top row: your race's traits, darkvision
+      and speeds; your class's features up to your level with their text (a fighter: Fighting Style, Second
+      Wind); your subclass's, names in proper case; "Your picks" (fighting style, dragon ancestor…).
+- [ ] A dragonborn: **Breath Weapon** tile shows the area, your save DC and the damage for your ancestry,
+      and "Uses 1/1". Click it outside a fight → "is used in a fight"; in a fight on your turn → a chat
+      button that fills `/combat use breath_weapon`.
+- [ ] A fighter clicks **Second Wind** out of a fight → fills `/character use second_wind`. Passive tiles
+      (Sneak Attack, Archery) aren't clickable. ← goes back to the sheet.
+
+## Possessed creatures attack by left-click (#179)
+
+- [ ] Possess a creature with attacks (`skeleton`): the hotbar item says "left-click a target". Hold the
+      shortbow, left-click a player → the prompt lists **Shortbow first** and fills
+      `/combat attack <them> Shortbow ` (you pick autoRoll/manualRoll after).
+
 ## Prepared spells (#218)
 
 - [ ] **Wizard spellbook:** an unprepared spell reads "In your spellbook, not prepared" and clicking it does

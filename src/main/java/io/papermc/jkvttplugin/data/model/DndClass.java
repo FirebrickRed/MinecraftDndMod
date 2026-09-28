@@ -204,6 +204,17 @@ public class DndClass {
         this.featuresByLevel = featuresByLevel;
     }
 
+    /** features_by_level as players read it: names and descriptions, case kept (#65). */
+    private Map<Integer, List<FeatureText>> featureTextsByLevel = Map.of();
+    public Map<Integer, List<FeatureText>> getFeatureTextsByLevel() { return featureTextsByLevel; }
+    public void setFeatureTextsByLevel(Map<Integer, List<FeatureText>> m) { this.featureTextsByLevel = m == null ? Map.of() : m; }
+    /** The features a character has at {@code level} and below, in level order. */
+    public List<FeatureText> featureTextsUpTo(int level) {
+        List<FeatureText> out = new ArrayList<>();
+        for (int l = 1; l <= level; l++) out.addAll(featureTextsByLevel.getOrDefault(l, List.of()));
+        return out;
+    }
+
     public Map<String, DndSubClass> getSubclasses() {
         return subclasses;
     }
@@ -403,8 +414,10 @@ public class DndClass {
         }
 
         // Class-specific: Level 1 features preview
-        if (featuresByLevel != null && featuresByLevel.containsKey(1)) {
-            builder.addListSection("Starting Features:", featuresByLevel.get(1), NamedTextColor.YELLOW, NamedTextColor.WHITE);
+        // (The string list dropped class entries, which are maps, so this section never showed. #65)
+        List<FeatureText> starting = featureTextsByLevel.getOrDefault(1, List.of());
+        if (!starting.isEmpty()) {
+            builder.addListSection("Starting Features:", starting.stream().map(FeatureText::name).toList(), NamedTextColor.YELLOW, NamedTextColor.WHITE);
         }
 
         // Automatic Grants (all proficiencies via unified system)

@@ -1309,6 +1309,13 @@ public class CharacterSheet {
         return DndRules.getProficiencyBonus(getTotalLevel());
     }
 
+    /** Darkvision range in feet, 0 for none (race, subrace or subclass, whichever is longest). */
+    public int getDarkvision() { return darkvision == null ? 0 : darkvision; }
+    /** A swimming / flying / climbing speed of its own, or 0 (swimming and climbing then cost double movement). */
+    public int getSwimmingSpeed() { return swimmingSpeed; }
+    public int getFlyingSpeed() { return flyingSpeed; }
+    public int getClimbingSpeed() { return climbingSpeed; }
+
     public int getSpeed() {
         return speed; // Uses character's own speed field (set from race/subrace in applyRacialTraits)
     }

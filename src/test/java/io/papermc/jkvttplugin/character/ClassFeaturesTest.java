@@ -121,4 +121,23 @@ class ClassFeaturesTest {
         assertEquals("south-east", FeatureUse.direction(here, new Location(null, 10, 64, 10)));
         assertEquals("west", FeatureUse.direction(here, new Location(null, -20, 64, 1)));
     }
+
+    /** #65: class features_by_level are maps; they used to be dropped, so the class listed no features. */
+    @Test
+    void classFeatureTextIsReadWithNamesAndDescriptions() {
+        CharacterSheet f = fighter("archery");
+        var names = f.getMainClass().featureTextsUpTo(1).stream().map(io.papermc.jkvttplugin.data.model.FeatureText::name).toList();
+        assertEquals(java.util.List.of("Fighting Style", "Second Wind"), names);
+        assertFalse(f.getMainClass().featureTextsUpTo(1).get(1).description().isBlank());
+        assertFalse(f.getMainClass().featureTextsUpTo(2).stream().noneMatch(t -> t.name().equals("Action Surge")));
+    }
+
+    /** #65: a subclass's "Name: text" strings keep their case (they used to be lower-cased). */
+    @Test
+    void subclassFeatureTextKeepsCaseAndSplitsTheName() {
+        var aberrant = io.papermc.jkvttplugin.data.loader.ClassLoader.getClass("sorcerer").getSubclasses().get("aberrant_mind");
+        var first = aberrant.featureTextsUpTo(1).get(0);
+        assertEquals("Telepathic Speech", first.name());
+        assertTrue(first.description().startsWith("Starting at 1st level"));
+    }
 }

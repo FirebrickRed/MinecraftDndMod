@@ -77,7 +77,10 @@ public class ClassLoader {
                 .playerChoices(ChoiceParser.parsePlayerChoices(data.get("player_choices")))
                 .customModel((String) data.get("custom_model")); // resource-pack model name
 
-        return builder.build();
+        DndClass built = builder.build();
+        // The same list as players read it (names + descriptions; the one above drops map entries) (#65).
+        built.setFeatureTextsByLevel(io.papermc.jkvttplugin.data.model.FeatureText.parseByLevel(data.get("features_by_level")));
+        return built;
     }
 
     public static DndClass getClass(String name) {

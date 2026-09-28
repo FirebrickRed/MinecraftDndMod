@@ -94,6 +94,16 @@ public class DndSubClass {
         this.featuresByLevel = featuresByLevel;
     }
 
+    /** features_by_level as players read it: names and descriptions, case kept (#65). */
+    private Map<Integer, List<FeatureText>> featureTextsByLevel = Map.of();
+    public Map<Integer, List<FeatureText>> getFeatureTextsByLevel() { return featureTextsByLevel; }
+    public void setFeatureTextsByLevel(Map<Integer, List<FeatureText>> m) { this.featureTextsByLevel = m == null ? Map.of() : m; }
+    public List<FeatureText> featureTextsUpTo(int level) {
+        List<FeatureText> out = new java.util.ArrayList<>();
+        for (int l = 1; l <= level; l++) out.addAll(featureTextsByLevel.getOrDefault(l, List.of()));
+        return out;
+    }
+
     private List<String> expandedSpellLists = List.of(); // whole class lists added to the pick list (Divine Soul: cleric)
     private List<io.papermc.jkvttplugin.effect.Feature> features = List.of(); // Effect Engine features (#224)
 
@@ -233,17 +243,12 @@ public class DndSubClass {
         }
 
         // Level 1 features preview
-        if (featuresByLevel != null && featuresByLevel.containsKey(1)) {
-            List<String> level1Features = featuresByLevel.get(1);
-            if (!level1Features.isEmpty()) {
-                lore.addLine("Level 1 Features:", NamedTextColor.GOLD);
-                for (String feature : level1Features) {
-                    // Truncate long feature descriptions
-                    String preview = feature.length() > 60 ? feature.substring(0, 57) + "..." : feature;
-                    lore.addLine("• " + preview, NamedTextColor.YELLOW);
-                }
-                lore.blankLine();
-            }
+        // Names only here (the full text is on the sheet's Features & Traits page, #65); case kept.
+        List<FeatureText> level1 = featureTextsByLevel.getOrDefault(1, List.of());
+        if (!level1.isEmpty()) {
+            lore.addLine("Level 1 Features:", NamedTextColor.GOLD);
+            for (FeatureText f : level1) lore.addLine("• " + f.name(), NamedTextColor.YELLOW);
+            lore.blankLine();
         }
 
         // Bonus spells preview (first 4 spells)

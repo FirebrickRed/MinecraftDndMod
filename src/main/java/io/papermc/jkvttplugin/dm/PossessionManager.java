@@ -286,8 +286,8 @@ public class PossessionManager {
             }
         }
 
-        // Natural / spell attacks have no weapon item — give a hotbar icon so there's something to
-        // right-click to attack with them (#132 follow-up). Default to a bone.
+        // Natural / spell attacks have no weapon item — give a hotbar icon to hold while you left-click
+        // a target (#132 follow-up, #179). Default to a bone.
         List<io.papermc.jkvttplugin.data.model.DndAttack> attacks = instance.getTemplate().getAttacks();
         if (attacks != null) {
             for (io.papermc.jkvttplugin.data.model.DndAttack a : attacks) {
@@ -313,7 +313,9 @@ public class PossessionManager {
         var meta = item.getItemMeta();
         meta.displayName(Component.text(attack.getName(), NamedTextColor.AQUA)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false));
-        meta.lore(java.util.List.of(Component.text("Right-click to attack", NamedTextColor.GRAY)
+        // Left-click, like every attack (#189: right-click never attacks). It said "Right-click", which
+        // is what #179 ran into: right-clicking a creature's Fire Bolt did nothing.
+        meta.lore(java.util.List.of(Component.text("Hold it and left-click a target to attack", NamedTextColor.GRAY)
                 .decoration(net.kyori.adventure.text.format.TextDecoration.ITALIC, false)));
         item.setItemMeta(meta);
         return item;

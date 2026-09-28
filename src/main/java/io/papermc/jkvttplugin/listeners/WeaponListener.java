@@ -399,10 +399,21 @@ public class WeaponListener implements Listener {
     }
 
     private void promptEntityAttack(Player player, Combatant entity, Combatant target) {
-        List<String> attacks = AttackHandler.getEntityAttackNames(entity);
+        List<String> attacks = new java.util.ArrayList<>(AttackHandler.getEntityAttackNames(entity));
         if (attacks.isEmpty()) {
             player.sendMessage(Component.text(entity.getDisplayName() + " has no defined attacks — use /combat attack manually.", NamedTextColor.GRAY));
             return;
+        }
+        // The attack whose hotbar icon you're holding goes first (#179): holding "Fire Bolt" and
+        // left-clicking means Fire Bolt, so it leads the row.
+        var held = player.getInventory().getItemInMainHand();
+        String heldName = held.hasItemMeta() && held.getItemMeta().hasDisplayName()
+                ? net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(held.getItemMeta().displayName())
+                : null;
+        if (heldName != null) {
+            for (String atk : attacks) {
+                if (atk.equalsIgnoreCase(heldName)) { attacks.remove(atk); attacks.add(0, atk); break; }
+            }
         }
         String targetName = target.getDisplayName();
         String targetArg = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
@@ -415,7 +426,8 @@ public class WeaponListener implements Listener {
                 .append(Component.text(targetName, NamedTextColor.YELLOW))
                 .append(Component.text(" as " + entity.getDisplayName() + ":", NamedTextColor.GOLD));
         for (String atk : attacks) {
-            String cmd = "/combat attack " + targetArg + " " + atk + " manualRoll ";
+            // No roll words: sending it gives the usual [Roll it] [I rolled…] [My total…] (RollPrompt.again).
+            String cmd = "/combat attack " + targetArg + " " + atk + " ";
             String[] status = rangeStatus(AttackHandler.resolveEntityAttack(entity, atk), feet); // {label, colorKey}
             if ("out".equals(status[1])) {
                 // Out of range: show it, but DON'T make it clickable — no accidental out-of-range shots.
@@ -427,7 +439,7 @@ public class WeaponListener implements Listener {
             NamedTextColor color = "long".equals(status[1]) ? NamedTextColor.YELLOW : NamedTextColor.GREEN;
             msg = msg.append(Component.text("  [" + atk + "]" + status[0], color, TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.suggestCommand(cmd))
-                    .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + "<roll>"))));
+                    .hoverEvent(HoverEvent.showText(Component.text("Fills: " + cmd + " (send it for the roll buttons)"))));
         }
         player.sendMessage(msg);
     }
