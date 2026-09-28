@@ -43,6 +43,16 @@ conditional_advantages:
     condition: poison
     description: "You have advantage on saving throws against poison."
 
+# Speed: "Your speed is not reduced by wearing heavy armor" (PHB p.20). Plate or chain mail too heavy
+# for your Strength costs anyone else 10 ft (#34).
+features:
+  - id: dwarven_speed
+    name: Heavy Armor Doesn't Slow You
+    activation: passive
+    apply:
+      effects:
+        heavy_armor_no_speed_penalty: true
+
 # Dwarven Combat Training: Weapon proficiencies
 weapon_proficiencies:
   - battleaxe

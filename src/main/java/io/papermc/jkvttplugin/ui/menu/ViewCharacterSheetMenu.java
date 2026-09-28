@@ -146,9 +146,12 @@ public class ViewCharacterSheetMenu {
         ItemStack speedItem = new ItemStack(Material.LEATHER_BOOTS);
         speedItem.editMeta(m -> {
             m.displayName(Component.text(character.getSpeed() + " ft.", NamedTextColor.WHITE));
-            m.lore(LoreBuilder.create()
-                    .addLine("Movement Speed", NamedTextColor.GRAY)
-                    .build());
+            LoreBuilder speedLore = LoreBuilder.create().addLine("Movement Speed", NamedTextColor.GRAY);
+            if (character.armorSlowsYou()) { // #34: armor too heavy for their Strength
+                speedLore.addLine("−10 ft: " + character.getEquippedArmor().getName() + " needs Strength "
+                        + character.getEquippedArmor().getStrengthRequirement(), NamedTextColor.RED);
+            }
+            m.lore(speedLore.build());
         });
         inventory.setItem(3, speedItem);
 

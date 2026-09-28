@@ -645,7 +645,7 @@ public class CharacterSheet {
         int baseAC = 10 + getModifier(Ability.DEXTERITY);
 
         if (equippedArmor != null) {
-            int armorAC = equippedArmor.calculateAC(getModifier(Ability.DEXTERITY), getAbility(Ability.STRENGTH));
+            int armorAC = equippedArmor.calculateAC(getModifier(Ability.DEXTERITY));
 
             if (armorAC > 0) {
                 baseAC = armorAC;
@@ -1316,8 +1316,23 @@ public class CharacterSheet {
     public int getFlyingSpeed() { return flyingSpeed; }
     public int getClimbingSpeed() { return climbingSpeed; }
 
+    /** Walking speed: the race's, less 10 ft in armor too heavy for them (#34). */
     public int getSpeed() {
-        return speed; // Uses character's own speed field (set from race/subrace in applyRacialTraits)
+        return speed - (armorSlowsYou() ? 10 : 0);
+    }
+
+    /** The race's walking speed, before armor. */
+    public int getBaseSpeed() {
+        return speed;
+    }
+
+    /**
+     * Body armor whose Strength requirement this character doesn't meet costs 10 ft of speed (PHB p.144),
+     * unless something waives it (a dwarf's speed isn't reduced by heavy armor: {@code heavy_armor_no_speed_penalty}).
+     */
+    public boolean armorSlowsYou() {
+        return equippedArmor != null && equippedArmor.slows(getAbility(Ability.STRENGTH))
+                && !hasPassiveFlag("heavy_armor_no_speed_penalty");
     }
 
     /**

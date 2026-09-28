@@ -28,9 +28,11 @@ public class DndArmor {
 
     public DndArmor() {}
 
-    public int calculateAC(int dexModifier, int strengthScore) {
-        if (strengthScore < strengthRequirement) return -1;
-
+    /**
+     * The AC this armor gives. Strength doesn't change it: armor too heavy for you still protects you,
+     * it just slows you down ({@link #slows}, PHB p.144, #34).
+     */
+    public int calculateAC(int dexModifier) {
         int ac = baseAC;
 
         if (addsDexModifier) {
@@ -44,10 +46,9 @@ public class DndArmor {
         return ac;
     }
 
-    public boolean canWear(int strengthScore, Set<String> armorProficiencies) {
-        if (strengthScore < strengthRequirement) return false;
-
-        return isProficient(armorProficiencies);
+    /** True when this armor is too heavy for {@code strengthScore}: the wearer's speed drops by 10 ft (PHB p.144). */
+    public boolean slows(int strengthScore) {
+        return strengthRequirement > 0 && strengthScore < strengthRequirement;
     }
 
     public boolean isProficient(Set<String> armorProficiencies) {

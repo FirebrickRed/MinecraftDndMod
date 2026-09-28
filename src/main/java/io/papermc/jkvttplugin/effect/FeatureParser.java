@@ -37,7 +37,8 @@ public final class FeatureParser {
             "extra_crit_die",    // Half-Orc Savage Attacks — one extra weapon die on a melee crit
             "endure_below_1",    // Half-Orc Relentless Endurance — drop to 1 HP instead of 0, 1×/long rest
             "offhand_ability_damage",   // Two-Weapon Fighting style — the off-hand attack adds its ability modifier
-            "reroll_low_damage");       // Great Weapon Fighting — reroll 1s and 2s on a two-handed melee weapon's damage
+            "reroll_low_damage",        // Great Weapon Fighting — reroll 1s and 2s on a two-handed melee weapon's damage
+            "heavy_armor_no_speed_penalty"); // Dwarf — heavy armor too heavy for your Strength doesn't slow you (#34)
 
     public static List<Feature> parseFeatures(Object node) {
         List<Feature> out = new ArrayList<>();

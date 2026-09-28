@@ -116,7 +116,14 @@ public class ArmorEquipListener implements Listener {
      * equip goes through; they may have a reason (a disguise, carrying it for someone).
      */
     private void warnIfUnproficient(Player player, CharacterSheet sheet, DndArmor armor) {
-        if (armor == null || sheet.isProficientWithArmor(armor)) return;
+        if (armor == null) return;
+        // Too heavy for your Strength (#34, PHB p.144): it still protects you, it just slows you down.
+        if (!armor.isShield() && sheet.armorSlowsYou()) {
+            player.sendMessage(net.kyori.adventure.text.Component.text("⚠ " + armor.getName() + " needs Strength "
+                    + armor.getStrengthRequirement() + ": your speed drops by 10 ft (now " + sheet.getSpeed() + " ft).",
+                    net.kyori.adventure.text.format.NamedTextColor.GOLD));
+        }
+        if (sheet.isProficientWithArmor(armor)) return;
         player.sendMessage(net.kyori.adventure.text.Component.text("⚠ You aren't proficient with " + armor.getName()
                 + ": disadvantage on Strength and Dexterity checks, saves and attacks, and you can't cast spells.",
                 net.kyori.adventure.text.format.NamedTextColor.GOLD));

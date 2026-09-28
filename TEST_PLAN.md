@@ -374,6 +374,13 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       "📖 Arcane Recovery… [Recover]"; use it → a level 1 slot back. Again → "used today". In a fight → refused.
 - [ ] Restart after preparing → the same spells are still prepared.
 
+## Heavy armor and Strength (#34)
+
+- [ ] A human with STR 10 puts on chain mail (`/dm give <you> chain_mail`, wear it) → "⚠ Chain Mail needs Strength 13:
+      your speed drops by 10 ft (now 20 ft)". The sheet's Speed tile says 20 ft with the reason; AC is 16, not 10.
+      In a fight the movement bar allows 20 ft. Take it off → 30 ft.
+- [ ] A dwarf with STR 10 in plate → no warning, speed stays 25.
+
 ## Rests and Hit Dice (#52)
 
 - [ ] The sheet's HP tile says "Hit Dice: 1/1 (1d10)" for a fighter.
