@@ -50,9 +50,6 @@ merges into main.
 
 ## Character creation
 
-### Naming a character
-- [X] Press **Finish** with no name set → the form opens.
-
 ### Size, halflings and sorcerers
 - [ ] **A halfling is small:** create one → your body shrinks to about half a human's height. Log out
       and back in → still small. Switch to a Medium character (`/character view` → set active) →
@@ -68,13 +65,7 @@ merges into main.
 - [ ] **Divine Soul:** the spell step offers cleric spells (Guiding Bolt, Healing Word) next to the
       sorcerer ones; each uses a pick.
 
-- [X] Cleric's Spells tab, bottom label → "You prepare these from your class's full spell list"
-      (it no longer promises swapping on a long rest; that's #218).
 - [ ] Item tooltips (a weapon, a potion) and condition hovers wrap at the same width as spells.
-- [X] High Elf: the Wizard Cantrip pick shows each cantrip's full description, like the Spells tab.
-- [X] Friends (or any spell with a long material component) → the card stays narrow; the component wraps.
-- [X] **Languages from two sources** (High Elf + Noble, one each): pick two, then keep picking → the
-      replaced language alternates (oldest goes), not the same slot every time.
 
 ### Content audit (races, classes, backgrounds vs the PHB)
 - [ ] **Paladin:** a Class Skills pick (2), and Weapons / Secondary Weapon / Adventuring Gear picks.
@@ -86,17 +77,12 @@ merges into main.
       the tile reads "✔ Longsword + Warhammer", and you get both.
 - [ ] Same, pick one then press Back → the tile says "So far: Longsword + …" and Finish still wants it;
       click it → you carry on with the second pick.
-- [X] "Any Martial Weapon + Shield" is still one pick. So is the cleric's "Light Crossbow + Bolt x20 /
-      any simple weapon", and the barbarian's "Handaxe x2" gives two handaxes with no pick at all.
 - [ ] **Ranger:** Favored Enemy, a language for it, and Natural Explorer picks; two simple melee weapons
       when you take that option; 20 arrows in one stack.
 - [ ] **Artificer:** at level 1 it prepares INT-modifier spells (one fewer than before); two simple
       weapon picks.
-- [X] **Druid** knows Druidic, a **rogue** Thieves' Cant; neither shows up in any "pick a language" list.
-- [X] **Dragonborn:** STR +2 and CHA +1, no ability pick; the breath weapon comes back on a short rest.
 - [ ] **Hexblade warlock:** a shield in the off hand, no "not proficient" warning.
 - [ ] **Bard** with CHA 10: Bardic Inspiration shows 1 use (it used to be missing).
-- [X] **Knowledge cleric:** after the two skills, an expertise pick offering those skills.
 
 ## Finished characters
 
@@ -112,12 +98,6 @@ Finish the combo, then look at the sheet and your inventory.
       "cannot use this type of focus" message.
 - [ ] **Tiefling Rogue:** right-click a chest holding thieves' tools → the chest's own [Open it] /
       [Ask for a check] prompt, not a focus message.
-
-## The sheet's skills and rolls
-
-Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX rolls.
-
-- [X] **Mountain dwarf wizard:** scale mail fine, chain mail penalized.
 
 ## Casting from the spellbook and `/character cast`
 
@@ -160,15 +140,7 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
 - [ ] Touch spells reach one block further than before in a fight (5 ft of slack, same as out of one).
 
 ### After the deprecation clean-up (replaced Paper APIs)
-- [X] **Shop:** `/dm entity trade Balin` opens the trading screen titled "Balin"; buy and sell once
-      (the screen reopens with updated stock).
-- [X] **Chat input:** the character-name step in creation takes your typed name; a Message spell
-      takes the words you type.
 - [ ] **Rage** still tints red (the Strength effect) and it goes when the rage ends.
-- [X] **Item tooltips:** a sword, leather armor, a shield and a potion show only the D&D lines, no
-      vanilla "attack damage" / "Dyed" / banner / "No Effects" lines.
-- [X] **Right-click with the sheet or a spell focus** on a chest, door, lever and crafting table uses
-      the block; on grass or stone it opens the sheet / spellbook (a fence now counts as plain block).
 - [ ] **Bow in combat:** draw and release a real bow shot → refused, nothing fires. Count your
       arrows before and after: does a refused draw cost one? (The old "give it back" call never
       worked, per Paper, so this is to find out, not a regression.)
@@ -238,8 +210,6 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
 - [ ] Down yourself, fail three death saves → "has DIED", turn skipped.
 - [ ] `/combat finished`, new fight → still `[DEAD]`, still skipped.
 - [ ] Dead: `/dm adjust <you> hp +10` refuses.
-- [X] Dead: `/dm rest <character> long` refuses.
-- [X] Dead: `/dm rest <you> long` refuses.
 - [ ] Dead: the sheet's HP slot shows a skull "DEAD".
 - [ ] `/dm revive <you>` → 1 HP, turns return.
 - [ ] `/dm adjust <c> hp -<current + max HP>` → dies outright (massive damage).
@@ -249,8 +219,7 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
 - [ ] As DM, right-click the body → [Revive] and [Remove body].
 - [ ] You can't punch the body or take the head.
 - [ ] Walk away until the chunk unloads, `/dm revive <c>`, walk back → the body is gone.
-- [X] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP".
-- [ ] Then `/dm adjust <c> hp +1` → the long rest works.
+- [ ] A stable character at 0 HP (the long rest refused them): `/dm adjust <c> hp +1` → now the long rest works.
 - [ ] A DM already in spectator mode for their own reasons isn't pulled out of it by deaths.
 
 ## Attacks outside a fight
@@ -322,9 +291,6 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 
 ## Prepared spells (#218)
 
-- [X] **New wizard:** finishing creation says "Your spellbook holds 6 spells; prepare N of them" with
-      **[Prepare spells]**. The menu shows the 6, "Prepared: 0/N"; click to prepare up to N, one more
-      says "unprepare one first".
 - [ ] **Wizard spellbook:** an unprepared spell reads "In your spellbook, not prepared" and clicking it does
       nothing; an unprepared **ritual** (e.g. Detect Magic, Find Familiar) says "Ritual: click to cast it as one".
 - [ ] `/character cast <unprepared non-ritual>` → "…in your spellbook but not prepared…". An unprepared
