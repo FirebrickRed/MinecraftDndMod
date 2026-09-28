@@ -31,8 +31,8 @@ import java.util.UUID;
  * right-click with the View tool. Read-only: nothing here can be taken or moved.
  *
  * <pre>
- *  row 0     summary · sheet, or a creature's stat block (stats, abilities, attacks, YAML notes)
- *            · DM notes · add a note · adjust
+ *  row 0     summary · sheet, or a creature's stat block (stats, abilities, attacks)
+ *            · DM notes (a creature's YAML dm_notes + notes added in play) · add a note · adjust
  *  rows 1-4  a character's inventory (backpack, then hotbar), or what a creature carries and drops
  *  row 5     a character's armor and off-hand
  * </pre>
@@ -66,23 +66,32 @@ public final class DmViewMenu {
             inv.setItem(1, EntityStatBlockMenu.buildBasicStatsItem(creature, template));
             inv.setItem(2, EntityStatBlockMenu.buildAbilitiesItem(template));
             if (!template.getAttacks().isEmpty()) inv.setItem(3, EntityStatBlockMenu.buildAttacksItem(template));
-            if (template.getDmNotes() != null && !template.getDmNotes().isEmpty()) {
-                inv.setItem(6, EntityStatBlockMenu.buildDmNotesItem(template));
-            }
         } else {
             inv.setItem(2, tile(Material.WRITABLE_BOOK, "Character sheet", NamedTextColor.YELLOW, lines("Their full sheet"), "sheet"));
         }
 
+        // One notes tile: a creature's YAML dm_notes first, then the notes added in play.
         List<String> notes = ViewCommand.notesFor(c);
         List<Component> noteLore = new ArrayList<>();
-        if (notes.isEmpty()) noteLore.add(line("No notes yet.", NamedTextColor.DARK_GRAY));
+        String yamlNotes = creature != null ? creature.getTemplate().getDmNotes() : null;
+        if (yamlNotes != null && !yamlNotes.isBlank()) {
+            noteLore.add(line("From its stat block:", NamedTextColor.GOLD));
+            for (String l : io.papermc.jkvttplugin.util.Util.wrapText(yamlNotes)) noteLore.add(line(l, NamedTextColor.GRAY));
+            if (!notes.isEmpty()) {
+                noteLore.add(Component.empty());
+                noteLore.add(line("Added in play:", NamedTextColor.GOLD));
+            }
+        } else if (notes.isEmpty()) {
+            noteLore.add(line("No notes yet.", NamedTextColor.DARK_GRAY));
+        }
         for (String n : notes) {
             // Wrapped at the standard width, continuation lines indented under the bullet.
             List<String> wrapped = io.papermc.jkvttplugin.util.Util.wrapText(n);
             for (int i = 0; i < wrapped.size(); i++) noteLore.add(line((i == 0 ? "• " : "  ") + wrapped.get(i), NamedTextColor.GRAY));
         }
         noteLore.add(line("Only DMs ever see these.", NamedTextColor.DARK_AQUA));
-        inv.setItem(4, tile(Material.PAPER, "DM notes (" + notes.size() + ")", NamedTextColor.DARK_AQUA, noteLore, null));
+        inv.setItem(4, tile(Material.PAPER, "DM notes" + (notes.isEmpty() ? "" : " (" + notes.size() + " added)"),
+                NamedTextColor.DARK_AQUA, noteLore, null));
         inv.setItem(5, tile(Material.FEATHER, "Add a note…", NamedTextColor.AQUA, lines("Fills /dm note … add"), "note"));
         inv.setItem(8, tile(Material.BLAZE_ROD, "Adjust", NamedTextColor.RED, lines("HP, AC, conditions"), "adjust"));
 

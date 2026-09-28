@@ -42,6 +42,8 @@ public final class ObjectDialog {
     private static final ClickCallback.Options ONCE = ClickCallback.Options.builder()
             .uses(1).lifetime(Duration.ofMinutes(15)).build();
 
+    private static final int TRAP_DC_MIN = 5, TRAP_DC_MAX = 40;
+
     private static final String[] SAVES = {"strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"};
 
     public static void open(Player dm, Block clicked) {
@@ -52,10 +54,12 @@ public final class ObjectDialog {
         String name = ObjectCommand.pretty(block.getType().name());
 
         List<DialogInput> inputs = new ArrayList<>();
-        inputs.add(DialogInput.singleOption("opening", Component.text("When a player tries to open it"), List.of(
-                option("opens", "It opens", cur.opening == InteractiveObjectManager.Obj.Opening.OPENS),
-                option("locked", "Locked: you're pinged to call a check", cur.opening == InteractiveObjectManager.Obj.Opening.LOCKED),
-                option("sealed", "Sealed: scenery, never opens", cur.opening == InteractiveObjectManager.Obj.Opening.SEALED)
+        // Buttons stay short ("Opening: Locked") so a click just cycles them; what each value means is
+        // in the legend above the form, since a dialog can't put text between its inputs.
+        inputs.add(DialogInput.singleOption("opening", Component.text("Opening"), List.of(
+                option("opens", "Opens", cur.opening == InteractiveObjectManager.Obj.Opening.OPENS),
+                option("locked", "Locked", cur.opening == InteractiveObjectManager.Obj.Opening.LOCKED),
+                option("sealed", "Sealed", cur.opening == InteractiveObjectManager.Obj.Opening.SEALED)
         )).width(300).build());
         inputs.add(DialogInput.bool("hidden", Component.text("Hidden from players (until you reveal it)"))
                 .initial(cur.hidden).build());
@@ -67,20 +71,22 @@ public final class ObjectDialog {
                 .initial(cur.trapped ? cur.trapDamage : "").maxLength(20).width(300).build());
         List<SingleOptionDialogInput.OptionEntry> saves = new ArrayList<>();
         String curSave = cur.trapSave == null || cur.trapSave.isBlank() ? "dexterity" : fullAbility(cur.trapSave);
-        for (String s : SAVES) saves.add(option(s, "Trap save: " + cap(s), s.equals(curSave)));
+        for (String s : SAVES) saves.add(option(s, cap(s), s.equals(curSave)));
         inputs.add(DialogInput.singleOption("trap_save", Component.text("Trap save"), saves).width(300).build());
-        inputs.add(DialogInput.numberRange("trap_dc", Component.text("Trap DC"), 5, 30)
-                .step(1f).initial((float) (cur.trapDc > 0 ? cur.trapDc : 13)).width(300).build());
+        // The command takes any DC; the slider's initial value has to sit inside its range.
+        int dcNow = cur.trapDc > 0 ? Math.max(TRAP_DC_MIN, Math.min(TRAP_DC_MAX, cur.trapDc)) : 13;
+        inputs.add(DialogInput.numberRange("trap_dc", Component.text("Trap DC"), TRAP_DC_MIN, TRAP_DC_MAX)
+                .step(1f).initial((float) dcNow).width(300).build());
         inputs.add(DialogInput.bool("trap_armed", Component.text("Trap armed")).initial(!cur.disarmed).build());
 
         List<SingleOptionDialogInput.OptionEntry> keys = new ArrayList<>();
-        keys.add(option("none", "No key", !cur.hasKey()));
+        keys.add(option("none", "None", !cur.hasKey()));
         for (String id : TagRegistry.itemsFor("key")) {
             String keyName = ItemUtil.displayNameOf(id);
-            keys.add(option(id, "Key: " + (keyName != null ? keyName : id), id.equalsIgnoreCase(cur.keyItem)));
+            keys.add(option(id, keyName != null ? keyName : id, id.equalsIgnoreCase(cur.keyItem)));
         }
-        inputs.add(DialogInput.singleOption("key", Component.text("Key that opens it (makes it locked)"), keys).width(300).build());
-        inputs.add(DialogInput.bool("key_single", Component.text("The key is used up when it's turned")).initial(cur.keySingleUse).build());
+        inputs.add(DialogInput.singleOption("key", Component.text("Key"), keys).width(300).build());
+        inputs.add(DialogInput.bool("key_single", Component.text("Key is used up when turned")).initial(cur.keySingleUse).build());
 
         inputs.add(DialogInput.text("loot", Component.text("Loot, item ids separated by commas (e.g. gold_piece x10, dagger)"))
                 .initial(String.join(", ", cur.loot)).maxLength(512).width(300).build());
@@ -101,9 +107,21 @@ public final class ObjectDialog {
 
         Dialog dialog = Dialog.create(b -> b.empty()
                 .base(DialogBase.builder(Component.text("🔧 " + name))
-                        .body(List.of(DialogBody.plainMessage(Component.text(
-                                "Annotating the " + name + " at " + at.getBlockX() + " " + at.getBlockY() + " " + at.getBlockZ()
-                                        + ". You can look away; this stays on it.", NamedTextColor.GRAY))))
+                        .body(List.of(
+                                DialogBody.plainMessage(Component.text(
+                                        "Annotating the " + name + " at " + at.getBlockX() + " " + at.getBlockY() + " " + at.getBlockZ()
+                                                + ". You can look away; this stays on it.", NamedTextColor.GRAY), 300),
+                                DialogBody.plainMessage(Component.text("Opening", NamedTextColor.WHITE)
+                                        .append(Component.text(": what happens when a player tries to open it. ", NamedTextColor.GRAY))
+                                        .append(Component.text("Opens", NamedTextColor.WHITE))
+                                        .append(Component.text(" normally. ", NamedTextColor.GRAY))
+                                        .append(Component.text("Locked", NamedTextColor.WHITE))
+                                        .append(Component.text(": you're pinged to call a check. ", NamedTextColor.GRAY))
+                                        .append(Component.text("Sealed", NamedTextColor.WHITE))
+                                        .append(Component.text(": scenery, never opens, nobody is pinged.", NamedTextColor.GRAY)), 300),
+                                DialogBody.plainMessage(Component.text("Key", NamedTextColor.WHITE)
+                                        .append(Component.text(": a player carrying it gets past the lock with no roll, and it "
+                                                + "stays open. Picking a key makes it Locked. \"Used up\" takes the key away.", NamedTextColor.GRAY)), 300)))
                         .inputs(inputs)
                         .canCloseWithEscape(true)
                         .afterAction(DialogBase.DialogAfterAction.CLOSE)

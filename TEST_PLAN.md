@@ -51,10 +51,6 @@ merges into main.
 ## Character creation
 
 ### Naming a character
-- [ ] **Name via form** (the book, where the anvil button was) opens a box with your current name;
-      Save → the menu comes back showing the name. Cancel or Esc → the menu, name unchanged.
-- [ ] Type "ab" and Save → the form comes back saying it's too short.
-- [ ] **Name via chat** still works.
 - [ ] Press **Finish** with no name set → the form opens.
 
 ### Size, halflings and sorcerers
@@ -86,8 +82,6 @@ Finish the combo, then look at the sheet and your inventory.
 
 - [ ] **High Elf Rogue** with Fire Bolt as the Wizard Cantrip → `/character cast fire_bolt` works and uses INT.
 - [ ] **Astral Elf** with Sacred Flame + Wisdom → `/combat cast sacred_flame <target>` uses WIS for the DC.
-- [ ] **Mountain Dwarf Fighter, Guild Artisan:** the artisan's-tool pick gives the proficiency **and** the item.
-- [ ] **Mountain Dwarf Fighter:** heavy armor on, no penalty.
 - [ ] **Folk Hero:** the picked tool is in your kit.
 - [ ] **Entertainer:** the picked instrument is in your kit.
 - [ ] `/dm rest <character> short` recovers as before (the player version is gone: rests are the DM's call).
@@ -101,14 +95,7 @@ Finish the combo, then look at the sheet and your inventory.
 
 Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX rolls.
 
-- [ ] **Fighter in chain mail:** no penalty.
 - [ ] **Mountain dwarf wizard:** scale mail fine, chain mail penalized.
-- [ ] Skills menu, hover an ability's check tile → its breakdown (`+2[DEX]`), like the skills and saves.
-
-## Natural 1s and 20s
-
-Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1`).
-
 
 ## Casting from the spellbook and `/character cast`
 
@@ -116,33 +103,27 @@ Roll a few times until one comes up (or type it: `manualRoll 20` / `manualRoll 1
 
 ## Combat
 
-- [ ] **Bows:** on your turn, left-click toward a distant enemy (not touching them) → the filled-in `/combat attack`.
 - [ ] **Wizard in chain mail:** a weapon attack shows "↯ disadvantage" with an "Armor (you)" reminder.
 - [ ] **Wizard in chain mail:** initiative rolls with disadvantage.
 - [ ] **Wizard in chain mail:** `/combat cast` refuses.
-- [ ] `/combat add <someone>` mid-fight → the table sees their initiative roll.
-- [ ] `/combat rollforinitiative` → each line shows `[d20] +N (DEX) = total`.
-- [ ] Same, in unproficient armor → `[disadvantage: a/b]`.
-- [ ] `/combat damage <t> autoRoll 2d6` → "🎲 2d6: [4, 3] = 7" before the damage.
+- [ ] `/combat add <a player>` mid-fight → the game's roll shows, and they also get the roll
+      buttons; rolling replaces the game's number, the tracker re-sorts, and the table sees
+      "rolled their own initiative".
+- [ ] Same, after their first turn → `/combat initiative` refuses (the order is settled).
+- [ ] Mid-fight, on someone's turn, `/combat initiative <someone else> set 30` → they move to the
+      top, and the **current turn stays with whoever had it** (the green →).
+- [ ] `/combat attack <t> <weapon> manualRoll abc` → "'abc' isn't a number", then buttons that fill
+      `/combat attack <t> <weapon> manualRoll ` (no `abc` left in it).
+- [ ] `/combat rollforinitiative` with someone in unproficient armor → their line shows disadvantage.
 - [ ] `/combat heal <t> autoRoll 2d4` → the dice show.
 - [ ] A healing potion with auto-roll → the dice show.
 - [ ] Cure Wounds → the dice show.
-- [ ] `/combat damage <t> manualRoll 7` → 7 damage.
-- [ ] `/combat damage <t> manualRoll abc` → a sensible error.
-- [ ] **Scoreboard, setup:** combatants in the order added, no numbers on the right, "Add combatants..." at the bottom.
-- [ ] **Scoreboard, setup:** two creatures with the same name → two lines.
-- [ ] **Scoreboard, fight:** green **→** on the current turn; initiative is the red number.
 - [ ] **Scoreboard, fight:** players' HP green / yellow / red below ½ and ¼.
 - [ ] **Scoreboard, fight:** temp HP shows as `+N` in aqua.
 - [ ] **Scoreboard, fight:** **[S]** on someone surprised.
 - [ ] **Scoreboard, fight:** downed → red ☠ and green/red death-save dots.
-- [ ] **Scoreboard, fight:** dead → **[DEAD]**.
-- [ ] **Scoreboard, fight:** a purple condition tag.
 - [ ] **Scoreboard, fight:** pink ✦N while channelling a ritual.
 - [ ] **Scoreboard, fight:** two tied initiatives in turn order.
-- [ ] **Scoreboard, fight:** "Round: N" at the bottom with no number on the right.
-- [ ] **Out of range, as DM** (possessing a creature, attacking something too far) → "… about N ft
-      away" **[Do it anyway]**; click → **[go again]** fills the attack; it goes through once.
 - [ ] **Out of reach in a fight, as a player:** a sword at someone 20 ft away → **[Ask the DM]**.
 - [ ] The DM gets **[Allow]** / **[Deny]**; Allow → you get **[go again]**, and the attack goes through.
 - [ ] Same with a spell in a fight (Cure Wounds from 20 ft) → [Ask the DM], then it goes through once.
@@ -279,33 +260,23 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] **Drop to 0 HP** on a creature with temp HP → it dies.
 - [ ] Player AC tile, shift-click → says their AC comes from armor.
 - [ ] `/combat damage override` is gone.
-- [ ] `/combat condition` is gone.
 - [ ] A trap's **[Apply damage]** fills `/dm adjust … hp -…`.
 - [ ] A spawn's **[Use my own roll]** fills `/dm adjust … maxhp`.
 
 ## Surprise tool & damage approval
 
-- [ ] DM combat toolbar → **Surprised (ambush)** (firework star) in slot 6; its hover explains Surprised.
-- [ ] In a fight, right-click a goblin with it → "Goblin is Surprised: …", **[S]** on the tracker.
-- [ ] Right-click again → no longer surprised.
-- [ ] On someone not in the fight → "Add them first".
 - [ ] With no fight → "Start a fight first".
 - [ ] The DM's own `/combat damage` lands at once, never waits.
 - [ ] `combat.damage_approval: off` in config → nothing ever asks you.
 
 ## Viewing & DM notes
 
-- [ ] A long DM note (YAML `dm_notes:` or `/dm note … add`) wraps in the Full view and the stat block tile.
 - [ ] View tool on your own character → race and class, concentration.
 - [ ] A DM AC adjustment plus Shield → the card's AC explains both.
 - [ ] A creature with its own AC → "own AC, stat block says 12".
 - [ ] A downed character → "Down, dying — death saves: 1 ✔ / 2 ✖".
-- [ ] A dead one → "☠ DEAD".
-- [ ] Sneak + right-click a player → Full view with their real inventory; you can't take or move anything.
-- [ ] Full view of a creature → what it carries, "Found with a DC 12 Investigation" / "In plain sight".
-- [ ] Full view of a creature → the top row holds its stat block: stats, abilities, attacks (and the
-      YAML's DM notes if it has any). No separate [Stat block] button.
-- [ ] Spawn one wolf, `/dm note Wolf add hungry`, View tool on that wolf → the note is there.
+- [ ] Full view of a creature with YAML `dm_notes` and an added note → **one** DM notes tile: the
+      YAML notes, then "Added in play:".
 
 ## Conditions outlast the fight
 
@@ -322,22 +293,8 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 ## Entities & shops
 
-- [ ] `/dm entity spawn kobold Meepo the Bold` → named "Meepo the Bold" (no quotes needed).
-- [ ] `/dm entity spawn guard Guard 3` → "Guard 3"; `/dm entity spawn guard Guard 3 ~ ~ ~5` → "Guard 3" there.
-- [ ] Two wolves (Wolf, Wolf #2): `/dm entity remove wolf #1 wolf #2` → both go, no "couldn't find" lines.
 - [ ] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
-- [ ] `/dm check ` + Tab and `/dm adjust ` + Tab → the **same** list, multi-word names in quotes (`"The Kindler"`).
-- [ ] `/dm check Balin Ironforge ` + Tab (unquoted) → `ability / save / skill` (no `tool` for a creature).
-- [ ] `/dm check "Balin Ironforge" ` + Tab → the same.
-- [ ] `/dm check Balin Ironforge save dex ` + Tab → `dc / adv / dis / autoRoll / manualRoll / total`.
-- [ ] `/dm adjust The Kindler ` + Tab (unquoted) → the actions (`hp`, `temp`, …).
-- [ ] `/dm entity cleanup` is gone (unknown subcommand, not in Tab).
-- [ ] `/dm entity remove nobody` → "No creature called 'nobody'".
-- [ ] Possess a creature → the message says its model is hidden from you and **F** shows it.
-- [ ] Press F, F5 → you see the model you're possessing. Stop, possess another → still visible
-      (the choice sticks); F again hides it.
-- [ ] **Looking at a creature**, right-click the character sheet → the sheet opens.
-- [ ] Same with your spellcasting focus → the spellbook opens.
+- [ ] Looking at a creature, right-click your spellcasting focus → the spellbook opens.
 - [ ] Right-clicking a **dead** creature with the sheet in hand → still loots (the body wins).
 - [ ] Dungeoneer's Pack in your inventory: click another item onto it, or it onto an item →
       nothing goes in, "Packs don't hold other items".
@@ -352,20 +309,12 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 The first dialog in the plugin. Right-click = the new form; sneak + right-click = the old chat
 buttons. Try both; whichever you like less gets removed.
 
-- [ ] Right-click a chest with the Annotate tool → a form opens: how it opens, hidden, description,
-      trap damage / save / DC / armed, key, loot. It shows the chest's current settings.
 - [ ] Fill it in, **look away**, then Save → it applies to that chest (not what you're looking at).
-- [ ] After Save, chat says "🔧 Saved the Chest: locked, trap 2d10 DEX DC 13 (armed), key …".
-- [ ] Right-click it again → the form shows what you saved.
 - [ ] A long description with line breaks → saved, and players see it.
-- [ ] Trap damage `banana` → a yellow note says it isn't dice; the rest still saves.
-- [ ] Sealed + a key → a note says a sealed block has no key; the key is left off.
 - [ ] Opens + a key → it saves as Locked (a key means a lock).
-- [ ] Loot `gold_piece x10, dagger, nonsense` → two entries saved, a note about "nonsense".
-- [ ] **Clear annotation** → it's a plain chest again.
-- [ ] Esc closes the form without changing anything.
-- [ ] Sneak + right-click → the old chat buttons, still working.
-- [ ] Which do you prefer? (Tell me in the notes.)
+- [ ] The buttons read short ("Opening: Locked", "Key: Brass Key", "Trap save: Dexterity"); clicking
+      one cycles it. What Opening and Key mean is in the text at the top.
+- [ ] The Trap DC slider goes to 40.
 
 ## DM tools
 
@@ -474,8 +423,32 @@ Set these up, `/stop`, start the server, then check:
 ---
 
 # Playtest notes
-
 (`→` lines are Claude's status. New notes go at the top.)
+
+**2026-09-28 (fourth round)**
+
+Two "DM notes" tiles in a creature's Full view.
+  → fixed: one tile, the YAML's `dm_notes` first, then "Added in play:".
+Dwarves aren't Small?
+  → correct as is: dwarves are Medium in the PHB (short but stocky). Only gnomes and halflings are
+    Small, and all ten race files match. Name any other half-done race fields and they get a pass.
+Ability checks don't add proficiency (STR save +6, STR check +4)?
+  → correct as is: proficiency goes on saves and skills you're proficient in, never a plain ability
+    check. (Jack of All Trades would add half to everything; not implemented yet.)
+Players added mid-fight rolling their own initiative; adjusting initiative.
+  → added: a late joiner still gets a game roll so they have a place, plus the roll buttons, and
+    their own roll replaces it until their first turn. Adjusting was already there:
+    `/combat initiative <name> set <n>` (DM, any time).
+  → found while checking: re-sorting mid-fight kept the turn's *slot*, so a late joiner or a `set`
+    could hand the current turn to someone else. The turn now stays with its owner.
+`/combat attack "meepo the bold" crossbow manualRoll abc` → buttons gave `… manualRoll abc manualRoll`.
+  → fixed: the re-prompt's buttons drop what was typed as the roll, and `abc` gets "'abc' isn't a
+    number". (`manualRoll bad` used to make the game roll, because "bad" has a d in it.)
+Annotate form: explanation outside the buttons, so a click just cycles.
+  → done for Opening and Key: the buttons read "Opening: Locked" / "Key: Brass Key", the
+    explanations sit at the top of the form (a dialog can't put text between its inputs).
+Trap DC up to 40.
+  → done.
 
 **2026-09-24 (third round)**
 

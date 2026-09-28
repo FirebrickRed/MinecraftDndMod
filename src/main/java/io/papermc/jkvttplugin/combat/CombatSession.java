@@ -184,6 +184,7 @@ public class CombatSession {
             InitiativeRoll rolled = rollInitiativeFor(combatant);
             broadcast(Component.text(combatant.getDisplayName() + " joins the fight — initiative "
                     + rolled.show(), NamedTextColor.GRAY));
+            if (combatant.isPlayer()) lateInitiative.add(combatant.getId()); // may roll their own (CombatCommand)
             sortByInitiative();
             updateScoreboard();
         } else {
@@ -388,6 +389,10 @@ public class CombatSession {
      * Ties broken by initiative bonus (higher wins).
      */
     public void sortByInitiative() {
+        // Mid-fight (a late joiner, a DM correction) the turn belongs to a person, not a slot: without
+        // this the sort kept the index and quietly handed the turn to whoever landed there.
+        Combatant current = !isSetupPhase && currentTurnIndex >= 0 && currentTurnIndex < combatants.size()
+                ? combatants.get(currentTurnIndex) : null;
         combatants.sort((a, b) -> {
             // Higher initiative first
             int initCompare = Integer.compare(b.getInitiative(), a.getInitiative());
@@ -396,7 +401,19 @@ public class CombatSession {
             // Tie-breaker: higher initiative bonus wins
             return Integer.compare(b.getInitiativeBonus(), a.getInitiativeBonus());
         });
+        if (current != null) currentTurnIndex = combatants.indexOf(current);
     }
+
+    /**
+     * Players who joined after initiative and haven't had a turn yet. The game rolled for them so they
+     * have a place in the order; until their first turn they may replace it with their own roll.
+     */
+    private final Set<UUID> lateInitiative = new HashSet<>();
+
+    public boolean canRollOwnInitiative(UUID playerId) { return lateInitiative.contains(playerId); }
+
+    /** Their own roll replaces the placeholder, once. */
+    public void useOwnInitiative(UUID playerId) { lateInitiative.remove(playerId); }
 
     /**
      * Start combat after initiative has been set.
@@ -505,6 +522,7 @@ public class CombatSession {
         // Start new combatant's turn: init state + apply glow
         Combatant current = getCurrentCombatant();
         if (current != null) {
+            lateInitiative.remove(current.getId()); // their turn came: the order is settled
             current.startNewTurn(current.getLocation());
             current.setReactionAvailable(true); // reaction refreshes at the start of your turn (#147)
             ReactionManager.clearForMover(current.getId()); // its own OAs from last round are now moot (#147)
@@ -572,6 +590,7 @@ public class CombatSession {
             currentTurnIndex = index;
 
             // Start new combatant's turn
+            lateInitiative.remove(combatant.getId());
             combatant.startNewTurn(combatant.getLocation());
             applyGlowEffect(combatant);
 

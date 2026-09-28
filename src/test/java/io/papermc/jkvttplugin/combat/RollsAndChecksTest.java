@@ -109,6 +109,23 @@ class RollsAndChecksTest {
         assertTrue(RollService.parseInput(new String[]{"insight", "deception"}).isEmpty());
     }
 
+    @Test
+    void aBadRollNumberIsNotARoll() {
+        // "abc" used to be dropped silently; "bad" (it has a d) even made the game roll.
+        assertTrue(RollService.parseInput(new String[]{"manualRoll", "abc"}).isEmpty());
+        assertTrue(RollService.parseInput(new String[]{"manualRoll", "bad"}).isEmpty());
+        assertTrue(RollService.parseInput(new String[]{"manualRoll", "2d20"}).forceAuto());
+    }
+
+    @Test
+    void theRePromptDropsWhatWasTypedAsTheRoll() {
+        // Clicking a button on the re-prompt used to give "… manualRoll abc manualRoll ".
+        String[] typed = {"attack", "\"meepo", "the", "bold\"", "crossbow", "manualRoll", "abc"};
+        assertEquals("/combat attack \"meepo the bold\" crossbow ", RollPrompt.baseLine("combat", typed));
+        assertEquals("/combat attack goblin ", RollPrompt.baseLine("combat", new String[]{"attack", "goblin", "autoRoll", "2d20"}));
+        assertEquals("/combat attack goblin ", RollPrompt.baseLine("combat", new String[]{"attack", "goblin", "total", "19"}));
+    }
+
     // ---------- advantage stacking (5e) ----------
 
     @Test

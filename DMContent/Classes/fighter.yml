@@ -158,7 +158,7 @@ player_choices:
     choose: 1
     options:
       - give: [martial_melee_weapon, shield]
-      - martial_melee_weapon
+      - martial_melee_weapon x2
   - id: class_equipment_2
     title: Secondary Weapon
     type: equipment

@@ -74,6 +74,7 @@ public final class RollService {
         Integer providedRoll = null, providedTotal = null;
         boolean forceAuto = false;
         java.util.List<String> stale = new java.util.ArrayList<>();
+        java.util.List<String> notNumbers = new java.util.ArrayList<>(), missing = new java.util.ArrayList<>();
         for (int i = 0; i < args.length; i++) {
             String a = args[i].toLowerCase();
             if (a.startsWith("--") && !LIVE_FLAGS.contains(a)) stale.add(args[i]);
@@ -81,19 +82,32 @@ public final class RollService {
             switch (a) {
                 case "autoroll" -> forceAuto = true; // optional trailing dice (e.g. 2d20) is ignored — advantage is auto-detected
                 case "manualroll" -> {
-                    if (next != null) {
-                        if (next.toLowerCase().contains("d")) forceAuto = true; // a dice expression → let the game roll
-                        else { try { providedRoll = Integer.parseInt(next.trim()); } catch (NumberFormatException ignored) {} }
-                    }
+                    if (next == null || isRollKeyword(next)) missing.add(args[i]);
+                    else if (isDice(next)) forceAuto = true; // a dice expression → let the game roll
+                    else { try { providedRoll = Integer.parseInt(next.trim()); } catch (NumberFormatException e) { notNumbers.add(next); } }
                 }
                 case "total" -> {
-                    if (next != null) { try { providedTotal = Integer.parseInt(next.trim()); } catch (NumberFormatException ignored) {} }
+                    if (next == null || isRollKeyword(next)) missing.add(args[i]);
+                    else { try { providedTotal = Integer.parseInt(next.trim()); } catch (NumberFormatException e) { notNumbers.add(next); } }
                 }
                 default -> {}
             }
         }
         if (who != null && !stale.isEmpty()) warnStaleSyntax(who, stale);
+        // A bad number leaves the input empty, so the caller re-offers the buttons; say why first.
+        if (who != null) {
+            for (String n : notNumbers) who.sendMessage(Component.text("'" + n + "' isn't a number. manualRoll takes the d20 you rolled "
+                    + "(manualRoll 14), total takes your final number (total 19).", NamedTextColor.RED));
+            for (String m : missing) who.sendMessage(Component.text(m + " needs a number after it (" + m + " 14).", NamedTextColor.RED));
+        }
         return new RollInput(providedRoll, providedTotal, forceAuto);
+    }
+
+    private static final java.util.regex.Pattern DICE = java.util.regex.Pattern.compile("(?i)\\d*d\\d+([+-]\\d+)?");
+
+    /** "d20", "2d20", "1d8+3": dice, as opposed to a number or a typo. */
+    public static boolean isDice(String token) {
+        return token != null && DICE.matcher(token.trim()).matches();
     }
 
     /**

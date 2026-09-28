@@ -215,6 +215,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                         Combatant combatant = Combatant.fromPlayer(nearbyPlayer);
                         if (session.addCombatant(combatant)) {
                             addedCount++;
+                            // Same offer as a single add: roll your own in setup, or replace a late placeholder.
+                            if ((session.isSetupPhase() && session.getPlayerInitiative(nearbyPlayer.getUniqueId()) == null)
+                                    || session.canRollOwnInitiative(nearbyPlayer.getUniqueId())) {
+                                promptInitiativeRoll(nearbyPlayer, combatant);
+                            }
                         }
                     } catch (IllegalArgumentException ignored) {}
                 }
@@ -263,9 +268,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 // Initiative (#114): keep an earlier roll if they're rejoining this encounter; otherwise prompt.
                 Integer kept = session.getPlayerInitiative(target.getUniqueId());
                 if (kept != null) {
-                    combatant.setInitiative(kept);
+                    session.setInitiative(combatant, kept); // re-sorts if the fight is already running
+                    session.useOwnInitiative(target.getUniqueId());
                     target.sendMessage(Component.text("Your initiative (" + kept + ") was kept.", NamedTextColor.GRAY));
                 } else if (session.isSetupPhase()) {
+                    promptInitiativeRoll(target, combatant);
+                } else if (session.canRollOwnInitiative(target.getUniqueId())) {
+                    // Mid-fight the game rolled so they have a place; their own roll can replace it.
+                    target.sendMessage(Component.text("The game rolled initiative " + combatant.getInitiative()
+                            + " for you so you have a place in the order. Rolling your own? It replaces that, until your first turn.",
+                            NamedTextColor.GRAY));
                     promptInitiativeRoll(target, combatant);
                 }
                 session.updateScoreboard();
@@ -419,8 +431,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private void handleSelfInitiative(Player player, String[] args) {
         CombatSession session = resolveSession(player);
         if (session == null) return;
-        if (!session.isSetupPhase()) {
-            player.sendMessage(Component.text("Initiative is rolled during setup, before turns begin.", NamedTextColor.RED));
+        boolean late = !session.isSetupPhase() && session.canRollOwnInitiative(player.getUniqueId());
+        if (!session.isSetupPhase() && !late) {
+            player.sendMessage(Component.text("Initiative is rolled during setup, before turns begin. "
+                    + "(Joining mid-fight, you can roll your own until your first turn.)", NamedTextColor.RED));
             return;
         }
         Combatant self = findOwnCombatant(session, player.getUniqueId());
@@ -439,9 +453,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         session.setPlayerInitiative(player.getUniqueId(), r.total());
-        session.setInitiative(self, r.total());
+        session.setInitiative(self, r.total()); // re-sorts mid-fight, keeping whose turn it is
         player.sendMessage(Component.text("Initiative: " + r.breakdown(), NamedTextColor.AQUA));
-        session.sendToDM(Component.text(self.getDisplayName() + " rolled initiative " + r.total() + ".", NamedTextColor.GRAY));
+        if (late) {
+            session.useOwnInitiative(player.getUniqueId());
+            session.broadcast(Component.text(self.getDisplayName() + " rolled their own initiative: " + r.total() + ".", NamedTextColor.GRAY));
+        } else {
+            session.sendToDM(Component.text(self.getDisplayName() + " rolled initiative " + r.total() + ".", NamedTextColor.GRAY));
+        }
     }
 
     /** Clickable prompt asking a player to roll their initiative (physical or let the game roll). */

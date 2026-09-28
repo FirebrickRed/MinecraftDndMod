@@ -75,13 +75,31 @@ public final class RollPrompt {
     /** Called by a root command ({@code /combat}, {@code /character}) before it dispatches. */
     public static void rememberCommand(org.bukkit.command.CommandSender sender, String label, String[] args) {
         if (!(sender instanceof org.bukkit.entity.Player p)) return;
+        typed.put(p.getUniqueId(), baseLine(label, args));
+    }
+
+    /**
+     * The typed line with any roll input taken out, so the buttons can add their own. Without this a
+     * bad {@code manualRoll abc} stayed in the line and every button produced
+     * {@code … manualRoll abc manualRoll }.
+     */
+    static String baseLine(String label, String[] args) {
         StringBuilder line = new StringBuilder("/" + label);
-        for (String a : args) {
+        for (int i = 0; i < args.length; i++) {
+            String a = args[i];
             // "showModifiers" only prints the info panel; the roll it offers is the real attack.
             if (a.isBlank() || a.equalsIgnoreCase("showModifiers") || a.equalsIgnoreCase("showMods")) continue;
+            if (RollService.isRollKeyword(a)) {
+                String next = i + 1 < args.length ? args[i + 1] : null;
+                // autoRoll only ever takes dice after it; manualRoll/total take whatever was typed, good or bad.
+                boolean takesNext = next != null && !RollService.isRollKeyword(next)
+                        && (!a.equalsIgnoreCase("autoRoll") || RollService.isDice(next));
+                if (takesNext) i++;
+                continue;
+            }
             line.append(' ').append(a);
         }
-        typed.put(p.getUniqueId(), line.append(' ').toString());
+        return line.append(' ').toString();
     }
 
     /** The command this player just typed ("/combat cast fire_bolt Goblin"), or null. For "go again" buttons. */

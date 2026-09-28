@@ -56,7 +56,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `add <player\|entity> [--hidden]` · `add --radius <blocks> [--hidden]` | Add combatant(s) |
 | `remove <name>` | Remove a combatant |
 | `surprise <name>` | **Toggle** Surprised on a combatant, before initiative: they didn't see it coming (an ambush, or a friendly chat that turns into a Fire Bolt), so they can't move, act or react on their first turn. Shows **[S]**. Also the **Surprised (ambush)** tool on the DM combat toolbar |
-| `initiative <name> <n>` | Manually set initiative |
+| `initiative <name> set <n>` | Set someone's initiative, any time; mid-fight the order re-sorts and the current turn stays put |
 | `nextturn` · `turn <name>` · `endturn` | Advance / jump / end a turn |
 | `status` | Show the initiative order |
 | `reveal <name>` · `hide <name>` | Toggle hidden-entity visibility |
@@ -81,6 +81,9 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `finished` | **End combat & clean up** (clears glow, scoreboards, prone) — named distinctly from `endturn`, so no confirm needed |
 
 Initiative is rolled with **`/combat rollforinitiative`** (rolls for all combatants, starts Round 1).
+Players can roll their own first with `/combat initiative [autoRoll | manualRoll <n> | total <n>]`.
+A player added mid-fight gets a game roll so they have a place, and may replace it with their own
+the same way until their first turn.
 
 > **Left-click to attack (#189).** On your turn, holding a weapon: **left-click the enemy**, or
 > left-click while looking at them, and the game hands you the filled-in `/combat attack` command.
