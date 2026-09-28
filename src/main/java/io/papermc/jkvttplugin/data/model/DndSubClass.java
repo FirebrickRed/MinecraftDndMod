@@ -94,6 +94,17 @@ public class DndSubClass {
         this.featuresByLevel = featuresByLevel;
     }
 
+    private List<String> expandedSpellLists = List.of(); // whole class lists added to the pick list (Divine Soul: cleric)
+    private List<io.papermc.jkvttplugin.effect.Feature> features = List.of(); // Effect Engine features (#224)
+
+    /** Whole class spell lists added to what this character can pick from (Divine Soul: [cleric]). */
+    public List<String> getExpandedSpellLists() { return expandedSpellLists; }
+    public void setExpandedSpellLists(List<String> lists) { this.expandedSpellLists = lists == null ? List.of() : List.copyOf(lists); }
+
+    /** Usable features, like a class's `features:` (Draconic Resilience, #224). */
+    public List<io.papermc.jkvttplugin.effect.Feature> getFeatures() { return features; }
+    public void setFeatures(List<io.papermc.jkvttplugin.effect.Feature> features) { this.features = features == null ? List.of() : List.copyOf(features); }
+
     /** Spells added to what this class can PICK from (a warlock patron, PHB p.108); they grant nothing themselves. */
     public List<String> getExpandedSpells() { return expandedSpells; }
     public void setExpandedSpells(List<String> spells) { this.expandedSpells = spells == null ? List.of() : List.copyOf(spells); }

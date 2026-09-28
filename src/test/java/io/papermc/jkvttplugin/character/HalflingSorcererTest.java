@@ -79,6 +79,29 @@ class HalflingSorcererTest {
         assertFalse(s.getKnownSpells().contains(SpellLoader.getSpell("bless")));
     }
 
+    /** Draconic Resilience (#224, subclass features): 13 + DEX unarmored, and +1 max HP per level. */
+    @Test
+    void draconicResilience() {
+        CharacterSheet d = sorcerer("draconic_bloodline");
+        assertEquals(13 + d.getModifier(Ability.DEXTERITY), d.getArmorClass());
+        assertEquals("Draconic Resilience: 13 + DEX", d.getAcFormulaSource());
+        assertEquals(6 + d.getModifier(Ability.CONSTITUTION) + 1, d.levelOneMaxHealth(), "d6 + CON + 1");
+
+        CharacterSheet wild = sorcerer("wild_magic");
+        assertEquals(10 + wild.getModifier(Ability.DEXTERITY), wild.getArmorClass(), "other origins: 10 + DEX");
+        assertEquals(6 + wild.getModifier(Ability.CONSTITUTION), wild.levelOneMaxHealth());
+    }
+
+    /** Divine Magic: a Divine Soul may learn cleric spells (a whole class list, expanded_spell_lists). */
+    @Test
+    void divineSoulMayLearnClericSpells() {
+        CharacterCreationSession s = session("halfling", "lightfoot", "sorcerer", "acolyte");
+        assertFalse(s.pickableSpells().stream().anyMatch(sp -> sp.getId().equals("guiding_bolt")), "not a sorcerer spell");
+        s.setSelectedSubclass("divine_soul");
+        assertTrue(s.pickableSpells().stream().anyMatch(sp -> sp.getId().equals("guiding_bolt")), "a cleric spell");
+        assertTrue(s.pickableSpells().stream().anyMatch(sp -> sp.getId().equals("fire_bolt")), "the sorcerer list stays");
+    }
+
     /** Every origin's choices now reach the player (they were `type: other`, which the parser dropped). */
     @Test
     void originChoicesAreRealChoices() {

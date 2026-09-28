@@ -359,6 +359,8 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - **Subclass Features:**
   - `bonus_spells` - Domain/oath spells (always prepared/known, don't count against limit)
   - `expanded_spells` - A warlock patron's expanded list: added to what the player may PICK, each costs a pick (#228)
+  - `expanded_spell_lists` - Whole class lists to pick from (Divine Soul: `[cleric]`)
+  - `features` - Effect Engine features, as on a class (Draconic Resilience: AC formula + `max_hp_per_level`, #224)
   - `additional_spells` - Bonus cantrips (e.g., Light cantrip for Light Domain)
   - Spells or other things based on a player choice (Genie kind): a `custom` choice whose options carry `grants:` (#222)
   - `proficiencies` - Armor, weapon, skill, tool proficiencies

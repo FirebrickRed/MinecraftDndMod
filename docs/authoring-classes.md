@@ -144,6 +144,11 @@ every formula that applies, so a formula can only help. The sheet's AC tile name
 It works on races' `features:` too (natural armor), and a live effect with a duration can carry one
 (Mage Armor). A misspelt ability or requirement is a console warning on `/dm reload`, not a guess.
 
+### Extra max HP (`max_hp_per_level`)
+
+`max_hp_per_level: 1` in a passive feature's `effects:` adds that much max HP per character level
+(Draconic Resilience, Dwarven Toughness). It's worked out when the character is created.
+
 ### Unarmed strikes and monk weapons (`unarmed_strike`, `weapon_ability`, #221)
 
 Martial Arts in `monk.yml` is the worked example. Two passive effects and one bonus-action attack:
@@ -190,6 +195,8 @@ subclasses:
     name: The Fiend
     description: "You have made a pact with a fiend…"
     expanded_spells: [burning_hands, command]   # a patron's list: may be LEARNED, each costs a pick
+    expanded_spell_lists: []                    # whole class lists to learn from (Divine Soul: [cleric])
+    features: []                                # usable features, as on a class (Draconic Resilience, #224)
     bonus_spells: []                            # a domain's/oath's: known or prepared for FREE
     additional_spells: [light]                  # bonus cantrips
     skill_proficiencies: []

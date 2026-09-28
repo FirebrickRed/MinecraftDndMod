@@ -157,7 +157,13 @@ public class CharacterCreationSession {
         DndClass cls = selectedClass == null ? null : io.papermc.jkvttplugin.data.loader.ClassLoader.getClass(selectedClass);
         if (cls != null && selectedSubclass != null && cls.getSubclasses() != null) {
             DndSubClass sub = cls.getSubclasses().get(selectedSubclass);
-            if (sub != null) expanded.addAll(sub.getExpandedSpells());
+            if (sub != null) {
+                expanded.addAll(sub.getExpandedSpells());
+                // A whole class list (Divine Soul: the cleric list, XGE p.50).
+                for (String list : sub.getExpandedSpellLists()) {
+                    for (DndSpell s : io.papermc.jkvttplugin.data.loader.SpellLoader.getSpellsForClass(list)) out.putIfAbsent(s.getId(), s);
+                }
+            }
         }
         for (PendingChoice<?> pc : pendingChoices) {
             PlayersChoice<?> choice = pc.getPlayersChoice();

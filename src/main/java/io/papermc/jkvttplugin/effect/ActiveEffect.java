@@ -32,6 +32,7 @@ public class ActiveEffect {
     private final AcFormula armorClass;        // another way to work out AC (Unarmored Defense, #220), or null
     private final UnarmedStrike unarmedStrike; // what an unarmed strike does (Martial Arts, #221), or null
     private final WeaponAbility weaponAbility; // weapons that may use another ability / die (#221), or null
+    private final int maxHpPerLevel;           // extra max HP per character level (Draconic Resilience, Dwarven Toughness)
 
     // ---- duration ----
     private int roundsRemaining;               // -1 = no round timer (DM/rest-ended)
@@ -44,7 +45,8 @@ public class ActiveEffect {
                         Set<String> disadvantageOn, int bonusDamage, String bonusDamageWhen,
                         String minecraftEffect, int minecraftAmplifier, Set<String> flags, boolean stacks,
                         int roundsRemaining, Set<String> maintainedBy, String untilRest, boolean untilUsed,
-                        AcFormula armorClass, UnarmedStrike unarmedStrike, WeaponAbility weaponAbility) {
+                        AcFormula armorClass, UnarmedStrike unarmedStrike, WeaponAbility weaponAbility,
+                        int maxHpPerLevel) {
         this.sourceId = sourceId;
         this.sourceName = sourceName;
         this.resistances = lower(resistances);
@@ -63,6 +65,7 @@ public class ActiveEffect {
         this.armorClass = armorClass;
         this.unarmedStrike = unarmedStrike;
         this.weaponAbility = weaponAbility;
+        this.maxHpPerLevel = maxHpPerLevel;
     }
 
     private static Set<String> lower(Set<String> in) {
@@ -75,7 +78,7 @@ public class ActiveEffect {
     public ActiveEffect copy() {
         return new ActiveEffect(sourceId, sourceName, resistances, advantageOn, disadvantageOn, bonusDamage,
                 bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks, roundsRemaining,
-                maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility);
+                maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel);
     }
 
     /**
@@ -100,6 +103,7 @@ public class ActiveEffect {
     public Set<String> getAdvantageOn() { return advantageOn; }
     public Set<String> getDisadvantageOn() { return disadvantageOn; }
     public WeaponAbility getWeaponAbility() { return weaponAbility; }
+    public int getMaxHpPerLevel() { return maxHpPerLevel; }
 
     // ---- queries (read sites) ----
     public boolean resists(String damageType) {

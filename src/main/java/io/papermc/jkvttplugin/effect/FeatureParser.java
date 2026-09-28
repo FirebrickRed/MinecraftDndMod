@@ -141,6 +141,7 @@ public final class FeatureParser {
         AcFormula armorClass = null;
         UnarmedStrike unarmedStrike = null;
         WeaponAbility weaponAbility = null;
+        int maxHpPerLevel = 0;
         if (apply.get("effects") instanceof Map<?, ?> e) {
             resistances.addAll(ParseUtil.normalizeStringList(e.get("resistance")));
             advantageOn.addAll(ParseUtil.normalizeStringList(e.get("advantage_on")));
@@ -158,10 +159,11 @@ public final class FeatureParser {
             if (e.get("armor_class") instanceof Map<?, ?> ac) armorClass = AcFormula.parse(ac);
             if (e.get("unarmed_strike") instanceof Map<?, ?> us) unarmedStrike = UnarmedStrike.parse(us);
             if (e.get("weapon_ability") instanceof Map<?, ?> wa) weaponAbility = WeaponAbility.parse(wa);
+            maxHpPerLevel = ParseUtil.asInt(e.get("max_hp_per_level"), 0);
         }
 
         return new ActiveEffect(featureId, featureName, resistances, advantageOn, disadvantageOn,
                 bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks,
-                rounds, maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility);
+                rounds, maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel);
     }
 }

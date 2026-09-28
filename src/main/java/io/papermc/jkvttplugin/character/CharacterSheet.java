@@ -625,10 +625,20 @@ public class CharacterSheet {
 
     private void calculateHealth() {
         if (dndClass != null) {
-            int conModifier = getModifier(Ability.CONSTITUTION);
-            totalHealth = dndClass.getHitDie() + conModifier;
+            totalHealth = levelOneMaxHealth();
             currentHealth = totalHealth;
         }
+    }
+
+    /**
+     * Max HP at 1st level: the hit die + CON, plus any feature's {@code max_hp_per_level} (Draconic
+     * Resilience: +1 per level). A saved character keeps its saved max; this is for creation.
+     */
+    public int levelOneMaxHealth() {
+        if (dndClass == null) return totalHealth;
+        int perLevel = 0;
+        for (var e : standingEffects()) perLevel += e.getValue().getMaxHpPerLevel();
+        return dndClass.getHitDie() + getModifier(Ability.CONSTITUTION) + perLevel * getTotalLevel();
     }
 
     private void calculateArmorClass() {
@@ -1905,6 +1915,9 @@ public class CharacterSheet {
     private static io.papermc.jkvttplugin.effect.Feature findFeatureAnywhere(String id) {
         for (DndClass c : ClassLoader.getAllClasses()) {
             for (var f : c.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
+            if (c.getSubclasses() != null) for (DndSubClass sub : c.getSubclasses().values()) {
+                for (var f : sub.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
+            }
         }
         for (DndRace r : RaceLoader.getAllRaces()) {
             for (var f : r.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
@@ -1915,19 +1928,15 @@ public class CharacterSheet {
     /** Look up an authored feature by id across this character's class and race (Effect Engine, #70). */
     public io.papermc.jkvttplugin.effect.Feature getFeature(String id) {
         if (id == null) return null;
-        if (dndClass != null) {
-            for (var f : dndClass.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
-        }
-        if (race != null) {
-            for (var f : race.getFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
-        }
+        for (var f : getAllFeatures()) if (f.getId().equalsIgnoreCase(id)) return f;
         return null;
     }
 
-    /** Every authored feature this character has, class then race (for menus/tab-completion). */
+    /** Every authored feature this character has: class, subclass (#224), then race (for menus/tab-completion). */
     public List<io.papermc.jkvttplugin.effect.Feature> getAllFeatures() {
         List<io.papermc.jkvttplugin.effect.Feature> all = new ArrayList<>();
         if (dndClass != null) all.addAll(dndClass.getFeatures());
+        if (subclass != null) all.addAll(subclass.getFeatures());
         if (race != null) all.addAll(race.getFeatures());
         return all;
     }

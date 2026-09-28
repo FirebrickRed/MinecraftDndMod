@@ -194,6 +194,16 @@ subclasses:
   draconic_bloodline:
     name: Draconic Bloodline
     description: "Your innate magic comes from draconic power"
+    # Draconic Resilience (PHB p.102): +1 max HP per sorcerer level, and 13 + DEX AC with no armor on
+    # (a shield still adds).
+    features:
+      - id: draconic_resilience
+        name: Draconic Resilience
+        activation: passive
+        apply:
+          effects:
+            armor_class: { base: 13, add: [dexterity], requires: [no_armor] }
+            max_hp_per_level: 1
     # Dragon Ancestor (PHB p.102): its damage type matters from 6th level (Elemental Affinity).
     player_choices:
       - id: dragon_ancestor
@@ -217,6 +227,8 @@ subclasses:
   divine_soul:
     name: Divine Soul
     description: "Your magic is touched by divine power"
+    # Divine Magic (XGE p.50): cleric spells can be learned as sorcerer spells, each costing a pick.
+    expanded_spell_lists: [cleric]
     player_choices:
       # Each affinity grants one extra spell known that doesn't count against your spells known (XGE p.50).
       - id: divine_magic_affinity

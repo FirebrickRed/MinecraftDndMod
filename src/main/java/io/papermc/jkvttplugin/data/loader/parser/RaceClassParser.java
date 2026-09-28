@@ -129,6 +129,8 @@ public final class RaceClassParser {
         List<String> bonusSpells = ParseUtil.normalizeStringList(data.get("bonus_spells"));
         subclass.setBonusSpells(bonusSpells);
         subclass.setExpandedSpells(ParseUtil.normalizeStringList(data.get("expanded_spells")));
+        subclass.setExpandedSpellLists(ParseUtil.normalizeStringList(data.get("expanded_spell_lists")));
+        subclass.setFeatures(io.papermc.jkvttplugin.effect.FeatureParser.parseFeatures(data.get("features"))); // #224
 
         // Parse additional spells (cantrips always known)
         List<String> additionalSpells = ParseUtil.normalizeStringList(data.get("additional_spells"));

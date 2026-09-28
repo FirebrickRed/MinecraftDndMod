@@ -57,6 +57,10 @@ merges into main.
 - [ ] **Stout halfling:** a poison save shows advantage (Stout Resilience).
 - [ ] **Sorcerer origins:** Divine Soul shows a **Divine Affinity** choice (Good → Cure Wounds in the
       spellbook); Draconic Bloodline shows **Dragon Ancestor**; Lunar and Shadow show their choices.
+- [ ] **Draconic Bloodline:** the AC tile says **Draconic Resilience: 13 + DEX**, and max HP is one more
+      than 6 + CON. Put on armor → normal armor AC.
+- [ ] **Divine Soul:** the spell step offers cleric spells (Guiding Bolt, Healing Word) next to the
+      sorcerer ones; each uses a pick.
 
 - [ ] Cleric's Spells tab, bottom label → "You prepare these from your class's full spell list"
       (it no longer promises swapping on a long rest; that's #218).

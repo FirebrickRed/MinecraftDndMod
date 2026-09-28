@@ -237,6 +237,10 @@ public final class ContentValidator {
                 referenceSpells(sub.getBonusSpells());
                 referenceSpells(sub.getAdditionalSpells());
                 referenceSpells(sub.getExpandedSpells());
+                for (String list : sub.getExpandedSpellLists()) {
+                    if (ClassLoader.getClass(list) == null) warn(subWhere + " expanded_spell_lists: '" + list + "' isn't a class.");
+                }
+                checkFeatures(subWhere, sub.getFeatures()); // #224
                 checkSkillNames(subWhere + " skill_proficiencies", sub.getSkillProficiencies());
                 checkToolIds(subWhere + " tool_proficiencies", sub.getToolProficiencies());
                 checkChoices(subWhere, sub.getPlayerChoices());
