@@ -1759,6 +1759,29 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        // The action or bonus action it costs (#229: Rage used to be free). Checked now, spent once it happens.
+        TurnState ts = actor.getTurnState();
+        boolean costsAction = "action".equalsIgnoreCase(feature.getActivation());
+        boolean costsBonus = "bonus_action".equalsIgnoreCase(feature.getActivation());
+        if (ts != null && ((costsAction && ts.isActionUsed()) || (costsBonus && ts.isBonusActionUsed()))) {
+            player.sendMessage(Component.text(feature.getName() + " takes " + (costsAction ? "your action" : "your bonus action")
+                    + ", and you've used it this turn.", NamedTextColor.YELLOW));
+            return;
+        }
+        Runnable spendEconomy = () -> {
+            if (ts == null) return;
+            if (costsAction) ts.useAction();
+            if (costsBonus) ts.useBonusAction();
+            session.updateScoreboard();
+        };
+
+        // Healing and sensing (Second Wind, Lay on Hands, Divine Sense, #229): shared with /character use.
+        if (FeatureUse.handles(feature)) {
+            String[] words = args.length > 2 ? java.util.Arrays.copyOfRange(args, 2, args.length) : new String[0];
+            if (FeatureUse.use(player, actor, session, feature, words)) spendEconomy.run();
+            return;
+        }
+
         // Resolve the cost resource, if any. Action features (which enter an aim-and-confirm preview)
         // only CHECK availability here and spend on confirm, so a cancelled aim costs nothing (#173);
         // instant features (e.g. Rage) spend right away.
@@ -1839,6 +1862,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
+        spendEconomy.run(); // an instant feature (Rage) has happened
         session.broadcast(Component.text(actor.getDisplayName() + " uses " + feature.getName() + "!", NamedTextColor.GOLD));
     }
 
@@ -2435,8 +2459,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     : (pendingBonus > 0 ? "+" + pendingBonus : String.valueOf(pendingBonus));
             String work;
             if (rollStr.toLowerCase().contains("d")) { // the game rolls the dice
-                DiceRoller.Rolled r = DiceRoller.rollOrFlat(rollStr);
+                // Great Weapon Fighting (#229): 1s and 2s on the dice are rolled again, once.
+                boolean rerollLow = attacker != null && attacker.getTurnState() != null
+                        && attacker.getTurnState().isPendingDamageRerollLow();
+                DiceRoller.Rolled r = rerollLow ? DiceRoller.roll(rollStr, 2).orElse(null) : DiceRoller.rollOrFlat(rollStr);
                 if (r == null) { dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED)); return; }
+                if (rerollLow) dm.sendMessage(Component.text("(Great Weapon Fighting: any 1 or 2 was rolled again.)", NamedTextColor.DARK_GRAY));
                 damage = r.total() + pendingBonus;
                 work = RollPrompt.gameRolled(rollStr, r.shown(), bonusShow, damage);
             } else {                                   // you rolled them

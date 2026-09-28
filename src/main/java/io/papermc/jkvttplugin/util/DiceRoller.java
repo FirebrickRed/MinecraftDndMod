@@ -15,7 +15,6 @@ import java.util.regex.Pattern;
  */
 public class DiceRoller {
     private static final Random random = new Random();
-    private static final Pattern DICE_PATTERN = Pattern.compile("(\\d*)d(\\d+)([+\\-]\\d+)?(?:\\s*\\*\\s*(\\d+))?");
 
     public static int rollDice(int numDice, int sides) {
         int total = 0;
@@ -86,22 +85,44 @@ public class DiceRoller {
 
     /** Roll a dice expression, keeping each die. Empty if malformed (or a die with no sides). */
     public static java.util.Optional<Rolled> roll(String input) {
-        String expr = input.toLowerCase().replace(" ", "");
-        Matcher matcher = DICE_PATTERN.matcher(expr);
-        if (!matcher.matches()) return java.util.Optional.empty();
+        return roll(input, 0);
+    }
 
-        int numDice = matcher.group(1).isEmpty() ? 1 : Integer.parseInt(matcher.group(1));
-        int sides = Integer.parseInt(matcher.group(2));
-        if (sides < 1 || numDice > 1000) return java.util.Optional.empty();
-        int modifier = (matcher.group(3) != null) ? Integer.parseInt(matcher.group(3)) : 0;
-        int multiplier = (matcher.group(4) != null) ? Integer.parseInt(matcher.group(4)) : 1;
+    /** One term of an expression: "+1d6", "-2", "2d8". */
+    private static final Pattern TERM = Pattern.compile("([+\\-]?)(?:(\\d*)d(\\d+)|(\\d+))");
+    /** The whole expression: terms, at least one of them dice, then an optional "*N". */
+    private static final Pattern EXPRESSION = Pattern.compile("[+\\-]?(?:\\d*d\\d+|\\d+)(?:[+\\-](?:\\d*d\\d+|\\d+))*(?:\\*(\\d+))?");
+
+    /**
+     * As {@link #roll(String)}, rerolling any die that shows {@code rerollAtOrBelow} or less, once
+     * (Great Weapon Fighting: 1s and 2s, keeping the new roll). 0 rerolls nothing.
+     *
+     * <p>More than one dice group is fine ("1d8+1d6+3", a hit with Sneak Attack): every die is kept
+     * and the flat terms add up into the modifier.
+     */
+    public static java.util.Optional<Rolled> roll(String input, int rerollAtOrBelow) {
+        String expr = input.toLowerCase().replace(" ", "");
+        Matcher whole = EXPRESSION.matcher(expr);
+        if (!whole.matches() || !expr.contains("d")) return java.util.Optional.empty();
+        int multiplier = whole.group(1) != null ? Integer.parseInt(whole.group(1)) : 1;
+        String terms = whole.group(1) != null ? expr.substring(0, expr.lastIndexOf('*')) : expr;
 
         java.util.List<Integer> dice = new java.util.ArrayList<>();
-        int sum = 0;
-        for (int i = 0; i < numDice; i++) {
-            int die = random.nextInt(sides) + 1;
-            dice.add(die);
-            sum += die;
+        int sum = 0, modifier = 0, count = 0;
+        Matcher t = TERM.matcher(terms);
+        while (t.find()) {
+            int sign = "-".equals(t.group(1)) ? -1 : 1;
+            if (t.group(4) != null) { modifier += sign * Integer.parseInt(t.group(4)); continue; }
+            int numDice = t.group(2).isEmpty() ? 1 : Integer.parseInt(t.group(2));
+            int sides = Integer.parseInt(t.group(3));
+            count += numDice;
+            if (sides < 1 || count > 1000) return java.util.Optional.empty();
+            for (int i = 0; i < numDice; i++) {
+                int die = random.nextInt(sides) + 1;
+                if (die <= rerollAtOrBelow) die = random.nextInt(sides) + 1;
+                dice.add(sign * die);
+                sum += sign * die;
+            }
         }
         return java.util.Optional.of(new Rolled(expr, dice, modifier, multiplier, (sum + modifier) * multiplier));
     }

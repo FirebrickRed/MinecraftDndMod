@@ -89,15 +89,23 @@ public class AttackHandler {
             return false;
         }
 
-        // Build damage string, then hand off to the shared resolver.
-        String damageStr = buildPlayerDamageString(sheet, weapon, offHand);
+        // Build damage string, then hand off to the shared resolver. The off-hand attack drops a positive
+        // ability modifier, unless the Two-Weapon Fighting style puts it back (#229).
+        boolean dropOffHandMod = offHand && !sheet.hasPassiveFlag("offhand_ability_damage");
+        String damageStr = buildPlayerDamageString(sheet, weapon, dropOffHandMod);
         String damageType = (weapon != null) ? weapon.getDamageType() : "bludgeoning";
 
-        // Effect bonus damage on a melee STR swing (e.g. Rage, #70). Unarmed and melee weapons count.
+        // Effect bonus damage by what kind of swing this is: a melee STR swing (Rage, #70; unarmed
+        // counts), and one melee weapon with nothing else (Dueling: a shield is fine, #229).
         boolean meleeStr = (weapon == null || !weapon.isRanged())
                 && resolveAttackAbility(sheet, weapon) == Ability.STRENGTH;
-        if (meleeStr) {
-            int bonus = attacker.effectBonusDamageFor("melee_str");
+        boolean oneHanded = weapon != null && !weapon.isRanged() && !isTwoHanded(weapon)
+                && !offHand && !offHandHoldsWeapon(player);
+        List<String> damageTags = new java.util.ArrayList<>();
+        if (meleeStr) damageTags.add("melee_str");
+        if (oneHanded) damageTags.add("melee_one_handed");
+        for (String tag : damageTags) {
+            int bonus = attacker.effectBonusDamageFor(tag);
             if (bonus > 0) damageStr = addFlatDamage(damageStr, bonus);
         }
         attacker.markEffectsMaintained("attacked"); // keeps Rage etc. going (#70)
@@ -105,15 +113,31 @@ public class AttackHandler {
         // Labeled damage-bonus breakdown for clarity (#168): "+5[STR] +2[Rage]".
         Ability dmgAbility = resolveAttackAbility(sheet, weapon);
         int dmgAbilityMod = sheet.getModifier(dmgAbility);
-        if (offHand) dmgAbilityMod = Math.min(0, dmgAbilityMod); // matches the damage string
+        if (dropOffHandMod) dmgAbilityMod = Math.min(0, dmgAbilityMod); // matches the damage string
         String bonusLabel = dmgAbilityMod != 0
                 ? (dmgAbilityMod > 0 ? "+" : "") + dmgAbilityMod + "[" + dmgAbility.getAbbreviation() + "]" : "";
         String magicDmg = magicLabel(weapon, weapon != null ? weapon.getDamageBonus() : 0);
         if (!magicDmg.isEmpty()) bonusLabel = bonusLabel.isEmpty() ? magicDmg : bonusLabel + " " + magicDmg;
-        if (meleeStr) {
-            String eff = attacker.effectBonusDamageBreakdownFor("melee_str");
+        for (String tag : damageTags) {
+            String eff = attacker.effectBonusDamageBreakdownFor(tag);
             if (!eff.isEmpty()) bonusLabel = bonusLabel.isEmpty() ? eff : bonusLabel + " " + eff;
         }
+
+        // Great Weapon Fighting (#229): a two-handed melee weapon (or a versatile one with the off hand
+        // free) rerolls 1s and 2s on its damage dice, when the game rolls them.
+        boolean gwf = sheet.hasPassiveFlag("reroll_low_damage") && weapon != null && !weapon.isRanged()
+                && (isTwoHanded(weapon) || (weapon.hasProperty("versatile") && player != null
+                        && player.getInventory().getItemInOffHand().getType().isAir()));
+        if (attacker.getTurnState() != null) attacker.getTurnState().setRerollLowForNextHit(gwf);
+
+        // Sneak Attack (#229): its dice join the weapon's, so a crit doubles them too.
+        SneakAttack.Use sneak = SneakAttack.check(session, attacker, target, sheet, weapon);
+        if (sneak != null) damageStr = SneakAttack.addDice(damageStr, sneak.dice());
+        final Runnable onHit = () -> {
+            if (sneak != null) SneakAttack.spend(session, attacker, target, sneak);
+            if (gwf) player.sendMessage(Component.text("Great Weapon Fighting: rolling it yourself? Reroll any 1 or 2 "
+                    + "on the damage dice once (the game does it when it rolls).", NamedTextColor.GRAY));
+        };
 
         // Half-Orc Savage Attacks: one extra weapon die on a melee-weapon crit (unarmed doesn't count).
         boolean extraCritDie = weapon != null && !weapon.isRanged() && attacker.hasExtraCritDie();
@@ -134,7 +158,7 @@ public class AttackHandler {
                 providedRoll, providedTotal, player, bonusLabel, extraCritDie, projectile, forceAuto,
                 AmmunitionManager.spentRoundId(weapon),
                 weapon != null ? (weapon.getLongRange() > 0 ? weapon.getLongRange() : weapon.getNormalRange()) : 0,
-                weapon != null ? weapon.getCritBonusDamage() : 0, weapon != null ? weapon.getName() : null);
+                weapon != null ? weapon.getCritBonusDamage() : 0, weapon != null ? weapon.getName() : null, onHit);
         if (resolved) AmmunitionManager.consume(player, weapon);
         return resolved;
     }
@@ -162,15 +186,16 @@ public class AttackHandler {
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser) {
         return resolveAttack(session, attacker, target, attackMod, modBreakdown, damageStr, damageType,
-                providedRoll, providedTotal, commandUser, "", false, null, false, null, 0, 0, null);
+                providedRoll, providedTotal, commandUser, "", false, null, false, null, 0, 0, null, null);
     }
 
+    /** @param onHit run once the attack is known to hit, before the damage prompt (Sneak Attack's spend, #229); may be null */
     private static boolean resolveAttack(CombatSession session, Combatant attacker, Combatant target,
                                       int attackMod, String modBreakdown, String damageStr, String damageType,
                                       Integer providedRoll, Integer providedTotal, Player commandUser, String bonusLabel,
                                       boolean extraCritDie, String projectileVisual, boolean forceAuto,
                                       String spentAmmoId, int projectileRangeFeet,
-                                      int critBonusDamage, String critBonusSource) {
+                                      int critBonusDamage, String critBonusSource, Runnable onHit) {
         // Advantage/disadvantage from conditions (#103): auto-applied when the game rolls, and the
         // roller is reminded either way (a physical roll or provided total is trusted as-is).
         Advantage advantage = attacker.attackAdvantageAgainst(target);
@@ -210,6 +235,7 @@ public class AttackHandler {
         // somewhere scattered rather than neatly at the target's feet (#191).
         CombatVisuals.launch(attacker, target, projectileVisual, spentAmmoId, hit, projectileRangeFeet);
         if (hit) {
+            if (onHit != null) onHit.run();
             remindMarkRider(attacker, target, commandUser); // Hex / Hunter's Mark rider (#178)
         }
         return true;
@@ -293,7 +319,23 @@ public class AttackHandler {
 
         // A magic weapon's bonus (#188) — added whether or not you're proficient, as in the DMG.
         int magic = weapon != null ? weapon.getAttackBonus() : 0;
-        return abilityMod + profBonus + magic;
+        return abilityMod + profBonus + magic + sheet.attackBonusFor(attackTag(weapon)); // Archery (#229)
+    }
+
+    /** What kind of attack a weapon makes, for an effect's attack_bonus "when" (Archery: ranged). */
+    static String attackTag(DndWeapon weapon) {
+        return weapon != null && weapon.isRanged() ? "ranged" : "melee";
+    }
+
+    static boolean isTwoHanded(DndWeapon weapon) {
+        return weapon != null && (weapon.hasProperty("two-handed") || weapon.hasProperty("two_handed"));
+    }
+
+    /** True if the off hand holds a weapon (a shield or a torch doesn't count). */
+    static boolean offHandHoldsWeapon(Player player) {
+        if (player == null) return false;
+        String id = ItemUtil.getItemId(player.getInventory().getItemInOffHand());
+        return id != null && WeaponLoader.getWeapon(id) != null;
     }
 
     /** "+2[Longsword +2]" for a magic weapon's bonus in a roll breakdown; empty for none. */
@@ -353,6 +395,8 @@ public class AttackHandler {
         }
         String magic = magicLabel(weapon, weapon != null ? weapon.getAttackBonus() : 0);
         if (!magic.isEmpty()) sb.append(" ").append(magic);
+        String style = sheet.attackBonusBreakdownFor(attackTag(weapon)); // "+2[Archery]" (#229)
+        if (!style.isEmpty()) sb.append(" ").append(style);
 
         return sb.toString();
     }
@@ -477,7 +521,7 @@ public class AttackHandler {
         String dmgLabel = dmgFlat == 0 ? "" : (dmgFlat > 0 ? "+" : "") + dmgFlat + "[" + attack.getName() + "]";
         return resolveAttack(session, attacker, target, toHit, (toHit >= 0 ? "+" : "") + toHit + "[" + attack.getName() + "]",
                 attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm, dmgLabel, false,
-                CombatVisuals.projectileFor(attack), forceAuto, null, 0, 0, null); // monsters do not track ammo
+                CombatVisuals.projectileFor(attack), forceAuto, null, 0, 0, null, null); // monsters do not track ammo
     }
 
     /**
@@ -627,6 +671,8 @@ public class AttackHandler {
         if (attacker.getTurnState() != null) {
             attacker.getTurnState().markAttackHit(target.getId(), d.hasDice() ? d.bonus() : 0,
                     d.hasDice() ? d.label() : "", isCrit);
+            // Great Weapon Fighting (#229): set by the weapon attack just made; a spell's hit takes false.
+            attacker.getTurnState().setPendingDamageRerollLow(attacker.getTurnState().takeRerollLowForNextHit());
             attacker.getTurnState().setPendingDamageType(damageType); // so /combat damage needs no 'type' (#183)
             attacker.getTurnState().setPendingDamageDice(d.hasDice() ? d.dice() : ""); // so 'autoRoll' needs no dice (#183)
         }

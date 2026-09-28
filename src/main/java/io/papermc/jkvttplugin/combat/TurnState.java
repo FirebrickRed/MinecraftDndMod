@@ -124,7 +124,18 @@ public class TurnState {
     public boolean isPendingDamageCrit() { return pendingDamageCrit; }
     public boolean isPendingDamageHalf() { return pendingDamageHalf; }
     public void setPendingDamageHalf(boolean half) { this.pendingDamageHalf = half; }
+
+    // Great Weapon Fighting (#229): the weapon attack being made says whether its hit rerolls 1s and
+    // 2s; recording the hit takes that and resets it, so a spell's hit afterwards doesn't inherit it.
+    private boolean rerollLowForNextHit;
+    private boolean pendingDamageRerollLow;
+    public void setRerollLowForNextHit(boolean reroll) { this.rerollLowForNextHit = reroll; }
+    public boolean takeRerollLowForNextHit() { boolean r = rerollLowForNextHit; rerollLowForNextHit = false; return r; }
+    public void setPendingDamageRerollLow(boolean reroll) { this.pendingDamageRerollLow = reroll; }
+    public boolean isPendingDamageRerollLow() { return pendingDamageRerollLow; }
+
     public void clearDamagePending() {
+        this.pendingDamageRerollLow = false;
         this.pendingDamageTargetId = null;
         this.pendingDamageBonus = 0;
         this.pendingDamageLabel = "";

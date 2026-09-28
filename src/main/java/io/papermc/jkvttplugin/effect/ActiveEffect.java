@@ -78,7 +78,42 @@ public class ActiveEffect {
     public ActiveEffect copy() {
         return new ActiveEffect(sourceId, sourceName, resistances, advantageOn, disadvantageOn, bonusDamage,
                 bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks, roundsRemaining,
-                maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel);
+                maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel)
+                .withBonuses(attackBonus, attackBonusWhen, acBonus, acBonusNeedsArmor, sneakAttackDice);
+    }
+
+    // ---- attack, AC and Sneak Attack bonuses (#229), set once by FeatureParser ----
+    private int attackBonus;                   // flat bonus to hit (Archery +2)
+    private String attackBonusWhen;            // the attack tag it applies to, e.g. "ranged"
+    private int acBonus;                       // flat AC (Defense +1)
+    private boolean acBonusNeedsArmor;         // only while wearing body armor (Defense)
+    private java.util.List<String> sneakAttackDice = java.util.List.of(); // by level: 1d6, 1d6, 2d6, …
+
+    /** The #229 primitives, kept off the constructor. Returns this. */
+    public ActiveEffect withBonuses(int attackBonus, String attackBonusWhen, int acBonus, boolean acBonusNeedsArmor,
+                                    java.util.List<String> sneakAttackDice) {
+        this.attackBonus = attackBonus;
+        this.attackBonusWhen = attackBonusWhen == null ? null : attackBonusWhen.toLowerCase();
+        this.acBonus = acBonus;
+        this.acBonusNeedsArmor = acBonusNeedsArmor;
+        this.sneakAttackDice = sneakAttackDice == null ? java.util.List.of() : java.util.List.copyOf(sneakAttackDice);
+        return this;
+    }
+
+    /** Flat bonus to hit this effect gives an attack tagged {@code tag} ("ranged"), or 0. */
+    public int attackBonusFor(String tag) {
+        return attackBonus != 0 && attackBonusWhen != null && attackBonusWhen.equalsIgnoreCase(tag) ? attackBonus : 0;
+    }
+
+    /** Flat AC this effect gives right now: Defense's +1 only while {@code wearingArmor}. */
+    public int acBonus(boolean wearingArmor) {
+        return acBonusNeedsArmor && !wearingArmor ? 0 : acBonus;
+    }
+
+    /** Sneak Attack's dice at {@code level} ("1d6"), or null if this effect isn't Sneak Attack. */
+    public String sneakAttackDiceAt(int level) {
+        if (sneakAttackDice.isEmpty()) return null;
+        return sneakAttackDice.get(Math.max(0, Math.min(level, sneakAttackDice.size()) - 1));
     }
 
     /**
@@ -153,6 +188,9 @@ public class ActiveEffect {
         if (!advantageOn.isEmpty()) parts.add("Advantage on " + String.join(", ", advantageOn).replace('_', ' '));
         if (!disadvantageOn.isEmpty()) parts.add("Disadvantage on " + String.join(", ", disadvantageOn).replace('_', ' '));
         if (armorClass != null) parts.add("AC " + armorClass.describe());
+        if (attackBonus != 0) parts.add((attackBonus > 0 ? "+" : "") + attackBonus + " to hit"
+                + (attackBonusWhen != null ? " (" + attackBonusWhen.replace('_', ' ') + ")" : ""));
+        if (acBonus != 0) parts.add((acBonus > 0 ? "+" : "") + acBonus + " AC" + (acBonusNeedsArmor ? " (in armor)" : ""));
         return parts;
     }
 

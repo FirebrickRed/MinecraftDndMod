@@ -29,6 +29,13 @@ class_resources:
     max_by_level: [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3]
     recovery: long_rest
     material: iron_ingot
+features:
+  # Second Wind (#229): /combat use second_wind on your turn, or /character use second_wind after the fight.
+  - id: second_wind
+    name: Second Wind
+    activation: bonus_action
+    cost: { resource: second_wind, amount: 1 }
+    heal: { dice: 1d10, add_level: true }   # 1d10 + fighter level, on yourself
 features_by_level:
   1:
     - name: Fighting Style
@@ -149,13 +156,36 @@ player_choices:
     title: Fighting Style
     type: custom
     choose: 1
+    # Each style grants a passive feature (#229). The paladin and ranger pick from the same list at
+    # level 2, so copy an option's grants there when level-up lands.
     options:
-      - "Archery: +2 to attack rolls with ranged weapons"
-      - "Defense: +1 AC while wearing armor"
-      - "Dueling: +2 damage with a melee weapon in one hand and no other weapon"
-      - "Great Weapon Fighting: reroll 1s and 2s on damage dice with a two-handed or versatile melee weapon"
-      - "Protection: impose disadvantage on an attack against an ally within 5 feet (reaction, needs a shield)"
-      - "Two-Weapon Fighting: add your ability modifier to the off-hand attack's damage"
+      - label: "Archery: +2 to attack rolls with ranged weapons"
+        grants:
+          features:
+            - { id: archery, name: Archery, activation: passive,
+                apply: { effects: { attack_bonus: { amount: 2, when: ranged } } } }
+      - label: "Defense: +1 AC while wearing armor"
+        grants:
+          features:
+            - { id: defense, name: Defense, activation: passive,
+                apply: { effects: { ac_bonus: { amount: 1, requires: [armor] } } } }
+      - label: "Dueling: +2 damage with a melee weapon in one hand and no other weapon"
+        grants:
+          features:
+            - { id: dueling, name: Dueling, activation: passive,
+                apply: { effects: { bonus_damage: { amount: 2, when: melee_one_handed } } } }
+      - label: "Great Weapon Fighting: reroll 1s and 2s on damage dice with a two-handed or versatile melee weapon"
+        grants:
+          features:
+            - { id: great_weapon_fighting, name: Great Weapon Fighting, activation: passive,
+                apply: { effects: { reroll_low_damage: true } } }
+      # A reaction the game doesn't run yet: say it at the table and the DM applies the disadvantage.
+      - "Protection: impose disadvantage on an attack against an ally within 5 feet (reaction, needs a shield; the DM applies it)"
+      - label: "Two-Weapon Fighting: add your ability modifier to the off-hand attack's damage"
+        grants:
+          features:
+            - { id: two_weapon_fighting, name: Two-Weapon Fighting, activation: passive,
+                apply: { effects: { offhand_ability_damage: true } } }
   - id: class_skills
     title: Class Skills
     type: skill

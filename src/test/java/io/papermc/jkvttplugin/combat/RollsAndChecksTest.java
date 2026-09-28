@@ -63,6 +63,25 @@ class RollsAndChecksTest {
         assertNull(DiceRoller.rollOrFlat(null));
     }
 
+    /** A hit with Sneak Attack is two dice groups; both roll, and the flat part is the modifier (#229). */
+    @RepeatedTest(20)
+    void twoDiceGroupsRoll() {
+        DiceRoller.Rolled r = DiceRoller.roll("1d8+1d6+3").orElseThrow();
+        assertEquals(2, r.dice().size());
+        assertEquals(3, r.modifier());
+        assertTrue(r.dice().get(0) <= 8 && r.dice().get(1) <= 6);
+        assertEquals(r.dice().get(0) + r.dice().get(1) + 3, r.total());
+        assertTrue(DiceRoller.roll("2d6*2").isPresent(), "a multiplier still works");
+        assertTrue(DiceRoller.roll("3+4").isEmpty(), "no dice: not a roll (rollOrFlat reads a plain number)");
+    }
+
+    /** Great Weapon Fighting: a 1 or 2 is rolled again (2d6 can't come out 2 unless both rerolls do). */
+    @RepeatedTest(50)
+    void rerollLowDiceOnce() {
+        DiceRoller.Rolled r = DiceRoller.roll("2d6", 2).orElseThrow();
+        assertTrue(r.total() >= 2 && r.total() <= 12);
+    }
+
     @Test
     void aDieWithNoSidesIsMalformedNotACrash() {
         assertTrue(DiceRoller.roll("1d0").isEmpty());

@@ -70,4 +70,27 @@ public class Feature {
     public int getGrantedResourceMax() { return grantedResourceMax; }
     public boolean isGrantedResourceByProf() { return grantedResourceByProf; }
     public String getGrantedResourceRecovery() { return grantedResourceRecovery; }
+
+    // ---- healing and sensing (#229), set once by FeatureParser ----
+
+    /**
+     * {@code heal:} Second Wind rolls {@code dice} (+ your level with {@code add_level}) on yourself;
+     * Lay on Hands ({@code from_pool}) spends points from its resource on a creature within
+     * {@code range} feet, never one of the {@code not:} creature types.
+     */
+    public record Heal(String dice, boolean addLevel, boolean fromPool, double rangeFeet, java.util.Set<String> notTypes) {}
+
+    /** {@code sense:} Divine Sense: these creature types within {@code rangeFeet}, by type and direction. */
+    public record Sense(java.util.Set<String> creatureTypes, double rangeFeet) {}
+
+    private Heal heal;
+    private Sense sense;
+
+    public Feature withHealAndSense(Heal heal, Sense sense) {
+        this.heal = heal;
+        this.sense = sense;
+        return this;
+    }
+    public Heal getHeal() { return heal; }
+    public Sense getSense() { return sense; }
 }

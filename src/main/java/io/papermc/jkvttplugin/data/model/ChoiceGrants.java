@@ -17,16 +17,23 @@ import java.util.Set;
  *   - { label: Wisdom, grants: { innate_casting_ability: wisdom } }          # genasi
  *   - { label: "Red (Fire, 15 ft. cone, DEX save)", grants: { damage_resistances: [fire] } }   # dragonborn
  *   - { label: Efreeti, grants: { expanded_spells: [burning_hands, scorching_ray] } }           # genie: pickable
+ *   - label: Archery                                                                            # a fighting style
+ *     grants:
+ *       features:            # Effect Engine features, written exactly as under a class's features:
+ *         - { id: archery, name: Archery, activation: passive,
+ *             apply: { effects: { attack_bonus: { amount: 2, when: ranged } } } }
  * </pre>
  *
  * Grants are re-derived from the saved pick on every load, like every other grant; only the pick
  * itself is saved.
  */
 public record ChoiceGrants(Ability innateCastingAbility, List<String> damageResistances,
-                           List<String> bonusSpells, List<String> expandedSpells, List<String> problems) {
+                           List<String> bonusSpells, List<String> expandedSpells,
+                           List<io.papermc.jkvttplugin.effect.Feature> features, List<String> problems) {
 
     /** The grant keys understood, for ContentValidator's message. */
-    public static final Set<String> KEYS = Set.of("innate_casting_ability", "damage_resistances", "bonus_spells", "expanded_spells");
+    public static final Set<String> KEYS = Set.of("innate_casting_ability", "damage_resistances", "bonus_spells",
+            "expanded_spells", "features");
 
     public static ChoiceGrants parse(Map<?, ?> m) {
         List<String> problems = new ArrayList<>();
@@ -47,6 +54,8 @@ public record ChoiceGrants(Ability innateCastingAbility, List<String> damageResi
         for (String s : ParseUtil.normalizeStringList(m.get("bonus_spells"))) spells.add(s.trim().toLowerCase());
         List<String> expanded = new ArrayList<>();
         for (String s : ParseUtil.normalizeStringList(m.get("expanded_spells"))) expanded.add(s.trim().toLowerCase());
-        return new ChoiceGrants(ability, List.copyOf(resistances), List.copyOf(spells), List.copyOf(expanded), List.copyOf(problems));
+        var features = io.papermc.jkvttplugin.effect.FeatureParser.parseFeatures(m.get("features"));
+        return new ChoiceGrants(ability, List.copyOf(resistances), List.copyOf(spells), List.copyOf(expanded),
+                List.copyOf(features), List.copyOf(problems));
     }
 }

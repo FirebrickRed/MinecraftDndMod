@@ -668,6 +668,8 @@ public class CharacterSheet {
                 acFormulaSource = source.getKey() + ": " + f.describe();
             }
         }
+        // A flat bonus on top of whichever way AC was worked out (Defense: +1 while in armor, #229).
+        for (var e : standingEffects()) baseAC += e.getValue().acBonus(equippedArmor != null);
 
         armorClass = baseAC;
     }
@@ -1861,9 +1863,13 @@ public class CharacterSheet {
         return new ArrayList<>(classResources);
     }
 
+    /** A resource by its name or its id spelling: "Second Wind" and "second_wind" are the same one. */
     public ClassResource getResource(String resourceName) {
+        if (resourceName == null) return null;
+        String id = io.papermc.jkvttplugin.util.Util.normalize(resourceName);
         for (ClassResource resource : classResources) {
-            if (resource.getName().equalsIgnoreCase(resourceName)) {
+            if (resource.getName().equalsIgnoreCase(resourceName)
+                    || io.papermc.jkvttplugin.util.Util.normalize(resource.getName()).equals(id)) {
                 return resource;
             }
         }
@@ -1932,12 +1938,25 @@ public class CharacterSheet {
         return null;
     }
 
-    /** Every authored feature this character has: class, subclass (#224), then race (for menus/tab-completion). */
+    /**
+     * Every authored feature this character has: class, subclass (#224), race, then the ones their
+     * custom-choice picks grant (a fighting style, #229).
+     */
     public List<io.papermc.jkvttplugin.effect.Feature> getAllFeatures() {
         List<io.papermc.jkvttplugin.effect.Feature> all = new ArrayList<>();
         if (dndClass != null) all.addAll(dndClass.getFeatures());
         if (subclass != null) all.addAll(subclass.getFeatures());
         if (race != null) all.addAll(race.getFeatures());
+        for (var choices : java.util.Arrays.asList(race != null ? race.getPlayerChoices() : null,
+                subrace != null ? subrace.getPlayerChoices() : null, dndClass != null ? dndClass.getPlayerChoices() : null,
+                subclass != null ? subclass.getPlayerChoices() : null, background != null ? background.getPlayerChoices() : null)) {
+            if (choices == null) continue;
+            for (ChoiceEntry entry : choices) {
+                if (entry.type() != PlayersChoice.ChoiceType.CUSTOM || entry.pc() == null) continue;
+                ChoiceGrants g = entry.pc().grantsFor(getCustomChoice(entry.id()));
+                if (g != null) all.addAll(g.features());
+            }
+        }
         return all;
     }
 
@@ -2000,6 +2019,7 @@ public class CharacterSheet {
         applyChoiceGrants(dndClass != null ? dndClass.getPlayerChoices() : null, false);
         applyChoiceGrants(subclass != null ? subclass.getPlayerChoices() : null, false);
         applyChoiceGrants(background != null ? background.getPlayerChoices() : null, false);
+        calculateArmorClass(); // a picked feature can move AC (Defense, #229)
     }
 
     private void applyChoiceGrants(List<ChoiceEntry> choices, boolean racial) {
@@ -2068,18 +2088,43 @@ public class CharacterSheet {
     public boolean isRelentlessEnduranceUsed() { return relentlessEnduranceUsed; }
     public int bonusDamageFor(String rollTag) {
         int sum = 0;
-        for (var e : activeEffects) sum += e.bonusDamageFor(rollTag);
+        for (var e : standingEffects()) sum += e.getValue().bonusDamageFor(rollTag); // Rage, and a passive Dueling (#229)
         return sum;
     }
     /** Labeled effect bonus damage for a swing, e.g. "+2[Rage]" (empty if none), for #168 breakdowns. */
     public String bonusDamageBreakdownFor(String rollTag) {
         StringBuilder sb = new StringBuilder();
-        for (var e : activeEffects) {
-            int b = e.bonusDamageFor(rollTag);
+        for (var e : standingEffects()) {
+            int b = e.getValue().bonusDamageFor(rollTag);
             if (b != 0) sb.append(sb.length() > 0 ? " " : "").append(b > 0 ? "+" : "").append(b)
-                    .append("[").append(e.getSourceName()).append("]");
+                    .append("[").append(e.getKey()).append("]");
         }
         return sb.toString();
+    }
+
+    /** Flat bonus to hit from effects for an attack tagged {@code tag} ("ranged": Archery, #229). */
+    public int attackBonusFor(String tag) {
+        int sum = 0;
+        for (var e : standingEffects()) sum += e.getValue().attackBonusFor(tag);
+        return sum;
+    }
+    /** As {@link #attackBonusFor}, labelled for a roll breakdown: "+2[Archery]" (empty if none). */
+    public String attackBonusBreakdownFor(String tag) {
+        StringBuilder sb = new StringBuilder();
+        for (var e : standingEffects()) {
+            int b = e.getValue().attackBonusFor(tag);
+            if (b != 0) sb.append(sb.length() > 0 ? " " : "").append(b > 0 ? "+" : "").append(b).append("[").append(e.getKey()).append("]");
+        }
+        return sb.toString();
+    }
+
+    /** Sneak Attack's dice at this character's level, by the feature's name, or null (#229). */
+    public Map.Entry<String, String> sneakAttack() {
+        for (var e : standingEffects()) {
+            String dice = e.getValue().sneakAttackDiceAt(getTotalLevel());
+            if (dice != null) return Map.entry(e.getKey(), dice);
+        }
+        return null;
     }
 
     // ---- duration lifecycle ----

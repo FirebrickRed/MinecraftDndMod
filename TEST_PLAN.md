@@ -76,6 +76,22 @@ merges into main.
 - [ ] **Languages from two sources** (High Elf + Noble, one each): pick two, then keep picking → the
       replaced language alternates (oldest goes), not the same slot every time.
 
+### Content audit (races, classes, backgrounds vs the PHB)
+- [ ] **Paladin:** a Class Skills pick (2), and Weapons / Secondary Weapon / Adventuring Gear picks.
+      Finished: wearing the chain mail gives **no** "not proficient" warning.
+- [ ] **Paladin:** the sheet shows Divine Sense (1 + CHA uses) and Lay on Hands (5 points).
+- [ ] **Fighter:** a Fighting Style pick; **"Two martial weapons"** hands you two picks (they can
+      differ); no second chain mail or shield in your inventory.
+- [ ] **Ranger:** Favored Enemy, a language for it, and Natural Explorer picks; two simple melee weapons
+      when you take that option; 20 arrows in one stack.
+- [ ] **Artificer:** at level 1 it prepares INT-modifier spells (one fewer than before); two simple
+      weapon picks.
+- [ ] **Druid** knows Druidic, a **rogue** Thieves' Cant; neither shows up in any "pick a language" list.
+- [ ] **Dragonborn:** STR +2 and CHA +1, no ability pick; the breath weapon comes back on a short rest.
+- [ ] **Hexblade warlock:** a shield in the off hand, no "not proficient" warning.
+- [ ] **Bard** with CHA 10: Bardic Inspiration shows 1 use (it used to be missing).
+- [ ] **Knowledge cleric:** after the two skills, an expertise pick offering those skills.
+
 ## Finished characters
 
 Finish the combo, then look at the sheet and your inventory.
@@ -176,6 +192,30 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
 - [ ] BG3 order (default `combat.bonus_attack_timing: any_time`): a fighter with a dagger in each hand
       uses the off-hand button first (`… dagger bonus`), then still has their Action. Its damage has no
       DEX. Set `after_attack_action` and restart: the same button now says to attack first.
+
+### Level-1 class features (#229)
+- [ ] **Archery** fighter, longbow: the to-hit breakdown ends with `+2[Archery]`; a sword attack doesn't.
+- [ ] **Defense** fighter: AC goes up by 1 when you put on chain mail (and not unarmored).
+- [ ] **Dueling** fighter, longsword + shield: damage breakdown has `+2[Dueling]`. A second weapon in the
+      off hand → no Dueling.
+- [ ] **Great Weapon Fighting**, greatsword, damage with `autoRoll` → "(Great Weapon Fighting: any 1 or 2
+      was rolled again.)" A plain hit on a longsword with a shield doesn't say it.
+- [ ] **Two-Weapon Fighting**, dagger in each hand: the off-hand attack's damage has `+N[DEX]`.
+- [ ] **Second Wind:** `/combat use second_wind` → the three roll buttons; answer → heals 1d10 + 1, the
+      bonus action is spent, a second use says no uses left. After the fight, `/character use second_wind`
+      once it's back (a short rest).
+- [ ] **Rage** now spends the bonus action: rage, then `/combat bonusAction` has nothing left.
+- [ ] **Sneak Attack**, rogue with a rapier, an ally next to the goblin: a hit says "🗡 Sneak Attack! +1d6
+      in that damage (Borin is next to them)" and the damage prompt rolls 1d8+1d6. A second hit that
+      turn gets no Sneak Attack.
+- [ ] **Sneak Attack**, no ally near and no advantage → nothing added. A club (not finesse) → nothing.
+- [ ] **Sneak Attack** crit → the prompt doubles both dice (2d8+2d6).
+- [ ] **Lay on Hands:** `/combat use lay_on_hands <ally> 3` next to them → heals 3, pool 5 → 2. From 20 ft
+      → "You need to touch them". On a skeleton → "no effect on Skeleton: it's an undead".
+- [ ] **Divine Sense** with `/dm entity spawn skeleton` nearby: "an undead, about 25 ft to the
+      north-east". The DM sees the same; other players only see that you used it. With nothing near →
+      "Nothing within 60 ft".
+- [ ] Known gap: if a Shield reaction turns a Sneak Attack hit into a miss, Sneak Attack is still spent.
 
 ## Death
 

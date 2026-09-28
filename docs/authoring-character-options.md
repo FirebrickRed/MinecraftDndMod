@@ -135,6 +135,7 @@ An option of a `custom` choice can carry what picking it gives:
 | `innate_casting_ability: charisma` | the ability the race's own `innate_spells` are cast with (genasi). Only on a race or subrace choice |
 | `bonus_spells: [a, b]` | spells known for free, like a subclass's `bonus_spells` |
 | `expanded_spells: [a, b]` | spells added to what the character may **pick**, like a warlock patron's `expanded_spells` (the genie's kind) |
+| `features: [ … ]` | Effect Engine features, written exactly as under a class's `features:` (the fighter's Fighting Style, #229). They're the character's own while the pick stands |
 
 - Only the pick is saved; what it grants is worked out again on every load, so editing the grants
   in YAML reaches existing characters.

@@ -1,0 +1,33 @@
+# SRD Skeleton. An undead, so it's what Divine Sense finds and Lay on Hands can't heal (#229).
+# Not modelled yet: vulnerable to bludgeoning, immune to poison and exhaustion / the poisoned
+# condition (creatures have no damage immunities or vulnerabilities in YAML yet).
+id: skeleton
+name: "Skeleton"
+
+creature_type: undead
+size: medium
+
+hit_points: 13
+hit_dice: "2d8+4"
+armor_class: 13     # armor scraps
+speed: 30
+
+abilities:
+  strength: 10
+  dexterity: 14
+  constitution: 15
+  intelligence: 6
+  wisdom: 8
+  charisma: 5
+
+attacks:
+  - name: "Shortsword"
+    to_hit: 4
+    reach: "5 ft."
+    damage: "1d6+2"
+    damage_type: piercing
+  - name: "Shortbow"
+    to_hit: 4
+    reach: "80/320 ft."
+    damage: "1d6+2"
+    damage_type: piercing

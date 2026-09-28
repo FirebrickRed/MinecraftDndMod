@@ -88,9 +88,15 @@ class_resources:
   - name: Rage
     max_by_level: [2,2,3,3,3,4,…]   # OR:
     # uses_ability: charisma        #   max = that ability's modifier (Bardic Inspiration)
+    # plus: 1                       #   added to the max (Divine Sense: 1 + CHA)
+    # minimum: 1                    #   the max is never lower ("a minimum of once")
     recovery: long_rest             # short_rest | long_rest | dawn | none
     material: red_dye               # the item it shows as on the sheet
 ```
+
+A pool of points is a resource too: Lay on Hands is `max_by_level: [5, 10, 15, …]`, and using it
+spends as many points as it heals. A feature's `cost: { resource: … }` can name a resource by its
+name or its id spelling (`second_wind` finds "Second Wind").
 
 A resource whose max works out to 0 at the character's level isn't created (Action Surge before
 level 2). `/dm rest <character|all> short|long` recovers them (rests are the DM's call).
@@ -181,6 +187,49 @@ Martial Arts in `monk.yml` is the worked example. Two passive effects and one bo
   `/combat attack <target> <weapon> bonus`, which is refused until the Attack action was taken this
   turn, the same rule as two-weapon fighting's off-hand attack.
 - `requires` works as on `armor_class`. Misspelt keys are console warnings on `/dm reload`.
+
+### Attack, AC and damage bonuses (fighting styles, #229)
+
+| Effect | Example | Meaning |
+|---|---|---|
+| `attack_bonus: { amount: 2, when: ranged }` | Archery | Added to hit, and named in the roll ("+2[Archery]"). `when`: `ranged` or `melee` |
+| `ac_bonus: { amount: 1, requires: [armor] }` | Defense | Added on top of whichever AC won. `requires: [armor]` = only while wearing body armor |
+| `bonus_damage: { amount: 2, when: melee_one_handed }` | Dueling | Added to damage. `when`: `melee_str` (a STR melee swing, Rage) or `melee_one_handed` (a melee weapon that isn't two-handed, with no weapon in the other hand; a shield is fine) |
+| `reroll_low_damage: true` | Great Weapon Fighting | 1s and 2s on the damage dice are rolled again when the game rolls, for a two-handed melee weapon (or versatile with the off hand empty). A player rolling their own dice is reminded |
+| `offhand_ability_damage: true` | Two-Weapon Fighting | The off-hand attack adds its ability modifier to damage |
+| `sneak_attack: { dice_by_level: [1d6, 1d6, 2d6, …] }` | Sneak Attack | Once per turn, a finesse or ranged weapon, with advantage or an ally within 5 ft of the target and no disadvantage. The dice join the hit's own (a crit doubles them) and the table is told why |
+
+All of these work on a passive feature and on one a choice grants (see
+[`authoring-character-options.md`](authoring-character-options.md), *Options that grant things*):
+that's how the fighter's Fighting Style is written.
+
+### Healing and sensing (`heal:`, `sense:`, #229)
+
+```yaml
+features:
+  - id: second_wind
+    name: Second Wind
+    activation: bonus_action
+    cost: { resource: second_wind, amount: 1 }
+    heal: { dice: 1d10, add_level: true }          # on yourself: 1d10 + your level
+  - id: lay_on_hands
+    name: Lay on Hands
+    activation: action
+    cost: { resource: lay_on_hands }
+    heal: { from_pool: true, range: 5, not: [undead, construct] }   # spend points on someone you touch
+  - id: divine_sense
+    name: Divine Sense
+    activation: action
+    cost: { resource: divine_sense, amount: 1 }
+    sense: { creature_types: [celestial, fiend, undead], range: 60 }  # lists them by type and direction
+```
+
+These run from `/combat use <id>` on your turn (spending the action or bonus action) and from
+`/character use <id>` outside a fight. A rolled heal gets the usual three roll buttons. Nothing is
+spent until the feature actually happens.
+
+**Every activated feature spends what its `activation` says**: `action` or `bonus_action`. It's refused
+if that's already used this turn. (Rage used to be free.)
 
 `features_by_level:` is **display text only**: the level-by-level feature list on the class tile.
 Its `type:`, `uses:` and `damage:` keys are descriptive and drive nothing. Put mechanics in `features:`.

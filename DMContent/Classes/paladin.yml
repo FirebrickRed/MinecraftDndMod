@@ -40,6 +40,18 @@ spellcasting:
     4: [0,0,0,0,0,0,0,0,0,0,0,0,1,1,2,2,3,3,3,3]
     5: [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,2,2]
   slot_recovery: long_rest
+features:
+  # #229: /combat use <id> on your turn, or /character use <id> outside a fight.
+  - id: lay_on_hands
+    name: Lay on Hands
+    activation: action
+    cost: { resource: lay_on_hands }        # spends as many points as you heal
+    heal: { from_pool: true, range: 5, not: [undead, construct] }
+  - id: divine_sense
+    name: Divine Sense
+    activation: action
+    cost: { resource: divine_sense, amount: 1 }
+    sense: { creature_types: [celestial, fiend, undead], range: 60 }
 features_by_level:
   1:
     - name: Divine Sense

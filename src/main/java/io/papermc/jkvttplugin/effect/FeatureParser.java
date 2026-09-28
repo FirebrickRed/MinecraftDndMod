@@ -35,7 +35,9 @@ public final class FeatureParser {
     private static final List<String> BOOLEAN_FLAGS = List.of(
             "reroll_natural_1",  // Halfling Lucky — reroll a natural 1 on a d20
             "extra_crit_die",    // Half-Orc Savage Attacks — one extra weapon die on a melee crit
-            "endure_below_1");   // Half-Orc Relentless Endurance — drop to 1 HP instead of 0, 1×/long rest
+            "endure_below_1",    // Half-Orc Relentless Endurance — drop to 1 HP instead of 0, 1×/long rest
+            "offhand_ability_damage",   // Two-Weapon Fighting style — the off-hand attack adds its ability modifier
+            "reroll_low_damage");       // Great Weapon Fighting — reroll 1s and 2s on a two-handed melee weapon's damage
 
     public static List<Feature> parseFeatures(Object node) {
         List<Feature> out = new ArrayList<>();
@@ -80,8 +82,22 @@ public final class FeatureParser {
 
             FeatureAttack attack = m.get("attack") instanceof Map<?, ?> attackMap ? FeatureAttack.parse(attackMap) : null;
 
+            // heal: { dice: 1d10, add_level: true } (Second Wind) | { from_pool: true, range: 5, not: [undead] } (Lay on Hands)
+            Feature.Heal heal = null;
+            if (m.get("heal") instanceof Map<?, ?> h) {
+                heal = new Feature.Heal(ParseUtil.asString(h.get("dice"), null), ParseUtil.asBoolean(h.get("add_level"), false),
+                        ParseUtil.asBoolean(h.get("from_pool"), false), ParseUtil.asInt(h.get("range"), 0),
+                        new HashSet<>(ParseUtil.normalizeStringList(h.get("not"))));
+            }
+            // sense: { creature_types: [celestial, fiend, undead], range: 60 } (Divine Sense)
+            Feature.Sense sense = null;
+            if (m.get("sense") instanceof Map<?, ?> s) {
+                sense = new Feature.Sense(new HashSet<>(ParseUtil.normalizeStringList(s.get("creature_types"))),
+                        ParseUtil.asInt(s.get("range"), 60));
+            }
+
             out.add(new Feature(id, name, activation, target, costResource, costAmount, apply,
-                    action, grantedMax, grantedByProf, grantedRecovery, attack));
+                    action, grantedMax, grantedByProf, grantedRecovery, attack).withHealAndSense(heal, sense));
         }
         return out;
     }
@@ -142,7 +158,23 @@ public final class FeatureParser {
         UnarmedStrike unarmedStrike = null;
         WeaponAbility weaponAbility = null;
         int maxHpPerLevel = 0;
+        int attackBonus = 0, acBonus = 0;
+        String attackBonusWhen = null;
+        boolean acBonusNeedsArmor = false;
+        List<String> sneakDice = List.of();
         if (apply.get("effects") instanceof Map<?, ?> e) {
+            // attack_bonus: { amount: 2, when: ranged }   (Archery)
+            if (e.get("attack_bonus") instanceof Map<?, ?> ab) {
+                attackBonus = ParseUtil.asInt(ab.get("amount"), 0);
+                attackBonusWhen = ParseUtil.asString(ab.get("when"), null);
+            }
+            // ac_bonus: { amount: 1, requires: [armor] }   (Defense)
+            if (e.get("ac_bonus") instanceof Map<?, ?> acb) {
+                acBonus = ParseUtil.asInt(acb.get("amount"), 0);
+                acBonusNeedsArmor = ParseUtil.normalizeStringList(acb.get("requires")).contains("armor");
+            }
+            // sneak_attack: { dice_by_level: [1d6, 1d6, 2d6, …] }
+            if (e.get("sneak_attack") instanceof Map<?, ?> sa) sneakDice = ParseUtil.normalizeStringList(sa.get("dice_by_level"));
             resistances.addAll(ParseUtil.normalizeStringList(e.get("resistance")));
             advantageOn.addAll(ParseUtil.normalizeStringList(e.get("advantage_on")));
             disadvantageOn.addAll(ParseUtil.normalizeStringList(e.get("disadvantage_on")));
@@ -164,6 +196,7 @@ public final class FeatureParser {
 
         return new ActiveEffect(featureId, featureName, resistances, advantageOn, disadvantageOn,
                 bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks,
-                rounds, maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel);
+                rounds, maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel)
+                .withBonuses(attackBonus, attackBonusWhen, acBonus, acBonusNeedsArmor, sneakDice);
     }
 }

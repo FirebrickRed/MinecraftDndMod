@@ -693,6 +693,16 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     upcasts and spends that slot — the spellbook's "⬆ Casting at 2nd level" fills it in. `/combat cast` used to spend nothing at all
     (the spellbook menu deducted the slot, and routing to the command skipped it), so a 1st-level
     spell in a fight was free. The spellbook menu now only *fills a command*; it consumes nothing.
+  - **Level-1 class features (#229):** a custom choice option can `grants: { features: [...] }`
+    (inline Effect Engine features), which `CharacterSheet.getAllFeatures` includes: that's the
+    Fighting Style. New effect primitives: `attack_bonus` (Archery), `ac_bonus` (Defense),
+    `bonus_damage when: melee_one_handed` (Dueling), flags `reroll_low_damage` (GWF, via
+    `TurnState` → `/combat damage autoRoll`) and `offhand_ability_damage` (TWF), and `sneak_attack`
+    (`SneakAttack`: dice added to the hit's own, so a crit doubles them; spent via `resolveAttack`'s
+    `onHit`). A feature with `heal:` / `sense:` (Second Wind, Lay on Hands, Divine Sense) runs through
+    `FeatureUse`, from `/combat use` and from `/character use` out of combat. `/combat use` spends the
+    action / bonus action a feature's `activation` says. The dice roller takes several groups
+    ("1d8+1d6+3").
   - **Bonus actions (#176):** `/combat bonusAction` with no argument lists what this character can
     actually do — bonus-action spells, features with `activation: bonus_action`, an off-hand attack
     when dual-wielding, a monk's bonus unarmed strike — each filling a command rather than firing it.

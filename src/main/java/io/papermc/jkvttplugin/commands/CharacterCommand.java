@@ -43,7 +43,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final ViewSheetCommand viewExec = new ViewSheetCommand();
     private final GiveSheetCommand giveExec = new GiveSheetCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "give", "delete", "loot", "check", "cast", "damage", "drink", "reply");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "give", "delete", "loot", "check", "cast", "use", "damage", "drink", "reply");
     private final DrinkCommand drinkExec = new DrinkCommand();
 
     @Override
@@ -99,6 +99,9 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "cast" -> {
                 return handleCast(sender, rest);
+            }
+            case "use" -> {
+                return handleUse(sender, rest);
             }
             case "drink" -> {
                 return drinkExec.onCommand(sender, cmd, label, rest);
@@ -447,6 +450,53 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         CharacterSheetManager.deleteCharacter(sheet.getPlayerId(), sheet.getCharacterId());
     }
 
+    /**
+     * {@code /character use <feature> [who] [points | roll words]}: a feature outside a fight (#229):
+     * Second Wind, Lay on Hands, Divine Sense. In a fight it's {@code /combat use}, which keeps turns.
+     */
+    private boolean handleUse(CommandSender sender, String[] rest) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage(Component.text("Only players use features.", NamedTextColor.RED));
+            return true;
+        }
+        if (io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(player.getUniqueId()) != null) {
+            String cmd = "/combat use " + String.join(" ", rest);
+            player.sendMessage(Component.text("You're in a fight: use it on your turn with ", NamedTextColor.YELLOW)
+                    .append(Component.text("[" + cmd.trim() + "]", NamedTextColor.GREEN, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                            .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))));
+            return true;
+        }
+        var target = io.papermc.jkvttplugin.combat.CombatTargets.forPlayer(player);
+        if (target == null) {
+            player.sendMessage(Component.text("You have no active character.", NamedTextColor.RED));
+            return true;
+        }
+        CharacterSheet sheet = target.combatant().getCharacterSheet();
+        List<String> usable = usableFeatures(sheet);
+        if (rest.length == 0) {
+            player.sendMessage(Component.text("Usage: /character use <feature> …   You have: "
+                    + (usable.isEmpty() ? "nothing to use outside a fight" : String.join(", ", usable)), NamedTextColor.YELLOW));
+            return true;
+        }
+        var feature = sheet.getFeature(rest[0]);
+        if (feature == null || !io.papermc.jkvttplugin.combat.FeatureUse.handles(feature)) {
+            player.sendMessage(Component.text(feature == null ? "You have no feature '" + rest[0] + "'."
+                    : feature.getName() + " is for a fight: /combat use " + feature.getId(), NamedTextColor.RED));
+            return true;
+        }
+        io.papermc.jkvttplugin.combat.FeatureUse.use(player, target.combatant(), null, feature,
+                Arrays.copyOfRange(rest, 1, rest.length));
+        return true;
+    }
+
+    /** The features this character can use with /character use (their ids, for Tab). */
+    private static List<String> usableFeatures(CharacterSheet sheet) {
+        List<String> out = new ArrayList<>();
+        if (sheet == null) return out;
+        for (var f : sheet.getAllFeatures()) if (io.papermc.jkvttplugin.combat.FeatureUse.handles(f)) out.add(f.getId());
+        return out;
+    }
+
     private void sendUsage(CommandSender sender) {
         sender.sendMessage(Component.text("Character commands:", NamedTextColor.GOLD));
         sender.sendMessage(Component.text("  /character create           ", NamedTextColor.YELLOW)
@@ -455,6 +505,8 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text("view a character sheet", NamedTextColor.GRAY)));
         sender.sendMessage(Component.text("  /character list             ", NamedTextColor.YELLOW)
                 .append(Component.text("list your characters", NamedTextColor.GRAY)));
+        sender.sendMessage(Component.text("  /character use <feature>    ", NamedTextColor.YELLOW)
+                .append(Component.text("Second Wind, Lay on Hands, Divine Sense outside a fight", NamedTextColor.GRAY)));
         if (DMManager.isDM(sender)) {
             sender.sendMessage(Component.text("  /character create <player>  ", NamedTextColor.AQUA)
                     .append(Component.text("(DM) open creation for a player", NamedTextColor.GRAY)));
@@ -477,6 +529,29 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         String sub = args[0].toLowerCase();
         String[] rest = Arrays.copyOfRange(args, 1, args.length);
         switch (sub) {
+            case "use" -> {
+                CharacterSheet sheet = sender instanceof Player p
+                        ? io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(p) : null;
+                if (rest.length == 1) {
+                    List<String> out = new ArrayList<>();
+                    for (String id : usableFeatures(sheet)) if (id.startsWith(rest[0].toLowerCase())) out.add(id);
+                    return out;
+                }
+                if (rest.length == 2 && sheet != null) {
+                    var f = sheet.getFeature(rest[0]);
+                    if (f != null && f.getHeal() != null && f.getHeal().fromPool()) {
+                        return io.papermc.jkvttplugin.combat.CombatTargets.suggestions(rest[1]);
+                    }
+                    if (f != null && f.getHeal() != null) {
+                        List<String> out = new ArrayList<>();
+                        for (String w : List.of("autoRoll", "manualRoll", "total")) {
+                            if (w.toLowerCase().startsWith(rest[1].toLowerCase())) out.add(w);
+                        }
+                        return out;
+                    }
+                }
+                return List.of();
+            }
             case "view" -> {
                 return viewExec.onTabComplete(sender, command, alias, rest);
             }
