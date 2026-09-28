@@ -61,6 +61,7 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new SpellFocusListener(this), this);
         Bukkit.getPluginManager().registerEvents(new ArmorEquipListener(this), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.character.CharacterBody(), this); // Small characters are small
+        io.papermc.jkvttplugin.character.CharacterSight.startViewLimit(); // darkvision range in the dark (#148)
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.ConsumableListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.listeners.ContentItemGuard(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.GearChangeNotifier(), this);

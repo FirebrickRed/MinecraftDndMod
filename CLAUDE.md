@@ -619,7 +619,7 @@ Menu clicks are handled in `MenuClickListener.onMenuClick()` via switch on `Menu
 ### Racial Traits (Issue #51)
 - ✅ Innate spellcasting (cantrips and leveled spells)
 - ✅ Usage tracking with recovery (long rest, short rest, proficiency bonus)
-- ✅ Darkvision, movement speeds (swimming, flying, climbing); darkvision gives Minecraft night vision (#148, `CharacterSight`, applied with the body in `CharacterBody.apply`), and a possessing DM gets the creature's (entity `darkvision:`)
+- ✅ Darkvision, movement speeds (swimming, flying, climbing); darkvision gives Minecraft night vision (#148, `CharacterSight`, applied with the body in `CharacterBody.apply`), and a possessing DM gets the creature's (entity `darkvision:`). In the dark (light ≤ 7 at eye level) the render distance also drops to the darkvision range in chunks, min 2 (`sight.darkvision_view_limit`)
 - ✅ Damage resistances
 - ✅ Weapon and armor proficiencies
 - ✅ Skill proficiencies

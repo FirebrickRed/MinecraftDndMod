@@ -340,6 +340,10 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
 - [ ] As a DM, possess `skeleton` (darkvision 60) → you see in the dark; possess `wolf` → you don't; let
       go → back to your own character's sight (none if you have no character).
+- [ ] As the dwarf, walk into a dark cave (or stand outside at night): after ~3 s the world beyond ~2 chunks
+      fogs out. Step into torchlight or daylight → full view distance comes straight back. A human in the same
+      cave keeps full distance (they just see darkness). Tell me if 2 chunks feels too tight or the switch
+      too jumpy; `sight.darkvision_view_limit: false` turns it off.
 
 ## Prepared spells (#218)
 

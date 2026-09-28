@@ -45,6 +45,7 @@ public final class PluginConfig {
     private static ThievesToolsBreak thievesToolsBreak = ThievesToolsBreak.ON_FAIL; // #210, BG3-style default
     private static boolean annotationGlow = true;     // outline annotated blocks for the annotating DM
     private static int annotationGlowRadius = 24;
+    private static boolean darkvisionViewLimit = true; // #148: render distance ~ darkvision range, in the dark
 
     private PluginConfig() {}
 
@@ -108,7 +109,13 @@ public final class PluginConfig {
         };
         annotationGlow = cfg.getBoolean("objects.annotation_glow", true);
         annotationGlowRadius = Math.max(4, Math.min(64, cfg.getInt("objects.annotation_glow_radius", 24)));
+
+        // In the dark, a darkvision character sees about as far as their darkvision (#148).
+        darkvisionViewLimit = cfg.getBoolean("sight.darkvision_view_limit", true);
     }
+
+    /** In the dark, cap a darkvision character's render distance to its range (#148). */
+    public static boolean isDarkvisionViewLimit() { return darkvisionViewLimit; }
 
     /** Which blocks give players the [Open it] / [Ask for a check] prompt (#185). */
     public static InteractionPrompt getInteractionPrompt() { return interactionPrompt; }
