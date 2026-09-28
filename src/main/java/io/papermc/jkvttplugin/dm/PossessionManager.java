@@ -216,19 +216,12 @@ public class PossessionManager {
 
     // ==================== HEIGHT / AIM HIGHLIGHT ====================
 
-    /** Scale the DM to roughly the creature's size so a held weapon lines up with the body. */
+    /** Scale the DM to the creature's size so a held weapon lines up with the body (Size.scale, one table). */
     private static void applyScale(Player dm, String size) {
         AttributeInstance attr = dm.getAttribute(Attribute.SCALE);
         if (attr == null) return;
-        double scale = switch (size == null ? "medium" : size.toLowerCase()) {
-            case "tiny" -> 0.4;
-            case "small" -> 0.6;
-            case "large" -> 2.0;
-            case "huge" -> 3.0;
-            case "gargantuan" -> 4.0;
-            default -> 1.0; // medium
-        };
-        attr.setBaseValue(scale);
+        attr.setBaseValue(io.papermc.jkvttplugin.data.model.enums.Size.parseOr(size,
+                io.papermc.jkvttplugin.data.model.enums.Size.MEDIUM).scale());
     }
 
     /**

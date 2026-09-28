@@ -19,6 +19,7 @@ public class ActiveCharacterTracker {
                 PersistentDataType.STRING,
                 characterId.toString()
         );
+        CharacterBody.apply(player); // their body takes the new character's size
     }
 
     public static UUID getActiveCharacterId(Player player) {

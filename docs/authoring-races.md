@@ -76,7 +76,7 @@ five proficiency lists, `damage_resistances`, `innate_spells`, `player_choices` 
 work as on the race. Movement and vision **override** the race when set: `speed` and the other
 speeds apply when above 0, and `darkvision` replaces the race's value.
 
-A subrace has **no** `features` or `conditional_advantages`. Put those on
+A subrace has **no** `features` (`conditional_advantages` work on subraces too: Stout Halfling). Put features on
 the race, or they're silently ignored.
 
 ## Innate spells

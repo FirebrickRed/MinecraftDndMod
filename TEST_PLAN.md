@@ -16,9 +16,47 @@ fails), copy `build/libs/*.jar` into the server's `plugins/`, restart. Load the 
 
 ---
 
+# Paper 26.2 upgrade (branch `paper-26.2`, #211)
+
+Only what the upgrade changed or can plausibly break; the rest of this plan covers everything else.
+Server on **Java 25**, the jar from `jkvttplugin-paper26\build\libs\`. When these pass, the branch
+merges into main.
+
+- [ ] **Resource pack:** `pack.mcmeta` has `"min_format": 88, "max_format": 88`. The server prompts
+      for it, and it loads without a "made for an older version" warning.
+- [ ] **Models render, none purple:** race and class tiles in `/character create`, a spawned kobold
+      (its head model), and The Kindler.
+- [ ] **Time tool** (it now uses the renamed day-cycle game rule): Stop the Clock → the sun stops;
+      Start → it moves; `/dm time` says running or stopped correctly.
+- [ ] **Annotate form** (a dialog, Paper API): right-click a chest with the Annotate tool → the form
+      opens; Save applies it.
+- [ ] **Shop screen** opens, titled with the merchant's name; buying and selling work.
+- [ ] **Chat input:** the name step in creation, and a Message spell's words.
+- [ ] **Item tooltips:** no vanilla "attack damage" / "Dyed" / "No Effects" lines on D&D items.
+- [ ] **Combat basics:** left-click a creature to get the attack prompt; a real bow shot and loading a
+      crossbow are both refused; the turn glow shows; a killed creature tips over.
+- [ ] **Possession:** you go invisible and stand at the creature's size; Let go → back to your own
+      size, still invisible if you were before.
+- [ ] **Your datapack:** visit each custom dimension; Asteria Glade and Xegrurn keep their fixed time
+      of day; Xegrurn has its ash. No datapack errors in the server log on startup.
+- [ ] **Restart:** a spawned creature and a character's HP survive a restart.
+
+---
+
 # Part 1 — You alone, as the DM
 
 ## Character creation
+
+### Size, halflings and sorcerers
+- [ ] **A halfling is small:** create one → your body shrinks to about half a human's height. Log out
+      and back in → still small. Switch to a Medium character (`/character view` → set active) →
+      back to normal. Die and respawn → still small.
+- [ ] A **genasi who picks Small** is small; one who picks Medium isn't.
+- [ ] Doorways and 1-block gaps feel right at that size, and the camera isn't strange (#193: the
+      0.6 scale is a guess).
+- [ ] **Stout halfling:** a poison save shows advantage (Stout Resilience).
+- [ ] **Sorcerer origins:** Divine Soul shows a **Divine Affinity** choice (Good → Cure Wounds in the
+      spellbook); Draconic Bloodline shows **Dragon Ancestor**; Lunar and Shadow show their choices.
 
 - [ ] Cleric's Spells tab, bottom label → "You prepare these from your class's full spell list"
       (it no longer promises swapping on a long rest; that's #218).
