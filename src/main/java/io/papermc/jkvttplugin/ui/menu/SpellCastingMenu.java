@@ -40,6 +40,15 @@ public class SpellCastingMenu {
 
         int defaultLevel = (hasCantrips && !hasLeveledSpells) ? 0 : 1;
         player.openInventory(build(sheet, defaultLevel));
+        // Nothing prepared looks like a broken spellbook (every spell does nothing), so say it (#218).
+        if (io.papermc.jkvttplugin.character.PreparedSpells.kind(sheet) != io.papermc.jkvttplugin.character.PreparedSpells.Kind.NONE
+                && io.papermc.jkvttplugin.character.PreparedSpells.prepared(sheet).isEmpty()
+                && !io.papermc.jkvttplugin.character.PreparedSpells.candidates(sheet).isEmpty()) {
+            player.sendMessage(Component.text("📖 You have no spells prepared, so only cantrips (and rituals) can be cast. ",
+                    NamedTextColor.LIGHT_PURPLE).append(io.papermc.jkvttplugin.character.PreparedSpells.canChangeNow(sheet)
+                    ? PrepareSpellsMenu.button(sheet)
+                    : Component.text(io.papermc.jkvttplugin.character.PreparedSpells.whenYouCanChange(), NamedTextColor.GRAY)));
+        }
     }
 
     public static Inventory build(CharacterSheet sheet, int selectedSpellLevel) {
@@ -198,7 +207,7 @@ public class SpellCastingMenu {
             spellItem.setItemMeta(meta);
 
             if (unprepared) {
-                if (spell.isRitual()) ItemUtil.tagAction(spellItem, MenuAction.CAST_AS_RITUAL, spell.getId());
+                ItemUtil.tagAction(spellItem, spell.isRitual() ? MenuAction.CAST_AS_RITUAL : MenuAction.SPELL_NOT_PREPARED, spell.getId());
             } else {
                 ItemUtil.tagAction(spellItem, MenuAction.CAST_SPELL, spell.getName() + ":" + selectedLevel);
             }

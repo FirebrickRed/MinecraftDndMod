@@ -210,8 +210,17 @@ subclasses:
         title: Dragon Ancestor
         type: custom
         choose: 1
-        options: ["Black (acid)", "Blue (lightning)", "Brass (fire)", "Bronze (lightning)", "Copper (acid)",
-                  "Gold (fire)", "Green (poison)", "Red (fire)", "Silver (cold)", "White (cold)"]
+        options:
+          - { label: "Black (acid)", description: "Chromatic. Acid is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to acid spell damage and can give you acid resistance." }
+          - { label: "Blue (lightning)", description: "Chromatic. Lightning is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to lightning spell damage and can give you lightning resistance." }
+          - { label: "Brass (fire)", description: "Metallic. Fire is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to fire spell damage and can give you fire resistance." }
+          - { label: "Bronze (lightning)", description: "Metallic. Lightning is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to lightning spell damage and can give you lightning resistance." }
+          - { label: "Copper (acid)", description: "Metallic. Acid is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to acid spell damage and can give you acid resistance." }
+          - { label: "Gold (fire)", description: "Metallic. Fire is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to fire spell damage and can give you fire resistance." }
+          - { label: "Green (poison)", description: "Chromatic. Poison is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to poison spell damage and can give you poison resistance." }
+          - { label: "Red (fire)", description: "Chromatic. Fire is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to fire spell damage and can give you fire resistance." }
+          - { label: "Silver (cold)", description: "Metallic. Cold is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to cold spell damage and can give you cold resistance." }
+          - { label: "White (cold)", description: "Chromatic. Cold is your dragon magic's damage type: from 6th level, Elemental Affinity adds your CHA to cold spell damage and can give you cold resistance." }
     languages:
       - Draconic
     features_by_level:
@@ -236,11 +245,12 @@ subclasses:
         type: custom
         choose: 1
         options:
-          - { label: Good, grants: { bonus_spells: [cure_wounds] } }
-          - { label: Evil, grants: { bonus_spells: [inflict_wounds] } }
-          - { label: Law, grants: { bonus_spells: [bless] } }
-          - { label: Chaos, grants: { bonus_spells: [bane] } }
-          - { label: Neutrality, grants: { bonus_spells: [protection_from_evil_and_good] } }
+          # The tile lists the granted spell ("Always known: Cure Wounds"); the description says why.
+          - { label: Good, description: "Your divine spark leans toward good.", grants: { bonus_spells: [cure_wounds] } }
+          - { label: Evil, description: "Your divine spark leans toward evil.", grants: { bonus_spells: [inflict_wounds] } }
+          - { label: Law, description: "Your divine spark leans toward law.", grants: { bonus_spells: [bless] } }
+          - { label: Chaos, description: "Your divine spark leans toward chaos.", grants: { bonus_spells: [bane] } }
+          - { label: Neutrality, description: "Your divine spark stands in the balance.", grants: { bonus_spells: [protection_from_evil_and_good] } }
     features_by_level:
       1:
         - "Divine Magic: Your link to the divine allows you to learn spells normally associated with the cleric class. When your Spellcasting feature lets you learn a sorcerer cantrip or a sorcerer spell of 1st level or higher, you can choose the new spell from the cleric spell list or the sorcerer spell list. You must otherwise obey all the restrictions for selecting the spell, and it becomes a sorcerer spell for you."

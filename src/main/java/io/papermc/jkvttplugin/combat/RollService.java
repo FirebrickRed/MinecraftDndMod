@@ -74,7 +74,8 @@ public final class RollService {
         Integer providedRoll = null, providedTotal = null;
         boolean forceAuto = false;
         java.util.List<String> stale = new java.util.ArrayList<>();
-        java.util.List<String> notNumbers = new java.util.ArrayList<>(), missing = new java.util.ArrayList<>();
+        java.util.List<String> notNumbers = new java.util.ArrayList<>(), missing = new java.util.ArrayList<>(),
+                belowOne = new java.util.ArrayList<>();
         for (int i = 0; i < args.length; i++) {
             String a = args[i].toLowerCase();
             if (a.startsWith("--") && !LIVE_FLAGS.contains(a)) stale.add(args[i]);
@@ -84,7 +85,12 @@ public final class RollService {
                 case "manualroll" -> {
                     if (next == null || isRollKeyword(next)) missing.add(args[i]);
                     else if (isDice(next)) forceAuto = true; // a dice expression → let the game roll
-                    else { try { providedRoll = Integer.parseInt(next.trim()); } catch (NumberFormatException e) { notNumbers.add(next); } }
+                    else {
+                        try {
+                            int n = Integer.parseInt(next.trim());
+                            if (n < 1) belowOne.add(next); else providedRoll = n; // no die shows 0
+                        } catch (NumberFormatException e) { notNumbers.add(next); }
+                    }
                 }
                 case "total" -> {
                     if (next == null || isRollKeyword(next)) missing.add(args[i]);
@@ -99,6 +105,7 @@ public final class RollService {
             for (String n : notNumbers) who.sendMessage(Component.text("'" + n + "' isn't a number. manualRoll takes the d20 you rolled "
                     + "(manualRoll 14), total takes your final number (total 19).", NamedTextColor.RED));
             for (String m : missing) who.sendMessage(Component.text(m + " needs a number after it (" + m + " 14).", NamedTextColor.RED));
+            for (String b : belowOne) who.sendMessage(Component.text("manualRoll " + b + "? No die shows less than 1.", NamedTextColor.RED));
         }
         return new RollInput(providedRoll, providedTotal, forceAuto);
     }
@@ -177,6 +184,9 @@ public final class RollService {
             return new RollResult(-1, providedTotal, true, false, false, RollPrompt.yourTotal(providedTotal));
         }
         if (advantage == null) advantage = Advantage.NONE;
+        // A d20 shows 1 to 20. Anything else isn't a roll (manualRoll 0 used to count), so the caller
+        // asks again. (parseInput already told them about 0 or less.)
+        if (providedRoll != null && (providedRoll < 1 || providedRoll > 20)) return null;
 
         Integer d20 = providedRoll;
         String shown = null; // the dice as the game rolled them: "[14]", or "[9, 15] advantage"

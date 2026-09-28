@@ -52,6 +52,13 @@ public class SpellCastingMenuListener implements Listener {
             case VIEW_CANTRIPS -> handleViewCantrips(player, sheet);
             case BREAK_CONCENTRATION -> handleConcentrationClick(player, sheet);
             case OPEN_PREPARE_SPELLS -> io.papermc.jkvttplugin.ui.menu.PrepareSpellsMenu.open(player, sheet);
+            case SPELL_NOT_PREPARED -> {
+                DndSpell spell = SpellLoader.getSpell(payload);
+                player.sendMessage(Component.text((spell != null ? spell.getName() : "That spell") + " isn't prepared. ", NamedTextColor.YELLOW)
+                        .append(io.papermc.jkvttplugin.character.PreparedSpells.canChangeNow(sheet)
+                                ? io.papermc.jkvttplugin.ui.menu.PrepareSpellsMenu.button(sheet)
+                                : Component.text(io.papermc.jkvttplugin.character.PreparedSpells.whenYouCanChange(), NamedTextColor.GRAY)));
+            }
             case CAST_AS_RITUAL -> {
                 // An unprepared ritual in a wizard's spellbook (#218): fill the ritual cast, no slot.
                 player.closeInventory();

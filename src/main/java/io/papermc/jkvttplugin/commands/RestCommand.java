@@ -223,7 +223,20 @@ public class RestCommand implements CommandExecutor, TabCompleter {
         if (options.isEmpty()) return;
         player.sendMessage(Component.text("During this rest you can:", NamedTextColor.GOLD));
         for (Component o : options) player.sendMessage(Component.text("  ").append(o));
-        player.sendMessage(Component.text("  (Until you join a fight or rest again.)", NamedTextColor.DARK_GRAY));
+        // [I'm done]: closes the rest's window and tells the DM this player is ready to move on.
+        Component done = Component.text("[I'm done]", NamedTextColor.GREEN, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(
+                        "Finish your rest: the DM is told you're ready (this closes the options above)")))
+                .clickEvent(net.kyori.adventure.text.event.ClickEvent.callback(a -> {
+                    character.closeShortRest();
+                    player.sendMessage(Component.text("✓ Rest finished. The DM knows you're ready.", NamedTextColor.GREEN));
+                    for (Player dm : io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs()) {
+                        if (!dm.equals(player)) dm.sendMessage(Component.text("✓ " + character.getCharacterName()
+                                + " is done with their " + restType + " rest.", NamedTextColor.GREEN));
+                    }
+                }, net.kyori.adventure.text.event.ClickCallback.Options.builder().uses(1).lifetime(java.time.Duration.ofHours(2)).build()));
+        player.sendMessage(Component.text("  ").append(done)
+                .append(Component.text("  (Open until you join a fight or rest again.)", NamedTextColor.DARK_GRAY)));
     }
 
     @Override

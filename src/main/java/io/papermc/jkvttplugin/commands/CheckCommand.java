@@ -420,7 +420,8 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         RollService.RollResult r = input.isEmpty() ? null
                 : RollService.resolve(input, mod, signed(mod) + "[" + source + "]", false, adv);
         if (r == null) {
-            sender.sendMessage(RollPrompt.line("🎲 " + name + "'s " + label
+            // "You roll for …": a creature's roll is the DM's, and the prompt says so.
+            sender.sendMessage(RollPrompt.line("🎲 You roll for " + name + ": " + label
                             + (dc != null ? ", DC " + dc : "") + (adv.affectsRoll() ? ", " + adv.label() : "") + ":", NamedTextColor.GOLD,
                     base, RollPrompt.d20(adv),
                     signed(mod) + "[" + source + "]"));

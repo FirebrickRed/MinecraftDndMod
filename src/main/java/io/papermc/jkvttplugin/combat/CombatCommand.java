@@ -2704,8 +2704,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (session == null) return;
 
         boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
-        // Players roll their own death saves (trust-based): manualRoll <n>, or autoRoll / nothing to auto-roll.
-        Integer providedRoll = RollService.parseInput(args, player).providedRoll();
+        // Players roll their own death saves: manualRoll <n>, autoRoll, or nothing for the three buttons.
+        RollService.RollInput input = RollService.parseInput(args, player);
+        Integer providedRoll = input.providedRoll() != null ? input.providedRoll() : input.providedTotal(); // nothing's added
         List<String> positional = collectPositionalArgs(args, 1);
 
         // DM may roll for a named downed player; otherwise you roll for yourself.
@@ -2750,7 +2751,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        DeathSaveHandler.rollDeathSave(session, target, providedRoll);
+        if (!DeathSaveHandler.rollDeathSave(session, target, providedRoll, input.forceAuto())) {
+            // No die yet: the same three buttons as every roll, on the line they typed.
+            player.sendMessage(RollPrompt.again(player, "💀 Roll the death save (10 or higher succeeds):", "d20", null));
+            return;
+        }
         target.setRolledDeathSaveThisTurn(true);
     }
 

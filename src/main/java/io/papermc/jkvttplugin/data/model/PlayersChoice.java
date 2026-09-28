@@ -108,6 +108,18 @@ public class PlayersChoice<T> {
         return option == null ? null : grants.get(option.trim().toLowerCase());
     }
 
+    /** A custom option's {@code description:}, shown on its tile (a dragon ancestor's damage type), by option. */
+    private Map<String, String> descriptions = Map.of();
+
+    public PlayersChoice<T> descriptions(Map<String, String> descriptions) {
+        this.descriptions = descriptions == null ? Map.of() : Map.copyOf(descriptions);
+        return this;
+    }
+
+    public String descriptionFor(String option) {
+        return option == null ? null : descriptions.get(option.trim().toLowerCase());
+    }
+
     /** A race's own spell pick (fixed or player-chosen ability): it becomes an innate spell, not a class spell. */
     public boolean isRacialSpellPick() {
         return castingAbility != null || castingAbilityChoiceId != null;

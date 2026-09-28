@@ -752,6 +752,10 @@ public class CharacterCreationMenu {
             status.add(Component.text("Click to select", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
         }
         List<Component> lore = new ArrayList<>(status);
+        // A custom pick says what it means: its description and what it grants (Divine Soul's
+        // "Always known: Cure Wounds", a dragon ancestor's damage type, a fighting style's effect).
+        List<Component> gives = customOptionLore(choice, optionKey);
+        if (!gives.isEmpty()) { lore.add(Component.empty()); lore.addAll(gives); }
         List<Component> existingLore = item.lore();
         if (existingLore != null && !existingLore.isEmpty()) {
             lore.add(Component.empty());
@@ -783,6 +787,46 @@ public class CharacterCreationMenu {
                     choice.getCategory().name() + "|" + choice.getChoiceId() + "|" + optionKey);
         }
         return item;
+    }
+
+    /** What a custom option means: its {@code description:}, then what its {@code grants:} give. Empty for anything else. */
+    private static List<Component> customOptionLore(MergedChoice choice, String optionKey) {
+        List<Component> out = new ArrayList<>();
+        for (PendingChoice<?> pc : choice.getSourcePendingChoices()) {
+            var p = pc.getPlayersChoice();
+            if (p == null || p.getType() != io.papermc.jkvttplugin.data.model.PlayersChoice.ChoiceType.CUSTOM
+                    || !pc.optionKeys().contains(optionKey)) continue;
+            String desc = p.descriptionFor(optionKey);
+            if (desc != null) for (String l : Util.wrapText(desc)) out.add(Component.text(l, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            var g = p.grantsFor(optionKey);
+            if (g != null) {
+                for (String id : g.bonusSpells()) {
+                    DndSpell s = SpellLoader.getSpell(id);
+                    out.add(Component.text("✦ Always known: " + (s != null ? s.getName() : Util.prettify(id))
+                            + (s != null && s.getLevel() > 0 ? " (" + Util.getOrdinal(s.getLevel()) + " level, doesn't use a pick)" : ""),
+                            NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false));
+                }
+                if (!g.expandedSpells().isEmpty()) {
+                    List<String> names = new ArrayList<>();
+                    for (String id : g.expandedSpells()) { DndSpell s = SpellLoader.getSpell(id); names.add(s != null ? s.getName() : Util.prettify(id)); }
+                    for (String l : Util.wrapText("✦ Adds to the spells you may learn: " + String.join(", ", names)))
+                        out.add(Component.text(l, NamedTextColor.LIGHT_PURPLE).decoration(TextDecoration.ITALIC, false));
+                }
+                for (String l : g.languages())
+                    out.add(Component.text("✦ You learn " + io.papermc.jkvttplugin.data.model.enums.LanguageRegistry.displayName(l), NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+                for (String r : g.damageResistances())
+                    out.add(Component.text("✦ Resistance to " + r + " damage", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+                if (g.innateCastingAbility() != null)
+                    out.add(Component.text("✦ Your racial spells use " + Util.prettify(g.innateCastingAbility().name()), NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+                for (var f : g.features()) {
+                    if (!f.hasApply()) continue;
+                    for (String line : f.getApplyTemplate().describe())
+                        out.add(Component.text("✦ " + f.getName() + ": " + line, NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+                }
+            }
+            break;
+        }
+        return out;
     }
 
     /** The human title for a choice (from its YAML {@code title}), or a prettified id fallback. */
@@ -890,12 +934,14 @@ public class CharacterCreationMenu {
         if (levels.isEmpty()) { inv.setItem(22, label("No spells available for this class yet.")); return; }
 
         // Prepared casters (Cleric, Druid) choose their PREPARED spells from the whole list; "known"
-        // casters and the Wizard's spellbook are fixed picks. Either way the count is computed per
-        // class (#113). RAW a prepared caster changes them after a long rest; that isn't built yet
-        // (#218), so the label doesn't promise it.
+        // casters are fixed picks. A wizard picks a SPELLBOOK here and prepares some of it each day
+        // (#218): two different numbers, so the label says which this one is.
+        boolean prepared = "prepared".equalsIgnoreCase(info.getPreparationType());
         boolean preparesFromList = info.getSpellsKnownByLevel() == null || info.getSpellsKnownByLevel().isEmpty();
-        if (preparesFromList && levels.contains(1)) {
-            inv.setItem(49, label("You prepare these from your class's full spell list."));
+        if (prepared && preparesFromList && levels.contains(1)) {
+            inv.setItem(49, label("These are your prepared spells. You can change them after each long rest."));
+        } else if (prepared && levels.contains(1)) {
+            inv.setItem(49, label("This is your spellbook. Each day you prepare some of it (INT modifier + level)."));
         }
 
         int active = session.getActiveSpellLevel();

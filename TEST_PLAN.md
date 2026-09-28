@@ -51,7 +51,7 @@ merges into main.
 ## Character creation
 
 ### Naming a character
-- [ ] Press **Finish** with no name set → the form opens.
+- [X] Press **Finish** with no name set → the form opens.
 
 ### Size, halflings and sorcerers
 - [ ] **A halfling is small:** create one → your body shrinks to about half a human's height. Log out
@@ -68,12 +68,12 @@ merges into main.
 - [ ] **Divine Soul:** the spell step offers cleric spells (Guiding Bolt, Healing Word) next to the
       sorcerer ones; each uses a pick.
 
-- [ ] Cleric's Spells tab, bottom label → "You prepare these from your class's full spell list"
+- [X] Cleric's Spells tab, bottom label → "You prepare these from your class's full spell list"
       (it no longer promises swapping on a long rest; that's #218).
 - [ ] Item tooltips (a weapon, a potion) and condition hovers wrap at the same width as spells.
-- [ ] High Elf: the Wizard Cantrip pick shows each cantrip's full description, like the Spells tab.
-- [ ] Friends (or any spell with a long material component) → the card stays narrow; the component wraps.
-- [ ] **Languages from two sources** (High Elf + Noble, one each): pick two, then keep picking → the
+- [X] High Elf: the Wizard Cantrip pick shows each cantrip's full description, like the Spells tab.
+- [X] Friends (or any spell with a long material component) → the card stays narrow; the component wraps.
+- [X] **Languages from two sources** (High Elf + Noble, one each): pick two, then keep picking → the
       replaced language alternates (oldest goes), not the same slot every time.
 
 ### Content audit (races, classes, backgrounds vs the PHB)
@@ -86,17 +86,17 @@ merges into main.
       the tile reads "✔ Longsword + Warhammer", and you get both.
 - [ ] Same, pick one then press Back → the tile says "So far: Longsword + …" and Finish still wants it;
       click it → you carry on with the second pick.
-- [ ] "Any Martial Weapon + Shield" is still one pick. So is the cleric's "Light Crossbow + Bolt x20 /
+- [X] "Any Martial Weapon + Shield" is still one pick. So is the cleric's "Light Crossbow + Bolt x20 /
       any simple weapon", and the barbarian's "Handaxe x2" gives two handaxes with no pick at all.
 - [ ] **Ranger:** Favored Enemy, a language for it, and Natural Explorer picks; two simple melee weapons
       when you take that option; 20 arrows in one stack.
 - [ ] **Artificer:** at level 1 it prepares INT-modifier spells (one fewer than before); two simple
       weapon picks.
-- [ ] **Druid** knows Druidic, a **rogue** Thieves' Cant; neither shows up in any "pick a language" list.
-- [ ] **Dragonborn:** STR +2 and CHA +1, no ability pick; the breath weapon comes back on a short rest.
+- [X] **Druid** knows Druidic, a **rogue** Thieves' Cant; neither shows up in any "pick a language" list.
+- [X] **Dragonborn:** STR +2 and CHA +1, no ability pick; the breath weapon comes back on a short rest.
 - [ ] **Hexblade warlock:** a shield in the off hand, no "not proficient" warning.
 - [ ] **Bard** with CHA 10: Bardic Inspiration shows 1 use (it used to be missing).
-- [ ] **Knowledge cleric:** after the two skills, an expertise pick offering those skills.
+- [X] **Knowledge cleric:** after the two skills, an expertise pick offering those skills.
 
 ## Finished characters
 
@@ -117,7 +117,7 @@ Finish the combo, then look at the sheet and your inventory.
 
 Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX rolls.
 
-- [ ] **Mountain dwarf wizard:** scale mail fine, chain mail penalized.
+- [X] **Mountain dwarf wizard:** scale mail fine, chain mail penalized.
 
 ## Casting from the spellbook and `/character cast`
 
@@ -160,14 +160,14 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
 - [ ] Touch spells reach one block further than before in a fight (5 ft of slack, same as out of one).
 
 ### After the deprecation clean-up (replaced Paper APIs)
-- [ ] **Shop:** `/dm entity trade Balin` opens the trading screen titled "Balin"; buy and sell once
+- [X] **Shop:** `/dm entity trade Balin` opens the trading screen titled "Balin"; buy and sell once
       (the screen reopens with updated stock).
-- [ ] **Chat input:** the character-name step in creation takes your typed name; a Message spell
+- [X] **Chat input:** the character-name step in creation takes your typed name; a Message spell
       takes the words you type.
 - [ ] **Rage** still tints red (the Strength effect) and it goes when the rage ends.
-- [ ] **Item tooltips:** a sword, leather armor, a shield and a potion show only the D&D lines, no
+- [X] **Item tooltips:** a sword, leather armor, a shield and a potion show only the D&D lines, no
       vanilla "attack damage" / "Dyed" / banner / "No Effects" lines.
-- [ ] **Right-click with the sheet or a spell focus** on a chest, door, lever and crafting table uses
+- [X] **Right-click with the sheet or a spell focus** on a chest, door, lever and crafting table uses
       the block; on grass or stone it opens the sheet / spellbook (a fence now counts as plain block).
 - [ ] **Bow in combat:** draw and release a real bow shot → refused, nothing fires. Count your
       arrows before and after: does a refused draw cost one? (The old "give it back" call never
@@ -238,8 +238,8 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
 - [ ] Down yourself, fail three death saves → "has DIED", turn skipped.
 - [ ] `/combat finished`, new fight → still `[DEAD]`, still skipped.
 - [ ] Dead: `/dm adjust <you> hp +10` refuses.
-- [ ] Dead: `/dm rest <character> long` refuses.
-- [ ] Dead: `/dm rest <you> long` refuses.
+- [X] Dead: `/dm rest <character> long` refuses.
+- [X] Dead: `/dm rest <you> long` refuses.
 - [ ] Dead: the sheet's HP slot shows a skull "DEAD".
 - [ ] `/dm revive <you>` → 1 HP, turns return.
 - [ ] `/dm adjust <c> hp -<current + max HP>` → dies outright (massive damage).
@@ -249,14 +249,15 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
 - [ ] As DM, right-click the body → [Revive] and [Remove body].
 - [ ] You can't punch the body or take the head.
 - [ ] Walk away until the chunk unloads, `/dm revive <c>`, walk back → the body is gone.
-- [ ] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP".
+- [X] **Long rest at 0 HP** (stable, not dead) → refused, "needs at least 1 HP".
 - [ ] Then `/dm adjust <c> hp +1` → the long rest works.
 - [ ] A DM already in spectator mode for their own reasons isn't pulled out of it by deaths.
 
 ## Attacks outside a fight
 
 - [ ] After Start combat, on the caster's first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
-- [ ] Sacred Flame with Let it happen → the DM sees the DC, **[Call the save]**, **[Failed: damage]** / **[Saved: …]**.
+- [ ] Sacred Flame with Let it happen → the DM sees the DC, **[Roll their save]**, **[Failed: damage]** / **[Saved: …]**.
+      [Roll their save] → "🎲 You roll for <creature>: Dexterity save, DC 13" with the three buttons.
 - [ ] **[Let it happen]** a Sacred Flame → you get **[cast it]**, not a d20 prompt (a save spell
       doesn't roll to hit).
 - [ ] `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Ask the DM]**.
@@ -266,7 +267,7 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
 - [ ] **Shocking Grasp at someone 20 ft away** → refused for range straight away; the DM is **not** asked
       to start a fight first.
 - [ ] Burning Hands (or any save spell) at a creature out of combat → the DM line shows its bonus
-      (`DC 13 DEX save (+1[DEX])`) and **[Call the save]**, which gives you the roll buttons graded vs the DC.
+      (`DC 13 DEX save (+1[DEX])`) and **[Roll their save]**, which gives you the roll buttons graded vs the DC.
 - [ ] Any "✨ Zek casts Magic Missile at …" line (in or out of a fight, and a plain `/character cast`
       like Light) → hover the spell name → its description.
 
@@ -302,9 +303,26 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Then [Roll it] + Enter, as a Halfling rolling a 1 → Lucky rerolls it.
 - [ ] `/combat action attack` → says "left-click your target" (it said right-click).
 
+## Fifth-round fixes
+
+- [ ] **Divine Soul:** hover each affinity → "✦ Always known: Cure Wounds (1st level, doesn't use a pick)" etc.
+- [ ] **Draconic Bloodline:** hover each dragon → its damage type and what it does from 6th level.
+- [ ] **Fighter:** hover a Fighting Style → "✦ Archery: +2 to hit (ranged)" and so on.
+- [ ] **Paladin:** pick "Martial Weapon + Shield" as a longsword → only that tile lights up.
+- [ ] **Ranger:** Favored Enemy options read "Dragons (learn Draconic)"; no separate language pick. Finished →
+      Draconic is on the sheet. Beasts → no extra language.
+- [ ] **Wizard with nothing prepared:** open the spellbook → "📖 You have no spells prepared…" [Prepare spells];
+      click a 1st-level spell → "isn't prepared".
+- [ ] **Death save:** `/combat deathsave` (with or without your name) → the three buttons, not a roll.
+      `manualRoll 0` → "No die shows less than 1", nothing rolled. `autoRoll` → the game rolls.
+- [ ] Any d20 roll with `manualRoll 25` → asked again, not accepted.
+- [ ] **[I'm done]** after a rest → "Rest finished"; the DM gets "✓ <name> is done with their long rest";
+      the rest options (Hit Dice, prepare) are closed.
+- [ ] **Creation, wizard spell step:** the label says "This is your spellbook. Each day you prepare some of it".
+
 ## Prepared spells (#218)
 
-- [ ] **New wizard:** finishing creation says "Your spellbook holds 6 spells; prepare N of them" with
+- [X] **New wizard:** finishing creation says "Your spellbook holds 6 spells; prepare N of them" with
       **[Prepare spells]**. The menu shows the 6, "Prepared: 0/N"; click to prepare up to N, one more
       says "unprepare one first".
 - [ ] **Wizard spellbook:** an unprepared spell reads "In your spellbook, not prepared" and clicking it does
@@ -515,6 +533,42 @@ Set these up, `/stop`, start the server, then check:
 
 # Playtest notes
 (`→` lines are Claude's status. New notes go at the top.)
+
+**2026-09-28 (fifth round)**
+
+Divine Soul and Dragon Ancestor picks say too little.
+  → a custom pick's tile now lists what it gives ("✦ Always known: Cure Wounds (1st level…)", a
+    resistance, a fighting style's effect) and an optional `description:` line. Each dragon says its
+    damage type and what it does from 6th level.
+Paladin: "Martial Weapon + Shield" and "two martial weapons" both light up.
+  → a bug: the menu counted any two-part pick as filling any two-part option. It now checks the pick
+    came from that option. Test added.
+Ranger's language should follow the favored enemy.
+  → each favored enemy option now teaches its language ("Dragons (learn Draconic)"); beasts, oozes
+    and plants don't speak (PHB: "if they speak one at all"). Humanoids are split by language. The
+    separate language pick is gone.
+Couldn't cast 1st-level spells: hadn't prepared any.
+  → opening the spellbook with nothing prepared now says so with [Prepare spells], and clicking an
+    unprepared spell says "isn't prepared" instead of doing nothing.
+Start combat with Fire Bolt, then change spells on your turn?
+  → already allowed: "Your opening move: Fire Bolt [do it]" is a suggestion, not a lock. Your turn is
+    yours. (Many tables let the attack that started the fight resolve first; that's the DM's call.)
+Acid Splash / [Call the save] prompted me to roll, confusing.
+  → that roll is the DM rolling the creature's save. The button is now **[Roll their save]** (a
+    player target: **[Ask them to save]**), and the prompt says "🎲 You roll for Goblin: Dexterity save, DC 13".
+A "done with my rest" button.
+  → added: the rest options end with **[I'm done]**, which closes them and tells the DM you're ready.
+Particles for every spell, like the breath weapon.
+  → ticketed as #230 (a `visual:` per spell, defaults by damage type; area aiming out of combat too).
+Death saves should use the three buttons; manualRoll 0 accepted; two nat 20s?
+  → a typed `/combat deathsave` (with or without your name) always let the game roll. It now gives the
+    three buttons unless you add autoRoll. A d20 must be 1-20 now ("manualRoll 0? No die shows less
+    than 1"), everywhere. The nat 20s were real rolls (about 1 in 400), nothing hardcoded.
+Prepared 6 after creation, only 3 after a long rest.
+  → both right, for a wizard: creation picks your **spellbook** (6); each day you **prepare** INT
+    modifier + level of it (3 with INT 14). The creation spell step now says "This is your spellbook.
+    Each day you prepare some of it (INT modifier + level)." (If this was a cleric, tell me: that
+    would be a bug.)
 
 **2026-09-28 (fourth round)**
 

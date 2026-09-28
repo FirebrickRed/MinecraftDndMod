@@ -78,6 +78,45 @@ class ContentAuditTest {
         assertFalse(two.isPartlyFilledBy(half.fillFirstOpenSlot(EquipmentOption.item("dagger"))), "a dagger isn't a martial weapon");
     }
 
+    /**
+     * The paladin's two weapon options: picking "Martial Weapon + Shield" as a longsword and shield
+     * must light only that tile, not "two martial weapons" too (same size, not the same option).
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void onlyThePickedBundleIsResolved() {
+        var s = session("human", null, "paladin", "soldier");
+        var pc = (io.papermc.jkvttplugin.data.model.PendingChoice) choice(s, "class_equipment_1");
+        List<EquipmentOption> opts = (List<EquipmentOption>) pc.getPlayersChoice().getOptions();
+        EquipmentOption withShield = opts.stream().filter(o -> o.openSlots() == 1).findFirst().orElseThrow();
+        EquipmentOption twoWeapons = opts.stream().filter(o -> o.openSlots() == 2).findFirst().orElseThrow();
+        pc.toggleOption(withShield.fillFirstOpenSlot(EquipmentOption.item("longsword")), java.util.Set.of());
+
+        var merged = merged(s).stream().filter(m -> m.getSourcePendingChoices().contains(pc)).findFirst().orElseThrow();
+        String shieldKey = null, twoKey = null;
+        for (Object key : pc.optionKeys()) {
+            String k = (String) key;
+            Object o = pc.optionForKey(k);
+            if (withShield.equals(o)) shieldKey = k;
+            if (twoWeapons.equals(o)) twoKey = k;
+        }
+        assertTrue(merged.isTagResolved(shieldKey));
+        assertFalse(merged.isTagResolved(twoKey), "the other bundle isn't picked");
+    }
+
+    /** A ranger's favored enemy brings its language (it was a separate pick that could mismatch). */
+    @Test
+    void favoredEnemyTeachesItsLanguage() {
+        CharacterSheet r = character("human", null, "ranger", "outlander", scores());
+        r.setCustomChoice("favored_enemy", "dragons (learn draconic)");
+        r.applyChoiceGrants();
+        assertTrue(r.getLanguages().stream().anyMatch(l -> LanguageRegistry.idOf(l).equals("draconic")));
+        CharacterSheet b = character("human", null, "ranger", "outlander", scores());
+        b.setCustomChoice("favored_enemy", "beasts");
+        b.applyChoiceGrants();
+        assertFalse(b.getLanguages().stream().anyMatch(l -> LanguageRegistry.idOf(l).equals("draconic")), "beasts don't speak");
+    }
+
     /** "Half your level, rounded down": 0 at level 1, so a level-1 artificer prepares INT mod spells. */
     @Test
     void halfCastersRoundDown() {

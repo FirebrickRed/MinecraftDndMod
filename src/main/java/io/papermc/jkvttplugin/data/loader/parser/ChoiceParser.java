@@ -170,6 +170,7 @@ public final class ChoiceParser {
                     // An option is text, or {label, grants} for what picking it gives (#222).
                     List<String> opts = new ArrayList<>();
                     Map<String, io.papermc.jkvttplugin.data.model.ChoiceGrants> grants = new java.util.LinkedHashMap<>();
+                    Map<String, String> descriptions = new java.util.LinkedHashMap<>();
                     if (m.get("options") instanceof List<?> rawOpts) {
                         for (Object o : rawOpts) {
                             if (o instanceof String s && !s.isBlank()) {
@@ -177,12 +178,14 @@ public final class ChoiceParser {
                             } else if (o instanceof Map<?, ?> om) {
                                 String label = ParseUtil.asString(om.get("label"), null);
                                 if (label == null || label.isBlank()) {
-                                    io.papermc.jkvttplugin.JkVttPlugin.logger().warning("[ChoiceParser] custom choice '" + id
+                                    io.papermc.jkvttplugin.data.ContentValidator.loadProblem("[ChoiceParser] custom choice '" + id
                                             + "' has an option with no label: — skipped.");
                                     continue;
                                 }
                                 String key = label.trim().toLowerCase();
                                 opts.add(key);
+                                String desc = ParseUtil.asString(om.get("description"), null);
+                                if (desc != null && !desc.isBlank()) descriptions.put(key, desc.trim());
                                 if (om.get("grants") instanceof Map<?, ?> gm) {
                                     grants.put(key, io.papermc.jkvttplugin.data.model.ChoiceGrants.parse(gm));
                                 }
@@ -190,7 +193,7 @@ public final class ChoiceParser {
                         }
                     }
                     if (opts.isEmpty()) continue;
-                    pc = new PlayersChoice<>(choose, opts, type).grants(grants);
+                    pc = new PlayersChoice<>(choose, opts, type).grants(grants).descriptions(descriptions);
                 }
                 case "EQUIPMENT" -> {
                     type = PlayersChoice.ChoiceType.EQUIPMENT;

@@ -323,10 +323,10 @@ public class MergedChoice {
                         // TAG-containing bundle: only count as resolved if chosen was created from THIS tag
                         if (chosenEo.equals(eo)) continue; // Unresolved TAG bundle
 
-                        if (chosenEo.getKind() != EquipmentOption.Kind.BUNDLE ||
-                            chosenEo.getParts().size() != eo.getParts().size()) {
-                            continue; // Different structure
-                        }
+                        // It has to be THIS option filled in, not just a bundle of the same size: the
+                        // paladin's "Longsword + Shield" isn't a resolved "Any Martial Weapon + Any Martial
+                        // Weapon", though both are two parts (both tiles used to light up).
+                        if (!eo.isPartlyFilledBy(chosenEo)) continue;
 
                         boolean chosenHasTag = chosenEo.getParts().stream().anyMatch(p -> p.getKind() == EquipmentOption.Kind.TAG);
                         if (chosenHasTag) continue; // Still unresolved or different TAG

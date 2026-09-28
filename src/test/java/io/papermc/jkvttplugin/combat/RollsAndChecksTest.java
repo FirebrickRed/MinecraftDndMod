@@ -136,6 +136,14 @@ class RollsAndChecksTest {
         assertTrue(RollService.parseInput(new String[]{"manualRoll", "2d20"}).forceAuto());
     }
 
+    /** A d20 shows 1-20: manualRoll 0 (or 25) isn't a roll, so the game asks again (a death save took a 0). */
+    @Test
+    void aD20IsOneToTwenty() {
+        assertTrue(RollService.parseInput(new String[]{"manualRoll", "0"}).isEmpty());
+        assertNull(RollService.resolve(25, null, 0, "", false, Advantage.NONE, false));
+        assertNotNull(RollService.resolve(20, null, 0, "", false, Advantage.NONE, false));
+    }
+
     @Test
     void theRePromptDropsWhatWasTypedAsTheRoll() {
         // Clicking a button on the re-prompt used to give "… manualRoll abc manualRoll ".

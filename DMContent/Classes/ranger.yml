@@ -154,14 +154,31 @@ player_choices:
     type: custom
     choose: 1
     # Advantage on Survival checks to track them and on Intelligence checks to recall information
-    # about them (DM-adjudicated for now). "Two races of humanoid" counts as one pick.
-    options: [Aberrations, Beasts, Celestials, Constructs, Dragons, Elementals, Fey, Fiends, Giants,
-              Monstrosities, Oozes, Plants, Undead, "Two races of humanoid (e.g. gnolls and orcs)"]
-  - id: favored_enemy_language
-    title: "Favored Enemy: a language they speak"
-    type: language
-    choose: 1
-    options: []
+    # about them (DM-adjudicated for now). You also learn "one language of your choice that is spoken
+    # by your favored enemies, if they speak one at all" (PHB p.91): each option grants its language,
+    # so it always matches. Beasts, oozes and plants don't speak. "Two races of humanoid" is one pick,
+    # split by the language you learn from them.
+    options:
+      - { label: "Aberrations (learn Deep Speech)", grants: { languages: [deep_speech] } }
+      - { label: "Beasts", description: "Beasts don't speak, so no language." }
+      - { label: "Celestials (learn Celestial)", grants: { languages: [celestial] } }
+      - { label: "Constructs", description: "Most constructs don't speak, so no language." }
+      - { label: "Dragons (learn Draconic)", grants: { languages: [draconic] } }
+      - { label: "Elementals (learn Primordial)", grants: { languages: [primordial] } }
+      - { label: "Fey (learn Sylvan)", grants: { languages: [sylvan] } }
+      - { label: "Fiends, demons (learn Abyssal)", grants: { languages: [abyssal] } }
+      - { label: "Fiends, devils (learn Infernal)", grants: { languages: [infernal] } }
+      - { label: "Giants (learn Giant)", grants: { languages: [giant] } }
+      - { label: "Monstrosities", description: "Most monstrosities don't speak, so no language." }
+      - { label: "Oozes", description: "Oozes don't speak, so no language." }
+      - { label: "Plants", description: "Plants don't speak, so no language." }
+      - { label: "Undead", description: "Undead speak the languages they knew in life, usually Common, which you already know. Ask the DM if yours speak something else." }
+      - { label: "Two humanoid races: goblinoids (learn Goblin)", description: "Goblins, hobgoblins, bugbears, and one more race.", grants: { languages: [goblin] } }
+      - { label: "Two humanoid races: orcs (learn Orc)", description: "Orcs, and one more race.", grants: { languages: [orc] } }
+      - { label: "Two humanoid races: gnolls or kobolds (learn Draconic)", description: "Kobolds speak Draconic; gnolls speak Gnoll, which isn't a language here yet.", grants: { languages: [draconic] } }
+      - { label: "Two humanoid races: drow or duergar (learn Undercommon)", grants: { languages: [undercommon] } }
+      - { label: "Two humanoid races: dwarves (learn Dwarvish)", grants: { languages: [dwarvish] } }
+      - { label: "Two humanoid races: elves (learn Elvish)", grants: { languages: [elvish] } }
   - id: natural_explorer
     title: Natural Explorer (favored terrain)
     type: custom

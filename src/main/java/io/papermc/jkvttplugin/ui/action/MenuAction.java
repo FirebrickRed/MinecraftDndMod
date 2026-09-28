@@ -48,6 +48,7 @@ public enum MenuAction {
     BREAK_CONCENTRATION,
     OPEN_PREPARE_SPELLS,     // spellbook → the Prepare Spells menu (#218)
     CAST_AS_RITUAL,          // spellbook: an unprepared ritual → fill "/character cast <id> ritual" (#218)
+    SPELL_NOT_PREPARED,      // spellbook: an unprepared spell → say so, and how to prepare it (#218)
 
     // ===== Prepare Spells (#218) =====
     PREPARE_SPELL,           // payload: spell id; prepare or unprepare it

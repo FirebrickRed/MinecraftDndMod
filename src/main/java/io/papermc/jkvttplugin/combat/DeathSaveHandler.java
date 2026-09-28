@@ -20,10 +20,16 @@ public class DeathSaveHandler {
 
     private static final int DEATH_SAVE_DC = 10;
 
-    public static void rollDeathSave(CombatSession session, Combatant target, Integer providedRoll) {
+    /**
+     * Roll it. Returns false, rolling nothing, when no die was given and the table rolls its own
+     * (physical mode): the caller offers the three buttons instead. It used to always let the game
+     * roll, so a typed {@code /combat deathsave} skipped the player's own die.
+     */
+    public static boolean rollDeathSave(CombatSession session, Combatant target, Integer providedRoll, boolean forceAuto) {
         // The shared resolver: the same "🎲 you rolled 14" / "🎲 d20 [14]" wording as every roll, and
         // Halfling Lucky applies (a death save is a saving throw, PHB p.28).
-        RollService.RollResult r = RollService.resolve(providedRoll, null, 0, "", target.rerollsNat1(), Advantage.NONE, true);
+        RollService.RollResult r = RollService.resolve(providedRoll, null, 0, "", target.rerollsNat1(), Advantage.NONE, forceAuto);
+        if (r == null) return false;
         int d20 = r.d20();
         String work = r.breakdown().replace(RollService.natCallout(d20), ""); // the banners below say it louder
 
@@ -39,7 +45,7 @@ public class DeathSaveHandler {
             session.broadcast(Component.text("★ NATURAL 20 ★", NamedTextColor.GOLD, TextDecoration.BOLD));
             session.broadcast(Component.text(target.getDisplayName() + " regains 1 HP and consciousness!", NamedTextColor.GREEN, TextDecoration.BOLD));
             session.updateScoreboard();
-            return;
+            return true;
         }
 
         if (d20 == 1) {
@@ -67,6 +73,7 @@ public class DeathSaveHandler {
         }
 
         session.updateScoreboard();
+        return true;
     }
 
     // ==================== PRONE EFFECT ====================

@@ -29,11 +29,12 @@ import java.util.Set;
  */
 public record ChoiceGrants(Ability innateCastingAbility, List<String> damageResistances,
                            List<String> bonusSpells, List<String> expandedSpells,
-                           List<io.papermc.jkvttplugin.effect.Feature> features, List<String> problems) {
+                           List<io.papermc.jkvttplugin.effect.Feature> features, List<String> languages,
+                           List<String> problems) {
 
     /** The grant keys understood, for ContentValidator's message. */
     public static final Set<String> KEYS = Set.of("innate_casting_ability", "damage_resistances", "bonus_spells",
-            "expanded_spells", "features");
+            "expanded_spells", "features", "languages");
 
     public static ChoiceGrants parse(Map<?, ?> m) {
         List<String> problems = new ArrayList<>();
@@ -55,7 +56,14 @@ public record ChoiceGrants(Ability innateCastingAbility, List<String> damageResi
         List<String> expanded = new ArrayList<>();
         for (String s : ParseUtil.normalizeStringList(m.get("expanded_spells"))) expanded.add(s.trim().toLowerCase());
         var features = io.papermc.jkvttplugin.effect.FeatureParser.parseFeatures(m.get("features"));
+        // languages: [draconic]: a ranger's favored enemy's tongue. Language ids, any spelling.
+        List<String> languages = new ArrayList<>();
+        for (String l : ParseUtil.normalizeStringList(m.get("languages"))) {
+            String id = io.papermc.jkvttplugin.data.model.enums.LanguageRegistry.idOf(l);
+            if (!io.papermc.jkvttplugin.data.model.enums.LanguageRegistry.isRegistered(id)) problems.add("language '" + l + "' isn't a known language");
+            languages.add(id);
+        }
         return new ChoiceGrants(ability, List.copyOf(resistances), List.copyOf(spells), List.copyOf(expanded),
-                List.copyOf(features), List.copyOf(problems));
+                List.copyOf(features), List.copyOf(languages), List.copyOf(problems));
     }
 }

@@ -166,10 +166,12 @@ public final class OutOfCombatAttack {
             Component dm = Component.text("   DM: " + aim.targetName() + " makes a DC " + dc + " " + abbr + " save" + bonus + ". ", NamedTextColor.GRAY);
             if (save != null) {
                 String check = "/dm check " + quote(aim.targetName()) + " save " + save.getAbbreviation().toLowerCase() + " dc " + dc;
-                dm = dm.append(Component.text("[Call the save]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                // Named for who rolls: the DM rolls a creature's save, a player rolls their own.
+                dm = dm.append(Component.text(target.isPlayer() ? "[Ask them to save]" : "[Roll their save]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.suggestCommand(check)).hoverEvent(HoverEvent.showText(Component.text(
-                                (target.isPlayer() ? "They roll it; the result comes back to you." : "You roll it for them.")
-                                        + "\nFills: " + check))))
+                                (target.isPlayer() ? "They get the roll buttons; the result comes back to you."
+                                        : "You're the DM, so you roll " + aim.targetName() + "'s save: you get the roll buttons, graded against DC " + dc + ".")
+                                        + " Then pick [Failed] or [Saved] here.\nFills: " + check))))
                         .append(Component.text(" "));
             }
             if (hasDamage) {

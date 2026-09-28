@@ -2042,6 +2042,7 @@ public class CharacterSheet {
             ChoiceGrants g = entry.pc().grantsFor(getCustomChoice(entry.id()));
             if (g == null) continue;
             damageResistances.addAll(g.damageResistances());
+            languages.addAll(g.languages()); // a favored enemy's language (a set: one already known stays one)
             for (String spellId : g.bonusSpells()) {
                 DndSpell spell = SpellLoader.getSpell(spellId);
                 if (spell == null) continue;
