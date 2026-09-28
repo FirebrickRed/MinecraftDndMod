@@ -91,7 +91,7 @@ public final class EquipmentParser {
                         : EquipmentOption.bundle(parts, label));
                 continue;
             }
-            // Scalar option: one item or tag ("martial_weapon x2" is two picks, given together).
+            // Scalar option: one item or tag ("martial_weapon x2" is a bundle of two, given together).
             List<EquipmentOption> parts = parseGiveEntries(opt);
             if (parts.size() == 1) out.add(parts.get(0));
             else if (!parts.isEmpty()) out.add(EquipmentOption.bundle(parts, null));
@@ -100,9 +100,10 @@ public final class EquipmentParser {
     }
 
     /**
-     * A give-entry, with a tag's quantity spelled out: "martial_weapon x2" is two separate picks
-     * (the PHB's "two martial weapons" can be two different ones). An item keeps its quantity
-     * ("bolt x20" is one stack). The quantity used to be dropped on a tag, so it gave one weapon.
+     * A give-entry, with a tag's quantity spelled out: "martial_weapon x2" is two tag slots. An item
+     * keeps its quantity ("bolt x20" is one stack). The quantity used to be dropped on a tag, so it
+     * gave one weapon. The creation menu fills the slots one pick at a time
+     * (CharacterCreationHandler.drilldownPick), so the PHB's "two martial weapons" can be two different ones.
      */
     private static List<EquipmentOption> parseGiveEntries(Object node) {
         EquipmentOption one = parseGiveEntry(node);

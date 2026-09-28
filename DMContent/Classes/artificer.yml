@@ -175,7 +175,7 @@ player_choices:
     type: equipment
     choose: 1
     options:
-      - simple_weapon x2        # two picks, can be different weapons
+      - simple_weapon x2        # two picks, one at a time: they can be different weapons
   - id: class_equipment_3
     title: Armor
     type: equipment

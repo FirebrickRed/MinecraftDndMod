@@ -115,9 +115,37 @@ public class MergedChoice {
      * Gets the total number of currently selected options across all source choices.
      */
     public int getSelectedCount() {
+        // Done picks only: a bundle still missing a weapon isn't counted (#229).
         return sourcePendingChoices.stream()
-                .mapToInt(PendingChoice::selectedCount)
+                .mapToInt(PendingChoice::completedCount)
                 .sum();
+    }
+
+    /** The finished pick for a bundle option, as it reads ("Longsword + Warhammer"), or null. */
+    public String finishedBundleLabel(String optionKey) {
+        for (PendingChoice<?> pc : sourcePendingChoices) {
+            if (!pc.optionKeys().contains(optionKey)) continue;
+            if (!(pc.optionForKey(optionKey) instanceof EquipmentOption eo) || eo.getKind() != EquipmentOption.Kind.BUNDLE) continue;
+            for (Object c : pc.getChosen()) {
+                if (c instanceof EquipmentOption ce && !ce.hasOpenSlot() && eo.isPartlyFilledBy(ce)) return ce.prettyLabel();
+            }
+        }
+        return null;
+    }
+
+    /**
+     * A pick of {@code optionKey} that's under way ("Longsword + Any Martial Weapon"), or null. The
+     * menu shows it on the option's tile so the first weapon isn't forgotten after a Back (#229).
+     */
+    public EquipmentOption partialPick(String optionKey) {
+        for (PendingChoice<?> pc : sourcePendingChoices) {
+            if (!pc.optionKeys().contains(optionKey)) continue;
+            if (!(pc.optionForKey(optionKey) instanceof EquipmentOption eo)) continue;
+            for (Object c : pc.getChosen()) {
+                if (c instanceof EquipmentOption ce && ce.hasOpenSlot() && !ce.equals(eo) && eo.isPartlyFilledBy(ce)) return ce;
+            }
+        }
+        return null;
     }
 
     /**

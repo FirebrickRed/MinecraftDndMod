@@ -2570,6 +2570,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         DamageHandler.applyDamage(session, target, damage, type, crit);
         session.refreshHpDisplays(target);
         if (attacker != null && attacker.getTurnState() != null) {
+            // Sneak Attack in this damage is spent now that it's landed (#229), not when the hit was rolled.
+            if (attacker.getTurnState().getPendingSneak() != null) SneakAttack.markUsed(session, attacker);
             attacker.getTurnState().clearDamagePending();
         }
     }

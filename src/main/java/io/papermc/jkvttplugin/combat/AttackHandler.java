@@ -130,11 +130,14 @@ public class AttackHandler {
                         && player.getInventory().getItemInOffHand().getType().isAir()));
         if (attacker.getTurnState() != null) attacker.getTurnState().setRerollLowForNextHit(gwf);
 
-        // Sneak Attack (#229): its dice join the weapon's, so a crit doubles them too.
+        // Sneak Attack (#229): with advantage its dice join the weapon's now (so a crit doubles them);
+        // otherwise a hit offers [Ask the DM], since tables rule "an ally next to it" differently.
         SneakAttack.Use sneak = SneakAttack.check(session, attacker, target, sheet, weapon);
-        if (sneak != null) damageStr = SneakAttack.addDice(damageStr, sneak.dice());
+        boolean sneakNow = sneak != null && !sneak.needsDm();
+        if (sneakNow) damageStr = SneakAttack.addDice(damageStr, sneak.dice());
         final Runnable onHit = () -> {
-            if (sneak != null) SneakAttack.spend(session, attacker, target, sneak);
+            if (sneakNow) SneakAttack.includedInHit(session, attacker, sneak);
+            else if (sneak != null) SneakAttack.offer(session, attacker, target, sneak, player);
             if (gwf) player.sendMessage(Component.text("Great Weapon Fighting: rolling it yourself? Reroll any 1 or 2 "
                     + "on the damage dice once (the game does it when it rolls).", NamedTextColor.GRAY));
         };

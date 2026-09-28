@@ -197,7 +197,7 @@ Martial Arts in `monk.yml` is the worked example. Two passive effects and one bo
 | `bonus_damage: { amount: 2, when: melee_one_handed }` | Dueling | Added to damage. `when`: `melee_str` (a STR melee swing, Rage) or `melee_one_handed` (a melee weapon that isn't two-handed, with no weapon in the other hand; a shield is fine) |
 | `reroll_low_damage: true` | Great Weapon Fighting | 1s and 2s on the damage dice are rolled again when the game rolls, for a two-handed melee weapon (or versatile with the off hand empty). A player rolling their own dice is reminded |
 | `offhand_ability_damage: true` | Two-Weapon Fighting | The off-hand attack adds its ability modifier to damage |
-| `sneak_attack: { dice_by_level: [1d6, 1d6, 2d6, …] }` | Sneak Attack | Once per turn, a finesse or ranged weapon, with advantage or an ally within 5 ft of the target and no disadvantage. The dice join the hit's own (a crit doubles them) and the table is told why |
+| `sneak_attack: { dice_by_level: [1d6, 1d6, 2d6, …] }` | Sneak Attack | Once per turn, a finesse or ranged weapon, no disadvantage. **With advantage it applies on its own**; otherwise the hit offers the player [Ask the DM] (tables rule "an ally next to it" differently), with what the game noticed. The dice join the hit's own (a crit doubles them). It's spent when the damage lands, so a hit Shield turns into a miss doesn't use it |
 
 All of these work on a passive feature and on one a choice grants (see
 [`authoring-character-options.md`](authoring-character-options.md), *Options that grant things*):

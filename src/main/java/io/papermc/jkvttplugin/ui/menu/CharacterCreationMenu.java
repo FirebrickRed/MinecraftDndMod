@@ -733,9 +733,14 @@ public class CharacterCreationMenu {
         // green with a ✔: a real item's glint is easy to miss, and a status line at the bottom of a
         // long stat tooltip was too.
         List<Component> status = new ArrayList<>();
+        EquipmentOption partial = needsDrilldown && !isResolved ? choice.partialPick(optionKey) : null;
         if (isResolved && resolvedItem != null) {
-            status.add(Component.text("✔ " + resolvedItem.prettyLabel(), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
+            String whole = choice.finishedBundleLabel(optionKey); // "Longsword + Warhammer", not just the first
+            status.add(Component.text("✔ " + (whole != null ? whole : resolvedItem.prettyLabel()), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
             status.add(Component.text("Click to change", NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+        } else if (partial != null) {
+            status.add(Component.text("So far: " + partial.prettyLabel(), NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
+            status.add(Component.text("Click to pick the rest", NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
         } else if (selected) {
             status.add(Component.text("✔ Selected — click to deselect", NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
         } else if (selectedElsewhere) {
@@ -821,7 +826,18 @@ public class CharacterCreationMenu {
             if (tag != null) for (String id : TagRegistry.itemsFor(tag)) subKeys.add("item:" + id);
         }
 
-        inv.setItem(13, label("Choose a specific: " + pc.displayFor(wildcardKey)));
+        // A bundle with two weapons is picked one at a time: say which one this is (#229).
+        String heading = "Choose a specific: " + pc.displayFor(wildcardKey);
+        if (opt instanceof EquipmentOption whole && whole.openSlots() > 1) {
+            EquipmentOption sofar = null;
+            for (Object c : pc.getChosen()) {
+                if (c instanceof EquipmentOption ce && ce.hasOpenSlot() && !ce.equals(whole) && whole.isPartlyFilledBy(ce)) sofar = ce;
+            }
+            int done = whole.openSlots() - (sofar != null ? sofar.openSlots() : whole.openSlots());
+            heading = "Pick " + (done + 1) + " of " + whole.openSlots() + ": " + pc.displayFor(wildcardKey)
+                    + (sofar != null ? " (so far: " + sofar.prettyLabel() + ")" : "");
+        }
+        inv.setItem(13, label(heading));
         int slot = 18;
         for (String sub : subKeys) {
             if (slot > 44) break;

@@ -180,7 +180,7 @@ player_choices:
     choose: 1
     options:
       - shortsword x2
-      - simple_melee_weapon x2  # two picks, can be different weapons
+      - simple_melee_weapon x2  # two picks, one at a time: they can be different weapons
   - id: class_equipment_3
     title: Adventuring Gear
     type: equipment

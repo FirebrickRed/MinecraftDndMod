@@ -80,8 +80,8 @@ merges into main.
 - [ ] **Paladin:** a Class Skills pick (2), and Weapons / Secondary Weapon / Adventuring Gear picks.
       Finished: wearing the chain mail gives **no** "not proficient" warning.
 - [ ] **Paladin:** the sheet shows Divine Sense (1 + CHA uses) and Lay on Hands (5 points).
-- [ ] **Fighter:** a Fighting Style pick; **"Two martial weapons"** hands you two picks (they can
-      differ); no second chain mail or shield in your inventory.
+- [ ] **Fighter:** a Fighting Style pick; **"Two martial weapons"** gives two of the weapon you pick
+      (one pick for now); no second chain mail or shield in your inventory.
 - [ ] **Ranger:** Favored Enemy, a language for it, and Natural Explorer picks; two simple melee weapons
       when you take that option; 20 arrows in one stack.
 - [ ] **Artificer:** at level 1 it prepares INT-modifier spells (one fewer than before); two simple
@@ -205,17 +205,22 @@ Armor you're not proficient with (PHB p.144) gives disadvantage on STR and DEX r
       bonus action is spent, a second use says no uses left. After the fight, `/character use second_wind`
       once it's back (a short rest).
 - [ ] **Rage** now spends the bonus action: rage, then `/combat bonusAction` has nothing left.
-- [ ] **Sneak Attack**, rogue with a rapier, an ally next to the goblin: a hit says "🗡 Sneak Attack! +1d6
-      in that damage (Borin is next to them)" and the damage prompt rolls 1d8+1d6. A second hit that
-      turn gets no Sneak Attack.
-- [ ] **Sneak Attack**, no ally near and no advantage → nothing added. A club (not finesse) → nothing.
-- [ ] **Sneak Attack** crit → the prompt doubles both dice (2d8+2d6).
+- [ ] **Sneak Attack with advantage** (the goblin is prone, or restrained): a rapier hit says "🗡 Sneak
+      Attack: +1d6 in that damage (advantage)" and the damage prompt rolls 1d8+1d6. No DM needed.
+- [ ] **Sneak Attack without advantage**, a player's rogue: the hit gives "🗡 Sneak Attack (+1d6)? No
+      advantage, so it's the DM's call: the game sees Borin within 5 ft of them. [Ask the DM]" (or "no
+      ally next to them"). Click → the DM gets [Allow] / [Deny].
+- [ ] [Allow] before the damage is rolled → "The DM allows Sneak Attack: +1d6 in that damage" and a new
+      damage prompt for 1d8+1d6. On a crit it's +2d6.
+- [ ] [Allow] after the damage was already applied → the 1d6 is rolled and dealt on its own, shown to the table.
+- [ ] [Deny] → the player is told. A DM running a rogue gets [Add it] instead of [Ask the DM].
+- [ ] Once the Sneak Attack damage lands, a second hit that turn offers nothing. A club (not finesse) → nothing.
+- [ ] **Shield:** a Sneak Attack hit that Shield turns into a miss → the next hit that turn can still Sneak Attack.
 - [ ] **Lay on Hands:** `/combat use lay_on_hands <ally> 3` next to them → heals 3, pool 5 → 2. From 20 ft
       → "You need to touch them". On a skeleton → "no effect on Skeleton: it's an undead".
 - [ ] **Divine Sense** with `/dm entity spawn skeleton` nearby: "an undead, about 25 ft to the
       north-east". The DM sees the same; other players only see that you used it. With nothing near →
       "Nothing within 60 ft".
-- [ ] Known gap: if a Shield reaction turns a Sneak Attack hit into a miss, Sneak Attack is still spent.
 
 ## Death
 
@@ -410,7 +415,7 @@ Set these up, `/stop`, start the server, then check:
 - [ ] On join → "Combat is still on".
 - [ ] The scoreboard is back, the downed player is prone, the condition is listed.
 - [ ] The current combatant can attack → damage with no errors.
-- [ ] A raging barbarian is still raging (sheet, halved slashing, red tint).
+- [ ] A raging barbarian is still raging (sheet, halved slashing, red tint)
 - [ ] `/combat finished` → the combat file is gone.
 
 ---

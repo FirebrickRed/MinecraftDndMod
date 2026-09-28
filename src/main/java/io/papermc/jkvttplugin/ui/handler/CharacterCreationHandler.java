@@ -172,8 +172,8 @@ public class CharacterCreationHandler implements MenuClickHandler {
                 CharacterCreationMenu.open(player, sessionId);
             }
             case DRILLDOWN_PICK -> {
-                drilldownPick(session, payload);
-                session.clearDrilldown();
+                // A bundle with another weapon still to pick keeps the list open for it (#229).
+                if (!drilldownPick(session, payload)) session.clearDrilldown();
                 CharacterCreationMenu.open(player, sessionId);
             }
             case DRILLDOWN_BACK -> {
@@ -240,32 +240,42 @@ public class CharacterCreationHandler implements MenuClickHandler {
         session.setDrilldown(choiceId, wildcardKey, returnCategory);
     }
 
+    /**
+     * Pick a specific item for a wildcard. A bundle's weapons are picked one at a time: each pick fills
+     * the next open slot ("Any Martial Weapon + Any Martial Weapon" → "Longsword + Any Martial Weapon"
+     * → "Longsword + Warhammer"), so the PHB's "two martial weapons" can be two different ones (#229).
+     * They used to all become the first pick. Returns true while a slot is still open, so the list
+     * stays up for the next one.
+     */
     @SuppressWarnings({"unchecked", "rawtypes"})
-    private void drilldownPick(CharacterCreationSession session, String payload) {
+    private boolean drilldownPick(CharacterCreationSession session, String payload) {
         String[] parts = payload.split("\\|", 4);
-        if (parts.length < 4) return;
+        if (parts.length < 4) return false;
         String choiceId = parts[0];
         String wildcardKey = parts[1];
         String subKey = parts[2];
         PendingChoice<?> pc = session.findPendingChoice(choiceId);
-        if (pc == null) return;
+        if (pc == null) return false;
 
         Object optObj = pc.optionForKey(wildcardKey);
         if (optObj instanceof EquipmentOption eo && eo.getKind() == EquipmentOption.Kind.BUNDLE) {
             EquipmentOption chosenItem = EquipmentUtil.fromItemKey(subKey);
-            if (chosenItem != null) {
-                List<EquipmentOption> newParts = new ArrayList<>();
-                for (EquipmentOption p : eo.getParts()) {
-                    newParts.add(p.getKind() == EquipmentOption.Kind.TAG ? chosenItem : p);
-                }
-                EquipmentOption newBundle = EquipmentOption.bundle(newParts);
-                pc.deselectKey(wildcardKey);
-                ((PendingChoice) pc).toggleOption(newBundle, java.util.Collections.emptySet());
+            if (chosenItem == null) return false;
+            // Carry on from a pick already under way for this option, if there is one.
+            EquipmentOption partial = null;
+            for (Object c : pc.getChosen()) {
+                if (c instanceof EquipmentOption ce && ce.hasOpenSlot() && !ce.equals(eo) && eo.isPartlyFilledBy(ce)) { partial = ce; break; }
             }
+            EquipmentOption newBundle = (partial != null ? partial : eo).fillFirstOpenSlot(chosenItem);
+            if (partial != null) pc.getChosen().remove(partial);
+            pc.deselectKey(wildcardKey);
+            ((PendingChoice) pc).toggleOption(newBundle, java.util.Collections.emptySet());
+            return newBundle.hasOpenSlot();
         } else {
             // TAG option (or non-equipment): deselect the wildcard and select the concrete item.
             pc.deselectKey(wildcardKey);
             session.toggleChoiceByKey(choiceId, subKey);
+            return false;
         }
     }
 

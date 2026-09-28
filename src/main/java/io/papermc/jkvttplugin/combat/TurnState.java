@@ -110,7 +110,14 @@ public class TurnState {
         this.pendingDamageLabel = damageBonusLabel == null ? "" : damageBonusLabel;
         this.pendingDamageCrit = crit;
         this.pendingDamageAfterReaction = false;
+        this.pendingSneak = null; // a new hit; its own Sneak Attack (if any) is set after this
     }
+
+    // Sneak Attack that's in this hit's damage (#229): spent when the damage lands, not on the hit,
+    // so a Shield that turns the hit into a miss doesn't use it up.
+    private SneakAttack.Use pendingSneak;
+    public SneakAttack.Use getPendingSneak() { return pendingSneak; }
+    public void setPendingSneak(SneakAttack.Use use) { this.pendingSneak = use; }
     public void markReactionOnHit() { this.pendingDamageAfterReaction = true; }
     public boolean isPendingDamageAfterReaction() { return pendingDamageAfterReaction; }
     public boolean isDamagePending() { return pendingDamageTargetId != null; }
@@ -136,6 +143,7 @@ public class TurnState {
 
     public void clearDamagePending() {
         this.pendingDamageRerollLow = false;
+        this.pendingSneak = null;
         this.pendingDamageTargetId = null;
         this.pendingDamageBonus = 0;
         this.pendingDamageLabel = "";

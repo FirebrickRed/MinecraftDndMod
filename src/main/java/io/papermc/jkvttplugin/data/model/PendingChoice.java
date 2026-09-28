@@ -71,7 +71,17 @@ public class PendingChoice<T> {
 
     public int getChoose() { return playersChoice.getChoose(); }
 
-    public boolean isComplete() { return chosen.size() >= playersChoice.getChoose(); }
+    public boolean isComplete() { return completedCount() >= playersChoice.getChoose(); }
+
+    /**
+     * Picks that are done: a bundle still waiting on one of its weapons ("Longsword + Any Martial
+     * Weapon") is chosen but not done, so Finish waits for it (#229).
+     */
+    public int completedCount() {
+        int n = 0;
+        for (T c : chosen) if (!(c instanceof EquipmentOption eo && eo.hasOpenSlot())) n++;
+        return n;
+    }
 
     public List<String> optionKeys() {
         return playersChoice.getOptions().stream().map(toKey).toList();

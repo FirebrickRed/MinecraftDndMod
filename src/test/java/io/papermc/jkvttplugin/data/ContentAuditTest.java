@@ -41,7 +41,7 @@ class ContentAuditTest {
         choice(s, "class_equipment_2");
     }
 
-    /** "martial_weapon x2" is two picks; the quantity on a tag used to be dropped (one weapon). */
+    /** "martial_weapon x2" is two weapons; the quantity on a tag used to be dropped (one weapon). */
     @Test
     void aTagWithAQuantityIsThatManyPicks() {
         List<EquipmentOption> opts = EquipmentParser.parseEquipmentOptions(List.of("martial_weapon x2", "bolt x20"));
@@ -49,6 +49,33 @@ class ContentAuditTest {
         assertEquals(2, opts.get(0).getParts().size());
         assertEquals(EquipmentOption.Kind.ITEM, opts.get(1).getKind(), "an item keeps its quantity as one stack");
         assertEquals(20, opts.get(1).getQuantity());
+    }
+
+    /**
+     * "Two martial weapons" is picked one at a time and can be two different weapons; a pick with a
+     * weapon still to choose doesn't count as done (they all used to become the first pick).
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void twoWeaponsArePickedOneAtATime() {
+        var s = session("human", null, "fighter", "soldier");
+        var pc = (io.papermc.jkvttplugin.data.model.PendingChoice) choice(s, "class_equipment_1");
+        EquipmentOption two = ((List<EquipmentOption>) pc.getPlayersChoice().getOptions()).stream()
+                .filter(o -> o.openSlots() == 2).findFirst().orElseThrow();
+
+        EquipmentOption half = two.fillFirstOpenSlot(EquipmentOption.item("longsword"));
+        assertTrue(half.hasOpenSlot());
+        assertTrue(two.isPartlyFilledBy(half));
+        pc.toggleOption(half, java.util.Set.of());
+        assertFalse(pc.isComplete(), "one weapon picked, one to go");
+
+        EquipmentOption both = half.fillFirstOpenSlot(EquipmentOption.item("warhammer"));
+        assertEquals("Longsword + Warhammer", both.prettyLabel());
+        assertTrue(two.isPartlyFilledBy(both));
+        pc.getChosen().remove(half);
+        pc.toggleOption(both, java.util.Set.of());
+        assertTrue(pc.isComplete());
+        assertFalse(two.isPartlyFilledBy(half.fillFirstOpenSlot(EquipmentOption.item("dagger"))), "a dagger isn't a martial weapon");
     }
 
     /** "Half your level, rounded down": 0 at level 1, so a level-1 artificer prepares INT mod spells. */

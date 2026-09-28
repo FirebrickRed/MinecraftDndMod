@@ -85,6 +85,23 @@ class ClassFeaturesTest {
         assertNull(fighter("archery").sneakAttack(), "not a rogue");
     }
 
+    /**
+     * Sneak Attack rides on the hit until its damage lands: a Shield that turns the hit into a miss
+     * clears the hit and the Sneak Attack with it, so it isn't spent; a new hit starts without one.
+     */
+    @Test
+    void sneakAttackGoesWithTheHit() {
+        var ts = new io.papermc.jkvttplugin.combat.TurnState(30, null);
+        var use = new SneakAttack.Use("1d6", "Sneak Attack", "advantage", "piercing", false);
+        ts.markAttackHit(java.util.UUID.randomUUID(), 3, "+3[DEX]", false);
+        ts.setPendingSneak(use);
+        ts.clearDamagePending(); // the hit became a miss
+        assertNull(ts.getPendingSneak());
+        ts.setPendingSneak(use);
+        ts.markAttackHit(java.util.UUID.randomUUID(), 3, "+3[DEX]", false); // the next hit
+        assertNull(ts.getPendingSneak());
+    }
+
     @Test
     void paladinFeatures() {
         CharacterSheet p = character("human", null, "paladin", "acolyte", scores(Ability.CHARISMA, 16));

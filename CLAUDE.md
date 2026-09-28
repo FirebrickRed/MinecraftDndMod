@@ -704,8 +704,11 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     Fighting Style. New effect primitives: `attack_bonus` (Archery), `ac_bonus` (Defense),
     `bonus_damage when: melee_one_handed` (Dueling), flags `reroll_low_damage` (GWF, via
     `TurnState` → `/combat damage autoRoll`) and `offhand_ability_damage` (TWF), and `sneak_attack`
-    (`SneakAttack`: dice added to the hit's own, so a crit doubles them; spent via `resolveAttack`'s
-    `onHit`). A feature with `heal:` / `sense:` (Second Wind, Lay on Hands, Divine Sense) runs through
+    (`SneakAttack`: automatic only with advantage; otherwise the hit offers [Ask the DM] and the DM's
+    [Allow] adds the dice to the pending damage, or deals them on their own if it already landed. It
+    rides on `TurnState.pendingSneak` and is spent in `applyHit`, so a hit Shield cancels keeps it).
+    Creation's two-weapon picks ("martial_weapon x2") fill one slot per drill-down pick
+    (`EquipmentOption.fillFirstOpenSlot`); a bundle with an open slot isn't a finished pick. A feature with `heal:` / `sense:` (Second Wind, Lay on Hands, Divine Sense) runs through
     `FeatureUse`, from `/combat use` and from `/character use` out of combat. `/combat use` spends the
     action / bonus action a feature's `activation` says. The dice roller takes several groups
     ("1d8+1d6+3").
