@@ -1301,6 +1301,23 @@ public class CharacterSheet {
         return speed; // Uses character's own speed field (set from race/subrace in applyRacialTraits)
     }
 
+    /**
+     * This character's size: their pick where the race offers one (a genasi or plasmoid's
+     * {@code race_size} choice), else the race's own (a halfling is Small), else Medium.
+     */
+    public io.papermc.jkvttplugin.data.model.enums.Size getSize() {
+        List<ChoiceEntry> choices = new ArrayList<>();
+        if (race != null && race.getPlayerChoices() != null) choices.addAll(race.getPlayerChoices());
+        if (subrace != null && subrace.getPlayerChoices() != null) choices.addAll(subrace.getPlayerChoices());
+        for (ChoiceEntry c : choices) {
+            if (c.type() != PlayersChoice.ChoiceType.CUSTOM || !c.id().toLowerCase().contains("size")) continue;
+            String picked = getCustomChoice(c.id());
+            if (picked != null) return io.papermc.jkvttplugin.data.model.enums.Size.parseOr(picked,
+                    io.papermc.jkvttplugin.data.model.enums.Size.MEDIUM);
+        }
+        return race != null && race.getSize() != null ? race.getSize() : io.papermc.jkvttplugin.data.model.enums.Size.MEDIUM;
+    }
+
     /** Hours needed for a long rest (#160); 8 by default, 4 for elven trance. Not enforced yet (#45). */
     public int getLongRestHours() {
         return longRestHours;
@@ -1919,6 +1936,7 @@ public class CharacterSheet {
     public List<Map<String, String>> getAllConditionalAdvantages() {
         List<Map<String, String>> all = new ArrayList<>();
         if (race != null && race.getConditionalAdvantages() != null) all.addAll(race.getConditionalAdvantages());
+        if (subrace != null) all.addAll(subrace.getConditionalAdvantages()); // Stout Halfling vs poison (#174)
         if (subclass != null && subclass.getConditionalAdvantages() != null) all.addAll(subclass.getConditionalAdvantages());
         return all;
     }

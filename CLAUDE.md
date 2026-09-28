@@ -766,7 +766,7 @@ plugin.yml permissions (a plugin.yml permission would default to op-only and blo
 - ❌ Level-up system (all characters are level 1)
 - ❌ Multiclassing
 - ❌ Feats
-- ❌ Lunar Sorcery's per-phase spells: not authored (a `custom` choice with `grants:` can now express them, #222)
+- ❌ Lunar Sorcery's once-per-long-rest free cast of the current phase's spell, and changing phase on a rest (its spells themselves are known, via `bonus_spells`)
 - ⚠️ Conditional advantages — saving-throw ones apply (Fey Ancestry, Dwarven Resilience); other types are display only
 - ⚠️ Combat system — largely implemented: initiative, turn/action economy, attack/spell rolls, damage/healing, temp HP, death saves (#97–#101); conditions with advantage/disadvantage (#103); the Effect Engine (#70: active buffs like Rage, the breath-weapon action path, passive features like Lucky/Savage/Relentless, resistances); AoE aim preview (#173); Hex (#178); and the autoRoll/manualRoll/total command redesign (#183). Reaction windows that hold the damage until the target answers, and Shield actually moving AC (#195). Remaining/rough edges: enemy-visibility polish (#102), the rest of the action-economy menu (#176 — bonus actions list, actions still just markers), out-of-combat casting resolving rolls (#152), and assorted spell mechanics (#182). Combat survives a restart (#105, #165): a normal shutdown suspends the fight (snapshot + keep the file; `endCombat` is only `/combat finished`), it restores on boot, visuals return as players rejoin, and the interrupted turn restarts. Active effects like Rage save with the character (#212) and come back with the rounds they had left. Much of this is committed but largely un-playtested.
 - ❌ Equipment management (equip/unequip in-game)

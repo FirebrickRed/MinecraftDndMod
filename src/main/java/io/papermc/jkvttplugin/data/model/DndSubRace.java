@@ -40,6 +40,13 @@ public class DndSubRace {
     private List<String> armorProficiencies = List.of();
     private List<String> toolProficiencies = List.of();
     private List<InnateSpell> innateSpells = List.of();
+    // Advantage on saves vs a condition/tag, like a race's (Stout Halfling vs poison, #174).
+    private List<java.util.Map<String, String>> conditionalAdvantages = List.of();
+
+    public List<java.util.Map<String, String>> getConditionalAdvantages() { return conditionalAdvantages; }
+    public void setConditionalAdvantages(List<java.util.Map<String, String>> ca) {
+        this.conditionalAdvantages = ca != null ? List.copyOf(ca) : List.of();
+    }
 
     public DndSubRace() {}
 

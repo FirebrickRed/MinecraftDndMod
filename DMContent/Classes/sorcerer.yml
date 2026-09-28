@@ -6,7 +6,7 @@ primary_abilities:
 saving_throws:
   - Constitution
   - Charisma
-#  should we remove these, doesn't this mean you get proficiencies with everything?
+# An empty list means no proficiencies at all (not "all of them"): sorcerers wear no armor.
 armor_proficiencies: []
 weapon_proficiencies:
   - dagger
@@ -14,7 +14,6 @@ weapon_proficiencies:
   - sling
   - quarterstaff
   - light_crossbow
-#  should we remove these, doesn't this mean you get proficiencies with everything?
 tool_proficiencies: []
 spellcasting:
   casting_ability: Charisma
@@ -195,6 +194,14 @@ subclasses:
   draconic_bloodline:
     name: Draconic Bloodline
     description: "Your innate magic comes from draconic power"
+    # Dragon Ancestor (PHB p.102): its damage type matters from 6th level (Elemental Affinity).
+    player_choices:
+      - id: dragon_ancestor
+        title: Dragon Ancestor
+        type: custom
+        choose: 1
+        options: ["Black (acid)", "Blue (lightning)", "Brass (fire)", "Bronze (lightning)", "Copper (acid)",
+                  "Gold (fire)", "Green (poison)", "Red (fire)", "Silver (cold)", "White (cold)"]
     languages:
       - Draconic
     features_by_level:
@@ -211,24 +218,31 @@ subclasses:
     name: Divine Soul
     description: "Your magic is touched by divine power"
     player_choices:
+      # Each affinity grants one extra spell known that doesn't count against your spells known (XGE p.50).
       - id: divine_magic_affinity
         title: Divine Affinity
-        type: other
+        type: custom
         choose: 1
-        options: [ good, evil, law, chaos, neutrality ]
+        options:
+          - { label: Good, grants: { bonus_spells: [cure_wounds] } }
+          - { label: Evil, grants: { bonus_spells: [inflict_wounds] } }
+          - { label: Law, grants: { bonus_spells: [bless] } }
+          - { label: Chaos, grants: { bonus_spells: [bane] } }
+          - { label: Neutrality, grants: { bonus_spells: [protection_from_evil_and_good] } }
     features_by_level:
       1:
         - "Divine Magic: Your link to the divine allows you to learn spells normally associated with the cleric class. When your Spellcasting feature lets you learn a sorcerer cantrip or a sorcerer spell of 1st level or higher, you can choose the new spell from the cleric spell list or the sorcerer spell list. You must otherwise obey all the restrictions for selecting the spell, and it becomes a sorcerer spell for you."
         - "Favored by the Gods. Starting at 1st level, divine power guards your destiny. If you fail a saving throw or miss with an attack roll, you can roll 2d4 and add it to the total, possibly changing the outcome. Once you use this feature, you can't use it again until you finish a short or long rest."
   lunar_sorcery:
     name: Lunar Sorcery
-    description: ""
+    description: "Your magic draws on the phases of the moon"
     player_choices:
 #      whenever you long rest you can choose what lunar phase manifests its power through your magic
 #      While in the chosen phase, you can cast one 1st-level spell of the associated phase in the Lunar Spells table once without expending a spell slot. Once you cast a spell in this way, you can’t do so again until you finish a long rest.
+      # The phase you start in; RAW you can change it on each long rest (not tracked yet).
       - id: lunar_phase
-        name: Lunar Phase
-        type: other
+        title: Lunar Phase
+        type: custom
         choose: 1
         options: ["Full moon", "New Moon", "Crescent Moon"]
     bonus_spells:
@@ -261,7 +275,7 @@ subclasses:
       #      ToDo: not entirely sure if we want or need this since this is just for flavor and doesn't effect game play at all
       - id: shadow_sorcerer_quirks
         title: Shadow Sorcerer Quirk
-        type: other
+        type: custom
         choose: 1
         options: [ "icy cold to the touch", "when sleeping, you don't appear to breathe", "you barely bleed, even when badly injured", "your heart beats once per minute. this event somtimes surprises you", "trouble remembering that living creatures and corpses should be treated differently", "You blinked. Once. Last week." ]
     darkvision: 120

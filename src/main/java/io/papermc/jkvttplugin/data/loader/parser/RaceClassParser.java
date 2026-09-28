@@ -66,7 +66,7 @@ public final class RaceClassParser {
         // Ability scores (fixed and choice-based)
         AbilityParser.AbilityScoreParseResult abilityScores = AbilityParser.parseAbilityScores(data.get("ability_scores"));
 
-        return DndSubRace.builder()
+        DndSubRace subrace = DndSubRace.builder()
                 .id(id)
                 .name((String) data.getOrDefault("name", id))
                 .description((String) data.getOrDefault("description", ""))
@@ -90,6 +90,8 @@ public final class RaceClassParser {
                 .toolProficiencies(ToolRegistry.idsOf(ParseUtil.normalizeStringList(data.get("tool_proficiencies"))))
                 .innateSpells(InnateSpellParser.parseInnateSpells(data.get("innate_spells")))
                 .build();
+        subrace.setConditionalAdvantages(parseConditionalAdvantages(data.get("conditional_advantages"))); // #174
+        return subrace;
     }
 
     public static Map<String, DndSubClass> parseSubclasses(Object rawData, String className) {
