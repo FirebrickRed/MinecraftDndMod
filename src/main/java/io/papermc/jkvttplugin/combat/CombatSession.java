@@ -525,6 +525,7 @@ public class CombatSession {
         Combatant current = getCurrentCombatant();
         if (current != null) {
             lateInitiative.remove(current.getId()); // their turn came: the order is settled
+            for (Combatant c : combatants) c.clearHelpFrom(current.getId()); // their Help lapses now (#176)
             current.startNewTurn(current.getLocation());
             current.setReactionAvailable(true); // reaction refreshes at the start of your turn (#147)
             ReactionManager.clearForMover(current.getId()); // its own OAs from last round are now moot (#147)

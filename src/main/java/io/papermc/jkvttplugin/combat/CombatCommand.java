@@ -803,10 +803,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         ACTIONS.put("dash", "Double your speed for this turn.");
         ACTIONS.put("dodge", "Attacks against you have disadvantage until your next turn.");
         ACTIONS.put("disengage", "Your movement doesn't provoke opportunity attacks.");
-        ACTIONS.put("help", "Give an ally advantage on a check or attack.");
-        ACTIONS.put("hide", "Make a Stealth check to hide.");
+        ACTIONS.put("help", "An ally's next attack roll or ability check before your next turn has advantage.");
+        ACTIONS.put("hide", "Roll Stealth; the DM compares it to passive Perception. Hidden: advantage on your next attack.");
         ACTIONS.put("ready", "Prepare an action to trigger on a condition.");
-        ACTIONS.put("search", "Look for something.");
+        ACTIONS.put("search", "Roll Perception (or Investigation) to find something, or someone hidden.");
         ACTIONS.put("use", "Use or interact with an object.");
     }
 
@@ -848,7 +848,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             showActionMenu(player, actor);
             return;
         }
-        performAction(player, session, actor, state, name);
+        performAction(player, session, actor, state, name, args);
     }
 
     /** Clickable list of the standard actions (#143). */
@@ -946,7 +946,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
     }
 
-    private void performAction(Player player, CombatSession session, Combatant actor, TurnState state, String name) {
+    private void performAction(Player player, CombatSession session, Combatant actor, TurnState state, String name, String[] args) {
         if (!ACTIONS.containsKey(name)) {
             player.sendMessage(Component.text("Unknown action: " + name + " — use /combat action for the list.", NamedTextColor.RED));
             return;
@@ -960,6 +960,25 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text(actor.getDisplayName() + " has already used their Action.", NamedTextColor.YELLOW));
             return;
         }
+        // Help, Hide and Search do something now (#176); the Action is spent once they've happened
+        // (a roll still waiting on the player's die costs nothing yet).
+        if (name.equals("help") || name.equals("hide") || name.equals("search")) {
+            List<String> words = new ArrayList<>();
+            for (int i = 2; i < args.length; i++) {
+                if (RollService.isRollKeyword(args[i])) { i++; continue; } // skip the keyword and its value
+                words.add(args[i]);
+            }
+            boolean done = switch (name) {
+                case "help" -> CombatActions.help(player, session, actor, words);
+                case "hide" -> CombatActions.hide(player, session, actor, args);
+                default -> CombatActions.search(player, session, actor, words, args);
+            };
+            if (done) {
+                state.useAction();
+                session.sendActionBar(actor);
+            }
+            return;
+        }
         state.useAction();
         String who = actor.getDisplayName(true);
         Component msg = switch (name) {
@@ -968,11 +987,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 yield Component.text(who + " takes the Dodge action (attacks against them have disadvantage).", NamedTextColor.YELLOW); }
             case "disengage" -> { actor.addCondition("disengaging"); session.updateScoreboard();
                 yield Component.text(who + " Disengages — no opportunity attacks from moving away.", NamedTextColor.YELLOW); }
-            case "help" -> Component.text(who + " takes the Help action.", NamedTextColor.YELLOW);
-            case "hide" -> Component.text(who + " tries to Hide.", NamedTextColor.YELLOW);
             case "ready" -> Component.text(who + " Readies an action.", NamedTextColor.YELLOW);
-            case "search" -> Component.text(who + " Searches the area.", NamedTextColor.YELLOW);
-            case "use" -> Component.text(who + " uses an object.", NamedTextColor.YELLOW);
+            case "use" ->Component.text(who + " uses an object.", NamedTextColor.YELLOW);
             default -> Component.text(who + " takes an action.", NamedTextColor.YELLOW);
         };
         session.broadcast(msg);

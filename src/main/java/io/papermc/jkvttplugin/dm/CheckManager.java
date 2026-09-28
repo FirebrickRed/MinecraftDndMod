@@ -20,13 +20,16 @@ public final class CheckManager {
 
     // ==================== PENDING (waiting on a player's roll) ====================
 
-    /** A check the DM called and is waiting on. {@code dc} null = ungraded; {@code contestId} set = part of a contest. */
-    public record Pending(UUID dmId, Integer dc, String label, Advantage advantage, String contestId) {}
+    /**
+     * A check the DM called and is waiting on. {@code dc} null = ungraded; {@code contestId} set = part
+     * of a contest; {@code groupId} set = one of several people called at once.
+     */
+    public record Pending(UUID dmId, Integer dc, String label, Advantage advantage, String contestId, String groupId) {}
 
     private static final Map<UUID, Pending> pending = new HashMap<>(); // roller's player id -> pending
 
     public static void register(UUID rollerPlayerId, UUID dmId, Integer dc, String label, Advantage advantage) {
-        registerPending(rollerPlayerId, new Pending(dmId, dc, label, advantage == null ? Advantage.NONE : advantage, null));
+        registerPending(rollerPlayerId, new Pending(dmId, dc, label, advantage == null ? Advantage.NONE : advantage, null, null));
     }
     private static void registerPending(UUID rollerPlayerId, Pending p) {
         if (rollerPlayerId != null) pending.put(rollerPlayerId, p);
@@ -75,7 +78,7 @@ public final class CheckManager {
         c.sides.add(b);
         contests.put(id, c);
         for (Side s : c.sides) {
-            if (!s.npc) registerPending(s.key, new Pending(dmId, null, s.label, Advantage.NONE, id));
+            if (!s.npc) registerPending(s.key, new Pending(dmId, null, s.label, Advantage.NONE, id, null));
         }
         return c;
     }
@@ -89,6 +92,64 @@ public final class CheckManager {
         for (Side s : c.sides) if (sideKey.equals(s.key)) s.total = total;
         if (c.complete()) { contests.remove(contestId); return c; }
         return null;
+    }
+
+    // ==================== GROUPS (several people at once) ====================
+
+    /**
+     * A check called from several characters at once (#186): {@code /dm check all …} or a list of
+     * names. Each rolls their own; the DM sees each result as it arrives, and the group verdict (with
+     * a DC: at least half succeed, PHB p.175) when everyone's in or the DM closes it.
+     */
+    public static final class Group {
+        public final String id; public final UUID dmId; public final Integer dc; public final String label;
+        /** player id → character name, in the order called. */
+        public final Map<UUID, String> members = new LinkedHashMap<>();
+        /** player id → total, as they come in. */
+        public final Map<UUID, Integer> totals = new LinkedHashMap<>();
+        Group(String id, UUID dmId, Integer dc, String label) { this.id = id; this.dmId = dmId; this.dc = dc; this.label = label; }
+        public boolean allIn() { return totals.size() >= members.size(); }
+        public int successes() {
+            if (dc == null) return 0;
+            int n = 0;
+            for (int t : totals.values()) if (t >= dc) n++;
+            return n;
+        }
+        /** At least half of those who rolled succeed. */
+        public boolean groupSucceeds() { return dc != null && !totals.isEmpty() && successes() * 2 >= totals.size(); }
+    }
+
+    private static final Map<String, Group> groups = new HashMap<>();
+    private static int groupCounter = 0;
+
+    public static Group registerGroup(UUID dmId, Integer dc, String label, Advantage advantage, Map<UUID, String> members) {
+        Group g = new Group("g" + (++groupCounter), dmId, dc, label);
+        g.members.putAll(members);
+        groups.put(g.id, g);
+        for (UUID member : members.keySet()) {
+            registerPending(member, new Pending(dmId, dc, label, advantage == null ? Advantage.NONE : advantage, null, g.id));
+        }
+        return g;
+    }
+
+    public static Group getGroup(String id) { return id == null ? null : groups.get(id); }
+
+    /** Record one member's total; the group stays until it's closed (by everyone rolling, or the DM). */
+    public static Group recordGroupRoll(String groupId, UUID playerId, int total) {
+        Group g = groups.get(groupId);
+        if (g != null && g.members.containsKey(playerId)) g.totals.put(playerId, total);
+        return g;
+    }
+
+    /** Close it: whoever hasn't rolled is dropped from it. Returns the group, or null if already closed. */
+    public static Group closeGroup(String groupId) {
+        Group g = groups.remove(groupId);
+        if (g == null) return null;
+        for (UUID member : g.members.keySet()) {
+            Pending p = pending.get(member);
+            if (p != null && groupId.equals(p.groupId())) pending.remove(member);
+        }
+        return g;
     }
 
     // ==================== ACTIVE / HELD CHECK VALUES ====================

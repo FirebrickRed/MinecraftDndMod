@@ -98,6 +98,7 @@ public class SpellCastHandler {
                 player.sendMessage(RollPrompt.again(player, "✨ Roll to hit with " + spell.getName() + ":", RollPrompt.d20(advantage), attackLabel));
                 return false;
             }
+            caster.afterAttackRoll(session); // a Help is used up; a hidden caster is revealed (#176)
             int ac = target.getArmorClass();
             boolean hit = RollService.hits(r, ac);
             session.broadcast(Component.empty());

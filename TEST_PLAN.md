@@ -289,6 +289,33 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       the rest options (Hit Dice, prepare) are closed.
 - [ ] **Creation, wizard spell step:** the label says "This is your spellbook. Each day you prepare some of it".
 
+## Help, Hide and Search in a fight (#176)
+
+- [ ] `/combat action help` → a row of your allies; pick one → the table sees "🤝 … helps …". Their next attack
+      shows "↑ advantage" with "Helped by …"; the attack after that doesn't. A sheet check instead of an
+      attack also takes the advantage ("↑ Advantage: helped by …").
+- [ ] Unused, the Help is gone once the helper's next turn starts.
+- [ ] `/combat action hide` → the three buttons (Stealth). Rolled → you see your total; the table sees
+      "tries to Hide"; the DM sees it against each enemy's passive Perception with [Hidden] / [Not hidden].
+- [ ] [Hidden] → "is hidden", and a Hidden condition tag on the scoreboard; your attack has advantage, and
+      after it "is no longer hidden: the attack gave them away". Attacks against you had disadvantage.
+- [ ] A creature (DM) takes `/combat action search` → the DM sees the Perception total and, for a hidden
+      player it beats, **[Reveal]**.
+- [ ] Help / Hide / Search spend the Action only once rolled (waiting on your die costs nothing).
+
+## Checks: private rolls, groups, passive (#186)
+
+- [ ] A player rolls a skill from their own sheet → only they see it, with **[Show the DM]**. Click →
+      the DM gets it with [Share with players]; nobody else sees anything until then.
+- [ ] `/dm check all skill stealth dc 12` → every online character gets the prompt; you see each result as it
+      comes ("Zek — Stealth: … ✔ (1/3 in)"), then "Group Stealth: 2 of 3 succeed. The group SUCCEEDS."
+- [ ] Same with `Zek, Borin` instead of `all`; and **[Close now]** before everyone rolls → the verdict from
+      whoever did, plus "Didn't roll: …".
+- [ ] `/dm check all passive perception dc 14` → no prompts; you see each passive score and who notices.
+      On a creature (`/dm check Goblin passive perception`) too.
+- [ ] `/dm check Zek skill athletics|acrobatics dc 13` → Zek gets both prompts ("pick how you go about
+      it"); the one he rolls comes back to you, graded.
+
 ## Prepared spells (#218)
 
 - [ ] **Wizard spellbook:** an unprepared spell reads "In your spellbook, not prepared" and clicking it does

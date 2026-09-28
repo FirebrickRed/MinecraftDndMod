@@ -74,7 +74,7 @@ public class RollOptionsMenuHandler {
     }
 
     /**
-     * Resolve a physical skill/check/save roll (via RollService) and broadcast it. Returns false if
+     * Resolve a physical skill/check/save roll (via RollService) and report it. Returns false if
      * physical mode still needs a die (the caller should prompt).
      */
     public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total,
@@ -101,13 +101,23 @@ public class RollOptionsMenuHandler {
             Player owner = Bukkit.getPlayer(character.getPlayerId());
             if (owner != null) owner.sendMessage(Component.text("↑ Advantage: " + boon + ".", NamedTextColor.GREEN));
         }
+        // An ally's Help in a fight (#176): advantage on the next ability check (not a save).
+        io.papermc.jkvttplugin.combat.Combatant helped = !"SAVE".equals(type) ? combatantOf(character) : null;
+        if (helped != null && helped.getHelpedByName() != null) {
+            advantage = advantage.with(true);
+            Player owner = Bukkit.getPlayer(character.getPlayerId());
+            if (owner != null) owner.sendMessage(Component.text("↑ Advantage: helped by " + helped.getHelpedByName() + ".", NamedTextColor.GREEN));
+        }
         RollService.RollResult r = RollService.resolve(roll, total, info.bonus, info.breakdown,
                 character.rerollsNat1(), advantage, forceAuto);
         if (r == null) return false;
+        if (helped != null) helped.clearHelp(); // the Help is used up by this check
         if (pending != null) {
             io.papermc.jkvttplugin.dm.CheckManager.takePending(character.getPlayerId());
             if (pending.contestId() != null) {
                 reportContest(character, info, r.total(), r.breakdown(), pending);
+            } else if (pending.groupId() != null) {
+                reportGroupRoll(character, info, r.total(), r.breakdown(), pending);
             } else {
                 io.papermc.jkvttplugin.dm.CheckManager.recordActive(character.getPlayerId(), info.displayName, r.total());
                 reportDmCheck(character, info, r.total(), r.breakdown(), pending);
@@ -115,8 +125,16 @@ public class RollOptionsMenuHandler {
             }
             return true;
         }
-        broadcastRoll(character, info, r, advantage);
+        reportOwnRoll(character, info, r, advantage);
         return true;
+    }
+
+    /** This character's combatant in a running fight, or null. */
+    private static io.papermc.jkvttplugin.combat.Combatant combatantOf(CharacterSheet character) {
+        var session = io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(character.getPlayerId());
+        if (session == null) return null;
+        for (var c : session.getCombatants()) if (c.isPlayer() && c.getId().equals(character.getPlayerId())) return c;
+        return null;
     }
 
     /** The ability a roll of this type uses: a skill's ability, the check/save ability, a tool check's. */
@@ -232,6 +250,28 @@ public class RollOptionsMenuHandler {
         // Not carrying any: nothing to break. The DM was already told "NOT carrying them" when calling it.
     }
 
+    /**
+     * One member of a group check has rolled (#186): the DM sees it as it arrives, with the count so
+     * far; when the last one's in, the group's verdict follows.
+     */
+    private static void reportGroupRoll(CharacterSheet character, RollInfo info, int total, String work,
+                                        io.papermc.jkvttplugin.dm.CheckManager.Pending p) {
+        Player owner = Bukkit.getPlayer(character.getPlayerId());
+        if (owner != null) owner.sendMessage(Component.text("You rolled " + info.displayName + ": " + work + " — sent to the DM.", NamedTextColor.GRAY));
+        var g = io.papermc.jkvttplugin.dm.CheckManager.recordGroupRoll(p.groupId(), character.getPlayerId(), total);
+        if (g == null) return; // the DM already closed it
+        Component line = Component.text("  📋 " + character.getCharacterName() + " — " + info.displayName + ": " + work, NamedTextColor.GOLD);
+        if (p.dc() != null) {
+            boolean ok = total >= p.dc();
+            line = line.append(Component.text(ok ? "  ✔" : "  ✘", ok ? NamedTextColor.GREEN : NamedTextColor.RED));
+        }
+        line = line.append(Component.text("  (" + g.totals.size() + "/" + g.members.size() + " in)", NamedTextColor.DARK_GRAY));
+        Player dm = p.dmId() != null ? Bukkit.getPlayer(p.dmId()) : null;
+        if (dm != null) dm.sendMessage(line);
+        else for (Player d : io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs()) d.sendMessage(line);
+        if (g.allIn()) io.papermc.jkvttplugin.commands.CheckCommand.reportGroupVerdict(io.papermc.jkvttplugin.dm.CheckManager.closeGroup(g.id));
+    }
+
     /** Record one side of a contested check; when both sides are in, report the winner to the DM (#186). */
     private static void reportContest(CharacterSheet character, RollInfo info, int total, String work,
                                       io.papermc.jkvttplugin.dm.CheckManager.Pending p) {
@@ -279,11 +319,11 @@ public class RollOptionsMenuHandler {
     public enum RollMode { NORMAL, ADVANTAGE, DISADVANTAGE }
 
     /**
-     * The table's line for a sheet roll: "Zek rolled Stealth with advantage: 18  (🎲 d20 [9, 15]
+     * A sheet roll the player made themselves, shown to them only (#186): "Zek rolled Stealth with advantage: 18  (🎲 d20 [9, 15]
      * advantage +3[DEX] +2[Prof] = 18)". The work in brackets is {@link RollPrompt}'s wording, so it
      * reads the same as every other roll; a natural 1 or 20 is pulled out and shown loud.
      */
-    private static void broadcastRoll(CharacterSheet character, RollInfo info, RollService.RollResult r,
+    private static void reportOwnRoll(CharacterSheet character, RollInfo info, RollService.RollResult r,
                                       io.papermc.jkvttplugin.combat.Advantage advantage) {
         Component message = Component.text(character.getCharacterName(), NamedTextColor.AQUA)
                 .append(Component.text(" rolled ", NamedTextColor.GRAY))
@@ -300,7 +340,26 @@ public class RollOptionsMenuHandler {
         if (!nat.isEmpty()) {
             message = message.append(Component.text(nat, r.d20() == 20 ? NamedTextColor.GOLD : NamedTextColor.DARK_RED, TextDecoration.BOLD));
         }
-        Bukkit.broadcast(message);
+        // A roll you make yourself is yours (#186): only you see it, and [Show the DM] passes it on.
+        // The DM gets it with [Share with players], like a check they called.
+        Player owner = Bukkit.getPlayer(character.getPlayerId());
+        if (owner == null) return;
+        final Component result = message;
+        String plain = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(message);
+        Component show = Component.text("[Show the DM]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                .hoverEvent(HoverEvent.showText(Component.text("Only you saw this roll. Send it to the DM, who can share it with the table.")))
+                .clickEvent(ClickEvent.callback(a -> {
+                    String token = io.papermc.jkvttplugin.dm.CheckManager.stashShare(plain);
+                    Component toDm = result.append(Component.text("  "))
+                            .append(Component.text("[Share with players]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                                    .clickEvent(ClickEvent.runCommand("/dm check share " + token))
+                                    .hoverEvent(HoverEvent.showText(Component.text("Announce this roll to the table."))));
+                    var dms = io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs();
+                    if (dms.isEmpty()) { owner.sendMessage(Component.text("No DM is online.", NamedTextColor.GRAY)); return; }
+                    for (Player dm : dms) if (!dm.equals(owner)) dm.sendMessage(toDm);
+                    owner.sendMessage(Component.text("Sent to the DM.", NamedTextColor.GRAY));
+                }, net.kyori.adventure.text.event.ClickCallback.Options.builder().uses(1).lifetime(java.time.Duration.ofMinutes(30)).build()));
+        owner.sendMessage(message.append(Component.text("  ")).append(show));
     }
 
     /**

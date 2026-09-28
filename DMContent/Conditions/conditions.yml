@@ -153,3 +153,17 @@ dodging:
     incoming_attack: disadvantage
   reminders:
     - "Only against attackers you can see; you also have advantage on Dexterity saves."
+
+# Hidden (#176): after a successful Hide. Creatures don't know where you are (PHB p.177, p.194).
+# The DM grants it when your Stealth beats their passive Perception; it ends after your next attack
+# (which still gets the advantage), or when the DM removes it: you made noise, or a creature's
+# Search (its active Perception) beat your Stealth.
+hidden:
+  name: Hidden
+  rules:
+    - "Creatures don't know where you are."
+    - "Your attack rolls have advantage; attack rolls against you have disadvantage."
+    - "It ends after you attack, or when you're found (noise, or a Search that beats your Stealth)."
+  roll_effects:
+    self_attack: advantage
+    incoming_attack: disadvantage

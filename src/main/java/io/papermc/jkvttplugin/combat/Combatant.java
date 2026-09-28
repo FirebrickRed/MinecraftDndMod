@@ -662,8 +662,50 @@ public class Combatant {
      * bits (prone melee-vs-ranged, frightened line-of-sight) are left to {@link #attackReminders} so
      * the game doesn't silently guess.
      */
+    // ==================== HELP AND HIDDEN (#176) ====================
+
+    /**
+     * An ally's Help action (PHB p.192): advantage on this combatant's next attack roll or ability
+     * check, used up by that roll, and gone when the helper's next turn starts.
+     */
+    private UUID helpedById;
+    private String helpedByName;
+
+    public void setHelpedBy(Combatant helper) {
+        this.helpedById = helper.getId();
+        this.helpedByName = helper.getDisplayName();
+    }
+    /** Who's helping, for "↑ Advantage: Helped by Zek", or null. */
+    public String getHelpedByName() { return helpedByName; }
+    public void clearHelp() { helpedById = null; helpedByName = null; }
+    /** The helper's turn has come round: their Help lapses if it wasn't used. */
+    public void clearHelpFrom(UUID helperId) { if (helperId != null && helperId.equals(helpedById)) clearHelp(); }
+
+    /** The Stealth total that got them Hidden, so a Search can be compared against it; null when not hidden. */
+    private Integer hiddenStealth;
+    public Integer getHiddenStealth() { return hasCondition("hidden") ? hiddenStealth : null; }
+    public void setHiddenStealth(Integer total) { this.hiddenStealth = total; }
+
+    /**
+     * An attack roll by this combatant has just been rolled: a Help's advantage is used up, and a
+     * hidden attacker is revealed (the attack itself still had advantage, PHB p.195).
+     */
+    public void afterAttackRoll(CombatSession session) {
+        clearHelp();
+        if (hasCondition("hidden")) {
+            removeCondition("hidden");
+            hiddenStealth = null;
+            if (session != null) {
+                session.broadcast(net.kyori.adventure.text.Component.text(getDisplayName() + " is no longer hidden: the attack gave them away.",
+                        net.kyori.adventure.text.format.NamedTextColor.GRAY));
+                session.updateScoreboard();
+            }
+        }
+    }
+
     public Advantage attackAdvantageAgainst(Combatant target) {
         Advantage adv = Advantage.NONE;
+        if (helpedByName != null) adv = adv.with(true); // an ally's Help (#176)
         for (io.papermc.jkvttplugin.data.model.DndCondition c : myConditions()) {
             adv = fold(adv, c.getSelfAttack());
         }
@@ -685,6 +727,7 @@ public class Combatant {
     /** Situational adv/dis notes for an attack by this combatant vs {@code target} (conditions can't auto-decide). */
     public java.util.List<String> attackReminders(Combatant target) {
         java.util.List<String> notes = new java.util.ArrayList<>();
+        if (helpedByName != null) notes.add("Helped by " + helpedByName + ": advantage on this roll (it's used up)");
         for (io.papermc.jkvttplugin.data.model.DndCondition c : myConditions()) {
             for (String r : c.getReminders()) notes.add(c.getName() + " (you): " + r);
         }

@@ -44,13 +44,15 @@ import java.util.UUID;
  *            roll, answered inline or via the [Roll it] button → /dm check npcroll &lt;contest&gt; &lt;1|2&gt; …)
  *        /dm check clear &lt;player&gt; [skill|all]  ·  /dm check active &lt;player&gt;   (held checks, e.g. Stealth)
  *        /dm check share &lt;token&gt;   (the [Share] button)
- *
- * Deferred: the responder-picks-approach menu, multi-target/all (#186).
+ *        /dm check &lt;all | A, B, …&gt; &lt;ability|save|skill&gt; &lt;name&gt; [dc &lt;n&gt;] [adv|dis]   (a group: each rolls,
+ *            results arrive one by one, then the verdict: at least half succeed; [Close now] ends it early)
+ *        /dm check &lt;who | all | A, B, …&gt; passive &lt;skill&gt; [dc &lt;n&gt;] [adv|dis]   (no rolls: 10 + bonus, ±5)
+ *        /dm check &lt;character&gt; skill &lt;a|b&gt; [dc &lt;n&gt;]   (the player picks the approach, e.g. athletics|acrobatics)
  */
 public class CheckCommand implements CommandExecutor, TabCompleter {
 
     /** Words that end a name before the check type: {@code /dm check <name> <type> ...}. */
-    private static final List<String> CHECK_TYPES = List.of("ability", "check", "save", "saving", "savingthrow", "skill", "tool");
+    private static final List<String> CHECK_TYPES = List.of("ability", "check", "save", "saving", "savingthrow", "skill", "tool", "passive");
     /** Words that end a name in {@code /dm check clear <name> [skill|all]}. */
     private static final List<String> CLEAR_STOP_WORDS = clearStopWords();
 
@@ -134,6 +136,9 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text("Usage: /dm check <character|creature> <ability|save|skill|tool> <name> [dc <n>] [adv|dis]", NamedTextColor.RED));
             return true;
         }
+        // Passive: nobody rolls (10 + bonus). Several at once: "all" or a comma list (#186).
+        if (args[1].equalsIgnoreCase("passive")) return passiveCheck(sender, args);
+        if (args[0].equalsIgnoreCase("all") || args[0].contains(",")) return groupCheck(sender, args);
         // A spawned creature rolls too (a goblin's DEX save against a trap): the DM rolls for it.
         DndEntityInstance creature = DndEntityInstance.findByName(args[0]);
         if (creature != null) return creatureCheck(sender, creature, args);
@@ -164,6 +169,8 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
                 value = ability.name();
             }
             case "skill" -> {
+                // "athletics|acrobatics": the player picks how they go about it (#186).
+                if (args[2].contains("|")) return approachCheck(sender, sheet, target, args);
                 Skill skill = resolveSkill(args[2]);
                 if (skill == null) {
                     sender.sendMessage(Component.text("Unknown skill: " + args[2], NamedTextColor.RED));
@@ -228,6 +235,212 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
                 + (dc != null ? " (DC " + dc + ", private)" : "")
                 + (mode == RollMode.NORMAL ? "" : " with " + mode.name().toLowerCase())
                 + " — the result comes back to you to share.", NamedTextColor.GRAY));
+        return true;
+    }
+
+    // ==================== PASSIVE, GROUP AND APPROACH CHECKS (#186) ====================
+
+    /** DC and advantage from the words after the check's name. */
+    private record Options(Integer dc, RollMode mode) {}
+
+    private static Options options(String[] args, int from) {
+        RollMode mode = RollMode.NORMAL;
+        Integer dc = null;
+        for (int i = from; i < args.length; i++) {
+            String a = args[i].toLowerCase();
+            if (a.equals("adv") || a.equals("advantage")) mode = RollMode.ADVANTAGE;
+            else if (a.equals("dis") || a.equals("disadvantage")) mode = RollMode.DISADVANTAGE;
+            else if (a.equals("dc") && i + 1 < args.length) {
+                try { dc = Integer.parseInt(args[i + 1]); } catch (NumberFormatException ignored) {}
+            }
+        }
+        return new Options(dc, mode);
+    }
+
+    /** "all" (every online player's active character) or "A, B, …"; null after saying what's wrong. */
+    private static List<CharacterSheet> resolveMany(CommandSender sender, String who) {
+        List<CharacterSheet> out = new ArrayList<>();
+        if (who.equalsIgnoreCase("all")) {
+            for (Player p : Bukkit.getOnlinePlayers()) {
+                CharacterSheet s = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(p);
+                if (s != null && !s.isDead()) out.add(s);
+            }
+            if (out.isEmpty()) sender.sendMessage(Component.text("No one online has an active character.", NamedTextColor.RED));
+            return out.isEmpty() ? null : out;
+        }
+        for (String part : who.split(",")) {
+            String name = NameUtil.stripQuotes(part.trim());
+            if (name.isEmpty()) continue;
+            CharacterSheet s = CharacterResolver.resolveOrError(sender, name);
+            if (s == null) return null;
+            if (!out.contains(s)) out.add(s);
+        }
+        return out.isEmpty() ? null : out;
+    }
+
+    /**
+     * /dm check &lt;who&gt; passive &lt;skill&gt; [dc n] [adv|dis]: nobody rolls. A passive score is 10 + the
+     * skill's bonus, +5 with advantage and -5 with disadvantage (PHB p.175). The DM sees who beats the DC.
+     */
+    private boolean passiveCheck(CommandSender sender, String[] args) {
+        Skill skill = args.length >= 3 ? resolveSkill(args[2]) : Skill.PERCEPTION;
+        if (skill == null) skill = Skill.PERCEPTION;
+        Options o = options(args, 2);
+        int shift = o.mode() == RollMode.ADVANTAGE ? 5 : o.mode() == RollMode.DISADVANTAGE ? -5 : 0;
+
+        List<String[]> rows = new ArrayList<>(); // name, score
+        if (args[0].equalsIgnoreCase("all") || args[0].contains(",")) {
+            List<CharacterSheet> sheets = resolveMany(sender, args[0]);
+            if (sheets == null) return true;
+            for (CharacterSheet s : sheets) rows.add(new String[]{s.getCharacterName(), String.valueOf(10 + s.getSkillBonus(skill) + shift)});
+        } else {
+            DndEntityInstance creature = DndEntityInstance.findByName(args[0]);
+            if (creature != null) {
+                rows.add(new String[]{creature.getDisplayName(), String.valueOf(10 + creature.getTemplate().getSkillBonus(skill) + shift)});
+            } else {
+                CharacterSheet s = CharacterResolver.resolveOrError(sender, args[0]);
+                if (s == null) return true;
+                rows.add(new String[]{s.getCharacterName(), String.valueOf(10 + s.getSkillBonus(skill) + shift)});
+            }
+        }
+        sender.sendMessage(Component.text("👁 Passive " + skill.getDisplayName() + (o.dc() != null ? " vs DC " + o.dc() : "")
+                + (shift > 0 ? " (advantage, +5)" : shift < 0 ? " (disadvantage, -5)" : "") + ":", NamedTextColor.GOLD));
+        for (String[] row : rows) {
+            int score = Integer.parseInt(row[1]);
+            if (o.dc() == null) {
+                sender.sendMessage(Component.text("   " + row[0] + ": " + score, NamedTextColor.GRAY));
+            } else {
+                boolean ok = score >= o.dc();
+                sender.sendMessage(Component.text("   " + (ok ? "✔ " : "✘ ") + row[0] + " (" + score + ")" + (ok ? " notices" : " doesn't"),
+                        ok ? NamedTextColor.GREEN : NamedTextColor.RED));
+            }
+        }
+        return true;
+    }
+
+    /**
+     * /dm check &lt;all | A, B, …&gt; &lt;ability|save|skill&gt; &lt;name&gt; [dc n] [adv|dis]: each rolls their own; the
+     * DM sees each result as it arrives, then the verdict. [Close now] ends it with whoever has rolled.
+     */
+    private boolean groupCheck(CommandSender sender, String[] args) {
+        List<CharacterSheet> sheets = resolveMany(sender, args[0]);
+        if (sheets == null) return true;
+        String category = args[1].toLowerCase();
+        String rollType;
+        String value;
+        String label;
+        switch (category) {
+            case "ability", "check", "save", "saving", "savingthrow" -> {
+                Ability ability = resolveAbility(args[2]);
+                if (ability == null) { sender.sendMessage(invalidAbility(args[2])); return true; }
+                rollType = category.startsWith("sav") ? "SAVE" : "CHECK";
+                value = ability.name();
+                label = ability.getAbbreviation() + (rollType.equals("SAVE") ? " save" : " check");
+            }
+            case "skill" -> {
+                Skill skill = resolveSkill(args[2]);
+                if (skill == null) { sender.sendMessage(Component.text("Unknown skill: " + args[2], NamedTextColor.RED)); return true; }
+                rollType = "SKILL";
+                value = skill.name();
+                label = skill.getDisplayName();
+            }
+            default -> {
+                sender.sendMessage(Component.text("A group check is an ability check, a save or a skill (or passive).", NamedTextColor.RED));
+                return true;
+            }
+        }
+        Options o = options(args, 3);
+        java.util.Map<UUID, String> members = new java.util.LinkedHashMap<>();
+        List<String> offline = new ArrayList<>();
+        for (CharacterSheet s : sheets) {
+            if (Bukkit.getPlayer(s.getPlayerId()) == null) offline.add(s.getCharacterName());
+            else members.put(s.getPlayerId(), s.getCharacterName());
+        }
+        if (members.isEmpty()) { sender.sendMessage(Component.text("None of them are online to roll.", NamedTextColor.RED)); return true; }
+        UUID dmId = (sender instanceof Player dm) ? dm.getUniqueId() : null;
+        io.papermc.jkvttplugin.combat.Advantage adv = switch (o.mode()) {
+            case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
+            case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
+            default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
+        };
+        CheckManager.Group g = CheckManager.registerGroup(dmId, o.dc(), label, adv, members);
+        for (CharacterSheet s : sheets) {
+            Player p = Bukkit.getPlayer(s.getPlayerId());
+            if (p != null) RollOptionsMenuHandler.promptSkillRoll(p, s, rollType, value, o.mode());
+        }
+        String groupId = g.id;
+        sender.sendMessage(Component.text("📋 Called " + label + " from " + String.join(", ", members.values())
+                        + (o.dc() != null ? " (DC " + o.dc() + ", private; the group succeeds if at least half do)" : "")
+                        + ". Results come back as they roll. ", NamedTextColor.GRAY)
+                .append(Component.text("[Close now]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text("Finish it with whoever has rolled")))
+                        .clickEvent(ClickEvent.callback(a -> {
+                            CheckManager.Group closed = CheckManager.closeGroup(groupId);
+                            if (closed != null) reportGroupVerdict(closed);
+                            else if (a instanceof Player p) p.sendMessage(Component.text("That check is already finished.", NamedTextColor.GRAY));
+                        }, net.kyori.adventure.text.event.ClickCallback.Options.builder().uses(1).lifetime(java.time.Duration.ofMinutes(30)).build()))));
+        if (!offline.isEmpty()) sender.sendMessage(Component.text("   Offline, not asked: " + String.join(", ", offline), NamedTextColor.DARK_GRAY));
+        return true;
+    }
+
+    /** The group's result for the DM, with [Share with players]. Called when the last one's in or the DM closes it. */
+    public static void reportGroupVerdict(CheckManager.Group g) {
+        if (g == null) return;
+        List<String> missing = new ArrayList<>();
+        for (var e : g.members.entrySet()) if (!g.totals.containsKey(e.getKey())) missing.add(e.getValue());
+        String summary;
+        if (g.dc == null) {
+            List<String> parts = new ArrayList<>();
+            for (var e : g.totals.entrySet()) parts.add(g.members.get(e.getKey()) + " " + e.getValue());
+            summary = "Group " + g.label + ": " + (parts.isEmpty() ? "no one rolled" : String.join(", ", parts));
+        } else {
+            summary = "Group " + g.label + ": " + g.successes() + " of " + g.totals.size() + " succeed. The group "
+                    + (g.groupSucceeds() ? "SUCCEEDS" : "FAILS") + ".";
+        }
+        String token = CheckManager.stashShare(summary);
+        Component msg = Component.text("📋 " + summary + (g.dc != null ? " (DC " + g.dc + ")" : ""),
+                        g.dc == null ? NamedTextColor.GOLD : g.groupSucceeds() ? NamedTextColor.GREEN : NamedTextColor.RED)
+                .append(Component.text("  "))
+                .append(Component.text("[Share with players]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                        .clickEvent(ClickEvent.runCommand("/dm check share " + token)));
+        Player dm = g.dmId != null ? Bukkit.getPlayer(g.dmId) : null;
+        List<Player> to = dm != null ? List.of(dm) : new ArrayList<>(DMManager.getOnlineDMs());
+        for (Player p : to) {
+            p.sendMessage(msg);
+            if (!missing.isEmpty()) p.sendMessage(Component.text("   Didn't roll: " + String.join(", ", missing), NamedTextColor.DARK_GRAY));
+        }
+    }
+
+    /**
+     * /dm check &lt;character&gt; skill &lt;a|b|…&gt; [dc n]: the player chooses how they go about it (escaping a
+     * grapple with Athletics or Acrobatics). They get a prompt for each; the first one rolled answers.
+     */
+    private boolean approachCheck(CommandSender sender, CharacterSheet sheet, Player target, String[] args) {
+        List<Skill> skills = new ArrayList<>();
+        for (String part : args[2].split("\\|")) {
+            Skill s = resolveSkill(part.trim());
+            if (s == null) { sender.sendMessage(Component.text("Unknown skill: " + part, NamedTextColor.RED)); return true; }
+            skills.add(s);
+        }
+        if (target == null) {
+            sender.sendMessage(Component.text(sheet.getCharacterName() + "'s player is offline — can't prompt a check.", NamedTextColor.RED));
+            return true;
+        }
+        Options o = options(args, 3);
+        List<String> names = new ArrayList<>();
+        for (Skill s : skills) names.add(s.getDisplayName());
+        String label = String.join(" or ", names);
+        UUID dmId = (sender instanceof Player dm) ? dm.getUniqueId() : null;
+        io.papermc.jkvttplugin.combat.Advantage adv = switch (o.mode()) {
+            case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
+            case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
+            default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
+        };
+        CheckManager.register(target.getUniqueId(), dmId, o.dc(), label, adv);
+        target.sendMessage(Component.text("🎲 The DM asks for " + label + ": pick how you go about it and roll that one.", NamedTextColor.YELLOW));
+        for (Skill s : skills) RollOptionsMenuHandler.promptSkillRoll(target, sheet, "SKILL", s.name(), o.mode());
+        sender.sendMessage(Component.text("Called " + label + " from " + sheet.getCharacterName() + " (their pick)"
+                + (o.dc() != null ? ", DC " + o.dc() + " private" : "") + " — the result comes back to you.", NamedTextColor.GRAY));
         return true;
     }
 

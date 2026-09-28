@@ -217,6 +217,7 @@ public class AttackHandler {
             commandUser.sendMessage(RollPrompt.again(commandUser, "⚔ Roll to hit " + target.getDisplayName() + ":", RollPrompt.d20(advantage), modBreakdown));
             return false;
         }
+        attacker.afterAttackRoll(session); // a Help is used up; a hidden attacker is revealed (#176)
         int targetAC = target.getArmorClass();
         boolean hit = RollService.hits(r, targetAC);
         // A crit doubles the weapon dice; Half-Orc Savage Attacks adds one more weapon die on top (#70).
