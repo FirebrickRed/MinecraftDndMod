@@ -66,6 +66,8 @@ public class DmModeListener implements Listener {
             TimeCommand.shift(player, player.getWorld(), player.isSneaking() ? -minutes : minutes, true);
         } else if (DmModeManager.TOOL_TIME_CUSTOM.equals(tool)) {
             TimeDialog.open(player);
+        } else if (DmModeManager.TOOL_SOUNDS.equals(tool)) {
+            io.papermc.jkvttplugin.ui.menu.SoundBoardMenu.open(player); // #16
         } else if (DmModeManager.TOOL_RELEASE.equals(tool)) {
             if (toolDebounced(player)) return; // this click already handled via the entity event
             PossessionManager.unpossess(player);

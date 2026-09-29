@@ -36,6 +36,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final ObjectCommand objectExec = new ObjectCommand();
     private final RestCommand restExec = new RestCommand();
     private final TimeCommand timeExec = new TimeCommand();
+    private final SoundCommand soundExec = new SoundCommand();
     private final RestoreResourceCommand restoreExec = new RestoreResourceCommand();
     private final ConsumeResourceCommand consumeExec = new ConsumeResourceCommand();
     private final ReloadYamlCommand reloadExec = new ReloadYamlCommand();
@@ -46,7 +47,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final io.papermc.jkvttplugin.commands.DmEntityCommand entityExec = new io.papermc.jkvttplugin.commands.DmEntityCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "adjust", "view", "note", "revive", "entity", "object", "lootprompt", "rest", "time", "resource", "reload", "mode", "animalreply");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "adjust", "view", "note", "revive", "entity", "object", "lootprompt", "rest", "time", "sound", "resource", "reload", "mode", "animalreply");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -73,6 +74,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "tp", "goto" -> handleTp(sender, args);
             case "rest" -> delegateDm(sender, command, label, args, restExec);
             case "time" -> delegateDm(sender, command, label, args, timeExec);
+            case "sound" -> delegateDm(sender, command, label, args, soundExec);
             case "reload" -> delegateDm(sender, command, label, args, reloadExec);
             case "resource" -> handleResource(sender, command, label, args);
             case "mode" -> handleInventory(sender);
@@ -375,6 +377,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
                 case "object" -> { return objectExec.onTabComplete(sender, command, label, sub); }
                 case "rest" -> { return restExec.onTabComplete(sender, command, label, sub); }
                 case "time" -> { return timeExec.onTabComplete(sender, command, label, sub); }
+                case "sound" -> { return soundExec.onTabComplete(sender, command, label, sub); }
                 case "resource" -> {
                     if (args.length == 2) {
                         return java.util.stream.Stream.of("restore", "consume")

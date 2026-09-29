@@ -86,7 +86,8 @@ public class MenuClickListener implements Listener {
                 || holder.getType() == MenuType.DM_ADJUST
                 || holder.getType() == MenuType.DM_VIEW
                 || holder.getType() == MenuType.PREPARE_SPELLS
-                || holder.getType() == MenuType.CHARACTER_FEATURES;
+                || holder.getType() == MenuType.CHARACTER_FEATURES
+                || holder.getType() == MenuType.SOUND_BOARD;
         // ToDo: check if this can be simplified
 
         // Fetch or create session (centralized, avoiding duplicate service calls in handlers)
@@ -116,6 +117,12 @@ public class MenuClickListener implements Listener {
         if (holder.getType() == MenuType.DM_VIEW) {
             if (action == MenuAction.DM_VIEW) {
                 io.papermc.jkvttplugin.ui.menu.DmViewMenu.handleClick(player, holder.getSessionId(), payload);
+            }
+            return;
+        }
+        if (holder.getType() == MenuType.SOUND_BOARD) {
+            if (io.papermc.jkvttplugin.dm.DMManager.isDM(player)) {
+                io.papermc.jkvttplugin.ui.menu.SoundBoardMenu.handleClick(player, action, payload, event.getClick());
             }
             return;
         }

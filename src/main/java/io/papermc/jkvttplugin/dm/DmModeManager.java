@@ -43,6 +43,7 @@ public class DmModeManager {
     public static final String TOOL_OBJECT = "object";
     public static final String TOOL_SPAWN = "spawn";
     public static final String TOOL_EXIT = "exit";
+    public static final String TOOL_SOUNDS = "sounds";
     // Category navigation (#187): the top level shows categories; each opens a page of tools + a Back.
     public static final String TOOL_PAGE_COMBAT = "page_combat";
     public static final String TOOL_PAGE_EXPLORE = "page_explore";
@@ -168,6 +169,9 @@ public class DmModeManager {
         // shouldn't mean opening the combat toolbar first.
         player.getInventory().setItem(6, tool(Material.LEAD, TOOL_POSSESS, "Possess",
                 "Right-click an entity to control it", "Right-click again (or Exit) to let go"));
+        player.getInventory().setItem(3, tool(Material.NOTE_BLOCK, TOOL_SOUNDS, "Sound Board",
+                "Right-click: a wolf howl, thunder, a door slamming…", "Click one: everyone hears it; shift-click: from where you stand",
+                "Also: switch or stop the fight's music (Sounds.yml)"));
         player.getInventory().setItem(4, tool(Material.TRIPWIRE_HOOK, TOOL_PAGE_EXPLORE, "Exploration Tools",
                 "Right-click to open the exploration toolbar", "(Annotate Object, …)"));
         player.getInventory().setItem(5, tool(Material.CLOCK, TOOL_PAGE_TIME, "Time",

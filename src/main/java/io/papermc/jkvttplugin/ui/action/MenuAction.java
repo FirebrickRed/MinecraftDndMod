@@ -55,6 +55,11 @@ public enum MenuAction {
     USE_FEATURE,             // payload: feature id → fill the command that uses it
     FEATURES_BACK,           // back to the character sheet
 
+    // ===== Sound Board (#16) =====
+    PLAY_SOUND,              // payload: board key; click = everyone, shift-click = from where the DM stands
+    SOUND_MUSIC,             // payload: track name, or "off"
+    SOUND_STOP,              // stop every Sound Board sound
+
     // ===== Prepare Spells (#218) =====
     PREPARE_SPELL,           // payload: spell id; prepare or unprepare it
     PREPARE_BACK,            // back to the spellbook
