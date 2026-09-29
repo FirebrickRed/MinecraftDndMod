@@ -41,13 +41,18 @@ public final class RollPrompt {
      */
     public static Component buttons(String base, String dice, String bonus) {
         boolean hasBonus = bonus != null && !bonus.isBlank();
-        Component out = button(ROLL_IT, NamedTextColor.AQUA, ClickEvent.suggestCommand(base + "autoRoll"),
+        // A manualRoll just refused for its bonus dice (no d4 typed for Bless, #225): say why, then the buttons again.
+        String refused = RollService.takeBonusDiceError();
+        Component out = refused == null ? Component.empty()
+                : Component.text("⚠ " + refused, NamedTextColor.RED).append(Component.newline());
+        out = out.append(button(ROLL_IT, NamedTextColor.AQUA, ClickEvent.suggestCommand(base + "autoRoll"),
                 "The game rolls " + dice + (hasBonus ? " and adds " + bonus : "") + ".\nFills chat: press Enter.")
                 .append(Component.text(" "))
                 .append(button(I_ROLLED, NamedTextColor.GREEN, ClickEvent.suggestCommand(base + "manualRoll "),
-                        "Roll " + dice + " and type what it came to" + (hasBonus ? ";\nthe game adds " + bonus : "") + "."
-                                + (RollService.hasLabelDice(bonus)
-                                        ? "\nRolling the bonus dice yourself too? Type them after, in order: manualRoll 14 3" : "")));
+                        RollService.hasLabelDice(bonus)
+                                // Bless's d4 and the like are yours to roll too with this button (#225).
+                                ? "Roll " + dice + " and your bonus dice, and type them in order:\nmanualRoll 14 3 (the d20, then each die in " + bonus + ")."
+                                : "Roll " + dice + " and type what it came to" + (hasBonus ? ";\nthe game adds " + bonus : "") + ".")));
         if (hasBonus) {
             out = out.append(Component.text(" "))
                     .append(button(MY_TOTAL, NamedTextColor.YELLOW, ClickEvent.suggestCommand(base + "total "),

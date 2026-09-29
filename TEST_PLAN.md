@@ -395,9 +395,10 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 ## Your own bonus die, clicking several targets, Bardic Inspiration (#225, #179, #40)
 
 - [ ] Blessed, attack with **[I rolled…]** and type `manualRoll 14 3` → the result shows `+3[Bless 1d4]` (your 3). Its
-      hover says you can type your bonus dice. `manualRoll 14` alone → the game rolls the d4.
+      hover says to type the d20 then the d4. `manualRoll 14` alone, or `manualRoll 14 9` → a red "Bless adds 1d4 …" /
+      "9 isn't a 1d4 roll" and the buttons again; nothing rolled. `autoRoll` rolls both.
 - [ ] In a fight: spellbook → **Bless** → "left-click up to 3 targets". Click Zek → "Bless: Zek (1 of 3) [Cast on these]
-      [+ me] [cancel]"; click Zek again → he's off the list; click three people → "[Cast it]" fills
+      [+ me] [cancel]"; click Zek again → he's off the list; **shift**-click Borin → straight to "[Cast it]" for Zek, Borin; click three people → "[Cast it]" fills
       `/combat cast bless Zek, Borin, Ada`. **[+ me]** adds you. **[Cast on these]** with two works too.
 - [ ] Out of a fight, spellbook → **Guidance** → click Borin → `/character cast guidance Borin`. **Bane** (harmful)
       out of a fight still asks for a typed name.

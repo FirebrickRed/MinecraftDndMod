@@ -120,7 +120,7 @@ the same way until their first turn.
 
 **Roll input** (attack / cast / save / initiative / deathsave — a d20 action). Pick one, as a bare keyword (no `--`):
 - `autoRoll` — the game rolls your d20 for you, applying any advantage/disadvantage (rolls 2d20 and keeps the right one). Works even in physical-dice mode.
-- `manualRoll <n>` — you physically rolled `n` (1–20); the game adds your modifiers. A bonus die (Bless's `+1d4`, Bardic Inspiration's `+1d6`, #225) is rolled by the game unless you type yours after the d20, in order: `manualRoll 14 3`.
+- `manualRoll <n>` — you physically rolled `n` (1–20); the game adds your modifiers. A bonus die (Bless's `+1d4`, Bardic Inspiration's `+1d6`, #225) is yours to roll with a manualRoll: type it after the d20, in order (`manualRoll 14 3`). A missing or impossible one is refused and the buttons come back; `autoRoll` rolls everything.
 - `total <n>` — a final total you already worked out; nothing is added.
 - Give nothing in physical-dice mode and you get a clickable prompt; in auto-roll mode the game rolls.
 

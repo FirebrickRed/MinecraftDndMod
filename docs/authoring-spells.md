@@ -233,8 +233,8 @@ bless:
   **[Cast on these]**, you get the filled-in cast. Out of a fight too, for a spell that isn't harmful.
   A **save spell** with an effect (Bane) puts it only on the targets that **fail** the save.
 - **The die** rides on the target's labelled bonus (`+3[STR] +2[Prof] +1d4[Bless]`), in the prompt
-  and the result. The game rolls it unless the player types their own after the d20
-  (`manualRoll 14 3`: a 14, and 3 on the d4). A
+  and the result. With `autoRoll` the game rolls it; with `manualRoll` the player types it after the
+  d20 (`manualRoll 14 3`: a 14, and 3 on the d4), and a missing or impossible one is refused. A
   `total <n>` is taken as final. It reaches attacks, saves (death saves and concentration too) and
   checks, whichever `to:` names, for characters and creatures alike.
 - **`to:`, not `on:`.** YAML reads a bare `on` as `true`, so `on: [attacks]` is silently lost. The

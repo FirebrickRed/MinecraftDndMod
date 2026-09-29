@@ -215,9 +215,11 @@ public final class RollService {
             d20 = DiceRoller.rollDice(1, 20);
             luck = " [Lucky: the 1 was rerolled, " + d20 + " stands]";
         }
-        // Dice in the bonus (Bless's "+1d4[Bless]", #225) are rolled here, for a die you rolled yourself too:
-        // the bonus said what gets added, and a total you give is the only thing taken as final.
-        LabelDice extra = rollLabelDice(modLabel);
+        // Dice in the bonus (Bless's "+1d4[Bless]", #225): the game rolls them with an autoRoll; with a
+        // manualRoll they're yours to type too ("manualRoll 14 3"), and a missing or impossible one is
+        // refused, so the caller re-offers the buttons (RollPrompt shows why). A total is taken as final.
+        LabelDice extra = rollLabelDice(modLabel, providedRoll != null);
+        if (extra == null) return null;
         int total = d20 + modifier + extra.sum();
         String work = providedRoll != null
                 ? RollPrompt.youRolled(d20, extra.label(), total)
@@ -255,13 +257,34 @@ public final class RollService {
         return p != null && p.tick() == currentTick() ? p.dice() : new java.util.ArrayDeque<>();
     }
 
+    /** Why the last manualRoll's bonus dice were refused, this tick; RollPrompt shows it above the buttons. */
+    private record BonusDiceError(String message, long tick) {}
+    private static BonusDiceError bonusDiceError;
+
+    /** The refusal from this tick's manualRoll, once, or null. */
+    public static String takeBonusDiceError() {
+        BonusDiceError e = bonusDiceError;
+        bonusDiceError = null;
+        return e != null && e.tick() == currentTick() ? e.message() : null;
+    }
+
     /** True if a bonus has dice for the game to roll ("+1d4[Bless]"), so a prompt can say you may roll them too. */
     public static boolean hasLabelDice(String label) {
         return label != null && LABEL_DICE.matcher(label).find();
     }
 
+    /** The game rolls every die in the bonus (an autoRoll). */
     public static LabelDice rollLabelDice(String label) {
-        if (label == null || label.indexOf('d') < 0) return new LabelDice(0, label);
+        return rollLabelDice(label, false);
+    }
+
+    /**
+     * Roll the dice in a bonus. With {@code typedByPlayer} (a manualRoll) each must come from what they
+     * typed after the d20, and nothing is rolled for them: a missing or impossible one gives null, with
+     * the reason kept for the re-prompt ({@link #takeBonusDiceError}).
+     */
+    public static LabelDice rollLabelDice(String label, boolean typedByPlayer) {
+        if (label == null || label.indexOf('d') < 0) { takeProvidedBonusDice(); return new LabelDice(0, label); }
         java.util.regex.Matcher m = LABEL_DICE.matcher(label);
         StringBuilder out = new StringBuilder();
         int sum = 0;
@@ -269,10 +292,24 @@ public final class RollService {
         while (m.find()) {
             int count = m.group(2).isEmpty() ? 1 : Integer.parseInt(m.group(2));
             int sides = Integer.parseInt(m.group(3));
-            // The player's own die if they typed one that fits (a 3 for a d4), else the game rolls it.
-            Integer mine = given.poll();
-            int rolled = mine != null && mine >= count && mine <= count * sides ? mine
-                    : io.papermc.jkvttplugin.util.DiceRoller.rollDice(count, sides);
+            String die = count + "d" + sides;
+            int rolled;
+            if (typedByPlayer) {
+                Integer mine = given.poll();
+                if (mine == null) {
+                    bonusDiceError = new BonusDiceError(m.group(4) + " adds " + die + ": type yours after the d20, e.g. manualRoll 14 3"
+                            + " (or use autoRoll and the game rolls both).", currentTick());
+                    return null;
+                }
+                if (mine < count || mine > count * sides) {
+                    bonusDiceError = new BonusDiceError(mine + " isn't a " + die + " roll for " + m.group(4) + " (" + count + " to "
+                            + count * sides + ").", currentTick());
+                    return null;
+                }
+                rolled = mine;
+            } else {
+                rolled = io.papermc.jkvttplugin.util.DiceRoller.rollDice(count, sides);
+            }
             boolean minus = m.group(1).equals("-");
             sum += minus ? -rolled : rolled;
             m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(

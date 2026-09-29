@@ -723,7 +723,8 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     concentration ending ends it on everyone (`CharacterSheet.breakConcentration`/`setConcentratingOn`).
     `until_used` effects are spent by `SpellEffects.useUp` at each attack/check/save site. Creatures hold effects
     too (`DndEntityInstance.getEffects`, in memory).
-    Typed bonus dice: `manualRoll 14 3` (parseInput stores them for that tick; `rollLabelDice` takes them).
+    Typed bonus dice: `manualRoll 14 3` (parseInput stores them for that tick; `rollLabelDice` takes them). A manualRoll
+    never rolls a bonus die for you: missing or impossible → resolve returns null and `RollPrompt.buttons` shows why.
     **Bardic Inspiration (#40)** is a feature with `target: other_creature` + `range:` (`FeatureUse.give`),
     whose effect is `held`: off every roll until the holder arms it (`SpellEffects.arm`, `/character inspiration`).
     Multi-target spells are picked by clicks in `SpellTargeting` (one click per target, [+ me], [Cast on these]).

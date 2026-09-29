@@ -27,7 +27,8 @@ import java.util.UUID;
  * <p>Picking a targeted spell from the spellbook <b>readies</b> it; each left-click at a creature (or
  * while looking at one) then picks a target. A one-target spell hands you the filled-in cast at once,
  * with the roll buttons for an attack spell. A spell that takes several (Bless, Bane, #225) collects
- * them, one click each (a second click on the same one takes it back), until it's full or you press
+ * them, one click each (a second click on the same one takes it back), until it's full, you shift-click
+ * the last one, or you press
  * [Cast on these]; [+ me] adds yourself. Like a weapon, the clicks only prompt: the cast goes through
  * the command, which owns range, the slot and the action.
  *
@@ -73,7 +74,7 @@ public final class SpellTargeting {
         readied.put(player.getUniqueId(), new Readied(spell.getId(), level, caster != null ? caster.getTurnState() : null, max));
         boolean upcast = upcast(spell, level);
         String typed = castCommand(caster != null, spell, "<target>", level).trim();
-        String how = max > 1 ? "left-click up to " + max + " targets" : "left-click your target";
+        String how = max > 1 ? "left-click up to " + max + " targets (shift-click the last)" : "left-click your target";
         player.sendMessage(Component.text("✨ ", NamedTextColor.LIGHT_PURPLE)
                 .append(spell.hoverName(NamedTextColor.LIGHT_PURPLE))
                 .append(Component.text((upcast ? " (level " + level + ")" : "") + " is ready: " + how + ". ", NamedTextColor.LIGHT_PURPLE))
@@ -128,6 +129,16 @@ public final class SpellTargeting {
             hit = result != null ? result.getHitEntity() : null;
         }
         String name = hit == null ? null : r.turn != null ? combatantName(session, hit, player) : worldName(hit);
+        // Shift + left-click finishes the pick: this one (if it's a creature) is the last, and the cast comes now.
+        if (player.isSneaking() && r.max > 1) {
+            if (name != null && !r.picked.contains(name)) r.picked.add(name);
+            if (r.picked.isEmpty()) {
+                player.sendActionBar(Component.text("✨ " + spell.getName() + ": pick someone first.", NamedTextColor.LIGHT_PURPLE));
+            } else {
+                player.sendMessage(castButton(r, spell, r.picked));
+            }
+            return true;
+        }
         if (name == null) {
             player.sendActionBar(Component.text("✨ " + spell.getName() + ": look at your target and left-click.", NamedTextColor.LIGHT_PURPLE));
             return true;

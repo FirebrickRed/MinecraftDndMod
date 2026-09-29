@@ -87,8 +87,9 @@ class SpellEffectsTest {
         }
         assertEquals(new RollService.LabelDice(0, "+3[STR] +2[Prof]"), RollService.rollLabelDice("+3[STR] +2[Prof]"));
 
-        RollService.RollResult r = RollService.resolve(10, null, 3, "+3[STR] +1d4[Bless]", false);
-        assertTrue(r.total() >= 14 && r.total() <= 17, "your 10 + 3 + the d4 the game rolls: " + r.total());
+        RollService.parseInput(new String[]{"autoRoll"});
+        RollService.RollResult auto = RollService.resolve(null, null, 3, "+3[STR] +1d4[Bless]", false, Advantage.NONE, true);
+        assertTrue(auto.total() >= 5 && auto.total() <= 27, "an autoRoll rolls the d4 too: " + auto.total());
         RollService.RollResult given = RollService.resolve(null, 20, 3, "+3[STR] +1d4[Bless]", false);
         assertEquals(20, given.total(), "a total you give is final");
     }
@@ -163,9 +164,13 @@ class SpellEffectsTest {
         assertEquals(20, r.total(), "14 + 3 + your 3 on the d4");
         assertTrue(r.breakdown().contains("+3[Bless 1d4]"), r.breakdown());
 
-        RollService.parseInput(new String[]{"manualRoll", "14", "9"}); // no d4 shows 9: the game rolls it
-        RollService.RollResult odd = RollService.resolve(14, null, 3, "+3[STR] +1d4[Bless]", false);
-        assertTrue(odd.total() >= 18 && odd.total() <= 21, "" + odd.total());
+        // A manualRoll never rolls for you: a missing or impossible d4 is refused, and the re-prompt says why.
+        RollService.parseInput(new String[]{"manualRoll", "14", "9"});
+        assertNull(RollService.resolve(14, null, 3, "+3[STR] +1d4[Bless]", false));
+        assertTrue(RollService.takeBonusDiceError().contains("isn't a 1d4 roll"));
+        RollService.parseInput(new String[]{"manualRoll", "14"});
+        assertNull(RollService.resolve(14, null, 3, "+3[STR] +1d4[Bless]", false));
+        assertTrue(RollService.takeBonusDiceError().startsWith("Bless adds 1d4"));
 
         assertEquals("/combat attack goblin ", RollPrompt.baseLine("combat", new String[]{"attack", "goblin", "manualRoll", "14", "3"}),
                 "a re-prompt drops the bonus dice typed after the d20 too");
