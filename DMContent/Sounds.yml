@@ -1,0 +1,47 @@
+# The table's sounds (#16). Every entry is a Minecraft sound name: a vanilla one, or one your
+# resource pack adds (put the .ogg in the pack, list it in its sounds.json, then use
+# jkvttresourcepack:<name> here). No code: change a line, /dm reload.
+#
+#   sound:  the sound name        volume: 1.0 is normal       pitch: 1.0 is normal (0.5 to 2)
+#
+# Who hears what: out of a fight only the player it's about; in a fight, everyone in it.
+# Each player can turn these down on their own sliders: moments on "Players", combat music on
+# "Jukebox/Note Blocks", the DM's Sound Board on "Ambient/Environment".
+# Turn everything off with sounds.enabled: false in config.yml.
+
+# What the game plays by itself. Leave one blank ("hit:") to silence just that moment.
+moments:
+  dice_roll:  { sound: minecraft:block.wood.place, volume: 0.6, pitch: 1.6 }   # any d20 rolled
+  natural_20: { sound: minecraft:entity.player.levelup, volume: 0.8 }
+  natural_1:  { sound: minecraft:entity.villager.no }
+  hit:        { sound: minecraft:entity.player.attack.strong, volume: 0.8 }
+  miss:       { sound: minecraft:entity.player.attack.nodamage, volume: 0.8 }
+  your_turn:  { sound: minecraft:block.note_block.bell, pitch: 1.5 }        # only the player whose turn it is
+  downed:     { sound: minecraft:entity.warden.heartbeat }
+  death:      { sound: minecraft:block.bell.use, pitch: 0.5 }
+
+# Combat music: starts when initiative is rolled, loops, stops with /combat finished. A creature can
+# bring its own (combat_music: <track> in its YAML: the boss's theme), and the DM can switch mid-fight
+# (/combat music <track> | off, or the Sound Board). Minecraft's own background music is silenced
+# for the fight.
+music:
+  default: boss              # the track a fight starts with; leave blank for no music
+  tracks:
+    # length: seconds, so it can loop (the server can't read how long an .ogg is). Round up a little.
+    boss: { name: "Boss battle", sound: minecraft:music.dragon, length: 186 }
+    # skyrim: { name: "Skyrim combat", sound: jkvttresourcepack:music.skyrim_combat, length: 150 }
+
+# The DM's Sound Board (the DM-mode hotbar tool, or /dm sound <key>). Click: everyone hears it where
+# they stand. Shift-click: it comes from where you're standing, carrying `range` blocks, so walk
+# into the woods and the party hears the howl from that direction.
+board:
+  wolf_howl:   { name: "Wolf howl",      sound: minecraft:entity.wolf.howl, range: 80 }
+  thunder:     { name: "Thunder",        sound: minecraft:entity.lightning_bolt.thunder, volume: 0.7 }
+  door_creak:  { name: "Door creaks",    sound: minecraft:block.wooden_door.open, pitch: 0.7 }
+  door_slam:   { name: "Door slams",     sound: minecraft:block.iron_door.close }
+  bell:        { name: "Distant bell",   sound: minecraft:block.bell.use, pitch: 0.6, range: 96 }
+  cave:        { name: "Cave noises",    sound: minecraft:ambient.cave }
+  roar:        { name: "Dragon roar",    sound: minecraft:entity.ender_dragon.growl, range: 128 }
+  scream:      { name: "A scream",       sound: minecraft:entity.ghast.scream, pitch: 1.3, range: 64 }
+  footsteps:   { name: "Footsteps",      sound: minecraft:block.gravel.step }
+  glass:       { name: "Glass breaks",   sound: minecraft:block.glass.break }

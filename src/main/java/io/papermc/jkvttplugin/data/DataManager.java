@@ -45,6 +45,7 @@ public class DataManager {
         SpellLoader.loadAllSpells(spellFolder);
         ConditionLoader.loadAllConditions(conditionsFolder);
         DamageTypeLoader.loadAll(new File(dmContentFolder, "DamageTypes.yml"));
+        SoundLoader.load(new File(dmContentFolder, "Sounds.yml")); // the table's sounds and music (#16)
         WeaponLoader.loadAllWeapons(weaponFolder);
         ArmorLoader.loadAllArmors(armorFolder);
         ItemLoader.loadAllItems(itemFolder);
@@ -77,5 +78,6 @@ public class DataManager {
         EntityLoader.clear();
         ConditionLoader.clear();
         DamageTypeLoader.clear();
+        SoundLoader.clear();
     }
 }

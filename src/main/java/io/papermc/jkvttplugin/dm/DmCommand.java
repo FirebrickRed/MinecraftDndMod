@@ -50,6 +50,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        io.papermc.jkvttplugin.sound.Sounds.setRoller(sender); // a roll the DM makes here sounds for the fight (#16)
         if (args.length == 0) {
             sendHelp(sender);
             return true;

@@ -150,6 +150,7 @@ public class DamageHandler {
             }
             say(session, target, Component.text(target.getDisplayName() + " has DIED.",
                     NamedTextColor.DARK_RED, TextDecoration.BOLD));
+            sound(session, target, io.papermc.jkvttplugin.sound.Sounds.DEATH); // #16
             if (session != null) session.updateScoreboard();
             return;
         }
@@ -181,6 +182,7 @@ public class DamageHandler {
             DeathSaveHandler.applyProne(target);
             say(session, target, Component.text(target.getDisplayName() + " falls unconscious!",
                     NamedTextColor.DARK_RED, TextDecoration.BOLD));
+            sound(session, target, io.papermc.jkvttplugin.sound.Sounds.DOWNED); // #16
             say(session, target, Component.text(session != null
                     ? "Death saving throws begin on their turn."
                     : "Out of combat: start a fight, or the DM calls death saves with /combat deathsave.",
@@ -267,6 +269,12 @@ public class DamageHandler {
      * Send a line to whoever should see this HP change: the whole table during combat, otherwise the
      * affected player plus every online DM (so a trap or a potion still leaves a trail).
      */
+    /** A moment about {@code target}: the fight hears it, or out of one the player it happened to (#16). */
+    private static void sound(CombatSession session, Combatant target, String moment) {
+        if (session != null) io.papermc.jkvttplugin.sound.Sounds.table(moment, session, target.getLocation());
+        else if (target.isPlayer()) io.papermc.jkvttplugin.sound.Sounds.toPlayer(moment, target.getPlayer());
+    }
+
     private static void say(CombatSession session, Combatant target, Component message) {
         if (session != null) {
             session.broadcast(message);

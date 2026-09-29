@@ -46,6 +46,7 @@ public final class PluginConfig {
     private static boolean annotationGlow = true;     // outline annotated blocks for the annotating DM
     private static int annotationGlowRadius = 24;
     private static boolean darkvisionViewLimit = true; // #148: render distance ~ darkvision range, in the dark
+    private static boolean soundsEnabled = true; // the table's sounds and combat music (DMContent/Sounds.yml, #16)
 
     private PluginConfig() {}
 
@@ -112,10 +113,14 @@ public final class PluginConfig {
 
         // In the dark, a darkvision character sees about as far as their darkvision (#148).
         darkvisionViewLimit = cfg.getBoolean("sight.darkvision_view_limit", true);
+        soundsEnabled = cfg.getBoolean("sounds.enabled", true);
     }
 
     /** In the dark, cap a darkvision character's render distance to its range (#148). */
     public static boolean isDarkvisionViewLimit() { return darkvisionViewLimit; }
+
+    /** Whether the game plays its sounds and combat music at all (#16). */
+    public static boolean isSoundsEnabled() { return soundsEnabled; }
 
     /** Which blocks give players the [Open it] / [Ask for a check] prompt (#185). */
     public static InteractionPrompt getInteractionPrompt() { return interactionPrompt; }

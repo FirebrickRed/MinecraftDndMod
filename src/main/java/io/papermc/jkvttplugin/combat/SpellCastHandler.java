@@ -5,6 +5,7 @@ import io.papermc.jkvttplugin.data.loader.ConditionLoader;
 import io.papermc.jkvttplugin.data.model.DndCondition;
 import io.papermc.jkvttplugin.data.model.DndSpell;
 import io.papermc.jkvttplugin.data.model.enums.Ability;
+import io.papermc.jkvttplugin.sound.Sounds;
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
 import net.kyori.adventure.text.format.TextDecoration;
@@ -107,6 +108,7 @@ public class SpellCastHandler {
             session.broadcast(Component.text("Spell attack: " + r.breakdown() + " vs AC " + ac, NamedTextColor.GRAY));
             if (hit) {
                 session.broadcast(Component.text(r.nat20() ? "★ CRITICAL HIT! ★" : "HIT!", NamedTextColor.GREEN, TextDecoration.BOLD));
+                if (!r.nat20()) Sounds.table(Sounds.HIT, session, target.getLocation()); // #16
                 String base = spell.getDamage();
                 String dmg = (base != null && r.nat20()) ? AttackHandler.doubleDice(base) : base;
                 // Always open the damage step on a hit — even if the spell defines no fixed damage
@@ -121,6 +123,7 @@ public class SpellCastHandler {
                         spell.getDamageType(), r.nat20(), flatLabel(dmg, spell.getName()), r.total());
             } else {
                 session.broadcast(Component.text("MISS", NamedTextColor.RED));
+                if (!r.nat1()) Sounds.table(Sounds.MISS, session, target.getLocation()); // #16
                 // Bardic Inspiration after the roll (#40): a higher total that beats the AC is a hit after all.
                 if (!r.nat1()) {
                     final TurnState turnAtRoll = caster.getTurnState();
@@ -132,6 +135,7 @@ public class SpellCastHandler {
                             session.broadcast(Component.text("   That's a hit, but the turn has moved on: the DM applies the damage.", NamedTextColor.YELLOW));
                         } else {
                             session.broadcast(Component.text("HIT!", NamedTextColor.GREEN, TextDecoration.BOLD));
+                            Sounds.table(Sounds.HIT, session, target.getLocation()); // #16
                             String dmg = spell.getDamage();
                             AttackHandler.promptDamage(session, caster, target, dmg == null ? "" : dmg,
                                     spell.getDamageType(), false, flatLabel(dmg, spell.getName()), newTotal);

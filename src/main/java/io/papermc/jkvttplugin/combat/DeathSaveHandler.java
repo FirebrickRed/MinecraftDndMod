@@ -93,6 +93,7 @@ public class DeathSaveHandler {
         if (target.isDead()) {
             leaveBody(target);
             session.broadcast(Component.text(target.getDisplayName() + " has DIED.", NamedTextColor.DARK_RED, TextDecoration.BOLD));
+            io.papermc.jkvttplugin.sound.Sounds.table(io.papermc.jkvttplugin.sound.Sounds.DEATH, session, target.getLocation()); // #16
             session.offerEndIfDecided(); // a death here may have ended the fight (e.g. a TPK)
         } else if (target.isStabilized()) {
             session.broadcast(Component.text(target.getDisplayName() + " is STABILIZED (unconscious but no longer dying).", NamedTextColor.AQUA, TextDecoration.BOLD));

@@ -224,6 +224,7 @@ public final class RollService {
         String work = providedRoll != null
                 ? RollPrompt.youRolled(d20, extra.label(), total)
                 : RollPrompt.gameRolled("d20", shown, extra.label(), total);
+        io.papermc.jkvttplugin.sound.Sounds.d20Rolled(d20); // the dice, and a natural 20 or 1 (#16)
         return new RollResult(d20, total, false, d20 == 20, d20 == 1, work + luck + natCallout(d20));
     }
 

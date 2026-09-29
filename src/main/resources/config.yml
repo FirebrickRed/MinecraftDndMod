@@ -113,3 +113,8 @@ sight:
   # never under Minecraft's minimum of 2 chunks (~32 blocks: generous for 60 ft, but it's the floor).
   # In light, everyone sees as far as the server allows. false = night vision only, no limit.
   darkvision_view_limit: true
+
+# The table's sounds: dice, hits, your turn, combat music, the DM's Sound Board (#16). What plays is
+# DMContent/Sounds.yml; this only turns them all off.
+sounds:
+  enabled: true

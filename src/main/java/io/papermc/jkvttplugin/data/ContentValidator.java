@@ -53,6 +53,26 @@ public final class ContentValidator {
     }
 
     /** Runs every check, logs each problem, and returns them (empty = a clean load). */
+    /** Sounds.yml (#16): names Minecraft can read, a default track that exists, tracks long enough to loop. */
+    private void checkSounds() {
+        java.util.Map<String, java.util.Map<String, io.papermc.jkvttplugin.data.model.SoundCue>> groups = new java.util.LinkedHashMap<>();
+        groups.put("moments", io.papermc.jkvttplugin.data.loader.SoundLoader.moments());
+        groups.put("music track", io.papermc.jkvttplugin.data.loader.SoundLoader.tracks());
+        groups.put("board", io.papermc.jkvttplugin.data.loader.SoundLoader.board());
+        groups.forEach((group, cues) -> cues.forEach((key, cue) -> {
+            if (cue != null && !io.papermc.jkvttplugin.data.model.SoundCue.isValidName(cue.sound())) {
+                warn("Sounds.yml " + group + " '" + key + "': '" + cue.sound() + "' isn't a sound name (lowercase namespace:path, e.g. minecraft:entity.wolf.howl).");
+            }
+        }));
+        io.papermc.jkvttplugin.data.loader.SoundLoader.tracks().forEach((key, cue) -> {
+            if (cue != null && cue.length() <= 0) warn("Sounds.yml music track '" + key + "' has no length: (seconds), so it plays once and doesn't loop.");
+        });
+        String def = io.papermc.jkvttplugin.data.loader.SoundLoader.defaultTrack();
+        if (def != null && io.papermc.jkvttplugin.data.loader.SoundLoader.track(def) == null) {
+            warn("Sounds.yml music default '" + def + "' isn't one of its tracks.");
+        }
+    }
+
     public static List<String> validateAll() {
         ContentValidator v = new ContentValidator();
         synchronized (ContentValidator.class) {
@@ -67,6 +87,7 @@ public final class ContentValidator {
         v.checkRaces();
         v.checkBackgrounds();
         v.checkEntities();
+        v.checkSounds();
         if (!v.missingSpellRefs.isEmpty()) {
             // Info, not a warning: subclasses list their spells for every level, and higher-level spells
             // simply haven't been authored yet. It becomes a real problem only for a spell a character can

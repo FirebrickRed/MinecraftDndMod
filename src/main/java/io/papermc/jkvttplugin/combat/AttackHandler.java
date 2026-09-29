@@ -630,6 +630,11 @@ public class AttackHandler {
         } else {
             session.broadcast(Component.text("MISS", NamedTextColor.RED));
         }
+        // The fight hears it land (or not), from the target (#16). A natural 20 or 1 already had its own.
+        if (!isNat20 && !isNat1) {
+            io.papermc.jkvttplugin.sound.Sounds.table(hit ? io.papermc.jkvttplugin.sound.Sounds.HIT : io.papermc.jkvttplugin.sound.Sounds.MISS,
+                    session, target.getLocation());
+        }
 
         session.broadcast(Component.text("━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
     }

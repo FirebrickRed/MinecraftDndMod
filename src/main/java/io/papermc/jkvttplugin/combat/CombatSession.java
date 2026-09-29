@@ -438,6 +438,7 @@ public class CombatSession {
             first.startNewTurn(first.getLocation());
             applyGlowEffect(first);
             sendActionBar(first); // show action/movement budget immediately on turn 1
+            io.papermc.jkvttplugin.sound.Sounds.yourTurn(first); // #16
             OutOfCombatAttack.offerOpening(first); // the attack that started this fight (#152)
         }
 
@@ -535,6 +536,7 @@ public class CombatSession {
             tickTurnStartEffects(current); // advance buff/debuff durations, expire the lapsed ones (#70)
             RitualManager.onTurnStart(this, current); // advance/complete/break a channelled ritual (#156)
             sendActionBar(current); // show action/movement budget immediately when the turn begins
+            io.papermc.jkvttplugin.sound.Sounds.yourTurn(current); // #16
             OutOfCombatAttack.offerOpening(current); // the attack that started this fight (#152)
         }
 
@@ -596,6 +598,7 @@ public class CombatSession {
             lateInitiative.remove(combatant.getId());
             combatant.startNewTurn(combatant.getLocation());
             applyGlowEffect(combatant);
+            io.papermc.jkvttplugin.sound.Sounds.yourTurn(combatant); // #16
 
             updateScoreboard();
             promptDeathSaveIfNeeded(combatant);

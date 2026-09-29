@@ -58,6 +58,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
         RollPrompt.rememberCommand(sender, command.getName(), args); // so a missing roll re-asks on this exact line
+        io.papermc.jkvttplugin.sound.Sounds.setRoller(sender); // a d20 rolled in this command sounds for them (#16)
 
         if (!(sender instanceof Player player)) {
             sender.sendMessage(Component.text("This command can only be used by players.", NamedTextColor.RED));

@@ -146,6 +146,7 @@ public final class OutOfCombatAttack {
             tell(player, spell.castLine("✨ " + who + " casts ", " at " + aim.targetName() + "!", NamedTextColor.LIGHT_PURPLE));
             tell(player, Component.text("Spell attack: " + r.breakdown() + " vs AC " + ac + " — " + (hit ? (r.nat20() ? "CRITICAL HIT!" : "HIT!") : "MISS"),
                     hit ? NamedTextColor.GREEN : NamedTextColor.RED));
+            if (!r.nat20() && !r.nat1()) io.papermc.jkvttplugin.sound.Sounds.toPlayer(hit ? io.papermc.jkvttplugin.sound.Sounds.HIT : io.papermc.jkvttplugin.sound.Sounds.MISS, player); // #16
             if (hit) offerDamage(player, spell, r.nat20(), aim.target, null, false);
             else if (!r.nat1()) {
                 // Bardic Inspiration after the roll (#40): a total that now reaches the AC is a hit after all.
