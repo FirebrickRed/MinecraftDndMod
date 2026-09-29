@@ -403,8 +403,14 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Out of a fight, spellbook → **Guidance** → click Borin → `/character cast guidance Borin`. **Bane** (harmful)
       out of a fight still asks for a typed name.
 - [ ] A bard: `/combat use bardic_inspiration Zek` (bonus action) → "gives Zek Bardic Inspiration: +1d6 to …", one use
-      spent. Zek gets "[Use it on my next roll]"; until he clicks it, his rolls don't show it. After → his next attack,
-      save or check shows `+1d6[Bardic Inspiration]` and it's gone. `/character inspiration` does the same.
+      spent. Zek is told he has it; his roll prompts don't show it.
+- [ ] Zek **misses** an attack by 3 → "Add your Bardic Inspiration (1d6) to that attack roll (12)? [Roll it] [I rolled…]
+      [Don't use it]". Roll a 4 → "adds Bardic Inspiration … → 16" then HIT and the damage prompt; a 2 → "Still a miss".
+      A hit or a natural 1 doesn't ask. `manualRoll 7` → "7 isn't a 1d6 roll" and the buttons again.
+- [ ] Zek **fails a concentration save** → the spell stays up until he answers; enough → "keeps it going after all";
+      [Don't use it] → it breaks. Same for a **death save** of 7: +3 or more → success, else the failure is marked.
+- [ ] A failed spell save or a skill check → asked; using it shows the new total and "The DM decides…". A skill check
+      rolled privately from the sheet shows the answer only to Zek.
 - [ ] Bardic Inspiration on yourself → refused; on someone 80 ft away → **[Ask the DM]**; out of uses → "No uses".
       Out of a fight: `/character use bardic_inspiration Zek`. The Features page's tile fills it in.
 

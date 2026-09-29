@@ -65,11 +65,31 @@ public class DeathSaveHandler {
             target.addDeathSaveSuccess();
             session.broadcast(Component.text("→ SUCCESS (DC " + DEATH_SAVE_DC + ")", NamedTextColor.GREEN));
         } else {
-            target.addDeathSaveFailure(1);
-            session.broadcast(Component.text("→ FAILURE (DC " + DEATH_SAVE_DC + ")", NamedTextColor.RED));
+            Runnable fail = () -> {
+                target.addDeathSaveFailure(1);
+                session.broadcast(Component.text("→ FAILURE (DC " + DEATH_SAVE_DC + ")", NamedTextColor.RED));
+                announceOutcome(session, target);
+            };
+            // Bardic Inspiration after the roll (#40): the failure waits for the answer; 10 or more is a success.
+            boolean asked = InspirationPrompt.offer(target.getCharacterSheet(), "death save (10 or higher)", r.total(),
+                    newTotal -> {
+                        if (newTotal >= DEATH_SAVE_DC) {
+                            target.addDeathSaveSuccess();
+                            session.broadcast(Component.text("→ SUCCESS (DC " + DEATH_SAVE_DC + ")", NamedTextColor.GREEN));
+                            announceOutcome(session, target);
+                        } else {
+                            fail.run();
+                        }
+                    }, fail, InspirationPrompt.table(session));
+            if (!asked) fail.run();
+            return true;
         }
+        announceOutcome(session, target);
+        return true;
+    }
 
-        // Resolve outcome.
+    /** After a death save's success or failure is marked: dead, stable, or the tally so far. */
+    private static void announceOutcome(CombatSession session, Combatant target) {
         if (target.isDead()) {
             leaveBody(target);
             session.broadcast(Component.text(target.getDisplayName() + " has DIED.", NamedTextColor.DARK_RED, TextDecoration.BOLD));
@@ -82,7 +102,6 @@ public class DeathSaveHandler {
         }
 
         session.updateScoreboard();
-        return true;
     }
 
     // ==================== PRONE EFFECT ====================

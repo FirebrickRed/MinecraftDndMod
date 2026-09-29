@@ -115,11 +115,9 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                 return handleReply(sender, rest);
             }
             case "inspiration" -> {
-                // Spend a held Bardic Inspiration die on your next attack, save or check (#40).
+                // Answer "add your Bardic Inspiration to that roll?" (#40): autoRoll | manualRoll <n> | no.
                 if (!(sender instanceof Player p)) { sender.sendMessage(Component.text("Only players hold inspiration.", NamedTextColor.RED)); return true; }
-                CharacterSheet sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(p);
-                if (sheet == null) { p.sendMessage(Component.text("You have no active character.", NamedTextColor.RED)); return true; }
-                p.sendMessage(io.papermc.jkvttplugin.combat.SpellEffects.armedMessage(io.papermc.jkvttplugin.combat.SpellEffects.arm(sheet)));
+                io.papermc.jkvttplugin.combat.InspirationPrompt.answer(p, rest);
                 return true;
             }
             case "damage" -> {

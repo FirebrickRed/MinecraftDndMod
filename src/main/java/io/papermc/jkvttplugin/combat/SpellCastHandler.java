@@ -99,7 +99,7 @@ public class SpellCastHandler {
                 return false;
             }
             caster.afterAttackRoll(session); // a Help is used up; a hidden caster is revealed (#176)
-            SpellEffects.useUp(caster, io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS); // an armed Bardic Inspiration (#40)
+            SpellEffects.useUp(caster, io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS); // a creature's Bardic Inspiration (a character's is asked for after the roll, #40)
             int ac = target.getArmorClass();
             boolean hit = RollService.hits(r, ac);
             session.broadcast(Component.empty());
@@ -121,6 +121,23 @@ public class SpellCastHandler {
                         spell.getDamageType(), r.nat20(), flatLabel(dmg, spell.getName()), r.total());
             } else {
                 session.broadcast(Component.text("MISS", NamedTextColor.RED));
+                // Bardic Inspiration after the roll (#40): a higher total that beats the AC is a hit after all.
+                if (!r.nat1()) {
+                    final TurnState turnAtRoll = caster.getTurnState();
+                    InspirationPrompt.offer(sheet, spell.getName() + " attack", r.total(), newTotal -> {
+                        int nowAc = target.getArmorClass();
+                        if (newTotal < nowAc) {
+                            session.broadcast(Component.text("   Still a miss (AC " + nowAc + ").", NamedTextColor.RED));
+                        } else if (caster.getTurnState() != turnAtRoll) {
+                            session.broadcast(Component.text("   That's a hit, but the turn has moved on: the DM applies the damage.", NamedTextColor.YELLOW));
+                        } else {
+                            session.broadcast(Component.text("HIT!", NamedTextColor.GREEN, TextDecoration.BOLD));
+                            String dmg = spell.getDamage();
+                            AttackHandler.promptDamage(session, caster, target, dmg == null ? "" : dmg,
+                                    spell.getDamageType(), false, flatLabel(dmg, spell.getName()), newTotal);
+                        }
+                    }, InspirationPrompt.table(session));
+                }
             }
             return true;
         }
@@ -395,6 +412,11 @@ public class SpellCastHandler {
         session.broadcast(Component.text(target.getDisplayName(true) + " " + ps.ability().getAbbreviation()
                 + " save: " + r.breakdown() + " vs DC " + ps.dc() + " → " + (success ? "SUCCESS" : "FAIL"),
                 success ? NamedTextColor.GREEN : NamedTextColor.RED));
+        // A failed save may still be saved by Bardic Inspiration (#40); the DM rules on the new total.
+        if (!success && target.getCharacterSheet() != null) {
+            InspirationPrompt.offer(target.getCharacterSheet(), ps.ability().getAbbreviation() + " save (DC " + ps.dc() + ")", r.total(), null,
+                    InspirationPrompt.table(session));
+        }
 
         if (success) {
             if ("half".equalsIgnoreCase(ps.saveEffect()) && ps.damage() != null) {

@@ -147,6 +147,17 @@ public final class OutOfCombatAttack {
             tell(player, Component.text("Spell attack: " + r.breakdown() + " vs AC " + ac + " — " + (hit ? (r.nat20() ? "CRITICAL HIT!" : "HIT!") : "MISS"),
                     hit ? NamedTextColor.GREEN : NamedTextColor.RED));
             if (hit) offerDamage(player, spell, r.nat20(), aim.target, null, false);
+            else if (!r.nat1()) {
+                // Bardic Inspiration after the roll (#40): a total that now reaches the AC is a hit after all.
+                InspirationPrompt.offer(sheet, spell.getName() + " attack", r.total(), newTotal -> {
+                    if (newTotal >= ac) {
+                        tell(player, Component.text("   That's a hit (AC " + ac + ").", NamedTextColor.GREEN));
+                        offerDamage(player, spell, false, aim.target, null, false);
+                    } else {
+                        tell(player, Component.text("   Still a miss (AC " + ac + ").", NamedTextColor.RED));
+                    }
+                }, msg -> tell(player, msg));
+            }
             return true;
         }
 
@@ -439,7 +450,7 @@ public final class OutOfCombatAttack {
                     adv.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
         }
         RollService.RollResult r = RollService.resolve(roll, mod, sheet.getSpellAttackBreakdown(spell), rerollNat1, adv);
-        if (r != null) SpellEffects.useUp(sheet, io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS); // an armed Bardic Inspiration (#40)
+        if (r != null) SpellEffects.useUp(sheet, io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS); // a creature's Bardic Inspiration (a character's is asked for after the roll, #40)
         return r;
     }
 

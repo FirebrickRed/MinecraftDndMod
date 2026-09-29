@@ -120,6 +120,8 @@ public final class CombatActions {
                         }, ONCE)));
         lines.add(buttons);
         toDms(player, session, lines);
+        // Bardic Inspiration after the roll (#40): the DM sees the new total and makes the call.
+        InspirationPrompt.offer(actor.getCharacterSheet(), "Stealth check", total, null, InspirationPrompt.rollerAndDms(player));
         return true;
     }
 
@@ -165,6 +167,7 @@ public final class CombatActions {
             }
         }
         toDms(player, session, lines);
+        InspirationPrompt.offer(actor.getCharacterSheet(), skill.getDisplayName() + " check", total, null, InspirationPrompt.rollerAndDms(player));
         return true;
     }
 

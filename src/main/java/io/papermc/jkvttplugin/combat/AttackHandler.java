@@ -220,7 +220,7 @@ public class AttackHandler {
             return false;
         }
         attacker.afterAttackRoll(session); // a Help is used up; a hidden attacker is revealed (#176)
-        SpellEffects.useUp(attacker, io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS); // an armed Bardic Inspiration (#40)
+        SpellEffects.useUp(attacker, io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS); // a creature's Bardic Inspiration (a character's is asked for after the roll, #40)
         int targetAC = target.getArmorClass();
         boolean hit = RollService.hits(r, targetAC);
         // A crit doubles the weapon dice; Half-Orc Savage Attacks adds one more weapon die on top (#70).
@@ -244,6 +244,24 @@ public class AttackHandler {
         if (hit) {
             if (onHit != null) onHit.run();
             remindMarkRider(attacker, target, commandUser); // Hex / Hunter's Mark rider (#178)
+        } else if (!r.nat1() && attacker.getCharacterSheet() != null) {
+            // A miss: a Bardic Inspiration die may still make it a hit (#40). Asked after the roll, as the
+            // PHB allows; a hit or a natural 1 has nothing to gain. The new total is checked against AC again.
+            final String damageF = finalDamage, bonusF = bonusLabel;
+            final TurnState turnAtRoll = attacker.getTurnState();
+            InspirationPrompt.offer(attacker.getCharacterSheet(), "attack roll", r.total(), newTotal -> {
+                int ac = target.getArmorClass();
+                if (newTotal < ac) {
+                    session.broadcast(Component.text("   Still a miss (AC " + ac + ").", NamedTextColor.RED));
+                } else if (attacker.getTurnState() != turnAtRoll) {
+                    session.broadcast(Component.text("   That's a hit (AC " + ac + "), but the turn has moved on: the DM applies the damage.", NamedTextColor.YELLOW));
+                } else {
+                    broadcastAttackResult(session, attacker, target, false, newTotal, ac, true, false, false,
+                            damageF, damageType, r.breakdown(), bonusF);
+                    if (onHit != null) onHit.run();
+                    remindMarkRider(attacker, target, commandUser);
+                }
+            }, InspirationPrompt.table(session));
         }
         return true;
     }

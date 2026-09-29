@@ -173,9 +173,22 @@ public final class ConcentrationManager {
             session.broadcast(Component.text(target.getDisplayName(true) + " keeps " + p.what() + " going.", NamedTextColor.GRAY));
             return;
         }
-        if (p.spell()) breakSpell(session, target, "the save failed");
-        if (p.ritual()) RitualManager.cancel(session, target, "the concentration check failed");
-        session.updateScoreboard();
+        Runnable breakIt = () -> {
+            if (p.spell()) breakSpell(session, target, "the save failed");
+            if (p.ritual()) RitualManager.cancel(session, target, "the concentration check failed");
+            session.updateScoreboard();
+        };
+        // Bardic Inspiration after the roll (#40): the spell holds until they answer; a total that reaches
+        // the DC keeps it going, [Don't use it] (or no die) breaks it now.
+        boolean asked = InspirationPrompt.offer(target.getCharacterSheet(), "concentration save (DC " + p.dc() + ")", r.total(),
+                newTotal -> {
+                    if (newTotal >= p.dc()) {
+                        session.broadcast(Component.text(target.getDisplayName(true) + " keeps " + p.what() + " going after all.", NamedTextColor.GREEN));
+                    } else {
+                        breakIt.run();
+                    }
+                }, breakIt, InspirationPrompt.table(session));
+        if (!asked) breakIt.run();
     }
 
     // ==================== BREAKING ====================

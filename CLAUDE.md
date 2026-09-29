@@ -726,7 +726,8 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     Typed bonus dice: `manualRoll 14 3` (parseInput stores them for that tick; `rollLabelDice` takes them). A manualRoll
     never rolls a bonus die for you: missing or impossible → resolve returns null and `RollPrompt.buttons` shows why.
     **Bardic Inspiration (#40)** is a feature with `target: other_creature` + `range:` (`FeatureUse.give`),
-    whose effect is `held`: off every roll until the holder arms it (`SpellEffects.arm`, `/character inspiration`).
+    whose effect is `held`: never added by itself; after each d20 roll the holder is asked (`InspirationPrompt.offer`,
+    answered by `/character inspiration`). A missed attack re-checks AC; failed concentration/death saves wait (`onDeclined`).
     Multi-target spells are picked by clicks in `SpellTargeting` (one click per target, [+ me], [Cast on these]).
   - **Spell slots are spent in one place (#152):** `character/SpellCost` — `of(sheet, spell)` to check
     *before* resolving, `spend(...)` only once it has. `level <n>` (last argument, after the target)

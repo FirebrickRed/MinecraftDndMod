@@ -177,7 +177,7 @@ class SpellEffectsTest {
     }
 
     @Test
-    void bardicInspirationWaitsUntilTheHolderChoosesTheRoll() {
+    void bardicInspirationIsNeverAddedByItself() {
         CharacterSheet bard = live("human", "bard");
         var feature = bard.getFeature("bardic_inspiration");
         assertNotNull(feature);
@@ -190,11 +190,11 @@ class SpellEffectsTest {
         SpellEffects.useUp(fighter, ActiveEffect.SAVES);
         assertTrue(fighter.hasEffect("bardic_inspiration"), "a roll made while it's held doesn't spend it");
 
-        assertEquals(1, SpellEffects.arm(fighter).size());
-        assertTrue(fighter.getSaveBreakdown(Ability.DEXTERITY).contains("+1d6[Bardic Inspiration]"));
-        assertTrue(fighter.getSkillBonusBreakdown(Skill.ATHLETICS).contains("+1d6[Bardic Inspiration]"));
-        SpellEffects.useUp(fighter, ActiveEffect.ATTACKS);
-        assertFalse(fighter.hasEffect("bardic_inspiration"), "the roll it was armed for spends it");
+        // It's offered after each roll instead (InspirationPrompt; answering needs a player online).
+        ActiveEffect die = InspirationPrompt.heldDie(fighter);
+        assertNotNull(die);
+        assertEquals("1d6", die.getRollBonusDice());
+        assertFalse(fighter.getSkillBonusBreakdown(Skill.ATHLETICS).contains("Bardic"));
     }
 
     @Test

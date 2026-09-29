@@ -49,13 +49,13 @@ public final class SpellEffects {
      * Put an effect on {@code target}: a spell's, or a feature's given to someone else (Bardic
      * Inspiration, #40). A second from the same source replaces the first: the same spell doesn't
      * stack (PHB p.205), and a creature holds one Bardic Inspiration die. A held effect on a creature
-     * is armed at once, since the DM rolls for it anyway; a character is told how to spend theirs.
+     * is armed at once, since the DM rolls for it anyway; a character is asked after each roll (InspirationPrompt).
      */
     public static void give(Combatant target, ActiveEffect e) {
         CharacterSheet sheet = target.getCharacterSheet();
         if (sheet != null) {
             sheet.addEffect(e);
-            if (e.isHeld()) offerToArm(sheet, e);
+            if (e.isHeld()) tellHeld(sheet, e);
         } else if (target.getEntityInstance() != null) {
             if (e.isHeld()) e.setArmed(true);
             List<ActiveEffect> list = target.getEntityInstance().getEffects();
@@ -64,48 +64,15 @@ public final class SpellEffects {
         }
     }
 
-    // ==================== HELD (Bardic Inspiration, #40) ====================
-
-    /** Tell the holder what they have, with [Use it on my next roll]. */
-    private static void offerToArm(CharacterSheet sheet, ActiveEffect e) {
+    /** Tell a character what they were given, and that they'll be asked after their rolls (#40). */
+    private static void tellHeld(CharacterSheet sheet, ActiveEffect e) {
         if (Bukkit.getServer() == null) return;
         Player p = sheet.getPlayerId() != null ? Bukkit.getPlayer(sheet.getPlayerId()) : null;
         if (p == null) return;
-        p.sendMessage(Component.text("🎵 You have " + e.getSourceName() + " (" + e.durationLabel() + "): ", NamedTextColor.LIGHT_PURPLE)
-                .append(Component.text(String.join(", ", e.describe()).replaceAll(" \\(once, when you choose.*\\)", "") + ". ", NamedTextColor.GRAY))
-                .append(armButton(sheet)));
+        p.sendMessage(Component.text("🎵 You have " + e.getSourceName() + " (" + e.getRollBonusDice() + ", " + e.durationLabel()
+                + "). After you roll an attack, save or check, you'll be asked whether to add it.", NamedTextColor.LIGHT_PURPLE));
     }
 
-    /** [Use it on my next roll]: arms the holder's held dice. A callback, so there's nothing to type or replay. */
-    public static Component armButton(CharacterSheet sheet) {
-        return Component.text("[Use it on my next roll]", NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
-                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(
-                        "Your next attack roll, saving throw or ability check adds the die.\nOr any time: /character inspiration")))
-                .clickEvent(net.kyori.adventure.text.event.ClickEvent.callback(a -> {
-                    Player p = sheet.getPlayerId() != null ? Bukkit.getPlayer(sheet.getPlayerId()) : null;
-                    List<ActiveEffect> armed = arm(sheet);
-                    if (p != null) p.sendMessage(armedMessage(armed));
-                }));
-    }
-
-    /**
-     * Arm this character's held dice: their next attack, save or check adds them, and that roll uses
-     * them up. Returns what was armed (empty if they hold nothing).
-     */
-    public static List<ActiveEffect> arm(CharacterSheet sheet) {
-        List<ActiveEffect> armed = new ArrayList<>();
-        for (ActiveEffect e : sheet.getActiveEffects()) {
-            if (e.isHeld() && !e.isArmed()) { e.setArmed(true); armed.add(e); }
-        }
-        if (!armed.isEmpty()) sheet.saveNow();
-        return armed;
-    }
-
-    public static Component armedMessage(List<ActiveEffect> armed) {
-        if (armed.isEmpty()) return Component.text("You have no Bardic Inspiration to use (or it's already set for your next roll).", NamedTextColor.GRAY);
-        return Component.text("🎵 " + String.join(", ", armed.stream().map(ActiveEffect::getSourceName).toList())
-                + " is on your next attack, save or check.", NamedTextColor.LIGHT_PURPLE);
-    }
 
     /** What the effect does and for how long, for the cast line: "+1d4 to attacks and saves, 10 rounds". */
     public static String describe(DndSpell spell) {

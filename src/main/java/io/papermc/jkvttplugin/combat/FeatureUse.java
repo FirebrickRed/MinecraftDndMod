@@ -92,7 +92,7 @@ public final class FeatureUse {
         io.papermc.jkvttplugin.effect.ActiveEffect e = f.getApplyTemplate().copy();
         SpellEffects.give(target, e);
         say(player, session, Component.text("🎵 " + self.getDisplayName() + " gives " + target.getDisplayName() + " " + f.getName()
-                + ": " + String.join(", ", e.describe()).replaceAll(" \\(once, when you choose.*\\)", "") + ".", NamedTextColor.LIGHT_PURPLE));
+                + ": " + String.join(", ", e.describe()).replaceAll(" \\(once: .*\\)", "") + ".", NamedTextColor.LIGHT_PURPLE));
         return true;
     }
 

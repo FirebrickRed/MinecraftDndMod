@@ -28,6 +28,17 @@ public class RollOptionsMenuHandler {
      * where it comes from are right there, and each button rolls (or, with physical dice, prompts)
      * exactly as the old menu's buttons did. A penalty (armor, a condition) is named up front.
      */
+    /**
+     * Bardic Inspiration after the roll (#40): the holder may add it; the DM rules on the new total. A
+     * roll the DM called goes to the DM too; the player's own private roll stays theirs.
+     */
+    private static void offerInspiration(CharacterSheet character, RollInfo info, RollService.RollResult r, boolean dmCalled) {
+        Player owner = Bukkit.getPlayer(character.getPlayerId());
+        if (owner == null) return;
+        io.papermc.jkvttplugin.combat.InspirationPrompt.offer(character, info.displayName, r.total(), null,
+                dmCalled ? io.papermc.jkvttplugin.combat.InspirationPrompt.rollerAndDms(owner) : owner::sendMessage);
+    }
+
     public static void offerRoll(Player player, CharacterSheet character, String type, String value) {
         RollInfo info = getRollInfo(character, type, value);
         player.closeInventory();
@@ -126,9 +137,11 @@ public class RollOptionsMenuHandler {
                 reportDmCheck(character, info, r.total(), r.breakdown(), pending);
                 if ("TOOL".equals(type)) maybeBreakThievesTools(character, value, r.total(), pending);
             }
+            offerInspiration(character, info, r, true);
             return true;
         }
         reportOwnRoll(character, info, r, advantage);
+        offerInspiration(character, info, r, false);
         return true;
     }
 

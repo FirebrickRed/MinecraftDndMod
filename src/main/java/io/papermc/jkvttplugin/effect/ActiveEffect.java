@@ -86,7 +86,7 @@ public class ActiveEffect {
 
     // ---- held (#40): Bardic Inspiration waits until its holder chooses the roll ----
     private boolean held;   // the roll bonus only counts once armed
-    private boolean armed;  // the holder said "my next roll"
+    private boolean armed;  // on a creature: added to its rolls at once (the DM rolls for it anyway)
 
     public ActiveEffect withHeld(boolean held) { this.held = held; return this; }
     public boolean isHeld() { return held; }
@@ -128,6 +128,8 @@ public class ActiveEffect {
     }
 
     public boolean hasRollBonus() { return rollBonusDice != null; }
+    /** The die itself ("1d6"), held or not. */
+    public String getRollBonusDice() { return rollBonusDice; }
     /** What the roll bonus applies to: attacks, saves, checks. */
     public Set<String> rollBonusKinds() { return java.util.Collections.unmodifiableSet(rollBonusOn); }
 
@@ -255,7 +257,7 @@ public class ActiveEffect {
         if (acBonus != 0) parts.add((acBonus > 0 ? "+" : "") + acBonus + " AC" + (acBonusNeedsArmor ? " (in armor)" : ""));
         if (rollBonusDice != null) parts.add((rollBonusDice.startsWith("-") ? rollBonusDice : "+" + rollBonusDice)
                 + " to " + String.join(" and ", new java.util.TreeSet<>(rollBonusOn))
-                + (held ? (armed ? " (on your next roll)" : " (once, when you choose: /character inspiration)") : untilUsed ? " (once)" : ""));
+                + (held && !armed ? " (once: you're asked after each roll)" : untilUsed ? " (once)" : ""));
         return parts;
     }
 

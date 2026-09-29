@@ -133,10 +133,12 @@ features:
 
 Used as `/combat use bardic_inspiration Zek` or `/character use bardic_inspiration Zek`; never on
 yourself. `roll_bonus` puts a die on the holder's rolls (the same primitive as Bless, see
-`authoring-spells.md` → Shape 5c; write `to:`, not `on:`). `held: true` keeps it off every roll until
-the holder chooses: **[Use it on my next roll]** or `/character inspiration`. Then the next attack,
-save or check adds it, and `until_used` ends it there. A creature holding one has it armed at once,
-since the DM rolls for it. A second one replaces the first.
+`authoring-spells.md` → Shape 5c; write `to:`, not `on:`). `held: true` keeps it off every roll by
+itself: after each attack, save or check the holder rolls, they're asked whether to add it
+(**[Roll it] [I rolled…] [Don't use it]**, answered by `/character inspiration`), as the PHB allows
+(p.54). A missed attack is re-checked against the AC; a failed concentration or death save waits for
+the answer; anything else is the DM's call. A creature holding one has it added to its rolls at
+once, since the DM rolls for it. A second one replaces the first.
 
 ### Advantage and disadvantage (`advantage_on`, `disadvantage_on`, #223)
 
