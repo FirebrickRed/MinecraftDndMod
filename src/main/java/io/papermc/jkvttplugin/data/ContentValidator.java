@@ -93,6 +93,7 @@ public final class ContentValidator {
         v.checkBackgrounds();
         v.checkEntities();
         v.checkSounds();
+        io.papermc.jkvttplugin.data.loader.DamageTypeLoader.problems().forEach(v::warn); // particles in DamageTypes.yml and spells' visual: (#230)
         if (!v.missingSpellRefs.isEmpty()) {
             // Info, not a warning: subclasses list their spells for every level, and higher-level spells
             // simply haven't been authored yet. It becomes a real problem only for a spell a character can

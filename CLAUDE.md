@@ -216,6 +216,8 @@ All D&D content is defined in `DMContent/` YAML files:
 - **Items:** `DMContent/Items/*.yml`
 - **Backgrounds:** `DMContent/Backgrounds/*.yml`
 - **Languages:** `DMContent/Languages.yml` (optional list of homebrew languages; the PHB ones are built in)
+- **Sounds:** `DMContent/Sounds.yml` (moments, combat music tracks, the DM's Sound Board; #16)
+- **Damage-type looks:** `DMContent/DamageTypes.yml` (a particle per damage type, plus `healing` / `buff` / `arcane`: the hit puff and every spell's default look; #230)
 
 Each category has a corresponding loader in `src/main/java/io/papermc/jkvttplugin/data/loader/` and model in `data/model/`.
 
@@ -429,6 +431,22 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
   - Currency items identified by `item_id` ending in "_piece"
   - Works for weapons, armor, items, and custom content
 - **Shop Commands:** DM entity commands for creating/managing shops (see Commands section)
+
+### Sounds and spell visuals (#16, #230)
+
+- **Every sound is a name in `DMContent/Sounds.yml`**, vanilla or from the resource pack (`jkvttresourcepack:…`);
+  the plugin never hardcodes one. Custom sounds need a resource pack (sounds are client-side assets); a
+  datapack can't add them. `sound/Sounds` plays a moment: in a fight to everyone in it (`Sounds.table`), out
+  of one only to the player it's about (`toPlayer`), so a private roll stays private. The d20 sound comes from
+  `RollService.resolve` for whoever typed the command (the root commands call `Sounds.setRoller`).
+  Sliders: moments on Players, combat music on Records (Jukebox/Note Blocks), the Sound Board on Ambient.
+- **Combat music** is `sound/CombatMusic`: one task per fight re-checks listeners each second, hushes vanilla
+  music, and loops by the track's `length:` (the server can't read an .ogg's length). A creature's
+  `combat_music:` picks the track; `/combat music` switches it.
+- **The DM's Sound Board** is `/dm sound` and a DM-mode tool (`SoundBoardMenu`).
+- **Spell visuals** are `combat/SpellVisuals`: shape from what the spell does (bolt / burst / glow), look from its
+  damage type in `DamageTypes.yml`, overridable per spell with `visual:`. Particles are vanilla only: nothing can
+  add a particle type. Damage-type fire is `setVisualFire`, never real fire ticks (those burn a player's hearts).
 
 ### UI standards: one helper per thing
 

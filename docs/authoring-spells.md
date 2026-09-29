@@ -250,6 +250,26 @@ bless:
 Not yet: Haste and Slow (speed changes, extra actions) and the effect's own `advantage_on` for
 another creature's rolls against the target.
 
+## How a spell looks (`visual:`, #230)
+
+Every spell plays a particle effect when it goes off, with no YAML needed. The **look** is its damage
+type's in `DMContent/DamageTypes.yml` (fire → flames, cold → snowflakes, radiant → end rods), or the
+`healing` / `buff` / `arcane` entries there. The **shape** comes from what it does: an attack roll or
+Magic Missile flies from the caster as a **bolt**, a save spell **bursts** on the target, healing and
+buffs **glow** around the target, and an area spell shows nothing extra (its aim preview already does).
+A homebrew damage type gets its look by adding a line to `DamageTypes.yml`.
+
+To give one spell its own:
+
+```yaml
+bane:
+  visual: { particle: DUST, color: "#6b1e1e" }   # shape: bolt | burst | glow | none (optional)
+```
+
+`particle:` is a Minecraft particle name; `DUST` is the one that takes a `color:`. A resource pack can
+repaint a particle, but nothing can add a new kind. The load check warns about a name that doesn't
+exist, or one that needs data the plugin doesn't give (`BLOCK`, `ITEM`).
+
 ## Shape 6 — Utility / buff (no automatic resolution)
 
 Longstrider, Invisibility, Jump, Hold Person's non-damage half, etc. Just the common fields, no

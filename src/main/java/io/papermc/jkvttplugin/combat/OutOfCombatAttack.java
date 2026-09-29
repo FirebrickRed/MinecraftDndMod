@@ -144,6 +144,7 @@ public final class OutOfCombatAttack {
             int ac = target.getArmorClass();
             boolean hit = RollService.hits(r, ac);
             tell(player, spell.castLine("✨ " + who + " casts ", " at " + aim.targetName() + "!", NamedTextColor.LIGHT_PURPLE));
+            SpellVisuals.play(spell, player.getLocation(), aim.target.combatant().getLocation()); // #230
             tell(player, Component.text("Spell attack: " + r.breakdown() + " vs AC " + ac + " — " + (hit ? (r.nat20() ? "CRITICAL HIT!" : "HIT!") : "MISS"),
                     hit ? NamedTextColor.GREEN : NamedTextColor.RED));
             if (!r.nat20() && !r.nat1()) io.papermc.jkvttplugin.sound.Sounds.toPlayer(hit ? io.papermc.jkvttplugin.sound.Sounds.HIT : io.papermc.jkvttplugin.sound.Sounds.MISS, player); // #16
@@ -170,6 +171,7 @@ public final class OutOfCombatAttack {
             String abbr = save != null ? save.getAbbreviation() : spell.getSaveType();
             tell(player, spell.castLine("✨ " + who + " casts ", " at " + aim.targetName()
                     + " — DC " + dc + " " + abbr + " save!", NamedTextColor.LIGHT_PURPLE));
+            SpellVisuals.play(spell, player.getLocation(), aim.target.combatant().getLocation()); // #230
             boolean hasDamage = spell.getDamage() != null && !spell.getDamage().isBlank();
             boolean halfOnSave = "half".equalsIgnoreCase(spell.getSaveEffect());
             // Their bonus, spelled out, and [Call the save] for anyone: a player is prompted to roll, a
@@ -204,6 +206,7 @@ public final class OutOfCombatAttack {
 
         // Hits automatically (Magic Missile) or just deals damage.
         tell(player, spell.castLine("✨ " + who + " casts ", " at " + aim.targetName() + ".", NamedTextColor.LIGHT_PURPLE));
+        SpellVisuals.play(spell, player.getLocation(), aim.target.combatant().getLocation()); // #230
         offerDamage(player, spell, false, aim.target, null, false);
         return true;
     }
@@ -254,6 +257,7 @@ public final class OutOfCombatAttack {
         tell(player, Component.text(heal.work(), NamedTextColor.GRAY));
         commit(player, sheet, spell, cost);
         tell(player, spell.castLine("✨ " + sheet.getCharacterName() + " casts ", " on " + name + ".", NamedTextColor.LIGHT_PURPLE));
+        SpellVisuals.play(spell, player.getLocation(), target.combatant().getLocation()); // #230
         DamageHandler.applyHealing(target.session(), target.combatant(), Math.max(1, amount));
         return true;
     }

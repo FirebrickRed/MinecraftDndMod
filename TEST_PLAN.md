@@ -400,6 +400,32 @@ Play a cleric; a couple of spawned creatures stand in for allies (`/dm entity sp
       In a fight the movement bar allows 20 ft. Take it off → 30 ft.
 - [ ] A dwarf with STR 10 in plate → no warning, speed stays 25.
 
+## Sounds, music and spell looks (#16, #230)
+
+The sounds are all in `DMContent/Sounds.yml`; the looks in `DMContent/DamageTypes.yml`. Copy both into
+the server's DMContent. Tell me which vanilla picks sound wrong, and swap in your own anytime.
+
+- [ ] Roll anything with a d20 (a sheet check, an attack) → a dice sound. A natural 20 adds a level-up chime, a
+      natural 1 a villager "hrmm". `/combat rollforinitiative` with several creatures → one rattle, not a pile.
+- [ ] In a fight: a hit and a miss sound different; your turn starting → a bell (for you only); dropping to 0 →
+      a heartbeat; dying → a low bell.
+- [ ] **Combat music:** roll initiative → the boss music starts (Jukebox/Note Blocks slider); walk around, it
+      doesn't fade; Minecraft's own music stays quiet; `/combat finished` → it stops. It loops after ~3 minutes.
+- [ ] `/combat music` → what's playing; `/combat music off` → silence; `/combat music default` → back.
+      A creature with `combat_music: boss` in its YAML (and a different default) → that fight uses its track.
+- [ ] Restart mid-fight → the music comes back when you rejoin.
+- [ ] **Sound Board** (note block, DM-mode hotbar slot 3): click **Wolf howl** → you hear it; shift-click →
+      "from here (carries about 80 blocks)". **Stop sounds** cuts it. In a fight, its music row switches tracks.
+- [ ] `/dm sound thunder`, `/dm sound minecraft:block.anvil.land`, `/dm sound nonsense` (→ refused), `/dm sound stop`.
+- [ ] Turn the Players slider down → dice/hit sounds go quiet but music doesn't; Jukebox slider → the reverse.
+- [ ] `sounds.enabled: false` in config.yml, restart → nothing plays.
+- [ ] **Spell looks:** Fire Bolt at a goblin → a line of flames flies to it and pops; Ray of Frost → snowflakes;
+      Sacred Flame → a burst of white on the target; Cure Wounds → hearts rise around the target; Bless → a gold
+      ring; Bane → a dark red burst. Burning Hands → only its aim preview, as before.
+- [ ] Out of a fight too: `/character cast fire_bolt` at The Kindler (after the DM lets it happen) → the same bolt.
+- [ ] A fire hit on **you** (a creature's fire attack) → you flicker with flames for 2 seconds but lose no hearts.
+- [ ] Put a typo in DamageTypes.yml (`particle: FLAMEE`) and `/dm reload` → the console names it.
+
 ## Rests and Hit Dice (#52)
 
 - [ ] The sheet's HP tile says "Hit Dice: 1/1 (1d10)" for a fighter.
@@ -601,6 +627,16 @@ You play a bard; they're the one inspired.
 - [ ] A failed spell save or a skill check → asked; using it shows the new total and "The DM decides…". A skill check
       rolled privately from their sheet shows the answer only to them.
 - [ ] Out of a fight, `/character use bardic_inspiration <them>` works too, and they're asked after their next check.
+
+## Who hears the sounds (#16)
+
+- [ ] Out of a fight, they roll from their sheet → **only they** hear the dice; you don't.
+- [ ] In a fight, they attack → you both hear the dice and the hit/miss, from where it happened.
+- [ ] Their turn starts → only they hear the bell.
+- [ ] Combat music: they're in the fight → they hear it; `/combat remove <them>` → it stops for them; add them
+      back → it starts again. They log out and back in mid-fight → it resumes.
+- [ ] Sound Board: click → they hear it wherever they are; shift-click from 60 blocks away → they hear it from
+      your direction; from 200 blocks away → they don't. `/dm sound wolf_howl <them>` → only they hear it.
 
 ## Damage approval (they attack, you approve)
 

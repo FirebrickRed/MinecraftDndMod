@@ -431,7 +431,10 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         }
         io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, cost); // the slot, and concentration
         io.papermc.jkvttplugin.combat.SpellTargeting.clear(player.getUniqueId()); // a spell readied from the book is cast
-        for (var t : targets) io.papermc.jkvttplugin.combat.SpellEffects.apply(sheet.getCharacterId(), t.combatant(), spell);
+        for (var t : targets) {
+            io.papermc.jkvttplugin.combat.SpellEffects.apply(sheet.getCharacterId(), t.combatant(), spell);
+            io.papermc.jkvttplugin.combat.SpellVisuals.play(spell, player.getLocation(), t.combatant().getLocation()); // #230
+        }
         announceNearby(player, spell.castLine("✨ " + sheet.getCharacterName() + " casts ", " on " + String.join(", ", names)
                 + ": " + io.papermc.jkvttplugin.combat.SpellEffects.describe(spell) + ".", NamedTextColor.LIGHT_PURPLE));
         return true;

@@ -27,6 +27,7 @@ That spawns, fights, dies and can be looted. Every other field has a default:
 | `armor_class` | 10 |
 | `speed` | 30 |
 | `darkvision` | 0 (none): feet; a DM possessing it gets night vision only if > 0 (#148) |
+| `combat_music` | none: a `music:` track name from `DMContent/Sounds.yml`; a fight with this creature starts with it instead of the default (the boss's theme, #16) |
 | `abilities` | all 10 |
 | `skills` | none (every skill = the ability modifier) |
 | `attacks`, `inventory`, `loot`, `shop` | none |

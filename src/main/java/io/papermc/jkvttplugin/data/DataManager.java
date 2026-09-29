@@ -42,9 +42,9 @@ public class DataManager {
         File conditionsFolder = new File(dmContentFolder, "Conditions"); // No Dependencies
         // Languages first: race/class/background loaders validate against the registry.
         LanguageRegistry.load(new File(dmContentFolder, "Languages.yml"));
+        DamageTypeLoader.loadAll(new File(dmContentFolder, "DamageTypes.yml")); // before spells: their visual: blocks check against it (#230)
         SpellLoader.loadAllSpells(spellFolder);
         ConditionLoader.loadAllConditions(conditionsFolder);
-        DamageTypeLoader.loadAll(new File(dmContentFolder, "DamageTypes.yml"));
         SoundLoader.load(new File(dmContentFolder, "Sounds.yml")); // the table's sounds and music (#16)
         WeaponLoader.loadAllWeapons(weaponFolder);
         ArmorLoader.loadAllArmors(armorFolder);

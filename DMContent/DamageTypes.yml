@@ -1,0 +1,28 @@
+# How each damage type looks (#230). Used two ways:
+#   - when damage of that type lands: a puff of particles on whoever was hit (fire_ticks sets them alight)
+#   - as the default look of a spell of that type: Fire Bolt flies as flames, Ray of Frost as snowflakes
+# A homebrew damage type is just a new entry. A spell can pick its own look with visual: in its YAML.
+#
+#   particle: a Minecraft particle name (FLAME, SNOWFLAKE, END_ROD, WITCH, ELECTRIC_SPARK, HEART, …).
+#             DUST is the one that takes a colour: particle: DUST, color: "#3a0d4a"
+#   fire_ticks: how long a hit shows flames on the target (20 = 1 second); cosmetic only, it never burns
+
+fire:        { particle: FLAME, fire_ticks: 40 }
+cold:        { particle: SNOWFLAKE }
+lightning:   { particle: ELECTRIC_SPARK }
+thunder:     { particle: DUST, color: "#9fb6ff" }
+acid:        { particle: DUST, color: "#7bd12a" }
+poison:      { particle: DUST, color: "#3f8a2a" }
+necrotic:    { particle: DUST, color: "#3a0d4a" }
+radiant:     { particle: END_ROD }
+psychic:     { particle: WITCH }
+force:       { particle: DUST, color: "#c9a7ff" }
+bludgeoning: { particle: CRIT }
+piercing:    { particle: CRIT }
+slashing:    { particle: CRIT }
+
+# Not damage types: the look of spells that heal, and of ones that help (Bless, Shield of Faith, Guidance).
+healing:     { particle: HEART }
+buff:        { particle: DUST, color: "#ffd86b" }
+# Anything else (a spell with no damage type, not healing or a buff): a generic sparkle.
+arcane:      { particle: DUST, color: "#b58cff" }

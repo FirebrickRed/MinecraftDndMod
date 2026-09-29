@@ -147,6 +147,15 @@ public class SpellLoader {
         // AC bonus for the spell's duration (#147): Shield's +5, Shield of Faith's +2. Applied to a
         // combatant when cast in combat; out of combat it's narrated like any other buff.
         if (data.get("ac_bonus") instanceof Number ac) spell.setAcBonus(ac.intValue());
+        // How it looks when cast (#230); without it, its damage type's look and a shape from what it does.
+        if (data.get("visual") instanceof Map<?, ?> vis) {
+            String shape = ParseUtil.asString(vis.get("shape"), null);
+            if (shape != null && !java.util.Set.of("bolt", "burst", "glow", "none").contains(shape.trim().toLowerCase())) {
+                io.papermc.jkvttplugin.data.ContentValidator.loadProblem("Spell '" + key + "' visual shape '" + shape + "' should be bolt, burst, glow or none.");
+                shape = null;
+            }
+            spell.setVisual(shape, DamageTypeLoader.parseLook(vis.get("particle"), vis.get("color"), "Spell '" + key + "' visual"));
+        }
         // A timed effect on its targets (#225): Bless, Bane, Guidance. The same vocabulary as a feature's
         // apply: block; with no duration of its own it lasts the spell's ("1 minute" = 10 rounds).
         if (data.get("effect") instanceof Map<?, ?> eff) {

@@ -236,6 +236,17 @@ public class DndSpell {
     /** True if this spell raises the target's AC while it lasts (Shield, Shield of Faith). */
     public boolean grantsAcBonus() { return acBonus > 0; }
 
+    // ---- how it looks when cast (#230): visual: { shape: bolt | burst | glow | none, particle: FLAME, color: "#rrggbb" } ----
+    private String visualShape;                                             // null = decided by what the spell does
+    private io.papermc.jkvttplugin.data.loader.DamageTypeLoader.Look visualLook; // null = its damage type's look
+
+    public void setVisual(String shape, io.papermc.jkvttplugin.data.loader.DamageTypeLoader.Look look) {
+        this.visualShape = shape == null ? null : shape.trim().toLowerCase();
+        this.visualLook = look;
+    }
+    public String getVisualShape() { return visualShape; }
+    public io.papermc.jkvttplugin.data.loader.DamageTypeLoader.Look getVisualLook() { return visualLook; }
+
     // ---- a timed effect on its targets (#225): Bless, Bane, Guidance ----
     private io.papermc.jkvttplugin.effect.ActiveEffect effect; // template; copied onto each target
     private int effectTargets = 1;

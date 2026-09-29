@@ -71,6 +71,7 @@ public class SpellCastHandler {
             }
             session.broadcast(Component.empty());
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " on " + target.getDisplayName(true) + ".", NamedTextColor.LIGHT_PURPLE));
+            SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
             if (work != null) session.broadcast(Component.text(work, NamedTextColor.GRAY));
             if (healAmount != null) DamageHandler.applyHealing(session, target, healAmount);
             if (spell.grantsTempHp()) DamageHandler.applyTempHp(session, target, Math.max(0, rollAmount(spell.getTempHp(), session)));
@@ -81,6 +82,7 @@ public class SpellCastHandler {
         if (spell.isAutoHit()) {
             session.broadcast(Component.empty());
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — it hits automatically.", NamedTextColor.LIGHT_PURPLE));
+            SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
             AttackHandler.promptDamage(session, caster, target, spell.getDamage() == null ? "" : spell.getDamage(),
                     spell.getDamageType(), false, flatLabel(spell.getDamage(), spell.getName()));
             return true;
@@ -105,6 +107,7 @@ public class SpellCastHandler {
             boolean hit = RollService.hits(r, ac);
             session.broadcast(Component.empty());
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + "!", NamedTextColor.LIGHT_PURPLE));
+            SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
             session.broadcast(Component.text("Spell attack: " + r.breakdown() + " vs AC " + ac, NamedTextColor.GRAY));
             if (hit) {
                 session.broadcast(Component.text(r.nat20() ? "★ CRITICAL HIT! ★" : "HIT!", NamedTextColor.GREEN, TextDecoration.BOLD));
@@ -155,6 +158,7 @@ public class SpellCastHandler {
             int dc = 8 + mod;
             session.broadcast(Component.empty());
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — DC " + dc + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
+            SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
             pendingSaves.put(target.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
                     spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell),
                     spell.hasEffect() ? spell.getId() : null)); // Bane: its -1d4 lands on a failed save (#225)
@@ -168,6 +172,7 @@ public class SpellCastHandler {
             SpellEffects.apply(sheet.getCharacterId(), target, spell);
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " on " + target.getDisplayName(true)
                     + ": " + SpellEffects.describe(spell) + ".", NamedTextColor.LIGHT_PURPLE));
+            SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
             session.updateScoreboard();
             return true;
         }

@@ -111,6 +111,7 @@ spells:
     material: "FERMENTED_SPIDER_EYE"
     save_type: "Charisma"
     higher_levels: "You can target one additional creature for each slot level above 1st."
+    visual: { particle: DUST, color: "#6b1e1e" }   # a curse, not the gold of a blessing (#230)
     # A failed save puts -1d4 on its attacks and saves for the minute (#225).
     effect:
       targets: 3
