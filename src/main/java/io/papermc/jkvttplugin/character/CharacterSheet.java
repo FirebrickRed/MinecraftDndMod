@@ -1139,6 +1139,11 @@ public class CharacterSheet {
      * so construction/deserialization don't write partial state. This replaces the old 5-minute timer:
      * every state-changing mutator below calls it, so a crash loses nothing but the in-progress turn.
      */
+    /** Save now, for a change made from outside that the sheet can't see (an effect armed or run down by the clock). */
+    public void saveNow() {
+        persist();
+    }
+
     private void persist() {
         if (savable) CharacterPersistenceLoader.saveCharacter(this);
     }

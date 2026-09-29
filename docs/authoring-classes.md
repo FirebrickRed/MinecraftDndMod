@@ -116,6 +116,28 @@ and grants resistance plus bonus damage, activated with `/combat use rage`. The 
 depth (costs, durations, effects, AoE actions). Copy from `barbarian.yml` (Rage) or `dragonborn.yml`
 (Breath Weapon) until it gets a guide of its own.
 
+### A feature for someone else (Bardic Inspiration, #40)
+
+```yaml
+features:
+  - id: bardic_inspiration
+    activation: bonus_action
+    target: other_creature        # its apply: goes on the creature named when it's used
+    range: 60                     # feet; out of reach offers [Ask the DM]
+    cost: { resource: bardic_inspiration, amount: 1 }
+    apply:
+      duration: { rounds: 100, until_used: true, held: true }
+      effects:
+        roll_bonus: { dice: 1d6, to: [attacks, saves, checks] }
+```
+
+Used as `/combat use bardic_inspiration Zek` or `/character use bardic_inspiration Zek`; never on
+yourself. `roll_bonus` puts a die on the holder's rolls (the same primitive as Bless, see
+`authoring-spells.md` → Shape 5c; write `to:`, not `on:`). `held: true` keeps it off every roll until
+the holder chooses: **[Use it on my next roll]** or `/character inspiration`. Then the next attack,
+save or check adds it, and `until_used` ends it there. A creature holding one has it armed at once,
+since the DM rolls for it. A second one replaces the first.
+
 ### Advantage and disadvantage (`advantage_on`, `disadvantage_on`, #223)
 
 An effect lists the rolls it affects by **roll tag**. Rage's is `advantage_on: [str_checks, str_saves]`.

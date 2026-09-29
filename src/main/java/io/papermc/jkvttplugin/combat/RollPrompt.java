@@ -45,7 +45,9 @@ public final class RollPrompt {
                 "The game rolls " + dice + (hasBonus ? " and adds " + bonus : "") + ".\nFills chat: press Enter.")
                 .append(Component.text(" "))
                 .append(button(I_ROLLED, NamedTextColor.GREEN, ClickEvent.suggestCommand(base + "manualRoll "),
-                        "Roll " + dice + " and type what it came to" + (hasBonus ? ";\nthe game adds " + bonus : "") + "."));
+                        "Roll " + dice + " and type what it came to" + (hasBonus ? ";\nthe game adds " + bonus : "") + "."
+                                + (RollService.hasLabelDice(bonus)
+                                        ? "\nRolling the bonus dice yourself too? Type them after, in order: manualRoll 14 3" : "")));
         if (hasBonus) {
             out = out.append(Component.text(" "))
                     .append(button(MY_TOTAL, NamedTextColor.YELLOW, ClickEvent.suggestCommand(base + "total "),
@@ -95,6 +97,8 @@ public final class RollPrompt {
                 boolean takesNext = next != null && !RollService.isRollKeyword(next)
                         && (!a.equalsIgnoreCase("autoRoll") || RollService.isDice(next));
                 if (takesNext) i++;
+                // "manualRoll 14 3": the bonus dice typed after the d20 go too (#225).
+                if (a.equalsIgnoreCase("manualRoll")) while (i + 1 < args.length && args[i + 1].trim().matches("\\d+")) i++;
                 continue;
             }
             line.append(' ').append(a);

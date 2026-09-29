@@ -49,6 +49,12 @@ public class Feature {
         this.attack = attack;
     }
 
+    private int range; // feet, for a feature used on someone else (Bardic Inspiration: 60); 0 = no limit
+    public Feature withRange(int range) { this.range = Math.max(0, range); return this; }
+    public int getRange() { return range; }
+    /** Its apply: goes on another creature, named when it's used (target: other_creature; Bardic Inspiration, #40). */
+    public boolean givesToOther() { return hasApply() && !targetsSelf(); }
+
     public String getId() { return id; }
     public String getName() { return name; }
     public String getActivation() { return activation; }

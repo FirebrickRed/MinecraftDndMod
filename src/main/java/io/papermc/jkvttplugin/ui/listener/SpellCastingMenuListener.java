@@ -149,6 +149,12 @@ public class SpellCastingMenuListener implements Listener {
             io.papermc.jkvttplugin.combat.SpellTargeting.ready(player, current, spell, castingLevel);
             return;
         }
+        // Out of a fight, a buff on others (Bless before the door, Guidance before the lock, #225) is
+        // readied the same way. A harmful one keeps the typed path, which asks the DM first.
+        if (!inCombat && needsTarget && spell.hasEffect() && !io.papermc.jkvttplugin.combat.OutOfCombatAttack.isHarmful(spell)) {
+            io.papermc.jkvttplugin.combat.SpellTargeting.ready(player, null, spell, castingLevel);
+            return;
+        }
 
         // A spell picked from a higher slot's page carries that level, so the command spends it.
         // "level N" has to come last (it stops target-name collection), so when there's both a

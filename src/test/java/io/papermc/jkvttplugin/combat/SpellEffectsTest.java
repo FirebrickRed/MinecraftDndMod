@@ -155,4 +155,47 @@ class SpellEffectsTest {
         assertEquals(cleric.getCharacterId(), e.getCasterId());
         assertFalse(fighter.restoreActiveEffect("spell:no_such_spell", 7, false, null));
     }
+
+    @Test
+    void youCanRollTheBonusDieYourself() {
+        RollService.parseInput(new String[]{"manualRoll", "14", "3"});
+        RollService.RollResult r = RollService.resolve(14, null, 3, "+3[STR] +1d4[Bless]", false);
+        assertEquals(20, r.total(), "14 + 3 + your 3 on the d4");
+        assertTrue(r.breakdown().contains("+3[Bless 1d4]"), r.breakdown());
+
+        RollService.parseInput(new String[]{"manualRoll", "14", "9"}); // no d4 shows 9: the game rolls it
+        RollService.RollResult odd = RollService.resolve(14, null, 3, "+3[STR] +1d4[Bless]", false);
+        assertTrue(odd.total() >= 18 && odd.total() <= 21, "" + odd.total());
+
+        assertEquals("/combat attack goblin ", RollPrompt.baseLine("combat", new String[]{"attack", "goblin", "manualRoll", "14", "3"}),
+                "a re-prompt drops the bonus dice typed after the d20 too");
+    }
+
+    @Test
+    void bardicInspirationWaitsUntilTheHolderChoosesTheRoll() {
+        CharacterSheet bard = live("human", "bard");
+        var feature = bard.getFeature("bardic_inspiration");
+        assertNotNull(feature);
+        assertTrue(feature.givesToOther());
+        assertEquals(60, feature.getRange());
+
+        CharacterSheet fighter = live("human", "fighter");
+        fighter.addEffect(feature.getApplyTemplate().copy());
+        assertFalse(fighter.getSaveBreakdown(Ability.DEXTERITY).contains("Bardic"), "held: not on any roll yet");
+        SpellEffects.useUp(fighter, ActiveEffect.SAVES);
+        assertTrue(fighter.hasEffect("bardic_inspiration"), "a roll made while it's held doesn't spend it");
+
+        assertEquals(1, SpellEffects.arm(fighter).size());
+        assertTrue(fighter.getSaveBreakdown(Ability.DEXTERITY).contains("+1d6[Bardic Inspiration]"));
+        assertTrue(fighter.getSkillBonusBreakdown(Skill.ATHLETICS).contains("+1d6[Bardic Inspiration]"));
+        SpellEffects.useUp(fighter, ActiveEffect.ATTACKS);
+        assertFalse(fighter.hasEffect("bardic_inspiration"), "the roll it was armed for spends it");
+    }
+
+    @Test
+    void severalClickedTargetsFillOneCommand() {
+        DndSpell bless = SpellLoader.getSpell("bless");
+        assertEquals("/character cast bless Zek, Borin, me ", SpellTargeting.castCommand(false, bless, "Zek, Borin, me", 0));
+        assertEquals("/combat cast bless Zek, Borin level 2 ", SpellTargeting.castCommand(true, bless, "Zek, Borin", 2));
+    }
 }

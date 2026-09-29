@@ -42,14 +42,69 @@ public final class SpellEffects {
     public static void apply(UUID casterId, Combatant target, DndSpell spell) {
         ActiveEffect e = spell.getEffect().copy();
         e.setCasterId(casterId);
+        give(target, e);
+    }
+
+    /**
+     * Put an effect on {@code target}: a spell's, or a feature's given to someone else (Bardic
+     * Inspiration, #40). A second from the same source replaces the first: the same spell doesn't
+     * stack (PHB p.205), and a creature holds one Bardic Inspiration die. A held effect on a creature
+     * is armed at once, since the DM rolls for it anyway; a character is told how to spend theirs.
+     */
+    public static void give(Combatant target, ActiveEffect e) {
         CharacterSheet sheet = target.getCharacterSheet();
         if (sheet != null) {
-            sheet.addEffect(e); // a second Bless refreshes the first: the same spell doesn't stack (PHB p.205)
+            sheet.addEffect(e);
+            if (e.isHeld()) offerToArm(sheet, e);
         } else if (target.getEntityInstance() != null) {
+            if (e.isHeld()) e.setArmed(true);
             List<ActiveEffect> list = target.getEntityInstance().getEffects();
             list.removeIf(x -> x.getSourceId().equalsIgnoreCase(e.getSourceId()));
             list.add(e);
         }
+    }
+
+    // ==================== HELD (Bardic Inspiration, #40) ====================
+
+    /** Tell the holder what they have, with [Use it on my next roll]. */
+    private static void offerToArm(CharacterSheet sheet, ActiveEffect e) {
+        if (Bukkit.getServer() == null) return;
+        Player p = sheet.getPlayerId() != null ? Bukkit.getPlayer(sheet.getPlayerId()) : null;
+        if (p == null) return;
+        p.sendMessage(Component.text("🎵 You have " + e.getSourceName() + " (" + e.durationLabel() + "): ", NamedTextColor.LIGHT_PURPLE)
+                .append(Component.text(String.join(", ", e.describe()).replaceAll(" \\(once, when you choose.*\\)", "") + ". ", NamedTextColor.GRAY))
+                .append(armButton(sheet)));
+    }
+
+    /** [Use it on my next roll]: arms the holder's held dice. A callback, so there's nothing to type or replay. */
+    public static Component armButton(CharacterSheet sheet) {
+        return Component.text("[Use it on my next roll]", NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(
+                        "Your next attack roll, saving throw or ability check adds the die.\nOr any time: /character inspiration")))
+                .clickEvent(net.kyori.adventure.text.event.ClickEvent.callback(a -> {
+                    Player p = sheet.getPlayerId() != null ? Bukkit.getPlayer(sheet.getPlayerId()) : null;
+                    List<ActiveEffect> armed = arm(sheet);
+                    if (p != null) p.sendMessage(armedMessage(armed));
+                }));
+    }
+
+    /**
+     * Arm this character's held dice: their next attack, save or check adds them, and that roll uses
+     * them up. Returns what was armed (empty if they hold nothing).
+     */
+    public static List<ActiveEffect> arm(CharacterSheet sheet) {
+        List<ActiveEffect> armed = new ArrayList<>();
+        for (ActiveEffect e : sheet.getActiveEffects()) {
+            if (e.isHeld() && !e.isArmed()) { e.setArmed(true); armed.add(e); }
+        }
+        if (!armed.isEmpty()) sheet.saveNow();
+        return armed;
+    }
+
+    public static Component armedMessage(List<ActiveEffect> armed) {
+        if (armed.isEmpty()) return Component.text("You have no Bardic Inspiration to use (or it's already set for your next roll).", NamedTextColor.GRAY);
+        return Component.text("🎵 " + String.join(", ", armed.stream().map(ActiveEffect::getSourceName).toList())
+                + " is on your next attack, save or check.", NamedTextColor.LIGHT_PURPLE);
     }
 
     /** What the effect does and for how long, for the cast line: "+1d4 to attacks and saves, 10 rounds". */
@@ -141,7 +196,7 @@ public final class SpellEffects {
         for (CharacterSheet s : CharacterSheetManager.getAllCharacters()) {
             Set<ActiveEffect> ran = new HashSet<>();
             for (ActiveEffect e : s.getActiveEffects()) if (e.passRounds(rounds)) ran.add(e);
-            if (ran.isEmpty()) continue;
+            if (ran.isEmpty()) { if (!s.getActiveEffects().isEmpty()) s.saveNow(); continue; } // fewer rounds left, still saved
             s.removeEffects(ran::contains);
             List<String> names = ran.stream().map(ActiveEffect::getSourceName).toList();
             tellHolder(s, String.join(", ", names) + " on you " + (names.size() == 1 ? "has" : "have") + " worn off.");

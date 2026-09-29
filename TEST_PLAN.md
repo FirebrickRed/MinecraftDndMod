@@ -392,6 +392,21 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       next turn. On a creature, its AC goes up too.
 - [ ] Restart with Bless on someone → it's still there with its rounds; the cleric breaking concentration still ends it.
 
+## Your own bonus die, clicking several targets, Bardic Inspiration (#225, #179, #40)
+
+- [ ] Blessed, attack with **[I rolled…]** and type `manualRoll 14 3` → the result shows `+3[Bless 1d4]` (your 3). Its
+      hover says you can type your bonus dice. `manualRoll 14` alone → the game rolls the d4.
+- [ ] In a fight: spellbook → **Bless** → "left-click up to 3 targets". Click Zek → "Bless: Zek (1 of 3) [Cast on these]
+      [+ me] [cancel]"; click Zek again → he's off the list; click three people → "[Cast it]" fills
+      `/combat cast bless Zek, Borin, Ada`. **[+ me]** adds you. **[Cast on these]** with two works too.
+- [ ] Out of a fight, spellbook → **Guidance** → click Borin → `/character cast guidance Borin`. **Bane** (harmful)
+      out of a fight still asks for a typed name.
+- [ ] A bard: `/combat use bardic_inspiration Zek` (bonus action) → "gives Zek Bardic Inspiration: +1d6 to …", one use
+      spent. Zek gets "[Use it on my next roll]"; until he clicks it, his rolls don't show it. After → his next attack,
+      save or check shows `+1d6[Bardic Inspiration]` and it's gone. `/character inspiration` does the same.
+- [ ] Bardic Inspiration on yourself → refused; on someone 80 ft away → **[Ask the DM]**; out of uses → "No uses".
+      Out of a fight: `/character use bardic_inspiration Zek`. The Features page's tile fills it in.
+
 ## Heavy armor and Strength (#34)
 
 - [ ] A human with STR 10 puts on chain mail (`/dm give <you> chain_mail`, wear it) → "⚠ Chain Mail needs Strength 13:

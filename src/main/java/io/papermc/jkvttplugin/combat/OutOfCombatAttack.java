@@ -438,7 +438,9 @@ public final class OutOfCombatAttack {
             player.sendMessage(Component.text("↯ You have " + adv.label() + " on this spell attack.",
                     adv.isAdvantage() ? NamedTextColor.GREEN : NamedTextColor.RED));
         }
-        return RollService.resolve(roll, mod, sheet.getSpellAttackBreakdown(spell), rerollNat1, adv);
+        RollService.RollResult r = RollService.resolve(roll, mod, sheet.getSpellAttackBreakdown(spell), rerollNat1, adv);
+        if (r != null) SpellEffects.useUp(sheet, io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS); // an armed Bardic Inspiration (#40)
+        return r;
     }
 
     private static int modFor(CharacterSheet sheet, DndSpell spell) {

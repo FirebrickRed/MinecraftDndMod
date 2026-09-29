@@ -73,6 +73,7 @@ public final class RollService {
     public static RollInput parseInput(String[] args, CommandSender who) {
         Integer providedRoll = null, providedTotal = null;
         boolean forceAuto = false;
+        java.util.List<Integer> bonusDice = new java.util.ArrayList<>();
         java.util.List<String> stale = new java.util.ArrayList<>();
         java.util.List<String> notNumbers = new java.util.ArrayList<>(), missing = new java.util.ArrayList<>(),
                 belowOne = new java.util.ArrayList<>();
@@ -89,6 +90,11 @@ public final class RollService {
                         try {
                             int n = Integer.parseInt(next.trim());
                             if (n < 1) belowOne.add(next); else providedRoll = n; // no die shows 0
+                            // Numbers after the d20 are the bonus dice you rolled too, in order (#225):
+                            // "manualRoll 14 3" = a 14, and 3 on Bless's d4.
+                            for (int j = i + 2; j < args.length && args[j].trim().matches("\\d+"); j++) {
+                                bonusDice.add(Integer.parseInt(args[j].trim()));
+                            }
                         } catch (NumberFormatException e) { notNumbers.add(next); }
                     }
                 }
@@ -107,6 +113,7 @@ public final class RollService {
             for (String m : missing) who.sendMessage(Component.text(m + " needs a number after it (" + m + " 14).", NamedTextColor.RED));
             for (String b : belowOne) who.sendMessage(Component.text("manualRoll " + b + "? No die shows less than 1.", NamedTextColor.RED));
         }
+        providedBonusDice = new ProvidedDice(new java.util.ArrayDeque<>(bonusDice), currentTick());
         return new RollInput(providedRoll, providedTotal, forceAuto);
     }
 
@@ -229,14 +236,43 @@ public final class RollService {
      * sum 1 and {@code "+3[STR] +3[Bless 1d4] -2[Bane 1d4]"}. Flat parts are left alone (the caller
      * already added them as the modifier). A bonus with no dice comes back as it was, sum 0.
      */
+    /**
+     * The bonus dice typed after a manualRoll ("manualRoll 14 3"), for the roll this command makes.
+     * parseInput sets them and the next rollLabelDice takes them. A command parses before it resolves,
+     * on the same tick, so they're only good for that tick: a prompt that never resolved can't leave a
+     * 3 behind for someone else's roll later.
+     */
+    private record ProvidedDice(java.util.ArrayDeque<Integer> dice, long tick) {}
+    private static ProvidedDice providedBonusDice;
+
+    private static long currentTick() {
+        return org.bukkit.Bukkit.getServer() != null ? org.bukkit.Bukkit.getCurrentTick() : -1;
+    }
+
+    private static java.util.Deque<Integer> takeProvidedBonusDice() {
+        ProvidedDice p = providedBonusDice;
+        providedBonusDice = null;
+        return p != null && p.tick() == currentTick() ? p.dice() : new java.util.ArrayDeque<>();
+    }
+
+    /** True if a bonus has dice for the game to roll ("+1d4[Bless]"), so a prompt can say you may roll them too. */
+    public static boolean hasLabelDice(String label) {
+        return label != null && LABEL_DICE.matcher(label).find();
+    }
+
     public static LabelDice rollLabelDice(String label) {
         if (label == null || label.indexOf('d') < 0) return new LabelDice(0, label);
         java.util.regex.Matcher m = LABEL_DICE.matcher(label);
         StringBuilder out = new StringBuilder();
         int sum = 0;
+        java.util.Deque<Integer> given = takeProvidedBonusDice();
         while (m.find()) {
             int count = m.group(2).isEmpty() ? 1 : Integer.parseInt(m.group(2));
-            int rolled = io.papermc.jkvttplugin.util.DiceRoller.rollDice(count, Integer.parseInt(m.group(3)));
+            int sides = Integer.parseInt(m.group(3));
+            // The player's own die if they typed one that fits (a 3 for a d4), else the game rolls it.
+            Integer mine = given.poll();
+            int rolled = mine != null && mine >= count && mine <= count * sides ? mine
+                    : io.papermc.jkvttplugin.util.DiceRoller.rollDice(count, sides);
             boolean minus = m.group(1).equals("-");
             sum += minus ? -rolled : rolled;
             m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(

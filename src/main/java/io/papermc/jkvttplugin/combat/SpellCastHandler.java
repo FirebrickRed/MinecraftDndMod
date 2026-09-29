@@ -99,6 +99,7 @@ public class SpellCastHandler {
                 return false;
             }
             caster.afterAttackRoll(session); // a Help is used up; a hidden caster is revealed (#176)
+            SpellEffects.useUp(caster, io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS); // an armed Bardic Inspiration (#40)
             int ac = target.getArmorClass();
             boolean hit = RollService.hits(r, ac);
             session.broadcast(Component.empty());

@@ -21,6 +21,20 @@ class_resources:
     minimum: 1           # "a number of times equal to your Charisma modifier (a minimum of once)"
     recovery: long_rest  # Changes to short_rest at level 5 (Font of Inspiration)
     material: note_block
+# Bardic Inspiration (#40): a bonus action gives someone else within 60 ft a d6 for 10 minutes. They
+# keep it until they choose the roll ([Use it on my next roll] or /character inspiration), then it adds
+# to that one attack, save or check. /combat use bardic_inspiration Zek (or /character use, out of a fight)
+features:
+  - id: bardic_inspiration
+    name: Bardic Inspiration
+    activation: bonus_action
+    target: other_creature
+    range: 60
+    cost: { resource: bardic_inspiration, amount: 1 }
+    apply:
+      duration: { rounds: 100, until_used: true, held: true }
+      effects:
+        roll_bonus: { dice: 1d6, to: [attacks, saves, checks] }   # d8 at 5th level, d10 at 10th, d12 at 15th (level-up, #153)
 spellcasting:
   casting_ability: Charisma
   preparation_type: known

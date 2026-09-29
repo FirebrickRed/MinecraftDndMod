@@ -103,7 +103,7 @@ public final class FeatureParser {
 
             out.add(new Feature(id, name, activation, target, costResource, costAmount, apply,
                     action, grantedMax, grantedByProf, grantedRecovery, attack).withHealAndSense(heal, sense)
-                    .withRecoverSlots(recover));
+                    .withRecoverSlots(recover).withRange(ParseUtil.asInt(m.get("range"), 0)));
         }
         return out;
     }
@@ -147,12 +147,14 @@ public final class FeatureParser {
         String untilRest = null;
         boolean untilUsed = false;
         boolean stacks = false;
+        boolean held = false;
         if (apply.get("duration") instanceof Map<?, ?> d) {
             if (d.get("rounds") != null) rounds = ParseUtil.asInt(d.get("rounds"), -1);
             maintainedBy.addAll(ParseUtil.normalizeStringList(d.get("maintained_by")));
             untilRest = ParseUtil.asString(d.get("until_rest"), null);
             untilUsed = ParseUtil.asBoolean(d.get("until_used"), false);
             stacks = ParseUtil.asBoolean(d.get("stacks"), false);
+            held = ParseUtil.asBoolean(d.get("held"), false); // Bardic Inspiration: the holder picks the roll (#40)
         }
 
         // effects (the primitive vocabulary)
@@ -216,6 +218,7 @@ public final class FeatureParser {
                 bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks,
                 rounds, maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel)
                 .withBonuses(attackBonus, attackBonusWhen, acBonus, acBonusNeedsArmor, sneakDice)
-                .withRollBonus(rollBonusDice, rollBonusOn);
+                .withRollBonus(rollBonusDice, rollBonusOn)
+                .withHeld(held);
     }
 }

@@ -43,7 +43,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
     private final ViewSheetCommand viewExec = new ViewSheetCommand();
     private final GiveSheetCommand giveExec = new GiveSheetCommand();
 
-    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "give", "delete", "loot", "check", "cast", "use", "hitdice", "damage", "drink", "reply");
+    private static final List<String> SUBCOMMANDS = List.of("create", "view", "list", "give", "delete", "loot", "check", "cast", "use", "hitdice", "damage", "drink", "reply", "inspiration");
     private final DrinkCommand drinkExec = new DrinkCommand();
 
     @Override
@@ -113,6 +113,14 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             }
             case "reply" -> {
                 return handleReply(sender, rest);
+            }
+            case "inspiration" -> {
+                // Spend a held Bardic Inspiration die on your next attack, save or check (#40).
+                if (!(sender instanceof Player p)) { sender.sendMessage(Component.text("Only players hold inspiration.", NamedTextColor.RED)); return true; }
+                CharacterSheet sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(p);
+                if (sheet == null) { p.sendMessage(Component.text("You have no active character.", NamedTextColor.RED)); return true; }
+                p.sendMessage(io.papermc.jkvttplugin.combat.SpellEffects.armedMessage(io.papermc.jkvttplugin.combat.SpellEffects.arm(sheet)));
+                return true;
             }
             case "damage" -> {
                 // Finish an out-of-combat hit: the roll the attack or the DM asked for.
@@ -423,6 +431,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, cost); // the slot, and concentration
+        io.papermc.jkvttplugin.combat.SpellTargeting.clear(player.getUniqueId()); // a spell readied from the book is cast
         for (var t : targets) io.papermc.jkvttplugin.combat.SpellEffects.apply(sheet.getCharacterId(), t.combatant(), spell);
         announceNearby(player, spell.castLine("✨ " + sheet.getCharacterName() + " casts ", " on " + String.join(", ", names)
                 + ": " + io.papermc.jkvttplugin.combat.SpellEffects.describe(spell) + ".", NamedTextColor.LIGHT_PURPLE));

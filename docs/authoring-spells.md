@@ -228,9 +228,13 @@ bless:
 
 - **Casting:** `/combat cast bless Zek, Borin, me` (commas for several targets, `me` for yourself), or
   out of a fight `/character cast guidance Borin` (no name = yourself). Each target must be in range.
+  From the spellbook it's clicks (#179): picking the spell readies it, each left-click at a creature
+  adds a target (a second click takes it back), **[+ me]** adds you, and at the limit, or on
+  **[Cast on these]**, you get the filled-in cast. Out of a fight too, for a spell that isn't harmful.
   A **save spell** with an effect (Bane) puts it only on the targets that **fail** the save.
 - **The die** rides on the target's labelled bonus (`+3[STR] +2[Prof] +1d4[Bless]`), in the prompt
-  and the result, and the game rolls it, even when the player rolled the d20 themselves. A
+  and the result. The game rolls it unless the player types their own after the d20
+  (`manualRoll 14 3`: a 14, and 3 on the d4). A
   `total <n>` is taken as final. It reaches attacks, saves (death saves and concentration too) and
   checks, whichever `to:` names, for characters and creatures alike.
 - **`to:`, not `on:`.** YAML reads a bare `on` as `true`, so `on: [attacks]` is silently lost. The

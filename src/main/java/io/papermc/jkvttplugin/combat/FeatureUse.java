@@ -30,7 +30,7 @@ public final class FeatureUse {
 
     /** Whether this is one of the features this class runs. */
     public static boolean handles(Feature f) {
-        return f.getHeal() != null || f.getSense() != null || f.getRecoverSlots() != null;
+        return f.getHeal() != null || f.getSense() != null || f.getRecoverSlots() != null || f.givesToOther();
     }
 
     /**
@@ -45,10 +45,55 @@ public final class FeatureUse {
             player.sendMessage(Component.text(f.getName() + " needs a '" + f.getCostResource() + "' resource this character doesn't have.", NamedTextColor.RED));
             return false;
         }
+        if (f.givesToOther()) return give(player, self, session, f, res, words);
         if (f.getRecoverSlots() != null) return recoverSlots(player, self, session, f, res, words);
         if (f.getSense() != null) return sense(player, self, session, f, res);
         if (f.getHeal().fromPool()) return layOnHands(player, self, session, f, res, words);
         return rollHeal(player, self, session, f, res, words);
+    }
+
+    // ==================== BARDIC INSPIRATION: an effect for someone else (#40) ====================
+
+    /**
+     * Give the feature's effect to the creature named in {@code words}: not yourself, within its
+     * {@code range:}. A second one replaces the first (a creature holds one Bardic Inspiration die).
+     */
+    private static boolean give(Player player, Combatant self, CombatSession session, Feature f, ClassResource res, String[] words) {
+        List<String> nameWords = new ArrayList<>();
+        for (String w : words) { if (RollService.isRollKeyword(w)) break; nameWords.add(w); }
+        String name = NameUtil.stripQuotes(String.join(" ", nameWords).trim());
+        String cmd = (session != null ? "/combat use " : "/character use ") + f.getId() + " ";
+        if (name.isEmpty()) {
+            player.sendMessage(Component.text("Who gets it? " + cmd + "<name>", NamedTextColor.YELLOW));
+            return false;
+        }
+        if (res != null && res.getCurrent() < f.getCostAmount()) {
+            player.sendMessage(Component.text("No uses of " + res.getName() + " left (they come back on a rest).", NamedTextColor.YELLOW));
+            return false;
+        }
+        CombatTargets.Target t = CombatTargets.resolveOrError(player, name);
+        if (t == null) return false; // the resolver said why
+        Combatant target = t.combatant();
+        if (target.getId().equals(self.getId())) {
+            player.sendMessage(Component.text(f.getName() + " goes to someone else, not you.", NamedTextColor.YELLOW));
+            return false;
+        }
+        if (f.getRange() > 0) {
+            double feet = Reach.feet(self.getLocation(), target.getLocation());
+            String what = "feature:" + f.getId();
+            if (feet > f.getRange() + Reach.SLACK_FEET && !Reach.isAllowed(player.getUniqueId(), what, target.getId())) {
+                Reach.refuse(player, target.getDisplayName() + " is about " + Math.round(feet) + " ft away. " + f.getName()
+                        + " reaches " + f.getRange() + " ft.", what, target.getId(), f.getName() + " for " + target.getDisplayName(), cmd + name);
+                return false;
+            }
+        }
+        if (res != null) res.consume(f.getCostAmount());
+        Reach.spend(player.getUniqueId());
+        io.papermc.jkvttplugin.effect.ActiveEffect e = f.getApplyTemplate().copy();
+        SpellEffects.give(target, e);
+        say(player, session, Component.text("🎵 " + self.getDisplayName() + " gives " + target.getDisplayName() + " " + f.getName()
+                + ": " + String.join(", ", e.describe()).replaceAll(" \\(once, when you choose.*\\)", "") + ".", NamedTextColor.LIGHT_PURPLE));
+        return true;
     }
 
     // ==================== SECOND WIND: roll dice, heal yourself ====================

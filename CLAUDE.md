@@ -721,8 +721,12 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     bonus label**, so every d20 path picks it up. Rounds tick at the holder's turn; out of combat only the
     DM moving the clock (`TimeCommand.shift` → `SpellEffects.passTime`) runs them down. The caster's
     concentration ending ends it on everyone (`CharacterSheet.breakConcentration`/`setConcentratingOn`).
-    `until_used` effects are spent by `SpellEffects.useUp` at each check/save site. Creatures hold effects
+    `until_used` effects are spent by `SpellEffects.useUp` at each attack/check/save site. Creatures hold effects
     too (`DndEntityInstance.getEffects`, in memory).
+    Typed bonus dice: `manualRoll 14 3` (parseInput stores them for that tick; `rollLabelDice` takes them).
+    **Bardic Inspiration (#40)** is a feature with `target: other_creature` + `range:` (`FeatureUse.give`),
+    whose effect is `held`: off every roll until the holder arms it (`SpellEffects.arm`, `/character inspiration`).
+    Multi-target spells are picked by clicks in `SpellTargeting` (one click per target, [+ me], [Cast on these]).
   - **Spell slots are spent in one place (#152):** `character/SpellCost` — `of(sheet, spell)` to check
     *before* resolving, `spend(...)` only once it has. `level <n>` (last argument, after the target)
     upcasts and spends that slot — the spellbook's "⬆ Casting at 2nd level" fills it in. `/combat cast` used to spend nothing at all

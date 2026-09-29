@@ -318,6 +318,7 @@ public class CharacterPersistenceLoader {
                 em.put("roundsRemaining", e.getRoundsRemaining());
                 em.put("maintainedThisRound", e.isMaintainedThisRound());
                 if (e.getCasterId() != null) em.put("caster", e.getCasterId().toString()); // a spell's (#225): its concentration ends it
+                if (e.isArmed()) em.put("armed", true); // Bardic Inspiration set for the next roll (#40)
                 effects.add(em);
             }
             data.put("activeEffects", effects);
@@ -401,7 +402,12 @@ public class CharacterPersistenceLoader {
             boolean maintained = Boolean.TRUE.equals(em.get("maintainedThisRound"));
             java.util.UUID caster = null;
             try { if (em.get("caster") instanceof String c) caster = java.util.UUID.fromString(c); } catch (IllegalArgumentException ignored) {}
-            if (!sheet.restoreActiveEffect(source, rounds, maintained, caster)) {
+            boolean restored = sheet.restoreActiveEffect(source, rounds, maintained, caster);
+            if (restored && Boolean.TRUE.equals(em.get("armed"))) {
+                var effects = sheet.getActiveEffects();
+                effects.get(effects.size() - 1).setArmed(true);
+            }
+            if (!restored) {
                 String who = sheet.getCharacterName();
                 java.util.logging.Logger.getLogger("CharacterPersistence").warning(who + " had an active '" + source
                         + "' effect, but no feature or spell with that id exists any more — dropped.");
