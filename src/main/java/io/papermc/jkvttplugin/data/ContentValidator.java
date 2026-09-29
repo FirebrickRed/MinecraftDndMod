@@ -71,6 +71,11 @@ public final class ContentValidator {
         if (def != null && io.papermc.jkvttplugin.data.loader.SoundLoader.track(def) == null) {
             warn("Sounds.yml music default '" + def + "' isn't one of its tracks.");
         }
+        for (io.papermc.jkvttplugin.data.model.DndEntity e : io.papermc.jkvttplugin.data.loader.EntityLoader.getAllEntities()) {
+            if (e.getCombatMusic() != null && io.papermc.jkvttplugin.data.loader.SoundLoader.track(e.getCombatMusic()) == null) {
+                warn("Entity '" + e.getId() + "' combat_music '" + e.getCombatMusic() + "' isn't a Sounds.yml music track; its fights use the default.");
+            }
+        }
     }
 
     public static List<String> validateAll() {

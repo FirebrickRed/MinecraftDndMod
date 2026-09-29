@@ -431,6 +431,7 @@ public class CombatSession {
         dismountEveryone(); // no boats or mounts once initiative is rolled (#198)
 
         startMovementRing();
+        io.papermc.jkvttplugin.sound.CombatMusic.start(this); // the fight's music (#16)
 
         // Initialize first combatant's turn
         Combatant first = getCurrentCombatant();
@@ -829,6 +830,7 @@ public class CombatSession {
      */
     public void suspendForShutdown() {
         CombatPersistence.save(this);
+        io.papermc.jkvttplugin.sound.CombatMusic.stop(this); // restarts with the fight at boot (#16)
         stopMovementRing();
         for (Combatant c : combatants) {
             clearGlowEffect(c);
@@ -855,6 +857,7 @@ public class CombatSession {
         restoredTurnPending = !isSetupPhase;
         Combatant current = getCurrentCombatant(); // starts an entity's turn now if its chunk is loaded
         if (!isSetupPhase && current != null && current.isEntity()) applyGlowEffect(current);
+        if (!isSetupPhase) io.papermc.jkvttplugin.sound.CombatMusic.start(this); // players hear it as they rejoin (#16)
         LOGGER_RESTORE.info("Restored combat " + sessionId + ": round " + roundNumber
                 + (current != null ? ", " + current.getDisplayName() + "'s turn" : "")
                 + ", " + combatants.size() + " combatants. The turn in progress restarts.");
@@ -884,6 +887,7 @@ public class CombatSession {
 
     public void endCombat() {
         isActive = false;
+        io.papermc.jkvttplugin.sound.CombatMusic.stop(this); // #16
         stopMovementRing();
         ReactionManager.clearAll(); // drop any pending opportunity attacks (#147)
         ReactionWindow.clearAll();  // and any held attack waiting on a reaction (#195)

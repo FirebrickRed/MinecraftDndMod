@@ -84,6 +84,11 @@ public class DndEntity {
     /** Darkvision in feet (0 = none). A DM possessing the creature sees in the dark only if it can (#148). */
     private int darkvision = 0;
 
+    /** The music track a fight with this creature starts with (Sounds.yml music.tracks), or null for the default (#16). */
+    private String combatMusic;
+    public String getCombatMusic() { return combatMusic; }
+    public void setCombatMusic(String combatMusic) { this.combatMusic = combatMusic; }
+
     /**
      * The six D&D ability scores.
      * Map of Ability enum -> score value (typically 1-30, average 10).

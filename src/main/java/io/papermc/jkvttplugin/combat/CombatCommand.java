@@ -91,6 +91,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "add" -> handleAdd(player, args);
             case "remove" -> handleRemove(player, args);
             case "surprise" -> handleSurprise(player, args);
+            case "music" -> handleMusic(player, args);
             case "initiative" -> handleInitiative(player, args);
             case "rollforinitiative" -> handleRollForInitiative(player);
             case "nextturn" -> handleNextTurn(player);
@@ -1436,6 +1437,43 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 session.sendActionBar(caster);
             }
         }
+    }
+
+    /**
+     * {@code /combat music [<track> | off | default]} (DM, #16): switch the fight's music (a Sounds.yml
+     * track: the boss's second phase), stop it, or go back to what it started with. No argument: what's playing.
+     */
+    private void handleMusic(Player player, String[] args) {
+        if (!isDM(player) && !player.hasPermission("jkvtt.dm")) {
+            player.sendMessage(Component.text("Only the DM changes the music.", NamedTextColor.RED));
+            return;
+        }
+        CombatSession session = resolveSession(player);
+        if (session == null) return;
+        if (session.isSetupPhase()) {
+            player.sendMessage(Component.text("The music starts when initiative is rolled.", NamedTextColor.YELLOW));
+            return;
+        }
+        String playing = io.papermc.jkvttplugin.sound.CombatMusic.nowPlaying(session);
+        if (args.length < 2) {
+            player.sendMessage(Component.text("♪ " + (playing != null ? "Playing: " + playing : "No music.")
+                    + " Tracks: " + String.join(", ", io.papermc.jkvttplugin.data.loader.SoundLoader.tracks().keySet())
+                    + ". /combat music <track> | off | default", NamedTextColor.GRAY));
+            return;
+        }
+        String want = args[1].toLowerCase();
+        if (want.equals("off")) {
+            io.papermc.jkvttplugin.sound.CombatMusic.stop(session);
+            player.sendMessage(Component.text("♪ Music off for this fight.", NamedTextColor.GRAY));
+            return;
+        }
+        if (want.equals("default")) want = io.papermc.jkvttplugin.sound.CombatMusic.trackFor(session);
+        if (want == null || !io.papermc.jkvttplugin.sound.CombatMusic.play(session, want)) {
+            player.sendMessage(Component.text("No music track '" + args[1] + "'. Tracks: "
+                    + String.join(", ", io.papermc.jkvttplugin.data.loader.SoundLoader.tracks().keySet()) + " (Sounds.yml).", NamedTextColor.RED));
+            return;
+        }
+        player.sendMessage(Component.text("♪ Now playing: " + want, NamedTextColor.GOLD));
     }
 
     private void handleSave(Player player, String[] args) {
@@ -3145,7 +3183,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
                 "reveal", "hide", "action", "bonusAction", "movement", "cast", "save", "attack",
-                "reactions", "concentration", "damage", "heal", "temphp", "deathsave", "use"));
+                "reactions", "concentration", "damage", "heal", "temphp", "deathsave", "use", "music"));
             return filterCompletions(completions, args[0]);
         }
 
@@ -3159,6 +3197,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             String sub = args[0].toLowerCase();
 
             switch (sub) {
+                case "music" -> {
+                    completions.addAll(io.papermc.jkvttplugin.data.loader.SoundLoader.tracks().keySet());
+                    completions.addAll(List.of("off", "default"));
+                }
                 case "add" -> {
                     // Suggest --radius, online players, and entity names
                     completions.add("--radius");

@@ -202,6 +202,8 @@ public class EntityLoader {
                 LOGGER.warning("[" + id + "] speed must be a whole number of feet — got '" + data.get("speed")
                         + "'. Falling back to 30.");
             }
+            // The boss's theme: a Sounds.yml music track this creature's fights start with (#16).
+            if (data.get("combat_music") != null) entity.setCombatMusic(String.valueOf(data.get("combat_music")).trim().toLowerCase());
             if (data.get("darkvision") instanceof Integer dv) {
                 entity.setDarkvision(dv);
             } else if (data.containsKey("darkvision")) {
