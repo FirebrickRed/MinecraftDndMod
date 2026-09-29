@@ -163,6 +163,20 @@ public class Combatant {
         return adv;
     }
 
+    /** Why {@link #initiativeAdvantage} is what it is, one line per source, for the roll prompt. */
+    public java.util.List<String> initiativeReminders() {
+        java.util.List<String> notes = new java.util.ArrayList<>();
+        CharacterSheet s = isPlayer() ? getCharacterSheet() : null;
+        if (s == null) return notes;
+        if (s.armorPenaltyApplies(Ability.DEXTERITY)) notes.add("Armor (you): disadvantage, " + s.armorPenaltyReason());
+        var tags = io.papermc.jkvttplugin.effect.RollTags.initiative();
+        String boon = s.effectAdvantageSource(tags);
+        if (boon != null) notes.add(boon + " (you): advantage on initiative");
+        String bane = s.effectDisadvantageSource(tags);
+        if (bane != null) notes.add(bane + " (you): disadvantage on initiative");
+        return notes;
+    }
+
     private static int calculatePlayerInitiativeBonus(CharacterSheet sheet) {
         int bonus = sheet.getModifier(Ability.DEXTERITY);
 

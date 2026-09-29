@@ -305,8 +305,15 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         io.papermc.jkvttplugin.combat.CombatSession session =
                 io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(player.getUniqueId());
         if (session != null && !session.isSetupPhase()) {
-            String cmd = "/combat cast " + spell.getId() + (spell.isAoe() ? "" : " <target>");
-            player.sendMessage(Component.text("You're in combat — cast it with " + cmd + ".", NamedTextColor.YELLOW));
+            boolean ritual = Arrays.stream(rest).anyMatch(w -> w.equalsIgnoreCase("ritual"));
+            boolean self = spell.getRange() != null && spell.getRange().equalsIgnoreCase("Self");
+            String cmd = "/combat cast " + spell.getId()
+                    + (ritual ? " ritual" : spell.isAoe() || self ? "" : " <target>");
+            player.sendMessage(Component.text("You're in combat — cast it with ", NamedTextColor.YELLOW)
+                    .append(Component.text(cmd, NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
+                            .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))
+                            .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text("Fills: " + cmd))))
+                    .append(Component.text(".", NamedTextColor.YELLOW)));
             return true;
         }
 

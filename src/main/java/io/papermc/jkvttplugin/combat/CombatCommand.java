@@ -467,6 +467,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
     /** Clickable prompt asking a player to roll their initiative (physical or let the game roll). */
     private void promptInitiativeRoll(Player player, Combatant combatant) {
+        // Say why before they roll, as the attack prompt does (a wizard in chain mail: disadvantage).
+        Advantage adv = combatant.initiativeAdvantage();
+        if (adv != Advantage.NONE) {
+            player.sendMessage(Component.text("↯ You have " + adv.label() + " on initiative.",
+                    adv.isAdvantage() ? NamedTextColor.GREEN : adv.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
+        }
+        for (String note : combatant.initiativeReminders()) {
+            player.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));
+        }
         player.sendMessage(RollPrompt.line("⚔ Roll for initiative:", NamedTextColor.GOLD,
                 "/combat initiative ", RollPrompt.d20(combatant.initiativeAdvantage()), combatant.initiativeBreakdown()));
     }
@@ -1216,7 +1225,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         boolean myTurn = isDM || (current != null && current.isPlayer() && current.getId().equals(player.getUniqueId()));
 
         if (args.length < 2) {
-            player.sendMessage(Component.text("Usage: /combat cast <spell> [target] [manualRoll <d20> | autoRoll]  |  /combat cast <ritual> --ritual  |  /combat cast cancel", NamedTextColor.RED));
+            player.sendMessage(Component.text("Usage: /combat cast <spell> [target] [manualRoll <d20> | autoRoll]  |  /combat cast <ritual> ritual  |  /combat cast cancel", NamedTextColor.RED));
             return;
         }
         // Ritual cancel / channel management only apply on your own turn.
@@ -1245,8 +1254,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (myTurn) {
             caster = current;
             if (caster == null) { player.sendMessage(Component.text("No active turn.", NamedTextColor.RED)); return; }
-            // Start a ritual channel (#156): /combat cast <ritual> --ritual
-            if (hasFlag(args, "--ritual")) {
+            // Start a ritual channel (#156): /combat cast <ritual> ritual (the same word as /character cast)
+            if (hasFlag(args, "ritual")) {
                 if (armorBlocksCasting(player, caster)) return;
                 // It never checked the caster knew it (#218): a wizard's book, a cleric's prepared list.
                 if (caster.getCharacterSheet() != null) {
@@ -1316,8 +1325,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                     () -> afterCast(player, session, aoeCaster, casterSheet, spell, cost, aoeReaction));
             resolved = false;
         } else {
-            if (args.length < 3) { player.sendMessage(Component.text("Usage: /combat cast " + args[1] + " <target> [manualRoll <d20> | autoRoll]", NamedTextColor.RED)); return; }
             List<String> pos = collectPositionalArgs(args, 2);
+            // A Self-range spell (Shield, Detect Magic, False Life) needs no name: it's the caster.
+            boolean selfRange = spell.getRange() != null && spell.getRange().equalsIgnoreCase("Self");
+            if (pos.isEmpty() && selfRange) pos = List.of("me");
+            if (pos.isEmpty()) { player.sendMessage(Component.text("Usage: /combat cast " + args[1] + " <target> [manualRoll <d20> | autoRoll]", NamedTextColor.RED)); return; }
 
             // A cast-time choice (Hex: "ability") is the trailing token; the rest is the target name.
             io.papermc.jkvttplugin.data.model.enums.Ability choice = null;
@@ -3307,9 +3319,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 completions.add("set");
             } else if (args[0].equalsIgnoreCase("cast")) {
                 if (session != null) for (Combatant c : session.getCombatants()) completions.add(c.getDisplayName());
-                // Offer --ritual for a ritual spell (cast it as a multi-turn channel, #156).
+                // Offer ritual for a ritual spell (cast it as a multi-turn channel, #156).
                 io.papermc.jkvttplugin.data.model.DndSpell s = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(args[1]);
-                if (s != null && s.isRitual()) completions.add("--ritual");
+                if (s != null && s.isRitual()) completions.add("ritual");
             }
             return filterCompletions(completions, args[2]);
         }

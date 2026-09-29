@@ -56,6 +56,16 @@ gradlew clean build
   test, so it keeps guarding after the session ends. When you fix a bug, add the test that would have
   caught it.
 
+### The manual test plan (`TEST_PLAN.md`)
+
+- **Rows go under the character that tests them**, not a new section per ticket: a fighter feature
+  under *Fighter*, a spell under the class that casts it, a race trait under *Races*. Only rows that
+  don't care who you play go under *Any character* / *DM tools*; anything needing a second, non-DM
+  player goes in Part 2. The point: the tester makes a character once and works straight down.
+- **End each row with its ticket number**, e.g. `(#229)`, when there is one. A ticket's rows end up
+  spread across several characters, and the number is how you find them all, both to report a
+  failure and to close a `needs-testing` ticket once every one of its rows is ticked.
+
 ## Development Environment
 
 - **OS**: Windows 11
@@ -332,7 +342,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
   is the book, `CharacterSheet.preparedSpellIds` the day's pick, saved as `preparedSpells:`).
   **Every cast path asks `PreparedSpells.castRefusal(sheet, spell, asRitual)`**, not `knowsSpell`;
   it also covers rituals (a wizard casts a book ritual unprepared, `/character cast <id> ritual` and
-  `/combat cast … --ritual`; others need it prepared). Changing them is `PrepareSpellsMenu`, allowed
+  `/combat cast … ritual`; others need it prepared). Changing them is `PrepareSpellsMenu`, allowed
   while `isLongRestOpen()` (a long rest, or a new character; closed by a fight or the next rest).
   A subclass's `bonus_spells` are always prepared and don't count. The rest summary
   (`RestCommand.sendRestOptions`) lists what can be done during the rest: Hit Dice and Arcane

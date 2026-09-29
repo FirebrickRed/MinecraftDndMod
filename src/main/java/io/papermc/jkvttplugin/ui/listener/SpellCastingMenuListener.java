@@ -61,8 +61,12 @@ public class SpellCastingMenuListener implements Listener {
             }
             case CAST_AS_RITUAL -> {
                 // An unprepared ritual in a wizard's spellbook (#218): fill the ritual cast, no slot.
+                // In a fight it's /combat's (a channel over turns, #156); /character only redirects there.
                 player.closeInventory();
-                String cmd = "/character cast " + payload + " ritual";
+                io.papermc.jkvttplugin.combat.CombatSession session =
+                        io.papermc.jkvttplugin.combat.CombatSession.getSessionForPlayer(player.getUniqueId());
+                boolean inCombat = session != null && !session.isSetupPhase();
+                String cmd = (inCombat ? "/combat cast " : "/character cast ") + payload + " ritual";
                 player.sendMessage(Component.text("✨ Cast it as a ritual (10 extra minutes, no slot) — ", NamedTextColor.LIGHT_PURPLE)
                         .append(Component.text("[click to cast]", NamedTextColor.AQUA, net.kyori.adventure.text.format.TextDecoration.UNDERLINED)
                                 .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(cmd))

@@ -76,7 +76,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `temphp <target> <amount>` | Grant temporary HP |
 | `deathsave [<player>] [manualRoll <d20> \| autoRoll]` | Roll a death save (DM may roll for a downed player). Three failures and the character is **dead**, on the sheet, so it outlasts the fight: see `/dm revive` |
 | `cast <spell> [target] [level <n>] [manualRoll <d20> | autoRoll | total <n>]` | Cast a combat spell — attack-roll or save; AoE spells aim (no target) (#123, #149). `level <n>` casts from a higher slot; it must come **last**, after the target |
-| `cast <ritual_spell> --ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
+| `cast <ritual_spell> ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
 | `save [target] [manualRoll <d20> | autoRoll]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
 | `concentration [target] [autoRoll | manualRoll <d20> | total <n>]` | The CON save to keep a concentration spell (or a channelled ritual) going after taking damage. The prompt says what you add before you roll |
 | `reactions` | List reactions — a player sees their own; the **DM sees a whole-table roster** (#147) |

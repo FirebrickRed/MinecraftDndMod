@@ -7,15 +7,17 @@ fails), copy `build/libs/*.jar` into the server's `plugins/`, restart. Load the 
 
 - **One box = one thing to do and one thing to look for.** If a box needs setup, the setup is in
   the section's intro or the box above it.
-- **Part 1** is everything you can do alone, as the DM, with your own character.
+- **Part 1** is everything you can do alone, as the DM, with your own character. It starts with
+  **By character**: one section per character to make, rows in play order (creation → sheet →
+  fight → rest), so you make each one once and work straight down. Spells live under the class
+  that casts them. After that, **Any character** holds what doesn't care who you play.
 - **Part 2** needs a second account that is **not** a DM (a friend, or a second account you `/deop`).
   Locks are here too: a DM walks through locks by design, so only a player can test them. So is
   anything that says **[Ask the DM]**: a DM gets [Do it anyway] or [Add it] instead, so you'd never
   see the player's side alone. A row that needs another player, or a player who isn't a DM, goes here.
 - **Restart checks** are batched at the end of Part 1 so you restart once.
-- A section about one ticket's work names it in the heading, e.g. "Rage's advantage (#223)", so a
-  failure has an obvious place to be reported. New sections get one when a ticket exists; older
-  sections aren't being retrofitted.
+- A row from one ticket's work ends with its number, e.g. `(#229)`, so a failure has an obvious
+  place to be reported. A new class or race row goes under its character, not a new ticket section.
 - Tick a row with `[X]`. Ticked rows get deleted at the next round (git keeps the history).
 - Notes go in **Playtest notes** at the bottom. They're answered in chat and turned into rows, then cleared.
 
@@ -55,60 +57,312 @@ local copy, and an old server pack loads above a local one. Steps: `docs/resourc
 
 # Part 1 — You alone, as the DM
 
-## Character creation
+# By character
 
-### Size, halflings and sorcerers
-- [ ] **A halfling is small:** create one → your body shrinks to about half a human's height. Log out
-      and back in → still small. Switch to a Medium character (`/character view` → set active) →
-      back to normal. Die and respawn → still small.
-- [ ] A **genasi who picks Small** is small; one who picks Medium isn't.
-- [ ] Doorways and 1-block gaps feel right at that size, and the camera isn't strange (#193: the
-      0.6 scale is a guess).
-- [ ] **Stout halfling:** a poison save shows advantage (Stout Resilience).
-- [ ] **Sorcerer origins:** Divine Soul shows a **Divine Affinity** choice (Good → Cure Wounds in the
-      spellbook); Draconic Bloodline shows **Dragon Ancestor**; Lunar and Shadow show their choices.
-- [ ] **Draconic Bloodline:** the AC tile says **Draconic Resilience: 13 + DEX**, and max HP is one more
-      than 6 + CON. Put on armor → normal armor AC.
-- [ ] **Divine Soul:** the spell step offers cleric spells (Guiding Bolt, Healing Word) next to the
-      sorcerer ones; each uses a pick.
+For the fight rows, spawn a couple of goblins or kobolds to hit, and a `town_guard` or two to stand
+in for allies (`/dm entity spawn town_guard`). Spawn alira as "The Kindler" for the out-of-a-fight
+rows (`/dm entity spawn alira "The Kindler"`).
 
-- [ ] Item tooltips (a weapon, a potion) and condition hovers wrap at the same width as spells.
+## Fighter
 
-### Content audit (races, classes, backgrounds vs the PHB)
-- [ ] **Paladin:** a Class Skills pick (2), and Weapons / Secondary Weapon / Adventuring Gear picks.
-      Finished: wearing the chain mail gives **no** "not proficient" warning.
-- [ ] **Paladin:** the sheet shows Divine Sense (1 + CHA uses) and Lay on Hands (5 points).
-- [ ] **Fighter:** a Fighting Style pick; no second chain mail or shield in your inventory.
-- [ ] **Fighter, "Any Martial Weapon + Any Martial Weapon":** the list says "Pick 1 of 2", pick a longsword →
+- [ ] Creation: a Fighting Style pick; no second chain mail or shield in your inventory.
+- [ ] Creation: hover a Fighting Style → "✦ Archery: +2 to hit (ranged)" and so on.
+- [ ] **"Any Martial Weapon + Any Martial Weapon":** the list says "Pick 1 of 2", pick a longsword →
       it stays open saying "Pick 2 of 2 … (so far: Longsword + Any Martial Weapon)", pick a warhammer →
       the tile reads "✔ Longsword + Warhammer", and you get both.
 - [ ] Same, pick one then press Back → the tile says "So far: Longsword + …" and Finish still wants it;
       click it → you carry on with the second pick.
-- [ ] **Ranger:** Favored Enemy, a language for it, and Natural Explorer picks; two simple melee weapons
-      when you take that option; 20 arrows in one stack.
-- [ ] **Artificer:** at level 1 it prepares INT-modifier spells (one fewer than before); two simple
-      weapon picks.
-- [ ] **Hexblade warlock:** a shield in the off hand, no "not proficient" warning.
-- [ ] **Bard** with CHA 10: Bardic Inspiration shows 1 use (it used to be missing).
+- [ ] The sheet's HP tile says "Hit Dice: 1/1 (1d10)". (#52)
+- [ ] Features & Traits: click **Second Wind** out of a fight → fills `/character use second_wind`. Passive tiles
+      (Sneak Attack, Archery) aren't clickable. ← goes back to the sheet. (#65)
+- [ ] **Archery** fighter, longbow: the to-hit breakdown ends with `+2[Archery]`; a sword attack doesn't. (#229)
+- [ ] **Defense** fighter: AC goes up by 1 when you put on chain mail (and not unarmored). (#229)
+- [ ] **Dueling** fighter, longsword + shield: damage breakdown has `+2[Dueling]`. A second weapon in the
+      off hand → no Dueling. (#229)
+- [ ] **Great Weapon Fighting**, greatsword, damage with `autoRoll` → "(Great Weapon Fighting: any 1 or 2
+      was rolled again.)" A plain hit on a longsword with a shield doesn't say it. (#229)
+- [ ] **Two-Weapon Fighting**, dagger in each hand: the off-hand attack's damage has `+N[DEX]`. (#229)
+- [ ] BG3 order (default `combat.bonus_attack_timing: any_time`): a fighter with a dagger in each hand
+      uses the off-hand button first (`… dagger bonus`), then still has their Action. Its damage has no
+      DEX. Set `after_attack_action` and restart: the same button now says to attack first. (#221)
+- [ ] With nothing to spend it on, the action bar shows **Bonus: —**. (#221)
+- [ ] **Second Wind:** `/combat use second_wind` → the three roll buttons; answer → heals 1d10 + 1, the
+      bonus action is spent, a second use says no uses left. After the fight, `/character use second_wind`
+      once it's back (a short rest). (#229)
+- [ ] Take some damage, `/dm rest <you> short` → the summary lists Hit Dice, then
+      **💚 Spend a Hit Die (1 of 1 left, HP 5/12): [Roll it] [I rolled…] [My total…]**. (#52)
+- [ ] Answer it → heals the die + CON, HP goes up on the sheet, "Hit Dice left: 0 of 1". (#52)
+- [ ] `/character hitdice autoRoll` again → "No Hit Dice left. A long rest brings back half of them." (#52)
+- [ ] `/character hitdice` with no rest → "spent at the end of a short rest". (#52)
+- [ ] After a short rest, join a fight, then finish it → `/character hitdice` refuses (the fight ended the rest). (#52)
+- [ ] `/dm rest <you> long` → Hit Dice back to 1/1; Second Wind back too (it used to stay spent overnight). (#52)
 
-## Finished characters
+## Rogue
 
-Finish the combo, then look at the sheet and your inventory.
+Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rogue**.
 
-- [ ] **High Elf Rogue** with Fire Bolt as the Wizard Cantrip → `/character cast fire_bolt` works and uses INT.
-- [ ] **Astral Elf** with Sacred Flame + Wisdom → `/combat cast sacred_flame <target>` uses WIS for the DC.
-- [ ] **Folk Hero:** the picked tool is in your kit.
-- [ ] **Entertainer:** the picked instrument is in your kit.
-- [ ] `/dm rest <character> short` recovers as before (the player version is gone: rests are the DM's call).
-- [ ] `/dm rest <character> long` recovers as before; with no time given, the clock doesn't move.
+- [ ] **High Elf Rogue:** `/character cast fire_bolt` works and uses INT.
+- [ ] **Tiefling Rogue:** `/character cast ` + Tab → your cantrips, spells and racial spells (Thaumaturgy).
 - [ ] **Tiefling Rogue:** right-click thieves' tools with no chest in view → nothing happens, no
       "cannot use this type of focus" message.
 - [ ] **Tiefling Rogue:** right-click a chest holding thieves' tools → the chest's own [Open it] /
       [Ask for a check] prompt, not a focus message.
+- [ ] **Sneak Attack with advantage** (the goblin is prone, or restrained): a rapier hit says "🗡 Sneak
+      Attack: +1d6 in that damage (advantage)" and the damage prompt rolls 1d8+1d6. No DM needed. (#229)
+- [ ] **Sneak Attack without advantage** (you're the DM): the hit offers **[Add it]** (a player's rogue
+      gets [Ask the DM]: Part 2). Click → +1d6 in the damage. (#229)
+- [ ] Once the Sneak Attack damage lands, a second hit that turn offers nothing. A club (not finesse) → nothing. (#229)
+- [ ] **Shield:** a Sneak Attack hit that Shield turns into a miss → the next hit that turn can still Sneak Attack. (#229)
+- [ ] **Thieves' tools break on a fail:** carry 2 sets, `/dm check <you> tool thieves_tools dc 25`, fail → one set gone, you're told.
+- [ ] DC 5, pass → nothing breaks.
+- [ ] No DC → never breaks.
+- [ ] `on_fail: always` / `never` in config.yml behave as named.
 
-## Casting from the spellbook and `/character cast`
+## Barbarian
 
-- [ ] `/character cast ` + Tab → your cantrips, spells and racial spells (Thaumaturgy for a tiefling).
+- [ ] **Rage** still tints red (the Strength effect) and it goes when the rage ends.
+- [ ] **Rage** spends the bonus action: rage, then `/combat bonusAction` has nothing left. (#229)
+- [ ] Raging (`/combat use rage`), roll Athletics from the sheet: the line shows **↑ advantage: Rage**
+      and the roll is 2d20 keep-higher. A STR save in the fight too. (#223)
+- [ ] Not raging, or a DEX check while raging: a normal roll. (#223)
+
+## Monk
+
+- [ ] No armor: the sheet's AC tile says **Unarmored Defense: 10 + DEX + WIS**. Put on leather armor
+      (chestplate slot) → the AC drops to leather's; take it off → back. (#220)
+- [ ] Unarmed strike (`/combat attack <target> unarmed`) rolls **1d4 + DEX**, labelled [DEX]. (#220)
+- [ ] **The game picks the cost.** Attack unarmed twice with the same `/combat attack <target> unarmed`
+      (or left-click twice): the first uses the Action, the second says **"That used your bonus action
+      (Martial Arts: bonus unarmed strike)"**. A third is refused with the reason. (#221)
+- [ ] The action bar, before attacking: **Bonus: READY: Martial Arts…**. (#221)
+- [ ] `/combat attack` with nothing after it lists attacks under **With your Action** and **With your
+      bonus action**. (#221)
+
+## Paladin
+
+- [ ] Creation: a Class Skills pick (2), and Weapons / Secondary Weapon / Adventuring Gear picks.
+      Finished: wearing the chain mail gives **no** "not proficient" warning.
+- [ ] Creation: pick "Martial Weapon + Shield" as a longsword → only that tile lights up.
+- [ ] The sheet shows Divine Sense (1 + CHA uses) and Lay on Hands (5 points).
+- [ ] **Lay on Hands:** `/combat use lay_on_hands <ally> 3` next to them → heals 3, pool 5 → 2. From 20 ft
+      → "You need to touch them". On a skeleton → "no effect on Skeleton: it's an undead". (#229)
+- [ ] **Divine Sense** with `/dm entity spawn skeleton` nearby: "an undead, about 25 ft to the
+      north-east". The DM sees the same; other players only see that you used it. With nothing near →
+      "Nothing within 60 ft". (#229)
+
+## Ranger
+
+- [ ] Creation: Favored Enemy and Natural Explorer picks; two simple melee weapons when you take that
+      option; 20 arrows in one stack.
+- [ ] Favored Enemy options read "Dragons (learn Draconic)"; no separate language pick. Finished →
+      Draconic is on the sheet. Beasts → no extra language.
+- [ ] **Bow in combat:** draw and release a real bow shot → refused, nothing fires. Count your
+      arrows before and after: does a refused draw cost one? (The old "give it back" call never
+      worked, per Paper, so this is to find out, not a regression.)
+
+## Wizard
+
+**Creation and the spellbook**
+
+- [ ] Creation, spell step: the label says "This is your spellbook. Each day you prepare some of it".
+- [ ] **Nothing prepared:** open the spellbook → "📖 You have no spells prepared…" [Prepare spells];
+      click a 1st-level spell → "isn't prepared".
+- [ ] An unprepared spell reads "In your spellbook, not prepared" and clicking it does
+      nothing; an unprepared **ritual** (e.g. Detect Magic, Find Familiar) says "Ritual: click to cast it as one". (#218)
+- [ ] `/character cast <unprepared non-ritual>` → "…in your spellbook but not prepared…". An unprepared
+      ritual without `ritual` → the same, plus **[cast it as a ritual]**; with `ritual` → "casts … as a ritual
+      (10 extra minutes, no spell slot)" and no slot is spent. (#218)
+- [ ] **The window:** `/dm rest <you> long` → the summary says "During this rest you can: 📖 Change your
+      prepared spells (3/4) [Prepare spells]". After a short rest, or once you join a fight, the menu is
+      view-only and says "after a long rest". (#218)
+- [ ] **Arcane Recovery:** cast a 1st-level spell, `/dm rest <you> short` → the summary offers
+      "📖 Arcane Recovery… [Recover]"; use it → a level 1 slot back. Again → "used today". In a fight → refused. (#218)
+
+**Out of a fight**
+
+- [ ] **Shocking Grasp at someone 20 ft away** → refused for range straight away; the DM is **not** asked
+      to start a fight first.
+- [ ] Burning Hands (or any save spell) at a creature → the DM line shows its bonus
+      (`DC 13 DEX save (+1[DEX])`) and **[Roll their save]**, which gives you the roll buttons graded vs the DC.
+- [ ] A spell with range Self that targets (not an area) at someone else → "only targets you".
+- [ ] Any "✨ Zek casts Magic Missile at …" line (in or out of a fight, and a plain `/character cast`
+      like Light) → hover the spell name → its description.
+- [ ] `/character cast fire_bolt` at The Kindler (after the DM lets it happen) → a line of flames flies to it. (#230)
+
+**Chain mail** (put it on for these, take it off after)
+
+- [X] A weapon attack shows "↯ disadvantage" with an "Armor (you)" reminder.
+- [X] Initiative rolls with disadvantage.
+- [X] `/combat cast` refuses.
+- [ ] `/combat add <you>` before initiative → above the roll buttons, "↯ You have disadvantage on initiative."
+      and "• Armor (you): disadvantage, …". Same when added mid-fight.
+- [ ] `/combat rollforinitiative` → your line shows disadvantage.
+
+**In a fight**
+
+- [ ] After Start combat, on your first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
+- [ ] Spell attack → `+3[INT] +2[Prof]`, not `+5[Spell]`. (#216)
+- [ ] On your turn: right-click your focus → spellbook → **Fire Bolt** → "Fire Bolt is ready: left-click
+      your target". Left-click a goblin → "✨ Fire Bolt at Goblin:" with [Roll it] [I rolled…] [My total…]; the
+      roll goes through as `/combat cast fire_bolt Goblin …`. Left-clicking a different creature first re-aims it. (#179)
+- [ ] A save spell (Hold Person) or Magic Missile the same way → one **[Cast it]** button instead of roll buttons. (#179)
+- [ ] Magic Missile from the **2nd-level** page → the click fills `… Goblin level 2 ` and spends a 2nd-level slot. (#179)
+- [ ] With a spell ready, [cancel] → left-click attacks with your weapon again. End your turn with one ready →
+      next turn, left-click is your weapon (it lapses with the turn). (#179)
+- [ ] Burning Hands / Thunderwave from the spellbook → the aim preview starts at once; right-click confirms.
+      **The slot is spent** (spellbook shows one fewer) and so is the Action. Cancel the aim instead → nothing
+      spent. (An area spell used to be free in a fight.) (#179)
+- [ ] **A Self spell needs no name:** `/combat cast false_life` → you gain the temp HP (it used to say
+      "Usage: … <target>"). Picking it from the spellbook fills the same, with nothing to type.
+- [ ] **Rituals are one word everywhere:** `/combat cast detect_magic ` + Tab offers `ritual`;
+      `/combat cast detect_magic ritual` starts channelling it (`--ritual` is gone).
+- [ ] Spellbook → an unprepared ritual (Detect Magic) in a fight, on your turn → fills
+      `/combat cast detect_magic ritual`, not `/character`.
+- [ ] `/character cast detect_magic ritual` in a fight → "You're in combat — cast it with
+      /combat cast detect_magic ritual", and clicking it fills that. (#218)
+- [ ] **Spell looks:** Fire Bolt at a goblin → a line of flames flies to it and pops; Ray of Frost → snowflakes;
+      Burning Hands → only its aim preview, as before. (#230)
+
+## Cleric
+
+Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
+
+**Prepared spells**
+
+- [ ] The menu lists the whole cleric list at 1st level, domain spells last as "✦ Always
+      prepared (Life Domain)". Swap one after a long rest; the new one casts, the old one says "isn't prepared". (#218)
+- [ ] An unprepared ritual can't be cast as one ("only a ritual they have prepared"). (#218)
+
+**Out of a fight**
+
+- [ ] Sacred Flame with Let it happen → the DM sees the DC, **[Roll their save]**, **[Failed: damage]** / **[Saved: …]**.
+      [Roll their save] → "🎲 You roll for <creature>: Dexterity save, DC 13" with the three buttons.
+- [ ] **[Let it happen]** a Sacred Flame → you get **[cast it]**, not a d20 prompt (a save spell
+      doesn't roll to hit).
+- [ ] `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Do it anyway]** (you're the DM;
+      a player's [Ask the DM] is in Part 2). Click → **[cast it]**, once; casting again from there refuses again.
+- [ ] `/character cast guidance` (no name = you) → your next check shows `+1d4[Guidance]`, then it's
+      gone (and you stop concentrating). A save in between doesn't use it. (#225)
+- [ ] Spellbook → **Guidance** → click a creature → `/character cast guidance <it>`. **Bane**
+      (harmful) still asks for a typed name. (#179)
+- [ ] Cast Bless, then Time tool **+10 min** → "Bless on … wore off". With the clock running
+      and no DM move, it stays. (#225)
+
+**In a fight**
+
+- [ ] Cure Wounds → the dice show.
+- [ ] Cure Wounds → `+3[WIS]`, not "your spellcasting modifier"; **[Roll it]** heals
+      (it used to re-prompt in physical-dice mode); the table sees the roll line. (#216)
+- [ ] Upcast Cure Wounds with no roll (`/combat cast cure_wounds <t> level 2`) → the buttons keep `level 2`. (#216)
+- [ ] Touch spells reach one block further than before (5 ft of slack, same as out of a fight).
+- [ ] `/combat cast bless me, Town Guard` → "casts Bless on …: +1d4 to attacks and saves for 1 minute";
+      your sheet's Active Effects tile shows it. Four names → "takes up to 3 targets". (#225)
+- [ ] Blessed, you attack: the prompt's bonus reads `… +1d4[Bless]`, and the result shows the d4 it rolled
+      (`+3[Bless 1d4]`). A save and a death save get it too; a skill check doesn't. The guard's attack (you roll
+      for it) shows it too. (#225)
+- [ ] Blessed, attack with **[I rolled…]** and type `manualRoll 14 3` → the result shows `+3[Bless 1d4]` (your 3). Its
+      hover says to type the d20 then the d4. `manualRoll 14` alone, or `manualRoll 14 9` → a red "Bless adds 1d4 …" /
+      "9 isn't a 1d4 roll" and the buttons again; nothing rolled. `autoRoll` rolls both. (#225)
+- [ ] Spellbook → **Bless** → "left-click up to 3 targets (shift-click the last)". Click a guard →
+      "Bless: Town Guard (1 of 3) [Cast on these] [+ me] [cancel]"; click it again → off the list; **[+ me]** adds you;
+      **shift**-click a second creature → straight to "[Cast it]". Clicking three fills `/combat cast bless A, B, C`. (#179)
+- [ ] `/combat cast bane Goblin, Goblin 2` → each makes a CHA save (you roll for them); the one that fails is
+      "under Bane" and its next attack/save shows `-2[Bane 1d4]`. (#225)
+- [ ] Cast another concentration spell, or fail a concentration save → "Bless ends on …". (#225)
+- [ ] Bless runs 10 rounds and ends on its own; your ◈ goes with it. (#225)
+- [ ] `/combat cast shield_of_faith me` → your AC +2 (sheet and `/combat status`), and it lasts past your
+      next turn. On a creature, its AC goes up too. (#225)
+- [ ] **Spell looks:** Sacred Flame → a burst of white on the target; Cure Wounds → hearts rise around the
+      target; Bless → a gold ring; Bane → a dark red burst. (#230)
+
+## Bard
+
+- [ ] With CHA 10: Bardic Inspiration shows 1 use (it used to be missing).
+- [ ] Bardic Inspiration on yourself → refused; on a creature → it's added to the creature's next roll
+      (the DM rolls for it, so it isn't asked); 80 ft away → **[Do it anyway]**; out of uses → "No uses". The
+      Features page's tile fills in the command. (A player being asked after their roll is in Part 2.) (#40)
+
+## Sorcerer
+
+- [ ] **Origins:** Divine Soul shows a **Divine Affinity** choice (Good → Cure Wounds in the
+      spellbook); Draconic Bloodline shows **Dragon Ancestor**; Lunar and Shadow show their choices.
+- [ ] **Divine Soul:** hover each affinity → "✦ Always known: Cure Wounds (1st level, doesn't use a pick)" etc.
+- [ ] **Divine Soul:** the spell step offers cleric spells (Guiding Bolt, Healing Word) next to the
+      sorcerer ones; each uses a pick.
+- [ ] **Draconic Bloodline:** hover each dragon → its damage type and what it does from 6th level.
+- [ ] **Draconic Bloodline:** the AC tile says **Draconic Resilience: 13 + DEX**, and max HP is one more
+      than 6 + CON. Put on armor → normal armor AC.
+
+## Warlock
+
+- [ ] **Genie:** **Genie Kind** and **Genie's Vessel** now show (they never did).
+      Efreeti → Burning Hands is **offered in the spell step** (not handed over). (#222)
+- [ ] **Fiend:** the spell step offers Burning Hands and Command next to the warlock spells; taking one
+      uses a pick (2 of 2). The sheet doesn't know the rest. The patron's tile says **Expanded Spell List
+      (you may learn these)**. (A cleric still gets their domain spells for free.) (#228)
+- [ ] **Hexblade:** a shield in the off hand, no "not proficient" warning.
+- [ ] Hex at someone 120 ft away → refused for range (it wasn't checked before).
+- [ ] Off your turn, Hellish Rebuke from the book still fills `/combat cast hellish_rebuke ` to type a name. (#179)
+- [ ] Cast a 1st-level spell, `/dm rest <you> short` → "Pact Magic spell slots restored", and
+      the slot is back in the spellbook. (#52)
+
+## Artificer
+
+- [ ] At level 1 it prepares INT-modifier spells (one fewer than before); two simple weapon picks.
+
+## Races
+
+**Halfling**
+- [ ] **Small:** create one → your body shrinks to about half a human's height. Log out and back in →
+      still small. Switch to a Medium character (`/character view` → set active) → back to normal.
+      Die and respawn → still small.
+- [ ] Doorways and 1-block gaps feel right at that size, and the camera isn't strange (#193: the
+      0.6 scale is a guess).
+- [ ] **Stout halfling:** a poison save shows advantage (Stout Resilience).
+- [ ] A 1 on a death save → Lucky rerolls it (it didn't before). (#216)
+- [ ] From the sheet, [Roll it] + Enter, rolling a 1 → Lucky rerolls it. (#216)
+
+**Genasi**
+- [ ] A genasi who picks **Small** is small; one who picks Medium isn't.
+- [ ] **Fire genasi:** the Extra tab has **Spellcasting Ability** (Intelligence / Wisdom / Charisma).
+      Pick Charisma → the spellbook's Produce Flame uses CHA. (#222)
+
+**Dragonborn** (red)
+- [ ] Still resists fire, and its breath weapon is still a fire cone. (#222)
+- [ ] Features & Traits: the **Breath Weapon** tile shows the area, your save DC and the damage for your
+      ancestry, and "Uses 1/1". Click it outside a fight → "is used in a fight"; in a fight on your turn → a
+      chat button that fills `/combat use breath_weapon`. (#65)
+
+**Astral Elf**
+- [ ] With Sacred Flame + Wisdom → `/combat cast sacred_flame <target>` uses WIS for the DC.
+
+**Darkvision** (a dwarf, elf or tiefling, and a human) (#148)
+- [ ] Make a dwarf/elf/tiefling active → night vision (no icon, no swirl); a cave at night is lit. Switch to
+      a human → it goes. Rejoin and die/respawn → it comes back for the dwarf.
+- [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
+- [ ] As the dwarf, walk into a dark cave (or stand outside at night): after ~3 s the world beyond ~2 chunks
+      fogs out. Step into torchlight or daylight → full view distance comes straight back. A human in the same
+      cave keeps full distance (they just see darkness). Tell me if 2 chunks feels too tight or the switch
+      too jumpy; `sight.darkvision_view_limit: false` turns it off.
+
+**Heavy armor and Strength** (#34)
+- [ ] A human with STR 10 puts on chain mail (`/dm give <you> chain_mail`, wear it) → "⚠ Chain Mail needs Strength 13:
+      your speed drops by 10 ft (now 20 ft)". The sheet's Speed tile says 20 ft with the reason; AC is 16, not 10.
+      In a fight the movement bar allows 20 ft. Take it off → 30 ft.
+- [ ] A dwarf with STR 10 in plate → no warning, speed stays 25.
+
+## Backgrounds
+
+- [ ] **Folk Hero:** the picked tool is in your kit.
+- [ ] **Entertainer:** the picked instrument is in your kit.
+
+---
+
+# Any character
+
+## Creation
+
+- [ ] Item tooltips (a weapon, a potion) and condition hovers wrap at the same width as spells.
 
 ## Combat
 
@@ -117,172 +371,20 @@ Finish the combo, then look at the sheet and your inventory.
       left-click at a distant one → one prompt.
 - [ ] Same, after a hit: exactly one damage prompt (to you, and one to the DM). Applying it twice →
       the second says "No attack hit to apply damage for".
-- [ ] **Wizard in chain mail:** a weapon attack shows "↯ disadvantage" with an "Armor (you)" reminder.
-- [ ] **Wizard in chain mail:** initiative rolls with disadvantage.
-- [ ] **Wizard in chain mail:** `/combat cast` refuses.
 - [ ] Mid-fight, on someone's turn, `/combat initiative <someone else> set 30` → they move to the
       top, and the **current turn stays with whoever had it** (the green →).
-- [ ] `/combat attack <t> <weapon> manualRoll abc` → "'abc' isn't a number", then buttons that fill
+- [X] `/combat attack <t> <weapon> manualRoll abc` → "'abc' isn't a number", then buttons that fill
       `/combat attack <t> <weapon> manualRoll ` (no `abc` left in it).
-- [ ] `/combat rollforinitiative` with someone in unproficient armor → their line shows disadvantage.
-- [ ] `/combat heal <t> autoRoll 2d4` → the dice show.
+- [X] `/combat heal <t> autoRoll 2d4` → the dice show.
 - [ ] A healing potion with auto-roll → the dice show.
-- [ ] Cure Wounds → the dice show.
-- [ ] **Scoreboard, fight:** players' HP green / yellow / red below ½ and ¼.
-- [ ] **Scoreboard, fight:** temp HP shows as `+N` in aqua.
-- [ ] **Scoreboard, fight:** **[S]** on someone surprised.
-- [ ] **Scoreboard, fight:** downed → red ☠ and green/red death-save dots.
-- [ ] **Scoreboard, fight:** pink ✦N while channelling a ritual.
-- [ ] **Scoreboard, fight:** two tied initiatives in turn order.
-- [ ] **Out of reach, as the DM:** your character swings at a goblin 20 ft away → **[Do it anyway]**
+- [X] **Scoreboard:** players' HP green / yellow / red below ½ and ¼.
+- [X] **Scoreboard:** temp HP shows as `+N` in aqua.
+- [ ] **Scoreboard:** **[S]** on someone surprised.
+- [X] **Scoreboard:** downed → red ☠ and green/red death-save dots.
+- [X] **Scoreboard:** pink ✦N while channelling a ritual.
+- [ ] **Scoreboard:** two tied initiatives in turn order.
+- [X] **Out of reach, as the DM:** your character swings at a goblin 20 ft away → **[Do it anyway]**
       (a player gets [Ask the DM] instead: Part 2).
-- [ ] Hex at someone 120 ft away → refused for range (it wasn't checked before).
-- [ ] A Self spell that targets (e.g. one with range Self, not an area) at someone else, out of a fight →
-      "only targets you" (only checked in a fight before).
-- [ ] Touch spells reach one block further than before in a fight (5 ft of slack, same as out of one).
-
-### After the deprecation clean-up (replaced Paper APIs)
-- [ ] **Rage** still tints red (the Strength effect) and it goes when the rage ends.
-- [ ] **Bow in combat:** draw and release a real bow shot → refused, nothing fires. Count your
-      arrows before and after: does a refused draw cost one? (The old "give it back" call never
-      worked, per Paper, so this is to find out, not a regression.)
-
-### Rage's advantage (#223)
-- [ ] A barbarian rages (`/combat use rage`), then rolls Athletics from the sheet: the line shows
-      **↑ advantage: Rage** and the roll is 2d20 keep-higher. A STR save in the fight too.
-- [ ] Not raging, or a DEX check while raging: a normal roll.
-
-### Choices that grant things (#222)
-- [ ] Create a **fire genasi**: the Extra tab has **Spellcasting Ability** (Intelligence / Wisdom /
-      Charisma). Pick Charisma → the spellbook's Produce Flame uses CHA.
-- [ ] Create a **Genie warlock**: **Genie Kind** and **Genie's Vessel** now show (they never did).
-      Efreeti → Burning Hands is **offered in the spell step** (not handed over: see #228 below).
-- [ ] **Warlock patron spells (#228):** a Fiend warlock's spell step offers Burning Hands and Command
-      next to the warlock spells; taking one uses a pick (2 of 2). Their sheet doesn't know the rest.
-      The patron's tile says **Expanded Spell List (you may learn these)**. A cleric still gets their
-      domain spells for free.
-- [ ] A **red dragonborn** still resists fire, and its breath weapon is still a fire cone.
-
-### Monk and two-weapon fighting (#220, #221)
-- [ ] A monk with no armor: the sheet's AC tile says **Unarmored Defense: 10 + DEX + WIS**. Put on
-      leather armor (chestplate slot) → the AC drops to leather's; take it off → back.
-- [ ] A monk's unarmed strike (`/combat attack <target> unarmed`) rolls **1d4 + DEX**, labelled [DEX].
-- [ ] **The game picks the cost.** A monk attacks unarmed twice with the same `/combat attack <target> unarmed`
-      (or left-click twice): the first uses the Action, the second says **"That used your bonus action
-      (Martial Arts: bonus unarmed strike)"**. A third is refused with the reason.
-- [ ] The action bar: before attacking, **Bonus: READY: Martial Arts…**; a fighter with nothing to
-      spend it on shows **Bonus: —**.
-- [ ] `/combat attack` with nothing after it lists attacks under **With your Action** and **With your
-      bonus action**.
-- [ ] BG3 order (default `combat.bonus_attack_timing: any_time`): a fighter with a dagger in each hand
-      uses the off-hand button first (`… dagger bonus`), then still has their Action. Its damage has no
-      DEX. Set `after_attack_action` and restart: the same button now says to attack first.
-
-### Level-1 class features (#229)
-- [ ] **Archery** fighter, longbow: the to-hit breakdown ends with `+2[Archery]`; a sword attack doesn't.
-- [ ] **Defense** fighter: AC goes up by 1 when you put on chain mail (and not unarmored).
-- [ ] **Dueling** fighter, longsword + shield: damage breakdown has `+2[Dueling]`. A second weapon in the
-      off hand → no Dueling.
-- [ ] **Great Weapon Fighting**, greatsword, damage with `autoRoll` → "(Great Weapon Fighting: any 1 or 2
-      was rolled again.)" A plain hit on a longsword with a shield doesn't say it.
-- [ ] **Two-Weapon Fighting**, dagger in each hand: the off-hand attack's damage has `+N[DEX]`.
-- [ ] **Second Wind:** `/combat use second_wind` → the three roll buttons; answer → heals 1d10 + 1, the
-      bonus action is spent, a second use says no uses left. After the fight, `/character use second_wind`
-      once it's back (a short rest).
-- [ ] **Rage** now spends the bonus action: rage, then `/combat bonusAction` has nothing left.
-- [ ] **Sneak Attack with advantage** (the goblin is prone, or restrained): a rapier hit says "🗡 Sneak
-      Attack: +1d6 in that damage (advantage)" and the damage prompt rolls 1d8+1d6. No DM needed.
-- [ ] **Sneak Attack without advantage, your own rogue** (you're the DM): the hit offers **[Add it]** (a
-      player's rogue gets [Ask the DM]: Part 2). Click → +1d6 in the damage.
-- [ ] Once the Sneak Attack damage lands, a second hit that turn offers nothing. A club (not finesse) → nothing.
-- [ ] **Shield:** a Sneak Attack hit that Shield turns into a miss → the next hit that turn can still Sneak Attack.
-- [ ] **Lay on Hands:** `/combat use lay_on_hands <ally> 3` next to them → heals 3, pool 5 → 2. From 20 ft
-      → "You need to touch them". On a skeleton → "no effect on Skeleton: it's an undead".
-- [ ] **Divine Sense** with `/dm entity spawn skeleton` nearby: "an undead, about 25 ft to the
-      north-east". The DM sees the same; other players only see that you used it. With nothing near →
-      "Nothing within 60 ft".
-
-## Death
-
-- [ ] Down yourself, fail three death saves → "has DIED", turn skipped.
-- [ ] `/combat finished`, new fight → still `[DEAD]`, still skipped.
-- [ ] Dead: `/dm adjust <you> hp +10` refuses.
-- [ ] Dead: the sheet's HP slot shows a skull "DEAD".
-- [ ] `/dm revive <you>` → 1 HP, turns return.
-- [ ] `/dm adjust <c> hp -<current + max HP>` → dies outright (massive damage).
-- [ ] Fail one save, `/combat finished`, new fight → still 1 failure.
-- [ ] `/dm entity revive <creature>` mid-fight → its turns come back.
-- [ ] A dead character leaves a tipped-over head "☠ <name>" where they fell.
-- [ ] As DM, right-click the body → [Revive] and [Remove body].
-- [ ] You can't punch the body or take the head.
-- [ ] Walk away until the chunk unloads, `/dm revive <c>`, walk back → the body is gone.
-- [ ] A stable character at 0 HP (the long rest refused them): `/dm adjust <c> hp +1` → now the long rest works.
-- [ ] A DM already in spectator mode for their own reasons isn't pulled out of it by deaths.
-
-## Attacks outside a fight
-
-- [ ] After Start combat, on the caster's first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
-- [ ] Sacred Flame with Let it happen → the DM sees the DC, **[Roll their save]**, **[Failed: damage]** / **[Saved: …]**.
-      [Roll their save] → "🎲 You roll for <creature>: Dexterity save, DC 13" with the three buttons.
-- [ ] **[Let it happen]** a Sacred Flame → you get **[cast it]**, not a d20 prompt (a save spell
-      doesn't roll to hit).
-- [ ] `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Do it anyway]** (you're the DM;
-      a player's [Ask the DM] is in Part 2). Click → **[cast it]**, once; casting again from there refuses again.
-- [ ] **Shocking Grasp at someone 20 ft away** → refused for range straight away; the DM is **not** asked
-      to start a fight first.
-- [ ] Burning Hands (or any save spell) at a creature out of combat → the DM line shows its bonus
-      (`DC 13 DEX save (+1[DEX])`) and **[Roll their save]**, which gives you the roll buttons graded vs the DC.
-- [ ] Any "✨ Zek casts Magic Missile at …" line (in or out of a fight, and a plain `/character cast`
-      like Light) → hover the spell name → its description.
-
-## Roll prompts (one wording everywhere, #216)
-
-Every prompt is **[Roll it] [I rolled…] [My total…]**, all three fill chat. Hover [My total…] → "roll 2d20 and keep the lower and add -1[DEX] yourself" when at disadvantage ([My total…] only when the game adds
-something). Every bonus is **named by its source**, and the prompt and the result show the same
-label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14] +3[INT] +2[Prof] = 19`
-(the game rolled), `🎲 you rolled 14 +3[INT] +2[Prof] = 19`, or `🎲 your total: 19`.
-
-- [ ] A contest with a creature side → its button labelled `+5[Deception]` (listed skill) or `+1[CHA]`.
-- [ ] In a fight: initiative → `+2[DEX]`; an attack (left-click) → the weapon's breakdown; a save
-      and a concentration save → `+1[CON] +2[Prof]` (proficient) or just `+1[CON]`.
-- [ ] Spell attack in a fight → `+3[INT] +2[Prof]`, not `+5[Spell]`.
-- [ ] Cure Wounds in a fight → `+3[WIS]`, not "your spellcasting modifier"; **[Roll it]** heals
-      (it used to re-prompt in physical-dice mode); the table sees the roll line.
-- [ ] Upcast Cure Wounds with no roll (`/combat cast cure_wounds <t> level 2`) → the buttons keep `level 2`.
-- [ ] A creature's attack in a fight → to hit `+4[Scimitar]`, damage `+2[Scimitar]` (not `[ToHit]`).
-- [ ] Any game-rolled dice (damage, healing, a potion) → **one** `= total`, never `[5] = 5 +3 = 8`.
-- [ ] `/combat damage <t> autoRoll` → one line, `🎲 1d8 [6] +3[STR] = 9`.
-- [ ] Type a roll command with no roll words (physical-dice mode): `/combat attack <t> <weapon>`,
-      `/combat save`, `/combat concentration`, `/character loot investigation` → the three buttons
-      on that same command, not "type 'manualRoll <n>'".
-- [ ] Downed → the player gets **💀 Roll your death save** with [Roll it] [I rolled…]; the result
-      reads `… makes a death saving throw: 🎲 you rolled 14` → SUCCESS.
-- [ ] A Halfling rolling a 1 on a death save → Lucky rerolls it (it didn't before).
-- [ ] `/combat rollforinitiative` (DM) → each line `🎲 d20 [14] +2[DEX] = 16`.
-- [ ] Opportunity attack buttons → pick the attack, Enter, then the three roll buttons.
-- [ ] Nowhere shows two dice icons (`🎲 … 🎲`), e.g. a shared check result or a loot roll.
-- [ ] Every roll button, **[Roll it]** included, only fills chat; nothing rolls until you press Enter.
-- [ ] Advantage, game-rolled → `🎲 d20 [9, 15] advantage +3[DEX] = 18` (both dice, one line).
-- [ ] Sheet [Normal] / [Advantage] / [Disadvantage] → never rolls on the click, even in auto-roll mode: you get the three roll buttons.
-- [ ] Then [Roll it] + Enter, as a Halfling rolling a 1 → Lucky rerolls it.
-- [ ] `/combat action attack` → says "left-click your target" (it said right-click).
-
-## Fifth-round fixes
-
-- [ ] **Divine Soul:** hover each affinity → "✦ Always known: Cure Wounds (1st level, doesn't use a pick)" etc.
-- [ ] **Draconic Bloodline:** hover each dragon → its damage type and what it does from 6th level.
-- [ ] **Fighter:** hover a Fighting Style → "✦ Archery: +2 to hit (ranged)" and so on.
-- [ ] **Paladin:** pick "Martial Weapon + Shield" as a longsword → only that tile lights up.
-- [ ] **Ranger:** Favored Enemy options read "Dragons (learn Draconic)"; no separate language pick. Finished →
-      Draconic is on the sheet. Beasts → no extra language.
-- [ ] **Wizard with nothing prepared:** open the spellbook → "📖 You have no spells prepared…" [Prepare spells];
-      click a 1st-level spell → "isn't prepared".
-- [ ] **Death save:** `/combat deathsave` (with or without your name) → the three buttons, not a roll.
-      `manualRoll 0` → "No die shows less than 1", nothing rolled. `autoRoll` → the game rolls.
-- [ ] Any d20 roll with `manualRoll 25` → asked again, not accepted.
-- [ ] **[I'm done]** after a rest → "Rest finished"; the DM gets "✓ <name> is done with their long rest";
-      the rest options (Hit Dice, prepare) are closed.
-- [ ] **Creation, wizard spell step:** the label says "This is your spellbook. Each day you prepare some of it".
 
 ## Help, Hide and Search in a fight (#176)
 
@@ -298,6 +400,33 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       player it beats, **[Reveal]**.
 - [ ] Help / Hide / Search spend the Action only once rolled (waiting on your die costs nothing).
 
+## Roll prompts (one wording everywhere, #216)
+
+Every prompt is **[Roll it] [I rolled…] [My total…]**, all three fill chat. Hover [My total…] → "roll 2d20 and keep the lower and add -1[DEX] yourself" when at disadvantage ([My total…] only when the game adds
+something). Every bonus is **named by its source**, and the prompt and the result show the same
+label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14] +3[INT] +2[Prof] = 19`
+(the game rolled), `🎲 you rolled 14 +3[INT] +2[Prof] = 19`, or `🎲 your total: 19`.
+
+- [ ] A contest with a creature side → its button labelled `+5[Deception]` (listed skill) or `+1[CHA]`.
+- [ ] In a fight: initiative → `+2[DEX]`; an attack (left-click) → the weapon's breakdown; a save
+      and a concentration save → `+1[CON] +2[Prof]` (proficient) or just `+1[CON]`.
+- [ ] A creature's attack in a fight → to hit `+4[Scimitar]`, damage `+2[Scimitar]` (not `[ToHit]`).
+- [ ] Any game-rolled dice (damage, healing, a potion) → **one** `= total`, never `[5] = 5 +3 = 8`.
+- [ ] `/combat damage <t> autoRoll` → one line, `🎲 1d8 [6] +3[STR] = 9`.
+- [ ] Type a roll command with no roll words (physical-dice mode): `/combat attack <t> <weapon>`,
+      `/combat save`, `/combat concentration`, `/character loot investigation` → the three buttons
+      on that same command, not "type 'manualRoll <n>'".
+- [X] Downed → the player gets **💀 Roll your death save** with [Roll it] [I rolled…]; the result
+      reads `… makes a death saving throw: 🎲 you rolled 14` → SUCCESS.
+- [X] `/combat rollforinitiative` (DM) → each line `🎲 d20 [14] +2[DEX] = 16`.
+- [ ] Opportunity attack buttons → pick the attack, Enter, then the three roll buttons.
+- [ ] Nowhere shows two dice icons (`🎲 … 🎲`), e.g. a shared check result or a loot roll.
+- [ ] Every roll button, **[Roll it]** included, only fills chat; nothing rolls until you press Enter.
+- [ ] Advantage, game-rolled → `🎲 d20 [9, 15] advantage +3[DEX] = 18` (both dice, one line).
+- [ ] Sheet [Normal] / [Advantage] / [Disadvantage] → never rolls on the click, even in auto-roll mode: you get the three roll buttons.
+- [ ] `/combat action attack` → says "left-click your target" (it said right-click).
+- [ ] Any d20 roll with `manualRoll 25` → asked again, not accepted.
+
 ## Checks: private rolls, groups, passive (#186)
 
 (Private rolls and group checks with other players are in Part 2.)
@@ -312,104 +441,39 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Character sheet → **Features & Traits** (nether star, slot 9). Top row: your race's traits, darkvision
       and speeds; your class's features up to your level with their text (a fighter: Fighting Style, Second
       Wind); your subclass's, names in proper case; "Your picks" (fighting style, dragon ancestor…).
-- [ ] A dragonborn: **Breath Weapon** tile shows the area, your save DC and the damage for your ancestry,
-      and "Uses 1/1". Click it outside a fight → "is used in a fight"; in a fight on your turn → a chat
-      button that fills `/combat use breath_weapon`.
-- [ ] A fighter clicks **Second Wind** out of a fight → fills `/character use second_wind`. Passive tiles
-      (Sneak Attack, Archery) aren't clickable. ← goes back to the sheet.
 
-## Casting by clicking, and possessed creatures by left-click (#179)
+## Death
 
-- [ ] Possess a creature with attacks (`skeleton`): the hotbar item says "left-click a target". Hold the
-      shortbow, left-click a player → the prompt lists **Shortbow first** and fills
-      `/combat attack <them> Shortbow ` (you pick autoRoll/manualRoll after).
-- [ ] In a fight, on your turn: right-click your focus → spellbook → **Fire Bolt** → "Fire Bolt is ready: left-click
-      your target". Left-click a goblin → "✨ Fire Bolt at Goblin:" with [Roll it] [I rolled…] [My total…]; the
-      roll goes through as `/combat cast fire_bolt Goblin …`. Left-clicking a different creature first re-aims it.
-- [ ] A save spell (Sacred Flame, Hold Person) or Magic Missile the same way → one **[Cast it]** button instead of roll buttons.
-- [ ] Magic Missile from the **2nd-level** page → the click fills `… Goblin level 2 ` and spends a 2nd-level slot.
-- [ ] With a spell ready, [cancel] → left-click attacks with your weapon again. End your turn with one ready →
-      next turn, left-click is your weapon (it lapses with the turn).
-- [ ] Burning Hands / Thunderwave from the spellbook → the aim preview starts at once; right-click confirms.
-      **The slot is spent** (spellbook shows one fewer) and so is the Action. Cancel the aim instead → nothing
-      spent. (An area spell used to be free in a fight.)
-- [ ] Off your turn, Hellish Rebuke from the book still fills `/combat cast hellish_rebuke ` to type a name.
+- [ ] Down yourself, fail three death saves → "has DIED", turn skipped.
+- [ ] `/combat finished`, new fight → still `[DEAD]`, still skipped.
+- [ ] Dead: `/dm adjust <you> hp +10` refuses.
+- [ ] Dead: the sheet's HP slot shows a skull "DEAD".
+- [ ] `/dm revive <you>` → 1 HP, turns return.
+- [ ] `/dm adjust <c> hp -<current + max HP>` → dies outright (massive damage).
+- [ ] Fail one save, `/combat finished`, new fight → still 1 failure.
+- [ ] `/combat deathsave` (with or without your name) → the three buttons, not a roll.
+      `manualRoll 0` → "No die shows less than 1", nothing rolled. `autoRoll` → the game rolls.
+- [ ] `/dm entity revive <creature>` mid-fight → its turns come back.
+- [ ] A dead character leaves a tipped-over head "☠ <name>" where they fell.
+- [ ] As DM, right-click the body → [Revive] and [Remove body].
+- [ ] You can't punch the body or take the head.
+- [ ] Walk away until the chunk unloads, `/dm revive <c>`, walk back → the body is gone.
+- [ ] A stable character at 0 HP (the long rest refused them): `/dm adjust <c> hp +1` → now the long rest works.
+- [ ] A DM already in spectator mode for their own reasons isn't pulled out of it by deaths.
 
-## Darkvision is night vision (#148)
+## Rests
 
-- [ ] Make a dwarf/elf/tiefling active → night vision (no icon, no swirl); a cave at night is lit. Switch to
-      a human → it goes. Rejoin and die/respawn → it comes back for the dwarf.
-- [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
-- [ ] As a DM, possess `skeleton` (darkvision 60) → you see in the dark; possess `wolf` → you don't; let
-      go → back to your own character's sight (none if you have no character).
-- [ ] As the dwarf, walk into a dark cave (or stand outside at night): after ~3 s the world beyond ~2 chunks
-      fogs out. Step into torchlight or daylight → full view distance comes straight back. A human in the same
-      cave keeps full distance (they just see darkness). Tell me if 2 chunks feels too tight or the switch
-      too jumpy; `sight.darkvision_view_limit: false` turns it off.
+- [ ] `/dm rest <character> short` recovers as before (the player version is gone: rests are the DM's call).
+- [ ] `/dm rest <character> long` recovers as before; with no time given, the clock doesn't move.
+- [ ] **[I'm done]** after a rest → "Rest finished"; the DM gets "✓ <name> is done with their long rest";
+      the rest options (Hit Dice, prepare) are closed.
 
-## Prepared spells (#218)
-
-- [ ] **Wizard spellbook:** an unprepared spell reads "In your spellbook, not prepared" and clicking it does
-      nothing; an unprepared **ritual** (e.g. Detect Magic, Find Familiar) says "Ritual: click to cast it as one".
-- [ ] `/character cast <unprepared non-ritual>` → "…in your spellbook but not prepared…". An unprepared
-      ritual without `ritual` → the same, plus **[cast it as a ritual]**; with `ritual` → "casts … as a ritual
-      (10 extra minutes, no spell slot)" and no slot is spent.
-- [ ] In a fight, `/combat cast <unprepared ritual> --ritual` works for the wizard.
-- [ ] **Cleric:** the menu lists the whole cleric list at 1st level, domain spells last as "✦ Always
-      prepared (Life Domain)". Swap one after a long rest; the new one casts, the old one says "isn't prepared".
-- [ ] **Cleric:** an unprepared ritual can't be cast as one ("only a ritual they have prepared").
-- [ ] **The window:** `/dm rest <you> long` → the summary says "During this rest you can: 📖 Change your
-      prepared spells (3/4) [Prepare spells]". After a short rest, or once you join a fight, the menu is
-      view-only and says "after a long rest".
-- [ ] **Arcane Recovery:** wizard casts a 1st-level spell, `/dm rest <you> short` → the summary offers
-      "📖 Arcane Recovery… [Recover]"; use it → a level 1 slot back. Again → "used today". In a fight → refused.
-
-## Bless, Bane, Guidance, Shield of Faith (#225)
-
-Play a cleric; a couple of spawned creatures stand in for allies (`/dm entity spawn town_guard`).
-
-- [ ] In a fight, `/combat cast bless me, Town Guard` → "casts Bless on …: +1d4 to attacks and saves for 1 minute";
-      your sheet's Active Effects tile shows it. Four names → "takes up to 3 targets".
-- [ ] Blessed, you attack: the prompt's bonus reads `… +1d4[Bless]`, and the result shows the d4 it rolled
-      (`+3[Bless 1d4]`). A save and a death save get it too; a skill check doesn't. The guard's attack (you roll
-      for it) shows it too.
-- [ ] `/combat cast bane Goblin, Goblin 2` → each makes a CHA save (you roll for them); the one that fails is
-      "under Bane" and its next attack/save shows `-2[Bane 1d4]`.
-- [ ] Cast another concentration spell, or fail a concentration save → "Bless ends on …".
-- [ ] Bless runs 10 rounds and ends on its own; your ◈ goes with it.
-- [ ] Out of a fight: `/character cast guidance` (no name = you) → your next check shows `+1d4[Guidance]`, then it's
-      gone (and you stop concentrating). A save in between doesn't use it.
-- [ ] Cast Bless out of a fight, then Time tool **+10 min** → "Bless on … wore off". With the clock running
-      and no DM move, it stays.
-- [ ] `/combat cast shield_of_faith me` → your AC +2 (sheet and `/combat status`), and it lasts past your
-      next turn. On a creature, its AC goes up too.
-
-## Your own bonus die, clicking several targets, Bardic Inspiration (#225, #179, #40)
-
-- [ ] Blessed, attack with **[I rolled…]** and type `manualRoll 14 3` → the result shows `+3[Bless 1d4]` (your 3). Its
-      hover says to type the d20 then the d4. `manualRoll 14` alone, or `manualRoll 14 9` → a red "Bless adds 1d4 …" /
-      "9 isn't a 1d4 roll" and the buttons again; nothing rolled. `autoRoll` rolls both.
-- [ ] In a fight: spellbook → **Bless** → "left-click up to 3 targets (shift-click the last)". Click a guard →
-      "Bless: Town Guard (1 of 3) [Cast on these] [+ me] [cancel]"; click it again → off the list; **[+ me]** adds you;
-      **shift**-click a second creature → straight to "[Cast it]". Clicking three fills `/combat cast bless A, B, C`.
-- [ ] Out of a fight, spellbook → **Guidance** → click a creature → `/character cast guidance <it>`. **Bane**
-      (harmful) out of a fight still asks for a typed name.
-- [ ] As a bard, Bardic Inspiration on yourself → refused; on a creature → it's added to the creature's next roll
-      (the DM rolls for it, so it isn't asked); 80 ft away → **[Do it anyway]**; out of uses → "No uses". The
-      Features page's tile fills in the command. (A player being asked after their roll is in Part 2.)
-
-## Heavy armor and Strength (#34)
-
-- [ ] A human with STR 10 puts on chain mail (`/dm give <you> chain_mail`, wear it) → "⚠ Chain Mail needs Strength 13:
-      your speed drops by 10 ft (now 20 ft)". The sheet's Speed tile says 20 ft with the reason; AC is 16, not 10.
-      In a fight the movement bar allows 20 ft. Take it off → 30 ft.
-- [ ] A dwarf with STR 10 in plate → no warning, speed stays 25.
-
-## Sounds, music and spell looks (#16, #230)
+## Sounds and music (#16)
 
 Test your own sounds with your local pack (F3+T reloads it), no upload needed: `docs/resource-pack.md`.
-The sounds are all in `DMContent/Sounds.yml`; the looks in `DMContent/DamageTypes.yml`. Copy both into
-the server's DMContent. Tell me which vanilla picks sound wrong, and swap in your own anytime.
+The sounds are all in `DMContent/Sounds.yml`; the spell looks (rows under Wizard and Cleric) in
+`DMContent/DamageTypes.yml`. Copy both into the server's DMContent. Tell me which vanilla picks sound
+wrong, and swap in your own anytime.
 
 - [ ] Roll anything with a d20 (a sheet check, an attack) → a dice sound. A natural 20 adds a level-up chime, a
       natural 1 a villager "hrmm". `/combat rollforinitiative` with several creatures → one rattle, not a pile.
@@ -425,25 +489,20 @@ the server's DMContent. Tell me which vanilla picks sound wrong, and swap in you
 - [ ] `/dm sound thunder`, `/dm sound minecraft:block.anvil.land`, `/dm sound nonsense` (→ refused), `/dm sound stop`.
 - [ ] Turn the Players slider down → dice/hit sounds go quiet but music doesn't; Jukebox slider → the reverse.
 - [ ] `sounds.enabled: false` in config.yml, restart → nothing plays.
-- [ ] **Spell looks:** Fire Bolt at a goblin → a line of flames flies to it and pops; Ray of Frost → snowflakes;
-      Sacred Flame → a burst of white on the target; Cure Wounds → hearts rise around the target; Bless → a gold
-      ring; Bane → a dark red burst. Burning Hands → only its aim preview, as before.
-- [ ] Out of a fight too: `/character cast fire_bolt` at The Kindler (after the DM lets it happen) → the same bolt.
-- [ ] A fire hit on **you** (a creature's fire attack) → you flicker with flames for 2 seconds but lose no hearts.
-- [ ] Put a typo in DamageTypes.yml (`particle: FLAMEE`) and `/dm reload` → the console names it.
+- [ ] A fire hit on **you** (a creature's fire attack) → you flicker with flames for 2 seconds but lose no hearts. (#230)
+- [ ] Put a typo in DamageTypes.yml (`particle: FLAMEE`) and `/dm reload` → the console names it. (#230)
 
-## Rests and Hit Dice (#52)
+---
 
-- [ ] The sheet's HP tile says "Hit Dice: 1/1 (1d10)" for a fighter.
-- [ ] Take some damage, `/dm rest <you> short` → the summary lists Hit Dice, then
-      **💚 Spend a Hit Die (1 of 1 left, HP 5/12): [Roll it] [I rolled…] [My total…]**.
-- [ ] Answer it → heals the die + CON, HP goes up on the sheet, "Hit Dice left: 0 of 1".
-- [ ] `/character hitdice autoRoll` again → "No Hit Dice left. A long rest brings back half of them."
-- [ ] `/character hitdice` with no rest → "spent at the end of a short rest".
-- [ ] After a short rest, join a fight, then finish it → `/character hitdice` refuses (the fight ended the rest).
-- [ ] `/dm rest <you> long` → Hit Dice back to 1/1; Second Wind back too (it used to stay spent overnight).
-- [ ] **Warlock:** cast a 1st-level spell, `/dm rest <you> short` → "Pact Magic spell slots restored", and
-      the slot is back in the spellbook.
+# DM tools
+
+## Possession (#179)
+
+- [ ] Possess a creature with attacks (`skeleton`): the hotbar item says "left-click a target". Hold the
+      shortbow, left-click a player → the prompt lists **Shortbow first** and fills
+      `/combat attack <them> Shortbow ` (you pick autoRoll/manualRoll after).
+- [ ] Possess `skeleton` (darkvision 60) → you see in the dark; possess `wolf` → you don't; let
+      go → back to your own character's sight (none if you have no character). (#148)
 
 ## The Adjust menu & `/dm adjust`
 
@@ -515,9 +574,7 @@ buttons. Try both; whichever you like less gets removed.
       one cycles it. What Opening and Key mean is in the text at the top.
 - [ ] The Trap DC slider goes to 40.
 
-## DM tools
-
-Spawn alira as "The Kindler" first (`/dm entity spawn alira "The Kindler"`).
+## Other DM commands
 
 - [ ] A creature check with no roll → the DM gets the three roll buttons.
 - [ ] `/dm check clear Balin Ironforge` → "is a creature. Only characters have held checks…".
@@ -529,12 +586,10 @@ Spawn alira as "The Kindler" first (`/dm entity spawn alira "The Kindler"`).
 - [ ] `/dm resource consume <character> <res> 1` works.
 - [ ] Look at a chest, `/dm object key brass_key` → "The Brass Key opens the Chest".
 - [ ] `/dm object key` on a sealed block refuses.
-- [ ] **Thieves' tools break on a fail:** carry 2 sets, `/dm check <you> tool thieves_tools dc 25`, fail → one set gone, you're told.
-- [ ] DC 5, pass → nothing breaks.
-- [ ] No DC → never breaks.
-- [ ] `on_fail: always` / `never` in config.yml behave as named.
 
-## Restart checks (do these together, one restart)
+---
+
+# Restart checks (do these together, one restart)
 
 Set these up, `/stop`, start the server, then check:
 
@@ -595,9 +650,11 @@ Set these up, `/stop`, start the server, then check:
 - [ ] **Out of reach:** they swing a sword at someone 20 ft away → **[Ask the DM]**. You get **[Allow]** /
       **[Deny]**; Allow → they get **[go again]**, and the attack goes through.
 - [ ] Same with a spell (Cure Wounds from 20 ft) → [Ask the DM], then it goes through once.
-- [ ] **Sneak Attack without advantage**, their rogue: the hit gives "🗡 Sneak Attack (+1d6)? No advantage, so it's
-      the DM's call: the game sees <ally> within 5 ft of them. [Ask the DM]" (or "no ally next to them"). Click →
-      you get [Allow] / [Deny].
+
+## Their rogue: Sneak Attack without advantage (#229)
+
+- [ ] The hit gives "🗡 Sneak Attack (+1d6)? No advantage, so it's the DM's call: the game sees <ally> within
+      5 ft of them. [Ask the DM]" (or "no ally next to them"). Click → you get [Allow] / [Deny].
 - [ ] [Allow] before the damage is rolled → "The DM allows Sneak Attack: +1d6 in that damage" and a new damage
       prompt for 1d8+1d6. On a crit it's +2d6.
 - [ ] [Allow] after the damage was already applied → the 1d6 is rolled and dealt on its own, shown to the table.
@@ -619,7 +676,7 @@ Set these up, `/stop`, start the server, then check:
 - [ ] Same with `<you>, <them>` instead of `all`; and **[Close now]** before they roll → the verdict from whoever
       did, plus "Didn't roll: …".
 
-## Bardic Inspiration, from the holder's side (#40)
+## Your bard inspires them (#40)
 
 You play a bard; they're the one inspired.
 
@@ -682,9 +739,9 @@ You play a bard; they're the one inspired.
 ---
 
 # Playtest notes
-
 Write anything here, in any order. Each round Claude answers in chat, turns the notes into rows
 above, and clears this section (git keeps the old notes).
+
 
 ---
 
