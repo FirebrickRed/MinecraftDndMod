@@ -136,7 +136,11 @@ public final class FeatureParser {
                 targets, byChoice, variants);
     }
 
-    private static ActiveEffect parseApply(String featureId, String featureName, Map<?, ?> apply) {
+    /**
+     * An {@code apply:} block (a feature's) or a spell's {@code effect:} block (#225): the same
+     * {@code duration:} + {@code effects:} vocabulary either way.
+     */
+    public static ActiveEffect parseApply(String featureId, String featureName, Map<?, ?> apply) {
         // duration
         int rounds = -1;                 // -1 = no round timer (DM/rest-ended)
         Set<String> maintainedBy = new HashSet<>();
@@ -168,6 +172,8 @@ public final class FeatureParser {
         String attackBonusWhen = null;
         boolean acBonusNeedsArmor = false;
         List<String> sneakDice = List.of();
+        String rollBonusDice = null;
+        Set<String> rollBonusOn = new HashSet<>();
         if (apply.get("effects") instanceof Map<?, ?> e) {
             // attack_bonus: { amount: 2, when: ranged }   (Archery)
             if (e.get("attack_bonus") instanceof Map<?, ?> ab) {
@@ -181,6 +187,12 @@ public final class FeatureParser {
             }
             // sneak_attack: { dice_by_level: [1d6, 1d6, 2d6, …] }
             if (e.get("sneak_attack") instanceof Map<?, ?> sa) sneakDice = ParseUtil.normalizeStringList(sa.get("dice_by_level"));
+            // roll_bonus: { dice: 1d4, to: [attacks, saves] }   (Bless; "-1d4" for Bane; to: [checks] for Guidance)
+            if (e.get("roll_bonus") instanceof Map<?, ?> rb) {
+                rollBonusDice = ParseUtil.asString(rb.get("dice"), null);
+                // "to", not "on": YAML 1.1 reads an "on" key as the boolean true, so it would never be found.
+                rollBonusOn.addAll(ParseUtil.normalizeStringList(rb.get("to")));
+            }
             resistances.addAll(ParseUtil.normalizeStringList(e.get("resistance")));
             advantageOn.addAll(ParseUtil.normalizeStringList(e.get("advantage_on")));
             disadvantageOn.addAll(ParseUtil.normalizeStringList(e.get("disadvantage_on")));
@@ -203,6 +215,7 @@ public final class FeatureParser {
         return new ActiveEffect(featureId, featureName, resistances, advantageOn, disadvantageOn,
                 bonusDamage, bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks,
                 rounds, maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel)
-                .withBonuses(attackBonus, attackBonusWhen, acBonus, acBonusNeedsArmor, sneakDice);
+                .withBonuses(attackBonus, attackBonusWhen, acBonus, acBonusNeedsArmor, sneakDice)
+                .withRollBonus(rollBonusDice, rollBonusOn);
     }
 }

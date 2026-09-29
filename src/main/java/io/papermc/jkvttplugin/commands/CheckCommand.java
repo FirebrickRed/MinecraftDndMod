@@ -630,14 +630,19 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         String base = "/dm check " + (name.contains(" ") ? "\"" + name + "\"" : name) + " " + category + " " + args[2]
                 + (dc != null ? " dc " + dc : "") + (adv.isAdvantage() ? " adv" : adv.isDisadvantage() ? " dis" : "") + " ";
         RollService.RollInput input = RollService.parseInput(args, sender);
+        // Bane on the creature, a Bless on an NPC ally (#225): their dice ride on the bonus.
+        String kind = category.equalsIgnoreCase("save") ? io.papermc.jkvttplugin.effect.ActiveEffect.SAVES
+                : io.papermc.jkvttplugin.effect.ActiveEffect.CHECKS;
+        String bonusLabel = signed(mod) + "[" + source + "]" + io.papermc.jkvttplugin.effect.ActiveEffect.rollBonusLabel(creature.getEffects(), kind);
         RollService.RollResult r = input.isEmpty() ? null
-                : RollService.resolve(input, mod, signed(mod) + "[" + source + "]", false, adv);
+                : RollService.resolve(input, mod, bonusLabel, false, adv);
+        if (r != null) io.papermc.jkvttplugin.combat.SpellEffects.useUp(creature, kind);
         if (r == null) {
             // "You roll for …": a creature's roll is the DM's, and the prompt says so.
             sender.sendMessage(RollPrompt.line("🎲 You roll for " + name + ": " + label
                             + (dc != null ? ", DC " + dc : "") + (adv.affectsRoll() ? ", " + adv.label() : "") + ":", NamedTextColor.GOLD,
                     base, RollPrompt.d20(adv),
-                    signed(mod) + "[" + source + "]"));
+                    bonusLabel));
             return true;
         }
         String result = name + " — " + label + ": " + r.breakdown();

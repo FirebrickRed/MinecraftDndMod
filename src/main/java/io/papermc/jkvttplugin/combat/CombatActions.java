@@ -84,6 +84,7 @@ public final class CombatActions {
             return false;
         }
         actor.clearHelp(); // a Help was spent on this check, if there was one
+        SpellEffects.useUp(actor, io.papermc.jkvttplugin.effect.ActiveEffect.CHECKS); // Guidance, once (#225)
         int total = r.total();
         player.sendMessage(Component.text("🥷 Stealth: " + r.breakdown() + ". The DM decides who notices you.", NamedTextColor.DARK_AQUA));
         session.broadcast(Component.text("🥷 " + actor.getDisplayName(true) + " tries to Hide.", NamedTextColor.DARK_AQUA));
@@ -135,6 +136,7 @@ public final class CombatActions {
             return false;
         }
         actor.clearHelp();
+        SpellEffects.useUp(actor, io.papermc.jkvttplugin.effect.ActiveEffect.CHECKS); // Guidance, once (#225)
         int total = r.total();
         player.sendMessage(Component.text("🔍 " + skill.getDisplayName() + ": " + r.breakdown() + ". The DM tells you what you find.", NamedTextColor.GOLD));
         session.broadcast(Component.text("🔍 " + actor.getDisplayName(true) + " Searches.", NamedTextColor.GOLD));
@@ -187,7 +189,8 @@ public final class CombatActions {
         } else {
             DndEntity t = c.getEntityInstance() != null ? c.getEntityInstance().getTemplate() : null;
             bonus = t != null ? t.getSkillBonus(skill) : 0;
-            label = (bonus >= 0 ? "+" : "") + bonus + "[" + (t != null && t.listsSkill(skill) ? skill.getDisplayName() : ability.getAbbreviation()) + "]";
+            label = (bonus >= 0 ? "+" : "") + bonus + "[" + (t != null && t.listsSkill(skill) ? skill.getDisplayName() : ability.getAbbreviation()) + "]"
+                    + c.rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.CHECKS);
         }
         // An ally's Help counts on an ability check too; the caller uses it up once the roll is made.
         if (c.getHelpedByName() != null) adv = adv.with(true);

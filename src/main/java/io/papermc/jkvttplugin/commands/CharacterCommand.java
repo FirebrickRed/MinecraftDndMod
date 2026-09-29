@@ -375,6 +375,9 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                     io.papermc.jkvttplugin.combat.RollService.parseInput(rest, player), cost);
         }
 
+        // A timed effect on its targets (#225): Guidance before a check, Bless before the door opens.
+        if (spell.hasEffect()) return castEffect(player, sheet, spell, castLevel, target, cost);
+
         // Everything else (Light, Detect Magic, Message…): cast it and the DM narrates.
         io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, cost);
         Component announce = spell.castLine("✨ " + sheet.getCharacterName() + " casts ", (target != null ? " on " + target : "") + ".", NamedTextColor.LIGHT_PURPLE);
@@ -382,6 +385,47 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         if (spell.isConcentration()) {
             player.sendMessage(Component.text("   Concentrating on " + spell.getName() + ".", NamedTextColor.GRAY));
         }
+        return true;
+    }
+
+    /**
+     * Out of a fight, a spell with an effect (#225): {@code /character cast guidance Borin},
+     * {@code /character cast bless Zek, Borin, me}; no name means yourself. Each target must be in reach.
+     * The effect then lasts until the DM moves the clock past it, a fight's rounds run it out, or the
+     * caster's concentration ends.
+     */
+    private boolean castEffect(Player player, CharacterSheet sheet, io.papermc.jkvttplugin.data.model.DndSpell spell,
+                               Integer castLevel, String typed, io.papermc.jkvttplugin.character.SpellCost cost) {
+        List<io.papermc.jkvttplugin.combat.CombatTargets.Target> targets = new ArrayList<>();
+        List<String> names = new ArrayList<>();
+        String[] parts = typed == null ? new String[]{"me"} : typed.split(",");
+        String retry = "/character cast " + spell.getId() + (typed != null ? " " + typed : "")
+                + (castLevel != null ? " level " + castLevel : "");
+        for (String part : parts) {
+            String name = NameUtil.stripQuotes(part.trim());
+            if (name.isEmpty()) continue;
+            boolean self = name.equalsIgnoreCase("me") || name.equalsIgnoreCase("self") || name.equalsIgnoreCase("myself");
+            var t = self ? io.papermc.jkvttplugin.combat.CombatTargets.forPlayer(player)
+                    : io.papermc.jkvttplugin.combat.CombatTargets.resolveOrError(player, name);
+            if (t == null) return true; // the resolver said why
+            String shown = self ? sheet.getCharacterName() : t.combatant().getDisplayName();
+            String why = self ? null : io.papermc.jkvttplugin.combat.Reach.spell(player.getLocation(), t.combatant().getLocation(), shown, false, spell);
+            String what = "spell:" + spell.getId();
+            if (why != null && !io.papermc.jkvttplugin.combat.Reach.isAllowed(player.getUniqueId(), what, t.combatant().getId())) {
+                io.papermc.jkvttplugin.combat.Reach.refuse(player, why, what, t.combatant().getId(), spell.getName() + " on " + shown, retry);
+                return true;
+            }
+            if (!names.contains(shown)) { targets.add(t); names.add(shown); }
+        }
+        int max = spell.effectTargetsAt(castLevel != null ? castLevel : spell.getLevel());
+        if (targets.size() > max) {
+            player.sendMessage(Component.text(spell.getName() + " takes up to " + max + " target" + (max == 1 ? "" : "s") + ".", NamedTextColor.RED));
+            return true;
+        }
+        io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, cost); // the slot, and concentration
+        for (var t : targets) io.papermc.jkvttplugin.combat.SpellEffects.apply(sheet.getCharacterId(), t.combatant(), spell);
+        announceNearby(player, spell.castLine("✨ " + sheet.getCharacterName() + " casts ", " on " + String.join(", ", names)
+                + ": " + io.papermc.jkvttplugin.combat.SpellEffects.describe(spell) + ".", NamedTextColor.LIGHT_PURPLE));
         return true;
     }
 

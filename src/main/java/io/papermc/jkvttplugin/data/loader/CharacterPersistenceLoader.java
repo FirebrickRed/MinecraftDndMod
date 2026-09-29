@@ -317,6 +317,7 @@ public class CharacterPersistenceLoader {
                 em.put("source", e.getSourceId());
                 em.put("roundsRemaining", e.getRoundsRemaining());
                 em.put("maintainedThisRound", e.isMaintainedThisRound());
+                if (e.getCasterId() != null) em.put("caster", e.getCasterId().toString()); // a spell's (#225): its concentration ends it
                 effects.add(em);
             }
             data.put("activeEffects", effects);
@@ -398,10 +399,12 @@ public class CharacterPersistenceLoader {
             if (!(o instanceof Map<?, ?> em) || !(em.get("source") instanceof String source)) continue;
             int rounds = parseIntOrDefault(em.get("roundsRemaining"), -1);
             boolean maintained = Boolean.TRUE.equals(em.get("maintainedThisRound"));
-            if (!sheet.restoreActiveEffect(source, rounds, maintained)) {
+            java.util.UUID caster = null;
+            try { if (em.get("caster") instanceof String c) caster = java.util.UUID.fromString(c); } catch (IllegalArgumentException ignored) {}
+            if (!sheet.restoreActiveEffect(source, rounds, maintained, caster)) {
                 String who = sheet.getCharacterName();
                 java.util.logging.Logger.getLogger("CharacterPersistence").warning(who + " had an active '" + source
-                        + "' effect, but no feature with that id exists any more — dropped.");
+                        + "' effect, but no feature or spell with that id exists any more — dropped.");
             }
         }
     }

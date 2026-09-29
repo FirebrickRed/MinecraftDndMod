@@ -25,7 +25,7 @@ public class SpellCastHandler {
     /** A saving throw a target still owes from a save spell. */
     private record PendingSave(String spellName, UUID casterId, int dc, Ability ability,
                                String damage, String damageType, String saveEffect, String conditionOnFail,
-                               java.util.Set<String> saveTags) {}
+                               java.util.Set<String> saveTags, String effectSpellId) {}
 
     /** What a save is "against" — drives conditional advantages (e.g. Dwarf vs poison, Gnome vs magic). */
     private static java.util.Set<String> saveTagsFor(DndSpell spell) {
@@ -134,8 +134,19 @@ public class SpellCastHandler {
             session.broadcast(Component.empty());
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — DC " + dc + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
             pendingSaves.put(target.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
-                    spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell)));
+                    spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell),
+                    spell.hasEffect() ? spell.getId() : null)); // Bane: its -1d4 lands on a failed save (#225)
             promptSave(session, target, saveAbility);
+            return true;
+        }
+
+        // A timed effect on the target (#225): Bless, Guidance, Shield of Faith. It lasts its rounds, or until
+        // the caster's concentration ends (afterCast starts that).
+        if (spell.hasEffect()) {
+            SpellEffects.apply(sheet.getCharacterId(), target, spell);
+            session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " on " + target.getDisplayName(true)
+                    + ": " + SpellEffects.describe(spell) + ".", NamedTextColor.LIGHT_PURPLE));
+            session.updateScoreboard();
             return true;
         }
 
@@ -145,7 +156,7 @@ public class SpellCastHandler {
     }
 
     /**
-     * Cast a mark/curse spell (Hex, Hunter's Mark — #178). Entities can't hold effects, so the mark
+     * Cast a mark/curse spell (Hex, Hunter's Mark — #178). The mark is the caster's rider damage, so it
      * lives on the CASTER: while they concentrate, they deal the rider damage on hits against the
      * marked target, and (Hex) the target has disadvantage on checks with the chosen ability.
      */
@@ -235,7 +246,8 @@ public class SpellCastHandler {
             session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation() + " save — each caught creature rolls:", NamedTextColor.GRAY));
             for (Combatant t : affected) {
                 pendingSaves.put(t.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
-                        spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell)));
+                        spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell),
+                        spell.hasEffect() ? spell.getId() : null));
                 promptSave(session, t, saveAbility);
             }
         } else {
@@ -274,7 +286,7 @@ public class SpellCastHandler {
                 ? java.util.Set.of(damageType.toLowerCase()) : java.util.Set.of();
         for (Combatant t : affected) {
             pendingSaves.put(t.getId(), new PendingSave(sourceName, caster.getId(), dc, saveAbility,
-                    damage, damageType, saveEffect, null, tags));
+                    damage, damageType, saveEffect, null, tags, null));
             promptSave(session, t, saveAbility);
         }
         return true;
@@ -374,6 +386,7 @@ public class SpellCastHandler {
             return;
         }
         pendingSaves.remove(target.getId());
+        SpellEffects.useUp(target, io.papermc.jkvttplugin.effect.ActiveEffect.SAVES); // Resistance, once (#225)
         boolean success = r.total() >= ps.dc();
         Combatant caster = findById(session, ps.casterId());
         Combatant damageSource = caster != null ? caster : target;
@@ -393,6 +406,16 @@ public class SpellCastHandler {
             return;
         }
         // Failed save: full damage + any condition.
+        if (ps.effectSpellId() != null) {
+            DndSpell effectSpell = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(ps.effectSpellId());
+            Combatant from = findById(session, ps.casterId());
+            if (effectSpell != null && effectSpell.hasEffect()) {
+                SpellEffects.apply(from != null && from.getCharacterSheet() != null ? from.getCharacterSheet().getCharacterId() : null,
+                        target, effectSpell);
+                session.broadcast(Component.text(target.getDisplayName(true) + " is under " + effectSpell.getName() + ": "
+                        + SpellEffects.describe(effectSpell) + ".", NamedTextColor.YELLOW));
+            }
+        }
         if (ps.damage() != null) AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false, flatLabel(ps.damage(), ps.spellName()));
         DndCondition cond = ps.conditionOnFail() != null ? ConditionLoader.get(ps.conditionOnFail()) : null;
         if (cond != null && target.addCondition(cond.getId())) {

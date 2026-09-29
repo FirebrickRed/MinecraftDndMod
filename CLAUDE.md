@@ -711,9 +711,18 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     back into reach before anyone is asked un-provokes it silently. A provocation now lives exactly
     as long as its window, which fixes the old bug where `pending` was only cleared on the mover's
     next turn and a round-1 OA could still be fired in round 3.
-  - **A spell's AC bonus is data (#147):** `ac_bonus:` in a spell's YAML (Shield 5, Shield of Faith 2)
+  - **A spell's AC bonus is data (#147):** `ac_bonus:` in a spell's YAML (Shield 5, the caster only)
     becomes `Combatant.grantTempAc`, added on top of `getBaseArmorClass()` and dropped at the start of
     that combatant's next turn. Don't hardcode a spell name to move AC.
+  - **Spells with timed effects on their targets (#225):** a spell's `effect:` block (the feature `apply:`
+    vocabulary) goes on each target as an `ActiveEffect` (`combat/SpellEffects`): Bless, Bane (on a failed save),
+    Guidance, Resistance, Shield of Faith. A `roll_bonus` die is written into the labelled bonus
+    (`+1d4[Bless]`) by the breakdown helpers, and **`RollService.resolve` rolls any dice it finds in a
+    bonus label**, so every d20 path picks it up. Rounds tick at the holder's turn; out of combat only the
+    DM moving the clock (`TimeCommand.shift` → `SpellEffects.passTime`) runs them down. The caster's
+    concentration ending ends it on everyone (`CharacterSheet.breakConcentration`/`setConcentratingOn`).
+    `until_used` effects are spent by `SpellEffects.useUp` at each check/save site. Creatures hold effects
+    too (`DndEntityInstance.getEffects`, in memory).
   - **Spell slots are spent in one place (#152):** `character/SpellCost` — `of(sheet, spell)` to check
     *before* resolving, `spend(...)` only once it has. `level <n>` (last argument, after the target)
     upcasts and spends that slot — the spellbook's "⬆ Casting at 2nd level" fills it in. `/combat cast` used to spend nothing at all

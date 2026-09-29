@@ -1515,7 +1515,7 @@ public class CharacterSheet {
             breakdown.append(" +").append(profBonus).append(hasExpertise(skill.name()) ? "[Prof ×2]" : "[Prof]");
         }
 
-        return breakdown.toString();
+        return breakdown.toString() + rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.CHECKS);
     }
 
     /** Proficiency added to a skill check: 0, the bonus, or double it with expertise. */
@@ -1548,7 +1548,7 @@ public class CharacterSheet {
             b.append(" +").append(prof).append("[").append(ToolRegistry.displayName(tool))
                     .append(hasExpertise(tool) ? " ×2" : "").append("]");
         }
-        return b.toString();
+        return b.toString() + rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.CHECKS);
     }
 
     private int toolProficiencyBonus(String tool) {
@@ -1650,7 +1650,8 @@ public class CharacterSheet {
                 + abilityModifier
                 + "["
                 + ability.getAbbreviation()
-                + "]";
+                + "]"
+                + rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.CHECKS);
     }
 
     /**
@@ -1678,7 +1679,7 @@ public class CharacterSheet {
             breakdown.append(" +").append(profBonus).append("[Prof]");
         }
 
-        return breakdown.toString();
+        return breakdown.toString() + rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.SAVES);
     }
 
     public void gainTempHealth(int tempHP) {
@@ -1728,7 +1729,10 @@ public class CharacterSheet {
     }
 
     public void setConcentratingOn(DndSpell spell) {
+        DndSpell was = this.concentratingOn;
         this.concentratingOn = spell;
+        // A new concentration spell ends the old one, on everyone it was on (Bless → Bane, #225).
+        if (was != null && was != spell) io.papermc.jkvttplugin.combat.SpellEffects.endConcentration(characterId, was);
     }
 
     public boolean isConcentrating() {
@@ -1736,12 +1740,14 @@ public class CharacterSheet {
     }
 
     public void breakConcentration() {
+        DndSpell was = concentratingOn;
         concentratingOn = null;
+        if (was != null) io.papermc.jkvttplugin.combat.SpellEffects.endConcentration(characterId, was); // #225
         clearSpellMark(); // Hex/Hunter's Mark end when concentration does
     }
 
     // ---- Spell mark (Hex / Hunter's Mark, #178) ----
-    // Entities can't hold effects, so a mark lives on the CASTER: who they've marked, the rider
+    // A mark lives on the CASTER (it's their rider damage, not a state of the target): who they've marked, the rider
     // damage on their hits, and (Hex) the ability the target has disadvantage on checks with.
     private java.util.UUID markTargetId;
     private String markDamage;              // rider dice, e.g. "1d6"
@@ -1876,7 +1882,7 @@ public class CharacterSheet {
 
     /** A spell attack's bonus, labelled like every other roll: "+3[INT] +2[Prof]". */
     public String getSpellAttackBreakdown(DndSpell spell) {
-        return getSpellModBreakdown(spell) + " +" + getProficiencyBonus() + "[Prof]";
+        return getSpellModBreakdown(spell) + " +" + getProficiencyBonus() + "[Prof]" + rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS);
     }
 
     /**
@@ -1936,18 +1942,40 @@ public class CharacterSheet {
         }
     }
 
+    /** Remove the effects {@code which} matches; returns them (a spell's effect when its caster's concentration ends, #225). */
+    public List<io.papermc.jkvttplugin.effect.ActiveEffect> removeEffects(java.util.function.Predicate<io.papermc.jkvttplugin.effect.ActiveEffect> which) {
+        List<io.papermc.jkvttplugin.effect.ActiveEffect> gone = new ArrayList<>();
+        activeEffects.removeIf(e -> { if (which.test(e)) { gone.add(e); return true; } return false; });
+        if (!gone.isEmpty()) { calculateArmorClass(); persist(); }
+        return gone;
+    }
+
+    /** The dice effects add to a roll of this kind (#225): " +1d4[Bless]", or "". */
+    public String rollBonusLabel(String kind) {
+        return io.papermc.jkvttplugin.effect.ActiveEffect.rollBonusLabel(activeEffects, kind);
+    }
+
     /**
      * Re-attach a saved effect on load (#212). Only the live state (rounds left, maintained this
      * round) is saved; the effect itself is rebuilt from its feature's YAML — this character's own
      * features first, then any class or race (an effect can come from someone else's feature).
      * Returns false if that feature no longer exists (renamed or removed), so the caller can report it.
      */
-    public boolean restoreActiveEffect(String sourceId, int roundsRemaining, boolean maintainedThisRound) {
-        io.papermc.jkvttplugin.effect.Feature feature = getFeature(sourceId);
-        if (feature == null) feature = findFeatureAnywhere(sourceId);
-        if (feature == null || !feature.hasApply()) return false;
-        io.papermc.jkvttplugin.effect.ActiveEffect effect = feature.getApplyTemplate().copy();
+    public boolean restoreActiveEffect(String sourceId, int roundsRemaining, boolean maintainedThisRound, UUID casterId) {
+        io.papermc.jkvttplugin.effect.ActiveEffect effect;
+        if (sourceId.toLowerCase().startsWith("spell:")) {
+            // A spell's effect (#225): rebuilt from the spell's effect: block.
+            DndSpell spell = SpellLoader.getSpell(sourceId.substring("spell:".length()));
+            if (spell == null || !spell.hasEffect()) return false;
+            effect = spell.getEffect().copy();
+        } else {
+            io.papermc.jkvttplugin.effect.Feature feature = getFeature(sourceId);
+            if (feature == null) feature = findFeatureAnywhere(sourceId);
+            if (feature == null || !feature.hasApply()) return false;
+            effect = feature.getApplyTemplate().copy();
+        }
         effect.restoreState(roundsRemaining, maintainedThisRound);
+        effect.setCasterId(casterId);
         activeEffects.add(effect);
         calculateArmorClass();
         return true;

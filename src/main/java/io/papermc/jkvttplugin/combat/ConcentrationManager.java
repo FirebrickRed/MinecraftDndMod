@@ -162,6 +162,7 @@ public final class ConcentrationManager {
             return;
         }
         pending.remove(target.getId());
+        SpellEffects.useUp(target, io.papermc.jkvttplugin.effect.ActiveEffect.SAVES); // Resistance, once (#225)
 
         boolean held = r.total() >= p.dc();
         session.broadcast(Component.text(target.getDisplayName(true) + " concentration: " + r.breakdown()

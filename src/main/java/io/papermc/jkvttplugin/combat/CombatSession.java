@@ -1406,7 +1406,7 @@ public class CombatSession {
             // The roll buttons go to whoever rolls it: the downed player (the DM can still roll for them by name).
             Player downed = c.getPlayer();
             if (downed != null) downed.sendMessage(RollPrompt.line("💀 Roll your death save (10 or higher succeeds):",
-                    NamedTextColor.YELLOW, "/combat deathsave ", "d20", null));
+                    NamedTextColor.YELLOW, "/combat deathsave ", "d20", DeathSaveHandler.bonusLabel(c)));
         }
     }
 

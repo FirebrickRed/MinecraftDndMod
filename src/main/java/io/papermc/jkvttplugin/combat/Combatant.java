@@ -379,6 +379,14 @@ public class Combatant {
      * A saving throw's bonus, labelled for a roll prompt and its result: a character's "+1[CON]
      * +2[Prof]" from the sheet, a creature's "+3[DEX]" (stat blocks carry no save proficiencies yet).
      */
+    /** The dice effects add to this one's rolls of {@code kind} (#225): " +1d4[Bless]", or "". */
+    public String rollBonusLabel(String kind) {
+        CharacterSheet sheet = getCharacterSheet();
+        if (sheet != null) return sheet.rollBonusLabel(kind);
+        DndEntityInstance entity = getEntityInstance();
+        return entity != null ? io.papermc.jkvttplugin.effect.ActiveEffect.rollBonusLabel(entity.getEffects(), kind) : "";
+    }
+
     public String saveBreakdown(Ability ability) {
         if (isPlayer()) {
             CharacterSheet sheet = getCharacterSheet();
@@ -386,7 +394,7 @@ public class Combatant {
         }
         DndEntityInstance entity = getEntityInstance();
         int mod = entity == null ? 0 : Ability.getModifier(entity.getTemplate().getAbilities().getOrDefault(ability, 10));
-        return (mod >= 0 ? "+" : "") + mod + "[" + ability.getAbbreviation() + "]";
+        return (mod >= 0 ? "+" : "") + mod + "[" + ability.getAbbreviation() + "]" + rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.SAVES);
     }
 
     public int getDeathSaveSuccesses() {
@@ -802,7 +810,12 @@ public class Combatant {
     }
     public java.util.List<io.papermc.jkvttplugin.effect.ActiveEffect> tickEffectsTurnStart() {
         CharacterSheet s = getCharacterSheet();
-        return s != null ? s.tickEffectsTurnStart() : java.util.List.of();
+        if (s != null) {
+            var ended = s.tickEffectsTurnStart();
+            SpellEffects.endConcentrationOn(ended); // Bless ran its minute: its caster stops concentrating (#225)
+            return ended;
+        }
+        return SpellEffects.tickTurnStart(getEntityInstance()); // a creature's Bane (#225)
     }
 
     /**

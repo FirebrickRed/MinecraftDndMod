@@ -374,6 +374,24 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       "📖 Arcane Recovery… [Recover]"; use it → a level 1 slot back. Again → "used today". In a fight → refused.
 - [ ] Restart after preparing → the same spells are still prepared.
 
+## Bless, Bane, Guidance, Shield of Faith (#225)
+
+- [ ] In a fight, a cleric casts `/combat cast bless Zek, Borin, me` → "casts Bless on …: +1d4 to attacks and saves for
+      1 minute"; the sheet's Active Effects tile shows it on each. A 4th name → "takes up to 3 targets".
+- [ ] Blessed Zek attacks: the prompt's bonus reads `… +1d4[Bless]`, and the result shows the d4 it rolled
+      (`+3[Bless 1d4]`), even with **I rolled…**. A save and a death save get it too; a skill check doesn't.
+- [ ] `/combat cast bane Goblin, Goblin 2` → each makes a CHA save (you roll for them); the one that fails is
+      "under Bane" and its next attack/save shows `-2[Bane 1d4]`.
+- [ ] The cleric casts another concentration spell, or fails a concentration save → "Bless ends on Zek, Borin…".
+- [ ] Bless runs 10 rounds and ends on its own; the cleric's ◈ goes with it.
+- [ ] Out of a fight: `/character cast guidance Borin` → Borin's next check shows `+1d4[Guidance]`, then it's gone
+      (and the cleric stops concentrating). A save in between doesn't use it.
+- [ ] Cast Bless out of a fight, then Time tool **+10 min** → "Bless on … wore off". With the clock running
+      and no DM move, it stays.
+- [ ] `/combat cast shield_of_faith Zek` → Zek's AC +2 (sheet and `/combat status`), and it lasts past Zek's
+      next turn. On a creature, its AC goes up too.
+- [ ] Restart with Bless on someone → it's still there with its rounds; the cleric breaking concentration still ends it.
+
 ## Heavy armor and Strength (#34)
 
 - [ ] A human with STR 10 puts on chain mail (`/dm give <you> chain_mail`, wear it) → "⚠ Chain Mail needs Strength 13:

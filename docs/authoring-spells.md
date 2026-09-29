@@ -208,12 +208,43 @@ shield:
 reaction to being hit, it also re-checks the triggering attack against the new AC — which is how
 Shield turns a hit into a miss. (A critical hit still lands: a nat 20 always hits.)
 
-Two things it doesn't do yet:
-- **The bonus always lands on the caster**, even for a spell like Shield of Faith that RAW targets an
-  ally within 60 feet. Targeted AC buffs are #182.
-- **Duration is always "until the start of your next turn."** A 10-minute buff ends early. Also #182.
+`ac_bonus:` always lands on the caster and lasts until the start of their next turn, which is right
+for Shield. For an AC buff on someone else that lasts the spell's duration (Shield of Faith), use an
+`effect:` instead (Shape 5c).
 
-Out of combat there are no combatants, so `ac_bonus:` is narrated like any other buff.
+## Shape 5c — A timed effect on the targets (Bless, Bane, Guidance, Shield of Faith, #225)
+
+```yaml
+bless:
+  # …common fields… (duration: "1 minute", concentration: true)
+  effect:
+    targets: 3                     # how many creatures it can take (default 1)
+    targets_per_slot_level: 1      # one more per slot level above the spell's own
+    # duration: { rounds: 10, until_used: true }   # optional; default = the spell's duration
+    effects:                       # the same vocabulary as a feature's apply: block
+      roll_bonus: { dice: 1d4, to: [attacks, saves] }   # "-1d4" for Bane; to: [checks] for Guidance
+      # ac_bonus: { amount: 2 }                          # Shield of Faith
+```
+
+- **Casting:** `/combat cast bless Zek, Borin, me` (commas for several targets, `me` for yourself), or
+  out of a fight `/character cast guidance Borin` (no name = yourself). Each target must be in range.
+  A **save spell** with an effect (Bane) puts it only on the targets that **fail** the save.
+- **The die** rides on the target's labelled bonus (`+3[STR] +2[Prof] +1d4[Bless]`), in the prompt
+  and the result, and the game rolls it, even when the player rolled the d20 themselves. A
+  `total <n>` is taken as final. It reaches attacks, saves (death saves and concentration too) and
+  checks, whichever `to:` names, for characters and creatures alike.
+- **`to:`, not `on:`.** YAML reads a bare `on` as `true`, so `on: [attacks]` is silently lost. The
+  load check warns about a `roll_bonus` with no `to:`.
+- **How long:** its rounds tick at the holder's turn in a fight; out of one, only the DM's clock
+  runs it down (`/dm time add`, the Time tool, a rest's time: 10 rounds a minute). A running daylight
+  cycle doesn't. `until_used: true` ends it after one roll of that kind (Guidance, Resistance), and
+  ends the caster's concentration with it.
+- **Concentration:** when the caster's ends (a new concentration spell, a failed save, a long
+  rest), the spell ends on everyone.
+- A character's effects are saved with the sheet; a creature's are kept in memory only.
+
+Not yet: Haste and Slow (speed changes, extra actions) and the effect's own `advantage_on` for
+another creature's rolls against the target.
 
 ## Shape 6 — Utility / buff (no automatic resolution)
 

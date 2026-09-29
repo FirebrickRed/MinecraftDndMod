@@ -79,7 +79,58 @@ public class ActiveEffect {
         return new ActiveEffect(sourceId, sourceName, resistances, advantageOn, disadvantageOn, bonusDamage,
                 bonusDamageWhen, minecraftEffect, minecraftAmplifier, flags, stacks, roundsRemaining,
                 maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel)
-                .withBonuses(attackBonus, attackBonusWhen, acBonus, acBonusNeedsArmor, sneakAttackDice);
+                .withBonuses(attackBonus, attackBonusWhen, acBonus, acBonusNeedsArmor, sneakAttackDice)
+                .withRollBonus(rollBonusDice, rollBonusOn);
+    }
+
+    // ---- a die added to rolls (#225): Bless +1d4, Bane -1d4, Guidance +1d4 on one check ----
+    /** Kinds of d20 roll a roll bonus can apply to. */
+    public static final String ATTACKS = "attacks", SAVES = "saves", CHECKS = "checks";
+    private String rollBonusDice;              // "1d4", "-1d4", or null
+    private Set<String> rollBonusOn = Set.of(); // attacks | saves | checks
+    private java.util.UUID casterId;           // who cast the spell that put it here (its concentration ends it), or null
+
+    /** The roll-bonus primitive, kept off the constructor. Returns this. */
+    public ActiveEffect withRollBonus(String dice, Set<String> on) {
+        this.rollBonusDice = dice == null || dice.isBlank() ? null : dice.trim().toLowerCase();
+        this.rollBonusOn = lower(on);
+        return this;
+    }
+
+    /** The die this adds to a roll of {@code kind} ("1d4", "-1d4"), or null. */
+    public String rollBonusFor(String kind) {
+        return rollBonusDice != null && kind != null && rollBonusOn.contains(kind.toLowerCase()) ? rollBonusDice : null;
+    }
+
+    /**
+     * The dice these effects add to a roll of {@code kind}, labelled the way every roll bonus is:
+     * {@code " +1d4[Bless] -1d4[Bane]"}, or "" for none. {@code RollService.resolve} rolls them.
+     */
+    public static String rollBonusLabel(java.util.Collection<ActiveEffect> effects, String kind) {
+        StringBuilder b = new StringBuilder();
+        if (effects != null) for (ActiveEffect e : effects) {
+            String d = e.rollBonusFor(kind);
+            if (d == null) continue;
+            b.append(" ").append(d.startsWith("-") ? d : "+" + d).append("[").append(e.getSourceName()).append("]");
+        }
+        return b.toString();
+    }
+
+    public boolean hasRollBonus() { return rollBonusDice != null; }
+    /** What the roll bonus applies to: attacks, saves, checks. */
+    public Set<String> rollBonusKinds() { return java.util.Collections.unmodifiableSet(rollBonusOn); }
+
+    public java.util.UUID getCasterId() { return casterId; }
+    public void setCasterId(java.util.UUID casterId) { this.casterId = casterId; }
+
+    /**
+     * Time passes out of a fight: the DM moved the clock by {@code rounds} (10 a minute). True if that
+     * ran the effect out. One with no round timer (until a rest, until removed) isn't touched.
+     */
+    public boolean passRounds(int rounds) {
+        if (roundsRemaining <= 0 || rounds <= 0) return false;
+        roundsRemaining = Math.max(0, roundsRemaining - rounds);
+        return roundsRemaining == 0;
     }
 
     // ---- attack, AC and Sneak Attack bonuses (#229), set once by FeatureParser ----
@@ -191,6 +242,8 @@ public class ActiveEffect {
         if (attackBonus != 0) parts.add((attackBonus > 0 ? "+" : "") + attackBonus + " to hit"
                 + (attackBonusWhen != null ? " (" + attackBonusWhen.replace('_', ' ') + ")" : ""));
         if (acBonus != 0) parts.add((acBonus > 0 ? "+" : "") + acBonus + " AC" + (acBonusNeedsArmor ? " (in armor)" : ""));
+        if (rollBonusDice != null) parts.add((rollBonusDice.startsWith("-") ? rollBonusDice : "+" + rollBonusDice)
+                + " to " + String.join(" and ", new java.util.TreeSet<>(rollBonusOn)) + (untilUsed ? " (once)" : ""));
         return parts;
     }
 

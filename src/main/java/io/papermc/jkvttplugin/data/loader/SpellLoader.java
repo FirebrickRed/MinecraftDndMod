@@ -147,6 +147,14 @@ public class SpellLoader {
         // AC bonus for the spell's duration (#147): Shield's +5, Shield of Faith's +2. Applied to a
         // combatant when cast in combat; out of combat it's narrated like any other buff.
         if (data.get("ac_bonus") instanceof Number ac) spell.setAcBonus(ac.intValue());
+        // A timed effect on its targets (#225): Bless, Bane, Guidance. The same vocabulary as a feature's
+        // apply: block; with no duration of its own it lasts the spell's ("1 minute" = 10 rounds).
+        if (data.get("effect") instanceof Map<?, ?> eff) {
+            io.papermc.jkvttplugin.effect.ActiveEffect template =
+                    io.papermc.jkvttplugin.effect.FeatureParser.parseApply(DndSpell.effectSourceId(key), name, eff);
+            if (template.getRoundsRemaining() < 0) template.restoreState(DndSpell.durationRounds(spell.getDuration()), false);
+            spell.setEffect(template, ParseUtil.asInt(eff.get("targets"), 1), ParseUtil.asInt(eff.get("targets_per_slot_level"), 0));
+        }
         // Optional resource-pack model overlay (only applied if the pack provides it).
         spell.setCustomModel(ParseUtil.asString(data.get("custom_model"), null));
         return spell;

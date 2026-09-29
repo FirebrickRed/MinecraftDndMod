@@ -208,11 +208,42 @@ public final class RollService {
             d20 = DiceRoller.rollDice(1, 20);
             luck = " [Lucky: the 1 was rerolled, " + d20 + " stands]";
         }
-        int total = d20 + modifier;
+        // Dice in the bonus (Bless's "+1d4[Bless]", #225) are rolled here, for a die you rolled yourself too:
+        // the bonus said what gets added, and a total you give is the only thing taken as final.
+        LabelDice extra = rollLabelDice(modLabel);
+        int total = d20 + modifier + extra.sum();
         String work = providedRoll != null
-                ? RollPrompt.youRolled(d20, modLabel, total)
-                : RollPrompt.gameRolled("d20", shown, modLabel, total);
+                ? RollPrompt.youRolled(d20, extra.label(), total)
+                : RollPrompt.gameRolled("d20", shown, extra.label(), total);
         return new RollResult(d20, total, false, d20 == 20, d20 == 1, work + luck + natCallout(d20));
+    }
+
+    /** What the dice in a bonus came to: their sum, and the bonus with each die replaced by its roll. */
+    public record LabelDice(int sum, String label) {}
+
+    private static final java.util.regex.Pattern LABEL_DICE =
+            java.util.regex.Pattern.compile("([+-])(\\d*)d(\\d+)\\[([^\\]]+)\\]");
+
+    /**
+     * Roll the dice written into a bonus: {@code "+3[STR] +1d4[Bless] -1d4[Bane]"} becomes, say,
+     * sum 1 and {@code "+3[STR] +3[Bless 1d4] -2[Bane 1d4]"}. Flat parts are left alone (the caller
+     * already added them as the modifier). A bonus with no dice comes back as it was, sum 0.
+     */
+    public static LabelDice rollLabelDice(String label) {
+        if (label == null || label.indexOf('d') < 0) return new LabelDice(0, label);
+        java.util.regex.Matcher m = LABEL_DICE.matcher(label);
+        StringBuilder out = new StringBuilder();
+        int sum = 0;
+        while (m.find()) {
+            int count = m.group(2).isEmpty() ? 1 : Integer.parseInt(m.group(2));
+            int rolled = io.papermc.jkvttplugin.util.DiceRoller.rollDice(count, Integer.parseInt(m.group(3)));
+            boolean minus = m.group(1).equals("-");
+            sum += minus ? -rolled : rolled;
+            m.appendReplacement(out, java.util.regex.Matcher.quoteReplacement(
+                    (minus ? "-" : "+") + rolled + "[" + m.group(4) + " " + count + "d" + m.group(3) + "]"));
+        }
+        m.appendTail(out);
+        return new LabelDice(sum, out.toString());
     }
 
     /**

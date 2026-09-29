@@ -201,6 +201,8 @@ public class AttackHandler {
                                       int critBonusDamage, String critBonusSource, Runnable onHit) {
         // Advantage/disadvantage from conditions (#103): auto-applied when the game rolls, and the
         // roller is reminded either way (a physical roll or provided total is trusted as-is).
+        // A creature's Bless or Bane (#225); a character's is already in its breakdown (buildPlayerModBreakdown).
+        if (!attacker.isPlayer()) modBreakdown = modBreakdown + attacker.rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS);
         Advantage advantage = attacker.attackAdvantageAgainst(target);
         if (commandUser != null) {
             if (advantage != Advantage.NONE) {
@@ -402,7 +404,7 @@ public class AttackHandler {
         String style = sheet.attackBonusBreakdownFor(attackTag(weapon)); // "+2[Archery]" (#229)
         if (!style.isEmpty()) sb.append(" ").append(style);
 
-        return sb.toString();
+        return sb.toString() + sheet.rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS);
     }
 
     /**

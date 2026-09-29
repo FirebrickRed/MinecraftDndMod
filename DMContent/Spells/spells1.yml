@@ -109,8 +109,14 @@ spells:
     concentration: true
     ritual: false
     material: "FERMENTED_SPIDER_EYE"
-    save_type: "Charisma"   # the -1d4 isn't automated yet (#182) — the save is; the DM tracks the penalty
+    save_type: "Charisma"
     higher_levels: "You can target one additional creature for each slot level above 1st."
+    # A failed save puts -1d4 on its attacks and saves for the minute (#225).
+    effect:
+      targets: 3
+      targets_per_slot_level: 1
+      effects:
+        roll_bonus: { dice: -1d4, to: [attacks, saves] }
 
   beast_bond:
     name: "Beast Bond"
@@ -140,6 +146,12 @@ spells:
     ritual: false
     material: "GOLDEN_APPLE"
     higher_levels: "When you cast this spell using a spell slot of 2nd level or higher, you can target one additional creature for each slot level above 1st."
+    # +1d4 on its targets' attacks and saves, for the spell's minute (#225). /combat cast bless Zek, Borin, me
+    effect:
+      targets: 3
+      targets_per_slot_level: 1
+      effects:
+        roll_bonus: { dice: 1d4, to: [attacks, saves] }
 
   burning_hands:
     name: "Burning Hands"
@@ -1041,7 +1053,10 @@ spells:
     concentration: true
     ritual: false
     material: "SHIELD"
-    ac_bonus: 2   # lands on the caster today; an AC buff on someone else is #182
+    # +2 AC on the creature you pick, for the spell's 10 minutes (#225).
+    effect:
+      effects:
+        ac_bonus: { amount: 2 }
 
   silent_image:
     name: "Silent Image"

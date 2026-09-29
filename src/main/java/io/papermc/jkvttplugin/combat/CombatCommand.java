@@ -1329,6 +1329,36 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
 
             String targetName = stripQuotes(String.join(" ", pos));
+            // Several targets for a spell that takes them (#225): "/combat cast bless Zek, Borin, me".
+            if (spell.hasEffect() && targetName.contains(",")) {
+                List<Combatant> targets = new ArrayList<>();
+                for (String part : targetName.split(",")) {
+                    String name = stripQuotes(part.trim());
+                    if (name.isEmpty()) continue;
+                    Combatant t = isSelfWord(name) ? caster : findCombatantByName(session, name);
+                    if (t == null) {
+                        player.sendMessage(Component.text("Target not found: " + name, NamedTextColor.RED));
+                        player.sendMessage(Component.text("In combat: ", NamedTextColor.GRAY)
+                                .append(Component.text(combatantNameList(session), NamedTextColor.YELLOW)));
+                        return;
+                    }
+                    if (!targets.contains(t)) targets.add(t);
+                }
+                int max = spell.effectTargetsAt(castLevel != null ? castLevel : spell.getLevel());
+                if (targets.size() > max) {
+                    player.sendMessage(Component.text(spell.getName() + " takes up to " + max + " target" + (max == 1 ? "" : "s")
+                            + (castLevel == null && spell.effectTargetsAt(spell.getLevel() + 1) > max ? " (more from a higher slot: add level <n>)" : "")
+                            + ".", NamedTextColor.RED));
+                    return;
+                }
+                resolved = false;
+                for (Combatant t : targets) {
+                    if (t.isDead()) { player.sendMessage(Component.text(t.getDisplayName() + " is dead.", NamedTextColor.YELLOW)); continue; }
+                    resolved |= SpellCastHandler.cast(caster, t, session, player, spell, providedRoll, providedTotal, roll.forceAuto());
+                }
+                if (resolved) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction);
+                return;
+            }
             // "me"/"self"/"myself" targets the caster — many spells (e.g. Primal Savagery) target you.
             Combatant target = isSelfWord(targetName) ? caster : findCombatantByName(session, targetName);
             if (target == null) {
@@ -2784,7 +2814,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         if (!DeathSaveHandler.rollDeathSave(session, target, providedRoll, input.forceAuto())) {
             // No die yet: the same three buttons as every roll, on the line they typed.
-            player.sendMessage(RollPrompt.again(player, "💀 Roll the death save (10 or higher succeeds):", "d20", null));
+            player.sendMessage(RollPrompt.again(player, "💀 Roll the death save (10 or higher succeeds):", "d20", DeathSaveHandler.bonusLabel(target)));
             return;
         }
         target.setRolledDeathSaveThisTurn(true);

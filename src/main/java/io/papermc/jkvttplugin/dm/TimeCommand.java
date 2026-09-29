@@ -56,6 +56,8 @@ public class TimeCommand implements CommandExecutor, TabCompleter {
     public static void shift(CommandSender sender, World world, int minutes, boolean quiet) {
         if (minutes == 0) return;
         String now = WorldTime.advance(world, minutes);
+        // Timed spells run down with the clock the DM moves (#225): Bless is gone after a minute of it.
+        io.papermc.jkvttplugin.combat.SpellEffects.passTime(minutes);
         Component msg = Component.text((minutes > 0 ? "⏩ +" : "⏪ −") + WorldTime.describe(minutes) + " → ", NamedTextColor.GOLD)
                 .append(Component.text(now, NamedTextColor.YELLOW));
         if (quiet && sender instanceof Player p) p.sendActionBar(msg);

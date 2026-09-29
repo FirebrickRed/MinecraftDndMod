@@ -112,6 +112,9 @@ public class RollOptionsMenuHandler {
                 character.rerollsNat1(), advantage, forceAuto);
         if (r == null) return false;
         if (helped != null) helped.clearHelp(); // the Help is used up by this check
+        // Guidance on a check, Resistance on a save: once, and this roll was it (#225).
+        io.papermc.jkvttplugin.combat.SpellEffects.useUp(character, "SAVE".equals(type)
+                ? io.papermc.jkvttplugin.effect.ActiveEffect.SAVES : io.papermc.jkvttplugin.effect.ActiveEffect.CHECKS);
         if (pending != null) {
             io.papermc.jkvttplugin.dm.CheckManager.takePending(character.getPlayerId());
             if (pending.contestId() != null) {

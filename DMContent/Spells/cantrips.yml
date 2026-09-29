@@ -244,6 +244,11 @@ spells:
     concentration: true
     ritual: false
     material: "COMPASS"
+    # +1d4 on their next ability check, then it ends (#225). /character cast guidance Borin
+    effect:
+      duration: { rounds: 10, until_used: true }
+      effects:
+        roll_bonus: { dice: 1d4, to: [checks] }
 
   gust:
     name: "Gust"
@@ -517,6 +522,11 @@ spells:
     concentration: true
     ritual: false
     material: "SHIELD"
+    # +1d4 on their next saving throw, then it ends (#225).
+    effect:
+      duration: { rounds: 10, until_used: true }
+      effects:
+        roll_bonus: { dice: 1d4, to: [saves] }
 
   sacred_flame:
     name: "Sacred Flame"

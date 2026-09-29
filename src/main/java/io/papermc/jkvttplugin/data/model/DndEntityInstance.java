@@ -138,6 +138,13 @@ public class DndEntityInstance {
     private final java.util.Set<String> conditions = new java.util.LinkedHashSet<>();
     /** The DM's temporary AC change, or null. */
     private AcAdjustment acAdjustment;
+
+    /**
+     * Timed effects on this creature (#225): Bane's -1d4, a Bless on an NPC ally. Kept in memory only, so a
+     * restart drops them (they last a minute or so; a character's are saved with the sheet).
+     */
+    private final java.util.List<io.papermc.jkvttplugin.effect.ActiveEffect> effects = new java.util.ArrayList<>();
+    public java.util.List<io.papermc.jkvttplugin.effect.ActiveEffect> getEffects() { return effects; }
     /** A permanent AC for this one creature ("this guard has a shield"), or null for the stat block's (#194). */
     private Integer acOverride;
 
@@ -176,9 +183,11 @@ public class DndEntityInstance {
         return acOverride != null ? acOverride : (template != null ? template.getArmorClass() : 10);
     }
 
-    /** AC as it stands: base plus any DM adjustment. */
+    /** AC as it stands: base plus any DM adjustment, plus a spell's (Shield of Faith, #225). */
     public int getArmorClass() {
-        return getBaseArmorClass() + (acAdjustment != null ? acAdjustment.amount() : 0);
+        int fromEffects = 0;
+        for (var e : effects) fromEffects += e.acBonus(true);
+        return getBaseArmorClass() + (acAdjustment != null ? acAdjustment.amount() : 0) + fromEffects;
     }
 
     // ==================== DM NOTES (#175) ====================

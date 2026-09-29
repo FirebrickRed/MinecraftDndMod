@@ -25,11 +25,20 @@ public class DeathSaveHandler {
      * (physical mode): the caller offers the three buttons instead. It used to always let the game
      * roll, so a typed {@code /combat deathsave} skipped the player's own die.
      */
+    /** What a death save adds: only a spell's die (Bless, #225), or null for a bare d20. */
+    public static String bonusLabel(Combatant c) {
+        String label = c.rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.SAVES).trim();
+        return label.isEmpty() ? null : label;
+    }
+
     public static boolean rollDeathSave(CombatSession session, Combatant target, Integer providedRoll, boolean forceAuto) {
         // The shared resolver: the same "🎲 you rolled 14" / "🎲 d20 [14]" wording as every roll, and
         // Halfling Lucky applies (a death save is a saving throw, PHB p.28).
-        RollService.RollResult r = RollService.resolve(providedRoll, null, 0, "", target.rerollsNat1(), Advantage.NONE, forceAuto);
+        // Bless adds its d4 here too (#225): the bonus is only the effects' dice, as nothing else adds to it.
+        String bonus = bonusLabel(target);
+        RollService.RollResult r = RollService.resolve(providedRoll, null, 0, bonus == null ? "" : bonus, target.rerollsNat1(), Advantage.NONE, forceAuto);
         if (r == null) return false;
+        SpellEffects.useUp(target, io.papermc.jkvttplugin.effect.ActiveEffect.SAVES); // Resistance, if it was waiting
         int d20 = r.d20();
         String work = r.breakdown().replace(RollService.natCallout(d20), ""); // the banners below say it louder
 
@@ -52,7 +61,7 @@ public class DeathSaveHandler {
             // Natural 1: two failures.
             target.addDeathSaveFailure(2);
             session.broadcast(Component.text("✗ NATURAL 1 — counts as TWO failures!", NamedTextColor.DARK_RED, TextDecoration.BOLD));
-        } else if (d20 >= DEATH_SAVE_DC) {
+        } else if (r.total() >= DEATH_SAVE_DC) {
             target.addDeathSaveSuccess();
             session.broadcast(Component.text("→ SUCCESS (DC " + DEATH_SAVE_DC + ")", NamedTextColor.GREEN));
         } else {

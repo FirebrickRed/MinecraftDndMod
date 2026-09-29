@@ -180,6 +180,10 @@ public final class ContentValidator {
     private void checkSpells() {
         for (DndSpell s : SpellLoader.getAllSpells()) {
             String where = "Spell '" + s.getId() + "'";
+            // A roll bonus that applies to nothing: usually "on:" instead of "to:" (YAML reads on as true), #225.
+            if (s.hasEffect() && s.getEffect().hasRollBonus() && s.getEffect().rollBonusKinds().isEmpty()) {
+                warn(where + " effect roll_bonus has no to: [attacks, saves, checks] — it adds to nothing. (Not on:, which YAML reads as true.)");
+            }
             if (s.getMaterial() != null && !isItem(s.getMaterial())) {
                 warn(where + " material " + s.getMaterial() + " is a block, not an item — it can't render.");
             }

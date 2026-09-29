@@ -236,6 +236,45 @@ public class DndSpell {
     /** True if this spell raises the target's AC while it lasts (Shield, Shield of Faith). */
     public boolean grantsAcBonus() { return acBonus > 0; }
 
+    // ---- a timed effect on its targets (#225): Bless, Bane, Guidance ----
+    private io.papermc.jkvttplugin.effect.ActiveEffect effect; // template; copied onto each target
+    private int effectTargets = 1;
+    private int effectTargetsPerSlotLevel = 0;
+
+    public void setEffect(io.papermc.jkvttplugin.effect.ActiveEffect effect, int targets, int perSlotLevel) {
+        this.effect = effect;
+        this.effectTargets = Math.max(1, targets);
+        this.effectTargetsPerSlotLevel = Math.max(0, perSlotLevel);
+    }
+    /** True if casting this puts a timed effect on its targets (on a failed save, for a save spell like Bane). */
+    public boolean hasEffect() { return effect != null; }
+    /** The effect's template: {@code copy()} it for each target. */
+    public io.papermc.jkvttplugin.effect.ActiveEffect getEffect() { return effect; }
+    /** How many creatures it can target from a slot of {@code castLevel} (Bless: 3, one more per level above 1st). */
+    public int effectTargetsAt(int castLevel) {
+        return effectTargets + Math.max(0, castLevel - level) * effectTargetsPerSlotLevel;
+    }
+    /** The source id a spell's effect goes by on its targets: "spell:bless". */
+    public static String effectSourceId(String spellId) { return "spell:" + spellId.toLowerCase(); }
+
+    /**
+     * A duration in rounds (6 seconds each): "1 minute" and "Concentration, up to 1 minute" = 10,
+     * "10 minutes" = 100, "1 hour" = 600, "1 round" = 1. -1 when it has none (Instantaneous, Until
+     * dispelled): the effect then lasts until a rest or concentration ends it.
+     */
+    public static int durationRounds(String duration) {
+        if (duration == null) return -1;
+        java.util.regex.Matcher m = java.util.regex.Pattern.compile("(\\d+)\\s*(round|minute|hour|day)").matcher(duration.toLowerCase());
+        if (!m.find()) return -1;
+        int n = Integer.parseInt(m.group(1));
+        return switch (m.group(2)) {
+            case "round" -> n;
+            case "minute" -> n * 10;
+            case "hour" -> n * 600;
+            default -> n * 14400;
+        };
+    }
+
     /** True if this spell is a chat/social spell that opens a message prompt instead of rolling (#151). */
     public boolean isSocial() { return socialType != null && !socialType.isBlank(); }
 
