@@ -21,13 +21,18 @@ fails), copy `build/libs/*.jar` into the server's `plugins/`, restart. Load the 
 
 ---
 
-# Paper 26.2 upgrade (branch `paper-26.2`, #211)
+# Paper 26.2 upgrade (#211)
 
 Only what the upgrade changed or can plausibly break; the rest of this plan covers everything else.
-Server on **Java 25**, the jar from `jkvttplugin-paper26\build\libs\`. When these pass, the branch
-merges into main.
+The upgrade is merged: main builds for 26.2, so it's the usual jar from `build\libs\`, on a server
+running **Java 25**.
 
-- [ ] **Resource pack:** `pack.mcmeta` has `"min_format": 88, "max_format": 88`. The server prompts
+**Upload the updated pack first** (the 26.2 format changed, and every player needs it): zip it, put it
+where `resource-pack=` in `server.properties` points, and set `resource-pack-sha1` to the new zip's
+SHA-1 (`certutil -hashfile <zip> SHA1`). These rows check what players get from the server, not your
+local copy, and an old server pack loads above a local one. Steps: `docs/resource-pack.md`.
+
+- [ ] **Resource pack:** `pack.mcmeta` has `"min_format": 88, "max_format": 88`. Joining, the server prompts
       for it, and it loads without a "made for an older version" warning.
 - [ ] **Models render, none purple:** race and class tiles in `/character create`, a spawned kobold
       (its head model), and The Kindler.
