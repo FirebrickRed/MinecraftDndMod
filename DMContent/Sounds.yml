@@ -1,6 +1,6 @@
 # The table's sounds (#16). Every entry is a Minecraft sound name: a vanilla one, or one your
 # resource pack adds (put the .ogg in the pack, list it in its sounds.json, then use
-# jkvttresourcepack:<name> here). No code: change a line, /dm reload.
+# jkvttresourcepack:<name> here; step by step in docs/resource-pack.md). No code: change a line, /dm reload.
 #
 #   sound:  the sound name        volume: 1.0 is normal       pitch: 1.0 is normal (0.5 to 2)
 #

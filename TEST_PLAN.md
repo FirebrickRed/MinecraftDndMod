@@ -402,6 +402,7 @@ Play a cleric; a couple of spawned creatures stand in for allies (`/dm entity sp
 
 ## Sounds, music and spell looks (#16, #230)
 
+Test your own sounds with your local pack (F3+T reloads it), no upload needed: `docs/resource-pack.md`.
 The sounds are all in `DMContent/Sounds.yml`; the looks in `DMContent/DamageTypes.yml`. Copy both into
 the server's DMContent. Tell me which vanilla picks sound wrong, and swap in your own anytime.
 

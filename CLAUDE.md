@@ -285,7 +285,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - A model needs a **complete chain** to render: `items/<name>.json` → `models/item/<name>.json`
   → `textures/item/<name>.png`. A model with no texture shows a broken (purple) placeholder,
   which is worse than the vanilla fallback — so only reference models whose textures exist.
-- The `ResourcePack/` folder is **not** committed (gitignored); it lives locally for testing.
+- The `ResourcePack/` folder is **not** committed (gitignored); it lives locally for testing. How to add models, sounds and music to it, test it locally and share it: `docs/resource-pack.md`.
 
 ## Architecture
 
