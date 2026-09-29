@@ -9,7 +9,9 @@ fails), copy `build/libs/*.jar` into the server's `plugins/`, restart. Load the 
   the section's intro or the box above it.
 - **Part 1** is everything you can do alone, as the DM, with your own character.
 - **Part 2** needs a second account that is **not** a DM (a friend, or a second account you `/deop`).
-  Locks are here too: a DM walks through locks by design, so only a player can test them.
+  Locks are here too: a DM walks through locks by design, so only a player can test them. So is
+  anything that says **[Ask the DM]**: a DM gets [Do it anyway] or [Add it] instead, so you'd never
+  see the player's side alone. A row that needs another player, or a player who isn't a DM, goes here.
 - **Restart checks** are batched at the end of Part 1 so you restart once.
 - A section about one ticket's work names it in the heading, e.g. "Rage's advantage (#223)", so a
   failure has an obvious place to be reported. New sections get one when a ticket exists; older
@@ -113,10 +115,6 @@ Finish the combo, then look at the sheet and your inventory.
 - [ ] **Wizard in chain mail:** a weapon attack shows "↯ disadvantage" with an "Armor (you)" reminder.
 - [ ] **Wizard in chain mail:** initiative rolls with disadvantage.
 - [ ] **Wizard in chain mail:** `/combat cast` refuses.
-- [ ] `/combat add <a player>` mid-fight → the game's roll shows, and they also get the roll
-      buttons; rolling replaces the game's number, the tracker re-sorts, and the table sees
-      "rolled their own initiative".
-- [ ] Same, after their first turn → `/combat initiative` refuses (the order is settled).
 - [ ] Mid-fight, on someone's turn, `/combat initiative <someone else> set 30` → they move to the
       top, and the **current turn stays with whoever had it** (the green →).
 - [ ] `/combat attack <t> <weapon> manualRoll abc` → "'abc' isn't a number", then buttons that fill
@@ -131,9 +129,8 @@ Finish the combo, then look at the sheet and your inventory.
 - [ ] **Scoreboard, fight:** downed → red ☠ and green/red death-save dots.
 - [ ] **Scoreboard, fight:** pink ✦N while channelling a ritual.
 - [ ] **Scoreboard, fight:** two tied initiatives in turn order.
-- [ ] **Out of reach in a fight, as a player:** a sword at someone 20 ft away → **[Ask the DM]**.
-- [ ] The DM gets **[Allow]** / **[Deny]**; Allow → you get **[go again]**, and the attack goes through.
-- [ ] Same with a spell in a fight (Cure Wounds from 20 ft) → [Ask the DM], then it goes through once.
+- [ ] **Out of reach, as the DM:** your character swings at a goblin 20 ft away → **[Do it anyway]**
+      (a player gets [Ask the DM] instead: Part 2).
 - [ ] Hex at someone 120 ft away → refused for range (it wasn't checked before).
 - [ ] A Self spell that targets (e.g. one with range Self, not an area) at someone else, out of a fight →
       "only targets you" (only checked in a fight before).
@@ -190,13 +187,8 @@ Finish the combo, then look at the sheet and your inventory.
 - [ ] **Rage** now spends the bonus action: rage, then `/combat bonusAction` has nothing left.
 - [ ] **Sneak Attack with advantage** (the goblin is prone, or restrained): a rapier hit says "🗡 Sneak
       Attack: +1d6 in that damage (advantage)" and the damage prompt rolls 1d8+1d6. No DM needed.
-- [ ] **Sneak Attack without advantage**, a player's rogue: the hit gives "🗡 Sneak Attack (+1d6)? No
-      advantage, so it's the DM's call: the game sees Borin within 5 ft of them. [Ask the DM]" (or "no
-      ally next to them"). Click → the DM gets [Allow] / [Deny].
-- [ ] [Allow] before the damage is rolled → "The DM allows Sneak Attack: +1d6 in that damage" and a new
-      damage prompt for 1d8+1d6. On a crit it's +2d6.
-- [ ] [Allow] after the damage was already applied → the 1d6 is rolled and dealt on its own, shown to the table.
-- [ ] [Deny] → the player is told. A DM running a rogue gets [Add it] instead of [Ask the DM].
+- [ ] **Sneak Attack without advantage, your own rogue** (you're the DM): the hit offers **[Add it]** (a
+      player's rogue gets [Ask the DM]: Part 2). Click → +1d6 in the damage.
 - [ ] Once the Sneak Attack damage lands, a second hit that turn offers nothing. A club (not finesse) → nothing.
 - [ ] **Shield:** a Sneak Attack hit that Shield turns into a miss → the next hit that turn can still Sneak Attack.
 - [ ] **Lay on Hands:** `/combat use lay_on_hands <ally> 3` next to them → heals 3, pool 5 → 2. From 20 ft
@@ -229,10 +221,8 @@ Finish the combo, then look at the sheet and your inventory.
       [Roll their save] → "🎲 You roll for <creature>: Dexterity save, DC 13" with the three buttons.
 - [ ] **[Let it happen]** a Sacred Flame → you get **[cast it]**, not a d20 prompt (a save spell
       doesn't roll to hit).
-- [ ] `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Ask the DM]**.
-- [ ] Click it → the DM gets "📏 … out of reach (about 18 ft away …)" **[Allow]** / **[Deny]**.
-- [ ] [Allow] → you get **[cast it]**; it goes through once. Casting again from there refuses again.
-- [ ] [Deny] → "The DM says it doesn't reach".
+- [ ] `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Do it anyway]** (you're the DM;
+      a player's [Ask the DM] is in Part 2). Click → **[cast it]**, once; casting again from there refuses again.
 - [ ] **Shocking Grasp at someone 20 ft away** → refused for range straight away; the DM is **not** asked
       to start a fight first.
 - [ ] Burning Hands (or any save spell) at a creature out of combat → the DM line shows its bonus
@@ -305,16 +295,12 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 
 ## Checks: private rolls, groups, passive (#186)
 
-- [ ] A player rolls a skill from their own sheet → only they see it, with **[Show the DM]**. Click →
-      the DM gets it with [Share with players]; nobody else sees anything until then.
-- [ ] `/dm check all skill stealth dc 12` → every online character gets the prompt; you see each result as it
-      comes ("Zek — Stealth: … ✔ (1/3 in)"), then "Group Stealth: 2 of 3 succeed. The group SUCCEEDS."
-- [ ] Same with `Zek, Borin` instead of `all`; and **[Close now]** before everyone rolls → the verdict from
-      whoever did, plus "Didn't roll: …".
+(Private rolls and group checks with other players are in Part 2.)
+
 - [ ] `/dm check all passive perception dc 14` → no prompts; you see each passive score and who notices.
       On a creature (`/dm check Goblin passive perception`) too.
-- [ ] `/dm check Zek skill athletics|acrobatics dc 13` → Zek gets both prompts ("pick how you go about
-      it"); the one he rolls comes back to you, graded.
+- [ ] `/dm check <you> skill athletics|acrobatics dc 13` → you get both prompts ("pick how you go about
+      it"); the one you roll comes back graded.
 
 ## Features & Traits page (#65)
 
@@ -372,47 +358,40 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       view-only and says "after a long rest".
 - [ ] **Arcane Recovery:** wizard casts a 1st-level spell, `/dm rest <you> short` → the summary offers
       "📖 Arcane Recovery… [Recover]"; use it → a level 1 slot back. Again → "used today". In a fight → refused.
-- [ ] Restart after preparing → the same spells are still prepared.
 
 ## Bless, Bane, Guidance, Shield of Faith (#225)
 
-- [ ] In a fight, a cleric casts `/combat cast bless Zek, Borin, me` → "casts Bless on …: +1d4 to attacks and saves for
-      1 minute"; the sheet's Active Effects tile shows it on each. A 4th name → "takes up to 3 targets".
-- [ ] Blessed Zek attacks: the prompt's bonus reads `… +1d4[Bless]`, and the result shows the d4 it rolled
-      (`+3[Bless 1d4]`), even with **I rolled…**. A save and a death save get it too; a skill check doesn't.
+Play a cleric; a couple of spawned creatures stand in for allies (`/dm entity spawn town_guard`).
+
+- [ ] In a fight, `/combat cast bless me, Town Guard` → "casts Bless on …: +1d4 to attacks and saves for 1 minute";
+      your sheet's Active Effects tile shows it. Four names → "takes up to 3 targets".
+- [ ] Blessed, you attack: the prompt's bonus reads `… +1d4[Bless]`, and the result shows the d4 it rolled
+      (`+3[Bless 1d4]`). A save and a death save get it too; a skill check doesn't. The guard's attack (you roll
+      for it) shows it too.
 - [ ] `/combat cast bane Goblin, Goblin 2` → each makes a CHA save (you roll for them); the one that fails is
       "under Bane" and its next attack/save shows `-2[Bane 1d4]`.
-- [ ] The cleric casts another concentration spell, or fails a concentration save → "Bless ends on Zek, Borin…".
-- [ ] Bless runs 10 rounds and ends on its own; the cleric's ◈ goes with it.
-- [ ] Out of a fight: `/character cast guidance Borin` → Borin's next check shows `+1d4[Guidance]`, then it's gone
-      (and the cleric stops concentrating). A save in between doesn't use it.
+- [ ] Cast another concentration spell, or fail a concentration save → "Bless ends on …".
+- [ ] Bless runs 10 rounds and ends on its own; your ◈ goes with it.
+- [ ] Out of a fight: `/character cast guidance` (no name = you) → your next check shows `+1d4[Guidance]`, then it's
+      gone (and you stop concentrating). A save in between doesn't use it.
 - [ ] Cast Bless out of a fight, then Time tool **+10 min** → "Bless on … wore off". With the clock running
       and no DM move, it stays.
-- [ ] `/combat cast shield_of_faith Zek` → Zek's AC +2 (sheet and `/combat status`), and it lasts past Zek's
+- [ ] `/combat cast shield_of_faith me` → your AC +2 (sheet and `/combat status`), and it lasts past your
       next turn. On a creature, its AC goes up too.
-- [ ] Restart with Bless on someone → it's still there with its rounds; the cleric breaking concentration still ends it.
 
 ## Your own bonus die, clicking several targets, Bardic Inspiration (#225, #179, #40)
 
 - [ ] Blessed, attack with **[I rolled…]** and type `manualRoll 14 3` → the result shows `+3[Bless 1d4]` (your 3). Its
       hover says to type the d20 then the d4. `manualRoll 14` alone, or `manualRoll 14 9` → a red "Bless adds 1d4 …" /
       "9 isn't a 1d4 roll" and the buttons again; nothing rolled. `autoRoll` rolls both.
-- [ ] In a fight: spellbook → **Bless** → "left-click up to 3 targets". Click Zek → "Bless: Zek (1 of 3) [Cast on these]
-      [+ me] [cancel]"; click Zek again → he's off the list; **shift**-click Borin → straight to "[Cast it]" for Zek, Borin; click three people → "[Cast it]" fills
-      `/combat cast bless Zek, Borin, Ada`. **[+ me]** adds you. **[Cast on these]** with two works too.
-- [ ] Out of a fight, spellbook → **Guidance** → click Borin → `/character cast guidance Borin`. **Bane** (harmful)
-      out of a fight still asks for a typed name.
-- [ ] A bard: `/combat use bardic_inspiration Zek` (bonus action) → "gives Zek Bardic Inspiration: +1d6 to …", one use
-      spent. Zek is told he has it; his roll prompts don't show it.
-- [ ] Zek **misses** an attack by 3 → "Add your Bardic Inspiration (1d6) to that attack roll (12)? [Roll it] [I rolled…]
-      [Don't use it]". Roll a 4 → "adds Bardic Inspiration … → 16" then HIT and the damage prompt; a 2 → "Still a miss".
-      A hit or a natural 1 doesn't ask. `manualRoll 7` → "7 isn't a 1d6 roll" and the buttons again.
-- [ ] Zek **fails a concentration save** → the spell stays up until he answers; enough → "keeps it going after all";
-      [Don't use it] → it breaks. Same for a **death save** of 7: +3 or more → success, else the failure is marked.
-- [ ] A failed spell save or a skill check → asked; using it shows the new total and "The DM decides…". A skill check
-      rolled privately from the sheet shows the answer only to Zek.
-- [ ] Bardic Inspiration on yourself → refused; on someone 80 ft away → **[Ask the DM]**; out of uses → "No uses".
-      Out of a fight: `/character use bardic_inspiration Zek`. The Features page's tile fills it in.
+- [ ] In a fight: spellbook → **Bless** → "left-click up to 3 targets (shift-click the last)". Click a guard →
+      "Bless: Town Guard (1 of 3) [Cast on these] [+ me] [cancel]"; click it again → off the list; **[+ me]** adds you;
+      **shift**-click a second creature → straight to "[Cast it]". Clicking three fills `/combat cast bless A, B, C`.
+- [ ] Out of a fight, spellbook → **Guidance** → click a creature → `/character cast guidance <it>`. **Bane**
+      (harmful) out of a fight still asks for a typed name.
+- [ ] As a bard, Bardic Inspiration on yourself → refused; on a creature → it's added to the creature's next roll
+      (the DM rolls for it, so it isn't asked); 80 ft away → **[Do it anyway]**; out of uses → "No uses". The
+      Features page's tile fills in the command. (A player being asked after their roll is in Part 2.)
 
 ## Heavy armor and Strength (#34)
 
@@ -433,7 +412,6 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] `/dm rest <you> long` → Hit Dice back to 1/1; Second Wind back too (it used to stay spent overnight).
 - [ ] **Warlock:** cast a 1st-level spell, `/dm rest <you> short` → "Pact Magic spell slots restored", and
       the slot is back in the spellbook.
-- [ ] Restart after spending a Hit Die (before a long rest) → still 0/1.
 
 ## The Adjust menu & `/dm adjust`
 
@@ -547,6 +525,9 @@ Set these up, `/stop`, start the server, then check:
 - [ ] The current combatant can attack → damage with no errors.
 - [ ] A raging barbarian is still raging (sheet, halved slashing, red tint).
 - [ ] `/combat finished` → the combat file is gone.
+- [ ] A wizard's prepared spells (changed before) → the same after (#218).
+- [ ] A Hit Die spent before (no long rest since) → still 0/1 (#52).
+- [ ] Bless on you before → still there with its rounds left; breaking your concentration still ends it (#225).
 
 ---
 
@@ -573,6 +554,53 @@ Set these up, `/stop`, start the server, then check:
 - [ ] `/character give <them> <your character>` → **[Give …]**; click → it's theirs, your paper is gone, the gear stayed with you.
 - [ ] `/character give` while either of you is in a fight → refused.
 - [ ] `/character give <them> <their character>` → they receive the sheet paper.
+
+## In a fight, as a player
+
+- [ ] `/combat add <them>` mid-fight → the game's roll shows, and they also get the roll buttons; rolling
+      replaces the game's number, the tracker re-sorts, and the table sees "rolled their own initiative".
+- [ ] Same, after their first turn → their `/combat initiative` refuses (the order is settled).
+- [ ] **Out of reach:** they swing a sword at someone 20 ft away → **[Ask the DM]**. You get **[Allow]** /
+      **[Deny]**; Allow → they get **[go again]**, and the attack goes through.
+- [ ] Same with a spell (Cure Wounds from 20 ft) → [Ask the DM], then it goes through once.
+- [ ] **Sneak Attack without advantage**, their rogue: the hit gives "🗡 Sneak Attack (+1d6)? No advantage, so it's
+      the DM's call: the game sees <ally> within 5 ft of them. [Ask the DM]" (or "no ally next to them"). Click →
+      you get [Allow] / [Deny].
+- [ ] [Allow] before the damage is rolled → "The DM allows Sneak Attack: +1d6 in that damage" and a new damage
+      prompt for 1d8+1d6. On a crit it's +2d6.
+- [ ] [Allow] after the damage was already applied → the 1d6 is rolled and dealt on its own, shown to the table.
+- [ ] [Deny] → they're told.
+
+## Out of a fight, as a player
+
+- [ ] They `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Ask the DM]**. Click → you get
+      "📏 … out of reach (about 18 ft away …)" **[Allow]** / **[Deny]**.
+- [ ] [Allow] → they get **[cast it]**; it goes through once. Casting again from there refuses again.
+- [ ] [Deny] → "The DM says it doesn't reach".
+
+## Private rolls and group checks (#186)
+
+- [ ] They roll a skill from their own sheet → only they see it, with **[Show the DM]**. Click → you get it with
+      [Share with players]; you (and anyone else) see nothing until then.
+- [ ] `/dm check all skill stealth dc 12` → every online character gets the prompt; you see each result as it
+      comes ("<name> — Stealth: … ✔ (1/2 in)"), then "Group Stealth: … The group SUCCEEDS/FAILS."
+- [ ] Same with `<you>, <them>` instead of `all`; and **[Close now]** before they roll → the verdict from whoever
+      did, plus "Didn't roll: …".
+
+## Bardic Inspiration, from the holder's side (#40)
+
+You play a bard; they're the one inspired.
+
+- [ ] `/combat use bardic_inspiration <them>` (your bonus action) → "gives … Bardic Inspiration: +1d6 to …", one use
+      spent. They're told they have it; their roll prompts don't show it.
+- [ ] They **miss** an attack by 3 → "Add your Bardic Inspiration (1d6) to that attack roll (12)? [Roll it] [I rolled…]
+      [Don't use it]". A 4 → "adds Bardic Inspiration … → 16" then HIT and the damage prompt; a 2 → "Still a miss".
+      A hit or a natural 1 doesn't ask. `manualRoll 7` → "7 isn't a 1d6 roll" and the buttons again.
+- [ ] They **fail a concentration save** → the spell stays up until they answer; enough → "keeps it going after all";
+      [Don't use it] → it breaks. Same for a **death save** of 7: +3 or more → success, else the failure is marked.
+- [ ] A failed spell save or a skill check → asked; using it shows the new total and "The DM decides…". A skill check
+      rolled privately from their sheet shows the answer only to them.
+- [ ] Out of a fight, `/character use bardic_inspiration <them>` works too, and they're asked after their next check.
 
 ## Damage approval (they attack, you approve)
 
