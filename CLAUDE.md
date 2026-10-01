@@ -815,6 +815,12 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     A player carrying that item gets past the lock with no roll (`Obj.keyOpens`) and it **stays
     open** afterwards (a consumed key mustn't leave a lock that can never open). A trap still fires
     first. Keys are ordinary items tagged `key`; one per lock is just a uniquely named item.
+  - **Study checks (#231):** `Obj.study` (`dm/Study`): passive or rolled, up to three skills, the
+    description plus up to three DC tiers of text, remembered per **character** and repeated on later
+    clicks, optionally DM-first. Authored in `StudyDialog` (the annotate dialog's "Save + study check…");
+    the click is `StudyInteraction`, and the roll is an ordinary `/character check` that
+    `resolvePhysical` hands to `StudyInteraction.takeRoll`. The record prints to the console (#193).
+    Design: `docs/exploration-and-checks.md`.
   - **One prompt on every container (#185):** right-clicking a chest gives **[Open it]** /
     **[Ask for a check]** — the same two buttons whether or not the block is annotated, because a
     prompt that only appeared on annotated blocks would itself be the tell, and a menu naming

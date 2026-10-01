@@ -175,7 +175,7 @@ public final class ObjectInteraction {
      * codebase, and non-damage traps (a cage drops, an alarm sounds) have no automatic form at all.
      * Auto-applying damage on a failed save is tracked separately.
      */
-    private static void springTrap(Player player, Block block, InteractiveObjectManager.Obj o) {
+    static void springTrap(Player player, Block block, InteractiveObjectManager.Obj o) {
         o.disarmed = true;
         InteractiveObjectManager.save();
 

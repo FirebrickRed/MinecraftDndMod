@@ -57,6 +57,8 @@ public final class InteractiveObjectManager {
         // key must not leave a lock that can never open again.
         public String keyItem = "";
         public boolean keySingleUse;
+        // Study check (#231): tiered lore text, remembered per character. Off unless the DM sets one.
+        public Study study = new Study();
 
         /** True when a player poking this block springs the trap (trapped and not yet disarmed). */
         public boolean hasArmedTrap() {
@@ -215,6 +217,8 @@ public final class InteractiveObjectManager {
             yaml.set(path + ".loot", e.getValue().loot);
             yaml.set(path + ".keyItem", e.getValue().keyItem);
             yaml.set(path + ".keySingleUse", e.getValue().keySingleUse);
+            Study study = e.getValue().study;
+            if (study.mode != Study.Mode.OFF || !study.results.isEmpty()) study.save(yaml.createSection(path + ".study"));
         }
         try {
             file.getParentFile().mkdirs();
@@ -248,6 +252,7 @@ public final class InteractiveObjectManager {
             o.loot = new java.util.ArrayList<>(yaml.getStringList(path + ".loot"));
             o.keyItem = yaml.getString(path + ".keyItem", "");
             o.keySingleUse = yaml.getBoolean(path + ".keySingleUse", false);
+            o.study = Study.load(yaml.getConfigurationSection(path + ".study"));
             objects.put(rawKey, o);
         }
         LOGGER.info("Loaded " + objects.size() + " interactive objects.");

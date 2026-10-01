@@ -96,7 +96,15 @@ public final class ObjectDialog {
                 .action(DialogAction.customClick((view, audience) -> {
                     if (audience instanceof Player p) save(p, at, name, view);
                 }, ONCE)).build();
-        ActionButton clear = ActionButton.builder(Component.text("Clear annotation", NamedTextColor.RED))
+        // Its own form: the annotate form is already long, and a study check has six fields of its own.
+        ActionButton study = ActionButton.builder(Component.text("Save + study check…", NamedTextColor.AQUA))
+                .tooltip(Component.text("Save this form, then set what players learn by studying the " + name + " (#231)"))
+                .action(DialogAction.customClick((view, audience) -> {
+                    if (!(audience instanceof Player p)) return;
+                    save(p, at, name, view);
+                    StudyDialog.open(p, at, name);
+                }, ONCE)).build();
+        ActionButton clear =ActionButton.builder(Component.text("Clear annotation", NamedTextColor.RED))
                 .tooltip(Component.text("Remove everything: it becomes a plain " + name + " again"))
                 .action(DialogAction.customClick((view, audience) -> {
                     if (!(audience instanceof Player p)) return;
@@ -126,7 +134,7 @@ public final class ObjectDialog {
                         .canCloseWithEscape(true)
                         .afterAction(DialogBase.DialogAfterAction.CLOSE)
                         .build())
-                .type(DialogType.multiAction(List.of(save, clear)).columns(2).build()));
+                .type(DialogType.multiAction(List.of(save, study, clear)).columns(2).build()));
         dm.showDialog(dialog);
     }
 
@@ -202,6 +210,7 @@ public final class ObjectDialog {
         }
         if (!o.loot.isEmpty()) parts.add(o.loot.size() + " loot");
         if (!o.description.isEmpty()) parts.add("described");
+        if (o.study.active()) parts.add(o.study.summary());
         return String.join(", ", parts);
     }
 

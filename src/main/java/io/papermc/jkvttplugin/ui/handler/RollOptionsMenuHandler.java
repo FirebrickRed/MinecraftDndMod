@@ -126,6 +126,9 @@ public class RollOptionsMenuHandler {
         // Guidance on a check, Resistance on a save: once, and this roll was it (#225).
         io.papermc.jkvttplugin.combat.SpellEffects.useUp(character, "SAVE".equals(type)
                 ? io.papermc.jkvttplugin.effect.ActiveEffect.SAVES : io.papermc.jkvttplugin.effect.ActiveEffect.CHECKS);
+        // Studying an annotated block (#231): the result is the block's text, not a private roll report.
+        // A check the DM called comes first.
+        if (pending == null && io.papermc.jkvttplugin.dm.StudyInteraction.takeRoll(character, type, value, r, roll)) return true;
         if (pending != null) {
             io.papermc.jkvttplugin.dm.CheckManager.takePending(character.getPlayerId());
             if (pending.contestId() != null) {

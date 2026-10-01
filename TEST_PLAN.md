@@ -573,6 +573,10 @@ buttons. Try both; whichever you like less gets removed.
 - [ ] The buttons read short ("Opening: Locked", "Key: Brass Key", "Trap save: Dexterity"); clicking
       one cycles it. What Opening and Key mean is in the text at the top.
 - [ ] The Trap DC slider goes to 40.
+- [ ] The dialog has **Save + study check…** → it saves, then opens the Study form for the same block. (#231)
+- [ ] Study form: a Skill button cycles through the 18 skills (with their ability), then the six ability
+      checks; shift-click goes back. Save → "Saved the Enchanting Table: study: rolled History or Arcana,
+      DC 10/15/20". Leave a tier's text blank → that tier is gone. (#231)
 
 ## Other DM commands
 
@@ -726,6 +730,28 @@ You play a bard; they're the one inspired.
 - [ ] They keep the key, and the chest stays open for everyone.
 - [ ] `key iron_key single-use` → the key is used up.
 - [ ] A trapped, keyed chest → the trap still springs first.
+
+## Study checks (#231)
+
+Set up an enchanting table: a description, **Rolled**, History or Arcana, three tiers with text (DC 10/15/20).
+
+- [ ] They right-click it → the description, "📖 Study the Enchanting Table, with one of:" and a roll line per
+      skill. The enchanting screen doesn't open, and you get no ping. (#231)
+- [ ] [Roll it] on History → "📖 History: 17 (…)" and a ✦ line per tier cleared. The server console shows
+      `Study: <character> (<player>) · Enchanting Table … History 17 (game rolled) … → tier 2/3`. (#231)
+- [ ] Click it again → "You've studied this already (History 17)." and the same lines, no roll. (#231)
+- [ ] Another of their characters → their own roll. (#231)
+- [ ] [I rolled…] → the console says `typed d20`; [My total…] → `typed total`. (#231)
+- [ ] Below DC 10 → "You learn nothing more than what you see." (#231)
+- [ ] With the study prompt up, roll a different skill from the sheet → a normal private roll; the study
+      still waits for its own. (#231)
+- [ ] Switch it to **Passive** and "Forget who has studied it" → they click: no buttons, the lines their passive
+      clears just appear. The console logs it once, not on every click. (#231)
+- [ ] Back to Rolled, **Send the result to me first** on, forgotten → they roll and see "The DM will tell you
+      what you learn."; you get the result (hover it for the lines) with [Tell them] / [Just the basics].
+      [Tell them] → they get the lines, and clicking again later repeats them. (#231)
+- [ ] Same, but ignore the ping and restart the server; they click again → you're asked again. (#231)
+- [ ] Add an armed trap to it → their click springs the trap instead. (#231)
 
 ## Death, from the player's side
 

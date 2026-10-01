@@ -98,6 +98,30 @@ button, held-check `active`/`clear`, and **contested** (`/dm check <A> <skillA> 
 player-vs-player). **Next:** contested with an NPC side (DM rolls for it), the responder-picks-approach
 menu, and multi-target/`all`.
 
+## Study checks: checks the DM doesn't have to call (#231)
+
+The exception to "DM-first": a block the DM has prepared lore on (a library shelf, an enchanting
+table, a mural). The DM writes it once, in the annotate dialog's **Save + study check…** form, and
+players read it without pinging anyone.
+
+- **The description is the base line** everyone gets by looking. Up to **three DC tiers** each add a
+  line on top when cleared.
+- **Passive** (10 + their best bonus, no button, nothing gives away that there was a check) or
+  **Rolled** (the usual roll buttons, one line per allowed skill; up to three skills or ability checks).
+- **Remembered per character** (`Study.results`, by character id) and repeated on every later click:
+  no reroll when nothing has changed. A passive result is re-read live, so a better bonus shows more.
+  "Forget who has studied it" in the form resets it.
+- **Private:** only that character sees the text. Telling the table, or not, is up to them.
+- **"Send the result to me first"** per block: the roll is saved, the text waits for the DM's
+  [Tell them] / [Just the basics].
+- **The record** (who, which skill, the total, game-rolled / typed d20 / typed total, which tier) goes to
+  the server console for now (#193), later to `/dm object info`.
+- The roll is an ordinary `/character check`, so penalties, Guidance and Lucky apply;
+  `RollOptionsMenuHandler.resolvePhysical` hands it to `StudyInteraction.takeRoll`. A check the DM
+  called at the same time comes first.
+
+Follow-ups: party/group checks (#232, needs a party roster, #42) and one annotation over many blocks (#233).
+
 ## DM-mode active-check log
 
 In DM mode, when the DM right-clicks (to view) — or passively — the DM sees players' **active check

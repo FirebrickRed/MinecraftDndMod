@@ -276,6 +276,7 @@ public class ObjectCommand implements CommandExecutor, TabCompleter {
         String loot = o.loot.isEmpty() ? "" : ("loot[" + String.join(", ", o.loot) + "] ");
         String key = o.hasKey() ? ("key[" + o.keyItem + (o.keySingleUse ? ", single-use" : "") + "] ") : "";
         String s = (openingLabel(o.opening) + (o.hidden ? "hidden " : "") + trap + key + loot
+                + (o.study.active() ? "[" + o.study.summary() + "] " : "")
                 + (o.description.isEmpty() ? "" : "\"" + o.description + "\"")).trim();
         return s.isEmpty() ? "annotated" : s;
     }

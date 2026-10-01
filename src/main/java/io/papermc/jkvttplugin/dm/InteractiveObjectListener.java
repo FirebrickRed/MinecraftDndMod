@@ -43,6 +43,20 @@ public class InteractiveObjectListener implements Listener {
         // haven't found, not even by blundering into its trap. The DM reveals it first.
         if (o != null && o.hidden) return;
 
+        // A study check (#231) is the interaction: an enchanting table's or lectern's own screen
+        // doesn't open. A trap on it still goes off first. A container studies, then gives its usual prompt.
+        if (o != null && o.study.active()) {
+            event.setCancelled(true);
+            boolean container = ObjectInteraction.isContainer(block);
+            if (o.hasArmedTrap() && !container) {
+                ObjectInteraction.springTrap(player, block, o);
+                return;
+            }
+            StudyInteraction.interact(player, block, o, !container);
+            if (container) ObjectInteraction.prompt(player, block);
+            return;
+        }
+
         // Normally every container prompts, annotated or not, so the prompt itself gives nothing
         // away. Resolution moves into ObjectInteraction once the player picks.
         if (ObjectInteraction.shouldPrompt(block, o)) {
