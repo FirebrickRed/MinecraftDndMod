@@ -65,17 +65,8 @@ rows (`/dm entity spawn alira "The Kindler"`).
 
 ## Fighter
 
-- [X] Creation: a Fighting Style pick; no second chain mail or shield in your inventory.
-- [X] Creation: hover a Fighting Style → "✦ Archery: +2 to hit (ranged)" and so on.
-- [X] **"Any Martial Weapon + Any Martial Weapon":** the list says "Pick 1 of 2", pick a longsword →
-      it stays open saying "Pick 2 of 2 … (so far: Longsword + Any Martial Weapon)", pick a warhammer →
-      the tile reads "✔ Longsword + Warhammer", and you get both.
-- [X] Same, pick one then press Back → the tile says "So far: Longsword + …" and Finish still wants it;
-      click it → you carry on with the second pick.
-- [X] The sheet's HP tile says "Hit Dice: 1/1 (1d10)". (#52)
 - [ ] Features & Traits: click **Second Wind** out of a fight → fills `/character use second_wind`. Passive tiles
       (Sneak Attack, Archery) aren't clickable. ← goes back to the sheet. (#65)
-- [X] **Archery** fighter, longbow: the to-hit breakdown ends with `+2[Archery]`; a sword attack doesn't. (#229)
 - [ ] Creation: the Fighting Style tiles are just the name ("Archery", "Great Weapon Fighting"); hover →
       what it does and the ✦ effect line, wrapped. Protection reads the same way. (#229)
 - [ ] **Weapon switch:** start your turn holding a longsword, scroll to a handaxe and back a few times →
@@ -203,9 +194,6 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 
 **Chain mail** (put it on for these, take it off after)
 
-- [X] A weapon attack shows "↯ disadvantage" with an "Armor (you)" reminder.
-- [X] Initiative rolls with disadvantage.
-- [X] `/combat cast` refuses.
 - [ ] `/combat add <you>` before initiative → above the roll buttons, "↯ You have disadvantage on initiative."
       and "• Armor (you): disadvantage, …". Same when added mid-fight.
 - [ ] `/combat rollforinitiative` → your line shows disadvantage.
@@ -349,8 +337,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] With Sacred Flame + Wisdom → `/combat cast sacred_flame <target>` uses WIS for the DC.
 
 **Darkvision** (a dwarf, elf or tiefling, and a human) (#148)
-- [X] Make a dwarf/elf/tiefling active → night vision (no icon, no swirl); a cave at night is lit. Switch to
-      a human → it goes. Rejoin and die/respawn → it comes back for the dwarf.
 - [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
 - [ ] As the dwarf, walk into a dark cave (or stand outside at night): after ~3 s the world beyond ~2 chunks
       fogs out. Step into torchlight or daylight → full view distance comes straight back. A human in the same
@@ -372,37 +358,16 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 # Any character
 
-## Creation
-
-- [X] Item tooltips (a weapon, a potion) and condition hovers wrap at the same width as spells.
-
 ## Combat
 
-- [X] **One prompt per click (#167):** on your turn, left-click a kobold directly → exactly **one** attack
-      prompt. Then aim at it from a few blocks away and left-click the air → one prompt. With a bow,
-      left-click at a distant one → one prompt.
-- [X] Same, after a hit: exactly one damage prompt (to you, and one to the DM). Applying it twice →
-      the second says "No attack hit to apply damage for".
 - [ ] Mid-fight, on someone's turn, `/combat initiative <someone else> set 30` → they move to the
       top, and the **current turn stays with whoever had it** (the green →).
-- [X] `/combat attack <t> <weapon> manualRoll abc` → "'abc' isn't a number", then buttons that fill
-      `/combat attack <t> <weapon> manualRoll ` (no `abc` left in it).
-- [X] `/combat heal <t> autoRoll 2d4` → the dice show.
 - [ ] A healing potion with auto-roll → the dice show.
-- [X] **Scoreboard:** players' HP green / yellow / red below ½ and ¼.
-- [X] **Scoreboard:** temp HP shows as `+N` in aqua.
 - [ ] **Scoreboard:** **[S]** on someone surprised.
-- [X] **Scoreboard:** downed → red ☠ and green/red death-save dots.
-- [X] **Scoreboard:** pink ✦N while channelling a ritual.
 - [ ] **Scoreboard:** two tied initiatives in turn order.
-- [X] **Out of reach, as the DM:** your character swings at a goblin 20 ft away → **[Do it anyway]**
-      (a player gets [Ask the DM] instead: Part 2).
 
 ## Help, Hide and Search in a fight (#176)
 
-- [X] `/combat action help` → a row of your allies; pick one → the table sees "🤝 … helps …". Their next attack
-      shows "↑ advantage" with "Helped by …"; the attack after that doesn't. A sheet check instead of an
-      attack also takes the advantage ("↑ Advantage: helped by …").
 - [ ] Unused, the Help is gone once the helper's next turn starts.
 - [ ] `/combat action hide` → the three buttons (Stealth). Rolled → you see your total; the table sees
       "tries to Hide"; the DM sees it against each enemy's passive Perception with [Hidden] / [Not hidden].
@@ -428,9 +393,6 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Type a roll command with no roll words (physical-dice mode): `/combat attack <t> <weapon>`,
       `/combat save`, `/combat concentration`, `/character loot investigation` → the three buttons
       on that same command, not "type 'manualRoll <n>'".
-- [X] Downed → the player gets **💀 Roll your death save** with [Roll it] [I rolled…]; the result
-      reads `… makes a death saving throw: 🎲 you rolled 14` → SUCCESS.
-- [X] `/combat rollforinitiative` (DM) → each line `🎲 d20 [14] +2[DEX] = 16`.
 - [ ] Opportunity attack buttons → pick the attack, Enter, then the three roll buttons.
 - [ ] Nowhere shows two dice icons (`🎲 … 🎲`), e.g. a shared check result or a loot roll.
 - [ ] Every roll button, **[Roll it]** included, only fills chat; nothing rolls until you press Enter.
