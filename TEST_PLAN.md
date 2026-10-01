@@ -527,6 +527,16 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 ## Entities & shops
 
+**Mannequin trial** (look-only, nothing to click; `/dm entity mannequin clear` tidies up). For the pack
+skin row, load the local `ResourcePack\jkvttresourcepack` (it has a placeholder `entity/npc/balin.png`):
+- [ ] `/dm entity mannequin balin_blacksmith` → a player-shaped Balin on the block you look at, facing
+      you: "Balin" with "Humanoid (dwarf)" under it, a warhammer in hand, the default skin. (#211)
+- [ ] Add `minecraft:entity/player/wide/kai` → Kai's skin: a texture key works as a skin. (#211)
+- [ ] `jkvttresourcepack:entity/npc/balin` → Efe's skin, from **our pack**: no account needed. (#211)
+- [ ] `jkvttresourcepack:entity/npc/nope` → a purple-and-black skin (missing texture), no crash. (#211)
+- [ ] `… minecraft:entity/player/slim/alex slim` → thin arms. Try a punch, a push, walking into it:
+      it doesn't move or take damage. Restart → it's gone. (#211)
+
 - [ ] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
 - [ ] Looking at a creature, right-click your spellcasting focus → the spellbook opens.
 - [ ] Right-clicking a **dead** creature with the sheet in hand → still loots (the body wins).

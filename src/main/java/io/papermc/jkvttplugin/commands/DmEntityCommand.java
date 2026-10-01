@@ -87,6 +87,7 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             case "trade" -> handleTrade(sender, args);
             case "shop" -> handleShop(sender, args);
             case "spawngroup" -> handleSpawnGroup(sender, args);
+            case "mannequin" -> io.papermc.jkvttplugin.dm.MannequinSpike.handle(sender, args);
             default -> sendHelp(sender);
         }
 
@@ -1682,10 +1683,12 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
 
         if (args.length == 1) {
             // Subcommands
-            return List.of("spawn", "list", "remove", "rename", "revive", "teleport", "info", "trade", "shop", "spawngroup").stream()
+            return List.of("spawn", "list", "remove", "rename", "revive", "teleport", "info", "trade", "shop", "spawngroup", "mannequin").stream()
                     .filter(s -> s.startsWith(args[0].toLowerCase()))
                     .collect(Collectors.toList());
         }
+
+        if (args.length >= 2 && args[0].equalsIgnoreCase("mannequin")) return io.papermc.jkvttplugin.dm.MannequinSpike.tab(args);
 
         if (args.length == 2) {
             switch (args[0].toLowerCase()) {

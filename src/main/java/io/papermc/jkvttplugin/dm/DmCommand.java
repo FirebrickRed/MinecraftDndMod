@@ -313,7 +313,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
                     .append(Component.text("  - DM-only notes", NamedTextColor.GRAY)));
             sender.sendMessage(Component.text("/dm revive <character|creature> [hp]", NamedTextColor.AQUA)
                     .append(Component.text("  - the only way back from death", NamedTextColor.GRAY)));
-            sender.sendMessage(Component.text("/dm entity <spawn|list|remove|rename|revive|teleport|info|trade|shop>", NamedTextColor.AQUA));
+            sender.sendMessage(Component.text("/dm entity <spawn|list|remove|rename|revive|teleport|info|trade|shop|mannequin>", NamedTextColor.AQUA));
             sender.sendMessage(Component.text("/dm rest <character|all> <short|long> [time passed]", NamedTextColor.AQUA)
                     .append(Component.text("  - run it when the rest is over", NamedTextColor.GRAY)));
             sender.sendMessage(Component.text("/dm time [add <duration> | stop | start]", NamedTextColor.AQUA)

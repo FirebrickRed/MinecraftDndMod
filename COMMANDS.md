@@ -134,6 +134,7 @@ the same way until their first turn.
 |---|---|
 | `spawn <entityId> [name] [x y z]` | Spawn an entity (from `DMContent/Entities/`), optionally named / placed. Also the DM-mode **Spawn Entity** tool |
 | `spawngroup <groupId>` | ⚠️ **Not implemented** — prints a notice (#79) |
+| `mannequin <entityId> [skin] [slim]` · `mannequin clear` | ⚠️ **Trial (#211)**: a look-only Mannequin of the creature in front of you, with its name, size and weapon. `skin` is a texture key (`minecraft:entity/player/wide/kai`, or one from our pack). No stats, no clicks; gone on restart. `clear` removes them |
 | `list` | List spawned entities with their coordinates and world (flagged when it isn't yours) |
 | `remove <name>` · `remove all\|dead` · `remove type <creature_type>` · `remove radius <blocks>` | Despawn one or many entities. A name with spaces works quoted or not (`remove "The Kindler"`); several one-word names can go in one line (`remove wolf guard`) |
 | `rename <current> <new>` | Rename a spawned entity, keeping its HP, shop stock and loot. Quote names with spaces — an ambiguous unquoted split is refused, not guessed |
