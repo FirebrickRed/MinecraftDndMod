@@ -65,17 +65,29 @@ rows (`/dm entity spawn alira "The Kindler"`).
 
 ## Fighter
 
-- [ ] Creation: a Fighting Style pick; no second chain mail or shield in your inventory.
-- [ ] Creation: hover a Fighting Style → "✦ Archery: +2 to hit (ranged)" and so on.
-- [ ] **"Any Martial Weapon + Any Martial Weapon":** the list says "Pick 1 of 2", pick a longsword →
+- [X] Creation: a Fighting Style pick; no second chain mail or shield in your inventory.
+- [X] Creation: hover a Fighting Style → "✦ Archery: +2 to hit (ranged)" and so on.
+- [X] **"Any Martial Weapon + Any Martial Weapon":** the list says "Pick 1 of 2", pick a longsword →
       it stays open saying "Pick 2 of 2 … (so far: Longsword + Any Martial Weapon)", pick a warhammer →
       the tile reads "✔ Longsword + Warhammer", and you get both.
-- [ ] Same, pick one then press Back → the tile says "So far: Longsword + …" and Finish still wants it;
+- [X] Same, pick one then press Back → the tile says "So far: Longsword + …" and Finish still wants it;
       click it → you carry on with the second pick.
-- [ ] The sheet's HP tile says "Hit Dice: 1/1 (1d10)". (#52)
+- [X] The sheet's HP tile says "Hit Dice: 1/1 (1d10)". (#52)
 - [ ] Features & Traits: click **Second Wind** out of a fight → fills `/character use second_wind`. Passive tiles
       (Sneak Attack, Archery) aren't clickable. ← goes back to the sheet. (#65)
-- [ ] **Archery** fighter, longbow: the to-hit breakdown ends with `+2[Archery]`; a sword attack doesn't. (#229)
+- [X] **Archery** fighter, longbow: the to-hit breakdown ends with `+2[Archery]`; a sword attack doesn't. (#229)
+- [ ] Creation: the Fighting Style tiles are just the name ("Archery", "Great Weapon Fighting"); hover →
+      what it does and the ✦ effect line, wrapped. Protection reads the same way. (#229)
+- [ ] **Weapon switch:** start your turn holding a longsword, scroll to a handaxe and back a few times →
+      nothing in chat, just a grey action-bar line. Attacking with the longsword rolls as normal. (#190)
+- [ ] Scroll to the handaxe and left-click a kobold → no roll buttons, but "⚠ You started your turn holding
+      Longsword. Switching to Handaxe uses your free object interaction. [Yes, I'm switching] [Ask the DM]".
+      [Yes] → the roll buttons; another handaxe attack this turn doesn't ask. (#190)
+- [ ] Then try a third weapon → "another switch takes your Action…" with only [Ask the DM]; your [Allow] →
+      roll buttons, your [Deny] → "attack with Handaxe this turn". (#190)
+- [ ] Holding the longsword, type `/combat attack <kobold> handaxe autoRoll` → the same question, nothing
+      rolled. Next turn starts fresh. (#190)
+- [ ] Longsword + a dagger in the off hand at the start of the turn: the dagger's bonus attack doesn't ask. (#190)
 - [ ] **Defense** fighter: AC goes up by 1 when you put on chain mail (and not unarmored). (#229)
 - [ ] **Dueling** fighter, longsword + shield: damage breakdown has `+2[Dueling]`. A second weapon in the
       off hand → no Dueling. (#229)
@@ -337,7 +349,7 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] With Sacred Flame + Wisdom → `/combat cast sacred_flame <target>` uses WIS for the DC.
 
 **Darkvision** (a dwarf, elf or tiefling, and a human) (#148)
-- [ ] Make a dwarf/elf/tiefling active → night vision (no icon, no swirl); a cave at night is lit. Switch to
+- [X] Make a dwarf/elf/tiefling active → night vision (no icon, no swirl); a cave at night is lit. Switch to
       a human → it goes. Rejoin and die/respawn → it comes back for the dwarf.
 - [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
 - [ ] As the dwarf, walk into a dark cave (or stand outside at night): after ~3 s the world beyond ~2 chunks
@@ -362,14 +374,14 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 ## Creation
 
-- [ ] Item tooltips (a weapon, a potion) and condition hovers wrap at the same width as spells.
+- [X] Item tooltips (a weapon, a potion) and condition hovers wrap at the same width as spells.
 
 ## Combat
 
-- [ ] **One prompt per click (#167):** on your turn, left-click a kobold directly → exactly **one** attack
+- [X] **One prompt per click (#167):** on your turn, left-click a kobold directly → exactly **one** attack
       prompt. Then aim at it from a few blocks away and left-click the air → one prompt. With a bow,
       left-click at a distant one → one prompt.
-- [ ] Same, after a hit: exactly one damage prompt (to you, and one to the DM). Applying it twice →
+- [X] Same, after a hit: exactly one damage prompt (to you, and one to the DM). Applying it twice →
       the second says "No attack hit to apply damage for".
 - [ ] Mid-fight, on someone's turn, `/combat initiative <someone else> set 30` → they move to the
       top, and the **current turn stays with whoever had it** (the green →).
@@ -388,7 +400,7 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 ## Help, Hide and Search in a fight (#176)
 
-- [ ] `/combat action help` → a row of your allies; pick one → the table sees "🤝 … helps …". Their next attack
+- [X] `/combat action help` → a row of your allies; pick one → the table sees "🤝 … helps …". Their next attack
       shows "↑ advantage" with "Helped by …"; the attack after that doesn't. A sheet check instead of an
       attack also takes the advantage ("↑ Advantage: helped by …").
 - [ ] Unused, the Help is gone once the helper's next turn starts.
@@ -441,6 +453,8 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Character sheet → **Features & Traits** (nether star, slot 9). Top row: your race's traits, darkvision
       and speeds; your class's features up to your level with their text (a fighter: Fighting Style, Second
       Wind); your subclass's, names in proper case; "Your picks" (fighting style, dragon ancestor…).
+- [ ] The paper above the list reads **Your features**, with "Below: what you can use…" wrapped underneath
+      instead of one long name. (#65)
 
 ## Death
 
@@ -670,6 +684,8 @@ Set these up, `/stop`, start the server, then check:
       "📏 … out of reach (about 18 ft away …)" **[Allow]** / **[Deny]**.
 - [ ] [Allow] → they get **[cast it]**; it goes through once. Casting again from there refuses again.
 - [ ] [Deny] → "The DM says it doesn't reach".
+- [ ] Out of a fight, they left-click The Kindler with a **shortbow**, then a **light crossbow** → you get
+      the same [Start combat] / [Deny] question a sword gets. Before, nothing happened. (#152)
 
 ## Private rolls and group checks (#186)
 

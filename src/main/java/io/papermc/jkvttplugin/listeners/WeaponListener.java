@@ -61,11 +61,12 @@ public class WeaponListener implements Listener {
 
         // Out of a fight: a swing at a creature asks the DM (#152). This has to come from the swing,
         // because spawned creatures are invulnerable stands and a survival player's hit on one never
-        // raises a damage event, so onLeftClickEntity alone never saw it.
+        // raises a damage event, so onLeftClickEntity alone never saw it. A bow or crossbow too, out to
+        // its range: it used to be melee only, so aiming one at a creature out of a fight did nothing.
         if (CombatSession.getSessionForPlayer(player.getUniqueId()) == null) {
             String weaponId = ItemUtil.getItemId(player.getInventory().getItemInMainHand());
             DndWeapon weapon = weaponId != null ? WeaponLoader.getWeapon(weaponId) : null;
-            if (weapon != null && !weapon.isRanged()) {
+            if (weapon != null) {
                 Entity hit = traceEntity(player, rangeBlocks(weapon), null);
                 if (hit != null) outOfCombatSwing(player, hit);
             }
@@ -323,6 +324,10 @@ public class WeaponListener implements Listener {
         for (String note : ctx.attacker.attackReminders(target)) {
             player.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));
         }
+
+        // A different weapon than they started the turn with: settle the switch before any roll is offered.
+        if (!io.papermc.jkvttplugin.combat.WeaponSwitch.allow(player, ctx.attacker, ctx.weaponId, base,
+                io.papermc.jkvttplugin.combat.RollPrompt.d20(adv), modShown)) return;
 
         player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("⚔ Attack " + targetName + " with " + ctx.weapon.getName() + ":",
                 NamedTextColor.GOLD, base, io.papermc.jkvttplugin.combat.RollPrompt.d20(adv), modShown));

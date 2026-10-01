@@ -2151,6 +2151,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // What pays for this attack (AttackCost): a character's is worked out, a creature's is its Action.
         AttackCost.Decision cost = null;
         if (!showMods && attacker.isPlayer()) {
+            // A weapon they didn't start the turn holding: settle the switch first, nothing rolled (#190).
+            DndWeapon used = AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName);
+            if (used != null && attacker.getCharacterSheet() != null) {
+                String retry = RollPrompt.lastCommand(player);
+                if (!WeaponSwitch.allow(player, attacker, used.getId(),
+                        (retry != null ? retry : "/combat attack " + target.getDisplayName() + " " + used.getId()) + " ",
+                        RollPrompt.d20(attacker.attackAdvantageAgainst(target)),
+                        AttackHandler.buildPlayerModBreakdown(attacker.getCharacterSheet(), used))) return;
+            }
             cost = AttackCost.decide(attacker.getCharacterSheet(),
                     AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName),
                     heldWeapon(player, true), heldWeapon(player, false),

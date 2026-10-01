@@ -821,7 +821,8 @@ public class CharacterCreationMenu {
                 for (var f : g.features()) {
                     if (!f.hasApply()) continue;
                     for (String line : f.getApplyTemplate().describe())
-                        out.add(Component.text("✦ " + f.getName() + ": " + line, NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
+                        for (String l : Util.wrapText("✦ " + f.getName() + ": " + line))
+                            out.add(Component.text(l, NamedTextColor.AQUA).decoration(TextDecoration.ITALIC, false));
                 }
             }
             break;

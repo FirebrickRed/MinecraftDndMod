@@ -44,8 +44,9 @@ public class TurnState {
 
     // Gear the combatant started the turn with, and which reminders we've already given (#190).
     private String turnStartWeaponId;
+    private String turnStartOffhandWeaponId;
+    private String switchedToWeaponId; // a switch already settled this turn: confirmed, or the DM allowed it
     private boolean objectInteractionUsed;
-    private boolean secondSwapWarned;
     private boolean shieldChangeWarned;
 
     public TurnState(int speed, Location startLocation) {
@@ -83,9 +84,10 @@ public class TurnState {
     // ==================== GEAR CHANGES (#190) ====================
 
     /**
-     * The weapon in hand when this turn began. Drawing or stowing a weapon is your one free object
-     * interaction per turn, and strapping on a shield costs an Action — but tables hand-wave both
-     * constantly, so we only ever remind. Nothing here is enforced or auto-consumed.
+     * The weapons in hand when this turn began. Attacking with any other weapon is a switch, and
+     * {@link WeaponSwitch} settles what it costs before the roll: drawing or stowing a weapon is your
+     * one free object interaction per turn, a second one takes your Action. Strapping on a shield costs
+     * an Action, and that one is only ever a reminder.
      */
     public String getTurnStartWeaponId() { return turnStartWeaponId; }
     public void setTurnStartWeaponId(String weaponId) { this.turnStartWeaponId = weaponId; }
@@ -93,8 +95,11 @@ public class TurnState {
     public boolean isObjectInteractionUsed() { return objectInteractionUsed; }
     public void markObjectInteractionUsed() { this.objectInteractionUsed = true; }
 
-    public boolean isSecondSwapWarned() { return secondSwapWarned; }
-    public void markSecondSwapWarned() { this.secondSwapWarned = true; }
+    public String getTurnStartOffhandWeaponId() { return turnStartOffhandWeaponId; }
+    public void setTurnStartOffhandWeaponId(String weaponId) { this.turnStartOffhandWeaponId = weaponId; }
+
+    public String getSwitchedToWeaponId() { return switchedToWeaponId; }
+    public void setSwitchedToWeaponId(String weaponId) { this.switchedToWeaponId = weaponId; }
 
     public boolean isShieldChangeWarned() { return shieldChangeWarned; }
     public void markShieldChangeWarned() { this.shieldChangeWarned = true; }

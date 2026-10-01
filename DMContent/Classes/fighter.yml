@@ -159,29 +159,35 @@ player_choices:
     # Each style grants a passive feature (#229). The paladin and ranger pick from the same list at
     # level 2, so copy an option's grants there when level-up lands.
     options:
-      - label: "Archery: +2 to attack rolls with ranged weapons"
+      - label: Archery
+        description: "+2 to attack rolls with ranged weapons."
         grants:
           features:
             - { id: archery, name: Archery, activation: passive,
                 apply: { effects: { attack_bonus: { amount: 2, when: ranged } } } }
-      - label: "Defense: +1 AC while wearing armor"
+      - label: Defense
+        description: "+1 AC while you are wearing armor."
         grants:
           features:
             - { id: defense, name: Defense, activation: passive,
                 apply: { effects: { ac_bonus: { amount: 1, requires: [armor] } } } }
-      - label: "Dueling: +2 damage with a melee weapon in one hand and no other weapon"
+      - label: Dueling
+        description: "+2 damage with a melee weapon held in one hand, when you hold no other weapon."
         grants:
           features:
             - { id: dueling, name: Dueling, activation: passive,
                 apply: { effects: { bonus_damage: { amount: 2, when: melee_one_handed } } } }
-      - label: "Great Weapon Fighting: reroll 1s and 2s on damage dice with a two-handed or versatile melee weapon"
+      - label: Great Weapon Fighting
+        description: "Reroll 1s and 2s on the damage dice of a two-handed or versatile melee weapon held in two hands."
         grants:
           features:
             - { id: great_weapon_fighting, name: Great Weapon Fighting, activation: passive,
                 apply: { effects: { reroll_low_damage: true } } }
       # A reaction the game doesn't run yet: say it at the table and the DM applies the disadvantage.
-      - "Protection: impose disadvantage on an attack against an ally within 5 feet (reaction, needs a shield; the DM applies it)"
-      - label: "Two-Weapon Fighting: add your ability modifier to the off-hand attack's damage"
+      - label: Protection
+        description: "With a shield, use your reaction to give disadvantage to an attack against an ally within 5 feet of you. Say it at the table: the DM applies it."
+      - label: Two-Weapon Fighting
+        description: "Add your ability modifier to the damage of your off-hand attack."
         grants:
           features:
             - { id: two_weapon_fighting, name: Two-Weapon Fighting, activation: passive,

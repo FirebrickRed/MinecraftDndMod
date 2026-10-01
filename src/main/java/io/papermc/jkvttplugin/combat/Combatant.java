@@ -496,6 +496,8 @@ public class Combatant {
         if (isPlayer() && getPlayer() != null) {
             this.turnState.setTurnStartWeaponId(
                     GearChangeNotifier.heldWeaponId(getPlayer().getInventory().getItemInMainHand()));
+            this.turnState.setTurnStartOffhandWeaponId(
+                    GearChangeNotifier.heldWeaponId(getPlayer().getInventory().getItemInOffHand()));
         }
     }
 

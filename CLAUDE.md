@@ -799,7 +799,11 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     bar shows **◈ <spell>**. An unanswered save holds the caster's turn, like a reaction window.
     (The old `RitualManager.onDamage` rolled the check itself, the only d20 in combat the game took
     out of the players' hands; it's been removed.)
-  - **Gear changes mid-turn (#190):** swapping weapons or donning a shield produces a *warning only* (`GearChangeNotifier`) — the object-interaction / Action cost is never auto-consumed or blocked. `TurnState` snapshots the weapon held at turn start.
+  - **Gear changes mid-turn (#190):** scrolling to another weapon costs nothing (an action-bar hint only).
+    The switch is settled when the weapon is **used**: `WeaponSwitch.allow`, from the left-click prompt and
+    `/combat attack`, holds the attack (nothing rolled) for [Yes, I'm switching] (uses the free object
+    interaction) or [Ask the DM]; a second switch would take the Action, so only the DM can allow it. Empty
+    hands draw without asking. `TurnState` snapshots both hands at turn start. A shield is still a warning only.
   - **Damage approval (#175):** a player's `/combat damage` applies at once, except when `combat.damage_approval` says to hold it: `reactions` (default: a hit that opened a reaction window, flagged on `TurnState`), `always`, or `off`. A hold is keyed to the attacker's `TurnState`, so it dies with its turn; the DM gets [Apply] / [Deny]. A **refused** `/combat damage` (off-turn, no hit, wrong target) offers the player [Ask the DM] (`askDmButton`), whose Apply goes through `AdjustCommand.hp`. The DM's own damage never waits. **Surprise** is a toggle, also a DM-mode tool.
 - **DM entities & items (`/dm entity <sub>`):** `spawn`, `list`, `remove`, `rename`, `revive`, `teleport`, `info`, `trade`, `shop <view|add|restock|adjust|discount|markup|reset|setfunds|setmultiplier>` (no `create` — a merchant needs `shop:` in its YAML). (`spawngroup` is registered but unimplemented — it prints a notice, see #79.)
   - **Entity identity (#194):** a template's `id:` is the permanent key — it's written into every spawned armor stand's PDC and looked up on restore, so changing it orphans anything already in the world (restore skips it and says so in the console, once per stand). `name:` is only read *at spawn*; a live creature's name is per-instance state on its body, so renaming one is `/dm entity rename`, not a YAML edit + `/dm reload`. Everything else on a spawned entity still comes from the shared template (see #194).

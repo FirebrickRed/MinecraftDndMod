@@ -58,13 +58,13 @@ public final class CharacterFeaturesMenu {
         ItemStack picks = picksTile(s);
         if (picks != null) inv.setItem(3, picks);
 
-        inv.setItem(9, label("Below: what you can use, and what's always on. Click a usable one to use it."));
+        inv.setItem(9, label("Your features", "Below: what you can use, and what's always on. Click a usable one to use it."));
         int slot = 18;
         for (Feature f : s.getAllFeatures()) {
             if (slot > 44) break;
             inv.setItem(slot++, featureTile(s, f));
         }
-        if (slot == 18) inv.setItem(22, label("No special features yet (a class's appear here: Rage, Second Wind, Sneak Attack…)."));
+        if (slot == 18) inv.setItem(22, label("No special features yet", "A class's appear here: Rage, Second Wind, Sneak Attack…"));
 
         ItemStack back = new ItemStack(Material.ARROW);
         back.editMeta(m -> m.displayName(line("← Character sheet", NamedTextColor.YELLOW)));
@@ -235,9 +235,12 @@ public final class CharacterFeaturesMenu {
 
     private static String capitalize(String t) { return t.isEmpty() ? t : Character.toUpperCase(t.charAt(0)) + t.substring(1); }
 
-    private static ItemStack label(String text) {
+    /** A short name, with the explanation wrapped underneath: an item's name never wraps. */
+    private static ItemStack label(String name, String text) {
         ItemStack item = new ItemStack(Material.PAPER);
-        item.editMeta(m -> m.displayName(line(text, NamedTextColor.GRAY)));
+        List<Component> lore = new ArrayList<>();
+        for (String l : Util.wrapText(text)) lore.add(line(l, NamedTextColor.GRAY));
+        item.editMeta(m -> { m.displayName(line(name, NamedTextColor.WHITE)); m.lore(lore); });
         return item;
     }
 
