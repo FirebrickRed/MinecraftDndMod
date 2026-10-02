@@ -52,10 +52,9 @@ public class CharacterPersistenceLoader {
             options.setPrettyFlow(true);
             Yaml yaml = new Yaml(options);
 
-            try (FileWriter writer = new FileWriter(characterFile)) {
-                yaml.dump(data, writer);
-            }
-        } catch(IOException e) {
+            // Whole file first, then swapped in: a failed write never leaves a truncated character (#242).
+            io.papermc.jkvttplugin.util.SafeFile.write(characterFile, yaml.dump(data));
+        } catch (Exception e) {
             LOGGER.severe("Failed to save character " + sheet.getCharacterName() + ": " + e.getMessage());
         }
     }
@@ -71,21 +70,53 @@ public class CharacterPersistenceLoader {
 
         int loaded = 0;
         for (File file : files) {
-            try (FileReader reader = new FileReader(file)) {
-                Map<String, Object> data = yaml.load(reader);
-
-                CharacterSheet sheet = deserializeCharacterSheet(data);
-                if (sheet != null) {
-                    sheet.setSavable(true); // now live — future mutations auto-save (#31)
-                    playerCharacters.computeIfAbsent(sheet.getPlayerId(), k -> new ConcurrentHashMap<>()).put(sheet.getCharacterId(), sheet);
-                    LOGGER.fine("Loaded character: " + sheet.getCharacterName());
-                    loaded++;
-                }
-            } catch (IOException e) {
-                LOGGER.severe("Failed to load character file " + file.getName() + ": " + e.getMessage());
+            CharacterSheet sheet = readOrRecover(yaml, file);
+            if (sheet != null) {
+                sheet.setSavable(true); // now live — future mutations auto-save (#31)
+                playerCharacters.computeIfAbsent(sheet.getPlayerId(), k -> new ConcurrentHashMap<>()).put(sheet.getCharacterId(), sheet);
+                LOGGER.fine("Loaded character: " + sheet.getCharacterName());
+                loaded++;
             }
         }
         LOGGER.info("Loaded " + loaded + " characters.");
+    }
+
+    /**
+     * One character file, or its last good version (#242). Anything a broken file throws stays here, so
+     * one bad file can't stop the rest loading or the plugin starting (it used to catch only IOException).
+     * Recovered from the {@code .bak}: the broken file is set aside first, so the next save can't bury it.
+     * Not recoverable: it's skipped and left where it is, untouched, for a look.
+     */
+    static CharacterSheet readOrRecover(Yaml yaml, File file) {
+        try {
+            return read(yaml, file);
+        } catch (Exception e) {
+            LOGGER.severe("Character file " + file.getName() + " won't load: " + e);
+        }
+        File bak = io.papermc.jkvttplugin.util.SafeFile.backupOf(file);
+        if (bak.exists()) {
+            try {
+                CharacterSheet sheet = read(yaml, bak);
+                if (sheet != null) {
+                    File aside = io.papermc.jkvttplugin.util.SafeFile.setAside(file);
+                    LOGGER.severe("  Loaded the previous version (" + bak.getName() + ") instead. The broken file is kept as "
+                            + (aside != null ? aside.getName() : file.getName()) + ".");
+                    return sheet;
+                }
+            } catch (Exception e) {
+                LOGGER.severe("  Its backup " + bak.getName() + " won't load either: " + e);
+            }
+        }
+        LOGGER.severe("  Skipped. The file is left as it is.");
+        return null;
+    }
+
+    private static CharacterSheet read(Yaml yaml, File file) throws IOException {
+        try (FileReader reader = new FileReader(file)) {
+            Map<String, Object> data = yaml.load(reader);
+            if (data == null) throw new IOException("the file is empty");
+            return deserializeCharacterSheet(data);
+        }
     }
 
     public static void saveAllCharacters() {

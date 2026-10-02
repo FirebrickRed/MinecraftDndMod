@@ -77,9 +77,7 @@ public final class CombatPersistence {
         DumperOptions options = new DumperOptions();
         options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
         options.setPrettyFlow(true);
-        try (FileWriter writer = new FileWriter(file)) {
-            new Yaml(options).dump(data, writer);
-        }
+        io.papermc.jkvttplugin.util.SafeFile.write(file, new Yaml(options).dump(data)); // #242
     }
 
     /** The save-file map for a session. Pure: reads only the combatants' own fields. */

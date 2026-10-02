@@ -99,9 +99,7 @@ public class DMPersistenceLoader {
             options.setPrettyFlow(true);
             Yaml yaml = new Yaml(options);
 
-            try (FileWriter writer = new FileWriter(dataFile)) {
-                yaml.dump(data, writer);
-            }
+            io.papermc.jkvttplugin.util.SafeFile.write(dataFile, yaml.dump(data)); // #242
 
             LOGGER.info("Saved " + dmUuidStrings.size() + " DMs to file");
         } catch (IOException e) {

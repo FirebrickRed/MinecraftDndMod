@@ -222,16 +222,39 @@ public final class InteractiveObjectManager {
         }
         try {
             file.getParentFile().mkdirs();
-            yaml.save(file);
+            io.papermc.jkvttplugin.util.SafeFile.write(file, yaml.saveToString()); // #242
         } catch (Exception ex) {
             LOGGER.warning("Failed to save world objects: " + ex.getMessage());
+        }
+    }
+
+    /** A YAML file, or null (logged) when it won't parse. */
+    private static YamlConfiguration readYaml(File f) {
+        YamlConfiguration yaml = new YamlConfiguration();
+        try {
+            yaml.load(f);
+            return yaml;
+        } catch (Exception e) {
+            LOGGER.severe("World objects file " + f.getName() + " won't load: " + e);
+            return null;
         }
     }
 
     private static void load() {
         objects.clear();
         if (file == null || !file.exists()) return;
-        YamlConfiguration yaml = YamlConfiguration.loadConfiguration(file);
+        // loadConfiguration hands back an EMPTY config for a file that won't parse, and the next save would
+        // write that over every annotation in the world (#242). Try the last good version instead, and set
+        // the broken file aside.
+        YamlConfiguration yaml = readYaml(file);
+        if (yaml == null) {
+            File bak = io.papermc.jkvttplugin.util.SafeFile.backupOf(file);
+            File aside = io.papermc.jkvttplugin.util.SafeFile.setAside(file);
+            LOGGER.severe("  The broken file is kept as " + (aside != null ? aside.getName() : file.getName()) + ".");
+            yaml = bak.exists() ? readYaml(bak) : null;
+            if (yaml == null) { LOGGER.severe("  No usable backup: starting with no annotations."); return; }
+            LOGGER.severe("  Loaded the previous version (" + bak.getName() + ") instead.");
+        }
         for (String path : yaml.getKeys(false)) {
             String rawKey = yaml.getString(path + ".key");
             if (rawKey == null) continue;

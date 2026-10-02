@@ -145,6 +145,10 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 
 ## Wizard
 
+- [ ] Start aiming Burning Hands, then `/combat nextturn` (or end your turn) → "Your turn is over. Your Burning
+      Hands aim is cancelled: nothing spent." Your 1st-level slot is still there. (#237)
+- [ ] Aim Burning Hands, then (without firing) cast another 1st-level spell with your last slot, then right-click
+      → "…doesn't go off: nothing spent." (#237)
 - [ ] In a fight, cast Fire Bolt and resolve it, then cast it again the same turn → "You've already used your
       Action this turn". Nothing is rolled or spent. (#235)
 - [ ] `/roll 1d6+2147483647d6` and `/roll 99999999999d6` → refused as invalid, and the server doesn't stall. (#234)
@@ -301,6 +305,7 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 **Dragonborn** (red)
 - [ ] Still resists fire, and its breath weapon is still a fire cone. (#222)
+- [ ] Aim the breath weapon, let the turn pass → the aim cancels itself, and the use is still there. (#237)
 
 **Astral Elf**
 
@@ -528,6 +533,13 @@ buttons. Try both; whichever you like less gets removed.
 
 Set these up, `/stop`, start the server, then check:
 
+- [ ] Before stopping: open `pluginsjkvttpluginSavedCharacters`, pick a character file, and copy it somewhere safe. After
+      the server has saved it once more (take a hit), that folder also has `<id>.yml.bak`: the version before. (#242)
+- [ ] With the server stopped, break that `<id>.yml` (delete half of it). Start → the console says it "won't load",
+      loaded the previous version instead, and kept the broken one as `<id>.yml.broken-…`; the character is there
+      and every other character loads. (#242)
+- [ ] Same, but also delete the `.bak` first → that one character is skipped, everyone else loads, the plugin
+      starts normally, and the broken file is left untouched. Put your safe copy back afterwards. (#242)
 - [ ] A fight in progress (your character in it) → after the restart, `/combat nextturn` works and
       `/combat finished` ends it; your character is out of combat and character commands work. (#165)
 - [ ] A character Poisoned before → still Poisoned after.

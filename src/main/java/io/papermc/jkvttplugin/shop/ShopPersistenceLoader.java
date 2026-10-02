@@ -58,7 +58,7 @@ public class ShopPersistenceLoader {
 
         File shopFile = new File(shopsFolder, entityUuid.toString() + ".yml");
 
-        try (FileWriter writer = new FileWriter(shopFile)) {
+        try {
             Map<String, Object> data = new HashMap<>();
 
             // Save stock for each item
@@ -89,10 +89,10 @@ public class ShopPersistenceLoader {
             options.setDefaultFlowStyle(DumperOptions.FlowStyle.BLOCK);
             options.setPrettyFlow(true);
             Yaml yaml = new Yaml(options);
-            yaml.dump(data, writer);
+            io.papermc.jkvttplugin.util.SafeFile.write(shopFile, yaml.dump(data)); // #242
 
             LOGGER.info("Saved shop for entity " + entityUuid);
-        } catch (IOException e) {
+        } catch (Exception e) {
             LOGGER.severe("Failed to save shop for entity " + entityUuid + ": " + e.getMessage());
             e.printStackTrace();
         }
@@ -118,12 +118,36 @@ public class ShopPersistenceLoader {
             return false;
         }
 
+        // A file that won't parse no longer escapes as an exception, and isn't buried by the next save (#242):
+        // the last good version (.bak) is tried, and the broken one is set aside either way.
+        try {
+            return loadFrom(shopFile, entityUuid, shopConfig);
+        } catch (Exception e) {
+            LOGGER.severe("Shop file " + shopFile.getName() + " won't load: " + e);
+        }
+        File bak = io.papermc.jkvttplugin.util.SafeFile.backupOf(shopFile);
+        File aside = io.papermc.jkvttplugin.util.SafeFile.setAside(shopFile);
+        LOGGER.severe("  The broken file is kept as " + (aside != null ? aside.getName() : shopFile.getName()) + ".");
+        if (bak.exists()) {
+            try {
+                boolean ok = loadFrom(bak, entityUuid, shopConfig);
+                LOGGER.severe("  Loaded the previous version (" + bak.getName() + ") instead.");
+                return ok;
+            } catch (Exception e) {
+                LOGGER.severe("  Its backup won't load either: " + e + ". The shop starts from its template.");
+            }
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static boolean loadFrom(File shopFile, UUID entityUuid, ShopConfig shopConfig) throws Exception {
         try (FileReader reader = new FileReader(shopFile)) {
             Yaml yaml = new Yaml();
             Map<String, Object> data = yaml.load(reader);
 
             if (data == null) {
-                return false;
+                throw new IOException("the file is empty");
             }
 
             // Load stock values
@@ -177,10 +201,6 @@ public class ShopPersistenceLoader {
 
             LOGGER.fine("Loaded shop for entity " + entityUuid);
             return true;
-        } catch (IOException e) {
-            LOGGER.severe("Failed to load shop for entity " + entityUuid + ": " + e.getMessage());
-            e.printStackTrace();
-            return false;
         }
     }
 

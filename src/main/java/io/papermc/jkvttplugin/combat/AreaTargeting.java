@@ -43,8 +43,13 @@ public final class AreaTargeting {
         final double sizeFeet;
         final String label;
         final Runnable onConfirm;
+        final java.util.function.Supplier<String> recheck; // the caller's own "still affordable?" (slot, use), or null
+        final TurnState turnAtStart;                        // the turn it was aimed on: firing on a later one is stale (#237)
         final Set<UUID> glowing = new HashSet<>(); // entities we've toggled glow on, to restore later
-        Pending(UUID casterId, CombatSession session, String shape, double sizeFeet, String label, Runnable onConfirm) {
+        Pending(UUID casterId, CombatSession session, String shape, double sizeFeet, String label, Runnable onConfirm,
+                java.util.function.Supplier<String> recheck, TurnState turnAtStart) {
+            this.recheck = recheck;
+            this.turnAtStart = turnAtStart;
             this.casterId = casterId;
             this.session = session;
             this.shape = shape;
@@ -63,9 +68,19 @@ public final class AreaTargeting {
      */
     public static void begin(Player player, CombatSession session, Combatant caster, String label,
                              String shape, double sizeFeet, String targets, Runnable onConfirm) {
+        begin(player, session, caster, label, shape, sizeFeet, targets, onConfirm, null);
+    }
+
+    /**
+     * As above, with {@code recheck}: run on confirm, it returns why the effect can no longer be paid for
+     * (the slot went on another spell, the use is gone), or null. Nothing is spent when it refuses.
+     */
+    public static void begin(Player player, CombatSession session, Combatant caster, String label,
+                             String shape, double sizeFeet, String targets, Runnable onConfirm,
+                             java.util.function.Supplier<String> recheck) {
         if (player == null || onConfirm == null) return;
         cancel(player, false); // clear any earlier aim first
-        pending.put(player.getUniqueId(), new Pending(caster.getId(), session, shape, sizeFeet, label, onConfirm));
+        pending.put(player.getUniqueId(), new Pending(caster.getId(), session, shape, sizeFeet, label, onConfirm, recheck, caster.getTurnState()));
         player.sendMessage(Component.text("🎯 Aim your " + label + " — ", NamedTextColor.GOLD)
                 .append(Component.text("right-click to fire", NamedTextColor.GREEN, TextDecoration.BOLD))
                 .append(Component.text(", sneak to cancel. Caught creatures glow.", NamedTextColor.GRAY)));
@@ -79,6 +94,13 @@ public final class AreaTargeting {
         Pending p = pending.remove(player.getUniqueId());
         if (p == null) return false;
         clearGlow(p);
+        // Revalidate: the aim may be older than the turn, the fight, or the slot it was going to use (#237).
+        String stale = staleReason(p);
+        if (stale == null && p.recheck != null) stale = p.recheck.get();
+        if (stale != null) {
+            player.sendMessage(Component.text(stale + " Your " + p.label + " doesn't go off: nothing spent.", NamedTextColor.YELLOW));
+            return true;
+        }
         try {
             p.onConfirm.run();
         } catch (Exception e) {
@@ -109,6 +131,14 @@ public final class AreaTargeting {
             Player player = JkVttPlugin.getInstance().getServer().getPlayer(entry.getKey());
             Pending p = entry.getValue();
             if (player == null || !player.isOnline()) { clearGlow(p); expired.add(entry.getKey()); continue; }
+            // The turn moved on (or the fight ended): drop the aim rather than leave a live trigger (#237).
+            String stale = staleReason(p);
+            if (stale != null) {
+                clearGlow(p);
+                expired.add(entry.getKey());
+                player.sendMessage(Component.text(stale + " Your " + p.label + " aim is cancelled: nothing spent.", NamedTextColor.YELLOW));
+                continue;
+            }
             // No auto-timeout: the aim holds until the player fires (right-click) or cancels (sneak).
             drawPreview(player, p);
         }
@@ -188,6 +218,27 @@ public final class AreaTargeting {
     private static Entity bodyOf(Combatant c) {
         if (c.isPlayer()) return c.getPlayer();
         return c.getEntityInstance() != null ? c.getEntityInstance().getArmorStand() : null;
+    }
+
+    /**
+     * Why a pending aim can no longer fire, or null: the fight ended, it's someone else's turn, it's a
+     * later turn of the same caster, or they can no longer act. Spending is the caller's recheck.
+     */
+    private static String staleReason(Pending p) {
+        boolean active = p.session != null && p.session.isActive();
+        Combatant caster = active ? combatantById(p.session, p.casterId) : null;
+        Combatant current = active ? p.session.getCurrentCombatant() : null;
+        return staleReason(active, caster, current, p.turnAtStart);
+    }
+
+    /** The rule itself, on plain values (testable without a live session). */
+    static String staleReason(boolean fightActive, Combatant caster, Combatant current, TurnState turnAtStart) {
+        if (!fightActive) return "The fight is over.";
+        if (caster == null) return "You're no longer in the fight.";
+        if (current == null || !current.getId().equals(caster.getId())) return "Your turn is over.";
+        if (turnAtStart != null && caster.getTurnState() != turnAtStart) return "That was aimed on an earlier turn.";
+        if (caster.cannotAct()) return caster.getDisplayName() + " can't act (" + caster.actionBlockingCondition() + ").";
+        return null;
     }
 
     private static Combatant combatantById(CombatSession session, UUID id) {

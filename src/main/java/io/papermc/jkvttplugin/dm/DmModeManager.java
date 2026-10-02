@@ -126,7 +126,7 @@ public class DmModeManager {
         cfg.set("armor", player.getInventory().getArmorContents());
         cfg.set("offhand", player.getInventory().getItemInOffHand());
         try {
-            cfg.save(snapshotFile(player.getUniqueId()));
+            io.papermc.jkvttplugin.util.SafeFile.write(snapshotFile(player.getUniqueId()), cfg.saveToString()); // #242
             return true;
         } catch (IOException e) {
             plugin.getLogger().warning("Failed to save DM-mode inventory for " + player.getName() + ": " + e.getMessage());
@@ -138,7 +138,16 @@ public class DmModeManager {
     private static void restoreInventory(Player player) {
         File f = snapshotFile(player.getUniqueId());
         if (!f.exists()) return;
-        YamlConfiguration cfg = YamlConfiguration.loadConfiguration(f);
+        // loadConfiguration would hand back an empty config for a broken file, and the file is deleted
+        // below: the DM's real inventory would be gone (#242). A file that won't parse is kept instead.
+        YamlConfiguration cfg = new YamlConfiguration();
+        try {
+            cfg.load(f);
+        } catch (Exception e) {
+            plugin.getLogger().severe("DM-mode inventory for " + player.getName() + " (" + f.getName() + ") won't load: " + e);
+            player.sendMessage(Component.text("Your saved inventory couldn't be read, so it wasn't restored. The file is kept: tell whoever runs the server.", NamedTextColor.RED));
+            return;
+        }
 
         List<ItemStack> contents = (List<ItemStack>) cfg.getList("contents");
         if (contents != null) player.getInventory().setContents(contents.toArray(new ItemStack[0]));

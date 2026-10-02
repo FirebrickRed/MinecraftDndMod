@@ -1324,8 +1324,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             // The aim is a preview: nothing is spent until it's confirmed, and then afterCast spends it all.
             final Combatant aoeCaster = caster;
             final boolean aoeReaction = spendReaction;
+            final Integer aoeLevel = castLevel;
+            // On confirm, the slot and the Action must still be there: another spell may have used them (#237).
+            java.util.function.Supplier<String> stillAffordable = () -> {
+                io.papermc.jkvttplugin.character.SpellCost now = io.papermc.jkvttplugin.character.SpellCost.of(casterSheet, spell, aoeLevel);
+                if (!now.available()) return now.unavailableReason(spell);
+                return aoeReaction || isDM ? null : castBudgetRefusal(aoeCaster.getTurnState(), spell);
+            };
             SpellCastHandler.castAoe(caster, session, player, spell, providedRoll, providedTotal,
-                    () -> afterCast(player, session, aoeCaster, casterSheet, spell, cost, aoeReaction));
+                    () -> afterCast(player, session, aoeCaster, casterSheet, spell, cost, aoeReaction), stillAffordable);
             resolved = false;
         } else {
             List<String> pos = collectPositionalArgs(args, 2);
@@ -1992,8 +1999,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                         fSpec.getTargets(), fSave, fDc, fSpec.getDamage(), fSpec.getDamageType(), fSpec.getSaveEffect());
                 if (actor.getTurnState() != null) actor.getTurnState().useAction();
             };
+            // On confirm, the use and the Action must still be there (#237).
+            java.util.function.Supplier<String> stillAffordable = () -> {
+                if (fRes != null && fRes.getCurrent() < feature.getCostAmount()) return "No uses of " + fRes.getName() + " left.";
+                if (actor.getTurnState() != null && actor.getTurnState().isActionUsed()) return "You've already used your Action this turn.";
+                return null;
+            };
             AreaTargeting.begin(player, session, actor, label, spec.getShape(), spec.getSizeFeet(),
-                    spec.getTargets(), onConfirm);
+                    spec.getTargets(), onConfirm, stillAffordable);
             return;
         }
 

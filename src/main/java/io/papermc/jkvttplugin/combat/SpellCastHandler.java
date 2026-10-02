@@ -224,7 +224,8 @@ public class SpellCastHandler {
      * Returns false so the command layer skips its own action-spend (the confirm handles it).
      */
     public static boolean castAoe(Combatant caster, CombatSession session, Player player, DndSpell spell,
-                                  Integer providedRoll, Integer providedTotal, Runnable afterConfirm) {
+                                  Integer providedRoll, Integer providedTotal, Runnable afterConfirm,
+                                  java.util.function.Supplier<String> recheck) {
         CharacterSheet sheet = caster.getCharacterSheet();
         if (sheet == null) {
             player.sendMessage(Component.text("Only characters cast spells this way.", NamedTextColor.RED));
@@ -242,7 +243,7 @@ public class SpellCastHandler {
             afterConfirm.run(); // the slot, concentration and the action, as for any cast (#179)
         };
         AreaTargeting.begin(player, session, caster, spell.getName(), spell.getAoeShape(), spell.getAoeSize(),
-                spell.getAoeTargets(), onConfirm);
+                spell.getAoeTargets(), onConfirm, recheck);
         return false; // preview started; the action is spent on confirm
     }
 
