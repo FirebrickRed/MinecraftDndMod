@@ -291,7 +291,7 @@ public class ViewCharacterSheetMenu {
         ));
 
         // Slot 18: Spellbook button (for spellcasters only)
-        if (character.hasSpells()) {
+        if (character.canCastSpells()) {
             int totalCantrips = character.getKnownCantrips().size();
             int totalSpells = character.getKnownSpells().size();
 

@@ -979,11 +979,18 @@ public class CharacterCreationMenu {
         // Spells already taken through another pick (a high elf's wizard cantrip): knowing it twice
         // does nothing, so it's shown but can't be taken again here.
         Map<String, String> knownElsewhere = spellsPickedInChoices(session);
+        // A subclass's always-prepared spells (a cleric's domain spells): fixed tiles, never a pick, since
+        // taking one would waste it (#247: they weren't shown here at all).
+        DndSubClass sub = session.getSelectedSubclass() != null && c.getSubclasses() != null
+                ? c.getSubclasses().get(session.getSelectedSubclass()) : null;
+        java.util.Set<String> always = new java.util.LinkedHashSet<>();
+        if (sub != null && sub.getBonusSpells() != null) for (String id : sub.getBonusSpells()) always.add(Util.normalize(id));
 
         int slot = 18;
         for (DndSpell spell : spells) {
             if (slot > 44) break;
             String key = Util.normalize(spell.getName());
+            if (always.contains(key)) { inv.setItem(slot++, alwaysPreparedTile(spell, sub)); continue; }
             String via = knownElsewhere.get(key);
             if (via != null && !session.hasSpell(key)) {
                 ItemStack known = plain(KNOWN_TILE, Component.text(spell.getName(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
@@ -1005,6 +1012,25 @@ public class CharacterCreationMenu {
             ItemUtil.tagAction(it, MenuAction.CHOOSE_SPELL, Util.normalize(spell.getName()) + ":" + level);
             inv.setItem(slot++, it);
         }
+        // Always-prepared spells that aren't on the class list at all still belong on the page.
+        for (String id : always) {
+            if (slot > 44) break;
+            DndSpell spell = SpellLoader.getSpell(id);
+            if (spell == null || spell.getLevel() != level || spells.contains(spell)) continue;
+            inv.setItem(slot++, alwaysPreparedTile(spell, sub));
+        }
+    }
+
+    /** A fixed tile for a spell the subclass always has prepared: shown, not pickable. */
+    private static ItemStack alwaysPreparedTile(DndSpell spell, DndSubClass sub) {
+        ItemStack it = plain(Material.ENCHANTED_BOOK, Component.text("✦ " + spell.getName(), NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
+        List<Component> lore = new ArrayList<>();
+        lore.add(Component.text("Always prepared (" + (sub != null ? sub.getName() : "your subclass") + ")", NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.text("Free: it doesn't use one of your picks.", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
+        lore.add(Component.empty());
+        lore.addAll(spell.detailLore());
+        it.editMeta(m -> m.lore(lore));
+        return it;
     }
 
     /** Spell keys picked through a SPELL choice (race, subclass…), mapped to that choice's title. */

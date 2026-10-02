@@ -249,12 +249,17 @@ public final class FeatureUse {
         }
         if (target != self && f.getHeal().rangeFeet() > 0) {
             double feet = Reach.feet(self.getLocation(), target.getLocation());
-            if (feet > f.getHeal().rangeFeet() + Reach.SLACK_FEET) {
-                player.sendMessage(Component.text("You need to touch them: " + target.getDisplayName()
-                        + " is about " + Math.round(feet) + " ft away.", NamedTextColor.YELLOW));
+            String what = "feature:" + f.getId();
+            // Out of reach: [Ask the DM] (or [Do it anyway] for a DM), like a spell, not a dead end (#247).
+            if (feet > f.getHeal().rangeFeet() + Reach.SLACK_FEET && !Reach.isAllowed(player.getUniqueId(), what, target.getId())) {
+                String retry = "/" + (session != null ? "combat" : "character") + " use " + f.getId() + " "
+                        + (target.getDisplayName().contains(" ") ? "\"" + target.getDisplayName() + "\"" : target.getDisplayName()) + " " + points;
+                Reach.refuse(player, "You need to touch them: " + target.getDisplayName() + " is about " + Math.round(feet) + " ft away.",
+                        what, target.getId(), f.getName() + " for " + target.getDisplayName(), retry);
                 return false;
             }
         }
+        Reach.spend(player.getUniqueId());
         pool.consume(points);
         say(player, session, Component.text("💚 " + self.getDisplayName() + " lays hands on " + target.getDisplayName()
                 + ": " + points + " HP (" + pool.getCurrent() + " left in the pool).", NamedTextColor.GREEN));

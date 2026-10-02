@@ -164,6 +164,7 @@ public final class FeatureParser {
         int bonusDamage = 0;
         String bonusDamageWhen = null;
         String minecraftEffect = null;
+        String aura = null;
         int minecraftAmplifier = 0;
         Set<String> flags = new HashSet<>();
         AcFormula armorClass = null;
@@ -203,6 +204,7 @@ public final class FeatureParser {
                 bonusDamageWhen = ParseUtil.asString(bd.get("when"), null);
             }
             minecraftEffect = ParseUtil.asString(e.get("minecraft_effect"), null);
+            aura = ParseUtil.asString(e.get("aura"), null);
             minecraftAmplifier = ParseUtil.asInt(e.get("minecraft_amplifier"), 0);
             // Boolean passive primitives — each true key becomes a flag by its own name.
             for (String flag : BOOLEAN_FLAGS) {
@@ -219,6 +221,7 @@ public final class FeatureParser {
                 rounds, maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel)
                 .withBonuses(attackBonus, attackBonusWhen, acBonus, acBonusNeedsArmor, sneakDice)
                 .withRollBonus(rollBonusDice, rollBonusOn)
-                .withHeld(held);
+                .withHeld(held)
+                .withAura(aura);
     }
 }

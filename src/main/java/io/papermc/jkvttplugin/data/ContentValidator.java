@@ -315,6 +315,9 @@ public final class ContentValidator {
                     warn(at + " advantage_on/disadvantage_on: '" + t + "' isn't a roll tag (e.g. str_checks, dex_saves, saves, attacks, initiative).");
                 }
             }
+            if (e.getAura() != null && io.papermc.jkvttplugin.effect.EffectAuras.color(e.getAura()) == null) {
+                warn(at + " aura: '" + e.getAura() + "' isn't a colour (red, orange, yellow, green, blue, purple, white, gold, or #rrggbb).");
+            }
             if (e.getArmorClass() != null) {
                 for (String p : e.getArmorClass().getProblems()) warn(at + " armor_class: " + p + ".");
             }

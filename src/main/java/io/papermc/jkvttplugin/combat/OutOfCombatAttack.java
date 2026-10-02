@@ -369,11 +369,18 @@ public final class OutOfCombatAttack {
 
     private static void grant(Player caster, DndSpell spell, UUID targetId, String retry) {
         permits.put(caster.getUniqueId(), new Permit(spell.getId(), targetId, System.currentTimeMillis()));
-        caster.sendMessage(Component.text("The DM lets it happen.", NamedTextColor.GREEN));
         CharacterSheet sheet = ActiveCharacterTracker.getActiveCharacter(caster);
-        // Only an attack spell rolls to hit; a save spell (Sacred Flame) just goes off.
-        if (spell.isAttackRoll() && sheet != null) rollPrompt(caster, sheet, spell, retry, Advantage.NONE);
-        else caster.sendMessage(Component.text("   ", NamedTextColor.GRAY).append(fill("[cast it]", retry.trim())));
+        // Only an attack spell rolls to hit; a save spell (Sacred Flame) just goes off. Say which, or the
+        // two read as random: one comes back as roll buttons, the other as the cast command (#247).
+        if (spell.isAttackRoll() && sheet != null) {
+            caster.sendMessage(Component.text("The DM lets it happen. " + spell.getName() + " is an attack: roll to hit.", NamedTextColor.GREEN));
+            rollPrompt(caster, sheet, spell, retry, Advantage.NONE);
+        } else {
+            caster.sendMessage(Component.text("The DM lets it happen. " + spell.getName()
+                    + (spell.isSaveSpell() ? " needs no attack roll (the target saves instead): cast it again to go."
+                                           : " needs no roll from you: cast it again to go."), NamedTextColor.GREEN)
+                    .append(Component.text(" ")).append(fill("[cast it]", retry.trim())));
+        }
     }
 
     private static void startCombat(Player dm, UUID attackerId, String targetArg, String label, String heldCommand) {

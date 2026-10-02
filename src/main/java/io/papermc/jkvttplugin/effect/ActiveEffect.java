@@ -81,8 +81,15 @@ public class ActiveEffect {
                 maintainedBy, untilRest, untilUsed, armorClass, unarmedStrike, weaponAbility, maxHpPerLevel)
                 .withBonuses(attackBonus, attackBonusWhen, acBonus, acBonusNeedsArmor, sneakAttackDice)
                 .withRollBonus(rollBonusDice, rollBonusOn)
-                .withHeld(held);
+                .withHeld(held)
+                .withAura(aura);
     }
+
+    // ---- aura (#247): a colour shown as particles around whoever has it (Rage: red), seen by everyone ----
+    private String aura;   // "red", "#ff3300", or null
+
+    public ActiveEffect withAura(String aura) { this.aura = aura == null || aura.isBlank() ? null : aura.trim().toLowerCase(); return this; }
+    public String getAura() { return aura; }
 
     // ---- held (#40): Bardic Inspiration waits until its holder chooses the roll ----
     private boolean held;   // the roll bonus only counts once armed

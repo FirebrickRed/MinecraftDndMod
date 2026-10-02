@@ -1108,8 +1108,21 @@ public class CharacterSheet {
         return background;
     }
 
+    /** The spell lists exist (they always do once loaded); persistence keys off this. Not "can cast". */
     public boolean hasSpells() {
         return knownCantrips != null && knownSpells != null;
+    }
+
+    /**
+     * Anything to cast: a known cantrip or spell, a spell slot, or an innate spell (a tiefling
+     * fighter's Thaumaturgy). What the sheet's Spellbook tile and a spellcasting focus check; a
+     * fighter with none used to get a Spellbook anyway (#247).
+     */
+    public boolean canCastSpells() {
+        if (knownCantrips != null && !knownCantrips.isEmpty()) return true;
+        if (knownSpells != null && !knownSpells.isEmpty()) return true;
+        for (int level = 1; level <= 9; level++) if (getMaxSpellSlots(level) > 0) return true;
+        return !getAvailableInnateSpells().isEmpty();
     }
 
     public int getCurrentHealth() {

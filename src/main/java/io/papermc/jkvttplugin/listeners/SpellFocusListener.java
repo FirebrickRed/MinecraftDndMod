@@ -53,7 +53,7 @@ public class SpellFocusListener implements Listener {
         String focusType = getFocusType(item);
         String classRequirement = sheet != null && sheet.getMainClass() != null && sheet.getMainClass().getSpellcastingInfo() != null
                 ? sheet.getMainClass().getSpellcastingInfo().getSpellcastingFocusType() : null;
-        if (sheet == null || !sheet.hasSpells() || !canUseThisFocus(focusType, classRequirement)) return false;
+        if (sheet == null || !sheet.canCastSpells() || !canUseThisFocus(focusType, classRequirement)) return false;
         SpellCastingMenu.open(player, sheet);
         return true;
     }

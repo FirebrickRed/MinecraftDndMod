@@ -32,7 +32,8 @@ features:
         resistance: [bludgeoning, piercing, slashing]  # halved while raging
         advantage_on: [str_checks, str_saves]          # Athletics and STR saves roll with advantage
         bonus_damage: { amount: 2, when: melee_str }    # +2 on melee STR hits
-        minecraft_effect: STRENGTH                       # red-tint feedback while active
+        minecraft_effect: STRENGTH                       # the Strength icon in the inventory while raging
+        aura: red                                        # a red ring around them that everyone sees (#247)
   - id: unarmored_defense
     name: Unarmored Defense
     activation: passive

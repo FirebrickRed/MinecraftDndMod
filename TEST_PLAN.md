@@ -64,6 +64,7 @@ rows (`/dm entity spawn alira "The Kindler"`).
 
 ## Fighter
 
+- [ ] A fighter's sheet has **no Spellbook tile**; a tiefling fighter's does (Thaumaturgy). (#247)
 - [ ] Features & Traits: click **Second Wind** out of a fight → fills `/character use second_wind`. Passive tiles
       (Sneak Attack, Archery) aren't clickable. ← goes back to the sheet. (#65)
 - [ ] Creation: the Fighting Style tiles are just the name ("Archery", "Great Weapon Fighting"); hover →
@@ -122,7 +123,8 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 
 ## Barbarian
 
-- [ ] **Rage** still tints red (the Strength effect) and it goes when the rage ends.
+- [ ] **Rage:** a ring of red dust circles you (and others see it on you); it stops when the rage ends.
+      The Strength icon is only in the inventory: that was never the tint. (#247)
 
 ## Monk
 
@@ -135,6 +137,11 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 - [ ] The action bar, before attacking: **Bonus: READY: Martial Arts…**. (#221)
 - [ ] `/combat attack` with nothing after it lists attacks under **With your Action** and **With your
       bonus action**. (#221)
+
+## Paladin
+
+- [ ] **Lay on Hands** on someone 24 ft away → "You need to touch them…" with **[Do it anyway]** (you're the DM).
+      Click it → it fills the command again, Enter → it heals. Next time it asks again. (#247)
 
 ## Wizard
 
@@ -199,6 +206,11 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 ## Cleric
 
 Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
+
+- [ ] Creation, Spells tab, Level 1: Bless and Cure Wounds are gold **✦ Always prepared (Life Domain)** tiles,
+      not picks: clicking does nothing and they don't count toward your number. (#247)
+- [ ] Out of a fight, cast Sacred Flame at a creature, [Let it happen] → "…needs no attack roll (the target
+      saves instead): cast it again to go. [cast it]". Guiding Bolt instead → "…is an attack: roll to hit." (#247)
 
 **Prepared spells**
 
