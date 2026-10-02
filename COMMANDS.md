@@ -186,7 +186,7 @@ the same way until their first turn.
 | `sound <board key \| sound name> [everyone \| here \| <player>]` / `sound stop` | Play a sound live (#16): a wolf howl, thunder, a door slamming. The keys are the `board:` list in `DMContent/Sounds.yml`; any sound name works too (`minecraft:entity.wolf.howl`, or one from your resource pack). `everyone` (default): each player hears it where they stand. `here`: it comes from where you stand and carries its `range`, so players hear which way it came from. `<player>`: only them. `stop` silences them all. Plays on the Ambient/Environment slider. Also the **Sound Board** tool (note block) in DM mode: click a sound for everyone, shift-click for from-here, and switch or stop the fight's music |
 | `resource restore <character> <name\|all>` | Restore a class resource |
 | `resource consume <character> <name> [amount]` | Spend a class resource |
-| `reload` | Reload all `DMContent/` YAML without a restart |
+| `reload` | Reload all `DMContent/` YAML without a restart. A file with a YAML syntax error refuses the reload (named, with its line) and keeps what's loaded; otherwise it reports "a clean load" or lists the warnings |
 
 Viewing/giving character sheets is under `/character`: `/character view <name>`, `/character view player <p>`, `/character give <player> <name>`.
 

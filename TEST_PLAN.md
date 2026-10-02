@@ -520,6 +520,10 @@ buttons. Try both; whichever you like less gets removed.
 
 ## Other DM commands
 
+- [ ] `/dm reload` with clean content → "✓ DMContent reloaded: a clean load." (#243)
+- [ ] Break a spell file in the server's `DMContent` (indent one line wrong), `/dm reload` → "✗ Reload refused", naming
+      the file and line; your spells are all still there. Fix it, reload → clean. (#243)
+- [ ] Give a spell an unknown `material:` and reload → it reloads, with that warning listed in chat. (#243)
 - [ ] A creature check with no roll → the DM gets the three roll buttons.
 - [ ] `/dm check clear Balin Ironforge` → "is a creature. Only characters have held checks…".
 - [ ] `/dm check clear ` + Tab → only characters, no creatures.

@@ -61,7 +61,7 @@ spells:
     description: "Choose a humanoid that you can see within range. The target must succeed on a Wisdom saving throw or be paralyzed for the duration. At the end of each of its turns, the target can make another Wisdom saving throw."
     concentration: true
     ritual: false
-    material: "CHAIN"
+    material: "IRON_CHAIN"   # CHAIN became IRON_CHAIN when copper chains arrived (1.21.9)
     save_type: "Wisdom"
     condition_on_fail: "paralyzed"
     higher_levels: "When you cast this spell using a spell slot of 3rd level or higher, you can target one additional humanoid for each slot level above 2nd."
@@ -250,7 +250,7 @@ spells:
     description: "Choose one creature you can see within range. Yellow strips of magical energy loop around the creature. The target must succeed on a Strength saving throw, or its flying speed (if any) is reduced to 0 feet for the spell's duration. An airborne creature affected by this spell safely descends at 60 feet per round until it reaches the ground or the spell ends."
     concentration: true
     ritual: false
-    material: "CHAIN"
+    material: "IRON_CHAIN"   # CHAIN became IRON_CHAIN when copper chains arrived (1.21.9)
     save_type: "Strength"
 
   enhance_ability:

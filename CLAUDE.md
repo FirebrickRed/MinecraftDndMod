@@ -318,6 +318,9 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
   mistakes the lenient loaders swallow: unknown item ids in kits, choices, shops and loot; unwearable
   armor; materials that aren't items; focus types no class uses; bad spell fields (`Self` range on a
   targeted spell, unknown condition, multi-group dice); prices over 64. A clean load prints nothing.
+  Anything the content loaders log as a warning while loading counts too (`DataManager.loadAllData` captures
+  their loggers, #243), and `/dm reload` refuses outright when a file won't parse (`syntaxErrors`), so a
+  syntax error can't wipe the content it defines.
   **When you add a new cross-reference between content types, add its check there.**
 - Shared parsing lives in `data/loader/util/ParseUtil` (generic YAML→value primitives) and the
   `data/loader/parser/` package (`AbilityParser`, `LanguageParser`, `EquipmentParser`,
