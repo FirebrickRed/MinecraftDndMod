@@ -471,6 +471,9 @@ public class AttackHandler {
 
         // Ability modifier plus a magic weapon's damage bonus (#188), as one flat term (1d8+5).
         int flat = abilityMod + weapon.getDamageBonus();
+        // Flat damage (the blowgun's 1, the net's 0): one number, since "1+3" isn't something the
+        // dice roller reads. Damage doesn't go below 0.
+        if (baseDice.trim().matches("\\d+")) return String.valueOf(Math.max(0, Integer.parseInt(baseDice.trim()) + flat));
         if (flat > 0) {
             return baseDice + "+" + flat;
         } else if (flat < 0) {

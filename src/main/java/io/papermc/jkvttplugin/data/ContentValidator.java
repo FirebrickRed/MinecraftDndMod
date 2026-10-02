@@ -127,7 +127,8 @@ public final class ContentValidator {
                 warn(where + " type should be melee or ranged (got '" + w.getType() + "').");
             }
             if (blank(w.getDamage())) warn(where + " has no damage dice.");
-            else if (!isDice(w.getDamage())) warn(where + " damage '" + w.getDamage() + "' isn't a dice expression like 1d8.");
+            // A flat number is real damage too: the blowgun always does 1, the net 0 (PHB p.149).
+            else if (!isDice(w.getDamage()) && !w.getDamage().trim().matches("\\d+")) warn(where + " damage '" + w.getDamage() + "' isn't a dice expression like 1d8, or a plain number.");
             if (blank(w.getDamageType())) warn(where + " has no damage_type.");
             if (w.getRarity() != null && !Set.of("common", "uncommon", "rare", "very_rare", "legendary", "artifact").contains(w.getRarity())) {
                 warn(where + " rarity '" + w.getRarity() + "' should be common, uncommon, rare, very_rare, legendary or artifact.");

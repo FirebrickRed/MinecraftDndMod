@@ -210,7 +210,7 @@ sickle:
 dart:
   name: "Dart"
   category: "simple"
-  type: "melee"
+  type: "ranged"   # PHB: a simple RANGED weapon (thrown), so not a monk weapon
   damage: "1d4"
   damage_type: "piercing"
   properties: ["finesse", "thrown"]
@@ -378,3 +378,189 @@ whip:
     currency: gold
   description: "A braided leather lash. Light damage, but it keeps enemies at 10 feet."
   material: LEAD
+
+# ── The rest of the PHB weapon table ─────────────────────────────────────────────────────────
+# WeaponCatalogTest fails the build if any of the 37 PHB weapons goes missing. Versatile damage
+# (the two-handed die) is in the description, as for the warhammer: it isn't modelled yet.
+
+greatclub:
+  name: "Greatclub"
+  category: "simple"
+  type: "melee"
+  damage: "1d8"
+  damage_type: "bludgeoning"
+  properties: ["two-handed"]
+  weight: "10 lb"
+  cost:
+    amount: 2
+    currency: silver
+  description: "A heavy two-handed club."
+  material: MACE
+
+light_hammer:
+  name: "Light Hammer"
+  category: "simple"
+  type: "melee"
+  damage: "1d4"
+  damage_type: "bludgeoning"
+  properties: ["light", "thrown"]
+  range: "20/60"
+  weight: "2 lb"
+  cost:
+    amount: 2
+    currency: gold
+  description: "A small hammer, balanced for throwing."
+  material: MACE
+
+spear:
+  name: "Spear"
+  category: "simple"
+  type: "melee"
+  damage: "1d6"
+  damage_type: "piercing"
+  properties: ["thrown", "versatile"]
+  range: "20/60"
+  weight: "3 lb"
+  cost:
+    amount: 1
+    currency: gold
+  description: "A simple spear, for thrusting or throwing. 1d8 when wielded with two hands."
+  material: IRON_SPEAR
+
+battleaxe:
+  name: "Battleaxe"
+  category: "martial"
+  type: "melee"
+  damage: "1d8"
+  damage_type: "slashing"
+  properties: ["versatile"]
+  weight: "4 lb"
+  cost:
+    amount: 10
+    currency: gold
+  description: "A broad-bladed war axe. 1d10 when wielded with two hands."
+  material: IRON_AXE
+
+flail:
+  name: "Flail"
+  category: "martial"
+  type: "melee"
+  damage: "1d8"
+  damage_type: "bludgeoning"
+  properties: []
+  weight: "2 lb"
+  cost:
+    amount: 10
+    currency: gold
+  description: "A spiked ball on a chain."
+  material: MACE
+
+maul:
+  name: "Maul"
+  category: "martial"
+  type: "melee"
+  damage: "2d6"
+  damage_type: "bludgeoning"
+  properties: ["heavy", "two-handed"]
+  weight: "10 lb"
+  cost:
+    amount: 10
+    currency: gold
+  description: "A massive two-handed hammer."
+  material: MACE
+
+morningstar:
+  name: "Morningstar"
+  category: "martial"
+  type: "melee"
+  damage: "1d8"
+  damage_type: "piercing"
+  properties: []
+  weight: "4 lb"
+  cost:
+    amount: 15
+    currency: gold
+  description: "A spiked mace."
+  material: MACE
+
+trident:
+  name: "Trident"
+  category: "martial"
+  type: "melee"
+  damage: "1d6"
+  damage_type: "piercing"
+  properties: ["thrown", "versatile"]
+  range: "20/60"
+  weight: "4 lb"
+  cost:
+    amount: 5
+    currency: gold
+  description: "A three-pronged spear. 1d8 when wielded with two hands."
+  material: TRIDENT
+
+war_pick:
+  name: "War Pick"
+  category: "martial"
+  type: "melee"
+  damage: "1d8"
+  damage_type: "piercing"
+  properties: []
+  weight: "2 lb"
+  cost:
+    amount: 5
+    currency: gold
+  description: "A heavy pick made for punching through armor."
+  material: IRON_PICKAXE
+
+blowgun:
+  name: "Blowgun"
+  category: "martial"
+  type: "ranged"
+  damage: "1"
+  damage_type: "piercing"
+  properties: ["ammunition", "loading"]
+  ammunition: blowgun_needle
+  range:
+    normal: 25
+    long: 100
+  weight: "1 lb"
+  cost:
+    amount: 10
+    currency: gold
+  description: "A hollow tube for shooting needles. Always 1 damage, plus your DEX modifier."
+  material: STICK
+
+heavy_crossbow:
+  name: "Heavy Crossbow"
+  category: "martial"
+  type: "ranged"
+  damage: "1d10"
+  damage_type: "piercing"
+  properties: ["ammunition", "heavy", "loading", "two-handed"]
+  ammunition: bolt
+  range:
+    normal: 100
+    long: 400
+  weight: "18 lb"
+  cost:
+    amount: 50
+    currency: gold
+  description: "A large crossbow with a heavy draw."
+  material: CROSSBOW
+
+# The net does no damage: a hit restrains a Large or smaller creature until it's freed (a DC 10
+# STR check, or 5 slashing damage to the net). The DM applies Restrained; the game doesn't yet.
+net:
+  name: "Net"
+  category: "martial"
+  type: "ranged"
+  damage: "0"
+  damage_type: "bludgeoning"
+  properties: ["special", "thrown"]
+  range: "5/15"
+  weight: "3 lb"
+  cost:
+    amount: 1
+    currency: gold
+  description: "A weighted net. A hit restrains a Large or smaller creature (no damage): DC 10 Strength to escape, or 5 slashing damage to the net. The DM applies Restrained."
+  material: COBWEB

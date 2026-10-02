@@ -43,7 +43,6 @@ local copy, and an old server pack loads above a local one. Steps: `docs/resourc
 - [ ] **Annotate form** (a dialog, Paper API): right-click a chest with the Annotate tool → the form
       opens; Save applies it.
 - [ ] **Shop screen** opens, titled with the merchant's name; buying and selling work.
-- [X] **Chat input:** the name step in creation, and a Message spell's words.
 - [ ] **Item tooltips:** no vanilla "attack damage" / "Dyed" / "No Effects" lines on D&D items.
 - [ ] **Combat basics:** left-click a creature to get the attack prompt; a real bow shot and loading a
       crossbow are both refused; the turn glow shows; a killed creature tips over.
@@ -123,13 +122,7 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 
 ## Barbarian
 
-- [ ] Creation, Starting Equipment 1: pick **Greataxe** → only that tile turns green. Pick "Any Martial Melee
-      Weapon" → Longsword instead → only that tile. Same with **Handaxe x2** / "Any Simple Weapon".
 - [ ] **Rage** still tints red (the Strength effect) and it goes when the rage ends.
-- [ ] **Rage** spends the bonus action: rage, then `/combat bonusAction` has nothing left. (#229)
-- [ ] Raging (`/combat use rage`), roll Athletics from the sheet: the line shows **↑ advantage: Rage**
-      and the roll is 2d20 keep-higher. A STR save in the fight too. (#223)
-- [ ] Not raging, or a DEX check while raging: a normal roll. (#223)
 
 ## Monk
 
@@ -142,28 +135,6 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 - [ ] The action bar, before attacking: **Bonus: READY: Martial Arts…**. (#221)
 - [ ] `/combat attack` with nothing after it lists attacks under **With your Action** and **With your
       bonus action**. (#221)
-
-## Paladin
-
-- [ ] Creation: a Class Skills pick (2), and Weapons / Secondary Weapon / Adventuring Gear picks.
-      Finished: wearing the chain mail gives **no** "not proficient" warning.
-- [ ] Creation: pick "Martial Weapon + Shield" as a longsword → only that tile lights up.
-- [ ] The sheet shows Divine Sense (1 + CHA uses) and Lay on Hands (5 points).
-- [ ] **Lay on Hands:** `/combat use lay_on_hands <ally> 3` next to them → heals 3, pool 5 → 2. From 20 ft
-      → "You need to touch them". On a skeleton → "no effect on Skeleton: it's an undead". (#229)
-- [ ] **Divine Sense** with `/dm entity spawn skeleton` nearby: "an undead, about 25 ft to the
-      north-east". The DM sees the same; other players only see that you used it. With nothing near →
-      "Nothing within 60 ft". (#229)
-
-## Ranger
-
-- [ ] Creation: Favored Enemy and Natural Explorer picks; two simple melee weapons when you take that
-      option; 20 arrows in one stack.
-- [ ] Favored Enemy options read "Dragons (learn Draconic)"; no separate language pick. Finished →
-      Draconic is on the sheet. Beasts → no extra language.
-- [ ] **Bow in combat:** draw and release a real bow shot → refused, nothing fires. Count your
-      arrows before and after: does a refused draw cost one? (The old "give it back" call never
-      worked, per Paper, so this is to find out, not a regression.)
 
 ## Wizard
 
@@ -231,9 +202,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 **Prepared spells**
 
-- [ ] The menu lists the whole cleric list at 1st level, domain spells last as "✦ Always
-      prepared (Life Domain)". Swap one after a long rest; the new one casts, the old one says "isn't prepared". (#218)
-- [ ] An unprepared ritual can't be cast as one ("only a ritual they have prepared"). (#218)
 
 **Out of a fight**
 
@@ -241,14 +209,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       [Roll their save] → "🎲 You roll for <creature>: Dexterity save, DC 13" with the three buttons.
 - [ ] **[Let it happen]** a Sacred Flame → you get **[cast it]**, not a d20 prompt (a save spell
       doesn't roll to hit).
-- [ ] `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Do it anyway]** (you're the DM;
-      a player's [Ask the DM] is in Part 2). Click → **[cast it]**, once; casting again from there refuses again.
-- [ ] `/character cast guidance` (no name = you) → your next check shows `+1d4[Guidance]`, then it's
-      gone (and you stop concentrating). A save in between doesn't use it. (#225)
-- [ ] Spellbook → **Guidance** → click a creature → `/character cast guidance <it>`. **Bane**
-      (harmful) still asks for a typed name. (#179)
-- [ ] Cast Bless, then Time tool **+10 min** → "Bless on … wore off". With the clock running
-      and no DM move, it stays. (#225)
 
 **In a fight**
 
@@ -315,28 +275,14 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 ## Races
 
 **Halfling**
-- [X] **Small:** create one → your body shrinks to about half a human's height. Log out and back in →
-      still small. Switch to a Medium character (`/character view` → set active) → back to normal.
-      Die and respawn → still small.
-- [X] Doorways and 1-block gaps feel right at that size, and the camera isn't strange (#193: the
-      0.6 scale is a guess).
 - [ ] **Stout halfling:** a poison save shows advantage (Stout Resilience).
-- [ ] A 1 on a death save → Lucky rerolls it (it didn't before). (#216)
-- [ ] From the sheet, [Roll it] + Enter, rolling a 1 → Lucky rerolls it. (#216)
 
 **Genasi**
-- [ ] A genasi who picks **Small** is small; one who picks Medium isn't.
-- [ ] **Fire genasi:** the Extra tab has **Spellcasting Ability** (Intelligence / Wisdom / Charisma).
-      Pick Charisma → the spellbook's Produce Flame uses CHA. (#222)
 
 **Dragonborn** (red)
 - [ ] Still resists fire, and its breath weapon is still a fire cone. (#222)
-- [ ] Features & Traits: the **Breath Weapon** tile shows the area, your save DC and the damage for your
-      ancestry, and "Uses 1/1". Click it outside a fight → "is used in a fight"; in a fight on your turn → a
-      chat button that fills `/combat use breath_weapon`. (#65)
 
 **Astral Elf**
-- [ ] With Sacred Flame + Wisdom → `/combat cast sacred_flame <target>` uses WIS for the DC.
 
 **Darkvision** (a dwarf, elf or tiefling, and a human) (#148)
 - [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
@@ -350,11 +296,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       your speed drops by 10 ft (now 20 ft)". The sheet's Speed tile says 20 ft with the reason; AC is 16, not 10.
       In a fight the movement bar allows 20 ft. Take it off → 30 ft.
 - [ ] A dwarf with STR 10 in plate → no warning, speed stays 25.
-
-## Backgrounds
-
-- [ ] **Folk Hero:** the picked tool is in your kit.
-- [ ] **Entertainer:** the picked instrument is in your kit.
 
 ---
 
@@ -419,14 +360,6 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] `/dm check <you> skill athletics|acrobatics dc 13` → you get both prompts ("pick how you go about
       it"); the one you roll comes back graded.
 
-## Features & Traits page (#65)
-
-- [X] Character sheet → **Features & Traits** (nether star, slot 9). Top row: your race's traits, darkvision
-      and speeds; your class's features up to your level with their text (a fighter: Fighting Style, Second
-      Wind); your subclass's, names in proper case; "Your picks" (fighting style, dragon ancestor…).
-- [X] The paper above the list reads **Your features**, with "Below: what you can use…" wrapped underneath
-      instead of one long name. (#65)
-
 ## Death
 
 - [ ] Down yourself, fail three death saves → "has DIED", turn skipped.
@@ -460,8 +393,6 @@ The sounds are all in `DMContent/Sounds.yml`; the spell looks (rows under Wizard
 `DMContent/DamageTypes.yml`. Copy both into the server's DMContent. Tell me which vanilla picks sound
 wrong, and swap in your own anytime.
 
-- [X] Roll anything with a d20 (a sheet check, an attack) → a dice sound. A natural 20 adds a level-up chime, a
-      natural 1 a villager "hrmm". `/combat rollforinitiative` with several creatures → one rattle, not a pile.
 - [ ] In a fight: a hit and a miss sound different; your turn starting → a bell (for you only); dropping to 0 →
       a heartbeat; dying → a low bell.
 - [ ] **Combat music:** roll initiative → the boss music starts (Jukebox/Note Blocks slider); walk around, it
@@ -538,17 +469,8 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 **Mannequin trial** (look-only, nothing to click; `/dm entity mannequin clear` tidies up). For the pack
 skin row, load the local `ResourcePack\jkvttresourcepack` (it has a placeholder `entity/npc/balin.png`):
-- [X] `/dm entity mannequin balin_blacksmith` → a player-shaped Balin on the block you look at, facing
-      you: "Balin" with "Humanoid (dwarf)" under it, a warhammer in hand, the default skin. (#211)
-- [X] Add `minecraft:entity/player/wide/kai` → Kai's skin: a texture key works as a skin. (#211)
-- [X] `jkvttresourcepack:entity/npc/balin` → Efe's skin, from **our pack**: no account needed. (#211)
-- [X] `jkvttresourcepack:entity/npc/nope` → a purple-and-black skin (missing texture), no crash. (#211)
-- [X] `… minecraft:entity/player/slim/alex slim` → thin arms. Try a punch, a push, walking into it:
-      it doesn't move or take damage. Restart → it's gone. (#211)
 
-- [X] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
 - [ ] Looking at a creature, right-click your spellcasting focus → the spellbook opens.
-- [X] Right-clicking a **dead** creature with the sheet in hand → still loots (the body wins).
 - [ ] Dungeoneer's Pack in your inventory: click another item onto it, or it onto an item →
       nothing goes in, "Packs don't hold other items".
 - [ ] Something already inside a pack from before → you can still take it out.
@@ -567,11 +489,6 @@ buttons. Try both; whichever you like less gets removed.
 - [ ] Opens + a key → it saves as Locked (a key means a lock).
 - [ ] The buttons read short ("Opening: Locked", "Key: Brass Key", "Trap save: Dexterity"); clicking
       one cycles it. What Opening and Key mean is in the text at the top.
-- [X] The Trap DC slider goes to 40.
-- [X] The dialog has **Save + study check…** → it saves, then opens the Study form for the same block. (#231)
-- [X] Study form: a Skill button cycles through the 18 skills (with their ability), then the six ability
-      checks; shift-click goes back. Save → "Saved the Enchanting Table: study: rolled History or Arcana,
-      DC 10/15/20". Leave a tier's text blank → that tier is gone. (#231)
 
 ## Other DM commands
 
@@ -579,7 +496,6 @@ buttons. Try both; whichever you like less gets removed.
 - [ ] `/dm check clear Balin Ironforge` → "is a creature. Only characters have held checks…".
 - [ ] `/dm check clear ` + Tab → only characters, no creatures.
 - [ ] `/dm check clear <your character>` → clears your held checks.
-- [ ] `/dm resource restore "Balin Ironforge" rage` works.
 - [ ] `/dm rest <character> long` works.
 - [ ] `/dm resource restore <character> all` works.
 - [ ] `/dm resource consume <character> <res> 1` works.
@@ -766,7 +682,6 @@ Set up an enchanting table: a description, **Rolled**, History or Arcana, three 
 # Playtest notes
 Write anything here, in any order. Each round Claude answers in chat, turns the notes into rows
 above, and clears this section (git keeps the old notes).
-
 
 
 ---
