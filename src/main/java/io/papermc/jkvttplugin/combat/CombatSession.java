@@ -121,6 +121,17 @@ public class CombatSession {
     }
 
     /**
+     * The fight a DM is running, or null. Looked up in the one registry every session joins (a new
+     * one and one restored after a restart alike); a second map kept by /combat used to miss restored
+     * fights, so the DM could neither run nor finish them while players were still stuck in them.
+     */
+    public static CombatSession getSessionForDm(UUID dmId) {
+        if (dmId == null) return null;
+        for (CombatSession s : ACTIVE_SESSIONS.values()) if (s.isActive && dmId.equals(s.dmId)) return s;
+        return null;
+    }
+
+    /**
      * Get a combat session by ID.
      */
     public static CombatSession getSession(UUID sessionId) {

@@ -110,4 +110,16 @@ class CombatPersistenceTest {
         CombatPersistence.delete(session);
         assertFalse(f.exists());
     }
+
+    /**
+     * A fight restored after a restart has to be the DM's to run and finish. /combat once kept its own
+     * map of DM sessions that a restore never joined: players were stuck "in combat" while every DM
+     * command said "No active combat session". One registry (CombatSession.getSessionForDm) only.
+     */
+    @Test
+    void theDmsCommandsFindFightsInTheOneRegistry() throws java.io.IOException {
+        String src = Files.readString(Path.of("src/main/java/io/papermc/jkvttplugin/combat/CombatCommand.java"));
+        assertFalse(src.matches("(?s).*Map<UUID,\\s*CombatSession>.*"),
+                "CombatCommand keeps its own session map again; look fights up with CombatSession.getSessionForDm");
+    }
 }

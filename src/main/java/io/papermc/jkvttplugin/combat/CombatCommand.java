@@ -49,7 +49,6 @@ import java.util.stream.Collectors;
 public class CombatCommand implements CommandExecutor, TabCompleter {
 
     // DM session tracking (player UUID -> their active combat session)
-    private static final Map<UUID, CombatSession> DM_SESSIONS = new HashMap<>();
 
     // Subcommands that players can use on their own turn (no DM permission needed)
     private static final Set<String> PLAYER_ALLOWED = Set.of("action", "bonusaction", "endturn", "attack", "deathsave", "damage", "movement", "initiative", "cast", "save", "concentration", "reaction", "reactions", "use");
@@ -124,7 +123,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
     private void handleStart(Player dm) {
         // Check if DM already has an active combat
-        CombatSession existing = DM_SESSIONS.get(dm.getUniqueId());
+        CombatSession existing = CombatSession.getSessionForDm(dm.getUniqueId());
         if (existing != null && existing.isActive()) {
             dm.sendMessage(Component.text("You already have an active combat session.", NamedTextColor.RED));
             dm.sendMessage(Component.text("Use /combat finished to end it first.", NamedTextColor.GRAY));
@@ -133,7 +132,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         // Create new combat session
         CombatSession session = new CombatSession(dm);
-        DM_SESSIONS.put(dm.getUniqueId(), session);
 
         dm.sendMessage(Component.empty());
         dm.sendMessage(Component.text("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
@@ -721,7 +719,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (session.isSetupPhase()) {
             session.broadcast(Component.text("✖ Encounter cancelled (never started).", NamedTextColor.GRAY, TextDecoration.ITALIC));
             session.endCombat();
-            DM_SESSIONS.remove(dm.getUniqueId());
             dm.sendMessage(Component.text("Encounter cancelled.", NamedTextColor.YELLOW));
             return;
         }
@@ -739,7 +736,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         session.broadcast(Component.text("━━━━━━━━━━━━━━━━━━━━━", NamedTextColor.GOLD));
 
         session.endCombat();
-        DM_SESSIONS.remove(dm.getUniqueId());
 
         dm.sendMessage(Component.text("Combat session ended.", NamedTextColor.GREEN));
     }
@@ -2897,7 +2893,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      */
     private CombatSession resolveSession(Player player) {
         // First check if they're the DM
-        CombatSession dmSession = DM_SESSIONS.get(player.getUniqueId());
+        CombatSession dmSession = CombatSession.getSessionForDm(player.getUniqueId());
         if (dmSession != null && dmSession.isActive()) {
             return dmSession;
         }
@@ -3003,7 +2999,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     }
 
     private CombatSession getActiveSession(Player dm) {
-        CombatSession session = DM_SESSIONS.get(dm.getUniqueId());
+        CombatSession session = CombatSession.getSessionForDm(dm.getUniqueId());
         if (session == null || !session.isActive()) {
             dm.sendMessage(Component.text("No active combat session. Use /combat start first.", NamedTextColor.RED));
             return null;
@@ -3187,7 +3183,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * Get the DM's active combat session.
      */
     public static CombatSession getDMSession(UUID dmId) {
-        return DM_SESSIONS.get(dmId);
+        return CombatSession.getSessionForDm(dmId);
     }
 
     // ==================== TAB COMPLETION ====================
@@ -3209,7 +3205,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         // Try DM session first, then player session for tab completion
-        CombatSession session = DM_SESSIONS.get(player.getUniqueId());
+        CombatSession session = CombatSession.getSessionForDm(player.getUniqueId());
         if (session == null) {
             session = CombatSession.getSessionForPlayer(player.getUniqueId());
         }

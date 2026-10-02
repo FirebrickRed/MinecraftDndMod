@@ -223,6 +223,7 @@ public class CharacterSheetManager {
         CharacterSheet sheet = CharacterPersistenceLoader.getCharacter(playerId, characterId);
         Player owner = Bukkit.getPlayer(playerId);
         if (owner != null) clearCharacterItems(owner, characterId, sheet);
+        ActiveCharacterTracker.clearIfActive(owner, characterId); // or every command says "no active character"
         // Anything still holding the sheet mustn't write it back into Saved/Characters.
         if (sheet != null) sheet.setSavable(false);
 

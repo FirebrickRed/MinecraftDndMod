@@ -344,6 +344,11 @@ public class MergedChoice {
                     }
                 }
 
+                // A pick that is itself one of the listed options isn't this tag filled in: the barbarian's
+                // "greataxe" also belongs to "any martial melee weapon", and both tiles lit up as selected.
+                if (eo.getKind() != EquipmentOption.Kind.BUNDLE && pc.getPlayersChoice().getOptions().stream()
+                        .anyMatch(o -> o instanceof EquipmentOption direct && direct.equals(chosenEo))) continue;
+
                 EquipmentOption resolved = findResolvedItem(chosenEo, tagItems);
                 if (resolved != null) return resolved;
             }

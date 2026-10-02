@@ -43,8 +43,26 @@ public class ActiveCharacterTracker {
 
     public static CharacterSheet getActiveCharacter(Player player) {
         UUID characterId = getActiveCharacterId(player);
-        if (characterId == null) return null;
+        CharacterSheet sheet = choose(characterId, CharacterSheetManager.getPlayerCharacters(player.getUniqueId()));
+        if (sheet != null && !sheet.getCharacterId().equals(characterId)) setActiveCharacter(player, sheet.getCharacterId());
+        return sheet;
+    }
 
-        return CharacterSheetManager.getCharacter(player.getUniqueId(), characterId);
+    /**
+     * The character a stored pointer means. The pointer can be missing or name a deleted character (a
+     * delete used to leave it behind, so the player had "no active character" until they right-clicked
+     * a sheet): then a player with exactly one character is playing that one. With several, they pick.
+     */
+    static CharacterSheet choose(UUID storedId, java.util.List<CharacterSheet> mine) {
+        if (mine == null || mine.isEmpty()) return null;
+        if (storedId != null) for (CharacterSheet s : mine) if (storedId.equals(s.getCharacterId())) return s;
+        return mine.size() == 1 ? mine.get(0) : null;
+    }
+
+    /** Forget the pointer if it names this character (it was just deleted). */
+    public static void clearIfActive(Player player, UUID characterId) {
+        if (player == null || characterId == null || !characterId.equals(getActiveCharacterId(player))) return;
+        activeCharacters.remove(player.getUniqueId());
+        player.getPersistentDataContainer().remove(new NamespacedKey("jkvtt", "active_character"));
     }
 }

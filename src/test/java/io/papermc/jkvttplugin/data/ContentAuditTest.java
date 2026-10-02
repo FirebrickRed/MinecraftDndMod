@@ -104,6 +104,35 @@ class ContentAuditTest {
         assertFalse(merged.isTagResolved(twoKey), "the other bundle isn't picked");
     }
 
+    /**
+     * The barbarian's "greataxe or any martial melee weapon": picking the greataxe tile lit the "any"
+     * tile too, since a greataxe is a martial melee weapon (playtest). Same for "handaxe x2 or any simple".
+     */
+    @SuppressWarnings({"unchecked", "rawtypes"})
+    @Test
+    void pickingTheNamedItemDoesntFillTheAnyOption() {
+        var s = session("human", null, "barbarian", "soldier");
+        for (String id : List.of("class_equipment_1", "class_equipment_2")) {
+            var pc = (io.papermc.jkvttplugin.data.model.PendingChoice) choice(s, id);
+            List<EquipmentOption> opts = (List<EquipmentOption>) pc.getPlayersChoice().getOptions();
+            EquipmentOption named = opts.stream().filter(o -> o.getKind() != EquipmentOption.Kind.TAG).findFirst().orElseThrow();
+            EquipmentOption any = opts.stream().filter(o -> o.getKind() == EquipmentOption.Kind.TAG).findFirst().orElseThrow();
+            pc.toggleOption(named, java.util.Set.of());
+
+            var merged = merged(s).stream().filter(m -> m.getSourcePendingChoices().contains(pc)).findFirst().orElseThrow();
+            String anyKey = null;
+            for (Object key : pc.optionKeys()) if (any.equals(pc.optionForKey((String) key))) anyKey = (String) key;
+            assertFalse(merged.isTagResolved(anyKey), id + ": picking " + named.getIdOrTag() + " isn't a pick from the list");
+
+            // Drilling into the list and picking something else from it still counts.
+            pc.toggleOption(named, java.util.Set.of());
+            String other = id.equals("class_equipment_1") ? "longsword" : "club";
+            s.toggleChoiceByKey(id, "item:" + other); // what the drill-down menu does
+            merged = merged(s).stream().filter(m -> m.getSourcePendingChoices().contains(pc)).findFirst().orElseThrow();
+            assertTrue(merged.isTagResolved(anyKey), id + ": " + other + " fills the list option");
+        }
+    }
+
     /** A ranger's favored enemy brings its language (it was a separate pick that could mismatch). */
     @Test
     void favoredEnemyTeachesItsLanguage() {

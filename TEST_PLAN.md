@@ -43,7 +43,7 @@ local copy, and an old server pack loads above a local one. Steps: `docs/resourc
 - [ ] **Annotate form** (a dialog, Paper API): right-click a chest with the Annotate tool → the form
       opens; Save applies it.
 - [ ] **Shop screen** opens, titled with the merchant's name; buying and selling work.
-- [ ] **Chat input:** the name step in creation, and a Message spell's words.
+- [X] **Chat input:** the name step in creation, and a Message spell's words.
 - [ ] **Item tooltips:** no vanilla "attack damage" / "Dyed" / "No Effects" lines on D&D items.
 - [ ] **Combat basics:** left-click a creature to get the attack prompt; a real bow shot and loading a
       crossbow are both refused; the turn glow shows; a killed creature tips over.
@@ -123,6 +123,8 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 
 ## Barbarian
 
+- [ ] Creation, Starting Equipment 1: pick **Greataxe** → only that tile turns green. Pick "Any Martial Melee
+      Weapon" → Longsword instead → only that tile. Same with **Handaxe x2** / "Any Simple Weapon".
 - [ ] **Rage** still tints red (the Strength effect) and it goes when the rage ends.
 - [ ] **Rage** spends the bonus action: rage, then `/combat bonusAction` has nothing left. (#229)
 - [ ] Raging (`/combat use rage`), roll Athletics from the sheet: the line shows **↑ advantage: Rage**
@@ -313,10 +315,10 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 ## Races
 
 **Halfling**
-- [ ] **Small:** create one → your body shrinks to about half a human's height. Log out and back in →
+- [X] **Small:** create one → your body shrinks to about half a human's height. Log out and back in →
       still small. Switch to a Medium character (`/character view` → set active) → back to normal.
       Die and respawn → still small.
-- [ ] Doorways and 1-block gaps feel right at that size, and the camera isn't strange (#193: the
+- [X] Doorways and 1-block gaps feel right at that size, and the camera isn't strange (#193: the
       0.6 scale is a guess).
 - [ ] **Stout halfling:** a poison save shows advantage (Stout Resilience).
 - [ ] A 1 on a death save → Lucky rerolls it (it didn't before). (#216)
@@ -357,6 +359,13 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 ---
 
 # Any character
+
+## Characters and gear
+
+- [ ] With two characters, delete the active one → the one left is used straight away; "no active
+      character" never shows. With three, delete the active one → right-click a sheet to pick.
+- [ ] Put a torch into your Explorer's Pack, in survival **and** in creative → it comes straight back
+      out: "Packs don't hold other items: it's back in your inventory." (#219)
 
 ## Combat
 
@@ -412,10 +421,10 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 
 ## Features & Traits page (#65)
 
-- [ ] Character sheet → **Features & Traits** (nether star, slot 9). Top row: your race's traits, darkvision
+- [X] Character sheet → **Features & Traits** (nether star, slot 9). Top row: your race's traits, darkvision
       and speeds; your class's features up to your level with their text (a fighter: Fighting Style, Second
       Wind); your subclass's, names in proper case; "Your picks" (fighting style, dragon ancestor…).
-- [ ] The paper above the list reads **Your features**, with "Below: what you can use…" wrapped underneath
+- [X] The paper above the list reads **Your features**, with "Below: what you can use…" wrapped underneath
       instead of one long name. (#65)
 
 ## Death
@@ -451,7 +460,7 @@ The sounds are all in `DMContent/Sounds.yml`; the spell looks (rows under Wizard
 `DMContent/DamageTypes.yml`. Copy both into the server's DMContent. Tell me which vanilla picks sound
 wrong, and swap in your own anytime.
 
-- [ ] Roll anything with a d20 (a sheet check, an attack) → a dice sound. A natural 20 adds a level-up chime, a
+- [X] Roll anything with a d20 (a sheet check, an attack) → a dice sound. A natural 20 adds a level-up chime, a
       natural 1 a villager "hrmm". `/combat rollforinitiative` with several creatures → one rattle, not a pile.
 - [ ] In a fight: a hit and a miss sound different; your turn starting → a bell (for you only); dropping to 0 →
       a heartbeat; dying → a low bell.
@@ -529,17 +538,17 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 **Mannequin trial** (look-only, nothing to click; `/dm entity mannequin clear` tidies up). For the pack
 skin row, load the local `ResourcePack\jkvttresourcepack` (it has a placeholder `entity/npc/balin.png`):
-- [ ] `/dm entity mannequin balin_blacksmith` → a player-shaped Balin on the block you look at, facing
+- [X] `/dm entity mannequin balin_blacksmith` → a player-shaped Balin on the block you look at, facing
       you: "Balin" with "Humanoid (dwarf)" under it, a warhammer in hand, the default skin. (#211)
-- [ ] Add `minecraft:entity/player/wide/kai` → Kai's skin: a texture key works as a skin. (#211)
-- [ ] `jkvttresourcepack:entity/npc/balin` → Efe's skin, from **our pack**: no account needed. (#211)
-- [ ] `jkvttresourcepack:entity/npc/nope` → a purple-and-black skin (missing texture), no crash. (#211)
-- [ ] `… minecraft:entity/player/slim/alex slim` → thin arms. Try a punch, a push, walking into it:
+- [X] Add `minecraft:entity/player/wide/kai` → Kai's skin: a texture key works as a skin. (#211)
+- [X] `jkvttresourcepack:entity/npc/balin` → Efe's skin, from **our pack**: no account needed. (#211)
+- [X] `jkvttresourcepack:entity/npc/nope` → a purple-and-black skin (missing texture), no crash. (#211)
+- [X] `… minecraft:entity/player/slim/alex slim` → thin arms. Try a punch, a push, walking into it:
       it doesn't move or take damage. Restart → it's gone. (#211)
 
-- [ ] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
+- [X] Buttons the game fills in (loot, possession, shop prompts) say `/dm entity …` and work.
 - [ ] Looking at a creature, right-click your spellcasting focus → the spellbook opens.
-- [ ] Right-clicking a **dead** creature with the sheet in hand → still loots (the body wins).
+- [X] Right-clicking a **dead** creature with the sheet in hand → still loots (the body wins).
 - [ ] Dungeoneer's Pack in your inventory: click another item onto it, or it onto an item →
       nothing goes in, "Packs don't hold other items".
 - [ ] Something already inside a pack from before → you can still take it out.
@@ -558,9 +567,9 @@ buttons. Try both; whichever you like less gets removed.
 - [ ] Opens + a key → it saves as Locked (a key means a lock).
 - [ ] The buttons read short ("Opening: Locked", "Key: Brass Key", "Trap save: Dexterity"); clicking
       one cycles it. What Opening and Key mean is in the text at the top.
-- [ ] The Trap DC slider goes to 40.
-- [ ] The dialog has **Save + study check…** → it saves, then opens the Study form for the same block. (#231)
-- [ ] Study form: a Skill button cycles through the 18 skills (with their ability), then the six ability
+- [X] The Trap DC slider goes to 40.
+- [X] The dialog has **Save + study check…** → it saves, then opens the Study form for the same block. (#231)
+- [X] Study form: a Skill button cycles through the 18 skills (with their ability), then the six ability
       checks; shift-click goes back. Save → "Saved the Enchanting Table: study: rolled History or Arcana,
       DC 10/15/20". Leave a tier's text blank → that tier is gone. (#231)
 
@@ -583,6 +592,8 @@ buttons. Try both; whichever you like less gets removed.
 
 Set these up, `/stop`, start the server, then check:
 
+- [ ] A fight in progress (your character in it) → after the restart, `/combat nextturn` works and
+      `/combat finished` ends it; your character is out of combat and character commands work. (#165)
 - [ ] A character Poisoned before → still Poisoned after.
 - [ ] A creature Prone before → start a fight after, its scoreboard tag is still there.
 - [ ] Your finished characters still list their chosen languages, tools and racial spell picks.
@@ -755,6 +766,7 @@ Set up an enchanting table: a description, **Rolled**, History or Arcana, three 
 # Playtest notes
 Write anything here, in any order. Each round Claude answers in chat, turns the notes into rows
 above, and clears this section (git keeps the old notes).
+
 
 
 ---
