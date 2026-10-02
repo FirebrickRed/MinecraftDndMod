@@ -145,6 +145,10 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 
 ## Wizard
 
+- [ ] In a fight, cast Fire Bolt and resolve it, then cast it again the same turn → "You've already used your
+      Action this turn". Nothing is rolled or spent. (#235)
+- [ ] `/roll 1d6+2147483647d6` and `/roll 99999999999d6` → refused as invalid, and the server doesn't stall. (#234)
+
 **Creation and the spellbook**
 
 - [ ] Creation, spell step: the label says "This is your spellbook. Each day you prepare some of it".
@@ -268,6 +272,10 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       than 6 + CON. Put on armor → normal armor AC.
 
 ## Warlock
+
+- [ ] Hex someone, then cast another concentration spell (Bless if you have it, or any) → attack the
+      Hexed target: no Hex damage offered. (#238)
+- [ ] A warlock without Hex: `/combat cast hex <target> strength` → refused ("doesn't know"), no slot spent. (#236)
 
 - [ ] **Genie:** **Genie Kind** and **Genie's Vessel** now show (they never did).
       Efreeti → Burning Hands is **offered in the spell step** (not handed over). (#222)

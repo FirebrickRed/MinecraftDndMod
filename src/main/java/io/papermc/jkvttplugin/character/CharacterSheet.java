@@ -1751,6 +1751,9 @@ public class CharacterSheet {
         this.concentratingOn = spell;
         // A new concentration spell ends the old one, on everyone it was on (Bless → Bane, #225).
         if (was != null && was != spell) io.papermc.jkvttplugin.combat.SpellEffects.endConcentration(characterId, was);
+        // ...and a Hex/Hunter's Mark it held: its rider damage went on after switching (#238). Casting the
+        // same mark again keeps it (castMark sets the new target right after).
+        if (was != null && was != spell) clearSpellMark();
     }
 
     public boolean isConcentrating() {

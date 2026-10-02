@@ -191,6 +191,9 @@ public class SpellCastHandler {
                                    DndSpell spell, Ability choice) {
         CharacterSheet sheet = caster.getCharacterSheet();
         if (sheet == null) { player.sendMessage(Component.text("Only characters cast this spell.", NamedTextColor.RED)); return false; }
+        // Known and prepared, like every other cast path: a spare slot was enough to cast an unknown Hex (#236).
+        String refusal = io.papermc.jkvttplugin.character.PreparedSpells.castRefusal(sheet, spell, false);
+        if (refusal != null) { player.sendMessage(Component.text(refusal, NamedTextColor.RED)); return false; }
         if (!reaches(caster, target, player, spell)) return false; // Hex reaches 90 ft; it wasn't checked at all
 
         if (sheet.isConcentrating() && sheet.getConcentratingOn() != spell) {

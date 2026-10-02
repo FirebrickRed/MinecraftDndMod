@@ -100,30 +100,58 @@ public class DiceRoller {
      * <p>More than one dice group is fine ("1d8+1d6+3", a hit with Sneak Attack): every die is kept
      * and the flat terms add up into the modifier.
      */
+    /** Biggest number any one token may be: far past any real roll, far below int overflow. */
+    private static final int MAX_TOKEN = 1_000_000;
+    private static final int MAX_DICE = 1000;
+
+    /** A digit run as a number, or -1 when it's too long or too big to be a real roll (#234). */
+    private static int token(String digits) {
+        if (digits == null || digits.isEmpty() || digits.length() > 7) return -1;
+        int n = Integer.parseInt(digits);
+        return n > MAX_TOKEN ? -1 : n;
+    }
+
     public static java.util.Optional<Rolled> roll(String input, int rerollAtOrBelow) {
         String expr = input.toLowerCase().replace(" ", "");
         Matcher whole = EXPRESSION.matcher(expr);
         if (!whole.matches() || !expr.contains("d")) return java.util.Optional.empty();
-        int multiplier = whole.group(1) != null ? Integer.parseInt(whole.group(1)) : 1;
+        int multiplier = whole.group(1) != null ? token(whole.group(1)) : 1;
+        if (multiplier < 0 || multiplier > 100) return java.util.Optional.empty();
         String terms = whole.group(1) != null ? expr.substring(0, expr.lastIndexOf('*')) : expr;
 
-        java.util.List<Integer> dice = new java.util.ArrayList<>();
-        int sum = 0, modifier = 0, count = 0;
+        // Check every term before rolling anything: a hostile count is refused without a loop (#234).
+        java.util.List<int[]> parsed = new java.util.ArrayList<>(); // {sign, dice (0 = flat), sides or value}
+        long modifier = 0;
+        int count = 0;
         Matcher t = TERM.matcher(terms);
         while (t.find()) {
             int sign = "-".equals(t.group(1)) ? -1 : 1;
-            if (t.group(4) != null) { modifier += sign * Integer.parseInt(t.group(4)); continue; }
-            int numDice = t.group(2).isEmpty() ? 1 : Integer.parseInt(t.group(2));
-            int sides = Integer.parseInt(t.group(3));
+            if (t.group(4) != null) {
+                int flat = token(t.group(4));
+                if (flat < 0) return java.util.Optional.empty();
+                modifier += (long) sign * flat;
+                if (Math.abs(modifier) > MAX_TOKEN) return java.util.Optional.empty();
+                continue;
+            }
+            int numDice = t.group(2).isEmpty() ? 1 : token(t.group(2));
+            int sides = token(t.group(3));
+            if (numDice < 0 || sides < 1 || numDice > MAX_DICE - count) return java.util.Optional.empty();
             count += numDice;
-            if (sides < 1 || count > 1000) return java.util.Optional.empty();
-            for (int i = 0; i < numDice; i++) {
-                int die = random.nextInt(sides) + 1;
-                if (die <= rerollAtOrBelow) die = random.nextInt(sides) + 1;
-                dice.add(sign * die);
-                sum += sign * die;
+            parsed.add(new int[]{sign, numDice, sides});
+        }
+
+        java.util.List<Integer> dice = new java.util.ArrayList<>();
+        long sum = 0;
+        for (int[] g : parsed) {
+            for (int i = 0; i < g[1]; i++) {
+                int die = random.nextInt(g[2]) + 1;
+                if (die <= rerollAtOrBelow) die = random.nextInt(g[2]) + 1;
+                dice.add(g[0] * die);
+                sum += (long) g[0] * die;
             }
         }
-        return java.util.Optional.of(new Rolled(expr, dice, modifier, multiplier, (sum + modifier) * multiplier));
+        long total = (sum + modifier) * multiplier;
+        if (Math.abs(total) > Integer.MAX_VALUE) return java.util.Optional.empty();
+        return java.util.Optional.of(new Rolled(expr, dice, (int) modifier, multiplier, (int) total));
     }
 }

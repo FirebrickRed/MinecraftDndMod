@@ -1282,6 +1282,13 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // A reaction cast is exempt: casting off-turn is often how you ANSWER a window, and
         // blocking it would deadlock the very thing that closes it.
         if (!spendReaction && turnHeld(player, caster)) return;
+        // The Action / bonus action it costs has to still be there: a cantrip could be cast again and
+        // again in one turn (#235). A DM is told but not stopped (their ruling stands).
+        if (!spendReaction) {
+            String spent = castBudgetRefusal(caster.getTurnState(), spell);
+            if (spent != null && !isDM) { player.sendMessage(Component.text(spent, NamedTextColor.YELLOW)); return; }
+            if (spent != null) player.sendMessage(Component.text(spent + " (DM: going ahead anyway.)", NamedTextColor.GRAY));
+        }
 
         // A leveled spell needs a slot (or an innate use). This was never checked in combat — the
         // spellbook menu consumed the slot, and routing to /combat cast skipped it, so a 1st-level
@@ -1386,6 +1393,21 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         if (resolved) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction);
+    }
+
+    /**
+     * Why this spell can't be cast on your own turn because what it costs is spent, or null if it can
+     * (#235). A bonus-action spell needs the bonus action; anything else that isn't a reaction needs the
+     * Action. Pure, for the tests.
+     */
+    static String castBudgetRefusal(TurnState state, io.papermc.jkvttplugin.data.model.DndSpell spell) {
+        if (state == null || spell == null) return null;
+        String time = spell.getCastingTime() == null ? "" : spell.getCastingTime().toLowerCase();
+        if (time.contains("reaction")) return null;
+        if (time.contains("bonus")) {
+            return state.isBonusActionUsed() ? "You've already used your bonus action this turn: " + spell.getName() + " needs it." : null;
+        }
+        return state.isActionUsed() ? "You've already used your Action this turn: " + spell.getName() + " needs it." : null;
     }
 
     /**
