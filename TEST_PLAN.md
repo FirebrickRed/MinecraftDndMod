@@ -533,7 +533,7 @@ buttons. Try both; whichever you like less gets removed.
 
 Set these up, `/stop`, start the server, then check:
 
-- [ ] Before stopping: open `pluginsjkvttpluginSavedCharacters`, pick a character file, and copy it somewhere safe. After
+- [ ] Before stopping: open `plugins/jkvttplugin/Saved/Characters`, pick a character file, and copy it somewhere safe. After
       the server has saved it once more (take a hit), that folder also has `<id>.yml.bak`: the version before. (#242)
 - [ ] With the server stopped, break that `<id>.yml` (delete half of it). Start → the console says it "won't load",
       loaded the previous version instead, and kept the broken one as `<id>.yml.broken-…`; the character is there
