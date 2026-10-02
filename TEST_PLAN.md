@@ -328,6 +328,9 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 ## Characters and gear
 
+- [ ] New weapons: `/dm give <you> battleaxe`, `maul`, `heavy_crossbow` and `blowgun` (+ `blowgun_needle x10`) all
+      arrive with their stats. In a fight, a blowgun hit's damage is one number: 1 + your DEX (it used to fail to roll).
+- [ ] A creation pick of "any simple melee weapon" no longer offers the dart; "any simple ranged weapon" does.
 - [ ] With two characters, delete the active one → the one left is used straight away; "no active
       character" never shows. With three, delete the active one → right-click a sheet to pick.
 - [ ] Put a torch into your Explorer's Pack, in survival **and** in creative → it comes straight back
