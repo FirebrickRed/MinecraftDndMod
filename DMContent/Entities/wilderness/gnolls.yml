@@ -1,0 +1,293 @@
+# Transcribed from the six stat blocks supplied by the DM.
+# Fixed printed HP; the original hit dice are recorded in the notes.
+# No model is assigned until a matching resource-pack texture exists.
+# Special actions, save proficiencies, and immunities are DM-adjudicated:
+# the entity loader supports individual attacks, not those mechanics.
+
+gnoll:
+  name: "Gnoll"
+  creature_type: humanoid
+  subtype: gnoll
+  size: medium
+  hit_points: 22
+  armor_class: 15
+  speed: 30
+  darkvision: 60
+  abilities:
+    strength: 14
+    dexterity: 12
+    constitution: 11
+    intelligence: 6
+    wisdom: 10
+    charisma: 7
+  attacks:
+    - name: "Bite"
+      material: BONE
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d4+2"
+      damage_type: piercing
+    - name: "Spear"
+      item: spear
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d6+2"
+      damage_type: piercing
+    - name: "Spear (Two-Handed)"
+      item: spear
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d8+2"
+      damage_type: piercing
+    - name: "Spear (Thrown)"
+      item: spear
+      to_hit: 4
+      reach: "20/60 ft."
+      damage: "1d6+2"
+      damage_type: piercing
+    - name: "Longbow"
+      item: longbow
+      to_hit: 3
+      reach: "150/600 ft."
+      damage: "1d8+1"
+      damage_type: piercing
+  # Explicit loot prevents the three spear attack modes from dropping three spears.
+  loot: [spear, longbow, hide_armor, shield]
+  dm_notes: |
+    Chaotic evil. CR 1/2 (100 XP). HP 22 (5d8).
+    Armor: hide armor and shield. Languages: Gnoll. Passive Perception 10.
+    Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
+    melee attack on its turn, move up to half its speed and make one Bite attack.
+    Two-handed spear and longbow require both hands; account for the shield when used.
+
+gnoll_pack_lord:
+  name: "Gnoll Pack Lord"
+  creature_type: humanoid
+  subtype: gnoll
+  size: medium
+  hit_points: 49
+  armor_class: 15
+  speed: 30
+  darkvision: 60
+  abilities:
+    strength: 16
+    dexterity: 14
+    constitution: 13
+    intelligence: 8
+    wisdom: 11
+    charisma: 9
+  attacks:
+    - name: "Bite"
+      material: BONE
+      to_hit: 5
+      reach: "5 ft."
+      damage: "1d4+3"
+      damage_type: piercing
+    - name: "Glaive"
+      item: glaive
+      to_hit: 5
+      reach: "10 ft."
+      damage: "1d10+3"
+      damage_type: slashing
+    - name: "Longbow"
+      item: longbow
+      to_hit: 4
+      reach: "150/600 ft."
+      damage: "1d8+2"
+      damage_type: piercing
+  loot: [glaive, longbow, chain_shirt]
+  dm_notes: |
+    Chaotic evil. CR 2 (450 XP). HP 49 (9d8+9).
+    Armor: chain shirt. Languages: Gnoll. Passive Perception 10.
+    Multiattack (DM-handled): two attacks with its glaive or longbow, and use
+    Incite Rampage if available.
+    Incite Rampage (action; recharge 5-6, DM-handled): one creature the gnoll can
+    see within 30 feet can use its reaction to make a melee attack if it can hear
+    the gnoll and has the Rampage trait.
+    Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
+    melee attack on its turn, move up to half its speed and make one Bite attack.
+
+gnoll_fang_of_yeenoghu:
+  name: "Gnoll Fang of Yeenoghu"
+  creature_type: fiend
+  subtype: gnoll
+  size: medium
+  hit_points: 65
+  armor_class: 14
+  speed: 30
+  darkvision: 60
+  abilities:
+    strength: 17
+    dexterity: 15
+    constitution: 15
+    intelligence: 10
+    wisdom: 11
+    charisma: 13
+  attacks:
+    - name: "Bite"
+      material: BONE
+      to_hit: 5
+      reach: "5 ft."
+      damage: "1d6+3"
+      damage_type: piercing
+    - name: "Claw"
+      material: FLINT
+      to_hit: 5
+      reach: "5 ft."
+      damage: "1d8+3"
+      damage_type: slashing
+  loot: [hide_armor]
+  dm_notes: |
+    Chaotic evil. CR 4 (1,100 XP). HP 65 (10d8+20).
+    Armor: hide armor. Languages: Abyssal, Gnoll. Passive Perception 10.
+    Saving throws (DM-handled totals): Constitution +4, Wisdom +2, Charisma +3.
+    Multiattack (DM-handled): one Bite and two Claw attacks.
+    Bite rider (DM-handled): on a hit, the target makes a DC 12 Constitution
+    save, taking 2d6 poison damage on a failure (no poison damage on success).
+    Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
+    melee attack on its turn, move up to half its speed and make one Bite attack.
+
+gnoll_witherling:
+  name: "Gnoll Witherling"
+  creature_type: undead
+  subtype: gnoll
+  size: medium
+  hit_points: 11
+  armor_class: 12
+  speed: 30
+  darkvision: 60
+  abilities:
+    strength: 14
+    dexterity: 8
+    constitution: 12
+    intelligence: 5
+    wisdom: 5
+    charisma: 5
+  attacks:
+    - name: "Bite"
+      material: BONE
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d4+2"
+      damage_type: necrotic
+    - name: "Spiked Club"
+      material: MACE
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d4+2"
+      damage_type: piercing
+  reactions:
+    - "Vengeful Strike (DM-handled): when a gnoll is reduced to 0 HP within 30 feet of the witherling, make one Bite or Spiked Club attack."
+  dm_notes: |
+    Typically chaotic evil. CR 1/4 (50 XP). Proficiency bonus +2. HP 11 (2d8+2).
+    Armor: natural armor. Passive Perception 7.
+    Languages: understands Gnoll but cannot speak.
+    Immunities (DM-handled): poison damage; exhaustion and poisoned conditions.
+    Unusual Nature: does not require air, food, drink, or sleep.
+    Multiattack (DM-handled): two attacks, each a Bite or Spiked Club.
+    Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
+    melee attack on its turn, move up to half its speed and make one Bite attack.
+    Spiked Club uses its printed piercing damage; no matching loot item is defined.
+
+gnoll_flesh_gnawer:
+  name: "Gnoll Flesh Gnawer"
+  creature_type: monstrosity
+  subtype: gnoll
+  size: medium
+  hit_points: 22
+  armor_class: 14
+  speed: 30
+  darkvision: 60
+  abilities:
+    strength: 12
+    dexterity: 14
+    constitution: 12
+    intelligence: 8
+    wisdom: 10
+    charisma: 8
+  attacks:
+    - name: "Bite"
+      material: BONE
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d4+2"
+      damage_type: piercing
+    - name: "Shortsword"
+      item: shortsword
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d6+2"
+      damage_type: piercing
+  loot:
+    - item_id: shortsword
+      qty: 2
+    - studded_leather_armor
+  dm_notes: |
+    Typically chaotic evil. CR 1 (200 XP). Proficiency bonus +2. HP 22 (4d8+4).
+    Armor: studded leather. Languages: Gnoll. Passive Perception 10.
+    Saving throws (DM-handled total): Dexterity +4.
+    Multiattack (DM-handled): one Bite and two Shortsword attacks.
+    Sudden Rush (action, DM-handled): until the end of this turn, speed increases
+    by 60 feet (to 90 feet) and movement does not provoke opportunity attacks.
+    Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
+    melee attack on its turn, move up to half its speed and make one Bite attack.
+
+gnoll_hunter:
+  name: "Gnoll Hunter"
+  creature_type: monstrosity
+  subtype: gnoll
+  size: medium
+  hit_points: 22
+  armor_class: 13
+  speed: 30
+  darkvision: 60
+  abilities:
+    strength: 14
+    dexterity: 14
+    constitution: 12
+    intelligence: 8
+    wisdom: 12
+    charisma: 8
+  skills:
+    perception: 3
+    stealth: 4
+  attacks:
+    - name: "Bite"
+      material: BONE
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d4+2"
+      damage_type: piercing
+    - name: "Spear"
+      item: spear
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d6+2"
+      damage_type: piercing
+    - name: "Spear (Two-Handed)"
+      item: spear
+      to_hit: 4
+      reach: "5 ft."
+      damage: "1d8+2"
+      damage_type: piercing
+    - name: "Spear (Thrown)"
+      item: spear
+      to_hit: 4
+      reach: "20/60 ft."
+      damage: "1d6+2"
+      damage_type: piercing
+    - name: "Longbow"
+      item: longbow
+      to_hit: 4
+      reach: "150/600 ft."
+      damage: "1d8+2"
+      damage_type: piercing
+  loot: [spear, longbow, leather_armor]
+  dm_notes: |
+    Typically chaotic evil. CR 1/2 (100 XP). Proficiency bonus +2. HP 22 (4d8+4).
+    Armor: leather armor. Languages: Gnoll. Passive Perception 13.
+    Multiattack (DM-handled): two attacks, each a Bite, Spear, or Longbow.
+    Longbow rider (DM-handled): on a hit, reduce the target's speed by 10 feet
+    until the end of its next turn.
+    Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
+    melee attack on its turn, move up to half its speed and make one Bite attack.
