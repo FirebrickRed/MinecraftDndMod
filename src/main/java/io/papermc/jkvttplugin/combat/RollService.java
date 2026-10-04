@@ -87,20 +87,25 @@ public final class RollService {
                     if (next == null || isRollKeyword(next)) missing.add(args[i]);
                     else if (isDice(next)) forceAuto = true; // a dice expression → let the game roll
                     else {
-                        try {
-                            int n = Integer.parseInt(next.trim());
-                            if (n < 1) belowOne.add(next); else providedRoll = n; // no die shows 0
+                        // A sum is fine: "manualRoll 1+4" or "1 + 4", several dice added up for you.
+                        int[] sum = readSum(args, i + 1);
+                        if (sum == null) notNumbers.add(next);
+                        else {
+                            if (sum[0] < 1) belowOne.add(next); else providedRoll = sum[0]; // no die shows 0
                             // Numbers after the d20 are the bonus dice you rolled too, in order (#225):
                             // "manualRoll 14 3" = a 14, and 3 on Bless's d4.
-                            for (int j = i + 2; j < args.length && args[j].trim().matches("\\d+"); j++) {
+                            for (int j = i + 1 + sum[1]; j < args.length && args[j].trim().matches("\\d+"); j++) {
                                 bonusDice.add(Integer.parseInt(args[j].trim()));
                             }
-                        } catch (NumberFormatException e) { notNumbers.add(next); }
+                        }
                     }
                 }
                 case "total" -> {
                     if (next == null || isRollKeyword(next)) missing.add(args[i]);
-                    else { try { providedTotal = Integer.parseInt(next.trim()); } catch (NumberFormatException e) { notNumbers.add(next); } }
+                    else {
+                        int[] sum = readSum(args, i + 1);
+                        if (sum == null) notNumbers.add(next); else providedTotal = sum[0];
+                    }
                 }
                 default -> {}
             }
@@ -115,6 +120,54 @@ public final class RollService {
         }
         providedBonusDice = new ProvidedDice(new java.util.ArrayDeque<>(bonusDice), currentTick());
         return new RollInput(providedRoll, providedTotal, forceAuto);
+    }
+
+    /**
+     * "1 + 4" typed as separate words becomes the one word "1+4", so every reader downstream sees a
+     * single number-like token (a stray "4" would otherwise be read as a flat amount, and "+" as part of
+     * a name). Only joins across a plus: "14 3" is left alone. Called by the root commands.
+     */
+    public static String[] joinSums(String[] args) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        for (String a : args) {
+            String t = a.trim();
+            String prev = out.isEmpty() ? null : out.get(out.size() - 1);
+            boolean numberish = t.matches("[0-9+]+") && prev != null && prev.matches("[0-9+]+");
+            if (numberish && (prev.endsWith("+") || t.startsWith("+"))) out.set(out.size() - 1, prev + t);
+            else out.add(a);
+        }
+        return out.toArray(new String[0]);
+    }
+
+    /** "7" → 7, "1+4" → 5; null when it isn't a number or a sum of numbers. */
+    public static Integer sumOrNull(String token) {
+        if (token == null || !token.trim().matches("[0-9]{1,6}([+][0-9]{1,6})*")) return null;
+        int total = 0;
+        for (String part : token.trim().split("[+]")) total += Integer.parseInt(part);
+        return total;
+    }
+
+    /**
+     * The number typed at {@code from}, which may be a sum: "7", "1+4", or "1 + 4" over several words
+     * (several dice rolled by hand, added up for you). Returns {value, words used}, or null when it isn't
+     * a number. A word joins the sum only across a plus, so "14 3" stays 14 followed by a bonus die (#225).
+     */
+    static int[] readSum(String[] args, int from) {
+        if (from >= args.length) return null;
+        StringBuilder joined = new StringBuilder();
+        int used = 0;
+        for (int i = from; i < args.length; i++) {
+            String t = args[i].trim();
+            if (!t.matches("[0-9+]+")) break;
+            boolean joins = used == 0 || joined.charAt(joined.length() - 1) == '+' || t.startsWith("+");
+            if (!joins) break;
+            joined.append(t);
+            used++;
+        }
+        if (used == 0 || !joined.toString().matches("[0-9]{1,6}([+][0-9]{1,6})*")) return null;
+        int total = 0;
+        for (String part : joined.toString().split("[+]")) total += Integer.parseInt(part);
+        return new int[]{total, used};
     }
 
     private static final java.util.regex.Pattern DICE = java.util.regex.Pattern.compile("(?i)\\d*d\\d+([+-]\\d+)?");

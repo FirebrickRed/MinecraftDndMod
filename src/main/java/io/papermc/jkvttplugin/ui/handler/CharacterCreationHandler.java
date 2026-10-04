@@ -186,6 +186,10 @@ public class CharacterCreationHandler implements MenuClickHandler {
                 chooseSpell(session, payload);
                 CharacterCreationMenu.open(player, sessionId);
             }
+            case SPELL_PAGE -> {
+                try { session.setSpellPage(Integer.parseInt(payload)); } catch (NumberFormatException ignored) {}
+                CharacterCreationMenu.open(player, sessionId);
+            }
             case CHANGE_SPELL_LEVEL -> {
                 try { session.setActiveSpellLevel(Integer.parseInt(payload)); } catch (NumberFormatException ignored) {}
                 CharacterCreationMenu.open(player, sessionId);

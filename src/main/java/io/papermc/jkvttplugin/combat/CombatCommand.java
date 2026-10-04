@@ -56,6 +56,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     @Override
     public boolean onCommand(@NotNull CommandSender sender, @NotNull Command command,
                              @NotNull String label, @NotNull String[] args) {
+        args = RollService.joinSums(args); // "manualRoll 1 + 4" → "manualRoll 1+4"
         RollPrompt.rememberCommand(sender, command.getName(), args); // so a missing roll re-asks on this exact line
         io.papermc.jkvttplugin.sound.Sounds.setRoller(sender); // a d20 rolled in this command sounds for them (#16)
 
@@ -2200,6 +2201,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage(Component.text(cost.refusal(), NamedTextColor.YELLOW));
                 return;
             }
+            // Say what it costs BEFORE the roll, while they can still change their mind (playtest: a monk's
+            // bonus unarmed strike only said so afterwards). The roll prompt follows.
+            if (cost.kind() == AttackCost.Kind.BONUS && roll.isEmpty()) {
+                player.sendMessage(Component.text("⚡ This attack uses your bonus action (" + cost.source() + ").", NamedTextColor.YELLOW));
+            }
         } else if (bonusAttack && !showMods) {
             player.sendMessage(Component.text("A creature's bonus attack isn't tracked: make the attack, then /combat bonusAction used.", NamedTextColor.YELLOW));
             return;
@@ -2336,7 +2342,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             try {
                 return Integer.parseInt(value);
             } catch (NumberFormatException e) {
-                return null;
+                return RollService.sumOrNull(value); // "total 1+4": dice added up for you
             }
         }
 
@@ -2409,12 +2415,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             sender.sendMessage(Component.text(r.display(), NamedTextColor.GRAY));
             return r.total();
         }
-        try {
-            return Integer.parseInt(rollStr.trim());
-        } catch (NumberFormatException e) {
-            sender.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED));
-            return null;
-        }
+        Integer typed = RollService.sumOrNull(rollStr); // a number, or several dice added up: "1+4"
+        if (typed == null) sender.sendMessage(Component.text("Invalid dice/amount: " + rollStr + " (a number, or a sum like 1+4).", NamedTextColor.RED));
+        return typed;
     }
 
     /** A resolved target plus an optional trailing flat amount, shared by /combat damage and heal. */

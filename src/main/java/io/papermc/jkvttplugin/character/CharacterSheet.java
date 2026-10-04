@@ -1901,6 +1901,17 @@ public class CharacterSheet {
         return (mod >= 0 ? "+" : "") + mod + "[" + a.getAbbreviation() + "]";
     }
 
+    /** A spell's save DC: 8 + proficiency + the casting ability's modifier. */
+    public int getSpellSaveDc(DndSpell spell) {
+        Ability a = castingAbilityFor(spell);
+        return 8 + getProficiencyBonus() + (a != null ? getModifier(a) : 0);
+    }
+
+    /** The DC with where it comes from, labelled like every bonus: "13 (8 +2[Prof] +3[WIS])" (#245). */
+    public String getSpellSaveDcBreakdown(DndSpell spell) {
+        return getSpellSaveDc(spell) + " (8 +" + getProficiencyBonus() + "[Prof] " + getSpellModBreakdown(spell) + ")";
+    }
+
     /** A spell attack's bonus, labelled like every other roll: "+3[INT] +2[Prof]". */
     public String getSpellAttackBreakdown(DndSpell spell) {
         return getSpellModBreakdown(spell) + " +" + getProficiencyBonus() + "[Prof]" + rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.ATTACKS);

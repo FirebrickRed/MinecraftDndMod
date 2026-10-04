@@ -138,6 +138,10 @@ public class RollOptionsMenuHandler {
             } else {
                 io.papermc.jkvttplugin.dm.CheckManager.recordActive(character.getPlayerId(), info.displayName, r.total());
                 reportDmCheck(character, info, r.total(), r.breakdown(), pending);
+                // A spell waiting on this save (#245): the result decides its damage, no second click.
+                if ("SAVE".equals(type) && pending.dc() != null) {
+                    io.papermc.jkvttplugin.combat.SaveOutcome.graded(character.getPlayerId(), pending.dc(), r.total() >= pending.dc());
+                }
                 if ("TOOL".equals(type)) maybeBreakThievesTools(character, value, r.total(), pending);
             }
             offerInspiration(character, info, r, true);

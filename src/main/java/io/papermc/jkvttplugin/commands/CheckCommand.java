@@ -646,6 +646,8 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         String result = name + " — " + label + ": " + r.breakdown();
+        // A spell waiting on this save (#245): the result decides its damage, no second click.
+        if (dc != null && category.startsWith("sav")) io.papermc.jkvttplugin.combat.SaveOutcome.graded(creature.getInstanceId(), dc, r.total() >= dc);
         String graded = dc == null ? "" : (r.total() >= dc ? "  ✔ success vs DC " + dc : "  ✖ fails DC " + dc);
         String token = CheckManager.stashShare(result);
         sender.sendMessage(Component.text(result, NamedTextColor.GRAY)

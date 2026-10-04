@@ -167,40 +167,58 @@ public final class OutOfCombatAttack {
         commit(player, sheet, spell, cost);
         if (spell.isSaveSpell()) {
             Ability save = parseAbility(spell.getSaveType());
-            int dc = 8 + sheet.getProficiencyBonus() + modFor(sheet, spell);
+            int dc = sheet.getSpellSaveDc(spell);
             String abbr = save != null ? save.getAbbreviation() : spell.getSaveType();
             tell(player, spell.castLine("✨ " + who + " casts ", " at " + aim.targetName()
-                    + " — DC " + dc + " " + abbr + " save!", NamedTextColor.LIGHT_PURPLE));
+                    + " — DC " + sheet.getSpellSaveDcBreakdown(spell) + " " + abbr + " save!", NamedTextColor.LIGHT_PURPLE));
             SpellVisuals.play(spell, player.getLocation(), aim.target.combatant().getLocation()); // #230
             boolean hasDamage = spell.getDamage() != null && !spell.getDamage().isBlank();
             boolean halfOnSave = "half".equalsIgnoreCase(spell.getSaveEffect());
-            // Their bonus, spelled out, and [Call the save] for anyone: a player is prompted to roll, a
-            // creature's save is the DM's own roll, graded against the DC (/dm check handles both).
-            String bonus = save != null ? " (" + target.saveBreakdown(save) + ")" : "";
-            Component dm = Component.text("   DM: " + aim.targetName() + " makes a DC " + dc + " " + abbr + " save" + bonus + ". ", NamedTextColor.GRAY);
-            if (save != null) {
-                String check = "/dm check " + quote(aim.targetName()) + " save " + save.getAbbreviation().toLowerCase() + " dc " + dc;
-                // Named for who rolls: the DM rolls a creature's save, a player rolls their own.
-                dm = dm.append(Component.text(target.isPlayer() ? "[Ask them to save]" : "[Roll their save]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
-                        .clickEvent(ClickEvent.suggestCommand(check)).hoverEvent(HoverEvent.showText(Component.text(
-                                (target.isPlayer() ? "They get the roll buttons; the result comes back to you."
-                                        : "You're the DM, so you roll " + aim.targetName() + "'s save: you get the roll buttons, graded against DC " + dc + ".")
-                                        + " Then pick [Failed] or [Saved] here.\nFills: " + check))))
-                        .append(Component.text(" "));
+            String condition = spell.getConditionOnFail() != null && !spell.getConditionOnFail().isBlank() ? spell.getConditionOnFail() : null;
+
+            // The save's result decides what happens (#245): no separate "failed / saved" click. It used
+            // to stop at the graded roll, so a failed Sacred Flame did nothing unless the DM also clicked.
+            java.util.function.Consumer<Boolean> outcome = saved -> {
+                if (!saved) {
+                    tell(player, Component.text(aim.targetName() + " fails the save against " + spell.getName() + ".", NamedTextColor.RED));
+                    if (hasDamage) offerDamage(player, spell, false, aim.target, null, false);
+                    if (condition != null) toDms(Component.text("   DM: on a fail, " + aim.targetName() + " is " + condition
+                            + " (/dm adjust applies it).", NamedTextColor.GRAY));
+                } else if (hasDamage && halfOnSave) {
+                    tell(player, Component.text(aim.targetName() + " saves: half damage.", NamedTextColor.YELLOW));
+                    offerDamage(player, spell, false, aim.target, null, true);
+                } else {
+                    tell(player, Component.text(aim.targetName() + " saves, and resists " + spell.getName() + ".", NamedTextColor.GRAY));
+                }
+            };
+            UUID saver = target.getId();
+            SaveOutcome.await(saver, dc, outcome);
+
+            // The DM's ruling without a roll stays possible, quietly, after the real buttons.
+            Component rule = Component.text("  or rule it: ", NamedTextColor.DARK_GRAY)
+                    .append(button("[failed]", NamedTextColor.DARK_GRAY, "No roll: they failed", a -> SaveOutcome.rule(saver, false)))
+                    .append(Component.text(" "))
+                    .append(button("[saved]", NamedTextColor.DARK_GRAY, "No roll: they saved", a -> SaveOutcome.rule(saver, true)));
+            if (save == null) {
+                toDms(Component.text("   DM: " + aim.targetName() + " makes a DC " + dc + " " + abbr + " save.", NamedTextColor.GRAY).append(rule));
+                return true;
             }
-            if (hasDamage) {
-                dm = dm.append(button("[Failed: damage]", NamedTextColor.RED, "They failed: " + who + " rolls full damage",
-                        a -> offerDamage(player, spell, false, aim.target, null, false)));
-                dm = dm.append(Component.text(" "));
-                dm = dm.append(halfOnSave
-                        ? button("[Saved: half]", NamedTextColor.YELLOW, "They saved: " + who + " rolls, and it's halved",
-                                a -> offerDamage(player, spell, false, aim.target, null, true))
-                        : button("[Saved: nothing]", NamedTextColor.GRAY, "They saved: no damage",
-                                a -> tell(player, Component.text(aim.targetName() + " resists " + spell.getName() + ".", NamedTextColor.GRAY))));
-            } else if (spell.getConditionOnFail() != null && !spell.getConditionOnFail().isBlank()) {
-                dm = dm.append(Component.text("On a fail: " + spell.getConditionOnFail() + ".", NamedTextColor.GRAY));
+            String check = "dm check " + quote(aim.targetName()) + " save " + save.getAbbreviation().toLowerCase() + " dc " + dc;
+            if (target.isPlayer()) {
+                // A player rolls their own: one button sends them the roll buttons, and the result comes back.
+                toDms(Component.text("   DM: " + aim.targetName() + " makes a DC " + dc + " " + abbr + " save ("
+                                + target.saveBreakdown(save) + "). ", NamedTextColor.GRAY)
+                        .append(button("[Ask for their roll]", NamedTextColor.AQUA,
+                                "They get [Roll it] [I rolled…] [My total…]; the result decides the damage",
+                                a -> { if (a instanceof Player dm) dm.performCommand(check); }))
+                        .append(rule));
+            } else {
+                // A creature's save is the DM's roll: the three roll buttons, right here.
+                for (Player dm : DMManager.getOnlineDMs()) {
+                    dm.performCommand(check);
+                    dm.sendMessage(rule);
+                }
             }
-            toDms(dm);
             return true;
         }
 
@@ -403,8 +421,12 @@ public final class OutOfCombatAttack {
         Opening o = openings.remove(current.getId());
         Player p = current.getPlayer();
         if (o == null || p == null || System.currentTimeMillis() - o.at() > Duration.ofMinutes(30).toMillis()) return;
-        p.sendMessage(Component.text("⚔ Your opening move: " + o.label() + " ", NamedTextColor.GOLD)
-                .append(fill("[do it]", o.command())));
+        // Its own block, in bold: one plain line was lost among the initiative messages (playtest).
+        p.sendMessage(Component.empty());
+        p.sendMessage(Component.text("⚔ You started this fight with " + o.label() + ". ", NamedTextColor.GOLD, TextDecoration.BOLD)
+                .append(fill("[Do it now]", o.command())));
+        p.sendMessage(Component.text("   It fills the command; you then roll as usual. Or do something else with your turn.", NamedTextColor.GRAY));
+        p.sendMessage(Component.empty());
     }
 
     // ==================== AIMING ====================

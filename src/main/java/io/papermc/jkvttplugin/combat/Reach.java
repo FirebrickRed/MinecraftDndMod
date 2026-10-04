@@ -172,6 +172,15 @@ public final class Reach {
      * @param retry  the command to go again with, filled into chat
      */
     public static void refuse(Player actor, String reason, String what, UUID target, String label, String retry) {
+        // A Self spell isn't "a little too far": it can only ever be its caster, so there's no override to
+        // offer, DM or not (playtest: Blade Ward went onto another creature through [Do it anyway]).
+        if (what != null && what.startsWith("spell:")) {
+            DndSpell spell = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(what.substring("spell:".length()));
+            if (spell != null && spell.getRangeFeet() == 0 && !spell.isAoe()) {
+                actor.sendMessage(Component.text(reason + " Cast it without a name and it's on you.", NamedTextColor.RED));
+                return;
+            }
+        }
         Component msg = Component.text(reason + " ", NamedTextColor.RED);
         UUID id = actor.getUniqueId();
         if (DMManager.isDM(actor)) {

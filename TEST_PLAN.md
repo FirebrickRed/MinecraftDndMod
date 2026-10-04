@@ -121,30 +121,12 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 - [ ] No DC → never breaks.
 - [ ] `on_fail: always` / `never` in config.yml behave as named.
 
-## Barbarian
-
-- [ ] **Rage:** a ring of red dust circles you (and others see it on you); it stops when the rage ends.
-      The Strength icon is only in the inventory: that was never the tint. (#247)
-
-## Monk
-
-- [ ] No armor: the sheet's AC tile says **Unarmored Defense: 10 + DEX + WIS**. Put on leather armor
-      (chestplate slot) → the AC drops to leather's; take it off → back. (#220)
-- [ ] Unarmed strike (`/combat attack <target> unarmed`) rolls **1d4 + DEX**, labelled [DEX]. (#220)
-- [ ] **The game picks the cost.** Attack unarmed twice with the same `/combat attack <target> unarmed`
-      (or left-click twice): the first uses the Action, the second says **"That used your bonus action
-      (Martial Arts: bonus unarmed strike)"**. A third is refused with the reason. (#221)
-- [ ] The action bar, before attacking: **Bonus: READY: Martial Arts…**. (#221)
-- [ ] `/combat attack` with nothing after it lists attacks under **With your Action** and **With your
-      bonus action**. (#221)
-
-## Paladin
-
-- [ ] **Lay on Hands** on someone 24 ft away → "You need to touch them…" with **[Do it anyway]** (you're the DM).
-      Click it → it fills the command again, Enter → it heals. Next time it asks again. (#247)
-
 ## Wizard
 
+- [ ] Creation, Spells tab: Cantrips and Level 1 each have **Next page ▶** at the bottom right; the second page
+      has the spells after Magnify Gravity, and picks on either page count together.
+- [ ] `/combat cast blade_ward <someone else>` (and `/character cast` out of a fight) → "only targets you
+      (range: Self). Cast it without a name and it's on you." No [Do it anyway], even for you. No name → it's on you.
 - [ ] Start aiming Burning Hands, then `/combat nextturn` (or end your turn) → "Your turn is over. Your Burning
       Hands aim is cancelled: nothing spent." Your 1st-level slot is still there. (#237)
 - [ ] Aim Burning Hands, then (without firing) cast another 1st-level spell with your last slot, then right-click
@@ -155,73 +137,41 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 
 **Creation and the spellbook**
 
-- [ ] Creation, spell step: the label says "This is your spellbook. Each day you prepare some of it".
-- [ ] **Nothing prepared:** open the spellbook → "📖 You have no spells prepared…" [Prepare spells];
-      click a 1st-level spell → "isn't prepared".
-- [ ] An unprepared spell reads "In your spellbook, not prepared" and clicking it does
-      nothing; an unprepared **ritual** (e.g. Detect Magic, Find Familiar) says "Ritual: click to cast it as one". (#218)
-- [ ] `/character cast <unprepared non-ritual>` → "…in your spellbook but not prepared…". An unprepared
-      ritual without `ritual` → the same, plus **[cast it as a ritual]**; with `ritual` → "casts … as a ritual
-      (10 extra minutes, no spell slot)" and no slot is spent. (#218)
-- [ ] **The window:** `/dm rest <you> long` → the summary says "During this rest you can: 📖 Change your
-      prepared spells (3/4) [Prepare spells]". After a short rest, or once you join a fight, the menu is
-      view-only and says "after a long rest". (#218)
 - [ ] **Arcane Recovery:** cast a 1st-level spell, `/dm rest <you> short` → the summary offers
       "📖 Arcane Recovery… [Recover]"; use it → a level 1 slot back. Again → "used today". In a fight → refused. (#218)
 
 **Out of a fight**
 
-- [ ] **Shocking Grasp at someone 20 ft away** → refused for range straight away; the DM is **not** asked
-      to start a fight first.
-- [ ] Burning Hands (or any save spell) at a creature → the DM line shows its bonus
-      (`DC 13 DEX save (+1[DEX])`) and **[Roll their save]**, which gives you the roll buttons graded vs the DC.
 - [ ] A spell with range Self that targets (not an area) at someone else → "only targets you".
-- [ ] Any "✨ Zek casts Magic Missile at …" line (in or out of a fight, and a plain `/character cast`
-      like Light) → hover the spell name → its description.
-- [ ] `/character cast fire_bolt` at The Kindler (after the DM lets it happen) → a line of flames flies to it. (#230)
 
 **Chain mail** (put it on for these, take it off after)
 
-- [ ] `/combat add <you>` before initiative → above the roll buttons, "↯ You have disadvantage on initiative."
-      and "• Armor (you): disadvantage, …". Same when added mid-fight.
-- [ ] `/combat rollforinitiative` → your line shows disadvantage.
 
 **In a fight**
 
 - [ ] After Start combat, on your first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
-- [ ] Spell attack → `+3[INT] +2[Prof]`, not `+5[Spell]`. (#216)
-- [ ] On your turn: right-click your focus → spellbook → **Fire Bolt** → "Fire Bolt is ready: left-click
-      your target". Left-click a goblin → "✨ Fire Bolt at Goblin:" with [Roll it] [I rolled…] [My total…]; the
-      roll goes through as `/combat cast fire_bolt Goblin …`. Left-clicking a different creature first re-aims it. (#179)
 - [ ] A save spell (Hold Person) or Magic Missile the same way → one **[Cast it]** button instead of roll buttons. (#179)
-- [ ] Magic Missile from the **2nd-level** page → the click fills `… Goblin level 2 ` and spends a 2nd-level slot. (#179)
 - [ ] With a spell ready, [cancel] → left-click attacks with your weapon again. End your turn with one ready →
       next turn, left-click is your weapon (it lapses with the turn). (#179)
 - [ ] Burning Hands / Thunderwave from the spellbook → the aim preview starts at once; right-click confirms.
       **The slot is spent** (spellbook shows one fewer) and so is the Action. Cancel the aim instead → nothing
       spent. (An area spell used to be free in a fight.) (#179)
-- [ ] **A Self spell needs no name:** `/combat cast false_life` → you gain the temp HP (it used to say
-      "Usage: … <target>"). Picking it from the spellbook fills the same, with nothing to type.
-- [ ] **Rituals are one word everywhere:** `/combat cast detect_magic ` + Tab offers `ritual`;
-      `/combat cast detect_magic ritual` starts channelling it (`--ritual` is gone).
-- [ ] Spellbook → an unprepared ritual (Detect Magic) in a fight, on your turn → fills
-      `/combat cast detect_magic ritual`, not `/character`.
-- [ ] `/character cast detect_magic ritual` in a fight → "You're in combat — cast it with
-      /combat cast detect_magic ritual", and clicking it fills that. (#218)
-- [ ] **Spell looks:** Fire Bolt at a goblin → a line of flames flies to it and pops; Ray of Frost → snowflakes;
-      Burning Hands → only its aim preview, as before. (#230)
 
 ## Cleric
 
 Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
+- [ ] Out of a fight, Sacred Flame at a creature, [Let it happen], cast → the cast line reads "DC 13 (8 +2[Prof]
+      +3[WIS]) DEX save", and **you** get "You roll for …: DEX save, DC 13: [Roll it] [I rolled…] [My total…]". (#245)
+- [ ] Roll a fail → "… fails the save", and the caster gets the damage roll buttons; the damage lands. Roll a
+      success → "… saves, and resists Sacred Flame", no damage. No second click either way. (#245)
+- [ ] Instead of rolling, the small grey **[failed]** / **[saved]** after the buttons rule it without a roll. (#245)
+- [ ] In a fight, a save spell's cast line shows the same DC breakdown. (#245)
+
 - [ ] Creation, Spells tab, Level 1: Bless and Cure Wounds are gold **✦ Always prepared (Life Domain)** tiles,
       not picks: clicking does nothing and they don't count toward your number. (#247)
 - [ ] Out of a fight, cast Sacred Flame at a creature, [Let it happen] → "…needs no attack roll (the target
       saves instead): cast it again to go. [cast it]". Guiding Bolt instead → "…is an attack: roll to hit." (#247)
-
-**Prepared spells**
-
 
 **Out of a fight**
 
@@ -235,7 +185,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] Cure Wounds → the dice show.
 - [ ] Cure Wounds → `+3[WIS]`, not "your spellcasting modifier"; **[Roll it]** heals
       (it used to re-prompt in physical-dice mode); the table sees the roll line. (#216)
-- [ ] Upcast Cure Wounds with no roll (`/combat cast cure_wounds <t> level 2`) → the buttons keep `level 2`. (#216)
 - [ ] Touch spells reach one block further than before (5 ft of slack, same as out of a fight).
 - [ ] `/combat cast bless me, Town Guard` → "casts Bless on …: +1d4 to attacks and saves for 1 minute";
       your sheet's Active Effects tile shows it. Four names → "takes up to 3 targets". (#225)
@@ -256,13 +205,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       next turn. On a creature, its AC goes up too. (#225)
 - [ ] **Spell looks:** Sacred Flame → a burst of white on the target; Cure Wounds → hearts rise around the
       target; Bless → a gold ring; Bane → a dark red burst. (#230)
-
-## Bard
-
-- [ ] With CHA 10: Bardic Inspiration shows 1 use (it used to be missing).
-- [ ] Bardic Inspiration on yourself → refused; on a creature → it's added to the creature's next roll
-      (the DM rolls for it, so it isn't asked); 80 ft away → **[Do it anyway]**; out of uses → "No uses". The
-      Features page's tile fills in the command. (A player being asked after their roll is in Part 2.) (#40)
 
 ## Sorcerer
 
@@ -301,13 +243,7 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 **Halfling**
 - [ ] **Stout halfling:** a poison save shows advantage (Stout Resilience).
 
-**Genasi**
-
 **Dragonborn** (red)
-- [ ] Still resists fire, and its breath weapon is still a fire cone. (#222)
-- [ ] Aim the breath weapon, let the turn pass → the aim cancels itself, and the use is still there. (#237)
-
-**Astral Elf**
 
 **Darkvision** (a dwarf, elf or tiefling, and a human) (#148)
 - [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
@@ -338,6 +274,14 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 ## Combat
 
+- [ ] On your turn with an **empty hand**, left-click a creature → "⚔ Attack … with an unarmed strike: [Roll it]…".
+      Holding a torch or your sheet → no prompt.
+- [ ] A **monk**, after attacking: left-click with an empty hand → "⚡ This attack uses your bonus action (Martial
+      Arts)." comes **before** the roll buttons.
+- [ ] Damage with several dice rolled by hand: `/combat damage <t> manualRoll 1+4` and `manualRoll 1 + 4` both count
+      as 5; `total 12+7` is 19. `manualRoll 14 3` on a Blessed attack is still a 14, and a 3 on the d4.
+- [ ] Start a fight by attacking out of combat ([Start combat]) → on your first turn, a bold gold line: "You started
+      this fight with …. [Do it now]", with a blank line above and below. (#152)
 - [ ] Mid-fight, on someone's turn, `/combat initiative <someone else> set 30` → they move to the
       top, and the **current turn stays with whoever had it** (the green →).
 - [ ] A healing potion with auto-roll → the dice show.
@@ -618,6 +562,8 @@ Set these up, `/stop`, start the server, then check:
 
 ## Out of a fight, as a player
 
+- [ ] You cast Sacred Flame at **their** character out of a fight → you get **[Ask for their roll]**; click it → they
+      get the roll buttons, and their result decides the damage with no further click from you. (#245)
 - [ ] They `/character cast cure_wounds The Kindler` from 18 ft → refused, with **[Ask the DM]**. Click → you get
       "📏 … out of reach (about 18 ft away …)" **[Allow]** / **[Deny]**.
 - [ ] [Allow] → they get **[cast it]**; it goes through once. Casting again from there refuses again.
@@ -727,6 +673,9 @@ above, and clears this section (git keeps the old notes).
 
 # Known deferred
 
+- **Upcasting can't be tested yet:** level-1 characters have no 2nd-level slots. Two rows wait for level-up (#153):
+  Magic Missile from the 2nd-level page filling `… level 2` and spending that slot (#179), and upcast Cure Wounds
+  keeping `level 2` on its buttons (#216).
 - Racial spell **uses** (a level-3 tiefling's Hellish Rebuke) aren't saved, so a restart refills
   them. Harmless at level 1; matters once level-up (#153) lands.
 - Character-sheet inventory redesign (waiting until more content lands).

@@ -267,10 +267,13 @@ public class WeaponListener implements Listener {
     /** Returns the attack context if the player is on their turn holding a D&D weapon, else null. */
     private AttackContext contextFor(Player player) {
         ItemStack item = player.getInventory().getItemInMainHand();
-        String weaponId = ItemUtil.getItemId(item);
+        // An empty hand is an unarmed strike (playtest: a punch should prompt like a sword swing). Only a
+        // truly empty hand: holding a torch or a sheet isn't a decision to punch.
+        boolean emptyHand = item == null || item.getType().isAir();
+        String weaponId = emptyHand ? "unarmed" : ItemUtil.getItemId(item);
         if (weaponId == null) return null;
-        DndWeapon weapon = WeaponLoader.getWeapon(weaponId);
-        if (weapon == null) return null;
+        DndWeapon weapon = emptyHand ? null : WeaponLoader.getWeapon(weaponId);
+        if (weapon == null && !emptyHand) return null;
 
         CombatSession session = CombatSession.getSessionForPlayer(player.getUniqueId());
         if (session == null || session.isSetupPhase()) return null;
@@ -287,6 +290,7 @@ public class WeaponListener implements Listener {
      * ordinary melee aiming forgiving.
      */
     private static double rangeBlocks(DndWeapon weapon) {
+        if (weapon == null) return 3.0; // an unarmed strike: 5 ft, with the same forgiving floor as melee
         double r = weapon.isRanged()
                 ? Math.min((weapon.getLongRange() > 0 ? weapon.getLongRange() : weapon.getNormalRange()) / 5.0, 60.0)
                 : weapon.getReachFeet() / 5.0;
@@ -329,12 +333,12 @@ public class WeaponListener implements Listener {
         if (!io.papermc.jkvttplugin.combat.WeaponSwitch.allow(player, ctx.attacker, ctx.weaponId, base,
                 io.papermc.jkvttplugin.combat.RollPrompt.d20(adv), modShown)) return;
 
-        player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("⚔ Attack " + targetName + " with " + ctx.weapon.getName() + ":",
+        player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("⚔ Attack " + targetName + " with " + (ctx.weapon != null ? ctx.weapon.getName() : "an unarmed strike") + ":",
                 NamedTextColor.GOLD, base, io.papermc.jkvttplugin.combat.RollPrompt.d20(adv), modShown));
 
         // Throwable weapon (#192): say which way it'll go by default and offer the override, since
         // throwing at an adjacent enemy (or stabbing at range, futile) is the player's call.
-        if (ctx.weapon.hasProperty("thrown")) {
+        if (ctx.weapon != null && ctx.weapon.hasProperty("thrown")) {
             boolean willThrow = io.papermc.jkvttplugin.combat.ThrownWeaponManager.isThrow(
                     ctx.weapon, ctx.attacker, target, io.papermc.jkvttplugin.combat.ThrownWeaponManager.Mode.AUTO);
             String altWord = willThrow ? "stab" : "throw";

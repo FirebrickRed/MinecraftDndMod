@@ -157,7 +157,7 @@ public class SpellCastHandler {
             }
             int dc = 8 + mod;
             session.broadcast(Component.empty());
-            session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — DC " + dc + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
+            session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — DC " + sheet.getSpellSaveDcBreakdown(spell) + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
             SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
             pendingSaves.put(target.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
                     spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell),

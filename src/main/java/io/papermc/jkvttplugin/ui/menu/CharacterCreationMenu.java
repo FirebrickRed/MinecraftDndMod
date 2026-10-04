@@ -560,6 +560,11 @@ public class CharacterCreationMenu {
      * there's more than one page. A page that opens in the middle of a section repeats its header.
      */
     private static void layOutPaged(Inventory inv, CharacterCreationSession session, List<ItemStack> tiles, List<ItemStack> sectionOf) {
+        layOutPaged(inv, tiles, sectionOf, session.getChoicePage(), MenuAction.CHOICE_PAGE);
+    }
+
+    /** As above, for any pane: {@code wantedPage} is that pane's own page, {@code pageAction} what its arrows do. */
+    private static void layOutPaged(Inventory inv, List<ItemStack> tiles, List<ItemStack> sectionOf, int wantedPage, MenuAction pageAction) {
         final int first = 18, last = 44;
         List<Map<Integer, ItemStack>> pages = new ArrayList<>();
         Map<Integer, ItemStack> page = new LinkedHashMap<>();
@@ -583,19 +588,19 @@ public class CharacterCreationMenu {
         }
         pages.add(page);
 
-        int current = Math.min(session.getChoicePage(), pages.size() - 1);
+        int current = Math.min(wantedPage, pages.size() - 1);
         pages.get(current).forEach(inv::setItem);
         if (pages.size() == 1) return;
 
         if (current > 0) {
             ItemStack prev = plain(Material.ARROW, Component.text("◀ Previous page", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
-            ItemUtil.tagAction(prev, MenuAction.CHOICE_PAGE, String.valueOf(current - 1));
+            ItemUtil.tagAction(prev, pageAction, String.valueOf(current - 1));
             inv.setItem(45, prev);
         }
         inv.setItem(49, label("Page " + (current + 1) + " of " + pages.size()));
         if (current < pages.size() - 1) {
             ItemStack next = plain(Material.ARROW, Component.text("Next page ▶", NamedTextColor.YELLOW).decoration(TextDecoration.ITALIC, false));
-            ItemUtil.tagAction(next, MenuAction.CHOICE_PAGE, String.valueOf(current + 1));
+            ItemUtil.tagAction(next, pageAction, String.valueOf(current + 1));
             inv.setItem(53, next);
         }
     }
@@ -940,9 +945,9 @@ public class CharacterCreationMenu {
         boolean prepared = "prepared".equalsIgnoreCase(info.getPreparationType());
         boolean preparesFromList = info.getSpellsKnownByLevel() == null || info.getSpellsKnownByLevel().isEmpty();
         if (prepared && preparesFromList && levels.contains(1)) {
-            inv.setItem(49, label("These are your prepared spells. You can change them after each long rest."));
+            inv.setItem(47, label("These are your prepared spells. You can change them after each long rest."));
         } else if (prepared && levels.contains(1)) {
-            inv.setItem(49, label("This is your spellbook. Each day you prepare some of it (INT modifier + level)."));
+            inv.setItem(47, label("This is your spellbook. Each day you prepare some of it (INT modifier + level)."));
         }
 
         int active = session.getActiveSpellLevel();
@@ -986,16 +991,17 @@ public class CharacterCreationMenu {
         java.util.Set<String> always = new java.util.LinkedHashSet<>();
         if (sub != null && sub.getBonusSpells() != null) for (String id : sub.getBonusSpells()) always.add(Util.normalize(id));
 
-        int slot = 18;
+        // Collected, then paged: a wizard has more 1st-level spells than the 27 slots, and the rest
+        // couldn't be reached at all (playtest: "the last spell I see is Magnify Gravity").
+        List<ItemStack> tiles = new ArrayList<>();
         for (DndSpell spell : spells) {
-            if (slot > 44) break;
             String key = Util.normalize(spell.getName());
-            if (always.contains(key)) { inv.setItem(slot++, alwaysPreparedTile(spell, sub)); continue; }
+            if (always.contains(key)) { tiles.add(alwaysPreparedTile(spell, sub)); continue; }
             String via = knownElsewhere.get(key);
             if (via != null && !session.hasSpell(key)) {
                 ItemStack known = plain(KNOWN_TILE, Component.text(spell.getName(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
                 known.editMeta(m -> m.lore(List.of(Component.text("Already known from " + via + " (can't select)", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false))));
-                inv.setItem(slot++, known);
+                tiles.add(known);
                 continue;
             }
             boolean sel = session.hasSpell(key);
@@ -1010,15 +1016,15 @@ public class CharacterCreationMenu {
                 if (sel) { m.addEnchant(Enchantment.UNBREAKING, 1, true); m.addItemFlags(ItemFlag.HIDE_ENCHANTS); }
             });
             ItemUtil.tagAction(it, MenuAction.CHOOSE_SPELL, Util.normalize(spell.getName()) + ":" + level);
-            inv.setItem(slot++, it);
+            tiles.add(it);
         }
         // Always-prepared spells that aren't on the class list at all still belong on the page.
         for (String id : always) {
-            if (slot > 44) break;
             DndSpell spell = SpellLoader.getSpell(id);
             if (spell == null || spell.getLevel() != level || spells.contains(spell)) continue;
-            inv.setItem(slot++, alwaysPreparedTile(spell, sub));
+            tiles.add(alwaysPreparedTile(spell, sub));
         }
+        layOutPaged(inv, tiles, java.util.Collections.<ItemStack>nCopies(tiles.size(), null), session.getSpellPage(), MenuAction.SPELL_PAGE);
     }
 
     /** A fixed tile for a spell the subclass always has prepared: shown, not pickable. */

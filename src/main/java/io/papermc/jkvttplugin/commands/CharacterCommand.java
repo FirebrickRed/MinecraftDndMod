@@ -48,6 +48,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
 
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+        args = io.papermc.jkvttplugin.combat.RollService.joinSums(args); // "manualRoll 1 + 4" → "manualRoll 1+4"
         io.papermc.jkvttplugin.combat.RollPrompt.rememberCommand(sender, cmd.getName(), args); // so a missing roll re-asks on this exact line
         io.papermc.jkvttplugin.sound.Sounds.setRoller(sender); // a d20 rolled in this command sounds for them (#16)
         if (args.length == 0) {

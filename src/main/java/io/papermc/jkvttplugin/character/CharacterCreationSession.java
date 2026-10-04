@@ -34,6 +34,7 @@ public class CharacterCreationSession {
     private String activeChoiceCategory = null;   // null → menu picks the first category
     private int activeSpellLevel = 0;
     private int choicePage = 0;
+    private int spellPage = 0;
     // Equipment drilldown state (null = not drilling down)
     private String drilldownChoiceId = null;
     private String drilldownWildcardKey = null;
@@ -424,7 +425,12 @@ public class CharacterCreationSession {
     }
     public void setActiveSpellLevel(int level) {
         this.activeSpellLevel = level;
+        this.spellPage = 0;
     }
+
+    /** Page of the active spell level, when it has more spells than fit on one screen. */
+    public int getSpellPage() { return spellPage; }
+    public void setSpellPage(int page) { this.spellPage = Math.max(0, page); }
 
     public String getDrilldownChoiceId() {
         return drilldownChoiceId;
