@@ -45,13 +45,28 @@ public class LootManager {
      * A player right-clicked a body (#144). They learn nothing about what's on it — they just wait
      * while the DM is shown the answer key (loot + DCs per check) and decides what to have them roll.
      */
+    /**
+     * Everything on a body: its loot table, plus the ammunition it never fired (#257). A dead archer
+     * has the arrows it didn't shoot, found with the same easy search as its weapons (DC 5
+     * Investigation), unless its loot table already lists that ammunition, or it isn't lootable at all.
+     */
+    static List<LootEntry> lootOn(DndEntityInstance corpse) {
+        List<LootEntry> table = new ArrayList<>(corpse.getTemplate().getLootTable());
+        if (!corpse.getTemplate().isLootable()) return table;
+        corpse.ammunitionCarried().forEach((itemId, count) -> {
+            boolean listed = table.stream().anyMatch(e -> e.getItemId().equalsIgnoreCase(itemId));
+            if (!listed) table.add(new LootEntry(itemId, count, 5, Skill.INVESTIGATION, true));
+        });
+        return table;
+    }
+
     public static void requestLoot(Player player, DndEntityInstance corpse) {
         UUID id = corpse.getInstanceId();
-        List<LootEntry> table = remaining.computeIfAbsent(id, k -> new ArrayList<>(corpse.getTemplate().getLootTable()));
+        List<LootEntry> table = remaining.computeIfAbsent(id, k -> lootOn(corpse));
         String name = corpse.getDisplayName();
 
         if (table.isEmpty()) {
-            player.sendMessage(Component.text(corpse.getTemplate().getLootTable().isEmpty()
+            player.sendMessage(Component.text(lootOn(corpse).isEmpty()
                     ? "You find nothing of value on " + name + "." : "There's nothing left to find on " + name + ".",
                     NamedTextColor.GRAY));
             return;

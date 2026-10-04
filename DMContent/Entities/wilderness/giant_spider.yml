@@ -1,0 +1,49 @@
+# SRD Giant Spider. Its Web is the first "Recharge 5-6" ability in the content (#256): once used, a d6
+# at the start of each of its turns brings it back on a 5 or 6.
+# Not modelled yet (DM-handled, see the notes): the bite's poison save (#254), and Web restraining its target.
+id: giant_spider
+name: "Giant Spider"
+
+creature_type: beast
+size: large
+
+hit_points: 26
+hit_dice: "4d10+4"
+armor_class: 14     # natural armor
+speed: 30
+darkvision: 60
+
+abilities:
+  strength: 14
+  dexterity: 16
+  constitution: 12
+  intelligence: 2
+  wisdom: 11
+  charisma: 4
+
+skills:
+  stealth: 7
+
+attacks:
+  - name: "Bite"
+    material: SPIDER_EYE
+    to_hit: 5
+    reach: "5 ft."
+    damage: "1d8+3"
+    damage_type: piercing
+  - name: "Web"
+    material: COBWEB
+    to_hit: 5
+    reach: "30/60 ft."
+    damage: "0"               # no damage: a hit restrains (DM-handled)
+    damage_type: bludgeoning
+    recharge: "5-6"
+
+dm_notes: |
+  Unaligned. CR 1 (200 XP). Blindsight 10 ft., darkvision 60 ft. Passive Perception 10.
+  Spider Climb: climbs any surface, ceilings included, without a check. Web Sense and Web Walker:
+  knows where anything touching its web is, and ignores webbing.
+  Bite rider (DM-handled, #254): the target makes a DC 11 Constitution save, taking 2d8 poison damage
+  on a failure, half on a success. Reduced to 0 HP by it: stable but poisoned and paralysed for 1 hour.
+  Web (DM-handled): on a hit the target is Restrained by webbing (/dm adjust). Escape: an action,
+  DC 12 Strength check. The webbing: AC 10, 5 HP, vulnerable to fire, immune to bludgeoning, poison, psychic.

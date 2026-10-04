@@ -173,9 +173,19 @@ public class EntityStatBlockMenu {
         lore.add(Component.empty());
 
         for (DndAttack attack : template.getAttacks()) {
-            lore.add(Component.text("• " + attack.getName(), NamedTextColor.YELLOW));
+            // "Fire Breath (Recharge 5-6)", as the stat block prints a limited ability (#256).
+            lore.add(Component.text("• " + attack.getName() + (attack.isLimited() ? " (" + attack.limitLabel() + ")" : ""), NamedTextColor.YELLOW));
             lore.add(Component.text("  To Hit: +" + attack.getToHit() + ", Reach: " + attack.getReach(), NamedTextColor.GRAY));
             lore.add(Component.text("  Damage: " + attack.getDamage() + " " + attack.getDamageType(), NamedTextColor.GRAY));
+            // What it carries to shoot or throw (#257): the default is rolled per creature at its first shot.
+            var pool = io.papermc.jkvttplugin.data.model.CreatureUses.poolFor(attack, template.getAttacks(),
+                    io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon);
+            if (pool != null && pool.spendsOne()) {
+                Integer own = io.papermc.jkvttplugin.data.model.CreatureUses.overrideFor(pool, template.getAttacks(),
+                        io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon);
+                lore.add(Component.text("  Carries: " + (own == null ? pool.dice() : own < 0 ? "unlimited" : String.valueOf(own))
+                        + " " + pool.label(), NamedTextColor.DARK_GRAY));
+            }
             lore.add(Component.empty());
         }
 

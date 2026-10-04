@@ -436,6 +436,28 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 ## Entities & shops
 
+**Limited abilities and ammunition** (`/dm entity spawn giant_spider`, and `gnoll`; a fight with both):
+- [ ] The spider's stat block lists "Web (Recharge 5-6)"; the gnoll's Longbow says "Carries: 2d10 arrows" and
+      Spear (Thrown) "Carries: 2d4 spears". (#256, #257)
+- [ ] Attack with **Web** → after the roll, "Web: used (Recharge 5-6)." Web again this turn → "Web is spent: it
+      recharges on a 5-6 at the start of its turn. **[Use it anyway]**", nothing rolled. Bite still works. (#256)
+- [ ] At the start of each spider turn you (only you) see "🎲 Giant Spider · Web (Recharge 5-6): rolled N, still
+      spent" or "recharged"; once recharged, Web works and the rolls stop. (#256)
+- [ ] [Use it anyway] → "Allowed this once. [go again]" → the attack goes through, and the next one is refused again. (#256)
+- [ ] `/combat finished`, start a new fight with the same spider → Web is ready at once. (#256)
+- [ ] The gnoll's **Longbow**: after each shot, "Gnoll: N arrows left." (N starts between 2 and 20, less one). Its
+      thrown spear: "N spears left"; a stab with the spear doesn't lower it. (#257)
+- [ ] Throw until "0 spears left" → both the thrown and the stabbing spear attacks say "Gnoll is out of spears."
+      Bite still works. (#257)
+- [ ] Restart the server mid-fight → the spent Web and the arrow count are as you left them. (#256, #257)
+- [ ] Kill the gnoll and search the body (a second player, or `/dm` loot) → the arrows it didn't fire are in the
+      loot. A gnoll killed before it ever shot still has some. (#257)
+- [ ] `/dm rest "Giant Spider" short` → "took a short rest. Back: Web." `/dm rest creatures long` → every creature at
+      full HP, and Tab offers `creatures` and creature names. (#256)
+- [ ] In a creature's YAML add `uses: 2` to an attack, `/dm reload`, spawn a new one → refused on the third use
+      "it comes back at dawn, or after a long rest"; `/dm time add 24h` (past dawn) → it works again. And
+      `ammunition: 3` on a bow attack → exactly 3 shots; `ammunition: unlimited` → no count shown. (#256, #257)
+
 **Stat-block saves and immunities** (`/dm entity spawn skeleton`, and `gnoll_fang_of_yeenoghu`):
 - [ ] The skeleton's stat block (`/dm entity info`), Ability Scores tile: "Immune: poison", "Vulnerable:
       bludgeoning", "Can't be: poisoned". The Fang's shows "CON: 15 (+2)  save +4". (#252)

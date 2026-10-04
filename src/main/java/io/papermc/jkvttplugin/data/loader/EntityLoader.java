@@ -411,6 +411,8 @@ public class EntityLoader {
         if (data.get("lootable") instanceof Boolean b) attack.setLootable(b);
         // The vanilla item a natural/spell attack shows as in the possession hotbar.
         if (data.get("material") instanceof String material) attack.setMaterial(material);
+        // Limited use (3/Day, Recharge 5-6, a rest) and how much ammunition it carries (#256, #257).
+        attack.setLimits(data.get("uses"), data.get("recharge"), data.get("ammunition"));
 
         return attack;
     }

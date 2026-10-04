@@ -448,6 +448,7 @@ public class CombatSession {
         Combatant first = getCurrentCombatant();
         if (first != null) {
             first.startNewTurn(first.getLocation());
+            rollCreatureRecharges(first); // #256
             applyGlowEffect(first);
             sendActionBar(first); // show action/movement budget immediately on turn 1
             io.papermc.jkvttplugin.sound.Sounds.yourTurn(first); // #16
@@ -546,6 +547,7 @@ public class CombatSession {
             applyGlowEffect(current);
             onTurnStartConditions(current); // expire Dodge/Disengage, remind of the rest (#103)
             tickTurnStartEffects(current); // advance buff/debuff durations, expire the lapsed ones (#70)
+            rollCreatureRecharges(current); // "Recharge 5-6": a d6 at the start of its turn (#256)
             RitualManager.onTurnStart(this, current); // advance/complete/break a channelled ritual (#156)
             sendActionBar(current); // show action/movement budget immediately when the turn begins
             io.papermc.jkvttplugin.sound.Sounds.yourTurn(current); // #16
@@ -1200,6 +1202,18 @@ public class CombatSession {
 
     /** Advance a combatant's active-effect durations at turn start; remove & announce any that
      *  expired, clearing their visual potion (Effect Engine, #70). */
+    /**
+     * A creature's spent "Recharge X-Y" abilities roll a d6 at the start of its turn (MM p.11). The DM
+     * sees each roll; the players don't (a dragon's breath coming back is the DM's to reveal).
+     */
+    private void rollCreatureRecharges(Combatant c) {
+        if (c == null || !c.isEntity() || c.getEntityInstance() == null) return;
+        Player dm = Bukkit.getPlayer(dmId);
+        for (String line : c.getEntityInstance().rollRecharges()) {
+            if (dm != null) dm.sendMessage(Component.text("🎲 " + c.getDisplayName() + " · " + line, NamedTextColor.GOLD));
+        }
+    }
+
     private void tickTurnStartEffects(Combatant c) {
         if (c == null) return;
         for (var expired : c.tickEffectsTurnStart()) {

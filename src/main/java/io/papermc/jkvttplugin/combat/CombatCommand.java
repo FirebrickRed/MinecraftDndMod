@@ -234,6 +234,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 DndEntityInstance instance = DndEntityInstance.getByArmorStand(armorStand);
                 if (instance != null && !instance.isDead()) {
                     Combatant combatant = Combatant.fromEntity(instance);
+                    instance.recoverRechargeRolls(); // a breath spent in an earlier fight has had time to come back (#256)
                     if (hidden) {
                         combatant.setHidden(true);
                         hiddenCount++;
@@ -297,6 +298,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         Combatant combatant = Combatant.fromEntity(entity);
+        entity.recoverRechargeRolls(); // a breath spent in an earlier fight has had time to come back (#256)
         if (hidden) {
             combatant.setHidden(true);
         }

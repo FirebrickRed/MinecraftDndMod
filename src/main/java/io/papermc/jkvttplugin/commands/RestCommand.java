@@ -25,7 +25,7 @@ import java.util.List;
  */
 public class RestCommand implements CommandExecutor, TabCompleter {
 
-    private static final String USAGE = "Usage: /dm rest <character|all> <short|long> [time passed, e.g. 8h]";
+    private static final String USAGE = "Usage: /dm rest <character|all|creature|creatures> <short|long> [time passed, e.g. 8h]";
 
     /** The parsed arguments; {@code minutes} is null when no time passed was given. */
     record Args(String who, String type, Integer minutes) {}
@@ -72,7 +72,31 @@ public class RestCommand implements CommandExecutor, TabCompleter {
                 sender.sendMessage(Component.text("Nobody online has an active character.", NamedTextColor.RED));
                 return true;
             }
+        } else if (parsed.who().equalsIgnoreCase("creatures")) {
+            // Every spawned creature (#256): their limited abilities come back, as a character's do.
+            int n = 0;
+            for (io.papermc.jkvttplugin.data.model.DndEntityInstance creature
+                    : new ArrayList<>(io.papermc.jkvttplugin.data.model.DndEntityInstance.getAll())) {
+                if (restCreature(sender, creature, parsed.type(), false)) n++;
+            }
+            sender.sendMessage(Component.text("🛏 " + n + " creature(s) took a " + parsed.type() + " rest.", NamedTextColor.GREEN));
+            if (parsed.minutes() != null && parsed.minutes() > 0) {
+                io.papermc.jkvttplugin.dm.TimeCommand.shift(sender, io.papermc.jkvttplugin.dm.WorldTime.worldOf(sender),
+                        parsed.minutes(), false);
+            }
+            return true;
         } else {
+            // A spawned creature by name rests too (#256). Creature first, the same order /dm check uses.
+            io.papermc.jkvttplugin.data.model.DndEntityInstance creature =
+                    io.papermc.jkvttplugin.data.model.DndEntityInstance.findByName(parsed.who());
+            if (creature != null) {
+                restCreature(sender, creature, parsed.type(), true);
+                if (parsed.minutes() != null && parsed.minutes() > 0) {
+                    io.papermc.jkvttplugin.dm.TimeCommand.shift(sender, io.papermc.jkvttplugin.dm.WorldTime.worldOf(sender),
+                            parsed.minutes(), false);
+                }
+                return true;
+            }
             CharacterSheet character = CharacterResolver.resolveOrError(sender, parsed.who());
             if (character == null) return true;
             resting.add(character);
@@ -85,6 +109,28 @@ public class RestCommand implements CommandExecutor, TabCompleter {
         if (parsed.minutes() != null && parsed.minutes() > 0 && (rested > 0 || parsed.who().equalsIgnoreCase("all"))) {
             io.papermc.jkvttplugin.dm.TimeCommand.shift(sender, io.papermc.jkvttplugin.dm.WorldTime.worldOf(sender),
                     parsed.minutes(), false);
+        }
+        return true;
+    }
+
+    /**
+     * A creature's rest (#256): its limited abilities come back (a short rest: the "Short or Long Rest"
+     * ones; a long rest: everything, X/Day included), and a long rest heals it. The dead don't rest.
+     */
+    private boolean restCreature(CommandSender sender, io.papermc.jkvttplugin.data.model.DndEntityInstance creature,
+                                 String restType, boolean report) {
+        if (creature.isDead()) {
+            if (report) sender.sendMessage(Component.text(creature.getDisplayName() + " is dead — resting won't bring it back. "
+                    + "Use /dm entity revive.", NamedTextColor.RED));
+            return false;
+        }
+        boolean longRest = restType.equals("long");
+        List<String> back = creature.rest(longRest);
+        if (longRest) creature.setCurrentHp(creature.getMaxHp());
+        if (report) {
+            sender.sendMessage(Component.text("🛏 " + creature.getDisplayName() + " took a " + restType + " rest"
+                    + (longRest ? " (HP " + creature.getMaxHp() + "/" + creature.getMaxHp() + ")" : "")
+                    + (back.isEmpty() ? "." : ". Back: " + String.join(", ", back) + "."), NamedTextColor.GREEN));
         }
         return true;
     }
@@ -259,6 +305,12 @@ public class RestCommand implements CommandExecutor, TabCompleter {
             }
         }
         if (args.length == 1 && "all".startsWith(lastArg)) completions.add("all");
+        if (args.length == 1 && "creatures".startsWith(lastArg)) completions.add("creatures"); // every spawned creature (#256)
+        // A spawned creature can rest by name too.
+        for (io.papermc.jkvttplugin.data.model.DndEntityInstance creature : io.papermc.jkvttplugin.data.model.DndEntityInstance.getAll()) {
+            String n = creature.getDisplayName();
+            if (n != null && !creature.isDead() && n.toLowerCase().startsWith(partialName) && !completions.contains(n)) completions.add(n);
+        }
         boolean mightBeRestType = "short".startsWith(lastArg) || "long".startsWith(lastArg);
 
         if (mightBeRestType && args.length > 1) {

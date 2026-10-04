@@ -146,8 +146,10 @@ possessing the creature (DM mode → Possess) and attacking like a player would.
 | `item` | optional | A weapon id. The possessing DM holds that weapon, and it becomes loot (Investigation DC 5). |
 | `lootable` | optional | `false` means it's used in the fight but never dropped (a kobold's smashed sling). |
 | `material` | optional | Hotbar icon for an attack with no `item`. |
+| `uses` · `recharge` | optional | **Limited use**, as a stat block prints it (#256). `uses: 3` is **3/Day**: back at the next dawn on the in-game clock, or after a long rest. `recharge: "5-6"` is **Recharge 5-6** (one use; then a d6 at the start of each of its turns, shown to the DM, brings it back on a 5 or 6; `"6"` for Recharge 6). `recharge: short_rest` is **"Recharges after a Short or Long Rest"**; `long_rest` for a long rest only. Both together (`uses: 2` + `recharge: short_rest`) is "twice, then a rest". The count belongs to each spawned creature and survives a restart. A spent attack is refused, with **[Use it anyway]** for a DM's ruling. |
+| `ammunition` | optional | How many shots or throws it carries (#257). **By default** (MM p.11) a bow or crossbow starts with **2d10** of its ammunition and a thrown weapon with **2d4**, rolled per creature at its first shot. `ammunition: 12` fixes the number; `ammunition: unlimited` never runs out. Set it on any one of the attacks that share the weapon. A thrown weapon is only counted when the creature has a thrown attack with it (a `reach:` like `"20/60 ft."`); the last one thrown leaves none to stab with. What a creature didn't fire drops with its body. |
 
-**Not supported yet:** save-based abilities (breath weapons, a gaze that forces a save), multiattack,
+**Not supported yet:** save-based abilities (breath weapons, a gaze that forces a save, #254), multiattack (#253),
 and spellcasting from a spell list. Run those as the DM: call each player's save with
 `/dm check <player> save dexterity dc 13`, then apply damage with
 `/combat override <target> <amount>`. (`/combat save` only answers a pending *spell* save.)

@@ -132,6 +132,81 @@ public class DndAttack {
     public String getMaterial() { return material; }
     public void setMaterial(String material) { this.material = material; }
 
+    // ==================== LIMITED USE (#256) AND AMMUNITION (#257) ====================
+
+    /** How a limited ability comes back (MM p.11, "Limited Usage"). */
+    public enum Recharge {
+        /** "X/Day": back at dawn, or after a long rest. */
+        DAY,
+        /** "Recharge 5-6": a d6 at the start of each of its turns; back on {@link #getRechargeMin()} or more. */
+        ROLL,
+        /** "Recharges after a Short or Long Rest". */
+        SHORT_REST,
+        /** Back after a long rest only. */
+        LONG_REST
+    }
+
+    private int uses;                 // how many before it's spent; 0 = unlimited
+    private Recharge recharge;        // null when unlimited
+    private int rechargeMin;          // ROLL: the lowest d6 that brings it back
+    private Integer ammunition;       // null = the Monster Manual's default; -1 = unlimited; else that many
+    private final java.util.List<String> limitProblems = new java.util.ArrayList<>();
+
+    public boolean isLimited() { return uses > 0 && recharge != null; }
+    public int getUses() { return uses; }
+    public Recharge getRecharge() { return recharge; }
+    public int getRechargeMin() { return rechargeMin; }
+    /** The YAML's {@code ammunition:}: null for the default (2d10 / 2d4), -1 for unlimited, else a count. */
+    public Integer getAmmunitionOverride() { return ammunition; }
+    /** What was wrong with {@code uses:} / {@code recharge:} / {@code ammunition:}, for the content check. */
+    public java.util.List<String> getLimitProblems() { return limitProblems; }
+
+    /**
+     * Read {@code uses:}, {@code recharge:} and {@code ammunition:} as a stat block prints them:
+     * <pre>
+     * uses: 3                 3/Day
+     * recharge: "5-6"         Recharge 5-6   ("6" or 6 for Recharge 6)
+     * recharge: short_rest    Recharges after a Short or Long Rest   (long_rest: a long rest only)
+     * uses: 2 + recharge: short_rest      twice, then a rest
+     * ammunition: 12 | unlimited          instead of the default 2d10 arrows / 2d4 thrown
+     * </pre>
+     * {@code uses:} alone is per day; a {@code recharge:} alone is one use.
+     */
+    public void setLimits(Object usesRaw, Object rechargeRaw, Object ammunitionRaw) {
+        limitProblems.clear();
+        uses = 0; recharge = null; rechargeMin = 0; ammunition = null;
+
+        if (usesRaw instanceof Number n && n.intValue() > 0) uses = n.intValue();
+        else if (usesRaw != null) limitProblems.add("uses: '" + usesRaw + "' should be a whole number above 0 (3 for 3/Day)");
+
+        if (rechargeRaw != null) {
+            String r = String.valueOf(rechargeRaw).trim().toLowerCase().replace('–', '-').replace(' ', '_');
+            java.util.regex.Matcher m = java.util.regex.Pattern.compile("([1-6])(?:-6)?").matcher(r);
+            if (m.matches()) { recharge = Recharge.ROLL; rechargeMin = Integer.parseInt(m.group(1)); }
+            else if (r.equals("short_rest")) recharge = Recharge.SHORT_REST;
+            else if (r.equals("long_rest")) recharge = Recharge.LONG_REST;
+            else if (r.equals("day")) recharge = Recharge.DAY;
+            else limitProblems.add("recharge: '" + rechargeRaw + "' should be \"5-6\" (or \"6\"), short_rest, long_rest or day");
+        }
+        if (recharge != null && uses == 0) uses = 1;         // "Recharge 5-6": one use
+        if (uses > 0 && recharge == null) recharge = Recharge.DAY; // "3/Day"
+
+        if (ammunitionRaw instanceof Number n && n.intValue() >= 0) ammunition = n.intValue();
+        else if (ammunitionRaw != null && String.valueOf(ammunitionRaw).trim().equalsIgnoreCase("unlimited")) ammunition = -1;
+        else if (ammunitionRaw != null) limitProblems.add("ammunition: '" + ammunitionRaw + "' should be a number, or unlimited");
+    }
+
+    /** "3/Day", "Recharge 5-6", "1/Short Rest": the limit as a stat block prints it, or "" when unlimited. */
+    public String limitLabel() {
+        if (!isLimited()) return "";
+        return switch (recharge) {
+            case DAY -> uses + "/Day";
+            case ROLL -> "Recharge " + (rechargeMin >= 6 ? "6" : rechargeMin + "-6");
+            case SHORT_REST -> uses + "/Short Rest";
+            case LONG_REST -> uses + "/Long Rest";
+        };
+    }
+
     // ==================== UTILITY METHODS ====================
 
     /**

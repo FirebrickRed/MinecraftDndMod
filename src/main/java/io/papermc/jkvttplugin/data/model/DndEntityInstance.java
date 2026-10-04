@@ -148,6 +148,83 @@ public class DndEntityInstance {
     /** A permanent AC for this one creature ("this guard has a shield"), or null for the stat block's (#194). */
     private Integer acOverride;
 
+    // ---- What this creature has used up (#256, #257): limited abilities and ammunition ----
+    private CreatureUses uses = new CreatureUses();
+
+    /** The day number on the world clock: it changes at dawn, which is when "X/Day" comes back. */
+    public long today() {
+        return armorStand != null && armorStand.getWorld() != null
+                ? armorStand.getWorld().getFullTime() / 24000L : 0L;
+    }
+
+    private static Integer rollDice(String dice) {
+        var r = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(dice);
+        return r == null ? 1 : r.total();
+    }
+
+    private CreatureUses.Pool poolFor(DndAttack attack) {
+        return CreatureUses.poolFor(attack, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon);
+    }
+
+    /** Why this attack can't be made now: the ability is spent, or it's out of ammunition. Null when it can. */
+    public String attackRefusal(DndAttack attack) {
+        String spent = uses.refusal(attack, today());
+        if (spent != null) return spent;
+        CreatureUses.Pool pool = poolFor(attack);
+        if (pool == null) return null;
+        int left = uses.ammoLeft(pool, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon, DndEntityInstance::rollDice);
+        persist(); // the starting amount may just have been rolled
+        return left == 0 ? displayName + " is out of " + pool.label() + "." : null;
+    }
+
+    /** The attack was made: spend a use and a piece of ammunition. Lines for the DM (may be empty). */
+    public java.util.List<String> afterAttack(DndAttack attack) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        String used = uses.spend(attack, today());
+        if (used != null) out.add(used);
+        CreatureUses.Pool pool = poolFor(attack);
+        if (pool != null) {
+            int left = uses.spendAmmo(pool, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon, DndEntityInstance::rollDice);
+            if (left >= 0 && pool.spendsOne()) out.add(displayName + ": " + left + " " + pool.label() + " left.");
+        }
+        if (!out.isEmpty()) persist();
+        return out;
+    }
+
+    /** The start of its turn: spent "Recharge X-Y" abilities roll a d6. Lines for the DM. */
+    public java.util.List<String> rollRecharges() {
+        java.util.List<String> out = uses.rollRecharges(template.getAttacks(),
+                () -> java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 7));
+        if (!out.isEmpty()) persist();
+        return out;
+    }
+
+    /** A rest: what came back. */
+    public java.util.List<String> rest(boolean longRest) {
+        java.util.List<String> back = uses.rest(template.getAttacks(), longRest);
+        if (!back.isEmpty()) persist();
+        return back;
+    }
+
+    /** Joining a fight: abilities that recharge on a roll have had time to. */
+    public void recoverRechargeRolls() {
+        uses.recoverRolls(template.getAttacks());
+        persist();
+    }
+
+    /** Ammunition it still carries, as item id → count: what a body drops beyond its loot table (#257). */
+    public java.util.Map<String, Integer> ammunitionCarried() {
+        java.util.Map<String, Integer> out = new java.util.LinkedHashMap<>();
+        // Roll any pool it never got to use: an archer killed before its first shot still has arrows.
+        if (template.getAttacks() != null) for (DndAttack a : template.getAttacks()) {
+            CreatureUses.Pool pool = poolFor(a);
+            if (pool != null) uses.ammoLeft(pool, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon, DndEntityInstance::rollDice);
+        }
+        persist();
+        uses.ammoPools().forEach((k, v) -> { if (k.startsWith("ammo:") && v > 0) out.put(k.substring(5), v); });
+        return out;
+    }
+
     public java.util.Set<String> getConditions() { return java.util.Collections.unmodifiableSet(conditions); }
     public boolean hasCondition(String id) { return id != null && conditions.contains(id.toLowerCase()); }
 
@@ -224,6 +301,7 @@ public class DndEntityInstance {
             } catch (NumberFormatException ignored) {}
         }
         acOverride = pdc.get(key("dnd_ac_override"), PersistentDataType.INTEGER);
+        uses = CreatureUses.deserialize(pdc.get(key("dnd_uses"), PersistentDataType.STRING));
         tempHp = isDead ? 0 : pdc.getOrDefault(key("dnd_temp_hp"), PersistentDataType.INTEGER, 0);
     }
 
@@ -301,6 +379,9 @@ public class DndEntityInstance {
         else pdc.set(key("dnd_dm_notes"), PersistentDataType.STRING, String.join(NOTE_SEPARATOR, dmNotes));
         if (acOverride == null) pdc.remove(key("dnd_ac_override"));
         else pdc.set(key("dnd_ac_override"), PersistentDataType.INTEGER, acOverride);
+        // Spent abilities and ammunition (#256, #257).
+        if (uses.isEmpty()) pdc.remove(key("dnd_uses"));
+        else pdc.set(key("dnd_uses"), PersistentDataType.STRING, uses.serialize());
     }
 
     // ==================== STATIC REGISTRY METHODS ====================

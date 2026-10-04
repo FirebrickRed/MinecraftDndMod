@@ -545,11 +545,26 @@ public class AttackHandler {
         // including whether its attack throws a cosmetic projectile (#181).
         // Both bonuses named for the attack, as the prompt names them: "+4[Scimitar]" to hit, and its
         // damage formula's flat part ("1d6+2" → "+2[Scimitar]"), which is the creature's modifier.
+        // A spent ability (3/Day, Recharge 5-6) or an empty quiver stops the attack before anything is
+        // rolled (#256, #257). The DM can wave it through once: their ruling stands.
+        String spent = entity.attackRefusal(attack);
+        if (spent != null && !CreatureLimitOverride.has(entity.getInstanceId(), attack.getName())) {
+            dm.sendMessage(Component.text(spent + " ", NamedTextColor.YELLOW)
+                    .append(CreatureLimitOverride.button(entity.getInstanceId(), attack.getName(), RollPrompt.lastCommand(dm))));
+            return false;
+        }
+
         int dmgFlat = splitDamageBonus(attack.getDamage())[0];
         String dmgLabel = dmgFlat == 0 ? "" : (dmgFlat > 0 ? "+" : "") + dmgFlat + "[" + attack.getName() + "]";
-        return resolveAttack(session, attacker, target, toHit, (toHit >= 0 ? "+" : "") + toHit + "[" + attack.getName() + "]",
+        boolean resolved = resolveAttack(session, attacker, target, toHit, (toHit >= 0 ? "+" : "") + toHit + "[" + attack.getName() + "]",
                 attack.getDamage(), attack.getDamageType(), providedRoll, providedTotal, dm, dmgLabel, false,
-                CombatVisuals.projectileFor(attack), forceAuto, null, 0, 0, null, null); // monsters do not track ammo
+                CombatVisuals.projectileFor(attack), forceAuto, null, 0, 0, null, null);
+        // Only a real attack spends anything: a prompt waiting on its roll returns false.
+        if (resolved) {
+            CreatureLimitOverride.spend(entity.getInstanceId());
+            for (String line : entity.afterAttack(attack)) dm.sendMessage(Component.text("   " + line, NamedTextColor.GRAY));
+        }
+        return resolved;
     }
 
     /**

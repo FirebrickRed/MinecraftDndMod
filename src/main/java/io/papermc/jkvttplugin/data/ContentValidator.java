@@ -506,6 +506,12 @@ public final class ContentValidator {
                     if (!blank(a.getItem()) && !itemExists(a.getItem())) {
                         warn(aw + " item '" + a.getItem() + "' isn't a defined weapon — no hotbar weapon or loot for it.");
                     }
+                    // uses: / recharge: / ammunition: that didn't parse (#256, #257), and an ammunition:
+                    // count on an attack that has nothing to run out of.
+                    for (String p : a.getLimitProblems()) warn(aw + " " + p + ".");
+                    if (a.getAmmunitionOverride() != null && io.papermc.jkvttplugin.data.model.CreatureUses.poolFor(a, e.getAttacks(), WeaponLoader::getWeapon) == null) {
+                        warn(aw + " has ammunition: but nothing to run out of. It needs item: a bow or crossbow (with its ammunition), or a thrown weapon with a thrown attack (reach \"20/60 ft.\").");
+                    }
                     if (blank(a.getDamage())) warn(aw + " has no damage.");
                     else checkAmount(aw, "damage", a.getDamage());
                 }
