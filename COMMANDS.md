@@ -79,6 +79,7 @@ Any time you're in the fight: `/combat save` (answer a spell's save) · `/combat
 | `cast <ritual_spell> ritual` · `cast cancel` | Channel a ritual over several turns / cancel it (#156) |
 | `save [target] [manualRoll <d20> | autoRoll]` | Roll a saving throw vs a spell (you for yourself; DM for others) |
 | `concentration [target] [autoRoll | manualRoll <d20> | total <n>]` | The CON save to keep a concentration spell (or a channelled ritual) going after taking damage. The prompt says what you add before you roll |
+| `recharge <creature> <ability> [autoRoll \| manualRoll <1-6>]` | **DM-only:** the d6 for a creature's spent "Recharge 5-6" ability (#256). At the start of its turn you're handed **[Roll it] [I rolled…]**, which fill this; a roll at or above the number brings the ability back. One roll per turn |
 | `reactions` | List reactions — a player sees their own; the **DM sees a whole-table roster** (#147) |
 | `reactions [<reactor>] <attack|pass>` | Take/pass a provoked opportunity attack (usually the ⚡ end-of-turn buttons) (#147) |
 | `reactions pass` | Decline a **held** reaction — this is what releases the attacker's damage (#195) |
@@ -159,6 +160,7 @@ the same way until their first turn.
 | `adjust <who> full` · `temp <n>` · `maxhp <n>` · `down` · `revive [hp]` | Full HP · temp HP · a creature's max HP (e.g. hit dice you rolled; the spawn message's **[Use my own roll]** fills it in) · drop to 0 · back from the dead |
 | `adjust <who> ac +1 [until next_turn\|short_rest\|long_rest\|removed]` · `ac clear` · `ac set <n>` · `ac reset` | Temporary AC change (asks how long if you don't say) · clear it · a creature's own AC for good · back to its stat block |
 | `adjust <who> condition <name>` · `condition add\|remove <name>` | Toggle / add / remove a condition. Conditions live on the character or creature: they work out of combat and outlast a fight (only Dodging-type ones end with it) |
+| `adjust <creature> ammo <kind> <n \| unlimited>` | How many arrows, bolts or thrown weapons a creature carries (#257). `<kind>` is the item id (`arrow`, `bolt`, `spear`; Tab lists what it has). The spawn message's **[Use my own roll]** fills this, for the 2d10 / 2d4 you rolled yourself |
 | `view <character\|creature>` | **Quick look in chat** (#175): HP and temp HP, AC with every change and where it came from (DM adjustment and how long, a creature's own AC, a spell's bonus), speed, conditions (rules on hover), concentration, death saves, the first DM note, and [Full view] / [Adjust] / [Add a note]. The DM-mode **View** tool does this on right-click |
 | `view <who> full` | **Full view** menu, read-only: summary, a button to their sheet / stat block, all DM notes, [Add a note], [Adjust]; a character's actual inventory (backpack, hotbar, armor, off-hand; while online) or what a creature carries and drops, with the check to find each item. The View tool does this on **sneak** + right-click |
 | `note <who> add <text…>` · `note <who> clear` · `note <who>` | **DM-only notes** on a character or a spawned creature, saved with them. Players never see them. A creature's YAML `dm_notes:` show alongside and `clear` doesn't touch them |

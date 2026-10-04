@@ -151,10 +151,25 @@ public class DndEntityInstance {
     // ---- What this creature has used up (#256, #257): limited abilities and ammunition ----
     private CreatureUses uses = new CreatureUses();
 
-    /** The day number on the world clock: it changes at dawn, which is when "X/Day" comes back. */
-    public long today() {
-        return armorStand != null && armorStand.getWorld() != null
-                ? armorStand.getWorld().getFullTime() / 24000L : 0L;
+    /** The world clock, in ticks: 1,000 to the in-game hour, a day starting at dawn. */
+    private long now() {
+        return armorStand != null && armorStand.getWorld() != null ? armorStand.getWorld().getFullTime() : 0L;
+    }
+
+    private static CreatureUses.DayRule dayRule() {
+        return io.papermc.jkvttplugin.config.PluginConfig.getCreaturePerDay();
+    }
+
+    /**
+     * The pool an attack draws on, or null. Honours the table's ammunition settings, the same two
+     * switches that govern characters (combat.track_ammunition, combat.track_thrown_weapons).
+     */
+    private CreatureUses.Pool poolFor(DndAttack attack) {
+        CreatureUses.Pool pool = CreatureUses.poolFor(attack, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon);
+        if (pool == null) return null;
+        boolean tracked = pool.key().startsWith("ammo:") ? io.papermc.jkvttplugin.config.PluginConfig.isTrackAmmunition()
+                : io.papermc.jkvttplugin.config.PluginConfig.isTrackThrownWeapons();
+        return tracked ? pool : null;
     }
 
     private static Integer rollDice(String dice) {
@@ -162,25 +177,81 @@ public class DndEntityInstance {
         return r == null ? 1 : r.total();
     }
 
-    private CreatureUses.Pool poolFor(DndAttack attack) {
-        return CreatureUses.poolFor(attack, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon);
+    private int ammoLeft(CreatureUses.Pool pool) {
+        return uses.ammoLeft(pool, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon, DndEntityInstance::rollDice);
+    }
+
+    private static String itemIdOf(CreatureUses.Pool pool) {
+        return pool.key().substring(pool.key().indexOf(':') + 1);
+    }
+
+    /** What was rolled for one pool at spawn: "arrows", the id to adjust it by ("arrow"), the dice as rolled, the count. */
+    public record AmmoRoll(String label, String itemId, String shown, int count) {}
+
+    /**
+     * Roll what it carries, once, as it spawns (#257): 2d10 for a bow or crossbow, 2d4 thrown, like its
+     * hit dice. Returned so the DM sees the dice and can put in their own roll (/dm adjust … ammo).
+     * A pool the stat block fixes ({@code ammunition: 12}, or unlimited) isn't rolled and isn't listed.
+     */
+    public java.util.List<AmmoRoll> rollStartingAmmunition() {
+        java.util.List<AmmoRoll> out = new java.util.ArrayList<>();
+        java.util.Set<String> seen = new java.util.HashSet<>();
+        if (template.getAttacks() == null) return out;
+        for (DndAttack a : template.getAttacks()) {
+            CreatureUses.Pool pool = poolFor(a);
+            if (pool == null || !seen.add(pool.key()) || uses.ammoPools().containsKey(pool.key())) continue;
+            Integer fixed = CreatureUses.overrideFor(pool, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon);
+            if (fixed != null) { uses.setAmmo(pool.key(), fixed); continue; }
+            var rolled = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(pool.dice());
+            int count = rolled == null ? 1 : Math.max(1, rolled.total());
+            uses.setAmmo(pool.key(), count);
+            out.add(new AmmoRoll(pool.label(), itemIdOf(pool), rolled == null ? String.valueOf(count) : rolled.display(), count));
+        }
+        persist();
+        return out;
+    }
+
+    /** The item ids of the pools this creature has: what {@code /dm adjust <it> ammo} can name. */
+    public java.util.List<String> ammunitionKinds() {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        if (template.getAttacks() != null) for (DndAttack a : template.getAttacks()) {
+            CreatureUses.Pool pool = poolFor(a);
+            if (pool != null && !out.contains(itemIdOf(pool))) out.add(itemIdOf(pool));
+        }
+        return out;
+    }
+
+    /**
+     * Set what it carries of one kind (the DM's own roll, or a correction). Returns the pool's label
+     * ("arrows"), or null if this creature doesn't use that.
+     */
+    public String setAmmunition(String itemId, int count) {
+        if (template.getAttacks() != null) for (DndAttack a : template.getAttacks()) {
+            CreatureUses.Pool pool = poolFor(a);
+            if (pool != null && itemIdOf(pool).equalsIgnoreCase(itemId)) {
+                uses.setAmmo(pool.key(), count);
+                persist();
+                return pool.label();
+            }
+        }
+        return null;
     }
 
     /** Why this attack can't be made now: the ability is spent, or it's out of ammunition. Null when it can. */
     public String attackRefusal(DndAttack attack) {
-        String spent = uses.refusal(attack, today());
+        String spent = uses.refusal(attack, now(), dayRule());
         if (spent != null) return spent;
         CreatureUses.Pool pool = poolFor(attack);
         if (pool == null) return null;
-        int left = uses.ammoLeft(pool, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon, DndEntityInstance::rollDice);
-        persist(); // the starting amount may just have been rolled
+        int left = ammoLeft(pool);
+        persist(); // a creature from before this existed gets its amount rolled here
         return left == 0 ? displayName + " is out of " + pool.label() + "." : null;
     }
 
     /** The attack was made: spend a use and a piece of ammunition. Lines for the DM (may be empty). */
     public java.util.List<String> afterAttack(DndAttack attack) {
         java.util.List<String> out = new java.util.ArrayList<>();
-        String used = uses.spend(attack, today());
+        String used = uses.spend(attack, now(), dayRule());
         if (used != null) out.add(used);
         CreatureUses.Pool pool = poolFor(attack);
         if (pool != null) {
@@ -191,12 +262,26 @@ public class DndEntityInstance {
         return out;
     }
 
-    /** The start of its turn: spent "Recharge X-Y" abilities roll a d6. Lines for the DM. */
-    public java.util.List<String> rollRecharges() {
-        java.util.List<String> out = uses.rollRecharges(template.getAttacks(),
-                () -> java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 7));
-        if (!out.isEmpty()) persist();
-        return out;
+    /** The start of its turn: the spent "Recharge X-Y" abilities, each owed a d6 the DM rolls. */
+    public java.util.List<DndAttack> rechargesDue() {
+        return uses.rechargesDue(template.getAttacks());
+    }
+
+    public boolean isRechargeDue(DndAttack attack) { return uses.isRechargeDue(attack); }
+
+    /** The DM's d6 for a recharge. The line to show, or null if no roll is owed for it. */
+    public String answerRecharge(DndAttack attack, int d6) {
+        String line = uses.answerRecharge(attack, d6);
+        if (line != null) persist();
+        return line;
+    }
+
+    /** One of its attacks by its key ("web", "fire_breath") or name, or null. */
+    public DndAttack attackByKey(String typed) {
+        if (typed == null || template.getAttacks() == null) return null;
+        String k = CreatureUses.key(typed);
+        for (DndAttack a : template.getAttacks()) if (CreatureUses.key(a.getName()).equals(k)) return a;
+        return null;
     }
 
     /** A rest: what came back. */
@@ -215,10 +300,10 @@ public class DndEntityInstance {
     /** Ammunition it still carries, as item id → count: what a body drops beyond its loot table (#257). */
     public java.util.Map<String, Integer> ammunitionCarried() {
         java.util.Map<String, Integer> out = new java.util.LinkedHashMap<>();
-        // Roll any pool it never got to use: an archer killed before its first shot still has arrows.
+        // Roll any pool that was never rolled (a creature from before this existed).
         if (template.getAttacks() != null) for (DndAttack a : template.getAttacks()) {
             CreatureUses.Pool pool = poolFor(a);
-            if (pool != null) uses.ammoLeft(pool, template.getAttacks(), io.papermc.jkvttplugin.data.loader.WeaponLoader::getWeapon, DndEntityInstance::rollDice);
+            if (pool != null) ammoLeft(pool);
         }
         persist();
         uses.ammoPools().forEach((k, v) -> { if (k.startsWith("ammo:") && v > 0) out.put(k.substring(5), v); });

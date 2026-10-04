@@ -551,6 +551,8 @@ public class AttackHandler {
         if (spent != null && !CreatureLimitOverride.has(entity.getInstanceId(), attack.getName())) {
             dm.sendMessage(Component.text(spent + " ", NamedTextColor.YELLOW)
                     .append(CreatureLimitOverride.button(entity.getInstanceId(), attack.getName(), RollPrompt.lastCommand(dm))));
+            // Its recharge d6 for this turn hasn't been rolled yet: offer it again, right here.
+            if (entity.isRechargeDue(attack)) dm.sendMessage(RechargeRoll.prompt(entity, attack));
             return false;
         }
 

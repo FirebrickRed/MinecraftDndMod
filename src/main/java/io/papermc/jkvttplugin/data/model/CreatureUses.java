@@ -12,82 +12,128 @@ import java.util.function.IntSupplier;
  * "Recharge 5-6") and its ammunition. The template says what the limits ARE; this is the count, which
  * belongs to the creature (two dragons each have their own breath) and is saved with it.
  *
- * <p>Days are counted from the world clock: a day starts at dawn (tick 0 of a Minecraft day), so
- * "X/Day" comes back at the next dawn, or after a long rest, whichever is first.
+ * <p>"X/Day" comes back by the {@link DayRule} in config.yml: 24 in-game hours after the first use, or
+ * at the next dawn on the world clock. A long rest brings it back sooner either way.
  *
  * <p>Ammunition (MM p.11): a monster carries 2d10 pieces for a bow or crossbow and 2d4 thrown
  * weapons, rolled the first time it's needed, unless the attack's {@code ammunition:} says otherwise.
  */
 public final class CreatureUses {
 
-    /** Spent uses per ability (by {@link #key}), and the day they were spent on (for X/Day). */
+    /**
+     * When "X/Day" comes back ({@code creatures.per_day} in config.yml). Either way a long rest brings it
+     * back sooner.
+     */
+    public enum DayRule {
+        /** 24 in-game hours after the first of those uses. */
+        HOURS_24,
+        /** At the next dawn on the world clock, whenever it was used. */
+        DAWN
+    }
+
+    /** A Minecraft day is 24,000 ticks, starting at dawn; an in-game hour is 1,000. */
+    private static final long TICKS_PER_DAY = 24000L, TICKS_PER_HOUR = 1000L;
+
+    /** Spent uses per ability (by {@link #key}), and the world time (ticks) of the first of them (for X/Day). */
     private final Map<String, Integer> used = new LinkedHashMap<>();
-    private final Map<String, Long> usedOnDay = new LinkedHashMap<>();
+    private final Map<String, Long> usedAt = new LinkedHashMap<>();
+    /** "Recharge X-Y" abilities whose d6 is waiting to be rolled this turn. Not saved: a restart restarts the turn. */
+    private final java.util.Set<String> rollDue = new java.util.LinkedHashSet<>();
     /** Ammunition left, by pool ("ammo:arrow", "thrown:spear"). Absent = not rolled yet. */
     private final Map<String, Integer> ammo = new LinkedHashMap<>();
 
-    static String key(String name) {
+    public static String key(String name) {
         return name == null ? "" : name.trim().toLowerCase().replaceAll("[^a-z0-9]+", "_");
     }
 
     // ==================== LIMITED USE ====================
 
-    /** How many uses are left right now (dawn has refilled an X/Day ability). Unlimited: Integer.MAX_VALUE. */
-    public int left(DndAttack a, long today) {
+    private static boolean dayHasPassed(long at, long now, DayRule rule) {
+        return rule == DayRule.DAWN ? at / TICKS_PER_DAY < now / TICKS_PER_DAY : now - at >= TICKS_PER_DAY;
+    }
+
+    /** How many uses are left right now (an X/Day ability refills once its day has passed). Unlimited: Integer.MAX_VALUE. */
+    public int left(DndAttack a, long now, DayRule rule) {
         if (a == null || !a.isLimited()) return Integer.MAX_VALUE;
         String k = key(a.getName());
-        if (a.getRecharge() == DndAttack.Recharge.DAY && usedOnDay.getOrDefault(k, today) < today) {
+        if (a.getRecharge() == DndAttack.Recharge.DAY && used.containsKey(k) && dayHasPassed(usedAt.getOrDefault(k, now), now, rule)) {
             used.remove(k);
-            usedOnDay.remove(k);
+            usedAt.remove(k);
         }
         return Math.max(0, a.getUses() - used.getOrDefault(k, 0));
     }
 
     /** Why it can't be used now ("Fire Breath is spent: it recharges on a 5-6."), or null. */
-    public String refusal(DndAttack a, long today) {
-        if (left(a, today) > 0) return null;
+    public String refusal(DndAttack a, long now, DayRule rule) {
+        if (left(a, now, rule) > 0) return null;
+        String k = key(a.getName());
         return a.getName() + " is spent: " + switch (a.getRecharge()) {
-            case DAY -> "it comes back at dawn, or after a long rest.";
-            case ROLL -> "it recharges on a " + (a.getRechargeMin() >= 6 ? "6" : a.getRechargeMin() + "-6")
-                    + " at the start of its turn.";
+            case DAY -> rule == DayRule.DAWN ? "it comes back at dawn, or after a long rest."
+                    : "it comes back in about " + hoursUntilBack(usedAt.getOrDefault(k, now), now)
+                            + " (24 hours after it was first used), or after a long rest.";
+            case ROLL -> rollDue.contains(k) ? "roll its recharge first (a " + rollText(a) + " brings it back)."
+                    : "it recharges on a " + rollText(a) + " at the start of its turn.";
             case SHORT_REST -> "it comes back after a short or long rest.";
             case LONG_REST -> "it comes back after a long rest.";
         };
     }
 
-    /** One use spent. Returns what to tell the DM ("Fire Breath: 2 of 3 left today."), or null if unlimited. */
-    public String spend(DndAttack a, long today) {
+    private static String rollText(DndAttack a) {
+        return a.getRechargeMin() >= 6 ? "6" : a.getRechargeMin() + "-6";
+    }
+
+    private static String hoursUntilBack(long at, long now) {
+        long ticks = Math.max(0, TICKS_PER_DAY - (now - at));
+        long hours = (ticks + TICKS_PER_HOUR - 1) / TICKS_PER_HOUR;
+        return hours <= 1 ? "an hour" : hours + " hours";
+    }
+
+    /** One use spent. Returns what to tell the DM ("Fire Breath: 2 of 3 left (3/Day)."), or null if unlimited. */
+    public String spend(DndAttack a, long now, DayRule rule) {
         if (a == null || !a.isLimited()) return null;
-        int left = left(a, today); // also applies a dawn refill first
+        int left = left(a, now, rule); // also applies a refill first
         String k = key(a.getName());
-        used.merge(k, 1, Integer::sum);
-        usedOnDay.put(k, today);
-        int now = Math.max(0, left - 1);
+        if (used.merge(k, 1, Integer::sum) == 1) usedAt.put(k, now); // the day runs from the first use
+        rollDue.remove(k);
+        int remaining = Math.max(0, left - 1);
         return a.getName() + ": " + (a.getRecharge() == DndAttack.Recharge.ROLL
                 ? "used (" + a.limitLabel() + ")."
-                : now + " of " + a.getUses() + " left (" + a.limitLabel() + ").");
+                : remaining + " of " + a.getUses() + " left (" + a.limitLabel() + ").");
     }
 
     /**
-     * The start of the creature's turn: every spent "Recharge X-Y" ability rolls a d6. Returns a line
-     * per roll for the DM ("Fire Breath: rolled 5, recharged." / "rolled 2, still spent.").
+     * The start of the creature's turn: every spent "Recharge X-Y" ability is owed a d6. Returns them,
+     * so the DM can be handed the roll buttons; {@link #answerRecharge} takes the result. One roll per
+     * turn each: asking again before it's answered doesn't add another.
      */
-    public List<String> rollRecharges(List<DndAttack> attacks, IntSupplier d6) {
-        List<String> out = new ArrayList<>();
-        if (attacks == null) return out;
+    public List<DndAttack> rechargesDue(List<DndAttack> attacks) {
+        List<DndAttack> due = new ArrayList<>();
+        if (attacks == null) return due;
         for (DndAttack a : attacks) {
             if (!a.isLimited() || a.getRecharge() != DndAttack.Recharge.ROLL) continue;
             String k = key(a.getName());
             if (used.getOrDefault(k, 0) <= 0) continue;
-            int roll = d6.getAsInt();
-            if (roll >= a.getRechargeMin()) {
-                used.remove(k);
-                out.add(a.getName() + " (" + a.limitLabel() + "): rolled " + roll + ", recharged.");
-            } else {
-                out.add(a.getName() + " (" + a.limitLabel() + "): rolled " + roll + ", still spent.");
-            }
+            rollDue.add(k);
+            due.add(a);
         }
-        return out;
+        return due;
+    }
+
+    public boolean isRechargeDue(DndAttack a) {
+        return a != null && rollDue.contains(key(a.getName()));
+    }
+
+    /**
+     * The d6 for a recharge that's due. Returns the line for the DM ("Web (Recharge 5-6): rolled 5,
+     * recharged."), or null when no roll is owed (not spent, or already rolled this turn).
+     */
+    public String answerRecharge(DndAttack a, int d6) {
+        if (a == null || !rollDue.remove(key(a.getName()))) return null;
+        if (d6 >= a.getRechargeMin()) {
+            used.remove(key(a.getName()));
+            return a.getName() + " (" + a.limitLabel() + "): rolled " + d6 + ", recharged.";
+        }
+        return a.getName() + " (" + a.limitLabel() + "): rolled " + d6 + ", still spent.";
     }
 
     /**
@@ -102,7 +148,7 @@ public final class CreatureUses {
             boolean refills = longRest || a.getRecharge() == DndAttack.Recharge.SHORT_REST
                     || a.getRecharge() == DndAttack.Recharge.ROLL; // an hour is plenty of turns
             String k = key(a.getName());
-            if (refills && used.remove(k) != null) { usedOnDay.remove(k); back.add(a.getName()); }
+            if (refills && used.remove(k) != null) { usedAt.remove(k); rollDue.remove(k); back.add(a.getName()); }
         }
         return back;
     }
@@ -111,7 +157,7 @@ public final class CreatureUses {
     public void recoverRolls(List<DndAttack> attacks) {
         if (attacks == null) return;
         for (DndAttack a : attacks) {
-            if (a.isLimited() && a.getRecharge() == DndAttack.Recharge.ROLL) used.remove(key(a.getName()));
+            if (a.isLimited() && a.getRecharge() == DndAttack.Recharge.ROLL) { used.remove(key(a.getName())); rollDue.remove(key(a.getName())); }
         }
     }
 
@@ -180,6 +226,11 @@ public final class CreatureUses {
         return now;
     }
 
+    /** Set a pool outright: the DM's own roll at spawn, or a correction. -1 = unlimited. */
+    public void setAmmo(String poolKey, int count) {
+        ammo.put(poolKey, Math.max(-1, count));
+    }
+
     /** What's left in every pool that's been rolled: "ammo:arrow" → 7. For loot and for saving. */
     public Map<String, Integer> ammoPools() { return java.util.Collections.unmodifiableMap(ammo); }
 
@@ -191,7 +242,7 @@ public final class CreatureUses {
     public String serialize() {
         if (isEmpty()) return "";
         StringBuilder sb = new StringBuilder();
-        used.forEach((k, v) -> sb.append(k).append('=').append(v).append('@').append(usedOnDay.getOrDefault(k, 0L)).append(';'));
+        used.forEach((k, v) -> sb.append(k).append('=').append(v).append('@').append(usedAt.getOrDefault(k, 0L)).append(';'));
         sb.append('|');
         ammo.forEach((k, v) -> sb.append(k).append('=').append(v).append(';'));
         return sb.toString();
@@ -206,7 +257,7 @@ public final class CreatureUses {
             if (eq <= 0 || at <= eq) continue;
             try {
                 out.used.put(e.substring(0, eq), Integer.parseInt(e.substring(eq + 1, at)));
-                out.usedOnDay.put(e.substring(0, eq), Long.parseLong(e.substring(at + 1)));
+                out.usedAt.put(e.substring(0, eq), Long.parseLong(e.substring(at + 1)));
             } catch (NumberFormatException ignored) {}
         }
         for (String e : halves[1].split(";")) {

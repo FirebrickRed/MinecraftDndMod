@@ -145,6 +145,18 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
         // Create entity instance
         DndEntityInstance instance = new DndEntityInstance(template, armorStand, finalName, maxHp);
 
+        // What it carries to shoot or throw is rolled now, like its hit points (#257): the DM sees the
+        // dice and can put in their own roll instead.
+        for (DndEntityInstance.AmmoRoll roll : instance.rollStartingAmmunition()) {
+            String who = finalName.contains(" ") ? "\"" + finalName + "\"" : finalName;
+            sender.sendMessage(Component.text(roll.shown() + " " + roll.label() + "  ", NamedTextColor.DARK_GRAY)
+                    .append(Component.text("[Use my own roll]", NamedTextColor.AQUA)
+                            .hoverEvent(net.kyori.adventure.text.event.HoverEvent.showText(Component.text(
+                                    "Roll it yourself and set how many " + roll.label() + " " + finalName + " carries")))
+                            .clickEvent(net.kyori.adventure.text.event.ClickEvent.suggestCommand(
+                                    "/dm adjust " + who + " ammo " + roll.itemId() + " "))));
+        }
+
         // Initialize shop if entity is a merchant (Issue #75)
         if (template.hasShop()) {
             ShopConfig instanceShop = cloneShop(template.getShop());

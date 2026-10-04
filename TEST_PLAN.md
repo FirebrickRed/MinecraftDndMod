@@ -441,8 +441,14 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
       Spear (Thrown) "Carries: 2d4 spears". (#256, #257)
 - [ ] Attack with **Web** → after the roll, "Web: used (Recharge 5-6)." Web again this turn → "Web is spent: it
       recharges on a 5-6 at the start of its turn. **[Use it anyway]**", nothing rolled. Bite still works. (#256)
-- [ ] At the start of each spider turn you (only you) see "🎲 Giant Spider · Web (Recharge 5-6): rolled N, still
-      spent" or "recharged"; once recharged, Web works and the rolls stop. (#256)
+- [ ] At the start of each spider turn you (only you) get "🎲 Giant Spider · Web (Recharge 5-6), roll its
+      recharge: **[Roll it] [I rolled…]**". [I rolled…] + 3 → "rolled 3, still spent (your roll)"; a 5 or 6 →
+      "recharged" in green, Web works, and the prompts stop. `manualRoll 7` → "A d6 shows 1 to 6". (#256)
+- [ ] Answer it, then run the same command again that turn → "isn't waiting on a recharge roll". Ignore it and
+      try Web → refused with "roll its recharge first", and the buttons again. (#256)
+- [ ] **Spawning a gnoll** shows its dice, like its HP: "🎲 2d10 [6, 5] = 11 arrows [Use my own roll]" and one for
+      spears. Click it → fills `/dm adjust Gnoll ammo arrow `; type 14 → "Gnoll now carries 14 arrows", and the
+      next shot says 13 left. Tab after `ammo` lists `arrow` and `spear`. (#257)
 - [ ] [Use it anyway] → "Allowed this once. [go again]" → the attack goes through, and the next one is refused again. (#256)
 - [ ] `/combat finished`, start a new fight with the same spider → Web is ready at once. (#256)
 - [ ] The gnoll's **Longbow**: after each shot, "Gnoll: N arrows left." (N starts between 2 and 20, less one). Its
@@ -454,9 +460,13 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
       loot. A gnoll killed before it ever shot still has some. (#257)
 - [ ] `/dm rest "Giant Spider" short` → "took a short rest. Back: Web." `/dm rest creatures long` → every creature at
       full HP, and Tab offers `creatures` and creature names. (#256)
-- [ ] In a creature's YAML add `uses: 2` to an attack, `/dm reload`, spawn a new one → refused on the third use
-      "it comes back at dawn, or after a long rest"; `/dm time add 24h` (past dawn) → it works again. And
-      `ammunition: 3` on a bow attack → exactly 3 shots; `ammunition: unlimited` → no count shown. (#256, #257)
+- [ ] In a creature's YAML add `uses: 2` to an attack, `/dm reload`, spawn a new one → refused on the third use:
+      "it comes back in about 24 hours (24 hours after it was first used), or after a long rest". `/dm time add
+      12h` → still refused, "about 12 hours"; another `12h` → it works. (#256)
+- [ ] Set `creatures.per_day: dawn` in the server's `config.yml`, restart, repeat → the refusal says "at dawn",
+      and moving the clock just past the next dawn brings it back. Set it back to `24_hours`. (#256)
+- [ ] `ammunition: 3` on a bow attack → no dice shown at spawn, exactly 3 shots; `ammunition: unlimited` → no
+      count at all. (#257)
 
 **Stat-block saves and immunities** (`/dm entity spawn skeleton`, and `gnoll_fang_of_yeenoghu`):
 - [ ] The skeleton's stat block (`/dm entity info`), Ability Scores tile: "Immune: poison", "Vulnerable:

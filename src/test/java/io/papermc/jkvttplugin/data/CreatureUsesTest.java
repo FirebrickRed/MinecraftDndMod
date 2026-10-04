@@ -35,34 +35,80 @@ class CreatureUsesTest {
     }
 
     // ==================== LIMITED USE ====================
+    private static final CreatureUses.DayRule H24 = CreatureUses.DayRule.HOURS_24, DAWN = CreatureUses.DayRule.DAWN;
+    /** World time in ticks: 1,000 to the in-game hour, 24,000 to the day, a day starting at dawn. */
+    private static final long HOUR = 1000, DAY = 24000;
 
     @Test
-    void threePerDayIsSpentAfterThreeAndBackAtDawn() {
+    void threePerDayIsSpentAfterThree() {
         DndAttack breath = attack("Fire Breath", 3, null);
         assertEquals("3/Day", breath.limitLabel());
         CreatureUses u = new CreatureUses();
-        long today = 40;
-        for (int i = 0; i < 3; i++) { assertNull(u.refusal(breath, today)); u.spend(breath, today); }
-        assertNotNull(u.refusal(breath, today), "the fourth use today");
-        assertEquals(0, u.left(breath, today));
-        assertEquals(3, u.left(breath, today + 1), "dawn the next day: all three back");
-        assertNull(u.refusal(breath, today + 1));
+        long now = 5 * DAY;
+        for (int i = 0; i < 3; i++) { assertNull(u.refusal(breath, now, H24)); u.spend(breath, now, H24); }
+        assertNotNull(u.refusal(breath, now, H24), "the fourth use");
+        assertEquals(0, u.left(breath, now, H24));
+    }
+
+    /** The default (creatures.per_day: 24_hours): 24 in-game hours after the FIRST of those uses. */
+    @Test
+    void twentyFourHoursAfterTheFirstUseItIsBack() {
+        DndAttack breath = attack("Fire Breath", 2, null);
+        CreatureUses u = new CreatureUses();
+        long evening = 5 * DAY + 14 * HOUR; // 8 pm (dawn is tick 0, 6 am)
+        u.spend(breath, evening, H24);
+        u.spend(breath, evening + 3 * HOUR, H24);
+        assertEquals(0, u.left(breath, evening + 12 * HOUR, H24), "the next morning: dawn has passed, 24 hours haven't");
+        assertTrue(u.refusal(breath, evening + 12 * HOUR, H24).contains("12 hours"), "and it says how long is left");
+        assertEquals(0, u.left(breath, evening + 23 * HOUR, H24));
+        assertEquals(2, u.left(breath, evening + 24 * HOUR, H24), "24 hours from the first use, not the second");
+    }
+
+    /** creatures.per_day: dawn. The same evening use is back the next morning. */
+    @Test
+    void withTheDawnRuleItIsBackAtDawn() {
+        DndAttack breath = attack("Fire Breath", 1, null);
+        CreatureUses u = new CreatureUses();
+        long evening = 5 * DAY + 14 * HOUR;
+        u.spend(breath, evening, DAWN);
+        assertEquals(0, u.left(breath, evening + 9 * HOUR, DAWN), "still the same night");
+        assertEquals(1, u.left(breath, 6 * DAY, DAWN), "dawn the next day");
+        assertTrue(new CreatureUsesRefusal(breath).after(evening, DAWN).contains("dawn"));
+    }
+
+    /** A spent ability's refusal under a rule, for the wording. */
+    private record CreatureUsesRefusal(DndAttack a) {
+        String after(long at, CreatureUses.DayRule rule) {
+            CreatureUses u = new CreatureUses();
+            for (int i = 0; i < a.getUses(); i++) u.spend(a, at, rule);
+            return u.refusal(a, at, rule);
+        }
     }
 
     @Test
-    void rechargeFiveSixComesBackOnlyOnAFiveOrSix() {
+    void rechargeFiveSixWaitsForTheDmsD6() {
         DndAttack breath = attack("Fire Breath", null, "5-6");
         assertEquals("Recharge 5-6", breath.limitLabel());
         assertEquals(1, breath.getUses(), "a recharge ability is one use");
         CreatureUses u = new CreatureUses();
-        assertTrue(u.rollRecharges(List.of(breath), () -> 6).isEmpty(), "nothing spent, nothing rolled");
-        u.spend(breath, 1);
-        assertNotNull(u.refusal(breath, 1));
-        assertEquals(1, u.rollRecharges(List.of(breath), () -> 4).size());
-        assertNotNull(u.refusal(breath, 1), "a 4 doesn't bring it back");
-        assertNotNull(u.refusal(breath, 2), "nor does a new day");
-        assertTrue(u.rollRecharges(List.of(breath), () -> 5).get(0).contains("recharged"));
-        assertNull(u.refusal(breath, 1));
+        List<DndAttack> all = List.of(breath);
+        assertTrue(u.rechargesDue(all).isEmpty(), "nothing spent, nothing owed");
+        assertNull(u.answerRecharge(breath, 6), "and no roll is taken for it");
+
+        u.spend(breath, 1, H24);
+        assertNotNull(u.refusal(breath, 1, H24));
+        assertFalse(u.isRechargeDue(breath), "not until its next turn starts");
+
+        assertEquals(all, u.rechargesDue(all), "the start of its turn: a d6 is owed");
+        assertTrue(u.refusal(breath, 1, H24).contains("roll its recharge first"));
+        assertTrue(u.answerRecharge(breath, 4).contains("still spent"));
+        assertNull(u.answerRecharge(breath, 6), "one roll per turn: a second isn't taken");
+        assertNotNull(u.refusal(breath, 1 + 3 * DAY, H24), "time doesn't bring it back, only the roll");
+
+        u.rechargesDue(all); // its next turn
+        assertTrue(u.answerRecharge(breath, 5).contains("recharged"));
+        assertNull(u.refusal(breath, 1, H24));
+        assertTrue(u.rechargesDue(all).isEmpty(), "ready again: no more rolls");
 
         assertEquals("Recharge 6", attack("Stomp", null, 6).limitLabel());
         assertEquals("Recharge 4-6", attack("Web", null, "4–6").limitLabel(), "a typed en dash is fine");
@@ -72,9 +118,9 @@ class CreatureUsesTest {
     void aFightStartsWithRechargeAbilitiesReady() {
         DndAttack breath = attack("Fire Breath", null, "5-6");
         CreatureUses u = new CreatureUses();
-        u.spend(breath, 1);
+        u.spend(breath, 1, H24);
         u.recoverRolls(List.of(breath));
-        assertNull(u.refusal(breath, 1));
+        assertNull(u.refusal(breath, 1, H24));
     }
 
     @Test
@@ -84,18 +130,18 @@ class CreatureUsesTest {
         DndAttack daily = attack("Legendary Resistance", 3, null);
         List<DndAttack> all = List.of(shortOne, longOne, daily);
         CreatureUses u = new CreatureUses();
-        u.spend(shortOne, 1); u.spend(longOne, 1); u.spend(longOne, 1); u.spend(daily, 1);
-        assertNotNull(u.refusal(shortOne, 1));
-        assertNotNull(u.refusal(longOne, 1));
+        u.spend(shortOne, 1, H24); u.spend(longOne, 1, H24); u.spend(longOne, 1, H24); u.spend(daily, 1, H24);
+        assertNotNull(u.refusal(shortOne, 1, H24));
+        assertNotNull(u.refusal(longOne, 1, H24));
 
         assertEquals(List.of("Second Wind"), u.rest(all, false), "a short rest: only the short-rest ability");
-        assertNull(u.refusal(shortOne, 1));
-        assertNotNull(u.refusal(longOne, 1));
-        assertEquals(2, u.left(daily, 1));
+        assertNull(u.refusal(shortOne, 1, H24));
+        assertNotNull(u.refusal(longOne, 1, H24));
+        assertEquals(2, u.left(daily, 1, H24));
 
         u.rest(all, true);
-        assertEquals(2, u.left(longOne, 1), "a long rest: everything");
-        assertEquals(3, u.left(daily, 1), "X/Day too, without waiting for dawn");
+        assertEquals(2, u.left(longOne, 1, H24), "a long rest: everything");
+        assertEquals(3, u.left(daily, 1, H24), "X/Day too, without waiting out the day");
     }
 
     /** The shipped Giant Spider: its Web is Recharge 5-6 and its Bite isn't limited. */
@@ -114,8 +160,8 @@ class CreatureUsesTest {
         DndAttack bite = attack("Bite", null, null);
         assertFalse(bite.isLimited());
         CreatureUses u = new CreatureUses();
-        assertNull(u.spend(bite, 1));
-        assertNull(u.refusal(bite, 1));
+        assertNull(u.spend(bite, 1, H24));
+        assertNull(u.refusal(bite, 1, H24));
     }
 
     @Test
@@ -206,6 +252,29 @@ class CreatureUsesTest {
         assertEquals(-1, u.spendAmmo(pool, all, WEAPONS, never), "never runs out");
     }
 
+    /** The DM's own roll at spawn (or a correction): the pool is whatever they say, with no further roll. */
+    @Test
+    void theDmCanSetWhatItCarries() {
+        List<DndAttack> gnoll = EntityLoader.getEntity("gnoll").getAttacks();
+        CreatureUses.Pool bow = CreatureUses.poolFor(named(gnoll, "Longbow"), gnoll, WEAPONS);
+        Function<String, Integer> never = dice -> { throw new AssertionError("set by hand: not rolled"); };
+        CreatureUses u = new CreatureUses();
+        u.setAmmo(bow.key(), 14);
+        assertEquals(14, u.ammoLeft(bow, gnoll, WEAPONS, never));
+        assertEquals(13, u.spendAmmo(bow, gnoll, WEAPONS, never));
+        u.setAmmo(bow.key(), -1);
+        assertEquals(-1, u.spendAmmo(bow, gnoll, WEAPONS, never), "unlimited");
+    }
+
+    /** The recharge d6 is a d6. */
+    @Test
+    void aRechargeRollIsOneToSix() {
+        assertTrue(io.papermc.jkvttplugin.combat.RechargeRoll.isD6(1));
+        assertTrue(io.papermc.jkvttplugin.combat.RechargeRoll.isD6(6));
+        assertFalse(io.papermc.jkvttplugin.combat.RechargeRoll.isD6(0));
+        assertFalse(io.papermc.jkvttplugin.combat.RechargeRoll.isD6(7));
+    }
+
     // ==================== SAVING ====================
 
     @Test
@@ -214,12 +283,12 @@ class CreatureUsesTest {
         List<DndAttack> gnoll = EntityLoader.getEntity("gnoll").getAttacks();
         CreatureUses.Pool bow = CreatureUses.poolFor(named(gnoll, "Longbow"), gnoll, WEAPONS);
         CreatureUses u = new CreatureUses();
-        u.spend(breath, 7);
+        u.spend(breath, 7 * DAY, H24);
         u.spendAmmo(bow, gnoll, WEAPONS, dice -> 9);
 
         CreatureUses back = CreatureUses.deserialize(u.serialize());
-        assertEquals(2, back.left(breath, 7));
-        assertEquals(3, back.left(breath, 8), "and dawn still refills it");
+        assertEquals(2, back.left(breath, 7 * DAY + HOUR, H24));
+        assertEquals(3, back.left(breath, 8 * DAY, H24), "and the day still runs from when it was used");
         assertEquals(8, back.ammoLeft(bow, gnoll, WEAPONS, dice -> { throw new AssertionError("already rolled"); }));
 
         assertEquals("", new CreatureUses().serialize(), "a fresh creature saves nothing");

@@ -110,6 +110,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             case "attack" -> handleAttack(player, args);
             case "use" -> handleUse(player, args);
             case "reaction", "reactions" -> handleReaction(player, args);
+            case "recharge" -> handleRecharge(player, args);
             case "damage" -> handleDamage(player, args);
             case "heal" -> handleHeal(player, args);
             case "temphp" -> handleTempHp(player, args);
@@ -1483,6 +1484,49 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * {@code /combat music [<track> | off | default]} (DM, #16): switch the fight's music (a Sounds.yml
      * track: the boss's second phase), stop it, or go back to what it started with. No argument: what's playing.
      */
+    /**
+     * {@code /combat recharge <creature> <ability> [autoRoll | manualRoll <n>]} (DM, #256): the d6 for a
+     * spent "Recharge X-Y" ability, owed at the start of that creature's turn. Filled by the buttons the
+     * DM is handed then; with no roll words it shows them again.
+     */
+    private void handleRecharge(Player player, String[] args) {
+        if (!isDM(player) && !player.hasPermission("jkvtt.dm")) {
+            player.sendMessage(Component.text("Only the DM rolls a creature's recharge.", NamedTextColor.RED));
+            return;
+        }
+        List<String> pos = collectPositionalArgs(args, 1);
+        if (pos.size() < 2) {
+            player.sendMessage(Component.text("Usage: /combat recharge <creature> <ability> [autoRoll | manualRoll <1-6>]", NamedTextColor.RED));
+            return;
+        }
+        String name = stripQuotes(String.join(" ", pos.subList(0, pos.size() - 1)));
+        DndEntityInstance creature = DndEntityInstance.findByName(name);
+        if (creature == null) { player.sendMessage(Component.text("No creature called " + name + ".", NamedTextColor.RED)); return; }
+        io.papermc.jkvttplugin.data.model.DndAttack attack = creature.attackByKey(pos.get(pos.size() - 1));
+        if (attack == null) {
+            player.sendMessage(Component.text(creature.getDisplayName() + " has no ability called " + pos.get(pos.size() - 1) + ".", NamedTextColor.RED));
+            return;
+        }
+        if (!creature.isRechargeDue(attack)) {
+            player.sendMessage(Component.text(attack.getName() + " isn't waiting on a recharge roll (it's ready, or already rolled this turn).", NamedTextColor.GRAY));
+            return;
+        }
+        RollService.RollInput roll = RollService.parseInput(args, player);
+        Integer d6 = roll.forceAuto() ? Integer.valueOf(java.util.concurrent.ThreadLocalRandom.current().nextInt(1, 7))
+                : roll.providedRoll() != null ? roll.providedRoll() : roll.providedTotal();
+        if (d6 == null) { player.sendMessage(RechargeRoll.prompt(creature, attack)); return; }
+        if (!RechargeRoll.isD6(d6)) {
+            player.sendMessage(Component.text("A d6 shows 1 to 6, not " + d6 + ".", NamedTextColor.RED));
+            player.sendMessage(RechargeRoll.prompt(creature, attack));
+            return;
+        }
+        String line = creature.answerRecharge(attack, d6);
+        if (line != null) {
+            player.sendMessage(Component.text("🎲 " + creature.getDisplayName() + " · " + line
+                    + (roll.forceAuto() ? "" : " (your roll)"), line.endsWith("recharged.") ? NamedTextColor.GREEN : NamedTextColor.GOLD));
+        }
+    }
+
     private void handleMusic(Player player, String[] args) {
         if (!isDM(player) && !player.hasPermission("jkvtt.dm")) {
             player.sendMessage(Component.text("Only the DM changes the music.", NamedTextColor.RED));
@@ -3240,7 +3284,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             completions.addAll(List.of("start", "add", "remove", "surprise", "initiative",
                 "rollforinitiative", "nextturn", "endturn", "turn", "status", "finished",
                 "reveal", "hide", "action", "bonusAction", "movement", "cast", "save", "attack",
-                "reactions", "concentration", "damage", "heal", "temphp", "deathsave", "use", "music"));
+                "reactions", "concentration", "damage", "heal", "temphp", "deathsave", "use", "music", "recharge"));
             return filterCompletions(completions, args[0]);
         }
 

@@ -595,9 +595,11 @@ every creature save), and `damage_resistances` / `damage_immunities` / `damage_v
 them, and `Combatant.isImmuneToCondition` refuses a condition). Multiattack, riders and traits are #253–#255.
 
 **What one spawned creature has used up is per-instance (#256, #257):** `CreatureUses` on `DndEntityInstance`,
-saved in its PDC (`dnd_uses`). An attack's `uses:` / `recharge:` (`DndAttack.setLimits`: 3/Day back at dawn or a
-long rest, Recharge 5-6 rolled at turn start by `CombatSession.rollCreatureRecharges`, short_rest / long_rest)
-and its ammunition (`CreatureUses.poolFor`: 2d10 for a bow, 2d4 thrown, or the attack's `ammunition:`).
+saved in its PDC (`dnd_uses`). An attack's `uses:` / `recharge:` (`DndAttack.setLimits`: 3/Day back 24 in-game
+hours after its first use or at dawn (`creatures.per_day`, `CreatureUses.DayRule`) or a long rest; Recharge 5-6: the DM is
+handed the d6 at turn start (`RechargeRoll.prompt`, answered by `/combat recharge`); short_rest / long_rest)
+and its ammunition (`CreatureUses.poolFor`: 2d10 for a bow, 2d4 thrown, or the attack's `ammunition:`), rolled at spawn
+with [Use my own roll] → `/dm adjust <it> ammo <kind> <n>`, like hit dice.
 `AttackHandler.executeEntityAttack` asks `attackRefusal` before the roll and `afterAttack` once it resolves;
 `CreatureLimitOverride` is the DM's [Use it anyway]. Creatures rest with `/dm rest <creature|creatures>`.
 Unfired ammunition is added to a body's loot (`LootManager.lootOn`).

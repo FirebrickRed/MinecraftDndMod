@@ -114,7 +114,16 @@ public final class PluginConfig {
         // In the dark, a darkvision character sees about as far as their darkvision (#148).
         darkvisionViewLimit = cfg.getBoolean("sight.darkvision_view_limit", true);
         soundsEnabled = cfg.getBoolean("sounds.enabled", true);
+        // When a creature's "X/Day" ability comes back (#256): 24 in-game hours after its first use, or at dawn.
+        creaturePerDay = "dawn".equalsIgnoreCase(cfg.getString("creatures.per_day", "24_hours"))
+                ? io.papermc.jkvttplugin.data.model.CreatureUses.DayRule.DAWN
+                : io.papermc.jkvttplugin.data.model.CreatureUses.DayRule.HOURS_24;
     }
+
+    private static io.papermc.jkvttplugin.data.model.CreatureUses.DayRule creaturePerDay =
+            io.papermc.jkvttplugin.data.model.CreatureUses.DayRule.HOURS_24;
+    /** When a creature's "X/Day" ability comes back: {@code creatures.per_day} (#256). */
+    public static io.papermc.jkvttplugin.data.model.CreatureUses.DayRule getCreaturePerDay() { return creaturePerDay; }
 
     /** In the dark, cap a darkvision character's render distance to its range (#148). */
     public static boolean isDarkvisionViewLimit() { return darkvisionViewLimit; }

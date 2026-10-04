@@ -106,6 +106,15 @@ objects:
   # How far the outline reaches, in blocks (clamped to 4-64).
   annotation_glow_radius: 24
 
+# Creatures (NPCs and monsters).
+creatures:
+  # When a creature's "X/Day" ability (uses: 3 on an attack) comes back (#256):
+  #   24_hours = (default) 24 in-game hours after the first of those uses
+  #   dawn     = at the next dawn on the in-game clock, whenever it was used
+  # Either way a long rest (/dm rest <creature> long) brings it back sooner. Moving the clock with
+  # /dm time counts. Recharge 5-6 and rest-recharged abilities aren't affected.
+  per_day: 24_hours
+
 # What characters see (#148).
 sight:
   # A character with darkvision gets night vision. Night vision has no range, so in the dark (light

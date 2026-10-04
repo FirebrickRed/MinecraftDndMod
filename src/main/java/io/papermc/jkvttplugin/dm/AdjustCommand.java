@@ -44,7 +44,7 @@ import java.util.UUID;
 public class AdjustCommand implements CommandExecutor, TabCompleter {
 
     /** Words that end a name: {@code /dm adjust The Kindler hp 12}. */
-    public static final List<String> ACTIONS = List.of("hp", "full", "temp", "maxhp", "ac", "condition", "revive", "down");
+    public static final List<String> ACTIONS = List.of("hp", "full", "temp", "maxhp", "ac", "condition", "revive", "down", "ammo");
 
     private static final ClickCallback.Options ONCE = ClickCallback.Options.builder()
             .uses(1).lifetime(Duration.ofMinutes(10)).build();
@@ -95,6 +95,7 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
                 refresh(t);
             }
             case "down" -> setHp(sender, t, 0);
+            case "ammo" -> ammo(sender, t, args);
             default -> usage(sender);
         }
         return true;
@@ -351,6 +352,38 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
         return null;
     }
 
+    /**
+     * {@code /dm adjust <creature> ammo <kind> <n|unlimited>} (#257): how many arrows, bolts or thrown
+     * weapons it carries. The spawn message's [Use my own roll] fills this, like maxhp for hit dice.
+     */
+    private static void ammo(CommandSender sender, CombatTargets.Target t, String[] args) {
+        var creature = t.combatant().isEntity() ? t.combatant().getEntityInstance() : null;
+        if (creature == null) {
+            sender.sendMessage(Component.text("Only creatures have their ammunition counted here; a character's is in their inventory.", NamedTextColor.RED));
+            return;
+        }
+        List<String> kinds = creature.ammunitionKinds();
+        if (kinds.isEmpty()) {
+            sender.sendMessage(Component.text(creature.getDisplayName() + " has nothing that runs out (no bow, crossbow or thrown weapon).", NamedTextColor.GRAY));
+            return;
+        }
+        if (args.length < 4) {
+            sender.sendMessage(Component.text("Usage: /dm adjust " + creature.getDisplayName() + " ammo <" + String.join("|", kinds) + "> <number | unlimited>", NamedTextColor.RED));
+            return;
+        }
+        Integer n = args[3].equalsIgnoreCase("unlimited") ? Integer.valueOf(-1) : parseInt(args[3]);
+        if (n == null || n < -1) {
+            sender.sendMessage(Component.text("'" + args[3] + "' should be a number, or unlimited.", NamedTextColor.RED));
+            return;
+        }
+        String label = creature.setAmmunition(args[2], n);
+        if (label == null) {
+            sender.sendMessage(Component.text(creature.getDisplayName() + " doesn't carry " + args[2] + ". It has: " + String.join(", ", kinds) + ".", NamedTextColor.RED));
+            return;
+        }
+        sender.sendMessage(Component.text(creature.getDisplayName() + " now carries " + (n < 0 ? "unlimited" : String.valueOf(n)) + " " + label + ".", NamedTextColor.GREEN));
+    }
+
     private static void usage(CommandSender sender) {
         sender.sendMessage(Component.text("/dm adjust <who>  — opens the Adjust menu", NamedTextColor.GOLD));
         for (String line : List.of(
@@ -358,7 +391,8 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
                 "/dm adjust <who> full · temp <n> · maxhp <n> (creatures) · down · revive [hp]",
                 "/dm adjust <who> ac +1 [until short_rest|long_rest|next_turn|removed] · ac clear",
                 "/dm adjust <who> ac set <n> · ac reset   (a creature's own AC, for good)",
-                "/dm adjust <who> condition <name> (toggle) · condition add|remove <name>")) {
+                "/dm adjust <who> condition <name> (toggle) · condition add|remove <name>",
+                "/dm adjust <creature> ammo <arrow|bolt|spear…> <n | unlimited>   (what it carries)")) {
             sender.sendMessage(Component.text(line, NamedTextColor.YELLOW));
         }
     }
@@ -384,6 +418,12 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
             };
         }
         if (a.length == 4 && a[1].equalsIgnoreCase("condition")) return filter(conditionIds(), a[3]);
+        // ammo <kind> <n>: the kinds this creature carries (#257).
+        if (a.length == 3 && a[1].equalsIgnoreCase("ammo")) {
+            var creature = io.papermc.jkvttplugin.data.model.DndEntityInstance.findByName(a[0]);
+            return creature == null ? List.of() : filter(creature.ammunitionKinds(), a[2]);
+        }
+        if (a.length == 4 && a[1].equalsIgnoreCase("ammo")) return filter(List.of("unlimited"), a[3]);
         if (a.length == 4 && a[1].equalsIgnoreCase("ac") && a[2].matches("[+-]\\d+")) return filter(List.of("until"), a[3]);
         if (a.length == 5 && a[1].equalsIgnoreCase("ac") && a[3].equalsIgnoreCase("until")) {
             return filter(List.of("next_turn", "short_rest", "long_rest", "removed"), a[4]);

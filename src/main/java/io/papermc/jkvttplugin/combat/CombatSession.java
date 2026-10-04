@@ -1209,8 +1209,9 @@ public class CombatSession {
     private void rollCreatureRecharges(Combatant c) {
         if (c == null || !c.isEntity() || c.getEntityInstance() == null) return;
         Player dm = Bukkit.getPlayer(dmId);
-        for (String line : c.getEntityInstance().rollRecharges()) {
-            if (dm != null) dm.sendMessage(Component.text("🎲 " + c.getDisplayName() + " · " + line, NamedTextColor.GOLD));
+        // The DM rolls it, like every die: [Roll it] or [I rolled…], answered by /combat recharge.
+        for (io.papermc.jkvttplugin.data.model.DndAttack due : c.getEntityInstance().rechargesDue()) {
+            if (dm != null) dm.sendMessage(RechargeRoll.prompt(c.getEntityInstance(), due));
         }
     }
 
