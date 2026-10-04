@@ -41,6 +41,28 @@ class CreatureStatBlockTest {
         assertEquals("+2[STR]", gnoll.getSaveLabel(Ability.STRENGTH));
     }
 
+    /** A low score gives a negative save, listed or not: the Witherling's WIS 5 is -3. */
+    @Test
+    void aSaveCanBeNegative() {
+        DndEntity witherling = EntityLoader.getEntity("gnoll_witherling");
+        assertEquals(-3, witherling.getSaveBonus(Ability.WISDOM));
+        assertEquals("-3[WIS]", witherling.getSaveLabel(Ability.WISDOM));
+
+        DndEntity listed = new DndEntity();
+        listed.setSavingThrows(java.util.Map.of(Ability.INTELLIGENCE, -2)); // proficient, but INT 3: -4 +2
+        assertEquals(-2, listed.getSaveBonus(Ability.INTELLIGENCE));
+        assertEquals("-2[INT save]", listed.getSaveLabel(Ability.INTELLIGENCE));
+    }
+
+    /** Skills were already stat-block totals: the Hunter's Stealth +4 and Perception +3. */
+    @Test
+    void skillsAreListedTheSameWay() {
+        DndEntity hunter = EntityLoader.getEntity("gnoll_hunter");
+        assertEquals(4, hunter.getSkillBonus(io.papermc.jkvttplugin.data.model.enums.Skill.STEALTH));
+        assertEquals(2, hunter.getSkillBonus(io.papermc.jkvttplugin.data.model.enums.Skill.SLEIGHT_OF_HAND),
+                "not listed: the DEX modifier");
+    }
+
     @Test
     void theSkeletonKnowsWhatHurtsIt() {
         DndEntity skeleton = EntityLoader.getEntity("skeleton");

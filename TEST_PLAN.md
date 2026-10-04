@@ -39,7 +39,7 @@ local copy, and an old server pack loads above a local one. Steps: `docs/resourc
 - [ ] **Models render, none purple:** race and class tiles in `/character create`, a spawned kobold
       (its head model), and The Kindler.
 - [ ] **Time tool** (it now uses the renamed day-cycle game rule): Stop the Clock → the sun stops;
-      Start → it moves; `/dm time` says running or stopped correctly.
+      Start → it moves; `/dm time` says running or stopped correctly. (#44)
 - [ ] **Annotate form** (a dialog, Paper API): right-click a chest with the Annotate tool → the form
       opens; Save applies it.
 - [ ] **Shop screen** opens, titled with the merchant's name; buying and selling work.
@@ -350,10 +350,10 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 
 ## Rests
 
-- [ ] `/dm rest <character> short` recovers as before (the player version is gone: rests are the DM's call).
-- [ ] `/dm rest <character> long` recovers as before; with no time given, the clock doesn't move.
+- [ ] `/dm rest <character> short` recovers as before (the player version is gone: rests are the DM's call). (#90)
+- [ ] `/dm rest <character> long` recovers as before; with no time given, the clock doesn't move. (#90)
 - [ ] **[I'm done]** after a rest → "Rest finished"; the DM gets "✓ <name> is done with their long rest";
-      the rest options (Hit Dice, prepare) are closed.
+      the rest options (Hit Dice, prepare) are closed. (#90)
 
 ## Sounds and music (#16)
 
@@ -478,7 +478,7 @@ buttons. Try both; whichever you like less gets removed.
 - [ ] `/dm check clear Balin Ironforge` → "is a creature. Only characters have held checks…".
 - [ ] `/dm check clear ` + Tab → only characters, no creatures.
 - [ ] `/dm check clear <your character>` → clears your held checks.
-- [ ] `/dm rest <character> long` works.
+- [ ] `/dm rest <character> long` works. (#90)
 - [ ] `/dm resource restore <character> all` works.
 - [ ] `/dm resource consume <character> <res> 1` works.
 - [ ] Look at a chest, `/dm object key brass_key` → "The Brass Key opens the Chest".
@@ -528,7 +528,7 @@ Set these up, `/stop`, start the server, then check:
 
 ## Permissions
 
-- [ ] `/roll 2d6+3` works.
+- [ ] `/roll 2d6+3` works. (#57)
 - [ ] `/character create Bob` is refused.
 - [ ] `/character list all` lists **their own** characters; Tab offers `all` but no player names.
 - [ ] `/dm view` is refused.
