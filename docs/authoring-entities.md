@@ -83,6 +83,12 @@ kobold_sorcerer:
     wisdom: 9
     charisma: 14
 
+  saving_throws: { dexterity: 4 }          # the totals as printed ("Dex +4"); unlisted = the modifier
+  damage_resistances: [fire]               # halved
+  damage_immunities: [poison]              # no damage
+  damage_vulnerabilities: [cold]           # doubled
+  condition_immunities: [poisoned]         # can't be given this condition
+
   attacks:
     - name: "Dagger"
       item: dagger               # a real weapon id: held while possessed, and lootable
@@ -113,7 +119,10 @@ kobold_sorcerer:
 |---|---|
 | `hit_points` vs `hit_dice` | `hit_points: 7d8+2` (dice without quotes) is **not** a number. The loader warns and falls back to 10 HP. Put dice in `hit_dice: "7d8+2"`. |
 | `armor_class`, `speed` | Must be whole numbers. A blank or text value warns and falls back to the default. |
-| `abilities` | Full lowercase names. Modifiers feed saves and checks. **No proficiency bonus is added to entity saves**, so fold it into the score if it matters. |
+| `abilities` | Full lowercase names. Modifiers feed checks, and any save not listed under `saving_throws`. |
+| `saving_throws` | `{constitution: 4, wisdom: 2}`: the total **as the stat block prints it** ("Con +4"), proficiency included, the same way `skills` works. A save that isn't listed rolls the plain ability modifier. Shown as `+4[CON save]` on the roll. A bad ability name or non-number warns on load. |
+| `damage_resistances` · `damage_immunities` · `damage_vulnerabilities` | Lists of damage types (`acid`, `bludgeoning`, `cold`, `fire`, `force`, `lightning`, `necrotic`, `piercing`, `poison`, `psychic`, `radiant`, `slashing`, `thunder`). Resisted damage is halved, immune is none, vulnerable is doubled, and the table is told which. Anything else warns on load: a typo would otherwise do nothing. They must be lists (`[poison]`), not a bare word. |
+| `condition_immunities` | Condition ids from `DMContent/Conditions` (`poisoned`, `charmed`, `frightened`…). A spell or `/dm adjust` that would apply one is refused, and says the creature is immune. Exhaustion isn't a condition in the game yet, so listing it warns. |
 | `skills` | `{deception: 5}`: the bonus **as the stat block prints it** ("Deception +5"), proficiency included. A skill that isn't listed uses the plain ability modifier, which is how monster stat blocks work. Used by contested checks (`/dm check Zek insight vs Balin deception`). A bad skill name or non-number warns on load. |
 | `size` | Stored and shown, but **doesn't scale the body** yet (#194 §6). A gargantuan dragon stands as tall as a kobold. It does scale the DM while possessing. |
 | `random_names` | Picked at spawn when you don't pass a name (`/dm entity spawn kobold "Meepo"` overrides it). |

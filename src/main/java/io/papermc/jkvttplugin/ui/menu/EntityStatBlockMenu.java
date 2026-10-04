@@ -136,12 +136,30 @@ public class EntityStatBlockMenu {
             int modifier = template.getAbilityModifier(ability);
             String modStr = modifier >= 0 ? "+" + modifier : String.valueOf(modifier);
 
-            lore.add(Component.text(ability.getAbbreviation() + ": " + score + " (" + modStr + ")", NamedTextColor.GRAY));
+            // A listed saving throw (#252) sits beside its ability: "CON: 15 (+2)  save +4".
+            String save = template.getSavingThrows().containsKey(ability)
+                    ? "  save " + (template.getSaveBonus(ability) >= 0 ? "+" : "") + template.getSaveBonus(ability) : "";
+            lore.add(Component.text(ability.getAbbreviation() + ": " + score + " (" + modStr + ")" + save, NamedTextColor.GRAY));
         }
+        // What damage and conditions do to it (#252).
+        addListLine(lore, "Resists", template.getDamageResistances(), NamedTextColor.AQUA);
+        addListLine(lore, "Immune", template.getDamageImmunities(), NamedTextColor.GREEN);
+        addListLine(lore, "Vulnerable", template.getDamageVulnerabilities(), NamedTextColor.RED);
+        addListLine(lore, "Can't be", template.getConditionImmunities(), NamedTextColor.GREEN);
 
         meta.lore(lore);
         item.setItemMeta(meta);
         return item;
+    }
+
+    /** "Immune: poison, cold" under the ability scores, wrapped; nothing for an empty list. */
+    private static void addListLine(List<Component> lore, String label, java.util.Collection<String> values, NamedTextColor color) {
+        if (values == null || values.isEmpty()) return;
+        boolean first = true;
+        for (String line : io.papermc.jkvttplugin.util.Util.wrapText(label + ": " + String.join(", ", values))) {
+            if (first) { lore.add(Component.empty()); first = false; }
+            lore.add(Component.text(line, color).decoration(TextDecoration.ITALIC, false));
+        }
     }
 
     static ItemStack buildAttacksItem(DndEntity template) {

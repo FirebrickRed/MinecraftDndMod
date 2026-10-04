@@ -1,6 +1,5 @@
 # SRD Skeleton. An undead, so it's what Divine Sense finds and Lay on Hands can't heal (#229).
-# Not modelled yet: vulnerable to bludgeoning, immune to poison and exhaustion / the poisoned
-# condition (creatures have no damage immunities or vulnerabilities in YAML yet).
+# Exhaustion immunity isn't listed: exhaustion isn't a condition in the game yet.
 id: skeleton
 name: "Skeleton"
 
@@ -20,6 +19,10 @@ abilities:
   intelligence: 6
   wisdom: 8
   charisma: 5
+
+damage_vulnerabilities: [bludgeoning]
+damage_immunities: [poison]
+condition_immunities: [poisoned]
 
 attacks:
   - name: "Shortsword"

@@ -473,9 +473,33 @@ public final class ContentValidator {
 
     // ==================== ENTITIES ====================
 
+    /** The thirteen 5e damage types (PHB p.196). */
+    private static final Set<String> DAMAGE_TYPES = Set.of("acid", "bludgeoning", "cold", "fire", "force", "lightning",
+            "necrotic", "piercing", "poison", "psychic", "radiant", "slashing", "thunder");
+
+    private void checkDamageTypes(String where, java.util.Collection<String> types) {
+        for (String t : types) {
+            if (!DAMAGE_TYPES.contains(t)) warn(where + ": '" + t + "' isn't a damage type (acid, bludgeoning, cold, fire, force, lightning, necrotic, piercing, poison, psychic, radiant, slashing, thunder).");
+        }
+    }
+
     private void checkEntities() {
         for (DndEntity e : EntityLoader.getAllEntities()) {
             String where = "Entity '" + e.getId() + "'";
+            // #252: a typo here would silently do nothing (a "posion" immunity never matches).
+            checkDamageTypes(where + " damage_resistances", e.getDamageResistances());
+            checkDamageTypes(where + " damage_immunities", e.getDamageImmunities());
+            checkDamageTypes(where + " damage_vulnerabilities", e.getDamageVulnerabilities());
+            for (String c : e.getConditionImmunities()) {
+                if (io.papermc.jkvttplugin.data.loader.ConditionLoader.get(c) == null) {
+                    warn(where + " condition_immunities: '" + c + "' isn't a condition in DMContent/Conditions, so it does nothing.");
+                }
+            }
+            for (String t : e.getDamageImmunities()) {
+                if (e.getDamageVulnerabilities().contains(t) || e.getDamageResistances().contains(t)) {
+                    warn(where + " lists '" + t + "' as an immunity and also a resistance or vulnerability; immunity wins.");
+                }
+            }
             if (e.getAttacks() != null) {
                 for (DndAttack a : e.getAttacks()) {
                     String aw = where + " attack '" + a.getName() + "'";

@@ -599,10 +599,11 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             case "ability", "check", "save", "saving", "savingthrow" -> {
                 Ability a = resolveAbility(args[2]);
                 if (a == null) { sender.sendMessage(invalidAbility(args[2])); return true; }
-                mod = t.getAbilityModifier(a);
                 boolean save = category.startsWith("sav");
+                // A save uses the stat block's listed total when it has one (#252); a check is the raw modifier.
+                mod = save ? t.getSaveBonus(a) : t.getAbilityModifier(a);
                 label = a.getAbbreviation() + (save ? " save" : " check");
-                source = a.getAbbreviation();
+                source = a.getAbbreviation() + (save && t.getSavingThrows().containsKey(a) ? " save" : "");
             }
             case "skill" -> {
                 Skill s = resolveSkill(args[2]);

@@ -144,9 +144,6 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 
 - [ ] A spell with range Self that targets (not an area) at someone else → "only targets you".
 
-**Chain mail** (put it on for these, take it off after)
-
-
 **In a fight**
 
 - [ ] After Start combat, on your first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
@@ -168,7 +165,7 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] Instead of rolling, the small grey **[failed]** / **[saved]** after the buttons rule it without a roll. (#245)
 - [ ] In a fight, a save spell's cast line shows the same DC breakdown. (#245)
 
-- [ ] Creation, Spells tab, Level 1: Bless and Cure Wounds are gold **✦ Always prepared (Life Domain)** tiles,
+- [X] Creation, Spells tab, Level 1: Bless and Cure Wounds are gold **✦ Always prepared (Life Domain)** tiles,
       not picks: clicking does nothing and they don't count toward your number. (#247)
 - [ ] Out of a fight, cast Sacred Flame at a creature, [Let it happen] → "…needs no attack roll (the target
       saves instead): cast it again to go. [cast it]". Guiding Bolt instead → "…is an attack: roll to hit." (#247)
@@ -439,6 +436,15 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 ## Entities & shops
 
+**Stat-block saves and immunities** (`/dm entity spawn skeleton`, and `gnoll_fang_of_yeenoghu`):
+- [ ] The skeleton's stat block (`/dm entity info`), Ability Scores tile: "Immune: poison", "Vulnerable:
+      bludgeoning", "Can't be: poisoned". The Fang's shows "CON: 15 (+2)  save +4". (#252)
+- [ ] `/dm adjust Skeleton hp -6 type bludgeoning` → 12 taken, "VULNERABLE to bludgeoning (doubled)".
+      `… hp -6 type poison` → none, "IMMUNE to poison". A sword's slashing → normal. (#252)
+- [ ] Make the skeleton Poisoned (`/dm adjust`) → "Skeleton is immune to being Poisoned", and it isn't. (#252)
+- [ ] `/dm check "Gnoll Fang of Yeenoghu" save con dc 12` → the buttons add `+4[CON save]`; a STR save adds
+      `+3[STR]`. A save spell on it uses the same +4. (#252)
+
 **Mannequin trial** (look-only, nothing to click; `/dm entity mannequin clear` tidies up). For the pack
 skin row, load the local `ResourcePack\jkvttresourcepack` (it has a placeholder `entity/npc/balin.png`):
 
@@ -667,6 +673,7 @@ Set up an enchanting table: a description, **Rolled**, History or Arcana, three 
 # Playtest notes
 Write anything here, in any order. Each round Claude answers in chat, turns the notes into rows
 above, and clears this section (git keeps the old notes).
+do we want a section to test spells? or is just testing a few varieties good enough?
 
 
 ---

@@ -454,7 +454,9 @@ public class SpellCastHandler {
         }
         if (ps.damage() != null) AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false, flatLabel(ps.damage(), ps.spellName()));
         DndCondition cond = ps.conditionOnFail() != null ? ConditionLoader.get(ps.conditionOnFail()) : null;
-        if (cond != null && target.addCondition(cond.getId())) {
+        if (cond != null && target.isImmuneToCondition(cond.getId())) {
+            session.broadcast(Component.text(target.getDisplayName(true) + " is immune to being " + cond.getName() + ".", NamedTextColor.GRAY)); // #252
+        } else if (cond != null && target.addCondition(cond.getId())) {
             // Incapacitated ends concentration outright, no save (PHB 203).
             if (target.cannotAct()) ConcentrationManager.onIncapacitated(session, target, "they were " + cond.getName().toLowerCase());
             session.setConditionEffect(target, cond, true);
@@ -511,7 +513,7 @@ public class SpellCastHandler {
     private static int saveBonus(Combatant c, Ability ability) {
         if (c.isPlayer() && c.getCharacterSheet() != null) return c.getCharacterSheet().getSavingThrowBonus(ability);
         if (c.isEntity() && c.getEntityInstance() != null) {
-            return Ability.getModifier(c.getEntityInstance().getTemplate().getAbilityScore(ability));
+            return c.getEntityInstance().getTemplate().getSaveBonus(ability); // its listed save, else the modifier (#252)
         }
         return 0;
     }

@@ -244,6 +244,35 @@ public class EntityLoader {
                 entity.setSkills(skills);
             }
 
+            // Saving throws (#252): the printed totals, like skills ({constitution: 4} = "Con +4").
+            if (data.get("saving_throws") instanceof Map<?, ?> savesMap) {
+                Map<Ability, Integer> saves = new HashMap<>();
+                for (Map.Entry<?, ?> entry : savesMap.entrySet()) {
+                    Ability ability = Ability.fromString(String.valueOf(entry.getKey()));
+                    if (ability == null) {
+                        LOGGER.warning("[" + id + "] saving_throws lists '" + entry.getKey() + "', which isn't an ability — ignored.");
+                    } else if (entry.getValue() instanceof Number n) {
+                        saves.put(ability, n.intValue());
+                    } else {
+                        LOGGER.warning("[" + id + "] saving throw '" + entry.getKey() + "' needs a number (the stat-block total, e.g. 4 for +4).");
+                    }
+                }
+                entity.setSavingThrows(saves);
+            } else if (data.get("saving_throws") != null) {
+                LOGGER.warning("[" + id + "] saving_throws should be a map, e.g. {constitution: 4, wisdom: 2}.");
+            }
+
+            // What damage and conditions do to it (#252). The names are checked by ContentValidator.
+            for (String key : List.of("damage_resistances", "damage_immunities", "damage_vulnerabilities", "condition_immunities")) {
+                if (data.get(key) != null && !(data.get(key) instanceof List<?>)) {
+                    LOGGER.warning("[" + id + "] " + key + " should be a list, e.g. [poison, cold] — ignored.");
+                }
+            }
+            entity.setDamageResistances(io.papermc.jkvttplugin.data.loader.util.ParseUtil.normalizeStringList(data.get("damage_resistances")));
+            entity.setDamageImmunities(io.papermc.jkvttplugin.data.loader.util.ParseUtil.normalizeStringList(data.get("damage_immunities")));
+            entity.setDamageVulnerabilities(io.papermc.jkvttplugin.data.loader.util.ParseUtil.normalizeStringList(data.get("damage_vulnerabilities")));
+            entity.setConditionImmunities(io.papermc.jkvttplugin.data.loader.util.ParseUtil.normalizeStringList(data.get("condition_immunities")));
+
             // Attacks
             Object attacksObj = data.get("attacks");
             if (attacksObj instanceof List<?> attacksList) {

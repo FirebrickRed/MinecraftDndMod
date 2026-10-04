@@ -334,6 +334,48 @@ public class DndEntity {
         return skills.containsKey(skill);
     }
 
+    // ---- Saving throws, as a stat block prints them (#252): saving_throws: {constitution: 4} = "Con +4" ----
+    private final Map<Ability, Integer> savingThrows = new java.util.EnumMap<>(Ability.class);
+
+    public Map<Ability, Integer> getSavingThrows() { return savingThrows; }
+    public void setSavingThrows(Map<Ability, Integer> saves) {
+        savingThrows.clear();
+        if (saves != null) savingThrows.putAll(saves);
+    }
+
+    /** The total a save rolls with: the listed total, else the raw ability modifier. */
+    public int getSaveBonus(Ability ability) {
+        Integer listed = savingThrows.get(ability);
+        return listed != null ? listed : getAbilityModifier(ability);
+    }
+
+    /** "+4[CON save]" for a listed save, "+2[CON]" for the raw modifier: the label every save roll shows. */
+    public String getSaveLabel(Ability ability) {
+        int bonus = getSaveBonus(ability);
+        return (bonus >= 0 ? "+" : "") + bonus + "[" + ability.getAbbreviation() + (savingThrows.containsKey(ability) ? " save]" : "]");
+    }
+
+    // ---- What damage and conditions do to it (#252). DamageHandler already halves, zeroes and doubles. ----
+    private final java.util.Set<String> damageResistances = new java.util.LinkedHashSet<>();
+    private final java.util.Set<String> damageImmunities = new java.util.LinkedHashSet<>();
+    private final java.util.Set<String> damageVulnerabilities = new java.util.LinkedHashSet<>();
+    private final java.util.Set<String> conditionImmunities = new java.util.LinkedHashSet<>();
+
+    public java.util.Set<String> getDamageResistances() { return damageResistances; }
+    public java.util.Set<String> getDamageImmunities() { return damageImmunities; }
+    public java.util.Set<String> getDamageVulnerabilities() { return damageVulnerabilities; }
+    public java.util.Set<String> getConditionImmunities() { return conditionImmunities; }
+
+    public void setDamageResistances(java.util.Collection<String> v) { replace(damageResistances, v); }
+    public void setDamageImmunities(java.util.Collection<String> v) { replace(damageImmunities, v); }
+    public void setDamageVulnerabilities(java.util.Collection<String> v) { replace(damageVulnerabilities, v); }
+    public void setConditionImmunities(java.util.Collection<String> v) { replace(conditionImmunities, v); }
+
+    private static void replace(java.util.Set<String> into, java.util.Collection<String> from) {
+        into.clear();
+        if (from != null) for (String s : from) if (s != null && !s.isBlank()) into.add(s.trim().toLowerCase());
+    }
+
     @Override
     public String toString() {
         return name + " [" + id + "]";

@@ -264,6 +264,12 @@ public class AdjustCommand implements CommandExecutor, TabCompleter {
     /** Add or remove one condition, with its Minecraft effect, and say so. */
     public static void setCondition(CommandSender sender, CombatTargets.Target t, DndCondition cond, boolean on) {
         Combatant who = t.combatant();
+        // Its stat block says this can't affect it (#252): say so, rather than "already is".
+        if (on && who.isImmuneToCondition(cond.getId())) {
+            sender.sendMessage(Component.text(who.getDisplayName() + " is immune to being " + cond.getName()
+                    + " (its stat block's condition_immunities).", NamedTextColor.YELLOW));
+            return;
+        }
         boolean changed = on ? who.addCondition(cond.getId()) : who.removeCondition(cond.getId());
         if (!changed) {
             sender.sendMessage(Component.text(who.getDisplayName() + (on ? " already is " : " isn't ") + cond.getName() + ".", NamedTextColor.GRAY));

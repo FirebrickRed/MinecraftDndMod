@@ -270,6 +270,7 @@ public class Combatant {
     }
 
     public boolean addCondition(String id) {
+        if (isImmuneToCondition(id)) return false; // callers say why (isImmuneToCondition)
         CharacterSheet sheet = isPlayer() ? getCharacterSheet() : null;
         if (sheet != null) return sheet.addCondition(id);
         DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
@@ -407,8 +408,9 @@ public class Combatant {
             if (sheet != null) return sheet.getSaveBreakdown(ability);
         }
         DndEntityInstance entity = getEntityInstance();
-        int mod = entity == null ? 0 : Ability.getModifier(entity.getTemplate().getAbilities().getOrDefault(ability, 10));
-        return (mod >= 0 ? "+" : "") + mod + "[" + ability.getAbbreviation() + "]" + rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.SAVES);
+        // A creature's listed save total ("+4[CON save]", #252), else its raw modifier ("+2[CON]").
+        String own = entity == null ? "+0[" + ability.getAbbreviation() + "]" : entity.getTemplate().getSaveLabel(ability);
+        return own + rollBonusLabel(io.papermc.jkvttplugin.effect.ActiveEffect.SAVES);
     }
 
     public int getDeathSaveSuccesses() {
@@ -883,13 +885,26 @@ public class Combatant {
             CharacterSheet sheet = getCharacterSheet();
             if (sheet != null) return sheet.getDamageResistances();
         }
-        return Collections.emptySet();
+        DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
+        return entity != null ? entity.getTemplate().getDamageResistances() : Collections.emptySet();
     }
 
-    // Vulnerability / immunity are not modeled in the data yet (Issue #100 follow-up),
-    // but the damage pipeline already consumes them so they light up when data exists.
-    public Set<String> getDamageVulnerabilities() { return Collections.emptySet(); }
-    public Set<String> getDamageImmunities() { return Collections.emptySet(); }
+    // A creature's come from its stat block (#252). Characters have none yet: no race or feature grants one.
+    public Set<String> getDamageVulnerabilities() {
+        DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
+        return entity != null ? entity.getTemplate().getDamageVulnerabilities() : Collections.emptySet();
+    }
+    public Set<String> getDamageImmunities() {
+        DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
+        return entity != null ? entity.getTemplate().getDamageImmunities() : Collections.emptySet();
+    }
+
+    /** True when this creature's stat block says the condition can't affect it (a skeleton can't be Poisoned, #252). */
+    public boolean isImmuneToCondition(String conditionId) {
+        DndEntityInstance entity = isEntity() ? getEntityInstance() : null;
+        return entity != null && conditionId != null
+                && entity.getTemplate().getConditionImmunities().contains(conditionId.toLowerCase());
+    }
 
     @Override
     public String toString() {

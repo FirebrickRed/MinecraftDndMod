@@ -232,6 +232,9 @@ public final class ConcentrationManager {
         if (c.isPlayer() && c.getCharacterSheet() != null) {
             return c.getCharacterSheet().getSavingThrowBonus(Ability.CONSTITUTION);
         }
+        if (c.isEntity() && c.getEntityInstance() != null) {
+            return c.getEntityInstance().getTemplate().getSaveBonus(Ability.CONSTITUTION); // its listed save (#252)
+        }
         return c.getConstitutionModifier();
     }
 }

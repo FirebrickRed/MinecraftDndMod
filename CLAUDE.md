@@ -588,6 +588,12 @@ Kindler") · `creature_type:` humanoid · `size:` medium · HP 10 · `armor_clas
 every ability score 10 · no attacks, inventory or loot. A creature with no `attacks:` simply has
 nothing to swing — it still takes damage, dies and drops loot.
 
+Stat-block lines beyond the basics (#252): `saving_throws: {constitution: 4}` (the printed total, like
+`skills:`; unlisted = the ability modifier, `DndEntity.getSaveBonus` / `getSaveLabel` is the one source for
+every creature save), and `damage_resistances` / `damage_immunities` / `damage_vulnerabilities` /
+`condition_immunities` (lists; `Combatant` reads them from the template, `DamageHandler` already applies
+them, and `Combatant.isImmuneToCondition` refuses a condition). Multiattack, riders and traits are #253–#255.
+
 Worth setting early: `name:` (what the party sees) and `hit_points:`/`armor_class:` (defaults make
 a 10/10 punching bag). `model:` is a resource-pack model name — **only set it if the texture
 exists**, or the NPC renders as a purple placeholder; absent means an invisible stand with a

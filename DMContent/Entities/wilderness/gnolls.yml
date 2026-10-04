@@ -1,8 +1,8 @@
 # Transcribed from the six stat blocks supplied by the DM.
 # Fixed printed HP; the original hit dice are recorded in the notes.
 # No model is assigned until a matching resource-pack texture exists.
-# Special actions, save proficiencies, and immunities are DM-adjudicated:
-# the entity loader supports individual attacks, not those mechanics.
+# Special actions (Multiattack, Rampage, riders) are DM-adjudicated: #253, #254, #255.
+# Save proficiencies and immunities are in the stat blocks (#252).
 
 gnoll:
   name: "Gnoll"
@@ -123,6 +123,7 @@ gnoll_fang_of_yeenoghu:
     intelligence: 10
     wisdom: 11
     charisma: 13
+  saving_throws: { constitution: 4, wisdom: 2, charisma: 3 }
   attacks:
     - name: "Bite"
       material: BONE
@@ -140,7 +141,6 @@ gnoll_fang_of_yeenoghu:
   dm_notes: |
     Chaotic evil. CR 4 (1,100 XP). HP 65 (10d8+20).
     Armor: hide armor. Languages: Abyssal, Gnoll. Passive Perception 10.
-    Saving throws (DM-handled totals): Constitution +4, Wisdom +2, Charisma +3.
     Multiattack (DM-handled): one Bite and two Claw attacks.
     Bite rider (DM-handled): on a hit, the target makes a DC 12 Constitution
     save, taking 2d6 poison damage on a failure (no poison damage on success).
@@ -163,6 +163,8 @@ gnoll_witherling:
     intelligence: 5
     wisdom: 5
     charisma: 5
+  damage_immunities: [poison]
+  condition_immunities: [poisoned]
   attacks:
     - name: "Bite"
       material: BONE
@@ -182,7 +184,7 @@ gnoll_witherling:
     Typically chaotic evil. CR 1/4 (50 XP). Proficiency bonus +2. HP 11 (2d8+2).
     Armor: natural armor. Passive Perception 7.
     Languages: understands Gnoll but cannot speak.
-    Immunities (DM-handled): poison damage; exhaustion and poisoned conditions.
+    Also immune to exhaustion (not a condition in the game yet).
     Unusual Nature: does not require air, food, drink, or sleep.
     Multiattack (DM-handled): two attacks, each a Bite or Spiked Club.
     Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
@@ -205,6 +207,7 @@ gnoll_flesh_gnawer:
     intelligence: 8
     wisdom: 10
     charisma: 8
+  saving_throws: { dexterity: 4 }
   attacks:
     - name: "Bite"
       material: BONE
@@ -225,7 +228,6 @@ gnoll_flesh_gnawer:
   dm_notes: |
     Typically chaotic evil. CR 1 (200 XP). Proficiency bonus +2. HP 22 (4d8+4).
     Armor: studded leather. Languages: Gnoll. Passive Perception 10.
-    Saving throws (DM-handled total): Dexterity +4.
     Multiattack (DM-handled): one Bite and two Shortsword attacks.
     Sudden Rush (action, DM-handled): until the end of this turn, speed increases
     by 60 feet (to 90 feet) and movement does not provoke opportunity attacks.
