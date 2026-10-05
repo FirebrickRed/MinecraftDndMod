@@ -47,7 +47,9 @@ class ClassFeaturesTest {
         int unarmored = f.getArmorClass();
         assertEquals(10 + 3, unarmored, "no armor: no Defense");
         f.equipArmor(ArmorLoader.getArmor("chain_mail"));
+        assertTrue(f.getAcBonusSources().isEmpty(), "nothing to name while unarmored");
         assertEquals(16 + 1, f.getArmorClass());
+        assertEquals(java.util.List.of("+1 Defense"), f.getAcBonusSources(), "the sheet says where the point came from");
     }
 
     @Test

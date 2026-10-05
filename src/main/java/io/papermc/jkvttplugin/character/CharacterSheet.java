@@ -42,6 +42,7 @@ public class CharacterSheet {
     private int tempHealth;
     private int armorClass;
     private String acFormulaSource; // what set the AC when a formula beat armor / 10 + DEX (#220); derived, not saved
+    private final List<String> acBonusSources = new ArrayList<>(); // "+1 Defense": flat bonuses in the AC, by what gives them; derived
 
     // Event-driven persistence (#31): once a sheet is live (created or loaded), any state-changing
     // mutator flushes it straight to disk — no timed autosave. Stays false while the sheet is being
@@ -669,7 +670,13 @@ public class CharacterSheet {
             }
         }
         // A flat bonus on top of whichever way AC was worked out (Defense: +1 while in armor, #229).
-        for (var e : standingEffects()) baseAC += e.getValue().acBonus(equippedArmor != null);
+        acBonusSources.clear();
+        for (var e : standingEffects()) {
+            int bonus = e.getValue().acBonus(equippedArmor != null);
+            if (bonus == 0) continue;
+            baseAC += bonus;
+            acBonusSources.add((bonus > 0 ? "+" : "") + bonus + " " + e.getKey());
+        }
 
         armorClass = baseAC;
     }
@@ -1390,6 +1397,11 @@ public class CharacterSheet {
     /** AC as it stands: armor, shield and Dex, plus any DM adjustment. */
     public int getArmorClass() {
         return armorClass + (acAdjustment != null ? acAdjustment.amount() : 0);
+    }
+
+    /** The flat bonuses inside the AC, each named by its source ("+1 Defense"), so the sheet can say where a point came from. */
+    public List<String> getAcBonusSources() {
+        return List.copyOf(acBonusSources);
     }
 
     /** AC from armor, shield and Dex alone, without a DM adjustment. */

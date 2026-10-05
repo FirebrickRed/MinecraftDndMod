@@ -126,6 +126,10 @@ public class ViewCharacterSheetMenu {
             if (character.getEquippedShield() != null) {
                 lore.addLine("Shield: +" + character.getEquippedShield().getBaseAC(), NamedTextColor.AQUA);
             }
+            // A feature's flat bonus (Defense, #229): named, so the extra point isn't a mystery.
+            for (String bonus : character.getAcBonusSources()) {
+                lore.addLine(bonus.substring(bonus.indexOf(' ') + 1) + ": " + bonus.substring(0, bonus.indexOf(' ')), NamedTextColor.GREEN);
+            }
             // A DM adjustment (#175): in the total, so say where it came from and how long it lasts.
             if (character.getAcAdjustment() != null) {
                 lore.addLine("DM: " + character.getAcAdjustment().describe(), NamedTextColor.LIGHT_PURPLE);

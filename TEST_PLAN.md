@@ -38,8 +38,6 @@ local copy, and an old server pack loads above a local one. Steps: `docs/resourc
       for it, and it loads without a "made for an older version" warning.
 - [ ] **Models render, none purple:** race and class tiles in `/character create`, a spawned kobold
       (its head model), and The Kindler.
-- [ ] **Time tool** (it now uses the renamed day-cycle game rule): Stop the Clock → the sun stops;
-      Start → it moves; `/dm time` says running or stopped correctly. (#44)
 - [ ] **Annotate form** (a dialog, Paper API): right-click a chest with the Annotate tool → the form
       opens; Save applies it.
 - [ ] **Shop screen** opens, titled with the merchant's name; buying and selling work.
@@ -64,11 +62,6 @@ rows (`/dm entity spawn alira "The Kindler"`).
 
 ## Fighter
 
-- [ ] A fighter's sheet has **no Spellbook tile**; a tiefling fighter's does (Thaumaturgy). (#247)
-- [ ] Features & Traits: click **Second Wind** out of a fight → fills `/character use second_wind`. Passive tiles
-      (Sneak Attack, Archery) aren't clickable. ← goes back to the sheet. (#65)
-- [ ] Creation: the Fighting Style tiles are just the name ("Archery", "Great Weapon Fighting"); hover →
-      what it does and the ✦ effect line, wrapped. Protection reads the same way. (#229)
 - [ ] **Weapon switch:** start your turn holding a longsword, scroll to a handaxe and back a few times →
       nothing in chat, just a grey action-bar line. Attacking with the longsword rolls as normal. (#190)
 - [ ] Scroll to the handaxe and left-click a kobold → no roll buttons, but "⚠ You started your turn holding
@@ -78,10 +71,13 @@ rows (`/dm entity spawn alira "The Kindler"`).
       roll buttons, your [Deny] → "attack with Handaxe this turn". (#190)
 - [ ] Holding the longsword, type `/combat attack <kobold> handaxe autoRoll` → the same question, nothing
       rolled. Next turn starts fresh. (#190)
-- [ ] Longsword + a dagger in the off hand at the start of the turn: the dagger's bonus attack doesn't ask. (#190)
-- [ ] **Defense** fighter: AC goes up by 1 when you put on chain mail (and not unarmored). (#229)
-- [ ] **Dueling** fighter, longsword + shield: damage breakdown has `+2[Dueling]`. A second weapon in the
-      off hand → no Dueling. (#229)
+- [ ] **Shortsword** in the main hand + a **dagger** in the off hand (the shield slot) at the start of the turn.
+      Left-click to attack with the shortsword, then `/combat bonusAction` → an off-hand **Dagger** attack is
+      listed; click it → "⚡ This attack uses your bonus action (two-weapon fighting)" and **no** "are you
+      switching weapons?" question. Any class works, but both weapons must be **light**: longsword + dagger
+      gets no bonus attack ("Two-weapon fighting needs a light weapon in each hand…"). (#190)
+- [ ] **Defense** fighter: AC goes up by 1 when you put on chain mail (and not unarmored). The sheet's AC
+      tile lists it: "Armor: 16", "Defense: +1". (#229)
 - [ ] **Great Weapon Fighting**, greatsword, damage with `autoRoll` → "(Great Weapon Fighting: any 1 or 2
       was rolled again.)" A plain hit on a longsword with a shield doesn't say it. (#229)
 - [ ] **Two-Weapon Fighting**, dagger in each hand: the off-hand attack's damage has `+N[DEX]`. (#229)
@@ -89,16 +85,6 @@ rows (`/dm entity spawn alira "The Kindler"`).
       uses the off-hand button first (`… dagger bonus`), then still has their Action. Its damage has no
       DEX. Set `after_attack_action` and restart: the same button now says to attack first. (#221)
 - [ ] With nothing to spend it on, the action bar shows **Bonus: —**. (#221)
-- [ ] **Second Wind:** `/combat use second_wind` → the three roll buttons; answer → heals 1d10 + 1, the
-      bonus action is spent, a second use says no uses left. After the fight, `/character use second_wind`
-      once it's back (a short rest). (#229)
-- [ ] Take some damage, `/dm rest <you> short` → the summary lists Hit Dice, then
-      **💚 Spend a Hit Die (1 of 1 left, HP 5/12): [Roll it] [I rolled…] [My total…]**. (#52)
-- [ ] Answer it → heals the die + CON, HP goes up on the sheet, "Hit Dice left: 0 of 1". (#52)
-- [ ] `/character hitdice autoRoll` again → "No Hit Dice left. A long rest brings back half of them." (#52)
-- [ ] `/character hitdice` with no rest → "spent at the end of a short rest". (#52)
-- [ ] After a short rest, join a fight, then finish it → `/character hitdice` refuses (the fight ended the rest). (#52)
-- [ ] `/dm rest <you> long` → Hit Dice back to 1/1; Second Wind back too (it used to stay spent overnight). (#52)
 
 ## Rogue
 
@@ -252,10 +238,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       too jumpy; `sight.darkvision_view_limit: false` turns it off.
 
 **Heavy armor and Strength** (#34)
-- [ ] A human with STR 10 puts on chain mail (`/dm give <you> chain_mail`, wear it) → "⚠ Chain Mail needs Strength 13:
-      your speed drops by 10 ft (now 20 ft)". The sheet's Speed tile says 20 ft with the reason; AC is 16, not 10.
-      In a fight the movement bar allows 20 ft. Take it off → 30 ft.
-- [ ] A dwarf with STR 10 in plate → no warning, speed stays 25.
 
 ---
 
@@ -503,7 +485,6 @@ buttons. Try both; whichever you like less gets removed.
 - [ ] `/dm check clear Balin Ironforge` → "is a creature. Only characters have held checks…".
 - [ ] `/dm check clear ` + Tab → only characters, no creatures.
 - [ ] `/dm check clear <your character>` → clears your held checks.
-- [ ] `/dm rest <character> long` works. (#90)
 - [ ] `/dm resource restore <character> all` works.
 - [ ] `/dm resource consume <character> <res> 1` works.
 - [ ] Look at a chest, `/dm object key brass_key` → "The Brass Key opens the Chest".
