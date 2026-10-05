@@ -1,7 +1,7 @@
 # Transcribed from the six stat blocks supplied by the DM.
 # Fixed printed HP; the original hit dice are recorded in the notes.
 # No model is assigned until a matching resource-pack texture exists.
-# Special actions (Multiattack, Rampage, riders) are DM-adjudicated: #253, #254, #255.
+# Multiattack is in the stat blocks (#253). Rampage and attack riders are DM-adjudicated: #254, #255.
 # Save proficiencies and immunities are in the stat blocks (#252).
 
 gnoll:
@@ -96,11 +96,11 @@ gnoll_pack_lord:
       damage: "1d8+2"
       damage_type: piercing
   loot: [glaive, longbow, chain_shirt]
+  multiattack: { count: 2, any_of: [Glaive, Longbow] }
   dm_notes: |
     Chaotic evil. CR 2 (450 XP). HP 49 (9d8+9).
     Armor: chain shirt. Languages: Gnoll. Passive Perception 10.
-    Multiattack (DM-handled): two attacks with its glaive or longbow, and use
-    Incite Rampage if available.
+    After its Multiattack it uses Incite Rampage if available (DM-handled).
     Incite Rampage (action; recharge 5-6, DM-handled): one creature the gnoll can
     see within 30 feet can use its reaction to make a melee attack if it can hear
     the gnoll and has the Rampage trait.
@@ -138,10 +138,12 @@ gnoll_fang_of_yeenoghu:
       damage: "1d8+3"
       damage_type: slashing
   loot: [hide_armor]
+  multiattack:
+    - { attack: Bite, count: 1 }
+    - { attack: Claw, count: 2 }
   dm_notes: |
     Chaotic evil. CR 4 (1,100 XP). HP 65 (10d8+20).
     Armor: hide armor. Languages: Abyssal, Gnoll. Passive Perception 10.
-    Multiattack (DM-handled): one Bite and two Claw attacks.
     Bite rider (DM-handled): on a hit, the target makes a DC 12 Constitution
     save, taking 2d6 poison damage on a failure (no poison damage on success).
     Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
@@ -180,13 +182,13 @@ gnoll_witherling:
       damage_type: piercing
   reactions:
     - "Vengeful Strike (DM-handled): when a gnoll is reduced to 0 HP within 30 feet of the witherling, make one Bite or Spiked Club attack."
+  multiattack: { count: 2, any_of: [Bite, Spiked Club] }
   dm_notes: |
     Typically chaotic evil. CR 1/4 (50 XP). Proficiency bonus +2. HP 11 (2d8+2).
     Armor: natural armor. Passive Perception 7.
     Languages: understands Gnoll but cannot speak.
     Also immune to exhaustion (not a condition in the game yet).
     Unusual Nature: does not require air, food, drink, or sleep.
-    Multiattack (DM-handled): two attacks, each a Bite or Spiked Club.
     Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
     melee attack on its turn, move up to half its speed and make one Bite attack.
     Spiked Club uses its printed piercing damage; no matching loot item is defined.
@@ -225,10 +227,12 @@ gnoll_flesh_gnawer:
     - item_id: shortsword
       qty: 2
     - studded_leather_armor
+  multiattack:
+    - { attack: Bite, count: 1 }
+    - { attack: Shortsword, count: 2 }
   dm_notes: |
     Typically chaotic evil. CR 1 (200 XP). Proficiency bonus +2. HP 22 (4d8+4).
     Armor: studded leather. Languages: Gnoll. Passive Perception 10.
-    Multiattack (DM-handled): one Bite and two Shortsword attacks.
     Sudden Rush (action, DM-handled): until the end of this turn, speed increases
     by 60 feet (to 90 feet) and movement does not provoke opportunity attacks.
     Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a
@@ -285,10 +289,10 @@ gnoll_hunter:
       damage: "1d8+2"
       damage_type: piercing
   loot: [spear, longbow, leather_armor]
+  multiattack: { count: 2, any_of: [Bite, Spear, "Spear (Two-Handed)", "Spear (Thrown)", Longbow] }
   dm_notes: |
     Typically chaotic evil. CR 1/2 (100 XP). Proficiency bonus +2. HP 22 (4d8+4).
     Armor: leather armor. Languages: Gnoll. Passive Perception 13.
-    Multiattack (DM-handled): two attacks, each a Bite, Spear, or Longbow.
     Longbow rider (DM-handled): on a hit, reduce the target's speed by 10 feet
     until the end of its next turn.
     Rampage (bonus action, DM-handled): after reducing a creature to 0 HP with a

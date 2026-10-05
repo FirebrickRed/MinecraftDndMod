@@ -436,6 +436,18 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 ## Entities & shops
 
+**Multiattack** (`/dm entity spawn gnoll_fang_of_yeenoghu`, and `gnoll_pack_lord`; a fight with both and a target):
+- [ ] The Fang's stat block (Attacks tile) starts "Multiattack: Bite, Claw ×2"; at the start of its turn you get
+      "⚔ … · Multiattack: Bite, Claw ×2." (#253)
+- [ ] Possess it and attack with **Claw** → after the roll, "Multiattack: left: Bite, Claw." Apply the damage,
+      Claw again → "left: Bite." Bite → "Multiattack: done." A fourth attack → "has already used their Action". (#253)
+- [ ] After the first Claw hits, attack again **before** applying its damage → "Apply the damage for …'s last hit
+      first". (#253)
+- [ ] After both Claws, a third Claw → "Multiattack has no Claw left. Left: Bite." (#253)
+- [ ] The Pack Lord: Glaive then Longbow → both go through ("1 more: Glaive or Longbow", then "done"). On another
+      turn, **Bite** first → it's the whole Action: a Glaive after it is refused. (#253)
+- [ ] A plain gnoll still gets exactly one attack. End a Multiattack turn early → the next turn starts fresh. (#253)
+
 **Limited abilities and ammunition** (`/dm entity spawn giant_spider`, and `gnoll`; a fight with both):
 - [ ] The spider's stat block lists "Web (Recharge 5-6)"; the gnoll's Longbow says "Carries: 2d10 arrows" and
       Spear (Thrown) "Carries: 2d4 spears". (#256, #257)

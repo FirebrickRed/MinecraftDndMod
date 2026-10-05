@@ -592,7 +592,12 @@ Stat-block lines beyond the basics (#252): `saving_throws: {constitution: 4}` (t
 `skills:`; unlisted = the ability modifier, `DndEntity.getSaveBonus` / `getSaveLabel` is the one source for
 every creature save), and `damage_resistances` / `damage_immunities` / `damage_vulnerabilities` /
 `condition_immunities` (lists; `Combatant` reads them from the template, `DamageHandler` already applies
-them, and `Combatant.isImmuneToCondition` refuses a condition). Multiattack, riders and traits are #253–#255.
+them, and `Combatant.isImmuneToCondition` refuses a condition). Attack riders and traits are #254–#255.
+
+**Multiattack (#253):** `multiattack:` on the entity (`data/model/Multiattack`: a list of `{attack, count}`,
+`{count, any_of}`, or a bare number). Its first attack on a turn starts a `Multiattack.Progress` on the creature's
+`TurnState`; `/combat attack` lets the remaining ones through after the Action is spent
+(`CombatCommand.countMultiattack`), one hit's damage at a time. An attack that isn't part of it is the whole Action.
 
 **What one spawned creature has used up is per-instance (#256, #257):** `CreatureUses` on `DndEntityInstance`,
 saved in its PDC (`dnd_uses`). An attack's `uses:` / `recharge:` (`DndAttack.setLimits`: 3/Day back 24 in-game

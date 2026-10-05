@@ -171,6 +171,13 @@ public class EntityStatBlockMenu {
 
         List<Component> lore = new ArrayList<>();
         lore.add(Component.empty());
+        // Multiattack first, as a stat block lists it (#253).
+        if (template.getMultiattack() != null) {
+            for (String l : io.papermc.jkvttplugin.util.Util.wrapText("Multiattack: " + template.getMultiattack().describe())) {
+                lore.add(Component.text(l, NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
+            }
+            lore.add(Component.empty());
+        }
 
         for (DndAttack attack : template.getAttacks()) {
             // "Fire Breath (Recharge 5-6)", as the stat block prints a limited ability (#256).

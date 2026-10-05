@@ -103,6 +103,9 @@ kobold_sorcerer:
       damage: "1d10"
       damage_type: fire
 
+  multiattack:                   # several attacks on one Action, as the stat block says
+    - { attack: Dagger, count: 2 }
+
   reactions:                     # free text, listed in the DM's reactions roster
     - "Parry: +2 AC against one melee hit it can see."
 
@@ -149,10 +152,35 @@ possessing the creature (DM mode → Possess) and attacking like a player would.
 | `uses` · `recharge` | optional | **Limited use**, as a stat block prints it (#256). `uses: 3` is **3/Day**: back 24 in-game hours after the first of those uses (or at the next dawn, if `creatures.per_day: dawn` in config.yml), or after a long rest. `recharge: "5-6"` is **Recharge 5-6** (one use; then at the start of each of its turns the DM is handed the d6 as **[Roll it] [I rolled…]** (`/combat recharge`), and a 5 or 6 brings it back; `"6"` for Recharge 6). `recharge: short_rest` is **"Recharges after a Short or Long Rest"**; `long_rest` for a long rest only. Both together (`uses: 2` + `recharge: short_rest`) is "twice, then a rest". The count belongs to each spawned creature and survives a restart. A spent attack is refused, with **[Use it anyway]** for a DM's ruling. |
 | `ammunition` | optional | How many shots or throws it carries (#257). **By default** (MM p.11) a bow or crossbow starts with **2d10** of its ammunition and a thrown weapon with **2d4**, rolled as the creature spawns, like its hit dice: the DM sees the dice with **[Use my own roll]**, which fills `/dm adjust <it> ammo <kind> ` to put in their own. `ammunition: 12` fixes the number (nothing is rolled); `ammunition: unlimited` never runs out. Set it on any one of the attacks that share the weapon. A thrown weapon is only counted when the creature has a thrown attack with it (a `reach:` like `"20/60 ft."`); the last one thrown leaves none to stab with. What a creature didn't fire drops with its body. |
 
-**Not supported yet:** save-based abilities (breath weapons, a gaze that forces a save, #254), multiattack (#253),
+**Not supported yet:** save-based abilities (breath weapons, a gaze that forces a save, #254),
 and spellcasting from a spell list. Run those as the DM: call each player's save with
 `/dm check <player> save dexterity dc 13`, then apply damage with
 `/combat override <target> <amount>`. (`/combat save` only answers a pending *spell* save.)
+
+
+### Multiattack
+
+`multiattack:` on the creature (not on an attack) says what one Action is. Three ways to write it, for the
+Monster Manual's three wordings:
+
+```yaml
+multiattack:                                       # "one bite and two claw attacks"
+  - { attack: Bite, count: 1 }
+  - { attack: Claw, count: 2 }
+
+multiattack: { count: 2, any_of: [Glaive, Longbow] }   # "two attacks with its glaive or longbow"
+
+multiattack: 2                                     # "makes two attacks": any of its attacks
+```
+
+- The creature's first attack on its turn starts the Multiattack, and the DM is told what's left after each
+  one ("Multiattack: left: Claw ×2"). An attack it has run out of is refused, naming what remains.
+- An attack that isn't part of it (the Pack Lord's Bite, above) is simply its whole Action.
+- One hit at a time: the last hit's damage has to be applied before the next attack.
+- Not using them all is fine. Ending the turn drops the rest.
+- Names match the creature's attacks whatever their case; a name it doesn't have, or a total under 2, warns
+  on load. Attack names with brackets need quotes: `"Spear (Thrown)"`.
+- The stat block shows it above the attacks, and the DM is reminded at the start of the creature's turn.
 
 ---
 

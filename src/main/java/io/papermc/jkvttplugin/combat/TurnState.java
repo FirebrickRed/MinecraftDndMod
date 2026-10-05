@@ -73,6 +73,11 @@ public class TurnState {
         attacksLeftInAction = Math.max(0, attacksPerAction - 1);
     }
     public int getAttacksLeftInAction() { return attacksLeftInAction; }
+
+    // A creature's Multiattack this turn (#253): null until its first attack starts one.
+    private io.papermc.jkvttplugin.data.model.Multiattack.Progress multiattack;
+    public io.papermc.jkvttplugin.data.model.Multiattack.Progress getMultiattack() { return multiattack; }
+    public void setMultiattack(io.papermc.jkvttplugin.data.model.Multiattack.Progress progress) { this.multiattack = progress; }
     /** One of the Attack action's further attacks is being made. */
     public void useExtraAttack() { if (attacksLeftInAction > 0) attacksLeftInAction--; }
     public boolean isAttackActionTaken() { return attackActionTaken; }

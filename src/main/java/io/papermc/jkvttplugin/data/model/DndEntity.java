@@ -334,6 +334,11 @@ public class DndEntity {
         return skills.containsKey(skill);
     }
 
+    // ---- Multiattack (#253): several attacks on one Action. Null when it has none. ----
+    private Multiattack multiattack;
+    public Multiattack getMultiattack() { return multiattack; }
+    public void setMultiattack(Multiattack multiattack) { this.multiattack = multiattack; }
+
     // ---- Saving throws, as a stat block prints them (#252): saving_throws: {constitution: 4} = "Con +4" ----
     private final Map<Ability, Integer> savingThrows = new java.util.EnumMap<>(Ability.class);
 

@@ -288,6 +288,11 @@ public class EntityLoader {
                 entity.setAttacks(attacks);
             }
 
+            // Multiattack (#253): read after the attacks, since it names them.
+            java.util.List<String> multiProblems = new ArrayList<>();
+            entity.setMultiattack(io.papermc.jkvttplugin.data.model.Multiattack.parse(data.get("multiattack"), entity.getAttacks(), multiProblems));
+            for (String p : multiProblems) LOGGER.warning("[" + id + "] " + p + ".");
+
             // Reactions — free-text ability lines shown in the combat reactions roster (#147).
             Object reactionsObj = data.get("reactions");
             if (reactionsObj instanceof List<?> reactionsList) {

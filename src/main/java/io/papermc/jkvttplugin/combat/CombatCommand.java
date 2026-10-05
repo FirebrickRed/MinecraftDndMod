@@ -2140,7 +2140,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 player.sendMessage(Component.text("No active turn state.", NamedTextColor.RED));
                 return;
             }
-            if (!attacker.isPlayer() && state.isActionUsed()) {
+            // A Multiattack under way (#253) has more attacks on the same Action; which ones is checked
+            // below, once the attack is known.
+            boolean multiattacking = state.getMultiattack() != null && !state.getMultiattack().done();
+            if (!attacker.isPlayer() && state.isActionUsed() && !multiattacking) {
                 player.sendMessage(Component.text(attacker.getDisplayName() + " has already used their Action this turn.", NamedTextColor.YELLOW));
                 return;
             }
@@ -2255,6 +2258,22 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         } else if (bonusAttack && !showMods) {
             player.sendMessage(Component.text("A creature's bonus attack isn't tracked: make the attack, then /combat bonusAction used.", NamedTextColor.YELLOW));
             return;
+        } else if (!showMods && !attacker.isPlayer() && attacker.getTurnState() != null
+                && attacker.getTurnState().isActionUsed() && attacker.getTurnState().getMultiattack() != null) {
+            // Mid-Multiattack (#253): one hit at a time, as for a character's Extra Attack, or the second
+            // attack would bury the first one's damage.
+            if (attacker.getTurnState().isDamagePending()) {
+                player.sendMessage(Component.text("Apply the damage for " + attacker.getDisplayName() + "'s last hit first (/combat damage).", NamedTextColor.YELLOW));
+                return;
+            }
+            // This attack has to be one it still owes.
+            io.papermc.jkvttplugin.data.model.Multiattack.Progress multi = attacker.getTurnState().getMultiattack();
+            io.papermc.jkvttplugin.data.model.DndAttack next = AttackHandler.resolveEntityAttack(attacker, weaponOrAttackName);
+            if (next != null && !multi.canUse(next.getName())) {
+                player.sendMessage(Component.text(attacker.getDisplayName() + "'s Multiattack has no " + next.getName()
+                        + " left. Left: " + multi.leftText() + ".", NamedTextColor.YELLOW));
+                return;
+            }
         }
 
         // Reach: the one rule (Reach), for players and creatures alike. Out of reach offers [Ask the DM]
@@ -2312,9 +2331,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                                 + (state.getAttacksLeftInAction() > 0 ? " (" + state.getAttacksLeftInAction() + " more)." : "."), NamedTextColor.GRAY));
                     }
                     default -> {
+                        boolean firstOfAction = !state.isActionUsed();
                         state.useAction();
                         // The Attack action: unlocks a bonus attack, and Extra Attack's further attacks (#153).
-                        state.markAttackAction(attacker.isPlayer() ? AttackCost.attacksPerAction(attacker.getCharacterSheet()) : 1);
+                        if (firstOfAction) state.markAttackAction(attacker.isPlayer() ? AttackCost.attacksPerAction(attacker.getCharacterSheet()) : 1);
+                        // A creature's Multiattack (#253): its first attack starts it, each one counts down.
+                        if (!attacker.isPlayer()) countMultiattack(player, attacker, state, weaponOrAttackName, firstOfAction);
                     }
                 }
                 session.sendActionBar(attacker);
@@ -2329,6 +2351,27 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 }
             }
         }
+    }
+
+    /**
+     * A creature's attack just resolved: start its Multiattack (#253) if this attack is part of one, count
+     * this one off, and tell the DM what's left. An attack that isn't part of it (the Fang shooting a bow
+     * it doesn't have in its Multiattack) is simply its whole Action.
+     */
+    private void countMultiattack(Player dm, Combatant attacker, TurnState state, String attackName, boolean firstOfAction) {
+        if (attacker.getEntityInstance() == null) return;
+        io.papermc.jkvttplugin.data.model.Multiattack multi = attacker.getEntityInstance().getTemplate().getMultiattack();
+        io.papermc.jkvttplugin.data.model.DndAttack made = AttackHandler.resolveEntityAttack(attacker, attackName);
+        if (multi == null || made == null) return;
+        if (firstOfAction) {
+            if (!multi.includes(made.getName())) return; // not part of it: a single attack was its Action
+            state.setMultiattack(multi.begin());
+        }
+        io.papermc.jkvttplugin.data.model.Multiattack.Progress progress = state.getMultiattack();
+        if (progress == null) return;
+        progress.use(made.getName());
+        dm.sendMessage(Component.text("⚔ " + attacker.getDisplayName() + "'s Multiattack: "
+                + (progress.done() ? "done." : "left: " + progress.leftText() + "."), NamedTextColor.GRAY));
     }
 
     /**

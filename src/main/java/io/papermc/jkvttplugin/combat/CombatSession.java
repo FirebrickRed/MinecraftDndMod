@@ -1213,6 +1213,11 @@ public class CombatSession {
         for (io.papermc.jkvttplugin.data.model.DndAttack due : c.getEntityInstance().rechargesDue()) {
             if (dm != null) dm.sendMessage(RechargeRoll.prompt(c.getEntityInstance(), due));
         }
+        // What its Action can be (#253), so the DM doesn't have to open the stat block.
+        io.papermc.jkvttplugin.data.model.Multiattack multi = c.getEntityInstance().getTemplate().getMultiattack();
+        if (dm != null && multi != null) {
+            dm.sendMessage(Component.text("⚔ " + c.getDisplayName() + " · Multiattack: " + multi.describe() + ".", NamedTextColor.GRAY));
+        }
     }
 
     private void tickTurnStartEffects(Combatant c) {
