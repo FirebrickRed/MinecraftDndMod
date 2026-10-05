@@ -13,6 +13,7 @@ import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -51,15 +52,30 @@ public class RollOptionsMenuHandler {
         if (penalty != null) line = line.append(Component.text("↯ disadvantage: " + penalty + " ", NamedTextColor.RED));
         String boon = boonReason(character, type, value);
         if (boon != null) line = line.append(Component.text("↑ advantage: " + boon + " ", NamedTextColor.GREEN));
-        for (RollMode mode : RollMode.values()) {
-            String label = switch (mode) { case NORMAL -> "[Normal]"; case ADVANTAGE -> "[Advantage]"; case DISADVANTAGE -> "[Disadvantage]"; };
-            NamedTextColor color = switch (mode) { case NORMAL -> NamedTextColor.WHITE; case ADVANTAGE -> NamedTextColor.GREEN; case DISADVANTAGE -> NamedTextColor.RED; };
-            line = line.append(Component.text(label, color, TextDecoration.UNDERLINED)
-                    .hoverEvent(HoverEvent.showText(Component.text(switch (mode) {
-                        case NORMAL -> "Roll one d20";
+        // What the sheet already knows decides the roll, so the buttons don't offer what can't happen
+        // (playtest: Poisoned said "disadvantage" and still offered [Normal] and [Advantage]). One of each
+        // cancels out however many there are (PHB p.173), so the only open question is the other side.
+        boolean forcedDis = penalty != null && boon == null, forcedAdv = boon != null && penalty == null;
+        List<RollMode> offered = penalty != null && boon != null ? List.of(RollMode.NORMAL)
+                : forcedDis ? List.of(RollMode.NORMAL, RollMode.ADVANTAGE)
+                : forcedAdv ? List.of(RollMode.NORMAL, RollMode.DISADVANTAGE)
+                : List.of(RollMode.values());
+        for (RollMode mode : offered) {
+            boolean cancels = (forcedDis && mode == RollMode.ADVANTAGE) || (forcedAdv && mode == RollMode.DISADVANTAGE);
+            RollMode rolled = withPenalties(character, type, value, mode); // what this button really rolls
+            String label = cancels ? (forcedDis ? "[I also have advantage]" : "[I also have disadvantage]")
+                    : offered.size() < 3 ? (rolled == RollMode.NORMAL ? "[Roll]" : "[Roll with " + rolled.name().toLowerCase() + "]")
+                    : switch (mode) { case NORMAL -> "[Normal]"; case ADVANTAGE -> "[Advantage]"; case DISADVANTAGE -> "[Disadvantage]"; };
+            NamedTextColor color = cancels ? NamedTextColor.GRAY : switch (rolled) {
+                case NORMAL -> NamedTextColor.WHITE; case ADVANTAGE -> NamedTextColor.GREEN; case DISADVANTAGE -> NamedTextColor.RED; };
+            String hover = (cancels ? "From something the game doesn't know about (the DM said so, an ally's help). "
+                    + "The two cancel out: " : "") + switch (rolled) {
+                        case NORMAL -> cancels ? "roll one d20" : "Roll one d20";
                         case ADVANTAGE -> "Roll two d20 and keep the higher";
                         case DISADVANTAGE -> "Roll two d20 and keep the lower";
-                    })))
+                    };
+            line = line.append(Component.text(label, color, TextDecoration.UNDERLINED)
+                    .hoverEvent(HoverEvent.showText(Component.text(hover)))
                     .clickEvent(ClickEvent.callback(a -> promptSkillRoll(player, character, type, value, mode), reusable)))
                     .append(Component.text(" "));
         }

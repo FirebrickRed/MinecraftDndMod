@@ -68,8 +68,6 @@ public class JkVttPlugin extends JavaPlugin implements Listener {
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.GearChangeNotifier(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.AmmoRecovery(), this);
         Bukkit.getPluginManager().registerEvents(new SpellCastingMenuListener(), this);
-        // EntityInteractionListener removed - use /dm entity info command instead
-        Bukkit.getPluginManager().registerEvents(new StatBlockMenuListener(), this);
         Bukkit.getPluginManager().registerEvents(new ShopListener(this), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.combat.CombatListener(), this);
         Bukkit.getPluginManager().registerEvents(new io.papermc.jkvttplugin.loot.LootListener(), this);

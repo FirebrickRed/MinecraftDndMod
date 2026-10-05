@@ -59,17 +59,22 @@ public class CharacterCreationHandler implements MenuClickHandler {
             }
 
             case CHOOSE_RACE -> {
+                int preparedBefore = preparedLimit(session);
                 if (!payload.equals(session.getSelectedRace())) {
                     session.setSelectedSubrace(null);
                     session.clearAllRacialBonuses();
                     session.setRacialBonusDistribution(null);
                 }
                 session.setSelectedRace(payload);
+                // A race's ability bonus can change how many spells a prepared caster picks.
+                if (preparedLimit(session) != preparedBefore) resetPreparedSpellsOnAbilityChange(session, player);
                 CharacterCreationService.rebuildPendingChoices(playerId);
                 CharacterCreationMenu.open(player, sessionId);
             }
             case CHOOSE_SUBRACE -> {
+                int preparedBefore = preparedLimit(session);
                 session.setSelectedSubrace(payload);
+                if (preparedLimit(session) != preparedBefore) resetPreparedSpellsOnAbilityChange(session, player);
                 CharacterCreationService.rebuildPendingChoices(playerId);
                 CharacterCreationMenu.open(player, sessionId);
             }
@@ -317,7 +322,7 @@ public class CharacterCreationHandler implements MenuClickHandler {
         }
         // - prepared casters prepare (spellcasting mod + level) spells from the whole list
         if (info.getSpellsPreparedFormula() != null) {
-            return info.getSpellsPreparedFormula().calculate(session.getAbilityScores(), 1);
+            return info.getSpellsPreparedFormula().calculate(session.getFinalAbilityScores(), 1); // with racial bonuses
         }
         if ("prepared".equalsIgnoreCase(info.getPreparationType())) {
             return Math.max(1, castingAbilityMod(info, session) + 1); // + level (1 at creation)
@@ -325,7 +330,6 @@ public class CharacterCreationHandler implements MenuClickHandler {
         return 0;
     }
 
-    /** Modifier of the class's spellcasting ability from the session's (base) ability scores. */
     /** Tell the player which spell picks went because they're no longer on their list (#228). */
     private static void reportDroppedSpells(Player player, List<String> dropped) {
         for (String name : dropped) {
@@ -337,7 +341,7 @@ public class CharacterCreationHandler implements MenuClickHandler {
         if (info.getCastingAbility() == null || session.getAbilityScores() == null) return 0;
         Ability ability = Ability.fromString(info.getCastingAbility());
         if (ability == null) return 0;
-        Integer score = session.getAbilityScores().get(ability);
+        Integer score = session.getFinalAbilityScores().get(ability); // with racial bonuses, as the sheet will have
         return score == null ? 0 : Ability.getModifier(score);
     }
 
@@ -347,6 +351,12 @@ public class CharacterCreationHandler implements MenuClickHandler {
      * with the correct count, and we never have to reconcile "too many prepared". Cantrips are
      * left alone (their count is fixed).
      */
+    /** How many 1st-level spells this session's class picks right now (0 with no class or no spellcasting). */
+    private static int preparedLimit(CharacterCreationSession session) {
+        DndClass c = session.getSelectedClass() == null ? null : ClassLoader.getClass(session.getSelectedClass());
+        return c == null ? 0 : spellMax(c, 1, session);
+    }
+
     private void resetPreparedSpellsOnAbilityChange(CharacterCreationSession session, Player player) {
         if (session.getSelectedClass() == null) return;
         DndClass c = ClassLoader.getClass(session.getSelectedClass());

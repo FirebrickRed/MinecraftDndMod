@@ -11,7 +11,6 @@ import io.papermc.jkvttplugin.data.model.*;
 import io.papermc.jkvttplugin.dm.DMManager;
 import io.papermc.jkvttplugin.shop.ShopGuiUtil;
 import io.papermc.jkvttplugin.shop.ShopPersistenceLoader;
-import io.papermc.jkvttplugin.ui.menu.EntityStatBlockMenu;
 import io.papermc.jkvttplugin.util.NameUtil;
 import io.papermc.jkvttplugin.util.DiceRoller;
 import net.kyori.adventure.text.Component;
@@ -333,8 +332,8 @@ public class DmEntityCommand implements CommandExecutor, TabCompleter {
             return;
         }
 
-        // Open stat block menu
-        EntityStatBlockMenu.open(player, instance);
+        // The DM's full view: stat block, notes, what it carries (the old stat block menu is gone).
+        io.papermc.jkvttplugin.ui.menu.DmViewMenu.open(player, instance.getInstanceId());
     }
 
     // ==================== RENAME SUBCOMMAND (#194) ====================

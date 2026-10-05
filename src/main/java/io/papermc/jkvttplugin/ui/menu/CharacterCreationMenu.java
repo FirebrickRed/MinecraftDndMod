@@ -988,15 +988,21 @@ public class CharacterCreationMenu {
         // taking one would waste it (#247: they weren't shown here at all).
         DndSubClass sub = session.getSelectedSubclass() != null && c.getSubclasses() != null
                 ? c.getSubclasses().get(session.getSelectedSubclass()) : null;
-        java.util.Set<String> always = new java.util.LinkedHashSet<>();
-        if (sub != null && sub.getBonusSpells() != null) for (String id : sub.getBonusSpells()) always.add(Util.normalize(id));
+        // ...and the ones a choice grants (a Divine Soul's affinity: Chaos gives Bane), which could still be
+        // picked on top of getting them free (playtest).
+        java.util.Set<String> always = session.alwaysKnownSpellIds();
+        boolean knownCaster = !preparesFromList;
 
         // Collected, then paged: a wizard has more 1st-level spells than the 27 slots, and the rest
         // couldn't be reached at all (playtest: "the last spell I see is Magnify Gravity").
         List<ItemStack> tiles = new ArrayList<>();
         for (DndSpell spell : spells) {
             String key = Util.normalize(spell.getName());
-            if (always.contains(key)) { tiles.add(alwaysPreparedTile(spell, sub)); continue; }
+            if (always.contains(key)) {
+                if (session.hasSpell(key)) session.removeSpell(key, level); // picked before it became free: give the pick back
+                tiles.add(alwaysPreparedTile(spell, sub, knownCaster));
+                continue;
+            }
             String via = knownElsewhere.get(key);
             if (via != null && !session.hasSpell(key)) {
                 ItemStack known = plain(KNOWN_TILE, Component.text(spell.getName(), NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
@@ -1022,16 +1028,17 @@ public class CharacterCreationMenu {
         for (String id : always) {
             DndSpell spell = SpellLoader.getSpell(id);
             if (spell == null || spell.getLevel() != level || spells.contains(spell)) continue;
-            tiles.add(alwaysPreparedTile(spell, sub));
+            tiles.add(alwaysPreparedTile(spell, sub, knownCaster));
         }
         layOutPaged(inv, tiles, java.util.Collections.<ItemStack>nCopies(tiles.size(), null), session.getSpellPage(), MenuAction.SPELL_PAGE);
     }
 
     /** A fixed tile for a spell the subclass always has prepared: shown, not pickable. */
-    private static ItemStack alwaysPreparedTile(DndSpell spell, DndSubClass sub) {
+    private static ItemStack alwaysPreparedTile(DndSpell spell, DndSubClass sub, boolean knownCaster) {
         ItemStack it = plain(Material.ENCHANTED_BOOK, Component.text("✦ " + spell.getName(), NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
         List<Component> lore = new ArrayList<>();
-        lore.add(Component.text("Always prepared (" + (sub != null ? sub.getName() : "your subclass") + ")", NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
+        // A sorcerer knows spells, a cleric prepares them: say the one that fits.
+        lore.add(Component.text((knownCaster ? "Always known (" : "Always prepared (") + (sub != null ? sub.getName() : "your subclass") + ")", NamedTextColor.GOLD).decoration(TextDecoration.ITALIC, false));
         lore.add(Component.text("Free: it doesn't use one of your picks.", NamedTextColor.DARK_GRAY).decoration(TextDecoration.ITALIC, false));
         lore.add(Component.empty());
         lore.addAll(spell.detailLore());

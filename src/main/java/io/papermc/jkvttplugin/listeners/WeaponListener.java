@@ -297,13 +297,19 @@ public class WeaponListener implements Listener {
         return Math.max(3.0, r);
     }
 
+    /** True when this is the second sighting of one physical click: an arm swing and an interact event both fire for it. */
+    private boolean repeatedClick(Player player) {
+        long now = System.currentTimeMillis();
+        Long previous = lastPrompt.get(player.getUniqueId());
+        if (previous != null && now - previous < 200) return true;
+        lastPrompt.put(player.getUniqueId(), now);
+        return false;
+    }
+
     private void promptAttack(Player player, AttackContext ctx, Combatant target) {
         // One physical left-click can surface as both a PlayerInteractEvent and an
         // EntityDamageByEntityEvent depending on what it lands on; only prompt once (#167).
-        long now = System.currentTimeMillis();
-        Long previous = lastPrompt.get(player.getUniqueId());
-        if (previous != null && now - previous < 200) return;
-        lastPrompt.put(player.getUniqueId(), now);
+        if (repeatedClick(player)) return;
 
         String targetName = target.getDisplayName();
         String targetArg = targetName.contains(" ") ? "\"" + targetName + "\"" : targetName;
@@ -332,6 +338,23 @@ public class WeaponListener implements Listener {
         // A different weapon than they started the turn with: settle the switch before any roll is offered.
         if (!io.papermc.jkvttplugin.combat.WeaponSwitch.allow(player, ctx.attacker, ctx.weaponId, base,
                 io.papermc.jkvttplugin.combat.RollPrompt.d20(adv), modShown)) return;
+
+        // What this attack would cost, said before the roll is offered (playtest: a monk's second punch
+        // only said "bonus action" once it had been rolled). The same decision /combat attack makes.
+        if (sheet != null && ctx.attacker.getTurnState() != null) {
+            var cost = io.papermc.jkvttplugin.combat.AttackCost.decide(sheet, ctx.weapon,
+                    io.papermc.jkvttplugin.combat.BonusAttack.heldWeapon(player, true),
+                    io.papermc.jkvttplugin.combat.BonusAttack.heldWeapon(player, false),
+                    ctx.attacker.getTurnState(), false,
+                    io.papermc.jkvttplugin.config.PluginConfig.isBonusAttackNeedsAttackAction());
+            if (!cost.allowed()) {
+                player.sendMessage(Component.text(cost.refusal(), NamedTextColor.YELLOW));
+                return;
+            }
+            if (cost.kind() == io.papermc.jkvttplugin.combat.AttackCost.Kind.BONUS) {
+                player.sendMessage(Component.text("⚡ This attack uses your bonus action (" + cost.source() + ").", NamedTextColor.YELLOW));
+            }
+        }
 
         player.sendMessage(io.papermc.jkvttplugin.combat.RollPrompt.line("⚔ Attack " + targetName + " with " + (ctx.weapon != null ? ctx.weapon.getName() : "an unarmed strike") + ":",
                 NamedTextColor.GOLD, base, io.papermc.jkvttplugin.combat.RollPrompt.d20(adv), modShown));
@@ -414,6 +437,7 @@ public class WeaponListener implements Listener {
     }
 
     private void promptEntityAttack(Player player, Combatant entity, Combatant target) {
+        if (repeatedClick(player)) return; // the same swing seen twice (playtest: a skeleton's prompt came up double)
         List<String> attacks = new java.util.ArrayList<>(AttackHandler.getEntityAttackNames(entity));
         if (attacks.isEmpty()) {
             player.sendMessage(Component.text(entity.getDisplayName() + " has no defined attacks — use /combat attack manually.", NamedTextColor.GRAY));

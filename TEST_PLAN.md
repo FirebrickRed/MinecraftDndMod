@@ -121,6 +121,13 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 - [ ] No DC → never breaks.
 - [ ] `on_fail: always` / `never` in config.yml behave as named.
 
+## Monk
+
+- [ ] On your turn, empty hand, left-click an enemy → the unarmed prompt, nothing about a bonus action.
+      Resolve it, left-click again → "⚡ This attack uses your bonus action (Martial Arts)" **above** the roll
+      buttons, before anything is rolled. A third click → refused (Action and bonus action both used), no
+      roll buttons.
+
 ## Wizard
 
 - [ ] Creation, Spells tab: Cantrips and Level 1 each have **Next page ▶** at the bottom right; the second page
@@ -165,8 +172,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] Instead of rolling, the small grey **[failed]** / **[saved]** after the buttons rule it without a roll. (#245)
 - [ ] In a fight, a save spell's cast line shows the same DC breakdown. (#245)
 
-- [X] Creation, Spells tab, Level 1: Bless and Cure Wounds are gold **✦ Always prepared (Life Domain)** tiles,
-      not picks: clicking does nothing and they don't count toward your number. (#247)
 - [ ] Out of a fight, cast Sacred Flame at a creature, [Let it happen] → "…needs no attack roll (the target
       saves instead): cast it again to go. [cast it]". Guiding Bolt instead → "…is an attack: roll to hit." (#247)
 
@@ -205,14 +210,10 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 ## Sorcerer
 
-- [ ] **Origins:** Divine Soul shows a **Divine Affinity** choice (Good → Cure Wounds in the
-      spellbook); Draconic Bloodline shows **Dragon Ancestor**; Lunar and Shadow show their choices.
 - [ ] **Divine Soul:** hover each affinity → "✦ Always known: Cure Wounds (1st level, doesn't use a pick)" etc.
-- [ ] **Divine Soul:** the spell step offers cleric spells (Guiding Bolt, Healing Word) next to the
-      sorcerer ones; each uses a pick.
-- [ ] **Draconic Bloodline:** hover each dragon → its damage type and what it does from 6th level.
-- [ ] **Draconic Bloodline:** the AC tile says **Draconic Resilience: 13 + DEX**, and max HP is one more
-      than 6 + CON. Put on armor → normal armor AC.
+- [ ] **Divine Soul:** pick Chaos, open the spell step → Bane is a fixed "Always known" tile, not something
+      you can pick; your picks still count 2 of 2 without it. Pick a spell, then change the affinity to the
+      one that grants it → it turns into the fixed tile and the pick comes back.
 
 ## Warlock
 
@@ -234,13 +235,14 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 ## Artificer
 
 - [ ] At level 1 it prepares INT-modifier spells (one fewer than before); two simple weapon picks.
+- [ ] INT 15 as a gnome (+2 → 17) or with a +1 you place (16): the spell step lets you prepare **3**, the
+      same number the finished sheet has. Change the race to one with no INT bonus → the prepared picks
+      reset and it's 2.
 
 ## Races
 
 **Halfling**
 - [ ] **Stout halfling:** a poison save shows advantage (Stout Resilience).
-
-**Dragonborn** (red)
 
 **Darkvision** (a dwarf, elf or tiefling, and a human) (#148)
 - [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
@@ -271,18 +273,12 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 ## Combat
 
-- [ ] On your turn with an **empty hand**, left-click a creature → "⚔ Attack … with an unarmed strike: [Roll it]…".
-      Holding a torch or your sheet → no prompt.
-- [ ] A **monk**, after attacking: left-click with an empty hand → "⚡ This attack uses your bonus action (Martial
-      Arts)." comes **before** the roll buttons.
 - [ ] Damage with several dice rolled by hand: `/combat damage <t> manualRoll 1+4` and `manualRoll 1 + 4` both count
       as 5; `total 12+7` is 19. `manualRoll 14 3` on a Blessed attack is still a 14, and a 3 on the d4.
 - [ ] Start a fight by attacking out of combat ([Start combat]) → on your first turn, a bold gold line: "You started
       this fight with …. [Do it now]", with a blank line above and below. (#152)
 - [ ] Mid-fight, on someone's turn, `/combat initiative <someone else> set 30` → they move to the
       top, and the **current turn stays with whoever had it** (the green →).
-- [ ] A healing potion with auto-roll → the dice show.
-- [ ] **Scoreboard:** **[S]** on someone surprised.
 - [ ] **Scoreboard:** two tied initiatives in turn order.
 
 ## Help, Hide and Search in a fight (#176)
@@ -315,19 +311,19 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Opportunity attack buttons → pick the attack, Enter, then the three roll buttons.
 - [ ] Nowhere shows two dice icons (`🎲 … 🎲`), e.g. a shared check result or a loot roll.
 - [ ] Every roll button, **[Roll it]** included, only fills chat; nothing rolls until you press Enter.
-- [ ] Advantage, game-rolled → `🎲 d20 [9, 15] advantage +3[DEX] = 18` (both dice, one line).
-- [ ] Sheet [Normal] / [Advantage] / [Disadvantage] → never rolls on the click, even in auto-roll mode: you get the three roll buttons.
-- [ ] `/combat action attack` → says "left-click your target" (it said right-click).
 - [ ] Any d20 roll with `manualRoll 25` → asked again, not accepted.
 
 ## Checks: private rolls, groups, passive (#186)
 
 (Private rolls and group checks with other players are in Part 2.)
 
-- [ ] `/dm check all passive perception dc 14` → no prompts; you see each passive score and who notices.
-      On a creature (`/dm check Goblin passive perception`) too.
-- [ ] `/dm check <you> skill athletics|acrobatics dc 13` → you get both prompts ("pick how you go about
-      it"); the one you roll comes back graded.
+- [ ] `/dm check nearby passive perception dc 14` → every character **and creature** within 60 ft of you,
+      each ✔/✘ with its score; one further away isn't listed. `all` is still the party only. (#186)
+- [ ] Poisoned (`/dm adjust`), click a skill on the sheet → "↯ disadvantage: Poisoned" and two buttons,
+      **[Roll with disadvantage]** and **[I also have advantage]**. The first rolls 2d20 keep lower; the second
+      is one d20 (they cancel). Not poisoned → the usual [Normal] [Advantage] [Disadvantage]. (#175)
+- [ ] A raging barbarian's Strength check → **[Roll with advantage]** and **[I also have disadvantage]**. (#223)
+
 
 ## Death
 
@@ -347,13 +343,6 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
 - [ ] Walk away until the chunk unloads, `/dm revive <c>`, walk back → the body is gone.
 - [ ] A stable character at 0 HP (the long rest refused them): `/dm adjust <c> hp +1` → now the long rest works.
 - [ ] A DM already in spectator mode for their own reasons isn't pulled out of it by deaths.
-
-## Rests
-
-- [ ] `/dm rest <character> short` recovers as before (the player version is gone: rests are the DM's call). (#90)
-- [ ] `/dm rest <character> long` recovers as before; with no time given, the clock doesn't move. (#90)
-- [ ] **[I'm done]** after a rest → "Rest finished"; the DM gets "✓ <name> is done with their long rest";
-      the rest options (Hit Dice, prepare) are closed. (#90)
 
 ## Sounds and music (#16)
 
@@ -381,14 +370,6 @@ wrong, and swap in your own anytime.
 
 # DM tools
 
-## Possession (#179)
-
-- [ ] Possess a creature with attacks (`skeleton`): the hotbar item says "left-click a target". Hold the
-      shortbow, left-click a player → the prompt lists **Shortbow first** and fills
-      `/combat attack <them> Shortbow ` (you pick autoRoll/manualRoll after).
-- [ ] Possess `skeleton` (darkvision 60) → you see in the dark; possess `wolf` → you don't; let
-      go → back to your own character's sight (none if you have no character). (#148)
-
 ## The Adjust menu & `/dm adjust`
 
 - [ ] In a fight, an HP change updates the scoreboard and the player's open sheet.
@@ -408,7 +389,6 @@ wrong, and swap in your own anytime.
 
 ## Surprise tool & damage approval
 
-- [ ] With no fight → "Start a fight first".
 - [ ] The DM's own `/combat damage` lands at once, never waits.
 - [ ] `combat.damage_approval: off` in config → nothing ever asks you.
 
@@ -426,10 +406,6 @@ wrong, and swap in your own anytime.
 Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
 
 - [ ] Someone Dodging, `/combat finished` → Dodging ends.
-- [ ] A Poisoned player, `/combat finished` → "X is still Poisoned after the fight".
-- [ ] A Prone goblin, `/combat finished` → "Goblin is still Prone after the fight".
-- [ ] Still Poisoned: a skill check from the sheet says "↯ Disadvantage: Poisoned" and rolls two d20s.
-- [ ] Still Poisoned: a saving throw doesn't.
 - [ ] Restrained (kept from a fight): a DEX save from the sheet is at disadvantage.
 - [ ] New fight with the same goblin → the scoreboard still shows Prone.
 - [ ] At the start of a turn, the condition hover is wrapped.
@@ -481,7 +457,12 @@ Add conditions with `/dm adjust <who> condition <name>` or the Adjust menu.
       count at all. (#257)
 
 **Stat-block saves and immunities** (`/dm entity spawn skeleton`, and `gnoll_fang_of_yeenoghu`):
-- [ ] The skeleton's stat block (`/dm entity info`), Ability Scores tile: "Immune: poison", "Vulnerable:
+- [ ] `/dm entity info Skeleton` opens the **same menu as** `/dm view Skeleton full` (stat tiles, DM notes, Adjust,
+      what it carries). The Basic Stats tile starts "Medium undead". The old "…'s Stat Block" menu is gone.
+- [ ] The skeleton's DM notes tile shows its CR and languages; possess it → it holds a shortsword / shortbow, and
+      spawning it rolls its arrows (2d10). Kill it → both weapons and the unfired arrows are on the body.
+- [ ] Possess a skeleton on its turn, left-click a target → **one** "Attack … as Skeleton" line, not two.
+- [ ] The skeleton's stat block (`/dm entity info Skeleton`), Ability Scores tile: "Immune: poison", "Vulnerable:
       bludgeoning", "Can't be: poisoned". The Fang's shows "CON: 15 (+2)  save +4". (#252)
 - [ ] `/dm adjust Skeleton hp -6 type bludgeoning` → 12 taken, "VULNERABLE to bludgeoning (doubled)".
       `… hp -6 type poison` → none, "IMMUNE to poison". A sword's slashing → normal. (#252)
@@ -717,8 +698,6 @@ Set up an enchanting table: a description, **Rolled**, History or Arcana, three 
 # Playtest notes
 Write anything here, in any order. Each round Claude answers in chat, turns the notes into rows
 above, and clears this section (git keeps the old notes).
-do we want a section to test spells? or is just testing a few varieties good enough?
-
 
 ---
 

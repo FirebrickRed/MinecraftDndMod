@@ -130,7 +130,7 @@ kobold_sorcerer:
 | `size` | Stored and shown, but **doesn't scale the body** yet (#194 §6). A gargantuan dragon stands as tall as a kobold. It does scale the DM while possessing. |
 | `random_names` | Picked at spawn when you don't pass a name (`/dm entity spawn kobold "Meepo"` overrides it). |
 | `model` | Absent means an invisible stand with a floating nameplate. **A model with no texture renders as a purple box**, which is worse than no model. |
-| `dm_notes` | DM-only notes (a string; `|` for several lines). Shown in the stat block (`/dm entity info`) and in `/dm view` (quick and full). Add more in-game on one spawned creature with `/dm note <name> add …`. |
+| `dm_notes` | DM-only notes (a string; `|` for several lines). Shown in `/dm view` (quick and full; `/dm entity info` opens the full one). Add more in-game on one spawned creature with `/dm note <name> add …`. |
 
 ---
 

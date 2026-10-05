@@ -407,8 +407,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - A roll a player makes from their own sheet is **private** to them, with **[Show the DM]** (the DM
   can then [Share] it); a DM-called check comes back to the DM first. Nothing a player rolls for
   themselves is broadcast (#186).
-- `/dm check` also does groups (`all` or `A, B`, verdict = at least half succeed, `CheckManager.Group`,
-  [Close now]), passive checks (`passive <skill>`, 10 + bonus ±5), and the player's pick of approach
+  [Close now]), passive checks (`passive <skill>`, 10 + bonus ±5; `nearby` adds the creatures within 60 ft of the DM), and the player's pick of approach
   (`skill athletics|acrobatics`).
 - Combat Help / Hide / Search (#176) are `combat/CombatActions`: Help sets `Combatant.helpedBy`
   (advantage on the next attack or check, lapses at the helper's turn); Hide rolls Stealth and the DM

@@ -282,6 +282,14 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
      * /dm check &lt;who&gt; passive &lt;skill&gt; [dc n] [adv|dis]: nobody rolls. A passive score is 10 + the
      * skill's bonus, +5 with advantage and -5 with disadvantage (PHB p.175). The DM sees who beats the DC.
      */
+    /** How far "nearby" reaches in a passive check, in feet (1 block = 5 ft). */
+    static final int NEARBY_FEET = 60;
+
+    static boolean isNearby(org.bukkit.Location from, org.bukkit.Location to) {
+        return from != null && to != null && from.getWorld() != null && from.getWorld().equals(to.getWorld())
+                && from.distance(to) * 5.0 <= NEARBY_FEET;
+    }
+
     private boolean passiveCheck(CommandSender sender, String[] args) {
         Skill skill = args.length >= 3 ? resolveSkill(args[2]) : Skill.PERCEPTION;
         if (skill == null) skill = Skill.PERCEPTION;
@@ -289,7 +297,29 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         int shift = o.mode() == RollMode.ADVANTAGE ? 5 : o.mode() == RollMode.DISADVANTAGE ? -5 : 0;
 
         List<String[]> rows = new ArrayList<>(); // name, score
-        if (args[0].equalsIgnoreCase("all") || args[0].contains(",")) {
+        if (args[0].equalsIgnoreCase("nearby")) {
+            // Everyone around the DM, creatures included: "all" is the party only, and every creature in the
+            // world would be noise (playtest).
+            if (!(sender instanceof Player dm)) {
+                sender.sendMessage(Component.text("'nearby' is measured from you, so it needs a player.", NamedTextColor.RED));
+                return true;
+            }
+            for (Player p : dm.getWorld().getPlayers()) {
+                CharacterSheet s = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(p);
+                if (s != null && !s.isDead() && isNearby(dm.getLocation(), p.getLocation())) {
+                    rows.add(new String[]{s.getCharacterName(), String.valueOf(10 + s.getSkillBonus(skill) + shift)});
+                }
+            }
+            for (DndEntityInstance c : DndEntityInstance.getAll()) {
+                if (!c.isDead() && isNearby(dm.getLocation(), c.getLocation())) {
+                    rows.add(new String[]{c.getDisplayName(), String.valueOf(10 + c.getTemplate().getSkillBonus(skill) + shift)});
+                }
+            }
+            if (rows.isEmpty()) {
+                sender.sendMessage(Component.text("No one within " + NEARBY_FEET + " ft of you.", NamedTextColor.GRAY));
+                return true;
+            }
+        } else if (args[0].equalsIgnoreCase("all") || args[0].contains(",")) {
             List<CharacterSheet> sheets = resolveMany(sender, args[0]);
             if (sheets == null) return true;
             for (CharacterSheet s : sheets) rows.add(new String[]{s.getCharacterName(), String.valueOf(10 + s.getSkillBonus(skill) + shift)});
@@ -729,7 +759,7 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         // Names are suggested and read exactly as /dm adjust does: the same quoted list, and the name
         // collapsed into one slot, so "Balin the Smith" and "\"Balin the Smith\"" land on the same argument.
         if (args.length == 1) {
-            out.addAll(filter(List.of("clear", "active"), args[0]));
+            out.addAll(filter(List.of("clear", "active", "all", "nearby"), args[0]));
             out.addAll(CombatTargets.suggestions(args[0]));
             return out;
         }

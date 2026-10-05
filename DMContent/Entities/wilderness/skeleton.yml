@@ -1,5 +1,4 @@
 # SRD Skeleton. An undead, so it's what Divine Sense finds and Lay on Hands can't heal (#229).
-# Exhaustion immunity isn't listed: exhaustion isn't a condition in the game yet.
 id: skeleton
 name: "Skeleton"
 
@@ -26,12 +25,20 @@ condition_immunities: [poisoned]
 
 attacks:
   - name: "Shortsword"
+    item: shortsword       # held when a DM possesses it, and left on the body as loot
     to_hit: 4
     reach: "5 ft."
     damage: "1d6+2"
     damage_type: piercing
   - name: "Shortbow"
+    item: shortbow         # carries 2d10 arrows by default, rolled when it spawns (#257)
     to_hit: 4
     reach: "80/320 ft."
     damage: "1d6+2"
     damage_type: piercing
+
+# Stat block lines the game doesn't model: kept here so they're in front of the DM (/dm view).
+dm_notes: |
+  CR 1/4 (50 XP). Passive Perception 9.
+  Understands the languages it knew in life but can't speak.
+  Exhaustion immune too (exhaustion isn't in the game yet).

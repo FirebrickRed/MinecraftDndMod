@@ -181,6 +181,30 @@ public class CharacterCreationSession {
         return new ArrayList<>(out.values());
     }
 
+    /**
+     * Spells this character has for free whatever they pick: the subclass's {@code bonus_spells} (a
+     * cleric's domain spells) and the ones a custom choice grants (a Divine Soul's affinity: Chaos → Bane).
+     * Normalized ids. The spell picker shows these as fixed tiles, so a pick is never wasted on one.
+     */
+    public java.util.Set<String> alwaysKnownSpellIds() {
+        java.util.Set<String> out = new java.util.LinkedHashSet<>();
+        io.papermc.jkvttplugin.data.model.DndClass cls = selectedClass == null ? null
+                : io.papermc.jkvttplugin.data.loader.ClassLoader.getClass(selectedClass);
+        if (cls != null && selectedSubclass != null && cls.getSubclasses() != null) {
+            DndSubClass sub = cls.getSubclasses().get(selectedSubclass);
+            if (sub != null && sub.getBonusSpells() != null) for (String id : sub.getBonusSpells()) out.add(io.papermc.jkvttplugin.util.Util.normalize(id));
+        }
+        for (PendingChoice<?> pc : pendingChoices) {
+            PlayersChoice<?> choice = pc.getPlayersChoice();
+            if (choice == null || choice.getType() != PlayersChoice.ChoiceType.CUSTOM) continue;
+            for (Object picked : pc.getChosen()) {
+                ChoiceGrants g = picked instanceof String option ? choice.grantsFor(option) : null;
+                if (g != null) for (String id : g.bonusSpells()) out.add(io.papermc.jkvttplugin.util.Util.normalize(id));
+            }
+        }
+        return out;
+    }
+
     public PendingChoice<?> findPendingChoice(String id) {
         if (id == null) return null;
         for (var pc : pendingChoices) {
@@ -252,6 +276,28 @@ public class CharacterCreationSession {
             if (!pc.isComplete()) return false;
         }
         return true;
+    }
+
+    /**
+     * The scores this character will actually have: the base ones plus the race's and subrace's fixed
+     * bonuses and the ones the player allocated, as {@code CharacterSheet.applyRacialBonuses} applies them.
+     * Anything counted from an ability during creation (how many spells a prepared caster picks) has to
+     * use these: the base scores gave an artificer with INT 15 +1 two spells where the sheet has three.
+     */
+    public EnumMap<Ability, Integer> getFinalAbilityScores() {
+        EnumMap<Ability, Integer> scores = new EnumMap<>(getAbilityScores());
+        io.papermc.jkvttplugin.data.model.DndRace race = selectedRace == null ? null
+                : io.papermc.jkvttplugin.data.loader.RaceLoader.getRace(selectedRace);
+        if (race != null) {
+            if (race.getFixedAbilityScores() != null) race.getFixedAbilityScores().forEach((a, b) -> scores.merge(a, b, Integer::sum));
+            var subrace = selectedSubRace == null || race.getSubraces() == null ? null : race.getSubraces().get(selectedSubRace);
+            if (subrace != null && subrace.getFixedAbilityScores() != null) {
+                subrace.getFixedAbilityScores().forEach((a, b) -> scores.merge(a, b, Integer::sum));
+            }
+        }
+        racialBonusAllocations.forEach((a, b) -> scores.merge(a, b, Integer::sum));
+        if (io.papermc.jkvttplugin.config.PluginConfig.isAbilityScoreCap20()) scores.replaceAll((a, v) -> Math.min(20, v));
+        return scores;
     }
 
     public EnumMap<Ability, Integer> getAbilityScores() {

@@ -63,9 +63,9 @@ public final class DmViewMenu {
         if (creature != null) {
             // The stat block is only a few tiles, so it sits right here rather than behind a second menu.
             var template = creature.getTemplate();
-            inv.setItem(1, EntityStatBlockMenu.buildBasicStatsItem(creature, template));
-            inv.setItem(2, EntityStatBlockMenu.buildAbilitiesItem(template));
-            if (!template.getAttacks().isEmpty()) inv.setItem(3, EntityStatBlockMenu.buildAttacksItem(template));
+            inv.setItem(1, EntityStatTiles.buildBasicStatsItem(creature, template));
+            inv.setItem(2, EntityStatTiles.buildAbilitiesItem(template));
+            if (!template.getAttacks().isEmpty()) inv.setItem(3, EntityStatTiles.buildAttacksItem(template));
         } else {
             inv.setItem(2, tile(Material.WRITABLE_BOOK, "Character sheet", NamedTextColor.YELLOW, lines("Their full sheet"), "sheet"));
         }
