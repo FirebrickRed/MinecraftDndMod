@@ -137,8 +137,8 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 - [ ] **Out of a fight, Bane** at a creature, [Let it happen], it fails the save → "… is under Bane: …" and its next
       attack or save shows `-1d4[Bane]`. It saves → nothing on it. (#267)
-- [ ] **Out of a fight, a save spell with a condition** (a druid's Entangle is an area; use a cleric's Command, or
-      any single-target one): the target fails → "… is now <condition>!" and `/dm view <them>` lists it, with no
+- [ ] **Out of a fight, a save spell with a condition** (Charm Person, Cause Fear or Tasha's Hideous Laughter; any caster
+      who knows one): the target fails → "… is now <condition>!" and `/dm view <them>` lists it, with no
       "/dm adjust applies it" note to you. The same cast at a creature immune to it → "… is immune to being …". (#267)
 - [ ] **In a fight, the same three** (Bane, a condition, an immune creature) read exactly as before, in the same
       order: the effect line, the damage step, then the condition. (#267)
