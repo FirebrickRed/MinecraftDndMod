@@ -490,18 +490,16 @@ public class SpellCastHandler {
     static HealRoll healRoll(CharacterSheet sheet, DndSpell spell, Integer providedRoll, Integer providedTotal, boolean forceAuto) {
         Ability ability = sheet.castingAbilityFor(spell);
         int mod = ability != null ? sheet.getModifier(ability) : 0;
-        RollPrompt.Formula f = RollPrompt.split(spell.getHealing(), spell.getName());
-        String bonus = healBonus(sheet, spell);
-        if (providedTotal != null) return new HealRoll(Math.max(1, providedTotal), RollPrompt.yourTotal(providedTotal));
-        if (providedRoll != null) {
-            int amount = providedRoll + f.flat() + mod;
-            return new HealRoll(Math.max(1, amount), RollPrompt.youRolled(providedRoll, bonus, amount));
+        DiceAmount.Result r = DiceAmount.resolve(new RollService.RollInput(providedRoll, providedTotal, forceAuto),
+                spell.getHealing(), spell.getName(), mod, sheet.getSpellModBreakdown(spell),
+                io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll());
+        if (r.status() == DiceAmount.Status.NEEDS_ROLL) return null;
+        if (r.status() == DiceAmount.Status.BAD_DICE) {
+            // Healing dice the roller can't read count as 0, so the spell still heals its modifier (as before).
+            return new HealRoll(Math.max(1, mod), RollPrompt.gameRolled(RollPrompt.split(spell.getHealing(), spell.getName()).dice(),
+                    "0", healBonus(sheet, spell), mod));
         }
-        if (!forceAuto && !io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) return null;
-        io.papermc.jkvttplugin.util.DiceRoller.Rolled r = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(spell.getHealing());
-        int amount = (r == null ? 0 : r.total()) + mod;
-        String shown = r == null ? "0" : r.dice().isEmpty() ? String.valueOf(r.total()) : r.dice().toString();
-        return new HealRoll(Math.max(1, amount), RollPrompt.gameRolled(f.dice(), shown, bonus, amount));
+        return new HealRoll(Math.max(1, r.amount()), r.work()); // a healing spell never heals less than 1
     }
 
     /** A spell formula's own flat part, labelled with the spell ("+1[Magic Missile]"), or "" if none. */

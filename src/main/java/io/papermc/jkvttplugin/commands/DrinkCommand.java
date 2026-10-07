@@ -98,32 +98,24 @@ public class DrinkCommand implements CommandExecutor {
         RollService.RollInput input = RollService.parseInput(args, player);
         String dice = item.getHealing();
 
-        if (input.providedTotal() != null) {
-            player.sendMessage(Component.text(io.papermc.jkvttplugin.combat.RollPrompt.yourTotal(input.providedTotal()), NamedTextColor.GRAY));
-            return Math.max(0, input.providedTotal());
-        }
-        if (input.providedRoll() != null) {
-            // "I rolled" is the dice (the 2d4); the game adds the potion's own +2, labelled as the potion's.
-            RollPrompt.Formula f = RollPrompt.split(dice, item.getName());
-            int total = input.providedRoll() + f.flat();
-            player.sendMessage(Component.text(RollPrompt.youRolled(input.providedRoll(), f.label(), total), NamedTextColor.GRAY));
-            return Math.max(0, total);
-        }
-        if (input.forceAuto() || PluginConfig.isAutoRoll()) {
-            DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(dice);
-            if (rolled == null) {
+        // "I rolled" is the dice (the 2d4); the potion's own +2 is added, labelled as the potion's. Nothing of
+        // the drinker's is added to a potion.
+        io.papermc.jkvttplugin.combat.DiceAmount.Result rolled = io.papermc.jkvttplugin.combat.DiceAmount.resolve(
+                input, dice, item.getName(), 0, null, PluginConfig.isAutoRoll());
+        switch (rolled.status()) {
+            case BAD_DICE -> {
                 player.sendMessage(Component.text(item.getName() + " has an unreadable healing value ('" + dice + "').", NamedTextColor.RED));
                 return null;
             }
-            // Shown the same way as a typed roll: the dice, then the potion's own +2, labelled.
-            RollPrompt.Formula f = RollPrompt.split(dice, item.getName());
-            String shown = rolled.dice().isEmpty() ? String.valueOf(rolled.total()) : rolled.dice().toString();
-            player.sendMessage(Component.text(RollPrompt.gameRolled(f.dice(), shown, f.label(), rolled.total()),
-                    NamedTextColor.GRAY)); // the game rolled it: show the dice
-            return Math.max(0, rolled.total());
+            case NEEDS_ROLL -> {
+                promptRoll(player, item);
+                return null;
+            }
+            default -> {
+                player.sendMessage(Component.text(rolled.work(), NamedTextColor.GRAY));
+                return Math.max(0, rolled.amount());
+            }
         }
-        promptRoll(player, item);
-        return null;
     }
 
     /** Ask for the roll the same way every other physical-dice prompt does: fill chat, don't act. */

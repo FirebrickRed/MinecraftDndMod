@@ -108,25 +108,19 @@ public final class FeatureUse {
         int bonus = h.addLevel() ? sheet.getTotalLevel() : 0;
         String label = bonus == 0 ? null : "+" + bonus + "[" + sheet.getMainClass().getName() + " level]";
 
-        RollService.RollInput in = RollService.parseInput(words, player);
-        int total;
-        String work;
-        if (in.providedTotal() != null) {
-            total = in.providedTotal();
-            work = RollPrompt.yourTotal(total);
-        } else if (in.providedRoll() != null) {
-            total = in.providedRoll() + bonus;
-            work = RollPrompt.youRolled(in.providedRoll(), label, total);
-        } else if (in.forceAuto() || PluginConfig.isAutoRoll()) {
-            DiceRoller.Rolled r = DiceRoller.rollOrFlat(h.dice());
-            if (r == null) { player.sendMessage(Component.text(f.getName() + " has bad dice in its YAML: " + h.dice(), NamedTextColor.RED)); return false; }
-            total = r.total() + bonus;
-            work = RollPrompt.gameRolled(h.dice(), r.shown(), label, total);
-        } else {
+        DiceAmount.Result rolled = DiceAmount.resolve(RollService.parseInput(words, player), h.dice(), f.getName(),
+                bonus, label, PluginConfig.isAutoRoll());
+        if (rolled.status() == DiceAmount.Status.BAD_DICE) {
+            player.sendMessage(Component.text(f.getName() + " has bad dice in its YAML: " + h.dice(), NamedTextColor.RED));
+            return false;
+        }
+        if (rolled.status() == DiceAmount.Status.NEEDS_ROLL) {
             // Nothing spent yet: the same three buttons as every roll.
             player.sendMessage(RollPrompt.again(player, "💚 Roll " + f.getName() + ":", h.dice(), label));
             return false;
         }
+        int total = rolled.amount();
+        String work = rolled.work();
         if (res != null) res.consume(f.getCostAmount());
         say(player, session, Component.text("💚 " + self.getDisplayName() + " uses " + f.getName() + ". " + work, NamedTextColor.GREEN));
         DamageHandler.applyHealing(session, self, Math.max(0, total));

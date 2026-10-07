@@ -303,18 +303,16 @@ public final class OutOfCombatAttack {
         RollService.RollInput in = RollService.parseInput(args, player);
         Integer amount = null;
         String work = null;
-        RollPrompt.Formula f = RollPrompt.split(p.dice(), p.source()); // "1d4" + "+1[Magic Missile]"
-        if (in.providedTotal() != null) { amount = in.providedTotal(); work = RollPrompt.yourTotal(amount); }
-        else if (in.providedRoll() != null) {
-            amount = in.providedRoll() + f.flat();
-            work = RollPrompt.youRolled(in.providedRoll(), f.label(), amount);
-        } else if (in.forceAuto()) {
-            DiceRoller.Rolled r = DiceRoller.rollOrFlat(p.dice());
-            if (r == null) { player.sendMessage(Component.text("There are no dice to roll — type the amount.", NamedTextColor.RED)); return; }
-            amount = r.total();
-            String shown = r.dice().isEmpty() ? String.valueOf(r.total()) : r.dice().toString();
-            work = RollPrompt.gameRolled(f.dice(), shown, f.label(), amount);
-        } else if (args.length > 0) {
+
+        // Damage here is only rolled by the game on an explicit autoRoll, whatever the server's roll mode:
+        // with no roll words, a bare number is the amount (see the DiceAmount tests for how the others differ).
+        DiceAmount.Result rolled = DiceAmount.resolve(in, p.dice(), p.source(), 0, null, false);
+        if (rolled.status() == DiceAmount.Status.BAD_DICE) {
+            player.sendMessage(Component.text("There are no dice to roll — type the amount.", NamedTextColor.RED));
+            return;
+        }
+        if (rolled.ok()) { amount = rolled.amount(); work = rolled.work(); }
+        else if (args.length > 0) {
             try { amount = Integer.parseInt(args[args.length - 1].trim()); work = RollPrompt.yourTotal(amount); } catch (NumberFormatException ignored) {}
         }
         if (amount == null) {

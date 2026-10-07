@@ -622,23 +622,15 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
         }
         int con = sheet.getModifier(io.papermc.jkvttplugin.data.model.enums.Ability.CONSTITUTION);
         String conLabel = con == 0 ? null : (con > 0 ? "+" : "") + con + "[CON]";
-        var in = io.papermc.jkvttplugin.combat.RollService.parseInput(rest, player);
-        int healed;
-        String work;
-        if (in.providedTotal() != null) {
-            healed = in.providedTotal();
-            work = io.papermc.jkvttplugin.combat.RollPrompt.yourTotal(healed);
-        } else if (in.providedRoll() != null) {
-            healed = in.providedRoll() + con;
-            work = io.papermc.jkvttplugin.combat.RollPrompt.youRolled(in.providedRoll(), conLabel, healed);
-        } else if (in.forceAuto() || io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll()) {
-            var r = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(sheet.hitDieDice());
-            healed = r.total() + con;
-            work = io.papermc.jkvttplugin.combat.RollPrompt.gameRolled(sheet.hitDieDice(), r.shown(), conLabel, healed);
-        } else {
+        var rolled = io.papermc.jkvttplugin.combat.DiceAmount.resolve(
+                io.papermc.jkvttplugin.combat.RollService.parseInput(rest, player), sheet.hitDieDice(), "Hit Die",
+                con, conLabel, io.papermc.jkvttplugin.config.PluginConfig.isAutoRoll());
+        if (!rolled.ok()) { // nothing typed (a Hit Die is always readable dice): the roll buttons
             player.sendMessage(hitDiePrompt(sheet));
             return;
         }
+        int healed = rolled.amount();
+        String work = rolled.work();
         sheet.spendHitDie();
         player.sendMessage(Component.text("💚 Hit Die: " + work, NamedTextColor.GREEN));
         var self = io.papermc.jkvttplugin.combat.CombatTargets.forPlayer(player);

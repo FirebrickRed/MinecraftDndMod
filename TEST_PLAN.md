@@ -203,7 +203,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       cave keeps full distance (they just see darkness). Tell me if 2 chunks feels too tight or the switch
       too jumpy; `sight.darkvision_view_limit: false` turns it off.
 
-
 ---
 
 # Any character
