@@ -488,6 +488,9 @@ buttons. Try both; whichever you like less gets removed.
       applied. They save → half. Without `half`, a save takes nothing. (#202)
 - [ ] The same line in a command block with `@p`, under a pressure plate → stepping on it does all of that.
       `… dc 13 8 type piercing` (a number, not dice) deals exactly 8 on a fail. (#202)
+- [ ] **A creature's old save buttons:** `/dm trap Wolf constitution dc 12 3d6 type poison`, answer the save. Cast
+      Resistance on the wolf (or give it any one-use bonus), then click the **same** roll buttons again → "That
+      save has already been settled.", nothing is rolled, and the wolf still has its Resistance. (#272)
 - [ ] `/dm trap Wolf constitution dc 12 3d6 type poison` → you get the creature's save buttons; answer them and the
       damage lands on the wolf. (#202)
 - [ ] A chest annotated as trapped with a DC and damage: when a player pokes it, your **[Trigger]** fills

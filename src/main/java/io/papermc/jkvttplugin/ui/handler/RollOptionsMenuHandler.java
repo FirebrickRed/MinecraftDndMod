@@ -129,10 +129,11 @@ public class RollOptionsMenuHandler {
     static Answering answering(CharacterSheet character, String type, String value, String answeredRequest) {
         if (answeredRequest != null) {
             io.papermc.jkvttplugin.dm.CheckManager.Pending p = io.papermc.jkvttplugin.dm.CheckManager.peekRequest(answeredRequest);
-            io.papermc.jkvttplugin.combat.SaveOutcome.Request req =
-                    io.papermc.jkvttplugin.combat.SaveOutcome.find(answeredRequest, character.getPlayerId());
-            boolean thisSave = "SAVE".equals(type) && req != null && (req.ability() == null || req.ability().name().equals(value));
-            return p != null && thisSave ? new Answering(p, false) : new Answering(null, true);
+            // The same test the called check passed (SaveOutcome.refusal): who, a save, its ability, its DC.
+            boolean isSave = "SAVE".equals(type);
+            boolean thisSave = p != null && io.papermc.jkvttplugin.combat.SaveOutcome.refusal(answeredRequest,
+                    character.getPlayerId(), isSave, isSave ? abilityOf(type, value) : null, p.dc()) == null;
+            return thisSave ? new Answering(p, false) : new Answering(null, true);
         }
         io.papermc.jkvttplugin.dm.CheckManager.Pending p = io.papermc.jkvttplugin.dm.CheckManager.peekPending(character.getPlayerId());
         return new Answering(p != null && p.requestId() != null ? null : p, false);

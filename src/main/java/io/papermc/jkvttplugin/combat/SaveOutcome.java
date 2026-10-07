@@ -71,6 +71,25 @@ public final class SaveOutcome {
         return r != null && r.saver().equals(saver) ? r : null;
     }
 
+    /**
+     * Why the save being made isn't the one this request is waiting on, or null when it is. The one test
+     * for every path that's handed a request id (the player's called check, their answer, a creature's
+     * save), asked before anything is prompted, rolled or used up: who is saving, that it's a save, its
+     * ability and its DC must all be the request's. An id that's gone (answered, ruled, lapsed) is refused too.
+     *
+     * @param ability the save's ability; the request's is only compared when it named one
+     * @param dc      the DC the save is being made against, or null for none
+     */
+    public static String refusal(String requestId, UUID saver, boolean isSave, Ability ability, Integer dc) {
+        Request r = find(requestId);
+        if (r == null) return "That save has already been settled.";
+        if (!r.saver().equals(saver)) return "That save is someone else's.";
+        if (!isSave) return "That request is waiting on a saving throw.";
+        if (r.ability() != null && r.ability() != ability) return "That request is waiting on a " + r.ability().getAbbreviation() + " save.";
+        if (dc == null || dc != r.dc()) return "That request is waiting on a save against DC " + r.dc() + ".";
+        return null;
+    }
+
     /** What this request's save is against; empty for no request, or one that's gone. */
     public static Set<String> tagsOf(String requestId) {
         Request r = find(requestId);
