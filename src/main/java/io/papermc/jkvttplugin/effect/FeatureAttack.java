@@ -13,16 +13,16 @@ import java.util.Set;
  * it fills {@code /combat attack <target> <weapon> bonus} rather than doing anything itself, so the
  * roll goes through the one attack path.
  *
- * <pre>attack: { weapon: unarmed, requires: [no_armor, no_shield, only_monk_weapons],
- *          after_attack_with: [unarmed, monk_weapon] }</pre>
+ * <pre>attack: { weapon: unarmed, requires: [no_armor, no_shield, only_feature_weapons],
+ *          after_attack_with: [unarmed, feature_weapon] }</pre>
  *
  * {@code after_attack_with} (#259): it only follows an Attack action made with one of these, whatever
- * {@code combat.bonus_attack_timing} says. {@code unarmed}, and {@code monk_weapon} for any weapon the
+ * {@code combat.bonus_attack_timing} says. {@code unarmed}, and {@code feature_weapon} for any weapon the
  * character's {@code weapon_ability} covers. Absent: it follows the timing setting, like an off-hand attack.
  */
 public record FeatureAttack(String weapon, Requirements requires, Set<String> afterAttackWith, List<String> problems) {
 
-    public static final Set<String> AFTER_KNOWN = Set.of("unarmed", "monk_weapon");
+    public static final Set<String> AFTER_KNOWN = Set.of("unarmed", "feature_weapon");
 
     public static FeatureAttack parse(Map<?, ?> m) {
         List<String> problems = new ArrayList<>();
@@ -35,7 +35,7 @@ public record FeatureAttack(String weapon, Requirements requires, Set<String> af
         for (String s : ParseUtil.normalizeStringList(m.get("after_attack_with"))) {
             String a = s.trim().toLowerCase();
             if (AFTER_KNOWN.contains(a)) after.add(a);
-            else problems.add("after_attack_with '" + s + "' isn't one of monk_weapon, unarmed");
+            else problems.add("after_attack_with '" + s + "' isn't one of feature_weapon, unarmed");
         }
         return new FeatureAttack(weapon.trim().toLowerCase(), Requirements.parse(m.get("requires"), problems),
                 Set.copyOf(after), List.copyOf(problems));

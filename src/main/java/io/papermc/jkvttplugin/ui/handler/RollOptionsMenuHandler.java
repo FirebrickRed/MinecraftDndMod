@@ -261,7 +261,8 @@ public class RollOptionsMenuHandler {
     private static void maybeBreakThievesTools(CharacterSheet character, String value, int total,
                                                io.papermc.jkvttplugin.dm.CheckManager.Pending p) {
         String tool = io.papermc.jkvttplugin.data.model.enums.ToolRegistry.idOf(value.substring(value.indexOf(':') + 1));
-        if (!"thieves_tools".equals(tool) || p.dc() == null) return;
+        if (!io.papermc.jkvttplugin.dm.LockTools.is(tool) || p.dc() == null) return; // any item tagged `lockpick`
+        String toolName = io.papermc.jkvttplugin.data.model.enums.ToolRegistry.displayName(tool);
         boolean breaks = switch (io.papermc.jkvttplugin.config.PluginConfig.getThievesToolsBreak()) {
             case NEVER -> false;
             case ALWAYS -> true;
@@ -278,8 +279,8 @@ public class RollOptionsMenuHandler {
             if (stack.getAmount() > 1) stack.setAmount(stack.getAmount() - 1);
             else owner.getInventory().setItem(i, null);
             character.removeEquipmentItem(tool, 1);
-            owner.sendMessage(Component.text("🔧 Your thieves' tools snap — that set is ruined.", NamedTextColor.RED));
-            Component note = Component.text("🔧 " + character.getCharacterName() + "'s thieves' tools broke ("
+            owner.sendMessage(Component.text("🔧 Your " + toolName + " snap: that set is ruined.", NamedTextColor.RED));
+            Component note = Component.text("🔧 " + character.getCharacterName() + "'s " + toolName + " broke ("
                     + (total < p.dc() ? "failed" : "used") + ", DC " + p.dc() + ").", NamedTextColor.GRAY);
             for (Player online : Bukkit.getOnlinePlayers()) {
                 if (io.papermc.jkvttplugin.dm.DMManager.isDM(online)) online.sendMessage(note);

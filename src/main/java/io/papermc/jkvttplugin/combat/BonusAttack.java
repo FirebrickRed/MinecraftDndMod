@@ -63,13 +63,13 @@ public final class BonusAttack {
                 if (!sameWeapon) continue;
                 if (!sheet.meets(f.getAttack().requires())) {
                     // Say which part of "unarmed or wielding only monk weapons" isn't true (#259).
-                    DndWeapon other = f.getAttack().requires().contains("only_monk_weapons") ? sheet.heldNonMonkWeapon() : null;
+                    DndWeapon other = f.getAttack().requires().contains("only_feature_weapons") ? sheet.heldOtherWeapon() : null;
                     if (other != null) featureRefusal = f.getName() + " isn't available while you're holding a " + other.getName() + ".";
                     continue;
                 }
                 // The Attack action it follows has to be the right kind, whatever the timing setting (#259).
                 if (f.getAttack().followsAnAttack() && !followed(sheet, f.getAttack(), attackActionWith)) {
-                    featureRefusal = f.getName() + " comes after an Attack action made with an unarmed strike or a monk weapon"
+                    featureRefusal = f.getName() + " comes after an Attack action made with " + followsWhat(sheet, f.getAttack())
                             + (attackActionWith == null ? ": attack first."
                             : "; this turn's was made with " + nameOf(attackActionWith) + ".");
                     continue;
@@ -93,8 +93,8 @@ public final class BonusAttack {
     private static boolean followed(CharacterSheet sheet, io.papermc.jkvttplugin.effect.FeatureAttack attack, String attackActionWith) {
         if (attackActionWith == null) return false;
         if (attackActionWith.equals("unarmed")) return attack.afterAttackWith().contains("unarmed");
-        return attack.afterAttackWith().contains("monk_weapon")
-                && sheet.isMonkWeapon(io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(attackActionWith));
+        return attack.afterAttackWith().contains("feature_weapon")
+                && sheet.isFeatureWeapon(io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(attackActionWith));
     }
 
     /** True if a bonus attack with this weapon is a feature that only follows the Attack action (the greyed "after your attack"). */
@@ -105,6 +105,17 @@ public final class BonusAttack {
             if (f.getAttack().isUnarmed() ? weapon == null : weapon != null && f.getAttack().weapon().equalsIgnoreCase(weapon.getId())) return true;
         }
         return false;
+    }
+
+    /** "an unarmed strike or a Martial Arts weapon": what the Attack action has to have been made with. */
+    private static String followsWhat(CharacterSheet sheet, io.papermc.jkvttplugin.effect.FeatureAttack attack) {
+        java.util.List<String> parts = new java.util.ArrayList<>();
+        if (attack.afterAttackWith().contains("unarmed")) parts.add("an unarmed strike");
+        if (attack.afterAttackWith().contains("feature_weapon")) {
+            String source = sheet.featureWeaponSource();
+            parts.add(source != null ? "a " + source + " weapon" : "one of its weapons");
+        }
+        return String.join(" or ", parts);
     }
 
     private static String nameOf(String weaponId) {

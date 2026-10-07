@@ -175,7 +175,7 @@ features:
 |---|---|---|
 | `base` | 10 | The flat part (13 for natural armor, 17 for a tortle's shell). |
 | `add` | none | Ability modifiers added, **full names** (`dexterity`, not `dex`). |
-| `requires` | none | `no_armor`, `no_shield`, and (for `unarmed_strike`, `weapon_ability` and an `attack:` block) `only_monk_weapons`: nothing in either hand but weapons the character's own `weapon_ability` covers, which is the monk's "unarmed or wielding only monk weapons" (#259). An AC formula ignores that one. Leave `no_shield` off and a shield adds its +2 on top (a barbarian's does; a monk's doesn't). |
+| `requires` | none | `no_armor`, `no_shield`, and (for `unarmed_strike`, `weapon_ability` and an `attack:` block) `only_feature_weapons`: nothing in either hand but weapons the character's own `weapon_ability` covers, which is the monk's "unarmed or wielding only monk weapons" (#259). An AC formula ignores that one. Leave `no_shield` off and a shield adds its +2 on top (a barbarian's does; a monk's doesn't). |
 
 The character's AC is the **best** of the normal calculation (armor or 10 + DEX, plus a shield) and
 every formula that applies, so a formula can only help. The sheet's AC tile names the one that won.
@@ -199,17 +199,17 @@ Martial Arts in `monk.yml` is the worked example. Two passive effects and one bo
         unarmed_strike:
           damage_by_level: [1d4, 1d4, 1d4, 1d4, 1d6, …]   # 20 entries; past the end, the last holds
           ability: [strength, dexterity]                  # one, or a list: the better one is used
-          requires: [no_armor, no_shield, only_monk_weapons]
+          requires: [no_armor, no_shield, only_feature_weapons]
         weapon_ability:
           weapons: [shortsword, simple_melee_weapon]      # weapon ids and/or weapon tags
           exclude_properties: [two_handed, heavy]
           ability: [strength, dexterity]
           min_die: unarmed                                # roll the unarmed die when it's bigger
-          requires: [no_armor, no_shield, only_monk_weapons]
+          requires: [no_armor, no_shield, only_feature_weapons]
   - id: martial_arts_strike
     name: "Martial Arts: bonus unarmed strike"
     activation: bonus_action
-    attack: { weapon: unarmed, requires: [no_armor, no_shield, only_monk_weapons], after_attack_with: [unarmed, monk_weapon] }
+    attack: { weapon: unarmed, requires: [no_armor, no_shield, only_feature_weapons], after_attack_with: [unarmed, feature_weapon] }
 ```
 
 - Without an `unarmed_strike`, an unarmed strike is 1 + STR (PHB p.195).
@@ -217,9 +217,9 @@ Martial Arts in `monk.yml` is the worked example. Two passive effects and one bo
   weapon's own (STR, or the better of STR/DEX for finesse). A magic weapon counts as its `base:`.
 - A feature with an **`attack:`** block *is* an attack. `/combat use` and `/combat bonusAction` fill
   `/combat attack <target> <weapon> bonus`. By default it follows `combat.bonus_attack_timing`, like
-  two-weapon fighting's off-hand attack. **`after_attack_with: [unarmed, monk_weapon]`** ties it to the
+  two-weapon fighting's off-hand attack. **`after_attack_with: [unarmed, feature_weapon]`** ties it to the
   Attack action instead: it's only allowed after an Attack action made with an unarmed strike
-  (`unarmed`) or a weapon the character's `weapon_ability` covers (`monk_weapon`), whatever the timing
+  (`unarmed`) or a weapon the character's `weapon_ability` covers (`feature_weapon`), whatever the timing
   setting says (#259).
 - The attack prompt says what these rules changed ("Martial Arts: 1d4 + DEX instead of 1 + STR", "The
   Quarterstaff's own 1d6 beats the Martial Arts 1d4") or why they're off ("Martial Arts is off: you're
@@ -302,7 +302,10 @@ subclasses:
     conditional_advantages: []                  # saving_throw + condition is applied (as on races)
     features_by_level: { 1: ["Dark One's Blessing. …"] }
     custom_model: fiend_icon
+    material: BOOK                              # the vanilla item under this tile; absent → the class's subclass_material → paper
 ```
+
+`subclass_material:` on the **class** (next to `subclass_type_name`) sets that item for all its subclasses at once.
 
 **Two spell rules, two keys (#228).** `bonus_spells` are simply known (or always prepared) and don't
 use up a pick: Cleric domains, Paladin oaths, Aberrant Mind / Clockwork Soul sorcerers. `expanded_spells`

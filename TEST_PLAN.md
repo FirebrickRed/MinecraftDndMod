@@ -118,7 +118,7 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
       empty off hand, then `/combat attack <t> unarmed bonus` → "…isn't available while you're holding a
       Longsword". (#259)
 - [ ] Attack with a shortbow, then `/combat attack <t> unarmed bonus` → refused: "comes after an Attack action
-      made with an unarmed strike or a monk weapon; this turn's was made with a Shortbow". Attack with a
+      made with an unarmed strike or a Martial Arts weapon; this turn's was made with a Shortbow". Attack with a
       quarterstaff instead → the bonus punch is allowed. (#259)
 - [ ] Before attacking at all, `/combat attack <t> unarmed bonus` → refused ("attack first"), and
       `/combat bonusAction` shows the unarmed strike greyed with "After your Attack action". A fighter's
@@ -642,6 +642,12 @@ You play a bard; they're the one inspired.
 
 - [ ] `/dm object lock` a chest; they click [Open it] → it stays shut and you get a ping.
 - [ ] A rogue with thieves' tools → the ping has **[Thieves' tools]** and "proficient (expertise), carrying them".
+- [ ] Give thieves' tools a second, homebrew sibling: copy the item in `adventuring_gear.yml` as `skeleton_keys`
+      (tags `[tool, lockpick]`), `/dm reload`, carry only those → the ping's button is **[Skeleton Keys]**, and a
+      failed graded check with them breaks a set. (#261)
+- [ ] Creation, subclass step: cleric domains are enchanted books, warlock patrons books, sorcerer origins blaze
+      powder (unchanged, but now from `subclass_material:` in the class YAML). Put `material: NETHER_STAR` on one
+      domain, `/dm reload` → that tile alone changes. (#261)
 - [ ] Click [Thieves' tools], add a DC → `+4[Thieves' Tools ×2]` in the breakdown.
 - [ ] A character without the proficiency → just `+DEX`.
 - [ ] `/dm object key brass_key` on the chest; without the key → locked, the ping says "they aren't carrying it".

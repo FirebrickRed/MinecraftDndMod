@@ -264,6 +264,7 @@ the pieces those three share (proficiency ids, `player_choices`, duplicate profi
   already has. `CharacterSheet.hasExpertise`, persisted as `expertise`. **Tool checks**: `/dm check <p> tool <tool>`
   → `getToolCheckBonus` (ability + tool proficiency, ×2 with expertise); the ability defaults to the item's
   `check_ability:` (thieves' tools → DEX). Picking a lock is a thieves' tools check, not Sleight of Hand.
+- **Lock tools are a tag** (#261): any item tagged `lockpick` (`dm/LockTools`) is offered on the DM's lock prompt and can break on a failed graded check. Never compare against the id `thieves_tools`. A subclass's menu tile item is its `material:`, else the class's `subclass_material:`. #261 lists what's still named or fixed in code.
 
 ### Icons & Materials (Resource Pack)
 
@@ -806,7 +807,7 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     **`/combat attack` works out what an attack costs** (`AttackCost.decide`): the Action (starting the
     Attack action, `TurnState.markAttackAction`), then the Attack action's further attacks (Extra Attack,
     #153; 1 per action until level-up), then the bonus action if a bonus attack fits the weapon
-    (`BonusAttack.check`: off-hand light weapon, or a feature with an `attack:` block). Martial Arts (#259): `requires: only_monk_weapons` reads both hands (`CharacterSheet.heldNonMonkWeapon`; a monk weapon is whatever the character's `weapon_ability` covers), and the bonus strike's `after_attack_with:` ties it to an Attack action made unarmed or with a monk weapon (`TurnState.getAttackActionWith`), whatever the timing setting; `AttackHandler.weaponRuleNotes` is the prompt's "Martial Arts: 1d4 + DEX instead of 1 + STR" line. The word `bonus`
+    (`BonusAttack.check`: off-hand light weapon, or a feature with an `attack:` block). Martial Arts (#259): `requires: only_feature_weapons` reads both hands (`CharacterSheet.heldOtherWeapon`; a monk weapon is whatever the character's `weapon_ability` covers), and the bonus strike's `after_attack_with:` ties it to an Attack action made unarmed or with a monk weapon (`TurnState.getAttackActionWith`), whatever the timing setting; `AttackHandler.weaponRuleNotes` is the prompt's "Martial Arts: 1d4 + DEX instead of 1 + STR" line. The word `bonus`
     asks for the bonus action while the Action is still free. `combat.bonus_attack_timing`: `any_time`
     (default, BG3) or `after_attack_action` (tabletop). The action bar names what the bonus action is
     good for (`READY: Martial Arts`, or — when nothing). `bonusAction used` is the

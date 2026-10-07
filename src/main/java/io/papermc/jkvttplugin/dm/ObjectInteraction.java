@@ -136,7 +136,7 @@ public final class ObjectInteraction {
                                 "Ask them what they're doing, then finish the command — e.g. "
                                 + "perception (searching), investigation (how it's put together), "
                                 + "athletics (force it). Picking the lock or disarming a trap is the "
-                                + "[Thieves' tools] button."))))
+                                + "tool button beside this one."))))
                 .append(Component.text(" "))
                 .append(thievesToolsButton(player));
         toDms(msg);
@@ -149,8 +149,12 @@ public final class ObjectInteraction {
      * DM nothing new and the player nothing at all (these messages are DM-only).
      */
     private static Component thievesToolsButton(Player player) {
-        return dmButton("[Thieves' tools]", "/dm check " + player.getName() + " tool thieves_tools dc ",
-                "DEX + thieves' tools proficiency (doubled with expertise). Add the DC and Enter.");
+        // Whichever lock tool this character has (any item tagged `lockpick`), not the id thieves_tools.
+        String tool = LockTools.best(io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player), player);
+        if (tool == null) return Component.empty(); // this content has no lock tools
+        String name = io.papermc.jkvttplugin.data.model.enums.ToolRegistry.displayName(tool);
+        return dmButton("[" + name + "]", "/dm check " + player.getName() + " tool " + tool + " dc ",
+                "A check with " + name + ": the ability + proficiency with them (doubled with expertise). Add the DC and Enter.");
     }
 
     /**
@@ -161,8 +165,10 @@ public final class ObjectInteraction {
      */
     private static Component thievesToolsStatus(Player player) {
         var sheet = io.papermc.jkvttplugin.character.ActiveCharacterTracker.getActiveCharacter(player);
+        String tool = LockTools.best(sheet, player);
+        if (tool == null) return Component.empty();
         String status = sheet == null ? "no active character"
-                : io.papermc.jkvttplugin.commands.CheckCommand.toolStatus(sheet, player, "thieves_tools");
+                : io.papermc.jkvttplugin.commands.CheckCommand.toolStatus(sheet, player, tool);
         return Component.text("   " + (sheet != null ? sheet.getCharacterName() + ": " : "") + status, NamedTextColor.DARK_GRAY);
     }
 

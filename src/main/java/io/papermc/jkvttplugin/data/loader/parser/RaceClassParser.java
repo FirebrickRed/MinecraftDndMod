@@ -114,6 +114,16 @@ public final class RaceClassParser {
         return result;
     }
 
+    /** A class's {@code subclass_material:} is the tile item for every subclass that doesn't name its own. */
+    public static Map<String, DndSubClass> withDefaultMaterial(Map<String, DndSubClass> subclasses, String material) {
+        if (material != null && !material.isBlank()) {
+            for (DndSubClass sub : subclasses.values()) {
+                if (sub.getMaterial() == null || sub.getMaterial().isBlank()) sub.setMaterial(material);
+            }
+        }
+        return subclasses;
+    }
+
     public static DndSubClass parseSubClass(String id, Map<String, Object> data, String className) {
         DndSubClass subclass = new DndSubClass();
         subclass.setId(id);
@@ -121,6 +131,7 @@ public final class RaceClassParser {
         subclass.setParentClass(className);
         subclass.setDescription((String) data.getOrDefault("description", ""));
         subclass.setCustomModel((String) data.get("custom_model")); // resource-pack model name
+        subclass.setMaterial(ParseUtil.asString(data.get("material"), null)); // vanilla item under the tile
 
         // Parse features by level
         subclass.setFeaturesByLevel(ParseUtil.parseLevelStringListMap(data.get("features_by_level")));

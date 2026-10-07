@@ -183,6 +183,7 @@ multiclass_requirements:
   Wisdom: 13
 subclass_level: 1
 subclass_type_name: Divine Domain
+subclass_material: ENCHANTED_BOOK        # the item every subclass tile shows; a subclass's own material: overrides it
 subclasses:
   life_domain:
     name: Life Domain

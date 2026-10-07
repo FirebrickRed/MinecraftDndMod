@@ -217,16 +217,18 @@ public class DndSubClass {
         this.customModel = customModel;
     }
 
-    /** The vanilla item under the subclass's menu tile, by parent class (a {@code custom_model:} overlays it). */
-    public Material getIconMaterial() {
-        if (parentClass == null) return Material.ENCHANTED_BOOK;
+    private String material; // vanilla item under the menu tile: its own `material:`, else the class's `subclass_material:`
 
-        return switch (Util.normalize(parentClass)) {
-            case "cleric" -> Material.ENCHANTED_BOOK;
-            case "warlock" -> Material.BOOK;
-            case "sorcerer" -> Material.BLAZE_POWDER;
-            default -> Material.PAPER;
-        };
+    public String getMaterial() { return material; }
+    public void setMaterial(String material) { this.material = material; }
+
+    /**
+     * The vanilla item under the subclass's menu tile (a {@code custom_model:} overlays it): the
+     * subclass's {@code material:}, else its class's {@code subclass_material:}, else paper. It used to
+     * be picked by the parent class's name, so a homebrew class's subclasses were always paper.
+     */
+    public Material getIconMaterial() {
+        return Util.parseMaterial(material, Material.PAPER);
     }
 
     /**

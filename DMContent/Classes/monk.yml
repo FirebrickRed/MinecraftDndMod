@@ -35,7 +35,7 @@ features:
         unarmed_strike:
           damage_by_level: [1d4, 1d4, 1d4, 1d4, 1d6, 1d6, 1d6, 1d6, 1d6, 1d6, 1d8, 1d8, 1d8, 1d8, 1d8, 1d8, 1d10, 1d10, 1d10, 1d10]
           ability: [strength, dexterity]
-          requires: [no_armor, no_shield, only_monk_weapons]
+          requires: [no_armor, no_shield, only_feature_weapons]
         # Monk weapons: shortswords and simple melee weapons that aren't two-handed or heavy. They can use
         # DEX, and roll the Martial Arts die when it's bigger than their own.
         weapon_ability:
@@ -43,13 +43,13 @@ features:
           exclude_properties: [two_handed, heavy]
           ability: [strength, dexterity]
           min_die: unarmed
-          requires: [no_armor, no_shield, only_monk_weapons]
+          requires: [no_armor, no_shield, only_feature_weapons]
   - id: martial_arts_strike
     name: "Martial Arts: bonus unarmed strike"
     activation: bonus_action
     # After an Attack action made with an unarmed strike or a monk weapon, one unarmed strike as a bonus
     # action (PHB p.78), whatever combat.bonus_attack_timing says. Fills /combat attack <target> unarmed bonus.
-    attack: { weapon: unarmed, requires: [no_armor, no_shield, only_monk_weapons], after_attack_with: [unarmed, monk_weapon] }
+    attack: { weapon: unarmed, requires: [no_armor, no_shield, only_feature_weapons], after_attack_with: [unarmed, feature_weapon] }
 features_by_level:
   1:
     - name: Unarmored Defense

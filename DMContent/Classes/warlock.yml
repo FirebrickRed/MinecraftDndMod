@@ -96,6 +96,7 @@ multiclass_requirements:
   Charisma: 13
 subclass_level: 1
 subclass_type_name: Otherworldly Patron
+subclass_material: BOOK        # the item every subclass tile shows; a subclass's own material: overrides it
 # A patron's spells are an EXPANDED LIST (PHB p.108): extra options when you learn a warlock spell,
 # each still costing one of your spells known. That's expanded_spells. (A cleric's domain spells are
 # the other rule, always prepared for free: bonus_spells. additional_spells are free bonus cantrips.)

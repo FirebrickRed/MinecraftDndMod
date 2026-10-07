@@ -720,7 +720,7 @@ public class CharacterSheet {
         int level = getTotalLevel();
         for (var e : standingEffects()) {
             var u = e.getValue().getUnarmedStrike();
-            if (u == null || u.dieAt(level) == null || !u.getRequires().met(equippedArmor != null, holdingShield(), holdsOnlyMonkWeapons())) continue;
+            if (u == null || u.dieAt(level) == null || !u.getRequires().met(equippedArmor != null, holdingShield(), holdsOnlyFeatureWeapons())) continue;
             if (best == null || io.papermc.jkvttplugin.effect.UnarmedStrike.faces(u.dieAt(level))
                     > io.papermc.jkvttplugin.effect.UnarmedStrike.faces(best.getValue().dieAt(level))) {
                 best = Map.entry(e.getKey(), u);
@@ -734,7 +734,7 @@ public class CharacterSheet {
         if (weapon == null) return null;
         for (var e : standingEffects()) {
             var w = e.getValue().getWeaponAbility();
-            if (w != null && w.covers(weapon) && w.getRequires().met(equippedArmor != null, holdingShield(), holdsOnlyMonkWeapons())) {
+            if (w != null && w.covers(weapon) && w.getRequires().met(equippedArmor != null, holdingShield(), holdsOnlyFeatureWeapons())) {
                 return Map.entry(e.getKey(), w);
             }
         }
@@ -759,8 +759,14 @@ public class CharacterSheet {
                 io.papermc.jkvttplugin.combat.BonusAttack.heldWeapon(p, false)};
     }
 
-    /** A weapon one of this character's {@code weapon_ability} rules covers (a monk weapon), whatever else is true right now. */
-    public boolean isMonkWeapon(DndWeapon weapon) {
+    /** What gives this character a {@code weapon_ability} ("Martial Arts"), for naming its weapons; null with none. */
+    public String featureWeaponSource() {
+        for (var e : standingEffects()) if (e.getValue().getWeaponAbility() != null) return e.getKey();
+        return null;
+    }
+
+    /** A weapon one of this character's {@code weapon_ability} rules covers (a monk's monk weapons), whatever else is true right now. */
+    public boolean isFeatureWeapon(DndWeapon weapon) {
         if (weapon == null) return false;
         for (var e : standingEffects()) {
             var w = e.getValue().getWeaponAbility();
@@ -770,8 +776,8 @@ public class CharacterSheet {
     }
 
     /** The weapon in hand that isn't a monk weapon, or null: "unarmed or wielding only monk weapons" (PHB p.78). */
-    public DndWeapon heldNonMonkWeapon() {
-        for (DndWeapon w : heldWeapons()) if (w != null && !isMonkWeapon(w)) return w;
+    public DndWeapon heldOtherWeapon() {
+        for (DndWeapon w : heldWeapons()) if (w != null && !isFeatureWeapon(w)) return w;
         return null;
     }
 
@@ -787,7 +793,7 @@ public class CharacterSheet {
                 req = e.getValue().getWeaponAbility().getRequires();
             }
             if (req == null || meets(req)) continue;
-            DndWeapon other = heldNonMonkWeapon();
+            DndWeapon other = heldOtherWeapon();
             String why = req.contains("no_armor") && equippedArmor != null ? "you're wearing armor"
                     : req.contains("no_shield") && holdingShield() ? "you're holding a shield"
                     : other != null ? "you're holding a " + other.getName() : "its conditions aren't met";
@@ -796,13 +802,13 @@ public class CharacterSheet {
         return null;
     }
 
-    private boolean holdsOnlyMonkWeapons() {
-        return heldNonMonkWeapon() == null;
+    private boolean holdsOnlyFeatureWeapons() {
+        return heldOtherWeapon() == null;
     }
 
     /** Whether a feature's own requirements (no armor, no shield) hold right now. */
     public boolean meets(io.papermc.jkvttplugin.effect.Requirements requirements) {
-        return requirements == null || requirements.met(equippedArmor != null, holdingShield(), holdsOnlyMonkWeapons());
+        return requirements == null || requirements.met(equippedArmor != null, holdingShield(), holdsOnlyFeatureWeapons());
     }
 
     /** "Unarmored Defense: 10 + DEX + WIS" when a formula set the AC (#220), or null for armor / 10 + DEX. */
