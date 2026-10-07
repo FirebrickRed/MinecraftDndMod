@@ -115,8 +115,10 @@ public final class FeatureUse {
             return false;
         }
         if (rolled.status() == DiceAmount.Status.NEEDS_ROLL) {
-            // Nothing spent yet: the same three buttons as every roll.
-            player.sendMessage(RollPrompt.again(player, "💚 Roll " + f.getName() + ":", h.dice(), label));
+            // Nothing spent yet: the same three buttons as every roll. They ask for the dice alone and name the
+            // formula's own flat part with the rest of what's added, as the result will (1d10+2 → "1d10", "+2[…]").
+            DiceAmount.Ask ask = DiceAmount.ask(h.dice(), f.getName(), label);
+            player.sendMessage(RollPrompt.again(player, "💚 Roll " + f.getName() + ":", ask.dice(), ask.bonusLabel()));
             return false;
         }
         int total = rolled.amount();

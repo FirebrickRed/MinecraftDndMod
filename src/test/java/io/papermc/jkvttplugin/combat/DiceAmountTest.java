@@ -97,6 +97,51 @@ class DiceAmountTest {
         }
     }
 
+    /**
+     * A feature's heal with a flat part of its own (homebrew "1d10+2", plus 1 for a class level): the prompt
+     * asks for the 1d10 and names both bonuses, and a typed 7 heals 10. The prompt used to ask for "1d10+2"
+     * and mention only the level, so the +2 looked like part of what you rolled.
+     */
+    @Test
+    void aFeatureHealPromptAsksForTheDiceAndNamesBothBonuses() throws Exception {
+        String level = "+1[Fighter level]";
+        DiceAmount.Ask ask = DiceAmount.ask("1d10+2", "Battle Medic", level);
+        assertEquals("1d10", ask.dice());
+        assertEquals("+2[Battle Medic] +1[Fighter level]", ask.bonusLabel());
+
+        // The buttons built from it say the same thing.
+        net.kyori.adventure.text.Component prompt = RollPrompt.line("💚 Roll Battle Medic:",
+                net.kyori.adventure.text.format.NamedTextColor.YELLOW, "/combat use battle_medic ", ask.dice(), ask.bonusLabel());
+        String hovers = String.join("\n", hoverTexts(prompt));
+        assertTrue(hovers.contains("Roll 1d10 and type what it came to"), hovers);
+        assertTrue(hovers.contains("the game adds +2[Battle Medic] +1[Fighter level]"), hovers);
+        assertFalse(hovers.contains("1d10+2"), "the flat part isn't something you roll: " + hovers);
+
+        // And the answer matches the prompt: 7 on the die, +2, +1.
+        DiceAmount.Result typed = DiceAmount.resolve(rolled(7), "1d10+2", "Battle Medic", 1, level, false);
+        assertEquals(10, typed.amount());
+        assertEquals("🎲 you rolled 7 +2[Battle Medic] +1[Fighter level] = 10", typed.work());
+
+        // Second Wind itself (1d10, no flat part) is unchanged: the dice, and the level.
+        DiceAmount.Ask secondWind = DiceAmount.ask("1d10", "Second Wind", level);
+        assertEquals("1d10", secondWind.dice());
+        assertEquals(level, secondWind.bonusLabel());
+
+        String featureUse = Files.readString(Path.of("src/main/java/io/papermc/jkvttplugin/combat/FeatureUse.java"));
+        assertTrue(featureUse.contains("DiceAmount.ask(h.dice(), f.getName(), label)"), "the feature heal prompt is built from DiceAmount.ask");
+    }
+
+    /** Every hover in a component tree, as plain text. */
+    private static java.util.List<String> hoverTexts(net.kyori.adventure.text.Component c) {
+        java.util.List<String> out = new java.util.ArrayList<>();
+        var hover = c.hoverEvent();
+        if (hover != null && hover.value() instanceof net.kyori.adventure.text.Component text) {
+            out.add(net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(text));
+        }
+        for (net.kyori.adventure.text.Component child : c.children()) out.addAll(hoverTexts(child));
+        return out;
+    }
+
     // ---------- where the callers differ, on purpose or not ----------
 
     /** A healing spell never heals less than 1, even on a typed total of 0. The others floor at 0 (see the scan below). */

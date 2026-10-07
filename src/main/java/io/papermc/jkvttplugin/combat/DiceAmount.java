@@ -63,6 +63,19 @@ public final class DiceAmount {
         return new Result(Status.OK, amount, RollPrompt.gameRolled(f.dice(), shown, label, amount));
     }
 
+    /** What a roll prompt asks for: the dice to roll, and everything the game then adds, labelled. */
+    public record Ask(String dice, String bonusLabel) {}
+
+    /**
+     * The prompt's half of {@link #resolve}: "1d10+2" from Battle Medic with "+1[Fighter level]" asks for
+     * {@code 1d10} and says the game adds {@code +2[Battle Medic] +1[Fighter level]}, which is exactly what a
+     * typed roll then gets. Build a caller's roll buttons from this, so the prompt and the result can't disagree.
+     */
+    public static Ask ask(String formula, String source, String bonusLabel) {
+        RollPrompt.Formula f = RollPrompt.split(formula, source);
+        return new Ask(f.dice(), join(f.label(), bonusLabel));
+    }
+
     /** The formula's own label and the roller's, as one bonus string; null when there's neither. */
     public static String join(String formulaLabel, String bonusLabel) {
         boolean a = formulaLabel != null && !formulaLabel.isBlank(), b = bonusLabel != null && !bonusLabel.isBlank();
