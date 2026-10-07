@@ -68,8 +68,14 @@ public class TurnState {
      * The Action was spent on the Attack action, which gives {@code attacksPerAction} attacks (1 until
      * Extra Attack, #153); the first is being made now. Two-weapon fighting and Martial Arts build on it.
      */
-    public void markAttackAction(int attacksPerAction) {
+    private String attackActionWith; // what the Attack action's first attack was made with: a weapon id, or "unarmed" (#259)
+
+    public void markAttackAction(int attacksPerAction) { markAttackAction(attacksPerAction, "unarmed"); }
+
+    /** @param with the weapon id the Attack action was made with, or "unarmed" */
+    public void markAttackAction(int attacksPerAction, String with) {
         attackActionTaken = true;
+        attackActionWith = with;
         attacksLeftInAction = Math.max(0, attacksPerAction - 1);
     }
     public int getAttacksLeftInAction() { return attacksLeftInAction; }
@@ -81,6 +87,8 @@ public class TurnState {
     /** One of the Attack action's further attacks is being made. */
     public void useExtraAttack() { if (attacksLeftInAction > 0) attacksLeftInAction--; }
     public boolean isAttackActionTaken() { return attackActionTaken; }
+    /** What the Attack action was made with (a weapon id or "unarmed"), or null before it's taken. */
+    public String getAttackActionWith() { return attackActionTaken ? attackActionWith : null; }
 
     public boolean isActionUsed() { return actionUsed; }
     public boolean isBonusActionUsed() { return bonusActionUsed; }

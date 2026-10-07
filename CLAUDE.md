@@ -804,7 +804,7 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     **`/combat attack` works out what an attack costs** (`AttackCost.decide`): the Action (starting the
     Attack action, `TurnState.markAttackAction`), then the Attack action's further attacks (Extra Attack,
     #153; 1 per action until level-up), then the bonus action if a bonus attack fits the weapon
-    (`BonusAttack.check`: off-hand light weapon, or a feature with an `attack:` block). The word `bonus`
+    (`BonusAttack.check`: off-hand light weapon, or a feature with an `attack:` block). Martial Arts (#259): `requires: only_monk_weapons` reads both hands (`CharacterSheet.heldNonMonkWeapon`; a monk weapon is whatever the character's `weapon_ability` covers), and the bonus strike's `after_attack_with:` ties it to an Attack action made unarmed or with a monk weapon (`TurnState.getAttackActionWith`), whatever the timing setting; `AttackHandler.weaponRuleNotes` is the prompt's "Martial Arts: 1d4 + DEX instead of 1 + STR" line. The word `bonus`
     asks for the bonus action while the Action is still free. `combat.bonus_attack_timing`: `any_time`
     (default, BG3) or `after_attack_action` (tabletop). The action bar names what the bonus action is
     good for (`READY: Martial Arts`, or — when nothing). `bonusAction used` is the

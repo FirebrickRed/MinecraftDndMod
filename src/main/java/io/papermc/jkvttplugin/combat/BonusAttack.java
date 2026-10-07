@@ -35,6 +35,19 @@ public final class BonusAttack {
     public static Verdict check(CharacterSheet sheet, DndWeapon weapon, DndWeapon mainHand, DndWeapon offHand,
                                 boolean attackActionTaken, boolean bonusActionUsed, boolean damagePending,
                                 boolean needsAttackAction) {
+        return check(sheet, weapon, mainHand, offHand, attackActionTaken ? "unarmed" : null, bonusActionUsed,
+                damagePending, needsAttackAction);
+    }
+
+    /**
+     * @param attackActionWith what this turn's Attack action was made with (a weapon id or "unarmed"), or
+     *                         null when it hasn't been taken ({@link TurnState#getAttackActionWith})
+     */
+    public static Verdict check(CharacterSheet sheet, DndWeapon weapon, DndWeapon mainHand, DndWeapon offHand,
+                                String attackActionWith, boolean bonusActionUsed, boolean damagePending,
+                                boolean needsAttackAction) {
+        boolean attackActionTaken = attackActionWith != null;
+        String featureRefusal = null; // why a feature that fits this weapon can't be used right now
         if (bonusActionUsed) return Verdict.no("You've already used your bonus action this turn.");
         if (needsAttackAction && !attackActionTaken) {
             return Verdict.no("A bonus attack comes after taking the Attack action this turn (two-weapon fighting, Martial Arts). Attack first.");
@@ -44,11 +57,24 @@ public final class BonusAttack {
         if (sheet != null) {
             for (Feature f : sheet.getAllFeatures()) {
                 if (!f.isAttack() || f.getActivation() == null || !f.getActivation().equalsIgnoreCase("bonus_action")) continue;
-                if (!sheet.meets(f.getAttack().requires())) continue;
                 boolean sameWeapon = f.getAttack().isUnarmed()
                         ? weapon == null
                         : weapon != null && f.getAttack().weapon().equalsIgnoreCase(weapon.getId());
-                if (sameWeapon) return new Verdict(Kind.FEATURE, f.getName(), null);
+                if (!sameWeapon) continue;
+                if (!sheet.meets(f.getAttack().requires())) {
+                    // Say which part of "unarmed or wielding only monk weapons" isn't true (#259).
+                    DndWeapon other = f.getAttack().requires().contains("only_monk_weapons") ? sheet.heldNonMonkWeapon() : null;
+                    if (other != null) featureRefusal = f.getName() + " isn't available while you're holding a " + other.getName() + ".";
+                    continue;
+                }
+                // The Attack action it follows has to be the right kind, whatever the timing setting (#259).
+                if (f.getAttack().followsAnAttack() && !followed(sheet, f.getAttack(), attackActionWith)) {
+                    featureRefusal = f.getName() + " comes after an Attack action made with an unarmed strike or a monk weapon"
+                            + (attackActionWith == null ? ": attack first."
+                            : "; this turn's was made with " + nameOf(attackActionWith) + ".");
+                    continue;
+                }
+                return new Verdict(Kind.FEATURE, f.getName(), null);
             }
         }
 
@@ -57,9 +83,33 @@ public final class BonusAttack {
             return new Verdict(Kind.OFF_HAND, "two-weapon fighting", null);
         }
 
+        if (featureRefusal != null) return Verdict.no(featureRefusal);
         String what = weapon == null ? "an unarmed strike" : "the " + weapon.getName();
         return Verdict.no("Nothing lets you make " + what + " as a bonus action. Two-weapon fighting needs a light "
                 + "weapon in each hand, attacking with the off-hand one; Martial Arts needs no armor or shield.");
+    }
+
+    /** Whether the Attack action already taken is one this feature attack may follow. */
+    private static boolean followed(CharacterSheet sheet, io.papermc.jkvttplugin.effect.FeatureAttack attack, String attackActionWith) {
+        if (attackActionWith == null) return false;
+        if (attackActionWith.equals("unarmed")) return attack.afterAttackWith().contains("unarmed");
+        return attack.afterAttackWith().contains("monk_weapon")
+                && sheet.isMonkWeapon(io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(attackActionWith));
+    }
+
+    /** True if a bonus attack with this weapon is a feature that only follows the Attack action (the greyed "after your attack"). */
+    public static boolean followsAnAttack(CharacterSheet sheet, DndWeapon weapon) {
+        if (sheet == null) return false;
+        for (Feature f : sheet.getAllFeatures()) {
+            if (!f.isAttack() || !f.getAttack().followsAnAttack()) continue;
+            if (f.getAttack().isUnarmed() ? weapon == null : weapon != null && f.getAttack().weapon().equalsIgnoreCase(weapon.getId())) return true;
+        }
+        return false;
+    }
+
+    private static String nameOf(String weaponId) {
+        DndWeapon w = io.papermc.jkvttplugin.data.loader.WeaponLoader.getWeapon(weaponId);
+        return w != null ? "a " + w.getName() : weaponId;
     }
 
     /** Whether this character has anything to spend a bonus action on besides an attack: a feature or a spell. */
@@ -92,7 +142,7 @@ public final class BonusAttack {
         DndWeapon main = heldWeapon(player, true), off = heldWeapon(player, false);
         boolean needs = io.papermc.jkvttplugin.config.PluginConfig.isBonusAttackNeedsAttackAction();
         for (DndWeapon w : java.util.Arrays.asList(null, off)) {
-            Verdict v = check(sheet, w, main, off, state.isAttackActionTaken(), false, false, needs);
+            Verdict v = check(sheet, w, main, off, state.getAttackActionWith(), false, false, needs);
             if (v.allowed()) return v.source();
         }
         return hasBonusOptions(sheet) ? "" : null;

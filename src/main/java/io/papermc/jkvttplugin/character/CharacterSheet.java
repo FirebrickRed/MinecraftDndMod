@@ -720,7 +720,7 @@ public class CharacterSheet {
         int level = getTotalLevel();
         for (var e : standingEffects()) {
             var u = e.getValue().getUnarmedStrike();
-            if (u == null || u.dieAt(level) == null || !u.getRequires().met(equippedArmor != null, holdingShield())) continue;
+            if (u == null || u.dieAt(level) == null || !u.getRequires().met(equippedArmor != null, holdingShield(), holdsOnlyMonkWeapons())) continue;
             if (best == null || io.papermc.jkvttplugin.effect.UnarmedStrike.faces(u.dieAt(level))
                     > io.papermc.jkvttplugin.effect.UnarmedStrike.faces(best.getValue().dieAt(level))) {
                 best = Map.entry(e.getKey(), u);
@@ -734,16 +734,75 @@ public class CharacterSheet {
         if (weapon == null) return null;
         for (var e : standingEffects()) {
             var w = e.getValue().getWeaponAbility();
-            if (w != null && w.covers(weapon) && w.getRequires().met(equippedArmor != null, holdingShield())) {
+            if (w != null && w.covers(weapon) && w.getRequires().met(equippedArmor != null, holdingShield(), holdsOnlyMonkWeapons())) {
                 return Map.entry(e.getKey(), w);
             }
         }
         return null;
     }
 
+    // ---- what's in hand (#259) ----
+
+    private DndWeapon[] heldWeaponsOverride; // set by tests, which have no player to read
+
+    /** For tests: the weapons in the main and off hand (null = empty), instead of the live player's. */
+    public void setHeldWeapons(DndWeapon mainHand, DndWeapon offHand) {
+        heldWeaponsOverride = new DndWeapon[]{mainHand, offHand};
+    }
+
+    /** The weapons in the owner's hands right now, main then off; nulls when a hand has no weapon or they're offline. */
+    private DndWeapon[] heldWeapons() {
+        if (heldWeaponsOverride != null) return heldWeaponsOverride;
+        org.bukkit.entity.Player p = org.bukkit.Bukkit.getServer() == null || playerId == null ? null : org.bukkit.Bukkit.getPlayer(playerId);
+        if (p == null) return new DndWeapon[]{null, null};
+        return new DndWeapon[]{io.papermc.jkvttplugin.combat.BonusAttack.heldWeapon(p, true),
+                io.papermc.jkvttplugin.combat.BonusAttack.heldWeapon(p, false)};
+    }
+
+    /** A weapon one of this character's {@code weapon_ability} rules covers (a monk weapon), whatever else is true right now. */
+    public boolean isMonkWeapon(DndWeapon weapon) {
+        if (weapon == null) return false;
+        for (var e : standingEffects()) {
+            var w = e.getValue().getWeaponAbility();
+            if (w != null && w.covers(weapon)) return true;
+        }
+        return false;
+    }
+
+    /** The weapon in hand that isn't a monk weapon, or null: "unarmed or wielding only monk weapons" (PHB p.78). */
+    public DndWeapon heldNonMonkWeapon() {
+        for (DndWeapon w : heldWeapons()) if (w != null && !isMonkWeapon(w)) return w;
+        return null;
+    }
+
+    /**
+     * Why a rule this character has for {@code weapon} (null = an unarmed strike) isn't in force right
+     * now, as "Martial Arts is off: you're holding a Longsword"; null when it applies or they have none.
+     */
+    public String inactiveWeaponRuleReason(DndWeapon weapon) {
+        for (var e : standingEffects()) {
+            io.papermc.jkvttplugin.effect.Requirements req = null;
+            if (weapon == null && e.getValue().getUnarmedStrike() != null) req = e.getValue().getUnarmedStrike().getRequires();
+            if (weapon != null && e.getValue().getWeaponAbility() != null && e.getValue().getWeaponAbility().covers(weapon)) {
+                req = e.getValue().getWeaponAbility().getRequires();
+            }
+            if (req == null || meets(req)) continue;
+            DndWeapon other = heldNonMonkWeapon();
+            String why = req.contains("no_armor") && equippedArmor != null ? "you're wearing armor"
+                    : req.contains("no_shield") && holdingShield() ? "you're holding a shield"
+                    : other != null ? "you're holding a " + other.getName() : "its conditions aren't met";
+            return e.getKey() + " is off: " + why;
+        }
+        return null;
+    }
+
+    private boolean holdsOnlyMonkWeapons() {
+        return heldNonMonkWeapon() == null;
+    }
+
     /** Whether a feature's own requirements (no armor, no shield) hold right now. */
     public boolean meets(io.papermc.jkvttplugin.effect.Requirements requirements) {
-        return requirements == null || requirements.met(equippedArmor != null, holdingShield());
+        return requirements == null || requirements.met(equippedArmor != null, holdingShield(), holdsOnlyMonkWeapons());
     }
 
     /** "Unarmored Defense: 10 + DEX + WIS" when a formula set the AC (#220), or null for armor / 10 + DEX. */

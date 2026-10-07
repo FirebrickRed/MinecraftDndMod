@@ -1104,11 +1104,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         candidates.add(null); // an unarmed strike (Martial Arts)
         if (off != null) candidates.add(off); // the off-hand weapon (two-weapon fighting)
         for (DndWeapon w : candidates) {
-            BonusAttack.Verdict v = BonusAttack.check(sheet, w, main, off, true, false, false, false);
+            BonusAttack.Verdict v = BonusAttack.check(sheet, w, main, off,
+                    state.isAttackActionTaken() ? state.getAttackActionWith() : "unarmed", false, false, false);
             if (!v.allowed()) continue;
             String id = w == null ? "unarmed" : w.getId();
             String cmd = "/combat attack <target> " + id + " bonus";
-            boolean waits = needsAttack && !state.isAttackActionTaken();
+            boolean waits = !state.isAttackActionTaken() && (needsAttack || BonusAttack.followsAnAttack(sheet, w));
             row = row.append(Component.text("[" + (w == null ? "Unarmed" : w.getName()) + " (" + v.source() + ")] ",
                             waits ? NamedTextColor.DARK_GRAY : NamedTextColor.AQUA, TextDecoration.UNDERLINED)
                     .clickEvent(ClickEvent.suggestCommand(cmd))
@@ -2334,7 +2335,11 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                         boolean firstOfAction = !state.isActionUsed();
                         state.useAction();
                         // The Attack action: unlocks a bonus attack, and Extra Attack's further attacks (#153).
-                        if (firstOfAction) state.markAttackAction(attacker.isPlayer() ? AttackCost.attacksPerAction(attacker.getCharacterSheet()) : 1);
+                        if (firstOfAction) {
+                            DndWeapon with = attacker.isPlayer() ? AttackHandler.resolvePlayerWeapon(player, weaponOrAttackName) : null;
+                            state.markAttackAction(attacker.isPlayer() ? AttackCost.attacksPerAction(attacker.getCharacterSheet()) : 1,
+                                    with != null ? with.getId() : "unarmed"); // what it was made with: Martial Arts asks (#259)
+                        }
                         // A creature's Multiattack (#253): its first attack starts it, each one counts down.
                         if (!attacker.isPlayer()) countMultiattack(player, attacker, state, weaponOrAttackName, firstOfAction);
                     }

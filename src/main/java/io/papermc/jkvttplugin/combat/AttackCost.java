@@ -41,7 +41,7 @@ public final class AttackCost {
             if (!state.isActionUsed()) return new Decision(Kind.ACTION, null, null, null);
         }
 
-        BonusAttack.Verdict v = BonusAttack.check(sheet, weapon, mainHand, offHand, state.isAttackActionTaken(),
+        BonusAttack.Verdict v = BonusAttack.check(sheet, weapon, mainHand, offHand, state.getAttackActionWith(),
                 state.isBonusActionUsed(), false, bonusNeedsAttackAction);
         if (v.allowed()) return new Decision(Kind.BONUS, v.kind(), v.source(), null);
         return Decision.no(wantsBonus ? v.refusal() : "You've already used your Action this turn. " + v.refusal());

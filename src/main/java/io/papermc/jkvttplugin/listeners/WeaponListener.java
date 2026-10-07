@@ -335,6 +335,13 @@ public class WeaponListener implements Listener {
             player.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));
         }
 
+        // What a feature changes about this attack's dice or ability (Martial Arts), or why it's off (#259).
+        if (sheet != null) {
+            for (String note : AttackHandler.weaponRuleNotes(sheet, ctx.weapon)) {
+                player.sendMessage(Component.text("  • " + note, NamedTextColor.GRAY));
+            }
+        }
+
         // A different weapon than they started the turn with: settle the switch before any roll is offered.
         if (!io.papermc.jkvttplugin.combat.WeaponSwitch.allow(player, ctx.attacker, ctx.weaponId, base,
                 io.papermc.jkvttplugin.combat.RollPrompt.d20(adv), modShown)) return;

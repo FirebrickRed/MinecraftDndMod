@@ -110,6 +110,20 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 ## Monk
 
 
+- [ ] Empty hands, left-click an enemy → a gray line "• Martial Arts: 1d4 + DEX instead of 1 + STR" above the
+      roll buttons. With a quarterstaff → "The Quarterstaff's own 1d6 beats the Martial Arts 1d4" and "Martial
+      Arts: DEX instead of STR"; the damage is 1d6 + DEX. (#259)
+- [ ] Longsword in the off hand, punch (`/combat attack <t> unarmed`) → damage is a flat 1 (1 + STR), and
+      `/combat bonusAction` offers no unarmed strike. Left-click with the longsword in the **main** hand and an
+      empty off hand, then `/combat attack <t> unarmed bonus` → "…isn't available while you're holding a
+      Longsword". (#259)
+- [ ] Attack with a shortbow, then `/combat attack <t> unarmed bonus` → refused: "comes after an Attack action
+      made with an unarmed strike or a monk weapon; this turn's was made with a Shortbow". Attack with a
+      quarterstaff instead → the bonus punch is allowed. (#259)
+- [ ] Before attacking at all, `/combat attack <t> unarmed bonus` → refused ("attack first"), and
+      `/combat bonusAction` shows the unarmed strike greyed with "After your Attack action". A fighter's
+      off-hand dagger can still go first (the timing setting only governs two-weapon fighting now). (#259)
+
 ## Wizard
 
 - [ ] Creation, Spells tab: Cantrips and Level 1 each have **Next page ▶** at the bottom right; the second page

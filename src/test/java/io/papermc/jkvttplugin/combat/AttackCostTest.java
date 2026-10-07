@@ -93,13 +93,15 @@ class AttackCostTest {
         assertTrue(d.refusal().contains("Attack action"), d.refusal());
     }
 
-    /** Casting a spell with the Action isn't the Attack action: the tabletop rule still refuses a bonus strike. */
+    /** Casting a spell with the Action isn't the Attack action: no Martial Arts strike, under either timing setting (#259). */
     @Test
     void aSpellIsNotTheAttackAction() {
         TurnState t = turn();
         t.useAction(); // cast something
         assertFalse(attack(monk(), null, null, null, t, false, true).allowed());
-        assertTrue(attack(monk(), null, null, null, t, false, false).allowed(), "but fine BG3-style");
+        AttackCost.Decision d = attack(monk(), null, null, null, t, false, false);
+        assertFalse(d.allowed(), "any_time is for two-weapon fighting; the monk's strike follows a monk attack");
+        assertTrue(d.refusal().contains("attack first"), d.refusal());
     }
 
     /** Extra Attack (#153): the Attack action's further attacks come before the bonus action. */

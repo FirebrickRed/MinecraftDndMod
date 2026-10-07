@@ -139,4 +139,103 @@ class MartialArtsTest {
                 "the attack has to be with the off-hand weapon");
         assertFalse(BonusAttack.check(f, null, dagger, dagger, true, false, false, true).allowed(), "a fighter has no bonus punch");
     }
+
+    // ---------- #259: "unarmed or wielding only monk weapons", and what the bonus strike follows ----------
+
+    /** A longsword in hand turns Martial Arts off: a punch is back to 1 + STR. */
+    @Test
+    void aNonMonkWeaponInHandTurnsMartialArtsOff() {
+        CharacterSheet m = monk();
+        m.setHeldWeapons(w("longsword"), null);
+        assertEquals(Ability.STRENGTH, AttackHandler.resolveAttackAbility(m, null));
+        assertEquals("1", AttackHandler.buildPlayerDamageString(m, null), "1 + STR 0");
+        assertEquals(List.of("Martial Arts is off: you're holding a Longsword"), AttackHandler.weaponRuleNotes(m, null));
+
+        m.setHeldWeapons(null, w("longsword")); // the off hand counts too
+        assertEquals("1", AttackHandler.buildPlayerDamageString(m, null));
+
+        m.setHeldWeapons(w("quarterstaff"), w("dagger")); // monk weapons in both hands: still on
+        assertEquals("1d4+3", AttackHandler.buildPlayerDamageString(m, null));
+    }
+
+    /** A shortsword loses DEX-by-Martial-Arts and the die when the other hand holds a longsword. */
+    @Test
+    void aMonkWeaponBesideANonMonkWeaponIsJustAWeapon() {
+        CharacterSheet m = monk();
+        DndWeapon mace = w("mace"); // simple melee, STR only: DEX comes from Martial Arts alone
+        m.setHeldWeapons(mace, null);
+        assertEquals(Ability.DEXTERITY, AttackHandler.resolveAttackAbility(m, mace));
+        m.setHeldWeapons(mace, w("longsword"));
+        assertEquals(Ability.STRENGTH, AttackHandler.resolveAttackAbility(m, mace));
+        assertEquals(List.of("Martial Arts is off: you're holding a Longsword"), AttackHandler.weaponRuleNotes(m, mace));
+    }
+
+    /** The prompt says what Martial Arts changed, or that the weapon's own die is the better one. */
+    @Test
+    void theAttackSaysWhatMartialArtsDoes() {
+        CharacterSheet m = monk();
+        m.setHeldWeapons(null, null);
+        assertEquals(List.of("Martial Arts: 1d4 + DEX instead of 1 + STR"), AttackHandler.weaponRuleNotes(m, null));
+
+        DndWeapon staff = w("quarterstaff");
+        m.setHeldWeapons(staff, null);
+        assertEquals(List.of("The Quarterstaff's own 1d6 beats the Martial Arts 1d4", "Martial Arts: DEX instead of STR"),
+                AttackHandler.weaponRuleNotes(m, staff));
+        assertTrue(AttackHandler.buildPlayerDamageString(m, staff).startsWith("1d6"));
+
+        DndWeapon dagger = w("dagger"); // 1d4 either way, finesse already: nothing to say
+        m.setHeldWeapons(dagger, null);
+        assertTrue(AttackHandler.weaponRuleNotes(m, dagger).isEmpty(), AttackHandler.weaponRuleNotes(m, dagger).toString());
+
+        CharacterSheet fighter = character("human", null, "fighter", "soldier", scores(Ability.STRENGTH, 16));
+        assertTrue(AttackHandler.weaponRuleNotes(fighter, null).isEmpty(), "no rule, no note");
+        assertTrue(AttackHandler.weaponRuleNotes(fighter, staff).isEmpty());
+    }
+
+    /** The bonus strike follows an Attack action made with an unarmed strike or a monk weapon, nothing else. */
+    @Test
+    void theBonusStrikeFollowsAMonkAttack() {
+        CharacterSheet m = monk();
+        m.setHeldWeapons(null, null);
+        // Even with bonus_attack_timing: any_time (needsAttackAction = false), it comes after.
+        BonusAttack.Verdict before = BonusAttack.check(m, null, null, null, (String) null, false, false, false);
+        assertFalse(before.allowed());
+        assertTrue(before.refusal().contains("attack first"), before.refusal());
+
+        assertTrue(BonusAttack.check(m, null, null, null, "unarmed", false, false, false).allowed());
+        assertTrue(BonusAttack.check(m, null, null, null, "quarterstaff", false, false, false).allowed(), "a monk weapon");
+        assertTrue(BonusAttack.check(m, null, null, null, "shortsword", false, false, false).allowed());
+
+        BonusAttack.Verdict bow = BonusAttack.check(m, null, null, null, "shortbow", false, false, false);
+        assertFalse(bow.allowed(), "a shortbow isn't a monk weapon");
+        assertTrue(bow.refusal().contains("Shortbow"), bow.refusal());
+    }
+
+    /** Holding a longsword: no bonus strike, and the refusal says why. */
+    @Test
+    void noBonusStrikeWhileHoldingANonMonkWeapon() {
+        CharacterSheet m = monk();
+        m.setHeldWeapons(w("longsword"), null);
+        BonusAttack.Verdict v = BonusAttack.check(m, null, w("longsword"), null, "unarmed", false, false, false);
+        assertFalse(v.allowed());
+        assertTrue(v.refusal().contains("holding a Longsword"), v.refusal());
+    }
+
+    /** Two-weapon fighting still follows the timing setting: it isn't tied to what the Attack action used. */
+    @Test
+    void offHandAttacksStillFollowTheTimingSetting() {
+        CharacterSheet f = character("human", null, "fighter", "soldier", scores(Ability.STRENGTH, 16));
+        DndWeapon dagger = w("dagger");
+        assertTrue(BonusAttack.check(f, dagger, w("shortsword"), dagger, (String) null, false, false, false).allowed(), "any_time");
+        assertFalse(BonusAttack.check(f, dagger, w("shortsword"), dagger, (String) null, false, false, true).allowed(), "after_attack_action");
+    }
+
+    /** The turn remembers what its Attack action was made with. */
+    @Test
+    void theTurnRemembersTheAttackActionsWeapon() {
+        TurnState t = new TurnState(30, null);
+        assertNull(t.getAttackActionWith());
+        t.markAttackAction(1, "quarterstaff");
+        assertEquals("quarterstaff", t.getAttackActionWith());
+    }
 }

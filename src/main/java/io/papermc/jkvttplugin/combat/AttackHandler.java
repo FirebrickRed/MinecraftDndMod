@@ -436,6 +436,40 @@ public class AttackHandler {
     }
 
     /**
+     * What a feature changes about this attack, so the dice in the prompt aren't a mystery (playtest):
+     * "Martial Arts: 1d4 + DEX instead of 1 + STR" for a punch, "Martial Arts: 1d6 instead of the Dagger's
+     * 1d4", "The Quarterstaff's own 1d6 beats the Martial Arts 1d4", or "Martial Arts is off: you're
+     * holding a Longsword". Empty when no such rule is involved. Reads the rules, so homebrew gets it too.
+     */
+    public static List<String> weaponRuleNotes(CharacterSheet sheet, DndWeapon weapon) {
+        List<String> notes = new ArrayList<>();
+        String off = sheet.inactiveWeaponRuleReason(weapon);
+        if (off != null) { notes.add(off); return notes; }
+        var unarmed = sheet.unarmedStrikeRule();
+        if (weapon == null) {
+            if (unarmed == null) return notes;
+            Ability a = unarmed.getValue().ability(sheet::getModifier);
+            notes.add(unarmed.getKey() + ": " + unarmed.getValue().dieAt(sheet.getTotalLevel()) + " + " + a.getAbbreviation()
+                    + " instead of 1 + STR");
+            return notes;
+        }
+        var rule = sheet.weaponAbilityFor(weapon);
+        if (rule == null) return notes;
+        String own = weapon.getDamage();
+        if (rule.getValue().usesUnarmedDieIfBigger() && unarmed != null && own != null) {
+            String die = unarmed.getValue().dieAt(sheet.getTotalLevel());
+            int ownFaces = io.papermc.jkvttplugin.effect.UnarmedStrike.faces(own), dieFaces = io.papermc.jkvttplugin.effect.UnarmedStrike.faces(die);
+            if (ownFaces > 0 && dieFaces > ownFaces) notes.add(rule.getKey() + ": " + die + " instead of the " + weapon.getName() + "'s " + own);
+            else if (ownFaces > dieFaces) notes.add("The " + weapon.getName() + "'s own " + own + " beats the " + rule.getKey() + " " + die);
+        }
+        Ability usual = weapon.getPrimaryAbility();
+        if (usual == null) usual = sheet.getModifier(Ability.DEXTERITY) >= sheet.getModifier(Ability.STRENGTH) ? Ability.DEXTERITY : Ability.STRENGTH;
+        Ability used = resolveAttackAbility(sheet, weapon);
+        if (used != usual) notes.add(rule.getKey() + ": " + used.getAbbreviation() + " instead of " + usual.getAbbreviation());
+        return notes;
+    }
+
+    /**
      * @param offHand a two-weapon-fighting bonus attack: a positive ability modifier isn't added to
      *                the damage (a negative one still is, PHB p.195).
      */
