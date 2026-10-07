@@ -416,7 +416,7 @@ Two clear YAML keys, used consistently — change them in YAML, not code:
 - Combat Help / Hide / Search (#176) are `combat/CombatActions`: Help sets `Combatant.helpedBy`
   (advantage on the next attack or check, lapses at the helper's turn); Hide rolls Stealth and the DM
   grants the **Hidden** condition (`conditions.yml`); `Combatant.afterAttackRoll` uses up a Help and
-  ends Hidden after any attack roll.
+  ends Hidden after any attack roll; out of a fight a spell attack calls it too (`OutOfCombatAttack.afterAttackRoll`, #265), with a null session, and says the returned line to its own audience.
 - Skill proficiencies tracked from class, background, and race
 
 **Class Resource System (Issue #25):**

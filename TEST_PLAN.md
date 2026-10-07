@@ -267,6 +267,13 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       "tries to Hide"; the DM sees it against each enemy's passive Perception with [Hidden] / [Not hidden].
 - [ ] [Hidden] → "is hidden", and a Hidden condition tag on the scoreboard; your attack has advantage, and
       after it "is no longer hidden: the attack gave them away". Attacks against you had disadvantage.
+- [ ] **Hidden, out of a fight:** `/dm adjust <you>` → Hidden, then `/character cast fire_bolt <creature>` and
+      [Let it happen]. The roll prompt says advantage (2d20, keep the higher). Roll it → "<you> is no longer
+      hidden: the attack gave them away" to you, the DMs and anyone nearby, whether it **hits or misses**, and
+      `/dm view <you>` no longer lists Hidden. Cast again → a plain d20. (#265)
+- [ ] **Hidden survives a cast that never rolls:** Hidden again, then each of these leaves you Hidden
+      (`/dm view`): the DM clicks [Deny]; the target is out of reach; you're shown the roll buttons and don't
+      answer them; aiming at a wall, you click [Cancel]. An attack at the wall you do roll → revealed. (#265)
 - [ ] A creature (DM) takes `/combat action search` → the DM sees the Perception total and, for a hidden
       player it beats, **[Reveal]**.
 - [ ] Help / Hide / Search spend the Action only once rolled (waiting on your die costs nothing).

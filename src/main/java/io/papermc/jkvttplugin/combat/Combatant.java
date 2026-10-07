@@ -715,18 +715,29 @@ public class Combatant {
     /**
      * An attack roll by this combatant has just been rolled: a Help's advantage is used up, and a
      * hidden attacker is revealed (the attack itself still had advantage, PHB p.195).
+     *
+     * @param session their fight, or null out of one (then nothing is announced here: see {@link #noLongerHiddenLine})
+     * @return true when they were Hidden and now aren't
      */
-    public void afterAttackRoll(CombatSession session) {
+    public boolean afterAttackRoll(CombatSession session) {
         clearHelp();
-        if (hasCondition("hidden")) {
-            removeCondition("hidden");
-            hiddenStealth = null;
-            if (session != null) {
-                session.broadcast(net.kyori.adventure.text.Component.text(getDisplayName() + " is no longer hidden: the attack gave them away.",
-                        net.kyori.adventure.text.format.NamedTextColor.GRAY));
-                session.updateScoreboard();
-            }
+        if (!hasCondition("hidden")) return false;
+        removeCondition("hidden");
+        hiddenStealth = null;
+        if (session != null) {
+            session.broadcast(noLongerHiddenLine());
+            session.updateScoreboard();
         }
+        return true;
+    }
+
+    /**
+     * What's said when an attack reveals this combatant. In a fight {@link #afterAttackRoll} broadcasts it;
+     * out of one there's no table, so the caller says it to its own audience (#265).
+     */
+    public net.kyori.adventure.text.Component noLongerHiddenLine() {
+        return net.kyori.adventure.text.Component.text(getDisplayName() + " is no longer hidden: the attack gave them away.",
+                net.kyori.adventure.text.format.NamedTextColor.GRAY);
     }
 
     public Advantage attackAdvantageAgainst(Combatant target) {

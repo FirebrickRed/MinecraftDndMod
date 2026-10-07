@@ -139,6 +139,7 @@ public final class OutOfCombatAttack {
             Advantage adv = caster.attackAdvantageAgainst(target);
             RollService.RollResult r = attackRoll(player, sheet, spell, adv, roll, caster.rerollsNat1());
             if (r == null) { rollPrompt(player, sheet, spell, retry, adv); return true; }
+            revealAfterAttackRoll(player, caster); // a Hidden caster is given away by the roll, hit or miss (#265)
             permits.remove(player.getUniqueId()); // one "let it happen" is one cast; the next asks again
             commit(player, sheet, spell, cost);
             int ac = target.getArmorClass();
@@ -239,6 +240,7 @@ public final class OutOfCombatAttack {
         if (spell.isAttackRoll()) {
             RollService.RollResult r = attackRoll(player, sheet, spell, Advantage.NONE, roll, false);
             if (r == null) { rollPrompt(player, sheet, spell, retry, Advantage.NONE); return true; }
+            revealAfterAttackRoll(player, CombatTargets.forPlayer(player).combatant()); // at a thing, too (#265)
             commit(player, sheet, spell, cost);
             permits.remove(player.getUniqueId());
             tell(player, spell.castLine("✨ " + who + " casts ", " at " + at + ": "
@@ -544,6 +546,24 @@ public final class OutOfCombatAttack {
     private static boolean permitted(Player caster, DndSpell spell, UUID targetId) {
         Permit p = permits.get(caster.getUniqueId());
         return p != null && p.covers(spell, targetId);
+    }
+
+    /**
+     * An attack roll was just made out of a fight: what follows is what follows in one
+     * ({@link Combatant#afterAttackRoll}). A Hidden attacker isn't hidden any more, and the line that
+     * says so goes to this path's own audience (the caster, DMs, players nearby), there being no table.
+     * Only ever called once a roll has resolved: a prompt, a refusal or a cast the DM hasn't approved
+     * rolls nothing and reveals nobody. Help is a fight's (it lives on the live combatant), so there's
+     * none to use up here.
+     */
+    private static void revealAfterAttackRoll(Player player, Combatant caster) {
+        Component line = afterAttackRoll(caster);
+        if (line != null) tell(player, line);
+    }
+
+    /** The mechanic, apart from who hears it: the line to say when the roll revealed them, or null. */
+    static Component afterAttackRoll(Combatant caster) {
+        return caster.afterAttackRoll(null) ? caster.noLongerHiddenLine() : null;
     }
 
     private static RollService.RollResult attackRoll(Player player, CharacterSheet sheet, DndSpell spell, Advantage adv,
