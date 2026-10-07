@@ -70,6 +70,13 @@ public final class CombatTargets {
         }
         String raw = io.papermc.jkvttplugin.util.NameUtil.stripQuotes(name.trim());
 
+        // A selector (@p from a command block's trap): that player's active character.
+        if (io.papermc.jkvttplugin.util.Selectors.is(raw)) {
+            CharacterSheet picked = io.papermc.jkvttplugin.util.Selectors.oneCharacter(sender, raw);
+            Player p = picked != null ? Bukkit.getPlayer(picked.getPlayerId()) : null;
+            return p != null ? forPlayer(p) : null;
+        }
+
         // A spawned creature first: entity names are the ones a DM is most likely to be pointing at,
         // and a character with the same name still resolves through the explicit Owner/Name form.
         DndEntityInstance entity = DndEntityInstance.findByName(raw);

@@ -489,6 +489,18 @@ buttons. Try both; whichever you like less gets removed.
 - [ ] The buttons read short ("Opening: Locked", "Key: Brass Key", "Trap save: Dexterity"); clicking
       one cycles it. What Opening and Key mean is in the text at the top.
 
+## Command-block traps
+
+(`enable-command-block=true` in `server.properties`; you place and program the block as an op in creative.)
+
+- [ ] A pressure plate wired to a command block holding `dm adjust @p hp -6 type fire` → step on it as a character:
+      6 fire damage to **you**, through the usual resistances (a tiefling takes 3).
+- [ ] A block holding `dm check @p save dexterity dc 13` → whoever steps on the plate gets the save prompt; the
+      result comes to you (every DM online) with ✔/✘, not to the block.
+- [ ] `dm adjust @p[distance=..3] hp -4` with nobody within 3 blocks → nothing happens (the block's output says
+      "No player matches"). `dm adjust @a hp -1` with two players on → refused, "takes one".
+- [ ] As the DM, typed in chat: `/dm view @p` → your own character's quick view.
+
 ## Other DM commands
 
 - [ ] Break a spell file in the server's `DMContent` (indent one line wrong), `/dm reload` → "✗ Reload refused", naming
@@ -692,6 +704,12 @@ Set up an enchanting table: a description, **Rolled**, History or Arcana, three 
 # Playtest notes
 Write anything here, in any order. Each round Claude answers in chat, turns the notes into rows
 above, and clears this section (git keeps the old notes).
+
+oh hey, paper is saying I'm 3 builds behind, are we good to update to latest, is anything going to break?
+does the weapon switching for fighter is that a fighter only feature because I don't think it should be if it is.
+thoughts on potential implementations for the artificers magical tinkering? or is it just a tell the dm at this point?
+
+
 
 ---
 

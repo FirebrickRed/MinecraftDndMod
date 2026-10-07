@@ -247,9 +247,16 @@ public class RollOptionsMenuHandler {
                 .append(Component.text("[Share with players]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
                         .clickEvent(ClickEvent.runCommand("/dm check share " + token))
                         .hoverEvent(HoverEvent.showText(Component.text("Announce this roll to the table."))));
-        Player dm = Bukkit.getPlayer(p.dmId());
-        if (dm != null) dm.sendMessage(dmMsg);
-        else Bukkit.broadcast(Component.text(shareText, NamedTextColor.YELLOW)); // DM offline → announce
+        // Called by a command block or the console (no DM behind it): every DM online gets it.
+        Player dm = p.dmId() != null ? Bukkit.getPlayer(p.dmId()) : null;
+        boolean told = false;
+        if (dm != null) { dm.sendMessage(dmMsg); told = true; }
+        else if (p.dmId() == null) {
+            for (Player online : Bukkit.getOnlinePlayers()) {
+                if (io.papermc.jkvttplugin.dm.DMManager.isDM(online)) { online.sendMessage(dmMsg); told = true; }
+            }
+        }
+        if (!told) Bukkit.broadcast(Component.text(shareText, NamedTextColor.YELLOW)); // no DM around → announce
     }
 
     /**

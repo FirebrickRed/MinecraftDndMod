@@ -48,6 +48,16 @@ class HomebrewFriendlyTest {
         assertNull(LockTools.pick(List.of(), List.of(), rogue), "content with no lock tools offers none");
     }
 
+    /** What counts as a selector where a name goes (a command block's @p); resolving one needs a server. */
+    @Test
+    void selectorsAreToldFromNames() {
+        assertTrue(io.papermc.jkvttplugin.util.Selectors.is("@p"));
+        assertTrue(io.papermc.jkvttplugin.util.Selectors.is("@a[distance=..3,limit=1]"));
+        assertFalse(io.papermc.jkvttplugin.util.Selectors.is("Zek"));
+        assertFalse(io.papermc.jkvttplugin.util.Selectors.is("@"), "not a selector, just a typo");
+        assertFalse(io.papermc.jkvttplugin.util.Selectors.is(null));
+    }
+
     /** A subclass tile's item comes from YAML: its own material, else its class's subclass_material, else paper. */
     @Test
     void subclassTilesTakeTheirItemFromYaml() {

@@ -37,6 +37,9 @@ public final class CharacterResolver {
         }
         String raw = stripQuotes(arg.trim());
 
+        // A selector (@p from a command block's trap): that player's active character.
+        if (io.papermc.jkvttplugin.util.Selectors.is(raw)) return io.papermc.jkvttplugin.util.Selectors.oneCharacter(sender, raw);
+
         // Owner/Name form points straight at one character.
         int slash = raw.indexOf('/');
         if (slash > 0 && slash < raw.length() - 1) {
