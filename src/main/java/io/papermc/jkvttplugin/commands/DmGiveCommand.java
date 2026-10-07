@@ -50,7 +50,10 @@ public class DmGiveCommand implements CommandExecutor, TabCompleter {
             sendHelp(sender);
             return true;
         }
-        Player targetPlayer = Bukkit.getPlayerExact(args[0]);
+        // A selector (@p from a command block: a chest that hands out loot) or a player's name.
+        boolean selector = io.papermc.jkvttplugin.util.Selectors.is(args[0]);
+        Player targetPlayer = selector ? io.papermc.jkvttplugin.util.Selectors.onePlayer(sender, args[0]) : Bukkit.getPlayerExact(args[0]);
+        if (selector && targetPlayer == null) return true; // onePlayer said why
         if (targetPlayer == null) {
             sender.sendMessage(Component.text("Player not online: " + args[0] + " (the player comes first: /dm give <player> <item_id> [amount])",
                     NamedTextColor.RED));
