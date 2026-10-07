@@ -109,10 +109,6 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 
 ## Monk
 
-- [X] On your turn, empty hand, left-click an enemy → the unarmed prompt, nothing about a bonus action.
-      Resolve it, left-click again → "⚡ This attack uses your bonus action (Martial Arts)" **above** the roll
-      buttons, before anything is rolled. A third click → refused (Action and bonus action both used), no
-      roll buttons.
 
 ## Wizard
 
@@ -196,10 +192,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 ## Sorcerer
 
-- [X] **Divine Soul:** hover each affinity → "✦ Always known: Cure Wounds (1st level, doesn't use a pick)" etc.
-- [X] **Divine Soul:** pick Chaos, open the spell step → Bane is a fixed "Always known" tile, not something
-      you can pick; your picks still count 2 of 2 without it. Pick a spell, then change the affinity to the
-      one that grants it → it turns into the fixed tile and the pick comes back.
 
 ## Warlock
 
@@ -485,13 +477,10 @@ buttons. Try both; whichever you like less gets removed.
 
 ## Other DM commands
 
-- [X] `/dm reload` with clean content → "✓ DMContent reloaded: a clean load." (#243)
 - [ ] Break a spell file in the server's `DMContent` (indent one line wrong), `/dm reload` → "✗ Reload refused", naming
       the file and line; your spells are all still there. Fix it, reload → clean. (#243)
 - [ ] Give a spell an unknown `material:` and reload → it reloads, with that warning listed in chat. (#243)
 - [ ] A creature check with no roll → the DM gets the three roll buttons.
-- [X] `/dm check clear Balin Ironforge` → "is a creature. Only characters have held checks…".
-- [X] `/dm check clear ` + Tab → only characters, no creatures.
 - [ ] `/dm check clear <your character>` → clears your held checks.
 - [ ] `/dm resource restore <character> all` works.
 - [ ] `/dm resource consume <character> <res> 1` works.
@@ -511,11 +500,8 @@ Set these up, `/stop`, start the server, then check:
       and every other character loads. (#242)
 - [ ] Same, but also delete the `.bak` first → that one character is skipped, everyone else loads, the plugin
       starts normally, and the broken file is left untouched. Put your safe copy back afterwards. (#242)
-- [X] A fight in progress (your character in it) → after the restart, `/combat nextturn` works and
-      `/combat finished` ends it; your character is out of combat and character commands work. (#165)
 - [ ] A character Poisoned before → still Poisoned after.
 - [ ] A creature Prone before → start a fight after, its scoreboard tag is still there.
-- [X] Your finished characters still list their chosen languages, tools and racial spell picks.
 - [ ] High elf rogue still casts Fire Bolt with INT; astral elf still uses Wisdom.
 - [ ] A dead character is still dead; their body is still there.
 - [ ] `/dm adjust <c> temp 7` before → still 7 temp HP after.
@@ -527,7 +513,6 @@ Set these up, `/stop`, start the server, then check:
 - [ ] A note on a **character** (`/dm note <character> add …`) is still there after.
 - [ ] **A fight survives** (set up: round 2, a condition on someone, a player at 0 HP; check
       `plugins/jkvttplugin/CombatSessions/` has a file): console says "Restored combat … round 2, X's turn".
-- [X] On join → "Combat is still on".
 - [ ] The scoreboard is back, the downed player is prone, the condition is listed.
 - [ ] The current combatant can attack → damage with no errors.
 - [ ] A raging barbarian is still raging (sheet, halved slashing, red tint).
