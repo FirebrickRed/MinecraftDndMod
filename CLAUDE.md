@@ -21,6 +21,8 @@ This is a Paper/Spigot Minecraft plugin that transforms Minecraft into a virtual
 
 We will not have this flexibility once we reach alpha/beta, so please flag any architectural concerns or improvements early. It's much easier to fix now than later.
 
+**Tickets labelled `idea`** are thoughts to ask players about, not planned work: they may never be built. Don't start one until the label comes off.
+
 ## Build Commands
 
 ```bash
