@@ -51,6 +51,19 @@ public final class SpellSave {
         boolean hasDamage() { return damage != null && !damage.isBlank(); }
     }
 
+    /**
+     * What a save against this spell is "against", for conditional advantages (a dwarf against poison, a
+     * gnome against magic, an elf against being charmed): always magic, plus its damage type and the
+     * condition it sets on a fail. The same tags in a fight and out of one (#266).
+     */
+    public static Set<String> tagsFor(DndSpell spell) {
+        Set<String> tags = new java.util.LinkedHashSet<>();
+        tags.add("magic"); // every spell save is against magic
+        if (spell.getDamageType() != null && !spell.getDamageType().isBlank()) tags.add(spell.getDamageType().toLowerCase());
+        if (spell.getConditionOnFail() != null && !spell.getConditionOnFail().isBlank()) tags.add(spell.getConditionOnFail().toLowerCase());
+        return java.util.Collections.unmodifiableSet(tags);
+    }
+
     /** How much of the spell's damage the caller now has rolled: all of it, half, or none. */
     public enum Owed { FULL, HALF, NONE }
 
@@ -90,6 +103,8 @@ public final class SpellSave {
             @Override public void give(ActiveEffect effect) { SpellEffects.give(target, effect); }
             // The potion effect is the player's own, so it needs no fight (it's what /dm adjust uses too).
             @Override public void showCondition(DndCondition condition) { CombatSession.setConditionEffect(target, condition, true); }
+            // The one place this class's "never sends" has an indirect exception: ending concentration announces
+            // itself (to the table in a fight, to the target's player out of one), during apply. Tracked in #271.
             @Override public void endConcentration(String why) { ConcentrationManager.onIncapacitated(session, target, why); }
         };
     }

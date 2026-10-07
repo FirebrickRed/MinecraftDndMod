@@ -202,6 +202,14 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       `/combat cast poison_spray <the halfling>` as a caster): your CON save prompt says **2d20, keep the
       higher**. Sacred Flame at you → a plain d20. (Stout Resilience)
 - [ ] **Stout halfling:** `/dm adjust <you> hp -6 type poison` → 3 taken, "resists poison".
+- [ ] **Stout halfling, out of a fight:** someone casts Poison Spray at you and you [Let it happen], [Ask for their
+      roll] → the save prompt says "↑ advantage: against poison" and **[Roll with advantage]** / [I also have
+      disadvantage]; the roll is 2d20, keep the higher. Sacred Flame at them → the plain three buttons. (#266)
+- [ ] `/dm trap <the halfling> constitution dc 13 1d12 type poison` → the same advantage. Without `type poison`
+      → none. (#266)
+- [ ] **Gnome:** `/dm trap <them> wisdom dc 13 2d6 magic` → advantage ("against magic"); the same trap as a
+      `dexterity` save, or without the word `magic` → none. In a fight, Burning Hands (a DEX save) at a gnome is a
+      plain d20 now; Cause Fear (WIS) still has advantage. (#266)
 
 **Darkvision** (a dwarf, elf or tiefling, and a human) (#148)
 - [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).

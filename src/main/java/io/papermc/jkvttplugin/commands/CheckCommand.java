@@ -229,7 +229,11 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
             default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
         };
-        io.papermc.jkvttplugin.dm.CheckManager.register(target.getUniqueId(), dmId, dc, args[2], adv);
+        // A save a spell or a trap is waiting on carries what it's against (magic, poison, charmed): the prompt
+        // and the roll then give the same conditional advantage a fight would (#266). Any other check has none.
+        java.util.Set<String> saveTags = "SAVE".equals(rollType)
+                ? io.papermc.jkvttplugin.combat.SaveOutcome.tagsFor(target.getUniqueId(), dc) : java.util.Set.of();
+        io.papermc.jkvttplugin.dm.CheckManager.register(target.getUniqueId(), dmId, dc, args[2], adv, saveTags);
         RollOptionsMenuHandler.promptSkillRoll(target, sheet, rollType, value, mode);
         sender.sendMessage(Component.text("Called a " + args[2] + " check from " + sheet.getCharacterName()
                 + (dc != null ? " (DC " + dc + ", private)" : "")

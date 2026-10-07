@@ -785,7 +785,7 @@ public class Combatant {
             if (c.getSaveDisadvantage().contains(abil)) adv = adv.with(false);
         }
         CharacterSheet s = getCharacterSheet();
-        if (s != null && s.hasSaveAdvantageVs(tags)) adv = adv.with(true);
+        if (s != null && s.hasSaveAdvantageVs(ability, tags)) adv = adv.with(true); // only for the abilities it names (Gnome Cunning)
         if (s != null && s.armorPenaltyApplies(ability)) adv = adv.with(false); // #209: STR/DEX saves
         // An effect on this save (Rage: STR saves, #223).
         if (s != null && s.effectAdvantageSource(io.papermc.jkvttplugin.effect.RollTags.save(ability)) != null) adv = adv.with(true);

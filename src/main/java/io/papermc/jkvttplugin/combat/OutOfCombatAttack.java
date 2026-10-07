@@ -176,7 +176,7 @@ public final class OutOfCombatAttack {
             // the spell's effect (Bane) and its condition are applied, immunity is checked, and the damage
             // owed comes back for this path's own damage step. It used to offer the damage and leave the
             // condition as a note to the DM; an effect did nothing.
-            SpellSave.Facts facts = SpellSave.Facts.of(spell, player.getUniqueId(), sheet.getCharacterId(), dc, save, java.util.Set.of());
+            SpellSave.Facts facts = SpellSave.Facts.of(spell, player.getUniqueId(), sheet.getCharacterId(), dc, save, SpellSave.tagsFor(spell));
             java.util.function.Consumer<Boolean> outcome = saved -> {
                 SpellSave.Outcome o = SpellSave.apply(facts, SpellSave.subject(target, aim.target.session(), aim.targetName()), saved);
                 if (!saved) {
@@ -192,7 +192,7 @@ public final class OutOfCombatAttack {
                 }
             };
             UUID saver = target.getId();
-            SaveOutcome.await(saver, dc, outcome);
+            SaveOutcome.await(saver, dc, facts.saveTags(), outcome); // what it's against rides with the save (#266)
 
             // The DM's ruling without a roll stays possible, quietly, after the real buttons.
             Component rule = Component.text("  or rule it: ", NamedTextColor.DARK_GRAY)

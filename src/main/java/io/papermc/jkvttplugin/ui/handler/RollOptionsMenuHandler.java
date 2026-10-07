@@ -201,7 +201,22 @@ public class RollOptionsMenuHandler {
 
     /** What gives this roll advantage (an effect such as Rage, #223), or null. */
     private static String boonReason(CharacterSheet character, String type, String value) {
-        return character.effectAdvantageSource(rollTags(type, abilityOf(type, value)));
+        String effect = character.effectAdvantageSource(rollTags(type, abilityOf(type, value)));
+        return effect != null ? effect : saveContextReason(character, type, value);
+    }
+
+    /**
+     * "against poison": a called save that says what it's against (a spell's or a trap's tags on the pending
+     * check) and a conditional advantage that matches (Stout Resilience, Fey Ancestry, Gnome Cunning for its
+     * three abilities). The sheet's own rule, the one a fight uses; asked here by the prompt and by the roll,
+     * so they can't disagree (#266).
+     */
+    private static String saveContextReason(CharacterSheet character, String type, String value) {
+        if (!"SAVE".equals(type)) return null;
+        io.papermc.jkvttplugin.dm.CheckManager.Pending pending =
+                io.papermc.jkvttplugin.dm.CheckManager.peekPending(character.getPlayerId());
+        if (pending == null || pending.saveTags().isEmpty()) return null;
+        return character.saveAdvantageSourceVs(abilityOf(type, value), pending.saveTags());
     }
 
     /** A save is a save; a skill, check or tool check is an ability check. */
@@ -210,7 +225,7 @@ public class RollOptionsMenuHandler {
     }
 
     /** Fold a disadvantage and an advantage into a menu roll mode (5e: one of each cancels out). */
-    private static RollMode withPenalties(CharacterSheet character, String type, String value, RollMode mode) {
+    static RollMode withPenalties(CharacterSheet character, String type, String value, RollMode mode) {
         io.papermc.jkvttplugin.combat.Advantage adv = switch (mode) {
             case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
             case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;

@@ -24,12 +24,23 @@ public final class CheckManager {
      * A check the DM called and is waiting on. {@code dc} null = ungraded; {@code contestId} set = part
      * of a contest; {@code groupId} set = one of several people called at once.
      */
-    public record Pending(UUID dmId, Integer dc, String label, Advantage advantage, String contestId, String groupId) {}
+    /** {@code saveTags}: what a called save is against (a spell's or a trap's, #266); empty for any other check. */
+    public record Pending(UUID dmId, Integer dc, String label, Advantage advantage, String contestId, String groupId,
+                          java.util.Set<String> saveTags) {
+        public Pending(UUID dmId, Integer dc, String label, Advantage advantage, String contestId, String groupId) {
+            this(dmId, dc, label, advantage, contestId, groupId, java.util.Set.of());
+        }
+    }
 
     private static final Map<UUID, Pending> pending = new HashMap<>(); // roller's player id -> pending
 
     public static void register(UUID rollerPlayerId, UUID dmId, Integer dc, String label, Advantage advantage) {
         registerPending(rollerPlayerId, new Pending(dmId, dc, label, advantage == null ? Advantage.NONE : advantage, null, null));
+    }
+    /** A called save that knows what it's against, so the prompt and the roll give the same conditional advantage (#266). */
+    public static void register(UUID rollerPlayerId, UUID dmId, Integer dc, String label, Advantage advantage, java.util.Set<String> saveTags) {
+        registerPending(rollerPlayerId, new Pending(dmId, dc, label, advantage == null ? Advantage.NONE : advantage, null, null,
+                saveTags == null ? java.util.Set.of() : java.util.Set.copyOf(saveTags)));
     }
     private static void registerPending(UUID rollerPlayerId, Pending p) {
         if (rollerPlayerId != null) pending.put(rollerPlayerId, p);

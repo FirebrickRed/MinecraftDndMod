@@ -24,14 +24,6 @@ import java.util.UUID;
 public class SpellCastHandler {
 
 
-    /** What a save is "against" — drives conditional advantages (e.g. Dwarf vs poison, Gnome vs magic). */
-    private static java.util.Set<String> saveTagsFor(DndSpell spell) {
-        java.util.Set<String> tags = new java.util.HashSet<>();
-        tags.add("magic"); // every spell save is against magic
-        if (spell.getDamageType() != null && !spell.getDamageType().isBlank()) tags.add(spell.getDamageType().toLowerCase());
-        if (spell.getConditionOnFail() != null && !spell.getConditionOnFail().isBlank()) tags.add(spell.getConditionOnFail().toLowerCase());
-        return tags;
-    }
     /** A saving throw a target still owes from a save spell: the save's facts, until /combat save answers it. */
     private static final Map<UUID, SpellSave.Facts> pendingSaves = new HashMap<>();
 
@@ -157,7 +149,7 @@ public class SpellCastHandler {
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — DC " + sheet.getSpellSaveDcBreakdown(spell) + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
             SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
             // The save's facts, effect included: Bane's -1d4 lands on a failed save (#225).
-            pendingSaves.put(target.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, saveTagsFor(spell)));
+            pendingSaves.put(target.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell)));
             promptSave(session, target, saveAbility);
             return true;
         }
@@ -272,7 +264,7 @@ public class SpellCastHandler {
             int dc = 8 + mod;
             session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation() + " save — each caught creature rolls:", NamedTextColor.GRAY));
             for (Combatant t : affected) {
-                pendingSaves.put(t.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, saveTagsFor(spell)));
+                pendingSaves.put(t.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell)));
                 promptSave(session, t, saveAbility);
             }
         } else {

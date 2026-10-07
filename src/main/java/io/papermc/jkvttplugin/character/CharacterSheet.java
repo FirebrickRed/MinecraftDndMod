@@ -2141,19 +2141,37 @@ public class CharacterSheet {
         return all;
     }
 
-    /** True if a conditional advantage grants advantage on saving throws against any of {@code tags}. */
+    /** True if a conditional advantage grants advantage on saving throws against any of {@code tags}, whatever the ability. */
     public boolean hasSaveAdvantageVs(Set<String> tags) {
-        if (tags == null || tags.isEmpty()) return false;
+        return saveAdvantageSourceVs(null, tags) != null;
+    }
+
+    /** As above, for a save with {@code ability}: one limited to some abilities (Gnome Cunning) only counts for those. */
+    public boolean hasSaveAdvantageVs(Ability ability, Set<String> tags) {
+        return saveAdvantageSourceVs(ability, tags) != null;
+    }
+
+    /**
+     * What gives this save advantage because of what it's against, as "against poison", or null. A save
+     * says what it's against with tags (a spell: magic, its damage type, its condition; a trap: its damage
+     * type). A conditional advantage matches when its {@code condition} is one of them and, if it lists
+     * {@code abilities}, the save uses one of those. A null {@code ability} skips that second test.
+     */
+    public String saveAdvantageSourceVs(Ability ability, Set<String> tags) {
+        if (tags == null || tags.isEmpty()) return null;
         for (Map<String, String> ca : getAllConditionalAdvantages()) {
             if (!"saving_throw".equalsIgnoreCase(ca.getOrDefault("type", ""))) continue;
             String cond = ca.getOrDefault("condition", "").toLowerCase();
             // "poison" covers a save against being Poisoned too (Stout Resilience; a save that only
             // carried the condition, not poison damage, used to miss it).
-            if (!cond.isEmpty() && (tags.contains(cond) || tags.contains(cond + "ed"))) return true;
+            if (cond.isEmpty() || !(tags.contains(cond) || tags.contains(cond + "ed"))) continue;
+            String only = ca.getOrDefault("abilities", "");
+            if (ability != null && !only.isBlank()
+                    && !java.util.Arrays.asList(only.split(",")).contains(ability.name().toLowerCase())) continue;
+            return "against " + cond;
         }
-        return false;
+        return null;
     }
-
     /** The option this character picked for a CUSTOM choice (e.g. draconic_ancestry), or null. */
     public String getCustomChoice(String choiceId) {
         return choiceId == null ? null : customChoices.get(choiceId);

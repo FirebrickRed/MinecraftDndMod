@@ -182,6 +182,11 @@ public final class RaceClassParser {
                 advantage.put("type", ParseUtil.asString(map.get("type"), ""));
                 advantage.put("condition", ParseUtil.asString(map.get("condition"), ""));
                 advantage.put("description", ParseUtil.asString(map.get("description"), ""));
+                // Only some saves (Gnome Cunning: INT, WIS and CHA). It was read from nowhere, so a gnome
+                // had advantage on every save against magic (#266). Kept as "intelligence,wisdom,charisma".
+                List<String> abilities = new ArrayList<>();
+                for (String a : ParseUtil.normalizeStringList(map.get("abilities"))) abilities.add(a.trim().toLowerCase());
+                if (!abilities.isEmpty()) advantage.put("abilities", String.join(",", abilities));
                 result.add(advantage);
             }
         }

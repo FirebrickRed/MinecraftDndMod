@@ -19,7 +19,7 @@ public final class SaveOutcome {
 
     private SaveOutcome() {}
 
-    private record Waiting(int dc, Consumer<Boolean> onGraded, long at) {}
+    private record Waiting(int dc, java.util.Set<String> tags, Consumer<Boolean> onGraded, long at) {}
 
     /** Who is saving (a player's id, or a creature's instance id) → what their result does. */
     private static final Map<UUID, Waiting> waiting = new HashMap<>();
@@ -27,7 +27,24 @@ public final class SaveOutcome {
 
     /** {@code onGraded} gets true when they saved. A new one for the same target replaces the old. */
     public static void await(UUID saver, int dc, Consumer<Boolean> onGraded) {
-        if (saver != null && onGraded != null) waiting.put(saver, new Waiting(dc, onGraded, System.currentTimeMillis()));
+        await(saver, dc, java.util.Set.of(), onGraded);
+    }
+
+    /**
+     * As above, saying what the save is against ({@code tags}: magic, a damage type, a condition), so the
+     * check that's about to be called for it can give the conditional advantages a fight would (#266).
+     */
+    public static void await(UUID saver, int dc, java.util.Set<String> tags, Consumer<Boolean> onGraded) {
+        if (saver != null && onGraded != null) {
+            waiting.put(saver, new Waiting(dc, tags == null ? java.util.Set.of() : java.util.Set.copyOf(tags), onGraded, System.currentTimeMillis()));
+        }
+    }
+
+    /** What the save waiting on {@code saver} at this DC is against; empty when none is, or it's another save. */
+    public static java.util.Set<String> tagsFor(UUID saver, Integer dc) {
+        Waiting w = saver == null || dc == null ? null : waiting.get(saver);
+        if (w == null || w.dc() != dc || System.currentTimeMillis() - w.at() > GOOD_FOR_MS) return java.util.Set.of();
+        return w.tags();
     }
 
     /**

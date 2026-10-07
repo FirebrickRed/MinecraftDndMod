@@ -32,7 +32,18 @@ import java.util.List;
 public class TrapCommand implements CommandExecutor, TabCompleter {
 
     /** What a trap line asks for. {@code damage} is dice or a number, exactly as typed. */
-    public record Spec(Ability save, int dc, String damage, String type, boolean halfOnSave, String name) {}
+    public record Spec(Ability save, int dc, String damage, String type, boolean halfOnSave, boolean magical, String name) {
+        /**
+         * What the trap's save is against, for conditional advantages (#266): its damage type, and magic only
+         * when the line says so. A pit or a poisoned needle isn't magic; a glyph is ({@code magic}).
+         */
+        public java.util.Set<String> saveTags() {
+            java.util.Set<String> tags = new java.util.LinkedHashSet<>();
+            if (type != null && !type.isBlank()) tags.add(type.toLowerCase());
+            if (magical) tags.add("magic");
+            return tags;
+        }
+    }
 
     private static final List<String> ABILITY_WORDS = abilityWords();
 
@@ -52,7 +63,7 @@ public class TrapCommand implements CommandExecutor, TabCompleter {
         if (save == null) { problems.add("'" + words[0] + "' isn't an ability (dexterity, dex, constitution, …)."); return null; }
         Integer dc = null;
         String damage = null, type = null, name = null;
-        boolean half = false;
+        boolean half = false, magical = false;
         for (int i = 1; i < words.length; i++) {
             String w = words[i].toLowerCase();
             if (w.equals("dc") && i + 1 < words.length) {
@@ -62,6 +73,8 @@ public class TrapCommand implements CommandExecutor, TabCompleter {
                 type = words[++i].toLowerCase();
             } else if (w.equals("half")) {
                 half = true;
+            } else if (w.equals("magic") || w.equals("magical")) {
+                magical = true;
             } else if (w.equals("name")) {
                 name = String.join(" ", java.util.Arrays.copyOfRange(words, i + 1, words.length)).trim();
                 break;
@@ -74,7 +87,7 @@ public class TrapCommand implements CommandExecutor, TabCompleter {
         }
         if (dc == null) { problems.add("A trap needs a DC: dc 13."); return null; }
         if (damage == null) { problems.add("A trap needs its damage: dice (2d10) or a number."); return null; }
-        return new Spec(save, dc, damage, type, half, name == null || name.isBlank() ? null : name);
+        return new Spec(save, dc, damage, type, half, magical, name == null || name.isBlank() ? null : name);
     }
 
     /** "dexterity" or "dex", any case; null for anything else. */
@@ -95,7 +108,7 @@ public class TrapCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         args = NameUtil.collapseName(args, 0, ABILITY_WORDS);
         if (args.length < 2) {
-            sender.sendMessage(Component.text("Usage: /dm trap <character|creature|@p> <ability> dc <n> <damage> [type <t>] [half] [name <text>]", NamedTextColor.RED));
+            sender.sendMessage(Component.text("Usage: /dm trap <character|creature|@p> <ability> dc <n> <damage> [type <t>] [half] [magic] [name <text>]", NamedTextColor.RED));
             sender.sendMessage(Component.text("   e.g. /dm trap @p dexterity dc 13 2d10 type fire half name Flame jet", NamedTextColor.GRAY));
             return true;
         }
@@ -122,7 +135,7 @@ public class TrapCommand implements CommandExecutor, TabCompleter {
         }
 
         // The graded save decides the damage; nothing more for anyone to click.
-        SaveOutcome.await(victim.getId(), spec.dc(), saved -> {
+        SaveOutcome.await(victim.getId(), spec.dc(), spec.saveTags(), saved -> {
             int taken = 0;
             DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(spec.damage());
             if (rolled != null) taken = damageAfterSave(Math.max(0, rolled.total()), saved, spec.halfOnSave());
@@ -180,7 +193,7 @@ public class TrapCommand implements CommandExecutor, TabCompleter {
             String prev = a[a.length - 2].toLowerCase();
             if (prev.equals("dc")) options.addAll(List.of("10", "13", "15"));
             else if (prev.equals("type")) options.addAll(List.of("fire", "piercing", "poison", "bludgeoning", "slashing", "cold", "lightning", "acid", "necrotic"));
-            else options.addAll(List.of("dc", "type", "half", "name", "1d10", "2d10", "4d6"));
+            else options.addAll(List.of("dc", "type", "half", "magic", "name", "1d10", "2d10", "4d6"));
         }
         List<String> out = new ArrayList<>();
         for (String o : options) if (o.startsWith(typed)) out.add(o);
