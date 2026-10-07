@@ -86,6 +86,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
+        if (OPENING_HELD.contains(subcommand) && OutOfCombatAttack.openingHolds(player, args)) return true;
+
         switch (subcommand) {
             case "start" -> handleStart(player);
             case "add" -> handleAdd(player, args);
@@ -1288,11 +1290,21 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         // blocking it would deadlock the very thing that closes it.
         if (!spendReaction && turnHeld(player, caster)) return;
         // The Action / bonus action it costs has to still be there: a cantrip could be cast again and
-        // again in one turn (#235). A DM is told but not stopped (their ruling stands).
+        // again in one turn (#235). A DM is stopped too (playtest: a DM playing their own character cast
+        // Fire Bolt three times in one turn, waved through with one gray line). Their way past is the button.
+        boolean budgetOverridden = false;
         if (!spendReaction) {
             String spent = castBudgetRefusal(caster.getTurnState(), spell);
-            if (spent != null && !isDM) { player.sendMessage(Component.text(spent, NamedTextColor.YELLOW)); return; }
-            if (spent != null) player.sendMessage(Component.text(spent + " (DM: going ahead anyway.)", NamedTextColor.GRAY));
+            if (spent != null) {
+                budgetOverridden = isDM && takeCastOverride(player, spell);
+                if (!budgetOverridden) {
+                    Component line = Component.text(spent + " ", NamedTextColor.YELLOW);
+                    if (isDM) line = line.append(castAnywayButton(player, spell));
+                    player.sendMessage(line);
+                    return;
+                }
+                player.sendMessage(Component.text("(DM: cast anyway.)", NamedTextColor.GRAY));
+            }
         }
 
         // A leveled spell needs a slot (or an innate use). This was never checked in combat — the
@@ -1330,11 +1342,12 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             final Combatant aoeCaster = caster;
             final boolean aoeReaction = spendReaction;
             final Integer aoeLevel = castLevel;
+            final boolean aoeOverridden = budgetOverridden;
             // On confirm, the slot and the Action must still be there: another spell may have used them (#237).
             java.util.function.Supplier<String> stillAffordable = () -> {
                 io.papermc.jkvttplugin.character.SpellCost now = io.papermc.jkvttplugin.character.SpellCost.of(casterSheet, spell, aoeLevel);
                 if (!now.available()) return now.unavailableReason(spell);
-                return aoeReaction || isDM ? null : castBudgetRefusal(aoeCaster.getTurnState(), spell);
+                return aoeReaction || aoeOverridden ? null : castBudgetRefusal(aoeCaster.getTurnState(), spell);
             };
             SpellCastHandler.castAoe(caster, session, player, spell, providedRoll, providedTotal,
                     () -> afterCast(player, session, aoeCaster, casterSheet, spell, cost, aoeReaction), stillAffordable);
@@ -1405,6 +1418,26 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         }
 
         if (resolved) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction);
+    }
+
+    /** What the move that started the fight has first claim on: the things that would spend the Action. */
+    private static final Set<String> OPENING_HELD = Set.of("attack", "cast", "action", "use");
+
+    // A DM's "cast it anyway" for one spell, spent by the cast it lets through.
+    private static final Map<UUID, String> castOverrides = new HashMap<>();
+
+    private static boolean takeCastOverride(Player dm, io.papermc.jkvttplugin.data.model.DndSpell spell) {
+        return spell.getId().equals(castOverrides.remove(dm.getUniqueId()));
+    }
+
+    private Component castAnywayButton(Player dm, io.papermc.jkvttplugin.data.model.DndSpell spell) {
+        String retry = RollPrompt.lastCommand(dm);
+        return Component.text("[Cast it anyway]", NamedTextColor.GOLD, TextDecoration.UNDERLINED)
+                .hoverEvent(HoverEvent.showText(Component.text("DM: let this one cast go through without its action")))
+                .clickEvent(ClickEvent.callback(a -> {
+                    castOverrides.put(dm.getUniqueId(), spell.getId());
+                    if (retry != null) dm.performCommand(retry.startsWith("/") ? retry.substring(1) : retry);
+                }, net.kyori.adventure.text.event.ClickCallback.Options.builder().uses(1).lifetime(java.time.Duration.ofMinutes(2)).build()));
     }
 
     /**

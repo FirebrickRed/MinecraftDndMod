@@ -86,6 +86,15 @@ public class TurnState {
     public void setMultiattack(io.papermc.jkvttplugin.data.model.Multiattack.Progress progress) { this.multiattack = progress; }
     /** One of the Attack action's further attacks is being made. */
     public void useExtraAttack() { if (attacksLeftInAction > 0) attacksLeftInAction--; }
+    // The attack or spell that started this fight, owed on this (their first) turn (#152): its label and
+    // the command that makes it. Until it's made or the DM releases it, the Action is spoken for.
+    private String openingLabel, openingCommand;
+
+    public void setOpening(String label, String command) { openingLabel = label; openingCommand = command; }
+    public void clearOpening() { openingLabel = null; openingCommand = null; }
+    public String getOpeningLabel() { return openingLabel; }
+    public String getOpeningCommand() { return openingCommand; }
+
     public boolean isAttackActionTaken() { return attackActionTaken; }
     /** What the Attack action was made with (a weapon id or "unarmed"), or null before it's taken. */
     public String getAttackActionWith() { return attackActionTaken ? attackActionWith : null; }

@@ -421,12 +421,81 @@ public final class OutOfCombatAttack {
         Opening o = openings.remove(current.getId());
         Player p = current.getPlayer();
         if (o == null || p == null || System.currentTimeMillis() - o.at() > Duration.ofMinutes(30).toMillis()) return;
-        // Its own block, in bold: one plain line was lost among the initiative messages (playtest).
-        p.sendMessage(Component.empty());
-        p.sendMessage(Component.text("⚔ You started this fight with " + o.label() + ". ", NamedTextColor.GOLD, TextDecoration.BOLD)
-                .append(fill("[Do it now]", o.command())));
-        p.sendMessage(Component.text("   It fills the command; you then roll as usual. Or do something else with your turn.", NamedTextColor.GRAY));
-        p.sendMessage(Component.empty());
+        TurnState state = current.getTurnState();
+        if (state != null) state.setOpening(o.label(), o.command()); // their Action is spoken for (openingHolds)
+        // A tick later, so it's the LAST thing on screen: sent now it sat above the initiative order, the
+        // round banner and "you get one action…", and was scrolled past (playtest).
+        Bukkit.getScheduler().runTask(io.papermc.jkvttplugin.JkVttPlugin.getInstance(), () -> {
+            p.sendMessage(Component.empty());
+            p.sendMessage(Component.text("⚔ You started this fight with " + o.label() + ". ", NamedTextColor.GOLD, TextDecoration.BOLD)
+                    .append(fill("[Do it now]", o.command())));
+            p.sendMessage(Component.text("   That's your Action this turn. It fills the command; you then roll as usual.", NamedTextColor.GRAY));
+            p.sendMessage(Component.empty());
+        });
+    }
+
+    /** Whether a typed command is the opening move itself (the roll words after it don't matter). */
+    static boolean isOpening(String openingCommand, String typed) {
+        if (openingCommand == null || typed == null) return false;
+        String want = openingCommand.trim().replaceAll("\\s+", " ").toLowerCase();
+        String got = typed.trim().replaceAll("\\s+", " ").toLowerCase();
+        if (!got.startsWith("/")) got = "/" + got;
+        return got.equals(want) || got.startsWith(want + " ");
+    }
+
+    /**
+     * The move that started the fight comes first (playtest): on that first turn, an attack, cast, action
+     * or feature that isn't it is held, with [Do it now], and [Ask the DM] to be let off ([Something else]
+     * for a DM). Making the opening move, or being let off, clears it. A bare {@code /combat attack} (the
+     * list of options) is never held. Returns true when the command was held.
+     */
+    public static boolean openingHolds(Player player, String[] args) {
+        CombatSession session = CombatSession.getSessionForPlayer(player.getUniqueId());
+        Combatant current = session != null ? session.getCurrentCombatant() : null;
+        if (current == null || !current.isPlayer() || !current.getId().equals(player.getUniqueId())) return false;
+        TurnState state = current.getTurnState();
+        if (state == null || state.getOpeningCommand() == null) return false;
+        if (state.isActionUsed()) { state.clearOpening(); return false; } // the Action is gone: nothing left to hold
+        if (args.length < 2) return false; // just looking at the options
+        String typed = "/combat " + String.join(" ", args);
+        if (isOpening(state.getOpeningCommand(), typed)) {
+            // Without roll words the roll prompt comes next and the move is still owed; with them it's being made.
+            for (String a : args) if (RollService.isRollKeyword(a)) { state.clearOpening(); break; }
+            return false;
+        }
+        String label = state.getOpeningLabel(), command = state.getOpeningCommand();
+        UUID id = player.getUniqueId();
+        var once = net.kyori.adventure.text.event.ClickCallback.Options.builder().uses(1).lifetime(Duration.ofMinutes(5)).build();
+        Component line = Component.text("You started this fight with " + label + ": that's your Action this turn. ", NamedTextColor.YELLOW)
+                .append(fill("[Do it now]", command)).append(Component.text(" "));
+        if (DMManager.isDM(player)) {
+            line = line.append(Component.text("[Something else]", NamedTextColor.GOLD, TextDecoration.UNDERLINED)
+                    .hoverEvent(HoverEvent.showText(Component.text("DM: drop the opening move and do this instead")))
+                    .clickEvent(ClickEvent.callback(a -> { state.clearOpening(); player.performCommand(typed.substring(1)); }, once)));
+        } else {
+            line = line.append(Component.text("[Ask the DM]", NamedTextColor.AQUA, TextDecoration.UNDERLINED)
+                    .hoverEvent(HoverEvent.showText(Component.text("Ask the DM to let you do something else instead")))
+                    .clickEvent(ClickEvent.callback(a -> {
+                        if (!DmRequests.anyDmOnline(player)) return;
+                        Component toDm = Component.text("⚔ " + player.getName() + " started the fight with " + label
+                                + " and wants to do something else instead (" + typed + ") ", NamedTextColor.GOLD)
+                                .append(DmRequests.button(id, "[Allow]", NamedTextColor.GREEN, "Drop the opening move", dm -> {
+                                    state.clearOpening();
+                                    Player p = Bukkit.getPlayer(id);
+                                    if (p != null) p.sendMessage(Component.text("The DM lets you do something else. ", NamedTextColor.GREEN)
+                                            .append(fill("[go again]", typed)));
+                                }))
+                                .append(Component.text(" "))
+                                .append(DmRequests.button(id, "[Deny]", NamedTextColor.GRAY, "They make the opening move", dm -> {
+                                    Player p = Bukkit.getPlayer(id);
+                                    if (p != null) p.sendMessage(Component.text("The DM says: make the move you started with. ", NamedTextColor.GRAY)
+                                            .append(fill("[Do it now]", command)));
+                                }));
+                        DmRequests.send(player, "something else than " + label, "Asked the DM.", toDm);
+                    }, once)));
+        }
+        player.sendMessage(line);
+        return true;
     }
 
     // ==================== AIMING ====================

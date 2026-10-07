@@ -75,7 +75,7 @@ rows (`/dm entity spawn alira "The Kindler"`).
       Left-click to attack with the shortsword, then `/combat bonusAction` → an off-hand **Dagger** attack is
       listed; click it → "⚡ This attack uses your bonus action (two-weapon fighting)" and **no** "are you
       switching weapons?" question. Any class works, but both weapons must be **light**: longsword + dagger
-      gets no bonus attack ("Two-weapon fighting needs a light weapon in each hand…"). (#190)
+      gets no bonus attack: "The Dagger can't be a bonus attack: … Your Longsword isn't light." (#190)
 - [ ] **Defense** fighter: AC goes up by 1 when you put on chain mail (and not unarmored). The sheet's AC
       tile lists it: "Armor: 16", "Defense: +1". (#229)
 - [ ] **Great Weapon Fighting**, greatsword, damage with `autoRoll` → "(Great Weapon Fighting: any 1 or 2
@@ -91,43 +91,20 @@ rows (`/dm entity spawn alira "The Kindler"`).
 Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rogue**.
 
 - [ ] **High Elf Rogue:** `/character cast fire_bolt` works and uses INT.
-- [ ] **Tiefling Rogue:** `/character cast ` + Tab → your cantrips, spells and racial spells (Thaumaturgy).
-- [ ] **Tiefling Rogue:** right-click thieves' tools with no chest in view → nothing happens, no
-      "cannot use this type of focus" message.
 - [ ] **Tiefling Rogue:** right-click a chest holding thieves' tools → the chest's own [Open it] /
-      [Ask for a check] prompt, not a focus message.
-- [ ] **Sneak Attack with advantage** (the goblin is prone, or restrained): a rapier hit says "🗡 Sneak
-      Attack: +1d6 in that damage (advantage)" and the damage prompt rolls 1d8+1d6. No DM needed. (#229)
-- [ ] **Sneak Attack without advantage** (you're the DM): the hit offers **[Add it]** (a player's rogue
-      gets [Ask the DM]: Part 2). Click → +1d6 in the damage. (#229)
+      [Ask for a check] prompt, not a focus message. (I can't do this cuz I'm dm or op or something)
 - [ ] Once the Sneak Attack damage lands, a second hit that turn offers nothing. A club (not finesse) → nothing. (#229)
 - [ ] **Shield:** a Sneak Attack hit that Shield turns into a miss → the next hit that turn can still Sneak Attack. (#229)
-- [ ] **Thieves' tools break on a fail:** carry 2 sets, `/dm check <you> tool thieves_tools dc 25`, fail → one set gone, you're told.
-- [ ] DC 5, pass → nothing breaks.
-- [ ] No DC → never breaks.
 - [ ] `on_fail: always` / `never` in config.yml behave as named.
 
 ## Monk
 
 
-- [ ] Empty hands, left-click an enemy → a gray line "• Martial Arts: 1d4 + DEX instead of 1 + STR" above the
-      roll buttons. With a quarterstaff → "The Quarterstaff's own 1d6 beats the Martial Arts 1d4" and "Martial
-      Arts: DEX instead of STR"; the damage is 1d6 + DEX. (#259)
-- [ ] Longsword in the off hand, punch (`/combat attack <t> unarmed`) → damage is a flat 1 (1 + STR), and
-      `/combat bonusAction` offers no unarmed strike. Left-click with the longsword in the **main** hand and an
-      empty off hand, then `/combat attack <t> unarmed bonus` → "…isn't available while you're holding a
-      Longsword". (#259)
-- [ ] Attack with a shortbow, then `/combat attack <t> unarmed bonus` → refused: "comes after an Attack action
-      made with an unarmed strike or a Martial Arts weapon; this turn's was made with a Shortbow". Attack with a
-      quarterstaff instead → the bonus punch is allowed. (#259)
-- [ ] Before attacking at all, `/combat attack <t> unarmed bonus` → refused ("attack first"), and
-      `/combat bonusAction` shows the unarmed strike greyed with "After your Attack action". A fighter's
-      off-hand dagger can still go first (the timing setting only governs two-weapon fighting now). (#259)
-
 ## Wizard
 
-- [ ] Creation, Spells tab: Cantrips and Level 1 each have **Next page ▶** at the bottom right; the second page
-      has the spells after Magnify Gravity, and picks on either page count together.
+- [ ] Out of a fight, `/character cast blade_ward Wolf` → "Blade Ward only targets you (range: Self)…", no
+      "casts Blade Ward on Wolf". `/character cast false_life` (a wizard or sorcerer who knows it) → the dice
+      are shown, you gain that many temporary hit points, and the slot is spent; `… false_life Wolf` → refused.
 - [ ] `/combat cast blade_ward <someone else>` (and `/character cast` out of a fight) → "only targets you
       (range: Self). Cast it without a name and it's on you." No [Do it anyway], even for you. No name → it's on you.
 - [ ] Start aiming Burning Hands, then `/combat nextturn` (or end your turn) → "Your turn is over. Your Burning
@@ -136,12 +113,9 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
       → "…doesn't go off: nothing spent." (#237)
 - [ ] In a fight, cast Fire Bolt and resolve it, then cast it again the same turn → "You've already used your
       Action this turn". Nothing is rolled or spent. (#235)
-- [ ] `/roll 1d6+2147483647d6` and `/roll 99999999999d6` → refused as invalid, and the server doesn't stall. (#234)
 
 **Creation and the spellbook**
 
-- [ ] **Arcane Recovery:** cast a 1st-level spell, `/dm rest <you> short` → the summary offers
-      "📖 Arcane Recovery… [Recover]"; use it → a level 1 slot back. Again → "used today". In a fight → refused. (#218)
 
 **Out of a fight**
 
@@ -150,7 +124,6 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 **In a fight**
 
 - [ ] After Start combat, on your first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
-- [ ] A save spell (Hold Person) or Magic Missile the same way → one **[Cast it]** button instead of roll buttons. (#179)
 - [ ] With a spell ready, [cancel] → left-click attacks with your weapon again. End your turn with one ready →
       next turn, left-click is your weapon (it lapses with the turn). (#179)
 - [ ] Burning Hands / Thunderwave from the spellbook → the aim preview starts at once; right-click confirms.
@@ -204,9 +177,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] **Spell looks:** Sacred Flame → a burst of white on the target; Cure Wounds → hearts rise around the
       target; Bless → a gold ring; Bane → a dark red burst. (#230)
 
-## Sorcerer
-
-
 ## Warlock
 
 - [ ] Hex someone, then cast another concentration spell (Bless if you have it, or any) → attack the
@@ -226,13 +196,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 ## Artificer
 
-- [ ] At level 1 it prepares INT-modifier spells (one fewer than before); two simple weapon picks.
-- [ ] INT 15 as a gnome (+2 → 17) or with a +1 you place (16): the spell step lets you prepare **3**, the
-      same number the finished sheet has. Change the race to one with no INT bonus → the prepared picks
-      reset and it's 2.
-- [ ] Hover the **Level 1  0/3** tile in the spell step → "Prepared: +3[INT] +0[half level, rounded down] = 3".
-      A cleric's says "+3[WIS] +1[level] = 4"; a sorcerer's "knows 2 spells"; a wizard's "spellbook holds 6".
-      The Prepare Spells menu's top tile says "You can prepare +3[INT] +1[level] = 4" for the wizard.
 
 ## Races
 
@@ -269,8 +232,16 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 - [ ] Damage with several dice rolled by hand: `/combat damage <t> manualRoll 1+4` and `manualRoll 1 + 4` both count
       as 5; `total 12+7` is 19. `manualRoll 14 3` on a Blessed attack is still a 14, and a 3 on the d4.
-- [ ] Start a fight by attacking out of combat ([Start combat]) → on your first turn, a bold gold line: "You started
-      this fight with …. [Do it now]", with a blank line above and below. (#152)
+- [ ] Start a fight by casting Fire Bolt at a creature out of combat ([Start combat]), `/combat rollforinitiative` →
+      the bold gold "You started this fight with …. [Do it now]" block is the **last** thing in chat, below the
+      initiative order, the round banner and "you get one action…". (#152)
+- [ ] On that first turn, try something else (`/combat attack <t> dagger autoRoll`) → held: "You started this
+      fight with …: that's your Action this turn. [Do it now] [Something else]" (a player sees [Ask the DM], and
+      your [Allow] lets them go again). [Do it now] → the roll buttons, and the cast goes through. Bonus
+      actions and `/combat endturn` are never held. (#152)
+- [ ] **A second cast in one turn:** on your turn cast Fire Bolt, then cast it again → "You've already used your
+      Action this turn: Fire Bolt needs it. [Cast it anyway]" and nothing is rolled. This holds for you as a DM
+      too; only clicking [Cast it anyway] lets the one cast through. (#235)
 - [ ] Mid-fight, on someone's turn, `/combat initiative <someone else> set 30` → they move to the
       top, and the **current turn stays with whoever had it** (the green →).
 - [ ] **Scoreboard:** two tied initiatives in turn order.
@@ -704,12 +675,6 @@ Set up an enchanting table: a description, **Rolled**, History or Arcana, three 
 # Playtest notes
 Write anything here, in any order. Each round Claude answers in chat, turns the notes into rows
 above, and clears this section (git keeps the old notes).
-
-oh hey, paper is saying I'm 3 builds behind, are we good to update to latest, is anything going to break?
-does the weapon switching for fighter is that a fighter only feature because I don't think it should be if it is.
-thoughts on potential implementations for the artificers magical tinkering? or is it just a tell the dm at this point?
-
-
 
 ---
 

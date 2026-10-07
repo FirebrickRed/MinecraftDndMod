@@ -383,6 +383,30 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
                 ? NameUtil.readName(words, 1, List.of("autoroll", "manualroll", "total")) : null;
         String target = typed != null ? typed.value() : null;
 
+        // A Self spell is only ever its caster (playtest: "casts Blade Ward on Wolf" went through here, the
+        // one cast path that never asked). No name needed; someone else's name is refused.
+        boolean selfOnly = spell.getRangeFeet() == 0 && !spell.isAoe();
+        if (selfOnly && target != null && !target.equalsIgnoreCase("me") && !target.equalsIgnoreCase("self")
+                && !target.equalsIgnoreCase("myself") && !target.equalsIgnoreCase(sheet.getCharacterName())) {
+            player.sendMessage(Component.text(spell.getName() + " only targets you (range: Self). Cast it without a name and it's on you.",
+                    NamedTextColor.RED));
+            return true;
+        }
+        if (selfOnly) target = null;
+
+        // Temporary hit points on yourself (False Life): it used to be announced and nothing else.
+        if (selfOnly && spell.grantsTempHp() && !spell.isHealing()) {
+            io.papermc.jkvttplugin.util.DiceRoller.Rolled rolled = io.papermc.jkvttplugin.util.DiceRoller.rollOrFlat(spell.getTempHp());
+            io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, cost);
+            announceNearby(player, spell.castLine("✨ " + sheet.getCharacterName() + " casts ", ".", NamedTextColor.LIGHT_PURPLE));
+            if (rolled != null) {
+                player.sendMessage(Component.text(rolled.display(), NamedTextColor.GRAY));
+                io.papermc.jkvttplugin.combat.DamageHandler.applyTempHp(null,
+                        io.papermc.jkvttplugin.combat.CombatTargets.forPlayer(player).combatant(), Math.max(0, rolled.total()));
+            }
+            return true;
+        }
+
         // Harmful spells need the DM's say (start a fight, let it happen, or a thing on the wall);
         // healing rolls and applies. Both go through the normal roll prompts and the one HP path.
         if (io.papermc.jkvttplugin.combat.OutOfCombatAttack.isHarmful(spell) || spell.isHealing()) {

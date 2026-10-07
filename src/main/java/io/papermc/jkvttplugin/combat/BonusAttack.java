@@ -84,9 +84,26 @@ public final class BonusAttack {
         }
 
         if (featureRefusal != null) return Verdict.no(featureRefusal);
-        String what = weapon == null ? "an unarmed strike" : "the " + weapon.getName();
-        return Verdict.no("Nothing lets you make " + what + " as a bonus action. Two-weapon fighting needs a light "
-                + "weapon in each hand, attacking with the off-hand one; Martial Arts needs no armor or shield.");
+        return Verdict.no(noBonusAttackReason(weapon, mainHand, offHand));
+    }
+
+    /**
+     * Why this attack can't be a bonus action, said about THEIR hands (playtest: one sentence listing
+     * two-weapon fighting and Martial Arts told a fighter about a monk feature and nobody what to change).
+     * Two-weapon fighting (PHB p.195): a light weapon in each hand, and the bonus attack is the off-hand one.
+     */
+    static String noBonusAttackReason(DndWeapon weapon, DndWeapon mainHand, DndWeapon offHand) {
+        if (weapon == null) return "An unarmed strike isn't a bonus action for you: nothing you have gives you one.";
+        String lead = "The " + weapon.getName() + " can't be a bonus attack: ";
+        String rule = "two-weapon fighting needs a light weapon in each hand, and the bonus attack is the off-hand one";
+        if (offHand == null) return lead + rule + ". Your off hand is empty.";
+        if (!weapon.getId().equalsIgnoreCase(offHand.getId())) {
+            return lead + "the bonus attack is made with your off-hand weapon (the " + offHand.getName() + ").";
+        }
+        if (mainHand == null) return lead + rule + ". Your main hand is empty.";
+        if (!isLight(mainHand)) return lead + rule + ". Your " + mainHand.getName() + " isn't light.";
+        if (!isLight(offHand)) return lead + rule + ". Your " + offHand.getName() + " isn't light.";
+        return lead + rule + ".";
     }
 
     /** Whether the Attack action already taken is one this feature attack may follow. */
