@@ -23,10 +23,6 @@ import java.util.UUID;
  */
 public class SpellCastHandler {
 
-    /** A saving throw a target still owes from a save spell. */
-    private record PendingSave(String spellName, UUID casterId, int dc, Ability ability,
-                               String damage, String damageType, String saveEffect, String conditionOnFail,
-                               java.util.Set<String> saveTags, String effectSpellId) {}
 
     /** What a save is "against" — drives conditional advantages (e.g. Dwarf vs poison, Gnome vs magic). */
     private static java.util.Set<String> saveTagsFor(DndSpell spell) {
@@ -36,7 +32,8 @@ public class SpellCastHandler {
         if (spell.getConditionOnFail() != null && !spell.getConditionOnFail().isBlank()) tags.add(spell.getConditionOnFail().toLowerCase());
         return tags;
     }
-    private static final Map<UUID, PendingSave> pendingSaves = new HashMap<>();
+    /** A saving throw a target still owes from a save spell: the save's facts, until /combat save answers it. */
+    private static final Map<UUID, SpellSave.Facts> pendingSaves = new HashMap<>();
 
     /** @return true if the spell actually resolved (so the action is spent). */
     public static boolean cast(Combatant caster, Combatant target, CombatSession session, Player player,
@@ -159,9 +156,8 @@ public class SpellCastHandler {
             session.broadcast(Component.empty());
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — DC " + sheet.getSpellSaveDcBreakdown(spell) + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
             SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
-            pendingSaves.put(target.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
-                    spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell),
-                    spell.hasEffect() ? spell.getId() : null)); // Bane: its -1d4 lands on a failed save (#225)
+            // The save's facts, effect included: Bane's -1d4 lands on a failed save (#225).
+            pendingSaves.put(target.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, saveTagsFor(spell)));
             promptSave(session, target, saveAbility);
             return true;
         }
@@ -276,9 +272,7 @@ public class SpellCastHandler {
             int dc = 8 + mod;
             session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation() + " save — each caught creature rolls:", NamedTextColor.GRAY));
             for (Combatant t : affected) {
-                pendingSaves.put(t.getId(), new PendingSave(spell.getName(), caster.getId(), dc, saveAbility,
-                        spell.getDamage(), spell.getDamageType(), spell.getSaveEffect(), spell.getConditionOnFail(), saveTagsFor(spell),
-                        spell.hasEffect() ? spell.getId() : null));
+                pendingSaves.put(t.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, saveTagsFor(spell)));
                 promptSave(session, t, saveAbility);
             }
         } else {
@@ -316,8 +310,8 @@ public class SpellCastHandler {
         java.util.Set<String> tags = damageType != null && !damageType.isBlank()
                 ? java.util.Set.of(damageType.toLowerCase()) : java.util.Set.of();
         for (Combatant t : affected) {
-            pendingSaves.put(t.getId(), new PendingSave(sourceName, caster.getId(), dc, saveAbility,
-                    damage, damageType, saveEffect, null, tags, null));
+            pendingSaves.put(t.getId(), new SpellSave.Facts(sourceName, caster.getId(), null, dc, saveAbility,
+                    damage, damageType, saveEffect, null, tags, null)); // a feature's area (a breath weapon): damage only
             promptSave(session, t, saveAbility);
         }
         return true;
@@ -382,7 +376,7 @@ public class SpellCastHandler {
     private static void promptSave(CombatSession session, Combatant target, Ability ability) {
         String adds = target.saveBreakdown(ability);
         // The same advantage the resolve step applies (conditions, Fey Ancestry…), so [My total…] says how to roll.
-        PendingSave ps = pendingSaves.get(target.getId());
+        SpellSave.Facts ps = pendingSaves.get(target.getId());
         String dice = RollPrompt.d20(target.saveAdvantage(ability, ps != null ? ps.saveTags() : java.util.Set.of()));
         if (target.isPlayer() && target.getPlayer() != null) {
             target.getPlayer().sendMessage(RollPrompt.line("🛡 Roll a " + ability.getAbbreviation() + " saving throw:",
@@ -397,7 +391,7 @@ public class SpellCastHandler {
     /** Resolve a pending save for {@code target}. Players roll their own; the DM rolls for entities. */
     public static void resolveSave(Player roller, CombatSession session, Combatant target,
                                    Integer providedRoll, Integer providedTotal, boolean forceAuto) {
-        PendingSave ps = pendingSaves.get(target.getId());
+        SpellSave.Facts ps = pendingSaves.get(target.getId());
         if (ps == null) {
             roller.sendMessage(Component.text(target.getDisplayName() + " has no pending save.", NamedTextColor.RED));
             return;
@@ -418,7 +412,7 @@ public class SpellCastHandler {
         }
         pendingSaves.remove(target.getId());
         SpellEffects.useUp(target, io.papermc.jkvttplugin.effect.ActiveEffect.SAVES); // Resistance, once (#225)
-        boolean success = r.total() >= ps.dc();
+        boolean success = SpellSave.saved(r.total(), ps.dc()); // grading; what it does is SpellSave.apply, below
         Combatant caster = findById(session, ps.casterId());
         Combatant damageSource = caster != null ? caster : target;
 
@@ -431,8 +425,11 @@ public class SpellCastHandler {
                     InspirationPrompt.table(session));
         }
 
+        // What the save does is the same in and out of a fight (SpellSave, #267). Rolling the damage and
+        // telling the table are this path's own: the caster's /combat damage step, and a broadcast.
+        SpellSave.Outcome outcome = SpellSave.apply(ps, SpellSave.subject(target, session, target.getDisplayName(true)), success);
         if (success) {
-            if ("half".equalsIgnoreCase(ps.saveEffect()) && ps.damage() != null) {
+            if (outcome.damage() == SpellSave.Owed.HALF) {
                 session.broadcast(Component.text(ps.spellName() + " deals half on a save.", NamedTextColor.GRAY));
                 AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false, flatLabel(ps.damage(), ps.spellName()));
                 if (damageSource.getTurnState() != null) damageSource.getTurnState().setPendingDamageHalf(true);
@@ -441,30 +438,14 @@ public class SpellCastHandler {
             }
             return;
         }
-        // Failed save: full damage + any condition.
-        if (ps.effectSpellId() != null) {
-            DndSpell effectSpell = io.papermc.jkvttplugin.data.loader.SpellLoader.getSpell(ps.effectSpellId());
-            Combatant from = findById(session, ps.casterId());
-            if (effectSpell != null && effectSpell.hasEffect()) {
-                SpellEffects.apply(from != null && from.getCharacterSheet() != null ? from.getCharacterSheet().getCharacterId() : null,
-                        target, effectSpell);
-                session.broadcast(Component.text(target.getDisplayName(true) + " is under " + effectSpell.getName() + ": "
-                        + SpellEffects.describe(effectSpell) + ".", NamedTextColor.YELLOW));
-            }
+        // Failed save: the effect, full damage, then any condition.
+        for (Component line : outcome.effectLines()) session.broadcast(line);
+        if (outcome.damage() == SpellSave.Owed.FULL) {
+            AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false, flatLabel(ps.damage(), ps.spellName()));
         }
-        if (ps.damage() != null) AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false, flatLabel(ps.damage(), ps.spellName()));
-        DndCondition cond = ps.conditionOnFail() != null ? ConditionLoader.get(ps.conditionOnFail()) : null;
-        if (cond != null && target.isImmuneToCondition(cond.getId())) {
-            session.broadcast(Component.text(target.getDisplayName(true) + " is immune to being " + cond.getName() + ".", NamedTextColor.GRAY)); // #252
-        } else if (cond != null && target.addCondition(cond.getId())) {
-            // Incapacitated ends concentration outright, no save (PHB 203).
-            if (target.cannotAct()) ConcentrationManager.onIncapacitated(session, target, "they were " + cond.getName().toLowerCase());
-            session.setConditionEffect(target, cond, true);
-            session.broadcast(Component.text(target.getDisplayName(true) + " is now " + cond.getName() + "!", NamedTextColor.YELLOW));
-            session.updateScoreboard();
-        }
+        for (Component line : outcome.conditionLines()) session.broadcast(line);
+        if (outcome.conditionApplied()) session.updateScoreboard();
     }
-
     public static boolean hasPendingSave(UUID targetId) { return pendingSaves.containsKey(targetId); }
 
     // ==================== HELPERS ====================

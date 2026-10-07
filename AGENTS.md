@@ -785,6 +785,7 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     whose effect is `held`: never added by itself; after each d20 roll the holder is asked (`InspirationPrompt.offer`,
     answered by `/character inspiration`). A missed attack re-checks AC; failed concentration/death saves wait (`onDeclined`).
     Multi-target spells are picked by clicks in `SpellTargeting` (one click per target, [+ me], [Cast on these]).
+  - **What a graded spell save does is one place (#267):** `combat/SpellSave`. `saved(total, dc)` grades; `apply(facts, subject, saved)` puts the spell's `effect:` and `condition_on_fail` on the target (immunity checked, concentration ended if it incapacitates) and returns the damage owed (`FULL` / `HALF` / `NONE`) and the lines to say. It never rolls or sends: the fight (`SpellCastHandler.resolveSave`) and the out-of-combat path (`OutOfCombatAttack`, via `SaveOutcome`) each keep their own damage step and audience. Grading and applying are separate so #268 can pause between them. Don't apply a save's consequences anywhere else.
   - **Spell slots are spent in one place (#152):** `character/SpellCost` — `of(sheet, spell)` to check
     *before* resolving, `spend(...)` only once it has. `level <n>` (last argument, after the target)
     upcasts and spends that slot — the spellbook's "⬆ Casting at 2nd level" fills it in. `/combat cast` used to spend nothing at all

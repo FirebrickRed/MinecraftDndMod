@@ -172,19 +172,19 @@ public final class OutOfCombatAttack {
             tell(player, spell.castLine("✨ " + who + " casts ", " at " + aim.targetName()
                     + " — DC " + sheet.getSpellSaveDcBreakdown(spell) + " " + abbr + " save!", NamedTextColor.LIGHT_PURPLE));
             SpellVisuals.play(spell, player.getLocation(), aim.target.combatant().getLocation()); // #230
-            boolean hasDamage = spell.getDamage() != null && !spell.getDamage().isBlank();
-            boolean halfOnSave = "half".equalsIgnoreCase(spell.getSaveEffect());
-            String condition = spell.getConditionOnFail() != null && !spell.getConditionOnFail().isBlank() ? spell.getConditionOnFail() : null;
-
-            // The save's result decides what happens (#245): no separate "failed / saved" click. It used
-            // to stop at the graded roll, so a failed Sacred Flame did nothing unless the DM also clicked.
+            // What the graded save does (#245, #267): the same consequences as in a fight, through SpellSave:
+            // the spell's effect (Bane) and its condition are applied, immunity is checked, and the damage
+            // owed comes back for this path's own damage step. It used to offer the damage and leave the
+            // condition as a note to the DM; an effect did nothing.
+            SpellSave.Facts facts = SpellSave.Facts.of(spell, player.getUniqueId(), sheet.getCharacterId(), dc, save, java.util.Set.of());
             java.util.function.Consumer<Boolean> outcome = saved -> {
+                SpellSave.Outcome o = SpellSave.apply(facts, SpellSave.subject(target, aim.target.session(), aim.targetName()), saved);
                 if (!saved) {
                     tell(player, Component.text(aim.targetName() + " fails the save against " + spell.getName() + ".", NamedTextColor.RED));
-                    if (hasDamage) offerDamage(player, spell, false, aim.target, null, false);
-                    if (condition != null) toDms(Component.text("   DM: on a fail, " + aim.targetName() + " is " + condition
-                            + " (/dm adjust applies it).", NamedTextColor.GRAY));
-                } else if (hasDamage && halfOnSave) {
+                    for (Component line : o.effectLines()) tell(player, line);
+                    if (o.damage() == SpellSave.Owed.FULL) offerDamage(player, spell, false, aim.target, null, false);
+                    for (Component line : o.conditionLines()) tell(player, line);
+                } else if (o.damage() == SpellSave.Owed.HALF) {
                     tell(player, Component.text(aim.targetName() + " saves: half damage.", NamedTextColor.YELLOW));
                     offerDamage(player, spell, false, aim.target, null, true);
                 } else {
