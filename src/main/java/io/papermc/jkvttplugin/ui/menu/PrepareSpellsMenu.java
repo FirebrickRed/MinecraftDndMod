@@ -66,6 +66,7 @@ public final class PrepareSpellsMenu {
         List<Component> head = new ArrayList<>();
         head.add(line((book ? "From your spellbook" : "From the " + sheet.getMainClass().getName().toLowerCase() + " spell list")
                 + ", up to " + Util.getOrdinal(Math.max(1, PreparedSpells.highestSlotLevel(sheet))) + " level.", NamedTextColor.GRAY));
+        head.add(line("You can prepare " + PreparedSpells.maxExplained(sheet), NamedTextColor.GRAY));
         head.add(line("Cantrips, racial spells and always-prepared spells don't count.", NamedTextColor.DARK_GRAY));
         head.add(Component.empty());
         head.add(canChange ? line("Click a spell to prepare or unprepare it.", NamedTextColor.GREEN)

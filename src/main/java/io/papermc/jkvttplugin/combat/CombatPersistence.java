@@ -130,8 +130,27 @@ public final class CombatPersistence {
             if (file.exists() && !file.delete()) {
                 LOGGER.warning("Could not delete combat session file: " + file.getName());
             }
+            // And what SafeFile.write keeps beside it (#242): the .bak of the previous turn used to stay
+            // behind after every fight (playtest: "the combat files aren't cleaning up").
+            for (String suffix : NEIGHBOURS) new File(file.getPath() + suffix).delete();
         } catch (Exception e) {
             LOGGER.warning("Failed to delete combat session " + sessionId + ": " + e.getMessage());
+        }
+    }
+
+    /** The files SafeFile.write leaves next to a save: last turn's copy and a half-written one. */
+    private static final List<String> NEIGHBOURS = List.of(".bak", ".tmp");
+
+    /** Backups whose fight is over (its .yml is gone): left by fights ended before delete() removed them. */
+    static void sweepOrphans() {
+        File[] all = folder().listFiles();
+        if (all == null) return;
+        for (File f : all) {
+            for (String suffix : NEIGHBOURS) {
+                if (!f.getName().endsWith(".yml" + suffix)) continue;
+                File real = new File(f.getParentFile(), f.getName().substring(0, f.getName().length() - suffix.length()));
+                if (!real.exists()) f.delete();
+            }
         }
     }
 
@@ -153,6 +172,7 @@ public final class CombatPersistence {
     @SuppressWarnings("unchecked")
     static List<Saved> readAll() {
         List<Saved> out = new ArrayList<>();
+        sweepOrphans();
         File[] files = folder().listFiles((d, name) -> name.endsWith(".yml"));
         if (files == null) return out;
         Yaml yaml = new Yaml();

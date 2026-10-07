@@ -111,6 +111,34 @@ class CombatPersistenceTest {
         assertFalse(f.exists());
     }
 
+    /** Every save keeps the previous one as .bak; ending the fight has to take that with it. */
+    @Test
+    void deleteRemovesTheBackupToo() throws Exception {
+        UUID session = UUID.randomUUID();
+        File f = new File(dir.toFile(), session + ".yml");
+        var data = CombatPersistence.snapshot(session, UUID.randomUUID(), 1, 0, false, List.of(zek()));
+        CombatPersistence.write(f, data);
+        CombatPersistence.write(f, data); // a second turn: now there's a .bak
+        assertTrue(new File(f.getPath() + ".bak").exists(), "the save keeps a backup");
+        CombatPersistence.delete(session);
+        assertEquals(0, dir.toFile().listFiles().length, "nothing of the fight is left");
+    }
+
+    /** Backups left by fights that ended before this was fixed are cleared at the next start. */
+    @Test
+    void orphanedBackupsAreSweptAtRestore() throws Exception {
+        File orphan = new File(dir.toFile(), UUID.randomUUID() + ".yml.bak");
+        java.nio.file.Files.writeString(orphan.toPath(), "old");
+        UUID live = UUID.randomUUID();
+        File f = new File(dir.toFile(), live + ".yml");
+        var data = CombatPersistence.snapshot(live, UUID.randomUUID(), 1, 0, false, List.of(zek()));
+        CombatPersistence.write(f, data);
+        CombatPersistence.write(f, data);
+        CombatPersistence.sweepOrphans();
+        assertFalse(orphan.exists(), "its fight is over");
+        assertTrue(new File(f.getPath() + ".bak").exists(), "a running fight keeps its backup");
+    }
+
     /**
      * A fight restored after a restart has to be the DM's to run and finish. /combat once kept its own
      * map of DM sessions that a restore never joined: players were stuck "in combat" while every DM

@@ -55,6 +55,18 @@ public final class PreparedSpells {
         return Math.max(1, (ability != null ? s.getModifier(ability) : 0) + s.getTotalLevel());
     }
 
+    /** {@link #max} spelled out: "+3[INT] +1[level] = 4". The same wording as the creation spell step. */
+    public static String maxExplained(CharacterSheet s) {
+        SpellcastingInfo info = info(s);
+        if (info == null) return "";
+        EnumMap<Ability, Integer> scores = new EnumMap<>(Ability.class);
+        for (Ability a : Ability.values()) scores.put(a, s.getAbility(a));
+        return info.getSpellsPreparedFormula() != null
+                ? info.getSpellsPreparedFormula().explain(scores, s.getTotalLevel())
+                : io.papermc.jkvttplugin.data.model.SpellsPreparedFormula.explainDefault(
+                        Ability.fromString(info.getCastingAbility()), scores, s.getTotalLevel());
+    }
+
     /** The highest spell level they have slots for (what a cleric can prepare up to). */
     public static int highestSlotLevel(CharacterSheet s) {
         int top = 0;

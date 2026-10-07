@@ -2082,7 +2082,9 @@ public class CharacterSheet {
         for (Map<String, String> ca : getAllConditionalAdvantages()) {
             if (!"saving_throw".equalsIgnoreCase(ca.getOrDefault("type", ""))) continue;
             String cond = ca.getOrDefault("condition", "").toLowerCase();
-            if (!cond.isEmpty() && tags.contains(cond)) return true;
+            // "poison" covers a save against being Poisoned too (Stout Resilience; a save that only
+            // carried the condition, not poison damage, used to miss it).
+            if (!cond.isEmpty() && (tags.contains(cond) || tags.contains(cond + "ed"))) return true;
         }
         return false;
     }

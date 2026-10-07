@@ -972,7 +972,14 @@ public class CharacterCreationMenu {
                     picked.add(Component.text("• " + sp.getName(), NamedTextColor.GREEN).decoration(TextDecoration.ITALIC, false));
                 }
             }
-            if (!picked.isEmpty()) tab.editMeta(m -> m.lore(picked));
+            // Where the number comes from (playtest: "why 2?"), then the picks.
+            List<Component> tabLore = new ArrayList<>();
+            String why = CharacterCreationHandler.spellMaxReason(c, lvl, session);
+            if (why != null) {
+                for (String l : Util.wrapText(why)) tabLore.add(Component.text(l, NamedTextColor.GRAY).decoration(TextDecoration.ITALIC, false));
+            }
+            tabLore.addAll(picked);
+            if (!tabLore.isEmpty()) tab.editMeta(m -> m.lore(tabLore));
             inv.setItem(tabSlots[i], tab);
         }
 

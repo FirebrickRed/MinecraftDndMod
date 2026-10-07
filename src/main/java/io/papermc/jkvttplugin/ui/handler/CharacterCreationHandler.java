@@ -330,6 +330,31 @@ public class CharacterCreationHandler implements MenuClickHandler {
         return 0;
     }
 
+    /**
+     * Where {@link #spellMax}'s number comes from, for the spell step's count tile: the class table for
+     * cantrips and spells known, the formula spelled out for a prepared caster ("+3[INT] +0[half level,
+     * rounded down] = 3"). Null when the class casts nothing at this level.
+     */
+    public static String spellMaxReason(DndClass dndClass, int spellLevel, CharacterCreationSession session) {
+        SpellcastingInfo info = dndClass.getSpellcastingInfo();
+        if (info == null) return null;
+        int max = spellMax(dndClass, spellLevel, session);
+        if (spellLevel == 0) return max > 0 ? "A level-1 " + dndClass.getName().toLowerCase() + " knows " + max + " cantrips." : null;
+        boolean prepares = "prepared".equalsIgnoreCase(info.getPreparationType());
+        if (info.getSpellsKnownByLevel() != null && !info.getSpellsKnownByLevel().isEmpty()) {
+            return prepares ? "A level-1 " + dndClass.getName().toLowerCase() + "'s spellbook holds " + max + " spells."
+                    : "A level-1 " + dndClass.getName().toLowerCase() + " knows " + max + " spells.";
+        }
+        if (info.getSpellsPreparedFormula() != null) {
+            return "Prepared: " + info.getSpellsPreparedFormula().explain(session.getFinalAbilityScores(), 1);
+        }
+        if (prepares) {
+            return "Prepared: " + io.papermc.jkvttplugin.data.model.SpellsPreparedFormula.explainDefault(
+                    Ability.fromString(info.getCastingAbility()), session.getFinalAbilityScores(), 1);
+        }
+        return null;
+    }
+
     /** Tell the player which spell picks went because they're no longer on their list (#228). */
     private static void reportDroppedSpells(Player player, List<String> dropped) {
         for (String name : dropped) {
