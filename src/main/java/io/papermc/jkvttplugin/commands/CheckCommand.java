@@ -229,17 +229,28 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
             default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
         };
-        // A save a spell or a trap is waiting on carries what it's against (magic, poison, charmed): the prompt
-        // and the roll then give the same conditional advantage a fight would (#266). Any other check has none.
-        java.util.Set<String> saveTags = "SAVE".equals(rollType)
-                ? io.papermc.jkvttplugin.combat.SaveOutcome.tagsFor(target.getUniqueId(), dc) : java.util.Set.of();
-        io.papermc.jkvttplugin.dm.CheckManager.register(target.getUniqueId(), dmId, dc, args[2], adv, saveTags);
-        RollOptionsMenuHandler.promptSkillRoll(target, sheet, rollType, value, mode);
+        // "request <id>": this save is the one a spell or a trap is waiting on (SaveOutcome, #272). The id rides
+        // on the pending check and in the player's roll buttons, so that request's tags (#266) and outcome go to
+        // this save and to no other, however alike another save's ability and DC are. No id: an ordinary check.
+        String request = requestWord(args);
+        if (request != null && (!"SAVE".equals(rollType)
+                || io.papermc.jkvttplugin.combat.SaveOutcome.find(request, target.getUniqueId()) == null)) {
+            sender.sendMessage(Component.text("That save has already been settled (or isn't " + sheet.getCharacterName() + "'s).", NamedTextColor.GRAY));
+            return true;
+        }
+        io.papermc.jkvttplugin.dm.CheckManager.register(target.getUniqueId(), dmId, dc, args[2], adv, request);
+        RollOptionsMenuHandler.promptSkillRoll(target, sheet, rollType, value, mode, request);
         sender.sendMessage(Component.text("Called a " + args[2] + " check from " + sheet.getCharacterName()
                 + (dc != null ? " (DC " + dc + ", private)" : "")
                 + (mode == RollMode.NORMAL ? "" : " with " + mode.name().toLowerCase())
                 + " — the result comes back to you to share.", NamedTextColor.GRAY));
         return true;
+    }
+
+    /** The id after the word {@code request}, or null: the save request a called save belongs to (#272). */
+    static String requestWord(String[] args) {
+        for (int i = 3; i + 1 < args.length; i++) if (args[i].equalsIgnoreCase("request")) return args[i + 1];
+        return null;
     }
 
     // ==================== PASSIVE, GROUP AND APPROACH CHECKS (#186) ====================
@@ -663,7 +674,8 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
         }
         String name = creature.getDisplayName();
         String base = "/dm check " + (name.contains(" ") ? "\"" + name + "\"" : name) + " " + category + " " + args[2]
-                + (dc != null ? " dc " + dc : "") + (adv.isAdvantage() ? " adv" : adv.isDisadvantage() ? " dis" : "") + " ";
+                + (dc != null ? " dc " + dc : "") + (adv.isAdvantage() ? " adv" : adv.isDisadvantage() ? " dis" : "")
+                + (requestWord(args) != null ? " request " + requestWord(args) : "") + " "; // the roll buttons keep the request (#272)
         RollService.RollInput input = RollService.parseInput(args, sender);
         // Bane on the creature, a Bless on an NPC ally (#225): their dice ride on the bonus.
         String kind = category.equalsIgnoreCase("save") ? io.papermc.jkvttplugin.effect.ActiveEffect.SAVES
@@ -681,8 +693,13 @@ public class CheckCommand implements CommandExecutor, TabCompleter {
             return true;
         }
         String result = name + " — " + label + ": " + r.breakdown();
-        // A spell waiting on this save (#245): the result decides its damage, no second click.
-        if (dc != null && category.startsWith("sav")) io.papermc.jkvttplugin.combat.SaveOutcome.graded(creature.getInstanceId(), dc, r.total() >= dc);
+        // The spell or trap waiting on this very save (#245, #272): its result decides the damage, no second
+        // click. Only a save called for that request carries its id; any other creature save resolves nothing.
+        String request = requestWord(args);
+        if (dc != null && category.startsWith("sav")
+                && io.papermc.jkvttplugin.combat.SaveOutcome.find(request, creature.getInstanceId()) != null) {
+            io.papermc.jkvttplugin.combat.SaveOutcome.graded(request, r.total() >= dc);
+        }
         String graded = dc == null ? "" : (r.total() >= dc ? "  ✔ success vs DC " + dc : "  ✖ fails DC " + dc);
         String token = CheckManager.stashShare(result);
         sender.sendMessage(Component.text(result, NamedTextColor.GRAY)

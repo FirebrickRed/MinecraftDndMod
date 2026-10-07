@@ -84,12 +84,21 @@ public class RollOptionsMenuHandler {
 
     /** Send a clickable chat prompt asking the player to roll this check physically. */
     public static void promptSkillRoll(Player player, CharacterSheet character, String type, String value, RollMode mode) {
+        promptSkillRoll(player, character, type, value, mode, null);
+    }
+
+    /**
+     * @param requestId the save request this prompt is for (#272), or null. It rides in the buttons' command,
+     *                  so the answer is tied to that request and nothing else can be taken for it.
+     */
+    public static void promptSkillRoll(Player player, CharacterSheet character, String type, String value, RollMode mode,
+                                       String requestId) {
         RollInfo info = getRollInfo(character, type, value);
         // Carry the menu's adv/dis pick in the command, or physical mode rolls it normal. The manual
         // form puts it before manualRoll so the player's typed d20 still lands last.
         String modeWord = switch (mode) { case ADVANTAGE -> "adv "; case DISADVANTAGE -> "dis "; default -> ""; };
-        String base = "/character check " + type + " " + value + " " + modeWord;
-        mode = withPenalties(character, type, value, mode); // show armor/condition disadvantage before they roll (#209, #175)
+        String base = "/character check " + type + " " + value + " " + (requestId != null ? "request " + requestId + " " : "") + modeWord;
+        mode = withPenalties(character, type, value, mode, requestId); // show armor/condition disadvantage before they roll (#209, #175)
         String dice = RollPrompt.d20(switch (mode) {
             case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
             case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
@@ -106,11 +115,43 @@ public class RollOptionsMenuHandler {
      */
     public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total,
                                           boolean forceAuto, io.papermc.jkvttplugin.combat.Advantage chosen) {
+        return resolvePhysical(character, type, value, roll, total, forceAuto, chosen, null);
+    }
+
+    /**
+     * Which pending check this roll answers (#272). A roll carrying a save request's id answers that
+     * request's check and no other; null with {@code settled} true means the request is gone (answered,
+     * ruled, lapsed, or never this character's save). A roll with no id answers the player's current
+     * check, unless that check belongs to a request: then it's just a roll of their own.
+     */
+    record Answering(io.papermc.jkvttplugin.dm.CheckManager.Pending pending, boolean settled) {}
+
+    static Answering answering(CharacterSheet character, String type, String value, String answeredRequest) {
+        if (answeredRequest != null) {
+            io.papermc.jkvttplugin.dm.CheckManager.Pending p = io.papermc.jkvttplugin.dm.CheckManager.peekRequest(answeredRequest);
+            io.papermc.jkvttplugin.combat.SaveOutcome.Request req =
+                    io.papermc.jkvttplugin.combat.SaveOutcome.find(answeredRequest, character.getPlayerId());
+            boolean thisSave = "SAVE".equals(type) && req != null && (req.ability() == null || req.ability().name().equals(value));
+            return p != null && thisSave ? new Answering(p, false) : new Answering(null, true);
+        }
+        io.papermc.jkvttplugin.dm.CheckManager.Pending p = io.papermc.jkvttplugin.dm.CheckManager.peekPending(character.getPlayerId());
+        return new Answering(p != null && p.requestId() != null ? null : p, false);
+    }
+
+    /** @param answeredRequest the save request id the roll's command carried, or null */
+    public static boolean resolvePhysical(CharacterSheet character, String type, String value, Integer roll, Integer total,
+                                          boolean forceAuto, io.papermc.jkvttplugin.combat.Advantage chosen, String answeredRequest) {
         RollInfo info = getRollInfo(character, type, value);
         // A DM-called check (#186) may carry advantage/disadvantage — apply it to the roll (so autoRoll
         // actually rolls 2d20 and keeps the right one), and report DM-first instead of broadcasting.
-        io.papermc.jkvttplugin.dm.CheckManager.Pending pending =
-                io.papermc.jkvttplugin.dm.CheckManager.peekPending(character.getPlayerId());
+        Answering answering = answering(character, type, value, answeredRequest);
+        if (answering.settled()) {
+            Player owner = Bukkit.getServer() == null ? null : Bukkit.getPlayer(character.getPlayerId());
+            if (owner != null) owner.sendMessage(Component.text("That save has already been settled.", NamedTextColor.GRAY));
+            return true; // handled: nothing is rolled against a request that's gone
+        }
+        io.papermc.jkvttplugin.dm.CheckManager.Pending pending = answering.pending();
+        String requestId = pending != null ? pending.requestId() : null;
         io.papermc.jkvttplugin.combat.Advantage advantage = pending != null
                 ? pending.advantage() : io.papermc.jkvttplugin.combat.Advantage.NONE;
         if (pending == null && chosen != null) advantage = chosen; // the sheet menu's own adv/dis pick
@@ -122,7 +163,7 @@ public class RollOptionsMenuHandler {
             if (owner != null) owner.sendMessage(Component.text("↯ Disadvantage: " + penalty + ".", NamedTextColor.RED));
         }
         // An effect granting advantage (Rage on a STR check, #223).
-        String boon = boonReason(character, type, value);
+        String boon = boonReason(character, type, value, requestId);
         if (boon != null) {
             advantage = advantage.with(true);
             Player owner = Bukkit.getPlayer(character.getPlayerId());
@@ -146,7 +187,7 @@ public class RollOptionsMenuHandler {
         // A check the DM called comes first.
         if (pending == null && io.papermc.jkvttplugin.dm.StudyInteraction.takeRoll(character, type, value, r, roll)) return true;
         if (pending != null) {
-            io.papermc.jkvttplugin.dm.CheckManager.takePending(character.getPlayerId());
+            io.papermc.jkvttplugin.dm.CheckManager.take(character.getPlayerId(), pending);
             if (pending.contestId() != null) {
                 reportContest(character, info, r.total(), r.breakdown(), pending);
             } else if (pending.groupId() != null) {
@@ -154,9 +195,10 @@ public class RollOptionsMenuHandler {
             } else {
                 io.papermc.jkvttplugin.dm.CheckManager.recordActive(character.getPlayerId(), info.displayName, r.total());
                 reportDmCheck(character, info, r.total(), r.breakdown(), pending);
-                // A spell waiting on this save (#245): the result decides its damage, no second click.
-                if ("SAVE".equals(type) && pending.dc() != null) {
-                    io.papermc.jkvttplugin.combat.SaveOutcome.graded(character.getPlayerId(), pending.dc(), r.total() >= pending.dc());
+                // The spell or trap waiting on this very save (#245, #272): the result decides its damage, no
+                // second click. Only a check called for a request has one; any other save resolves nothing.
+                if (requestId != null && pending.dc() != null) {
+                    io.papermc.jkvttplugin.combat.SaveOutcome.graded(requestId, r.total() >= pending.dc());
                 }
                 if ("TOOL".equals(type)) maybeBreakThievesTools(character, value, r.total(), pending);
             }
@@ -201,8 +243,13 @@ public class RollOptionsMenuHandler {
 
     /** What gives this roll advantage (an effect such as Rage, #223), or null. */
     private static String boonReason(CharacterSheet character, String type, String value) {
+        return boonReason(character, type, value, null);
+    }
+
+    /** @param requestId the save request this roll or prompt is for, or null for any other roll */
+    private static String boonReason(CharacterSheet character, String type, String value, String requestId) {
         String effect = character.effectAdvantageSource(rollTags(type, abilityOf(type, value)));
-        return effect != null ? effect : saveContextReason(character, type, value);
+        return effect != null ? effect : saveContextReason(character, type, value, requestId);
     }
 
     /**
@@ -211,12 +258,10 @@ public class RollOptionsMenuHandler {
      * three abilities). The sheet's own rule, the one a fight uses; asked here by the prompt and by the roll,
      * so they can't disagree (#266).
      */
-    private static String saveContextReason(CharacterSheet character, String type, String value) {
-        if (!"SAVE".equals(type)) return null;
-        io.papermc.jkvttplugin.dm.CheckManager.Pending pending =
-                io.papermc.jkvttplugin.dm.CheckManager.peekPending(character.getPlayerId());
-        if (pending == null || pending.saveTags().isEmpty()) return null;
-        return character.saveAdvantageSourceVs(abilityOf(type, value), pending.saveTags());
+    private static String saveContextReason(CharacterSheet character, String type, String value, String requestId) {
+        if (!"SAVE".equals(type) || requestId == null) return null; // only the save a request asked for (#272)
+        java.util.Set<String> tags = io.papermc.jkvttplugin.combat.SaveOutcome.tagsOf(requestId);
+        return tags.isEmpty() ? null : character.saveAdvantageSourceVs(abilityOf(type, value), tags);
     }
 
     /** A save is a save; a skill, check or tool check is an ability check. */
@@ -226,13 +271,18 @@ public class RollOptionsMenuHandler {
 
     /** Fold a disadvantage and an advantage into a menu roll mode (5e: one of each cancels out). */
     static RollMode withPenalties(CharacterSheet character, String type, String value, RollMode mode) {
+        return withPenalties(character, type, value, mode, null);
+    }
+
+    /** @param requestId the save request this roll is for, whose tags may earn advantage (#266); null for any other roll */
+    static RollMode withPenalties(CharacterSheet character, String type, String value, RollMode mode, String requestId) {
         io.papermc.jkvttplugin.combat.Advantage adv = switch (mode) {
             case ADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.ADVANTAGE;
             case DISADVANTAGE -> io.papermc.jkvttplugin.combat.Advantage.DISADVANTAGE;
             default -> io.papermc.jkvttplugin.combat.Advantage.NONE;
         };
         if (penaltyReason(character, type, value) != null) adv = adv.with(false);
-        if (boonReason(character, type, value) != null) adv = adv.with(true);
+        if (boonReason(character, type, value, requestId) != null) adv = adv.with(true);
         return adv.isAdvantage() ? RollMode.ADVANTAGE : adv.isDisadvantage() ? RollMode.DISADVANTAGE : RollMode.NORMAL;
     }
 

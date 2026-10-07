@@ -205,6 +205,14 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] **Stout halfling, out of a fight:** someone casts Poison Spray at you and you [Let it happen], [Ask for their
       roll] → the save prompt says "↑ advantage: against poison" and **[Roll with advantage]** / [I also have
       disadvantage]; the roll is 2d20, keep the higher. Sacred Flame at them → the plain three buttons. (#266)
+- [ ] **An unrelated save doesn't set off a waiting one:** out of a fight, Poison Spray at the stout halfling,
+      [Let it happen], but **don't** click [Ask for their roll]. Now `/dm check <them> save con dc 13` → their
+      prompt is a plain d20 (no "against poison"), and failing it deals **no** Poison Spray damage. Then click
+      [Ask for their roll] → advantage, and failing that one deals the damage. (#272)
+- [ ] **Two at once:** Poison Spray then Sacred Flame at the same player, [Ask for their roll] for both. They
+      answer the **first** prompt's buttons (scroll up) → the Poison Spray result, not Sacred Flame's; then the
+      second prompt → Sacred Flame. Click an already-answered prompt's button again → "That save has already
+      been settled." (#272)
 - [ ] `/dm trap <the halfling> constitution dc 13 1d12 type poison` → the same advantage. Without `type poison`
       → none. (#266)
 - [ ] **Gnome:** `/dm trap <them> wisdom dc 13 2d6 magic` → advantage ("against magic"); the same trap as a

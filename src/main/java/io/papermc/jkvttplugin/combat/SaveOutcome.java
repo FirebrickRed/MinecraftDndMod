@@ -1,77 +1,101 @@
 package io.papermc.jkvttplugin.combat;
 
+import io.papermc.jkvttplugin.data.model.enums.Ability;
+
 import java.time.Duration;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
- * What happens when a save a spell called for is graded, out of a fight (#245). The save is an ordinary
- * {@code /dm check … save … dc N}; when it's graded, the waiting outcome runs: full damage on a fail,
- * half or nothing on a success. Before this the save was rolled and graded and nothing followed: the DM
- * had to click [Failed: damage] as well, so a failed Sacred Flame did no damage.
+ * A save something is waiting on, out of a fight (#245): a spell's, or a trap's. The save itself is an
+ * ordinary {@code /dm check … save … dc N}; when it's graded, the waiting outcome runs: full damage on a
+ * fail, half or nothing on a success.
  *
- * <p>In a fight a save spell already resolves itself ({@code SpellCastHandler.pendingSaves} and
+ * <p><b>Each one is a request with its own id (#272).</b> The id goes into the check that's called for it
+ * and into the roll buttons the saver gets, and only an answer carrying that id is the answer to it. It
+ * used to be matched by who was saving and the DC, so any other save by the same player at the same DC
+ * inherited its tags (#266) and set off its damage, and a second waiting save replaced the first.
+ *
+ * <p>In a fight a save spell resolves itself ({@code SpellCastHandler.pendingSaves} and
  * {@code /combat save}); this is the out-of-combat half.
  */
 public final class SaveOutcome {
 
     private SaveOutcome() {}
 
-    private record Waiting(int dc, java.util.Set<String> tags, Consumer<Boolean> onGraded, long at) {}
+    /**
+     * One save being waited on. {@code ability} is the save it calls for (null when the caller couldn't
+     * say); {@code tags} are what it's against (magic, a damage type, a condition).
+     */
+    public record Request(String id, UUID saver, int dc, Ability ability, Set<String> tags, Consumer<Boolean> onGraded, long at) {}
 
-    /** Who is saving (a player's id, or a creature's instance id) → what their result does. */
-    private static final Map<UUID, Waiting> waiting = new HashMap<>();
+    private static final Map<String, Request> requests = new LinkedHashMap<>();
     private static final long GOOD_FOR_MS = Duration.ofMinutes(10).toMillis();
 
-    /** {@code onGraded} gets true when they saved. A new one for the same target replaces the old. */
-    public static void await(UUID saver, int dc, Consumer<Boolean> onGraded) {
-        await(saver, dc, java.util.Set.of(), onGraded);
+    /** A save with nothing said about what it's for; {@code onGraded} gets true when they saved. */
+    public static String await(UUID saver, int dc, Consumer<Boolean> onGraded) {
+        return await(saver, dc, null, Set.of(), onGraded);
     }
 
     /**
-     * As above, saying what the save is against ({@code tags}: magic, a damage type, a condition), so the
-     * check that's about to be called for it can give the conditional advantages a fight would (#266).
-     */
-    public static void await(UUID saver, int dc, java.util.Set<String> tags, Consumer<Boolean> onGraded) {
-        if (saver != null && onGraded != null) {
-            waiting.put(saver, new Waiting(dc, tags == null ? java.util.Set.of() : java.util.Set.copyOf(tags), onGraded, System.currentTimeMillis()));
-        }
-    }
-
-    /** What the save waiting on {@code saver} at this DC is against; empty when none is, or it's another save. */
-    public static java.util.Set<String> tagsFor(UUID saver, Integer dc) {
-        Waiting w = saver == null || dc == null ? null : waiting.get(saver);
-        if (w == null || w.dc() != dc || System.currentTimeMillis() - w.at() > GOOD_FOR_MS) return java.util.Set.of();
-        return w.tags();
-    }
-
-    /**
-     * A save by {@code saver} was just graded against {@code dc}. If a spell is waiting on exactly that
-     * (same DC, still fresh), its outcome runs, once. Any other save (a trap's, a different DC) is left alone.
+     * Start waiting on a save by {@code saver} and return its request id, to put in the check that's called
+     * for it. Other requests for the same saver are left alone: each is answered by its own prompt.
      *
-     * @return true when an outcome ran
+     * @param ability the save it calls for, so an answer for another ability can't be passed off as this one
+     * @param tags    what it's against, for conditional advantages (#266)
      */
-    public static boolean graded(UUID saver, int dc, boolean saved) {
-        Waiting w = saver == null ? null : waiting.get(saver);
-        if (w == null) return false;
-        if (System.currentTimeMillis() - w.at() > GOOD_FOR_MS) { waiting.remove(saver); return false; }
-        if (w.dc() != dc) return false;
-        waiting.remove(saver);
-        w.onGraded().accept(saved);
+    public static String await(UUID saver, int dc, Ability ability, Set<String> tags, Consumer<Boolean> onGraded) {
+        if (saver == null || onGraded == null) return null;
+        long now = System.currentTimeMillis();
+        requests.values().removeIf(r -> now - r.at() > GOOD_FOR_MS); // nobody answered: it lapses
+        // Starts with a letter, so no command parser can take it for a number.
+        String id = "r" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
+        requests.put(id, new Request(id, saver, dc, ability, tags == null ? Set.of() : Set.copyOf(tags), onGraded, now));
+        return id;
+    }
+
+    /** The request with this id while it's still waiting; null once it's answered, ruled or lapsed. */
+    public static Request find(String requestId) {
+        Request r = requestId == null ? null : requests.get(requestId);
+        if (r == null) return null;
+        if (System.currentTimeMillis() - r.at() > GOOD_FOR_MS) { requests.remove(requestId); return null; }
+        return r;
+    }
+
+    /** The request, if it's waiting on this saver; null for anyone else's id. */
+    public static Request find(String requestId, UUID saver) {
+        Request r = find(requestId);
+        return r != null && r.saver().equals(saver) ? r : null;
+    }
+
+    /** What this request's save is against; empty for no request, or one that's gone. */
+    public static Set<String> tagsOf(String requestId) {
+        Request r = find(requestId);
+        return r == null ? Set.of() : r.tags();
+    }
+
+    /**
+     * The save for this request was rolled and graded: its outcome runs, once.
+     *
+     * @return true when an outcome ran; false for no request, or one already settled
+     */
+    public static boolean graded(String requestId, boolean saved) {
+        Request r = find(requestId);
+        if (r == null) return false;
+        requests.remove(requestId);
+        r.onGraded().accept(saved);
         return true;
     }
 
-    /** The DM ruled it without a roll: run the outcome, if one is still waiting. */
-    public static boolean rule(UUID saver, boolean saved) {
-        Waiting w = saver == null ? null : waiting.remove(saver);
-        if (w == null) return false;
-        w.onGraded().accept(saved);
-        return true;
+    /** The DM ruled it without a roll: the same outcome, once. */
+    public static boolean rule(String requestId, boolean saved) {
+        return graded(requestId, saved);
     }
 
-    public static boolean isWaiting(UUID saver) { return saver != null && waiting.containsKey(saver); }
+    public static boolean isWaiting(String requestId) { return find(requestId) != null; }
 
-    static void clear() { waiting.clear(); }
+    static void clear() { requests.clear(); }
 }

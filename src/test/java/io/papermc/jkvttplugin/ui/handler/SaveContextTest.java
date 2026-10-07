@@ -39,13 +39,17 @@ class SaveContextTest {
         return s;
     }
 
-    /** A save called on {@code sheet}'s player that says what it's against, as CheckCommand registers it. */
-    private static void called(CharacterSheet sheet, Set<String> tags) {
-        CheckManager.register(sheet.getPlayerId(), UUID.randomUUID(), 13, "save", Advantage.NONE, tags);
+    private String request; // the save request the last called() made
+
+    /** A save a spell or trap is waiting on, called on {@code sheet}'s player: what CheckCommand does with "request <id>". */
+    private void called(CharacterSheet sheet, Set<String> tags) {
+        request = SaveOutcome.await(sheet.getPlayerId(), 13, null, tags, saved -> {});
+        CheckManager.register(sheet.getPlayerId(), UUID.randomUUID(), 13, "save", Advantage.NONE, request);
     }
 
-    private static RollMode prompt(CharacterSheet sheet, Ability save) {
-        return RollOptionsMenuHandler.withPenalties(sheet, "SAVE", save.name(), RollMode.NORMAL);
+    /** The roll mode of the prompt for that request's save (the roll asks the same rule with the same id). */
+    private RollMode prompt(CharacterSheet sheet, Ability save) {
+        return RollOptionsMenuHandler.withPenalties(sheet, "SAVE", save.name(), RollMode.NORMAL, request);
     }
 
     // ---------- what a save is against ----------
@@ -103,7 +107,8 @@ class SaveContextTest {
         called(stout, Set.of("magic", "poison"));
         assertEquals(RollMode.ADVANTAGE, prompt(stout, Ability.CONSTITUTION), "Poison Spray, out of a fight");
         CheckManager.takePending(stout.getPlayerId());
-        assertEquals(RollMode.NORMAL, prompt(stout, Ability.CONSTITUTION), "nothing called: an ordinary save from the sheet");
+        assertEquals(RollMode.NORMAL, RollOptionsMenuHandler.withPenalties(stout, "SAVE", "CONSTITUTION", RollMode.NORMAL),
+                "an ordinary save from the sheet carries no request, so no tags");
 
         called(stout, Set.of("magic", "fire"));
         assertEquals(RollMode.NORMAL, prompt(stout, Ability.DEXTERITY), "Burning Hands isn't poison");
@@ -139,7 +144,7 @@ class SaveContextTest {
         assertEquals(RollMode.NORMAL, prompt(stout, Ability.DEXTERITY), "Restrained and Stout Resilience: a straight roll");
         assertEquals(RollMode.ADVANTAGE, prompt(stout, Ability.CONSTITUTION), "Restrained doesn't touch a CON save");
         // The DM's own word on top doesn't tip it back: any of each still cancels (PHB p.173).
-        assertEquals(RollMode.NORMAL, RollOptionsMenuHandler.withPenalties(stout, "SAVE", "DEXTERITY", RollMode.ADVANTAGE));
+        assertEquals(RollMode.NORMAL, RollOptionsMenuHandler.withPenalties(stout, "SAVE", "DEXTERITY", RollMode.ADVANTAGE, request));
         CheckManager.takePending(stout.getPlayerId());
 
         called(stout, Set.of("magic", "fire"));
@@ -152,13 +157,12 @@ class SaveContextTest {
     @Test
     void theWaitingSaveHandsItsTagsToTheCheckThatIsCalledForIt() {
         UUID saver = UUID.randomUUID();
-        SaveOutcome.await(saver, 13, Set.of("magic", "poison"), saved -> {});
-        assertEquals(Set.of("magic", "poison"), SaveOutcome.tagsFor(saver, 13));
-        assertEquals(Set.of(), SaveOutcome.tagsFor(saver, 15), "some other save at another DC isn't this one");
-        assertEquals(Set.of(), SaveOutcome.tagsFor(saver, null), "an ungraded check has no DC to match");
-        assertEquals(Set.of(), SaveOutcome.tagsFor(UUID.randomUUID(), 13));
-        SaveOutcome.graded(saver, 13, true);
-        assertEquals(Set.of(), SaveOutcome.tagsFor(saver, 13), "answered: nothing left to carry");
+        String id = SaveOutcome.await(saver, 13, Ability.CONSTITUTION, Set.of("magic", "poison"), saved -> {});
+        assertEquals(Set.of("magic", "poison"), SaveOutcome.tagsOf(id));
+        assertEquals(Set.of(), SaveOutcome.tagsOf(null), "a check called for no request has nothing to carry");
+        assertEquals(Set.of(), SaveOutcome.tagsOf("rsomeoneelses"));
+        SaveOutcome.graded(id, true);
+        assertEquals(Set.of(), SaveOutcome.tagsOf(id), "answered: nothing left to carry");
     }
 
     /** The prompt and the roll ask the same question of the same place, and the spell paths pass their tags. */
@@ -167,16 +171,16 @@ class SaveContextTest {
         String base = "src/main/java/io/papermc/jkvttplugin/";
         String roller = Files.readString(Path.of(base + "ui/handler/RollOptionsMenuHandler.java"));
         int resolve = roller.indexOf("public static boolean resolvePhysical(");
-        assertTrue(roller.indexOf("boonReason(character, type, value)", resolve) > resolve, "the roll asks boonReason");
-        int prompt = roller.indexOf("static RollMode withPenalties(");
-        assertTrue(roller.indexOf("boonReason(character, type, value)", prompt) > prompt, "so does the prompt");
-        assertTrue(roller.contains("character.saveAdvantageSourceVs(abilityOf(type, value), pending.saveTags())"),
+        assertTrue(roller.indexOf("boonReason(character, type, value, requestId)", resolve) > resolve, "the roll asks boonReason, for its request");
+        int prompt = roller.indexOf("static RollMode withPenalties(CharacterSheet character, String type, String value, RollMode mode, String requestId)");
+        assertTrue(roller.indexOf("boonReason(character, type, value, requestId)", prompt) > prompt, "so does the prompt, for the same request");
+        assertTrue(roller.contains("character.saveAdvantageSourceVs(abilityOf(type, value), tags)"),
                 "and boonReason asks the sheet's own rule, the one a fight uses");
 
         String check = Files.readString(Path.of(base + "commands/CheckCommand.java"));
-        assertTrue(check.contains("SaveOutcome.tagsFor(target.getUniqueId(), dc)"), "the called save picks up the waiting spell's or trap's tags");
+        assertTrue(check.contains("promptSkillRoll(target, sheet, rollType, value, mode, request)"), "the called save's prompt carries its request");
         String outside = Files.readString(Path.of(base + "combat/OutOfCombatAttack.java"));
-        assertTrue(outside.contains("SpellSave.tagsFor(spell)") && outside.contains("SaveOutcome.await(saver, dc, facts.saveTags(), outcome)"));
+        assertTrue(outside.contains("SpellSave.tagsFor(spell)") && outside.contains("SaveOutcome.await(saver, dc, save, facts.saveTags(), outcome)"));
         String fight = Files.readString(Path.of(base + "combat/SpellCastHandler.java"));
         assertTrue(fight.contains("SpellSave.tagsFor(spell)") && !fight.contains("saveTagsFor("), "one definition of a spell's tags, for both paths");
         String combatant = Files.readString(Path.of(base + "combat/Combatant.java"));

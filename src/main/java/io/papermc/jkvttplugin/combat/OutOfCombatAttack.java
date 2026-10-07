@@ -192,18 +192,21 @@ public final class OutOfCombatAttack {
                 }
             };
             UUID saver = target.getId();
-            SaveOutcome.await(saver, dc, facts.saveTags(), outcome); // what it's against rides with the save (#266)
+            // Its own request id (#272): what it's against (#266) and what it does go to the save called for THIS
+            // cast, not to whatever save this target makes next at the same DC.
+            String request = SaveOutcome.await(saver, dc, save, facts.saveTags(), outcome);
 
             // The DM's ruling without a roll stays possible, quietly, after the real buttons.
             Component rule = Component.text("  or rule it: ", NamedTextColor.DARK_GRAY)
-                    .append(button("[failed]", NamedTextColor.DARK_GRAY, "No roll: they failed", a -> SaveOutcome.rule(saver, false)))
+                    .append(button("[failed]", NamedTextColor.DARK_GRAY, "No roll: they failed", a -> SaveOutcome.rule(request, false)))
                     .append(Component.text(" "))
-                    .append(button("[saved]", NamedTextColor.DARK_GRAY, "No roll: they saved", a -> SaveOutcome.rule(saver, true)));
+                    .append(button("[saved]", NamedTextColor.DARK_GRAY, "No roll: they saved", a -> SaveOutcome.rule(request, true)));
             if (save == null) {
                 toDms(Component.text("   DM: " + aim.targetName() + " makes a DC " + dc + " " + abbr + " save.", NamedTextColor.GRAY).append(rule));
                 return true;
             }
-            String check = "dm check " + quote(aim.targetName()) + " save " + save.getAbbreviation().toLowerCase() + " dc " + dc;
+            String check = "dm check " + quote(aim.targetName()) + " save " + save.getAbbreviation().toLowerCase() + " dc " + dc
+                    + " request " + request;
             if (target.isPlayer()) {
                 // A player rolls their own: one button sends them the roll buttons, and the result comes back.
                 toDms(Component.text("   DM: " + aim.targetName() + " makes a DC " + dc + " " + abbr + " save ("

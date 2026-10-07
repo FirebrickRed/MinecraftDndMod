@@ -53,25 +53,25 @@ class PlaytestRound3Test {
     void theGradedSaveRunsTheOutcomeOnce() {
         UUID goblin = UUID.randomUUID();
         List<Boolean> seen = new ArrayList<>();
-        SaveOutcome.await(goblin, 13, seen::add);
+        String request = SaveOutcome.await(goblin, 13, seen::add);
 
-        assertFalse(SaveOutcome.graded(goblin, 15, false), "a save against some other DC (a trap) isn't this spell's");
-        assertFalse(SaveOutcome.graded(UUID.randomUUID(), 13, false), "nor is someone else's save");
+        assertFalse(SaveOutcome.graded("rnotarequest", false), "a save that isn't this request's resolves nothing (#272)");
+        assertFalse(SaveOutcome.graded(null, false), "nor does a save called for no request at all");
         assertTrue(seen.isEmpty());
 
-        assertTrue(SaveOutcome.graded(goblin, 13, false));
+        assertTrue(SaveOutcome.graded(request, false));
         assertEquals(List.of(false), seen, "failed: the damage is offered");
-        assertFalse(SaveOutcome.graded(goblin, 13, false), "only once");
+        assertFalse(SaveOutcome.graded(request, false), "only once");
     }
 
     @Test
     void theDmCanRuleItWithoutARoll() {
         UUID goblin = UUID.randomUUID();
         List<Boolean> seen = new ArrayList<>();
-        SaveOutcome.await(goblin, 13, seen::add);
-        assertTrue(SaveOutcome.rule(goblin, true));
+        String request = SaveOutcome.await(goblin, 13, seen::add);
+        assertTrue(SaveOutcome.rule(request, true));
         assertEquals(List.of(true), seen);
-        assertFalse(SaveOutcome.isWaiting(goblin));
+        assertFalse(SaveOutcome.isWaiting(request));
     }
 
     @Test

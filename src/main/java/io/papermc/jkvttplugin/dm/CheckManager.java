@@ -24,23 +24,45 @@ public final class CheckManager {
      * A check the DM called and is waiting on. {@code dc} null = ungraded; {@code contestId} set = part
      * of a contest; {@code groupId} set = one of several people called at once.
      */
-    /** {@code saveTags}: what a called save is against (a spell's or a trap's, #266); empty for any other check. */
+    /**
+     * {@code requestId}: the save request this check was called for (a spell's or a trap's,
+     * {@code SaveOutcome}, #272); null for any other check. Only an answer carrying that id answers it.
+     */
     public record Pending(UUID dmId, Integer dc, String label, Advantage advantage, String contestId, String groupId,
-                          java.util.Set<String> saveTags) {
+                          String requestId) {
         public Pending(UUID dmId, Integer dc, String label, Advantage advantage, String contestId, String groupId) {
-            this(dmId, dc, label, advantage, contestId, groupId, java.util.Set.of());
+            this(dmId, dc, label, advantage, contestId, groupId, null);
         }
     }
+
+    /** Checks called for a save request, by that request's id: answered by its own prompt, whatever came after. */
+    private static final Map<String, Pending> byRequest = new HashMap<>();
 
     private static final Map<UUID, Pending> pending = new HashMap<>(); // roller's player id -> pending
 
     public static void register(UUID rollerPlayerId, UUID dmId, Integer dc, String label, Advantage advantage) {
         registerPending(rollerPlayerId, new Pending(dmId, dc, label, advantage == null ? Advantage.NONE : advantage, null, null));
     }
-    /** A called save that knows what it's against, so the prompt and the roll give the same conditional advantage (#266). */
-    public static void register(UUID rollerPlayerId, UUID dmId, Integer dc, String label, Advantage advantage, java.util.Set<String> saveTags) {
-        registerPending(rollerPlayerId, new Pending(dmId, dc, label, advantage == null ? Advantage.NONE : advantage, null, null,
-                saveTags == null ? java.util.Set.of() : java.util.Set.copyOf(saveTags)));
+    /** A save called for one request (#272): kept by that request's id as well, so only its own answer finds it. */
+    public static void register(UUID rollerPlayerId, UUID dmId, Integer dc, String label, Advantage advantage, String requestId) {
+        Pending p = new Pending(dmId, dc, label, advantage == null ? Advantage.NONE : advantage, null, null, requestId);
+        registerPending(rollerPlayerId, p);
+        // Checks whose request has since been ruled or has lapsed can never be answered: drop them.
+        byRequest.keySet().removeIf(id -> !io.papermc.jkvttplugin.combat.SaveOutcome.isWaiting(id));
+        if (requestId != null) byRequest.put(requestId, p);
+    }
+
+    /** The check called for this request, or null: never called, or already answered. */
+    public static Pending peekRequest(String requestId) { return requestId == null ? null : byRequest.get(requestId); }
+
+    /**
+     * This check was just answered: forget it. A request's check goes from the by-request list, and from the
+     * player's slot only if it's still the one sitting there (a newer check may have taken the slot).
+     */
+    public static void take(UUID rollerPlayerId, Pending answered) {
+        if (answered == null) return;
+        if (answered.requestId() != null) byRequest.remove(answered.requestId());
+        if (rollerPlayerId != null && pending.get(rollerPlayerId) == answered) pending.remove(rollerPlayerId);
     }
     private static void registerPending(UUID rollerPlayerId, Pending p) {
         if (rollerPlayerId != null) pending.put(rollerPlayerId, p);

@@ -234,12 +234,16 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             if (t.equalsIgnoreCase("adv") || t.equalsIgnoreCase("advantage")) chosen = chosen.with(true);
             else if (t.equalsIgnoreCase("dis") || t.equalsIgnoreCase("disadvantage")) chosen = chosen.with(false);
         }
+        // "request <id>": the roll buttons of a save a spell or trap called for carry its id, so this answer
+        // is that save's and no other's (#272). Typed by hand without it, it's a roll of your own.
+        String request = null;
+        for (int i = 2; i + 1 < rest.length; i++) if (rest[i].equalsIgnoreCase("request")) { request = rest[i + 1]; break; }
         if (!io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.resolvePhysical(sheet, type, value,
-                input.providedRoll(), input.providedTotal(), input.forceAuto(), chosen)) {
+                input.providedRoll(), input.providedTotal(), input.forceAuto(), chosen, request)) {
             io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.promptSkillRoll(player, sheet, type, value,
                     chosen.isAdvantage() ? io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode.ADVANTAGE
                             : chosen.isDisadvantage() ? io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode.DISADVANTAGE
-                            : io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode.NORMAL);
+                            : io.papermc.jkvttplugin.ui.handler.RollOptionsMenuHandler.RollMode.NORMAL, request);
         }
         return true;
     }

@@ -83,11 +83,11 @@ class TrapCommandTest {
     void theDamageWaitsForTheGradedSave() {
         UUID victim = UUID.randomUUID();
         List<Boolean> ran = new ArrayList<>();
-        SaveOutcome.await(victim, 13, ran::add);
-        assertFalse(SaveOutcome.graded(victim, 15, false), "some other save at another DC isn't the trap's");
+        String request = SaveOutcome.await(victim, 13, ran::add);
+        assertFalse(SaveOutcome.graded(null, false), "some other save of theirs isn't the trap's (#272)");
         assertTrue(ran.isEmpty());
-        assertTrue(SaveOutcome.graded(victim, 13, false));
+        assertTrue(SaveOutcome.graded(request, false));
         assertEquals(List.of(false), ran);
-        assertFalse(SaveOutcome.graded(victim, 13, false), "it doesn't fire twice");
+        assertFalse(SaveOutcome.graded(request, false), "it doesn't fire twice");
     }
 }

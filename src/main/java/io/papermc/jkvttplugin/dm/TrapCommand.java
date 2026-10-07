@@ -135,7 +135,7 @@ public class TrapCommand implements CommandExecutor, TabCompleter {
         }
 
         // The graded save decides the damage; nothing more for anyone to click.
-        SaveOutcome.await(victim.getId(), spec.dc(), spec.saveTags(), saved -> {
+        String request = SaveOutcome.await(victim.getId(), spec.dc(), spec.save(), spec.saveTags(), saved -> {
             int taken = 0;
             DiceRoller.Rolled rolled = DiceRoller.rollOrFlat(spec.damage());
             if (rolled != null) taken = damageAfterSave(Math.max(0, rolled.total()), saved, spec.halfOnSave());
@@ -152,7 +152,8 @@ public class TrapCommand implements CommandExecutor, TabCompleter {
         });
 
         // Call the save: a character rolls their own; a creature's is the DM's roll.
-        String check = "dm check " + quote(who) + " save " + abbr.toLowerCase() + " dc " + spec.dc();
+        // The save is called for this trap's request (#272), so no other save of theirs can set it off.
+        String check = "dm check " + quote(who) + " save " + abbr.toLowerCase() + " dc " + spec.dc() + " request " + request;
         if (victim.isPlayer()) {
             Bukkit.dispatchCommand(sender, check);
         } else if (sender instanceof Player dm) {
