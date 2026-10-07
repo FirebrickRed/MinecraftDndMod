@@ -348,8 +348,10 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             Component announce = spell.castLine("✨ " + sheet.getCharacterName() + " casts ",
                     " as a ritual (10 extra minutes, no spell slot).", NamedTextColor.LIGHT_PURPLE);
             announceNearby(player, announce);
+            // The same completion as any cast, with no cost (#269): the readied spell is cleared and a spell it
+            // replaces is named ("Concentration on Bless ends"), which a ritual used to do without a word.
+            io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, null);
             if (spell.isConcentration()) {
-                sheet.setConcentratingOn(spell);
                 player.sendMessage(Component.text("   Concentrating on " + spell.getName() + ".", NamedTextColor.GRAY));
             }
             return true;
@@ -411,6 +413,15 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             return true;
         }
 
+        // A mark (Hex, Hunter's Mark) is a curse on someone: the DM's say first, and then it really marks them
+        // (#269). It has no damage of its own, so it used to fall to "announce it" below and mark nobody.
+        if (spell.isMarkSpell()) {
+            // Every word after the spell: the name (quoted or not) and, for Hex, the ability after it. The name
+            // reader above stops at a closing quote, which would drop that ability.
+            String typedWords = words.length >= 2 ? String.join(" ", Arrays.copyOfRange(words, 1, words.length)) : null;
+            return io.papermc.jkvttplugin.combat.OutOfCombatAttack.castMark(player, sheet, spell, castLevel, typedWords, cost);
+        }
+
         // Harmful spells need the DM's say (start a fight, let it happen, or a thing on the wall);
         // healing rolls and applies. Both go through the normal roll prompts and the one HP path.
         if (io.papermc.jkvttplugin.combat.OutOfCombatAttack.isHarmful(spell) || spell.isHealing()) {
@@ -465,8 +476,7 @@ public class CharacterCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text(spell.getName() + " takes up to " + max + " target" + (max == 1 ? "" : "s") + ".", NamedTextColor.RED));
             return true;
         }
-        io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, cost); // the slot, and concentration
-        io.papermc.jkvttplugin.combat.SpellTargeting.clear(player.getUniqueId()); // a spell readied from the book is cast
+        io.papermc.jkvttplugin.combat.OutOfCombatAttack.commit(player, sheet, spell, cost); // the slot, concentration, and the readied spell
         for (var t : targets) {
             io.papermc.jkvttplugin.combat.SpellEffects.apply(sheet.getCharacterId(), t.combatant(), spell);
             io.papermc.jkvttplugin.combat.SpellVisuals.play(spell, player.getLocation(), t.combatant().getLocation()); // #230

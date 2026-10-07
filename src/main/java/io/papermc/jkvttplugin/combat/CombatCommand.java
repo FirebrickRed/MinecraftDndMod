@@ -1411,7 +1411,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
             if (target.isDead()) { player.sendMessage(Component.text(target.getDisplayName() + " is already dead.", NamedTextColor.YELLOW)); return; }
             if (spell.isMarkSpell()) {
-                resolved = SpellCastHandler.castMark(caster, target, session, player, spell, choice);
+                // The mark is set when the cast completes, with its concentration (afterCast), not by castMark.
+                CastCompletion.Mark mark = SpellCastHandler.castMark(caster, target, session, player, spell, choice);
+                if (mark != null) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction, mark);
+                return;
             } else {
                 resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal, roll.forceAuto());
             }
@@ -1463,18 +1466,22 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private void afterCast(Player player, CombatSession session, Combatant caster, CharacterSheet casterSheet,
                            io.papermc.jkvttplugin.data.model.DndSpell spell,
                            io.papermc.jkvttplugin.character.SpellCost cost, boolean spendReaction) {
-        SpellTargeting.clear(player.getUniqueId()); // a readied spell is spent
-        cost.spend(casterSheet, spell);
-        Reach.spend(player.getUniqueId()); // a DM "close enough" covered this one cast
+        afterCast(player, session, caster, casterSheet, spell, cost, spendReaction, null);
+    }
 
-        // Concentration (PHB 203): a second concentration spell replaces the first. castMark
-        // (Hex/Hunter's Mark) sets this itself, so don't tread on it.
-        if (spell.isConcentration() && casterSheet != null && !spell.isMarkSpell()) {
-            if (casterSheet.isConcentrating() && casterSheet.getConcentratingOn() != spell) {
-                session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + "'s concentration on "
-                        + casterSheet.getConcentratingOn().getName() + " ends.", NamedTextColor.GRAY));
-            }
-            casterSheet.setConcentratingOn(spell);
+    /** @param mark what a mark spell (Hex, Hunter's Mark) marks, from {@code SpellCastHandler.castMark}; null otherwise */
+    private void afterCast(Player player, CombatSession session, Combatant caster, CharacterSheet casterSheet,
+                           io.papermc.jkvttplugin.data.model.DndSpell spell,
+                           io.papermc.jkvttplugin.character.SpellCost cost, boolean spendReaction, CastCompletion.Mark mark) {
+        // The part every cast shares, in one place (#269): readied spell, reach allowance, cost,
+        // concentration, mark. What it did comes back for the table to hear.
+        CastCompletion.Done done = CastCompletion.finish(player.getUniqueId(), casterSheet, spell, cost, mark);
+        if (done.concentrationEnded() != null) {
+            session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + "'s concentration on "
+                    + done.concentrationEnded().getName() + " ends.", NamedTextColor.GRAY));
+        }
+        // A mark's own lines already say "while concentrating" (castMark).
+        if (done.concentrating() && !spell.isMarkSpell()) {
             session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + " is concentrating on "
                     + spell.getName() + ".", NamedTextColor.LIGHT_PURPLE));
         }

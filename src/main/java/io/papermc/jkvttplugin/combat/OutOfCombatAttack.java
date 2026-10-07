@@ -585,16 +585,102 @@ public final class OutOfCombatAttack {
 
     /** Spend the slot or use and handle concentration: only once the spell actually goes off. */
     public static void commit(Player player, CharacterSheet sheet, DndSpell spell, SpellCost cost) {
-        Reach.spend(player.getUniqueId()); // a DM "close enough" covers this one cast
-        if (spell.isConcentration() && sheet.isConcentrating()) {
-            DndSpell was = sheet.getConcentratingOn();
-            sheet.breakConcentration();
-            player.sendMessage(Component.text("Concentration on " + was.getName() + " ends.", NamedTextColor.YELLOW));
+        commit(player, sheet, spell, cost, null);
+    }
+
+    /**
+     * The cast went through, out of a fight: the shared completion ({@link CastCompletion}, #269), told to
+     * the caster. Called once a cast has resolved, never for a prompt, a refusal or a cast the DM hasn't
+     * let happen.
+     *
+     * @param cost null for a ritual, which spends no slot
+     * @param mark what a mark spell marks; null otherwise
+     */
+    public static void commit(Player player, CharacterSheet sheet, DndSpell spell, SpellCost cost, CastCompletion.Mark mark) {
+        CastCompletion.Done done = CastCompletion.finish(player.getUniqueId(), sheet, spell, cost, mark);
+        if (done.concentrationEnded() != null) {
+            player.sendMessage(Component.text("Concentration on " + done.concentrationEnded().getName() + " ends.", NamedTextColor.YELLOW));
         }
-        cost.spend(sheet, spell);
-        if (spell.isConcentration()) sheet.setConcentratingOn(spell);
-        String spent = cost.spentLabel(sheet);
-        if (!spent.isEmpty()) player.sendMessage(Component.text("   Spent " + spent + ".", NamedTextColor.GRAY));
+        if (!done.spent().isEmpty()) player.sendMessage(Component.text("   Spent " + done.spent() + ".", NamedTextColor.GRAY));
+    }
+
+    // ==================== MARKS (HEX, HUNTER'S MARK) ====================
+
+    /** A mark spell's typed words: the target's name, and (Hex) the ability chosen, when the last word is one. */
+    record MarkWords(String targetName, Ability choice) {}
+
+    /**
+     * "Wolf strength" or "\"Dire Wolf\" strength" → the name + STRENGTH, for a spell that takes an ability;
+     * anything else is all name. Quotes around the name are dropped. Pure.
+     */
+    static MarkWords markWords(DndSpell spell, String typed) {
+        if (typed == null || typed.isBlank()) return new MarkWords(null, null);
+        String t = typed.trim();
+        Ability choice = null;
+        if ("ability".equalsIgnoreCase(spell.getCastChoice())) {
+            int space = t.lastIndexOf(' ');
+            Ability a = parseAbility(space < 0 ? t : t.substring(space + 1));
+            if (a != null) { choice = a; t = space < 0 ? "" : t.substring(0, space).trim(); }
+        }
+        String name = io.papermc.jkvttplugin.util.NameUtil.stripQuotes(t).trim();
+        return new MarkWords(name.isEmpty() ? null : name, choice);
+    }
+
+    /**
+     * {@code /character cast hex <target> [ability]} out of a fight (#269). A curse on someone is a hostile
+     * cast, so it takes the same road as an attack: in reach, then the DM's [Let it happen] (or a fight).
+     * Nothing is spent until that's given and the cast is made; then the slot, concentration and the mark
+     * are set together by {@link #commit}. It used to fall through to "announce it": the slot went, the
+     * caster concentrated, and nobody was marked.
+     */
+    public static boolean castMark(Player player, CharacterSheet sheet, DndSpell spell, Integer castLevel,
+                                   String typed, SpellCost cost) {
+        MarkWords words = markWords(spell, typed);
+        Aim aim = aim(player, words.targetName());
+        if (aim == null) return true; // a typed name that didn't resolve; the resolver said why
+        if (aim.target == null) {
+            player.sendMessage(Component.text(spell.getName() + " marks a creature: look at one, or name it.", NamedTextColor.RED));
+            return true;
+        }
+        String level = castLevel != null ? " level " + castLevel : "";
+        if ("ability".equalsIgnoreCase(spell.getCastChoice()) && words.choice() == null) {
+            // Which ability comes first, so what the DM is asked about is the whole cast.
+            player.sendMessage(Component.text("Choose an ability for " + spell.getName() + " on " + aim.targetName()
+                    + " (the target has disadvantage on checks with it):", NamedTextColor.LIGHT_PURPLE));
+            Component line = Component.text("  ", NamedTextColor.GRAY);
+            for (Ability a : Ability.values()) {
+                String cmd = "/character cast " + spell.getId() + " " + quote(aim.targetName()) + " " + a.name().toLowerCase() + level;
+                line = line.append(fill("[" + a.getAbbreviation() + "]", cmd)).append(Component.text(" "));
+            }
+            player.sendMessage(line);
+            return true;
+        }
+        String choiceWord = words.choice() != null ? " " + words.choice().name().toLowerCase() : "";
+        String retry = "/character cast " + spell.getId() + " " + quote(aim.targetName()) + choiceWord + level + " ";
+        if (!inRange(player, aim, spell, retry)) return true;
+        Combatant target = aim.target.combatant();
+        if (!permitted(player, spell, target.getId())) {
+            String combatCmd = "/combat cast " + spell.getId() + " " + quote(aim.targetName()) + choiceWord + level + " ";
+            askDm(player, sheet.getCharacterName() + " wants to cast " + spell.getName() + " at " + aim.targetName(),
+                    target, spell.getName() + " at " + aim.targetName(), combatCmd,
+                    () -> grant(player, spell, target.getId(), retry));
+            return true;
+        }
+        if (!inRange(player, aim, spell, retry)) return true; // they may have walked off while the DM decided
+
+        permits.remove(player.getUniqueId()); // one "let it happen" is one cast
+        commit(player, sheet, spell, cost, CastCompletion.Mark.of(spell, target.getId(), words.choice()));
+        String who = sheet.getCharacterName();
+        tell(player, Component.text("✨ " + who + " marks " + aim.targetName() + " with " + spell.getName() + "!", NamedTextColor.LIGHT_PURPLE));
+        String dtype = spell.getDamageType() != null ? " " + spell.getDamageType() : "";
+        tell(player, Component.text("+" + spell.getMarkDamage() + dtype + " on every hit against " + aim.targetName()
+                + " while concentrating.", NamedTextColor.GRAY));
+        if (words.choice() != null) {
+            tell(player, Component.text(aim.targetName() + " has disadvantage on "
+                    + words.choice().name().charAt(0) + words.choice().name().substring(1).toLowerCase() + " checks.", NamedTextColor.GRAY));
+        }
+        SpellVisuals.play(spell, player.getLocation(), target.getLocation()); // #230
+        return true;
     }
 
     private static void rollPrompt(Player player, CharacterSheet sheet, DndSpell spell, String retry, Advantage adv) {

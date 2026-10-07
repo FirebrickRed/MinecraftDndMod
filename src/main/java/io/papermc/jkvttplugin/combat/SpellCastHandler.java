@@ -174,23 +174,19 @@ public class SpellCastHandler {
      * Cast a mark/curse spell (Hex, Hunter's Mark — #178). The mark is the caster's rider damage, so it
      * lives on the CASTER: while they concentrate, they deal the rider damage on hits against the
      * marked target, and (Hex) the target has disadvantage on checks with the chosen ability.
+     *
+     * @return whom to mark, for the caller to complete the cast with; null when it was refused
      */
-    public static boolean castMark(Combatant caster, Combatant target, CombatSession session, Player player,
-                                   DndSpell spell, Ability choice) {
+    public static CastCompletion.Mark castMark(Combatant caster, Combatant target, CombatSession session, Player player,
+                                               DndSpell spell, Ability choice) {
         CharacterSheet sheet = caster.getCharacterSheet();
-        if (sheet == null) { player.sendMessage(Component.text("Only characters cast this spell.", NamedTextColor.RED)); return false; }
+        if (sheet == null) { player.sendMessage(Component.text("Only characters cast this spell.", NamedTextColor.RED)); return null; }
         // Known and prepared, like every other cast path: a spare slot was enough to cast an unknown Hex (#236).
         String refusal = io.papermc.jkvttplugin.character.PreparedSpells.castRefusal(sheet, spell, false);
-        if (refusal != null) { player.sendMessage(Component.text(refusal, NamedTextColor.RED)); return false; }
-        if (!reaches(caster, target, player, spell)) return false; // Hex reaches 90 ft; it wasn't checked at all
-
-        if (sheet.isConcentrating() && sheet.getConcentratingOn() != spell) {
-            session.broadcast(Component.text(caster.getDisplayName(true) + "'s concentration on "
-                    + sheet.getConcentratingOn().getName() + " ends.", NamedTextColor.GRAY));
-        }
-        sheet.setConcentratingOn(spell);
-        String abilityName = choice != null ? choice.name().toLowerCase() : null;
-        sheet.setSpellMark(target.getId(), spell.getMarkDamage(), spell.getDamageType(), abilityName);
+        if (refusal != null) { player.sendMessage(Component.text(refusal, NamedTextColor.RED)); return null; }
+        if (!reaches(caster, target, player, spell)) return null; // Hex reaches 90 ft; it wasn't checked at all
+        // Nothing is changed here any more: concentration and the mark are set when the cast completes
+        // (CastCompletion, #269), with the slot. This only says what happened and hands back whom to mark.
 
         session.broadcast(Component.empty());
         session.broadcast(Component.text("✨ " + caster.getDisplayName(true) + " marks " + target.getDisplayName(true)
@@ -202,9 +198,8 @@ public class SpellCastHandler {
             session.broadcast(Component.text(target.getDisplayName(true) + " has disadvantage on "
                     + choice.name().charAt(0) + choice.name().substring(1).toLowerCase() + " checks.", NamedTextColor.GRAY));
         }
-        return true;
+        return CastCompletion.Mark.of(spell, target.getId(), choice);
     }
-
     /**
      * Begin casting an area spell (#149): enter the aim-and-confirm preview (#173) so the caster can
      * see the shape and who's caught before committing. The spell resolves only on confirm; the

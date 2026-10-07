@@ -92,6 +92,14 @@ public final class SpellTargeting {
         readied.remove(playerId);
     }
 
+    /** Whether this player has a spell readied (for the tests of what a completed cast clears). */
+    static boolean isReadied(UUID playerId) { return readied.containsKey(playerId); }
+
+    /** A readied spell without the chat that goes with readying one, for tests that have no player. */
+    static void readyQuietly(UUID playerId, DndSpell spell) {
+        readied.put(playerId, new Readied(spell.getId(), spell.getLevel(), null, 1));
+    }
+
     /**
      * A left-click. If a spell is readied, pick {@code clicked} (or what the player looks at when
      * null) as a target and return true, so the weapon prompt stays out of it.

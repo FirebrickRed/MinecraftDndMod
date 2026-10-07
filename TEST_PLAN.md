@@ -135,6 +135,11 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] Instead of rolling, the small grey **[failed]** / **[saved]** after the buttons rule it without a roll. (#245)
 - [ ] In a fight, a save spell's cast line shows the same DC breakdown. (#245)
 
+- [ ] **A ritual replacing concentration:** concentrating on Bless out of a fight, `/character cast detect_magic
+      ritual` → "Concentration on Bless ends." then "Concentrating on Detect Magic.", and no slot is spent. (#269)
+- [ ] **A readied spell is used up out of a fight:** click Sacred Flame in the spellbook (it's "ready"), cast it at
+      a creature with [Let it happen]. Left-click another creature afterwards → nothing is filled in; it isn't
+      still readied. (#269)
 - [ ] **Out of a fight, Bane** at a creature, [Let it happen], it fails the save → "… is under Bane: …" and its next
       attack or save shows `-1d4[Bane]`. It saves → nothing on it. (#267)
 - [ ] **Out of a fight, a save spell with a condition** (Charm Person, Cause Fear or Tasha's Hideous Laughter; any caster
@@ -182,6 +187,17 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
 - [ ] Hex someone, then cast another concentration spell (Bless if you have it, or any) → attack the
       Hexed target: no Hex damage offered. (#238)
+- [ ] **Hex out of a fight:** `/character cast hex <creature>` → asked which ability; pick one → the DM is asked
+      ([Start combat] / [Let it happen] / deny) and **no slot is spent yet**. [Let it happen] → [cast it] →
+      "… marks … with Hex!", "+1d6 necrotic on every hit …", the slot is spent, and the action bar / sheet
+      shows you concentrating on Hex. Start a fight and hit that creature → the damage prompt includes the
+      +1d6. (#269)
+- [ ] The same, but the DM clicks **[Deny]**, or the creature is out of reach (90 ft) → nothing spent, no
+      concentration, no mark. Aiming at a wall → "Hex marks a creature…". (#269)
+- [ ] Hex with a quoted name: `/character cast hex "Town Guard" wisdom` → goes straight to the DM's question
+      (no ability prompt). (#269)
+- [ ] In a fight, Hex reads as before, and casting it while concentrating on something else says
+      "◈ …'s concentration on <that> ends." (now after the "marks …" lines). (#269)
 - [ ] A warlock without Hex: `/combat cast hex <target> strength` → refused ("doesn't know"), no slot spent. (#236)
 
 - [ ] **Genie:** **Genie Kind** and **Genie's Vessel** now show (they never did).
