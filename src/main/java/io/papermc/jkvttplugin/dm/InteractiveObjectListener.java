@@ -174,7 +174,11 @@ public class InteractiveObjectListener implements Listener {
                 .append(Component.text(" "))
                 .append(trapButton("[Disarm]", "/dm check " + player.getName() + " skill sleight_of_hand" + dc, "Try to disarm it (then /dm object disarm on a success)"))
                 .append(Component.text(" "))
-                .append(trapButton("[Trigger]", "/dm check " + player.getName() + " save " + save + dc, "It goes off — call the save, then apply " + o.trapDamage + " on a fail"));
+                // One step when the trap has a DC and damage: the save is called and the damage follows it (/dm trap).
+                .append(o.trapDc > 0 && !o.trapDamage.isBlank()
+                        ? trapButton("[Trigger]", "/dm trap " + player.getName() + " " + save + " dc " + o.trapDc + " " + o.trapDamage,
+                                "It goes off: they roll the save, and " + o.trapDamage + " is dealt on a fail. Add 'type fire' or 'half' before sending.")
+                        : trapButton("[Trigger]", "/dm check " + player.getName() + " save " + save + dc, "It goes off — call the save, then apply " + o.trapDamage + " on a fail"));
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (DMManager.isDM(p)) { p.sendMessage(header); p.sendMessage(buttons); }
         }

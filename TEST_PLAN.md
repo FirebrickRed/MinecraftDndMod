@@ -97,9 +97,6 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 - [ ] **Shield:** a Sneak Attack hit that Shield turns into a miss → the next hit that turn can still Sneak Attack. (#229)
 - [ ] `on_fail: always` / `never` in config.yml behave as named.
 
-## Monk
-
-
 ## Wizard
 
 - [ ] Out of a fight, `/character cast blade_ward Wolf` → "Blade Ward only targets you (range: Self)…", no
@@ -113,9 +110,6 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
       → "…doesn't go off: nothing spent." (#237)
 - [ ] In a fight, cast Fire Bolt and resolve it, then cast it again the same turn → "You've already used your
       Action this turn". Nothing is rolled or spent. (#235)
-
-**Creation and the spellbook**
-
 
 **Out of a fight**
 
@@ -194,9 +188,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] Cast a 1st-level spell, `/dm rest <you> short` → "Pact Magic spell slots restored", and
       the slot is back in the spellbook. (#52)
 
-## Artificer
-
-
 ## Races
 
 **Halfling**
@@ -212,7 +203,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       cave keeps full distance (they just see darkness). Tell me if 2 chunks feels too tight or the switch
       too jumpy; `sight.darkvision_view_limit: false` turns it off.
 
-**Heavy armor and Strength** (#34)
 
 ---
 
@@ -470,6 +460,16 @@ buttons. Try both; whichever you like less gets removed.
       result comes to you (every DM online) with ✔/✘, not to the block.
 - [ ] `dm adjust @p[distance=..3] hp -4` with nobody within 3 blocks → nothing happens (the block's output says
       "No player matches"). `dm adjust @a hp -1` with two players on → refused, "takes one".
+- [ ] `/dm trap <a character> dexterity dc 13 2d10 type fire half name Flame jet` → you see "… sets off Flame jet: DC 13
+      DEX save, 2d10 fire on a fail, half on a success"; they see "You set off Flame jet!" (no DC) and the roll
+      buttons. They fail → "fails the save …: N fire damage (2d10: [4, 7] = 11)" and the HP drops, resistances
+      applied. They save → half. Without `half`, a save takes nothing. (#202)
+- [ ] The same line in a command block with `@p`, under a pressure plate → stepping on it does all of that.
+      `… dc 13 8 type piercing` (a number, not dice) deals exactly 8 on a fail. (#202)
+- [ ] `/dm trap Wolf constitution dc 12 3d6 type poison` → you get the creature's save buttons; answer them and the
+      damage lands on the wolf. (#202)
+- [ ] A chest annotated as trapped with a DC and damage: when a player pokes it, your **[Trigger]** fills
+      `/dm trap <them> <save> dc <n> <dice>`. (#202)
 - [ ] As the DM, typed in chat: `/dm view @p` → your own character's quick view.
 
 ## Other DM commands

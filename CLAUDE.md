@@ -860,6 +860,7 @@ classes remain and are delegated to from CharacterCommand / DmCommand).
     `ClickEvent.callback`s, not commands — nothing to type, replay, or aim at a distant chest.
     **`hidden` is absolute**: no prompt, no trap, nothing until `/dm object reveal` (blundering into
     a trap is #202's walk-over trigger). A sprung trap auto-disarms; `/dm object arm` resets it.
+  - **`/dm trap` (#202):** `dm/TrapCommand`, a save and its damage in one step: `SaveOutcome.await` holds the damage until the ordinary `/dm check … save` is graded, then `DamageHandler` applies all, half (`half`) or none. With `@p` from a command block it's a walk-over trap; an annotated chest's [Trigger] fills it.
   - **HP changes aren't combat-only (#175):** `DamageHandler` takes a **nullable** `CombatSession`, so a trap, a potion or a DM correction runs the same resistance → damage → downing → persistence path as a sword swing. `CombatTargets` resolves the live `Combatant` when a fight is running and a transient one otherwise; out of combat the messages go to the affected player and the DMs instead of the table. **Never write a second HP path** — route new sources of damage or healing through `DamageHandler`.
   - **Death lives on the sheet (#101).** `CharacterSheet` owns `dead` and the death-save tally, persisted
     (`dead:`, `deathSaves:`), and applies the 0-HP rules in `takeDamage`: damage at 0 is a failed save

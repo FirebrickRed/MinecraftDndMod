@@ -44,10 +44,11 @@ public class DmCommand implements CommandExecutor, TabCompleter {
     private final ViewCommand viewExec = new ViewCommand();
     private final NoteCommand noteExec = new NoteCommand();
     private final ReviveCommand reviveExec = new ReviveCommand();
+    private final TrapCommand trapExec = new TrapCommand();
     private final io.papermc.jkvttplugin.commands.DmEntityCommand entityExec = new io.papermc.jkvttplugin.commands.DmEntityCommand();
 
     /** DM-admin verbs folded under /dm (all require DM); role verbs (add/remove/list) handled separately. */
-    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "adjust", "view", "note", "revive", "entity", "object", "lootprompt", "rest", "time", "sound", "resource", "reload", "mode", "animalreply");
+    private static final List<String> DM_TOOL_SUBS = List.of("give", "check", "trap", "adjust", "view", "note", "revive", "entity", "object", "lootprompt", "rest", "time", "sound", "resource", "reload", "mode", "animalreply");
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
@@ -66,6 +67,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
             case "give" -> delegateDm(sender, command, label, args, giveExec);
             case "check", "promptcheck" -> delegateDm(sender, command, label, args, checkExec);
             case "adjust" -> delegateDm(sender, command, label, args, adjustExec);
+            case "trap" -> delegateDm(sender, command, label, args, trapExec);
             case "view" -> delegateDm(sender, command, label, args, viewExec);
             case "note" -> delegateDm(sender, command, label, args, noteExec);
             case "revive" -> delegateDm(sender, command, label, args, reviveExec);
@@ -370,6 +372,7 @@ public class DmCommand implements CommandExecutor, TabCompleter {
                 }
                 case "check", "promptcheck" -> { return checkExec.onTabComplete(sender, command, label, sub); }
                 case "adjust" -> { return adjustExec.onTabComplete(sender, command, label, sub); }
+                case "trap" -> { return trapExec.onTabComplete(sender, command, label, sub); }
                 case "view" -> { return viewExec.onTabComplete(sender, command, label, sub); }
                 case "note" -> { return noteExec.onTabComplete(sender, command, label, sub); }
                 case "revive" -> { return reviveExec.onTabComplete(sender, command, label, sub); }
