@@ -138,6 +138,15 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] **Bless again on other people:** out of a fight, `/character cast bless A, B`, then `/character cast bless
       C` → A and B are told "Bless on you has ended.", C has it, and one more slot is gone. The same in a
       fight (`/combat cast bless A, B`, next turn `/combat cast bless B, C`): A loses it, B and C have it. (#269)
+- [ ] **Two save spells at one creature (in a fight):** cast Bane at a wolf and **don't** answer its save; then
+      (another caster, or next turn) Sacred Flame at the same wolf. You now have **two** prompts, "…CHA save
+      against Bane" and "…DEX save against Sacred Flame". Answer the **second** one first → Sacred Flame's
+      result (DEX, its DC). Then the first → Bane's (CHA, its DC). Neither was lost. (#273)
+- [ ] Click a save prompt's button that's already been answered → "That save has already been settled.", and
+      nothing is rolled. Type a bare `/combat save Wolf` while it owes two → "Wolf owes 2 saves. Which one?"
+      with both prompts again; while it owes one → that one is rolled as before. (#273)
+- [ ] Leave a save unanswered, `/combat finished`, start a new fight with the same creature → `/combat save Wolf`
+      says "has no pending save". (#273)
 - [ ] **A late Bane save (in a fight, two enemies):** cast Bane at enemy A and **don't** answer its save yet. Next
       turn cast Bane at enemy B and answer B's save (fail) → B is under Bane. Now answer A's old save, failing
       it → "Bane is no longer being held, so it doesn't take hold of A", and A has no −1d4. (#269)

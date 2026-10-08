@@ -905,6 +905,7 @@ public class CombatSession {
         ReactionManager.clearAll(); // drop any pending opportunity attacks (#147)
         ReactionWindow.clearAll();  // and any held attack waiting on a reaction (#195)
         ConcentrationManager.clearAll(); // and any unanswered concentration save
+        SaveOutcome.clearInFight();      // and the saves its spells left unanswered (#273): they used to outlive the fight
         AmmoRecovery.startDespawnTimers(); // spent ammo now begins its ~5-min pickup window (#191)
 
         // Remove all players from session tracking, clear glows and turn state

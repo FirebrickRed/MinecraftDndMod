@@ -125,6 +125,11 @@ public final class SpellSave {
      * the damage owed. Changes the target; says and rolls nothing.
      */
     public static Outcome apply(Facts facts, Subject target, boolean saved) {
+        return apply(facts, target, saved, SpellLoader::getSpell);
+    }
+
+    /** As above, finding the save's effect spell through {@code spells}: the loaded spells in play, a test's own otherwise. */
+    static Outcome apply(Facts facts, Subject target, boolean saved, java.util.function.Function<String, DndSpell> spells) {
         if (saved) {
             boolean half = facts.hasDamage() && "half".equalsIgnoreCase(facts.saveEffect());
             return new Outcome(true, half ? Owed.HALF : Owed.NONE, List.of(), List.of(), false);
@@ -132,7 +137,7 @@ public final class SpellSave {
         List<Component> effectLines = new ArrayList<>(), conditionLines = new ArrayList<>();
 
         // The spell's structured effect lands on a failed save (Bane's -1d4, #225).
-        DndSpell effectSpell = facts.effectSpellId() != null ? SpellLoader.getSpell(facts.effectSpellId()) : null;
+        DndSpell effectSpell = facts.effectSpellId() != null ? spells.apply(facts.effectSpellId()) : null;
         if (effectSpell != null && effectSpell.hasEffect()) {
             // A concentration spell's effect only exists while the cast that called for this save still holds
             // the caster's concentration (#269). This save may be answered late: after that concentration

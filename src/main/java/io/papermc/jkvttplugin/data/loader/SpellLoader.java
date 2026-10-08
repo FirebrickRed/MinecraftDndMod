@@ -82,8 +82,12 @@ public class SpellLoader {
         LOGGER.info("Loaded " + spells.size() + " spells total");
     }
 
+    /**
+     * One spell from its YAML map. The loader's own step for each entry of a spell file, and the way to
+     * build a spell that isn't in any file (a test's synthetic one); the caller sets its id.
+     */
     @SuppressWarnings("unchecked")
-    private static DndSpell parseSpell(String key, Map<?, ?> data) {
+    public static DndSpell parseSpell(String key, Map<?, ?> data) {
         String name = ParseUtil.asString(data.get("name"), key);
         int level = ParseUtil.asInt(data.get("level"), 0);
         SpellSchool school = SpellSchool.fromString(ParseUtil.asString(data.get("school"), "evocation"));

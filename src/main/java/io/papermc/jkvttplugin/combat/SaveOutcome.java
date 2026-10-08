@@ -19,8 +19,8 @@ import java.util.function.Consumer;
  * used to be matched by who was saving and the DC, so any other save by the same player at the same DC
  * inherited its tags (#266) and set off its damage, and a second waiting save replaced the first.
  *
- * <p>In a fight a save spell resolves itself ({@code SpellCastHandler.pendingSaves} and
- * {@code /combat save}); this is the out-of-combat half.
+ * <p>A fight's saves are requests here too ({@link #awaitInFight}, #273), answered by {@code /combat save}
+ * with the id in its roll buttons; they wait as long as the fight does.
  */
 public final class SaveOutcome {
 
@@ -28,9 +28,12 @@ public final class SaveOutcome {
 
     /**
      * One save being waited on. {@code ability} is the save it calls for (null when the caller couldn't
-     * say); {@code tags} are what it's against (magic, a damage type, a condition).
+     * say); {@code tags} are what it's against (magic, a damage type, a condition). {@code label} names what
+     * it's a save against ("Bane"), for telling two apart. {@code inFight}: left by a spell in a fight (#273),
+     * answered by {@code /combat save}; it waits as long as the fight does instead of lapsing.
      */
-    public record Request(String id, UUID saver, int dc, Ability ability, Set<String> tags, Consumer<Boolean> onGraded, long at) {}
+    public record Request(String id, UUID saver, int dc, Ability ability, Set<String> tags, Consumer<Boolean> onGraded, long at,
+                          String label, boolean inFight) {}
 
     private static final Map<String, Request> requests = new LinkedHashMap<>();
     private static final long GOOD_FOR_MS = Duration.ofMinutes(10).toMillis();
@@ -50,18 +53,51 @@ public final class SaveOutcome {
     public static String await(UUID saver, int dc, Ability ability, Set<String> tags, Consumer<Boolean> onGraded) {
         if (saver == null || onGraded == null) return null;
         long now = System.currentTimeMillis();
-        requests.values().removeIf(r -> now - r.at() > GOOD_FOR_MS); // nobody answered: it lapses
+        return put(saver, dc, ability, tags, onGraded, null, false);
+    }
+
+    /**
+     * A save a spell leaves on a target in a fight (#273): the same kind of request, so two spells at one
+     * creature are two saves, each answered by its own prompt in either order. It doesn't lapse (a round can
+     * take a while); the fight ending clears it ({@link #clearInFight()}).
+     *
+     * @param label what it's a save against, shown when a target owes several
+     */
+    public static String awaitInFight(UUID saver, int dc, Ability ability, Set<String> tags, String label, Consumer<Boolean> onGraded) {
+        if (saver == null || onGraded == null) return null;
+        return put(saver, dc, ability, tags, onGraded, label, true);
+    }
+
+    private static String put(UUID saver, int dc, Ability ability, Set<String> tags, Consumer<Boolean> onGraded, String label, boolean inFight) {
+        long now = System.currentTimeMillis();
+        requests.values().removeIf(r -> lapsed(r, now)); // nobody answered: it lapses
         // Starts with a letter, so no command parser can take it for a number.
         String id = "r" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
-        requests.put(id, new Request(id, saver, dc, ability, tags == null ? Set.of() : Set.copyOf(tags), onGraded, now));
+        requests.put(id, new Request(id, saver, dc, ability, tags == null ? Set.of() : Set.copyOf(tags), onGraded, now, label, inFight));
         return id;
+    }
+
+    private static boolean lapsed(Request r, long now) {
+        return !r.inFight() && now - r.at() > GOOD_FOR_MS;
+    }
+
+    /** The saves this saver still owes from spells in a fight, oldest first. */
+    public static java.util.List<Request> inFightFor(UUID saver) {
+        java.util.List<Request> out = new java.util.ArrayList<>();
+        for (Request r : requests.values()) if (r.inFight() && r.saver().equals(saver)) out.add(r);
+        return out;
+    }
+
+    /** A fight ended: the saves its spells left unanswered go with it. Out-of-combat requests are untouched. */
+    public static void clearInFight() {
+        requests.values().removeIf(Request::inFight);
     }
 
     /** The request with this id while it's still waiting; null once it's answered, ruled or lapsed. */
     public static Request find(String requestId) {
         Request r = requestId == null ? null : requests.get(requestId);
         if (r == null) return null;
-        if (System.currentTimeMillis() - r.at() > GOOD_FOR_MS) { requests.remove(requestId); return null; }
+        if (lapsed(r, System.currentTimeMillis())) { requests.remove(requestId); return null; }
         return r;
     }
 

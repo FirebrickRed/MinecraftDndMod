@@ -216,19 +216,92 @@ class LateSaveCastTest {
         assertEquals(SpellSave.Owed.HALF, SpellSave.apply(facts, subject(lucky), true).damage(), "a late success is still half");
     }
 
-    /** An effect that doesn't depend on concentration isn't asked the question at all. */
-    @Test
-    void anEffectThatNeedsNoConcentrationLandsWhoeverHoldsWhat() {
-        DndSpell effectSpell = SpellLoader.getAllSpells().stream()
-                .filter(s -> s.hasEffect() && !s.isConcentration()).findFirst().orElse(null);
-        if (effectSpell == null) return; // none shipped today: nothing to pin
-        CharacterSheet cleric = live("cleric"), target = live("fighter");
-        SpellSave.Facts facts = new SpellSave.Facts(effectSpell.getName(), cleric.getPlayerId(), cleric.getCharacterId(), 13, Ability.WISDOM,
-                null, null, null, null, Set.of(), effectSpell.getId(), SpellEffects.newCast());
-        SpellSave.apply(facts, subject(target), false);
-        assertTrue(target.hasEffect(effectSpell.getEffect().getSourceId()));
+    /**
+     * A spell that isn't in any file: Bane's effect on a failed save, with or without concentration. No
+     * shipped spell has an effect on a save without concentration today, so the rule is pinned with one
+     * made here instead of with whatever the content happens to hold.
+     */
+    private static DndSpell jinx(String id, boolean concentration) {
+        java.util.Map<String, Object> yaml = new java.util.LinkedHashMap<>();
+        yaml.put("name", concentration ? "Held Jinx" : "Jinx");
+        yaml.put("level", 1);
+        yaml.put("school", "enchantment");
+        yaml.put("casting_time", "1 action");
+        yaml.put("range", "30 feet");
+        yaml.put("components", "V");
+        yaml.put("duration", "1 minute");
+        yaml.put("description", "A test curse.");
+        yaml.put("concentration", concentration);
+        yaml.put("save_type", "Charisma");
+        yaml.put("effect", java.util.Map.of("effects",
+                java.util.Map.of("roll_bonus", java.util.Map.of("dice", "-1d4", "to", List.of("attacks", "saves")))));
+        DndSpell spell = SpellLoader.parseSpell(id, yaml);
+        spell.setId(id);
+        return spell;
     }
 
+    private static SpellSave.Facts saveAgainst(DndSpell spell, UUID casterCharacterId, long castId) {
+        return new SpellSave.Facts(spell.getName(), UUID.randomUUID(), casterCharacterId, 13, Ability.CHARISMA,
+                null, null, null, null, Set.of("magic"), spell.getId(), castId);
+    }
+
+    /** An effect that doesn't depend on concentration isn't asked who holds what: it lands whatever the caster is doing. */
+    @Test
+    void anEffectThatNeedsNoConcentrationLandsWhoeverHoldsWhat() {
+        DndSpell jinx = jinx("jinx", false);
+        assertTrue(jinx.hasEffect(), "the synthetic spell really has an effect");
+        assertFalse(jinx.isConcentration(), "and really needs no concentration");
+        java.util.function.Function<String, DndSpell> spells = id -> id.equals("jinx") ? jinx : SpellLoader.getSpell(id);
+        String source = jinx.getEffect().getSourceId();
+
+        // The caster is concentrating on something else entirely.
+        CharacterSheet cleric = live("cleric"), a = live("fighter");
+        CastCompletion.finish(null, cleric, SpellLoader.getSpell("bless"), null, null);
+        long cast = SpellEffects.newCast();
+        SpellSave.Outcome o = SpellSave.apply(saveAgainst(jinx, cleric.getCharacterId(), cast), subject(a), false, spells);
+        assertTrue(a.hasEffect(source), "it landed");
+        ActiveEffect onA = a.getActiveEffects().stream().filter(e -> e.getSourceId().equalsIgnoreCase(source)).findFirst().orElseThrow();
+        assertEquals("-1d4", onA.rollBonusFor(ActiveEffect.ATTACKS));
+        assertEquals(cast, onA.getCastId(), "and still knows its cast");
+        assertEquals(cleric.getCharacterId(), onA.getCasterId());
+        assertTrue(text(o.effectLines()).contains("is under Jinx"), text(o.effectLines()));
+        assertSame(SpellLoader.getSpell("bless"), cleric.getConcentratingOn(), "the caster's Bless is their own business");
+
+        // The caster isn't concentrating on anything.
+        CharacterSheet b = live("fighter");
+        cleric.breakConcentration();
+        SpellSave.apply(saveAgainst(jinx, cleric.getCharacterId(), SpellEffects.newCast()), subject(b), false, spells);
+        assertTrue(b.hasEffect(source));
+
+        // The caster can't even be found (a creature's ability, say): there's no one to ask, and no need to.
+        CharacterSheet c = live("fighter");
+        SpellSave.apply(saveAgainst(jinx, UUID.randomUUID(), SpellEffects.newCast()), subject(c), false, spells);
+        assertTrue(c.hasEffect(source));
+
+        // A successful save still applies nothing.
+        CharacterSheet d = live("fighter");
+        SpellSave.apply(saveAgainst(jinx, cleric.getCharacterId(), SpellEffects.newCast()), subject(d), true, spells);
+        assertFalse(d.hasEffect(source));
+    }
+
+    /** The very same spell made a concentration spell is held to the rule: with nobody holding that cast, it doesn't land. */
+    @Test
+    void theSameSyntheticSpellWithConcentrationIsHeldToItsCast() {
+        DndSpell held = jinx("held_jinx", true);
+        assertTrue(held.isConcentration());
+        java.util.function.Function<String, DndSpell> spells = id -> id.equals("held_jinx") ? held : SpellLoader.getSpell(id);
+        String source = held.getEffect().getSourceId();
+        CharacterSheet cleric = live("cleric"), a = live("fighter"), b = live("fighter");
+
+        long cast = CastCompletion.finish(null, cleric, held, null, null).castId();
+        SpellSave.apply(saveAgainst(held, cleric.getCharacterId(), cast), subject(a), false, spells);
+        assertTrue(a.hasEffect(source), "held: it lands");
+
+        cleric.breakConcentration();
+        SpellSave.Outcome late = SpellSave.apply(saveAgainst(held, cleric.getCharacterId(), cast), subject(b), false, spells);
+        assertFalse(b.hasEffect(source), "no longer held: it doesn't");
+        assertTrue(text(late.effectLines()).contains("no longer being held"), text(late.effectLines()));
+    }
     // ---------- who holds a cast ----------
 
     @Test

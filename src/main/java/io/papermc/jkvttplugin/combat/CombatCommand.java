@@ -1608,6 +1608,18 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         if (session == null) return;
         boolean isDM = isDM(player) || player.hasPermission("jkvtt.dm");
         RollService.RollInput roll = RollService.parseInput(args, player);
+        // "request <id>": which of the target's saves this answers. The roll buttons carry it (#273); it isn't
+        // part of anyone's name, so it comes out before the name is read.
+        String request = null;
+        for (int i = 1; i + 1 < args.length; i++) {
+            if (!args[i].equalsIgnoreCase("request")) continue;
+            request = args[i + 1];
+            List<String> rest = new ArrayList<>(Arrays.asList(args));
+            rest.remove(i + 1);
+            rest.remove(i);
+            args = rest.toArray(new String[0]);
+            break;
+        }
         String targetName = joinArgsExcludingFlags(args, 1);
 
         Combatant target;
@@ -1619,7 +1631,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             target = findCombatantByName(session, stripQuotes(targetName));
             if (target == null) { player.sendMessage(Component.text("Target not found: " + targetName, NamedTextColor.RED)); return; }
         }
-        SpellCastHandler.resolveSave(player, session, target, roll.providedRoll(), roll.providedTotal(), roll.forceAuto());
+        SpellCastHandler.resolveSave(player, session, target, roll.providedRoll(), roll.providedTotal(), roll.forceAuto(), request);
     }
 
     /**

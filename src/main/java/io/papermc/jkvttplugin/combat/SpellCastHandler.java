@@ -24,8 +24,7 @@ import java.util.UUID;
 public class SpellCastHandler {
 
 
-    /** A saving throw a target still owes from a save spell: the save's facts, until /combat save answers it. */
-    private static final Map<UUID, SpellSave.Facts> pendingSaves = new HashMap<>();
+
 
     /**
      * @param castId this cast's identity ({@code SpellEffects.newCast()}), the same for every target of one cast:
@@ -153,8 +152,7 @@ public class SpellCastHandler {
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — DC " + sheet.getSpellSaveDcBreakdown(spell) + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
             SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
             // The save's facts, effect included: Bane's -1d4 lands on a failed save (#225).
-            pendingSaves.put(target.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell), castId));
-            promptSave(session, target, saveAbility);
+            leavePending(session, target, SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell), castId));
             return true;
         }
 
@@ -263,8 +261,7 @@ public class SpellCastHandler {
             int dc = 8 + mod;
             session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation() + " save — each caught creature rolls:", NamedTextColor.GRAY));
             for (Combatant t : affected) {
-                pendingSaves.put(t.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell), castId));
-                promptSave(session, t, saveAbility);
+                leavePending(session, t, SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell), castId));
             }
         } else {
             session.broadcast(Component.text("(no save defined — the DM applies the effect)", NamedTextColor.DARK_GRAY));
@@ -301,9 +298,8 @@ public class SpellCastHandler {
         java.util.Set<String> tags = damageType != null && !damageType.isBlank()
                 ? java.util.Set.of(damageType.toLowerCase()) : java.util.Set.of();
         for (Combatant t : affected) {
-            pendingSaves.put(t.getId(), new SpellSave.Facts(sourceName, caster.getId(), null, dc, saveAbility,
+            leavePending(session, t, new SpellSave.Facts(sourceName, caster.getId(), null, dc, saveAbility,
                     damage, damageType, saveEffect, null, tags, null, 0)); // a feature's area (a breath weapon): damage only, no cast
-            promptSave(session, t, saveAbility);
         }
         return true;
     }
@@ -364,32 +360,77 @@ public class SpellCastHandler {
     }
 
     /** Send the target's controller a clickable prompt to roll the pending save. */
-    private static void promptSave(CombatSession session, Combatant target, Ability ability) {
+    /**
+     * A spell leaves {@code target} a save to make (#273): a save request of its own ({@link SaveOutcome}), so
+     * a second spell at the same creature is a second save, not a replacement. Its id rides in the roll
+     * buttons; answering it runs this spell's outcome and no other's. It used to be one slot per target.
+     */
+    private static void leavePending(CombatSession session, Combatant target, SpellSave.Facts facts) {
+        String request = SaveOutcome.awaitInFight(target.getId(), facts.dc(), facts.ability(), facts.saveTags(), facts.spellName(),
+                saved -> applyOutcome(session, target, facts, saved));
+        promptSave(session, target, SaveOutcome.find(request));
+    }
+
+    /** Send the target's controller the roll buttons for one save it owes; they carry that save's request id. */
+    private static void promptSave(CombatSession session, Combatant target, SaveOutcome.Request save) {
+        Ability ability = save.ability();
         String adds = target.saveBreakdown(ability);
         // The same advantage the resolve step applies (conditions, Fey Ancestry…), so [My total…] says how to roll.
-        SpellSave.Facts ps = pendingSaves.get(target.getId());
-        String dice = RollPrompt.d20(target.saveAdvantage(ability, ps != null ? ps.saveTags() : java.util.Set.of()));
+        String dice = RollPrompt.d20(target.saveAdvantage(ability, save.tags()));
+        String against = save.label() != null ? " against " + save.label() : "";
         if (target.isPlayer() && target.getPlayer() != null) {
-            target.getPlayer().sendMessage(RollPrompt.line("🛡 Roll a " + ability.getAbbreviation() + " saving throw:",
-                    NamedTextColor.GOLD, "/combat save ", dice, adds));
+            target.getPlayer().sendMessage(RollPrompt.line("🛡 Roll a " + ability.getAbbreviation() + " saving throw" + against + ":",
+                    NamedTextColor.GOLD, "/combat save request " + save.id() + " ", dice, adds));
         } else {
             // Entity: the DM rolls the save for it.
-            session.sendToDM(RollPrompt.line("🛡 Roll " + target.getDisplayName(true) + "'s " + ability.getAbbreviation() + " save:",
-                    NamedTextColor.GOLD, "/combat save " + quoted(target.getDisplayName()) + " ", dice, adds));
+            session.sendToDM(RollPrompt.line("🛡 Roll " + target.getDisplayName(true) + "'s " + ability.getAbbreviation() + " save" + against + ":",
+                    NamedTextColor.GOLD, "/combat save " + quoted(target.getDisplayName()) + " request " + save.id() + " ", dice, adds));
         }
     }
 
-    /** Resolve a pending save for {@code target}. Players roll their own; the DM rolls for entities. */
+    /**
+     * Which of the saves {@code targetId} owes an answer is for. With a request id: that one, or why not (it's
+     * gone, or it's someone else's). With none: the only one they owe; {@code several} when they owe more than
+     * one, for the caller to ask; a refusal when they owe none. Pure, so the isolation can be tested.
+     */
+    record Picked(SaveOutcome.Request save, String refusal, java.util.List<SaveOutcome.Request> several) {}
+
+    static Picked pickSave(UUID targetId, String targetName, String requestId) {
+        if (requestId != null) {
+            SaveOutcome.Request r = SaveOutcome.find(requestId);
+            String refusal = SaveOutcome.refusal(requestId, targetId, true, r != null ? r.ability() : null, r != null ? r.dc() : null);
+            if (refusal == null && !r.inFight()) refusal = "That save isn't one a fight is waiting on.";
+            return refusal != null ? new Picked(null, refusal, java.util.List.of()) : new Picked(r, null, java.util.List.of());
+        }
+        java.util.List<SaveOutcome.Request> owed = SaveOutcome.inFightFor(targetId);
+        if (owed.isEmpty()) return new Picked(null, targetName + " has no pending save.", java.util.List.of());
+        if (owed.size() == 1) return new Picked(owed.get(0), null, java.util.List.of());
+        return new Picked(null, null, owed);
+    }
+
+    /**
+     * Resolve one save {@code target} owes. Players roll their own; the DM rolls for entities.
+     *
+     * @param requestId which save, from the roll buttons; null when the command was typed bare
+     */
     public static void resolveSave(Player roller, CombatSession session, Combatant target,
-                                   Integer providedRoll, Integer providedTotal, boolean forceAuto) {
-        SpellSave.Facts ps = pendingSaves.get(target.getId());
-        if (ps == null) {
-            roller.sendMessage(Component.text(target.getDisplayName() + " has no pending save.", NamedTextColor.RED));
+                                   Integer providedRoll, Integer providedTotal, boolean forceAuto, String requestId) {
+        // Which save this answers is settled first, before anything is rolled or a one-use effect is spent:
+        // a stale id (answered, or from a fight that's over) resolves nothing (#273).
+        Picked picked = pickSave(target.getId(), target.getDisplayName(), requestId);
+        if (picked.refusal() != null) {
+            roller.sendMessage(Component.text(picked.refusal(), NamedTextColor.RED));
             return;
         }
+        if (picked.save() == null) {
+            roller.sendMessage(Component.text(target.getDisplayName() + " owes " + picked.several().size() + " saves. Which one?", NamedTextColor.YELLOW));
+            for (SaveOutcome.Request owed : picked.several()) promptSave(session, target, owed);
+            return;
+        }
+        SaveOutcome.Request ps = picked.save();
         int bonus = saveBonus(target, ps.ability());
         // Advantage/disadvantage on the save from conditions + racial conditional advantages (#103/#174).
-        Advantage advantage = target.saveAdvantage(ps.ability(), ps.saveTags());
+        Advantage advantage = target.saveAdvantage(ps.ability(), ps.tags());
         if (advantage != Advantage.NONE) {
             roller.sendMessage(Component.text("↯ " + target.getDisplayName() + " rolls this save with "
                     + advantage.label() + ".", advantage.isAdvantage() ? NamedTextColor.GREEN : advantage.isDisadvantage() ? NamedTextColor.RED : NamedTextColor.GRAY));
@@ -401,23 +442,28 @@ public class SpellCastHandler {
             roller.sendMessage(RollPrompt.again(roller, "🛡 Roll " + target.getDisplayName() + "'s " + ps.ability().getAbbreviation() + " save:", RollPrompt.d20(advantage), label));
             return;
         }
-        pendingSaves.remove(target.getId());
         SpellEffects.useUp(target, io.papermc.jkvttplugin.effect.ActiveEffect.SAVES); // Resistance, once (#225)
-        boolean success = SpellSave.saved(r.total(), ps.dc()); // grading; what it does is SpellSave.apply, below
-        Combatant caster = findById(session, ps.casterId());
-        Combatant damageSource = caster != null ? caster : target;
+        boolean success = SpellSave.saved(r.total(), ps.dc()); // grading; what it does is applyOutcome, below
 
         session.broadcast(Component.text(target.getDisplayName(true) + " " + ps.ability().getAbbreviation()
-                + " save: " + r.breakdown() + " vs DC " + ps.dc() + " → " + (success ? "SUCCESS" : "FAIL"),
+                + " save" + (ps.label() != null ? " against " + ps.label() : "") + ": " + r.breakdown() + " vs DC " + ps.dc()
+                + " → " + (success ? "SUCCESS" : "FAIL"),
                 success ? NamedTextColor.GREEN : NamedTextColor.RED));
         // A failed save may still be saved by Bardic Inspiration (#40); the DM rules on the new total.
         if (!success && target.getCharacterSheet() != null) {
             InspirationPrompt.offer(target.getCharacterSheet(), ps.ability().getAbbreviation() + " save (DC " + ps.dc() + ")", r.total(), null,
                     InspirationPrompt.table(session));
         }
+        SaveOutcome.graded(ps.id(), success); // this request's outcome, once: applyOutcome for the spell that left it
+    }
 
-        // What the save does is the same in and out of a fight (SpellSave, #267). Rolling the damage and
-        // telling the table are this path's own: the caster's /combat damage step, and a broadcast.
+    /**
+     * What a graded save does in a fight. The consequences are the shared ones (SpellSave, #267); rolling the
+     * damage and telling the table are this path's own: the caster's /combat damage step, and a broadcast.
+     */
+    private static void applyOutcome(CombatSession session, Combatant target, SpellSave.Facts ps, boolean success) {
+        Combatant caster = findById(session, ps.casterId());
+        Combatant damageSource = caster != null ? caster : target;
         SpellSave.Outcome outcome = SpellSave.apply(ps, SpellSave.subject(target, session, target.getDisplayName(true)), success);
         if (success) {
             if (outcome.damage() == SpellSave.Owed.HALF) {
@@ -437,8 +483,7 @@ public class SpellCastHandler {
         for (Component line : outcome.conditionLines()) session.broadcast(line);
         if (outcome.conditionApplied()) session.updateScoreboard();
     }
-    public static boolean hasPendingSave(UUID targetId) { return pendingSaves.containsKey(targetId); }
-
+    public static boolean hasPendingSave(UUID targetId) { return !SaveOutcome.inFightFor(targetId).isEmpty(); }
     // ==================== HELPERS ====================
 
     /** A healing roll's amount and its result line. */
