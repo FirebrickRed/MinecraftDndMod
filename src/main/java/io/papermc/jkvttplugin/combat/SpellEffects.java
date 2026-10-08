@@ -38,31 +38,46 @@ public final class SpellEffects {
 
     // ==================== APPLY ====================
 
-    /** Put {@code spell}'s effect on {@code target}, cast by {@code casterId} (a character id). */
-    public static void apply(UUID casterId, Combatant target, DndSpell spell) {
-        give(target, castEffect(casterId, spell));
+    /** Put {@code spell}'s effect on {@code target}, as part of cast {@code castId} by {@code casterId} (a character id). */
+    public static void apply(UUID casterId, Combatant target, DndSpell spell, long castId) {
+        give(target, castEffect(casterId, spell, castId));
     }
 
-    private static final java.util.concurrent.atomic.AtomicLong CAST_ORDER = new java.util.concurrent.atomic.AtomicLong();
+    private static final java.util.concurrent.atomic.AtomicLong CASTS = new java.util.concurrent.atomic.AtomicLong();
 
     /**
-     * Where the order of casts stands: every effect put on anyone so far is at or before this. A cast
-     * that applies its effects before it completes (a fight does) takes this first, and completes with it,
-     * so the completion can tell the effects it has just applied from an earlier cast's (#269).
+     * The identity of one actual cast (#269): taken once when a cast begins, and carried by everything
+     * that cast does: the effects it puts on its targets ({@link #castEffect}), the saves it leaves pending
+     * ({@code SpellSave.Facts.castId}), and the caster's concentration once it completes
+     * ({@code CharacterSheet.getConcentrationCastId}). The spell's id can't tell two casts of the same spell
+     * apart; this does. Never 0, which means "no known cast" (an effect or concentration loaded from disk).
      */
-    public static long castOrderNow() { return CAST_ORDER.get(); }
+    public static long newCast() { return CASTS.incrementAndGet(); }
 
     /**
-     * {@code spell}'s effect, ready to put on one target of a cast by {@code casterId}: a copy that knows
-     * its caster and where in the order of casts it was made. Every spell effect goes on through this.
+     * {@code spell}'s effect, ready to put on one target of cast {@code castId} by {@code casterId}: a copy
+     * that knows its caster and its cast. Every spell effect goes on through this.
      */
-    public static ActiveEffect castEffect(UUID casterId, DndSpell spell) {
+    public static ActiveEffect castEffect(UUID casterId, DndSpell spell, long castId) {
         ActiveEffect e = spell.getEffect().copy();
         e.setCasterId(casterId);
-        e.setCastOrder(CAST_ORDER.incrementAndGet());
+        e.setCastId(castId);
         return e;
     }
 
+    /**
+     * Whether cast {@code castId} of {@code spell} is still the one {@code casterCharacterId} is
+     * concentrating on. A concentration spell's effect that lands late (a save answered after the cast)
+     * may only go on while this holds: the same spell cast again is another cast, and so is concentration
+     * that ended and came back. A caster the game can't find can't be shown to still hold it.
+     */
+    public static boolean ownsConcentration(UUID casterCharacterId, DndSpell spell, long castId) {
+        if (casterCharacterId == null || spell == null || castId == 0) return false;
+        CharacterSheet caster = CharacterSheetManager.getCharacterById(casterCharacterId);
+        return caster != null && caster.isConcentrating()
+                && caster.getConcentratingOn().getId().equalsIgnoreCase(spell.getId())
+                && caster.getConcentrationCastId() == castId;
+    }
     /**
      * Put an effect on {@code target}: a spell's, or a feature's given to someone else (Bardic
      * Inspiration, #40). A second from the same source replaces the first: the same spell doesn't
@@ -109,16 +124,15 @@ public final class SpellEffects {
     }
 
     /**
-     * The caster cast {@code spell} again while still concentrating on it (#269): the earlier cast ends on
-     * everyone it was on, and the new one stays. "Earlier" is every effect of theirs from this spell made
-     * at or before {@code castStarted} ({@link #castOrderNow()} taken before the new cast applied anything).
-     * Someone in both casts already had their old effect replaced by the new one, so they keep it.
-     * Another caster's effects of the same spell aren't touched.
+     * The caster cast {@code spell} again while still concentrating on it (#269): their earlier casts of it
+     * end on everyone they were on, and cast {@code castId} stays, whether its effects are already on
+     * their targets (a fight applies them before the cast completes) or still to come. Someone in both
+     * casts had their old effect replaced by the new one, so they keep it. Another caster's effects of the
+     * same spell aren't touched.
      */
-    public static void endEarlierCast(UUID casterId, DndSpell spell, long castStarted) {
-        end(casterId, spell, e -> e.getCastOrder() <= castStarted, "cast again");
+    public static void endOtherCasts(UUID casterId, DndSpell spell, long castId) {
+        end(casterId, spell, e -> e.getCastId() != castId, "cast again");
     }
-
     private static void end(UUID casterId, DndSpell spell, java.util.function.Predicate<ActiveEffect> which, String why) {
         if (casterId == null || spell == null || !spell.hasEffect()) return;
         String source = spell.getEffect().getSourceId();

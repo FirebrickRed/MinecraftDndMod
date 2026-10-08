@@ -1330,9 +1330,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             player.sendMessage(Component.text(cost.unavailableReason(spell), NamedTextColor.YELLOW));
             return;
         }
-        // Where this cast begins in the order of casts: a fight puts a spell's effect on each target as it
-        // resolves, before afterCast, so the completion needs this to tell them from an earlier cast's (#269).
-        final long castStarted = SpellEffects.castOrderNow();
+        // This cast's identity (#269), taken before it resolves against anyone: a fight puts a spell's effect
+        // on each target, and leaves its saves pending, before afterCast. They carry this id, and completing
+        // the cast gives the caster's concentration to it.
+        final long castId = SpellEffects.newCast();
 
         RollService.RollInput roll = RollService.parseInput(args, player);
         Integer providedRoll = roll.providedRoll();
@@ -1353,7 +1354,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 return aoeReaction || aoeOverridden ? null : castBudgetRefusal(aoeCaster.getTurnState(), spell);
             };
             SpellCastHandler.castAoe(caster, session, player, spell, providedRoll, providedTotal,
-                    () -> afterCast(player, session, aoeCaster, casterSheet, spell, cost, aoeReaction, null, castStarted), stillAffordable);
+                    () -> afterCast(player, session, aoeCaster, casterSheet, spell, cost, aoeReaction, null, castId), stillAffordable, castId);
             resolved = false;
         } else {
             List<String> pos = collectPositionalArgs(args, 2);
@@ -1399,9 +1400,9 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 resolved = false;
                 for (Combatant t : targets) {
                     if (t.isDead()) { player.sendMessage(Component.text(t.getDisplayName() + " is dead.", NamedTextColor.YELLOW)); continue; }
-                    resolved |= SpellCastHandler.cast(caster, t, session, player, spell, providedRoll, providedTotal, roll.forceAuto());
+                    resolved |= SpellCastHandler.cast(caster, t, session, player, spell, providedRoll, providedTotal, roll.forceAuto(), castId);
                 }
-                if (resolved) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction, null, castStarted);
+                if (resolved) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction, null, castId);
                 return;
             }
             // "me"/"self"/"myself" targets the caster — many spells (e.g. Primal Savagery) target you.
@@ -1416,14 +1417,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (spell.isMarkSpell()) {
                 // The mark is set when the cast completes, with its concentration (afterCast), not by castMark.
                 CastCompletion.Mark mark = SpellCastHandler.castMark(caster, target, session, player, spell, choice);
-                if (mark != null) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction, mark, castStarted);
+                if (mark != null) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction, mark, castId);
                 return;
             } else {
-                resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal, roll.forceAuto());
+                resolved = SpellCastHandler.cast(caster, target, session, player, spell, providedRoll, providedTotal, roll.forceAuto(), castId);
             }
         }
 
-        if (resolved) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction, null, castStarted);
+        if (resolved) afterCast(player, session, caster, casterSheet, spell, cost, spendReaction, null, castId);
     }
 
     /** What the move that started the fight has first claim on: the things that would spend the Action. */
@@ -1468,15 +1469,15 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      */
     /**
      * @param mark        what a mark spell (Hex, Hunter's Mark) marks, from {@code SpellCastHandler.castMark}; null otherwise
-     * @param castStarted {@code SpellEffects.castOrderNow()} from before this cast resolved against anyone
+     * @param castId      this cast's identity, taken before it resolved against anyone
      */
     private void afterCast(Player player, CombatSession session, Combatant caster, CharacterSheet casterSheet,
                            io.papermc.jkvttplugin.data.model.DndSpell spell,
                            io.papermc.jkvttplugin.character.SpellCost cost, boolean spendReaction, CastCompletion.Mark mark,
-                           long castStarted) {
+                           long castId) {
         // The part every cast shares, in one place (#269): readied spell, reach allowance, cost,
         // concentration, mark. What it did comes back for the table to hear.
-        CastCompletion.Done done = CastCompletion.finish(player.getUniqueId(), casterSheet, spell, cost, mark, castStarted);
+        CastCompletion.Done done = CastCompletion.finish(player.getUniqueId(), casterSheet, spell, cost, mark, castId);
         if (done.concentrationEnded() != null) {
             session.broadcast(Component.text("◈ " + caster.getDisplayName(true) + "'s concentration on "
                     + done.concentrationEnded().getName() + " ends.", NamedTextColor.GRAY));

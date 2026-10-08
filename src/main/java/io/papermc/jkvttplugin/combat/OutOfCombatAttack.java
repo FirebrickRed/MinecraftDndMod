@@ -165,7 +165,7 @@ public final class OutOfCombatAttack {
         }
 
         permits.remove(player.getUniqueId());
-        commit(player, sheet, spell, cost);
+        long castId = commit(player, sheet, spell, cost); // this cast: its pending save carries it (#269)
         if (spell.isSaveSpell()) {
             Ability save = parseAbility(spell.getSaveType());
             int dc = sheet.getSpellSaveDc(spell);
@@ -177,7 +177,7 @@ public final class OutOfCombatAttack {
             // the spell's effect (Bane) and its condition are applied, immunity is checked, and the damage
             // owed comes back for this path's own damage step. It used to offer the damage and leave the
             // condition as a note to the DM; an effect did nothing.
-            SpellSave.Facts facts = SpellSave.Facts.of(spell, player.getUniqueId(), sheet.getCharacterId(), dc, save, SpellSave.tagsFor(spell));
+            SpellSave.Facts facts = SpellSave.Facts.of(spell, player.getUniqueId(), sheet.getCharacterId(), dc, save, SpellSave.tagsFor(spell), castId);
             java.util.function.Consumer<Boolean> outcome = saved -> {
                 SpellSave.Outcome o = SpellSave.apply(facts, SpellSave.subject(target, aim.target.session(), aim.targetName()), saved);
                 if (!saved) {
@@ -584,8 +584,8 @@ public final class OutOfCombatAttack {
     }
 
     /** Spend the slot or use and handle concentration: only once the spell actually goes off. */
-    public static void commit(Player player, CharacterSheet sheet, DndSpell spell, SpellCost cost) {
-        commit(player, sheet, spell, cost, null);
+    public static long commit(Player player, CharacterSheet sheet, DndSpell spell, SpellCost cost) {
+        return commit(player, sheet, spell, cost, null);
     }
 
     /**
@@ -595,13 +595,15 @@ public final class OutOfCombatAttack {
      *
      * @param cost null for a ritual, which spends no slot
      * @param mark what a mark spell marks; null otherwise
+     * @return this cast's identity, for the effects it puts on and the saves it leaves pending afterwards (#269)
      */
-    public static void commit(Player player, CharacterSheet sheet, DndSpell spell, SpellCost cost, CastCompletion.Mark mark) {
+    public static long commit(Player player, CharacterSheet sheet, DndSpell spell, SpellCost cost, CastCompletion.Mark mark) {
         CastCompletion.Done done = CastCompletion.finish(player.getUniqueId(), sheet, spell, cost, mark);
         if (done.concentrationEnded() != null) {
             player.sendMessage(Component.text("Concentration on " + done.concentrationEnded().getName() + " ends.", NamedTextColor.YELLOW));
         }
         if (!done.spent().isEmpty()) player.sendMessage(Component.text("   Spent " + done.spent() + ".", NamedTextColor.GRAY));
+        return done.castId();
     }
 
     // ==================== MARKS (HEX, HUNTER'S MARK) ====================

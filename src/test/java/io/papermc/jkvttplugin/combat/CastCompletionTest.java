@@ -234,9 +234,9 @@ class CastCompletionTest {
         String command = Files.readString(Path.of(base + "commands/CharacterCommand.java")).replace("\r\n", "\n");
         String marks = Files.readString(Path.of(base + "combat/SpellCastHandler.java")).replace("\r\n", "\n");
 
-        assertTrue(fight.contains("CastCompletion.finish(player.getUniqueId(), casterSheet, spell, cost, mark, castStarted)"),
-                "a fight's afterCast, saying where its cast began (its effects are already on their targets)");
-        assertTrue(fight.contains("final long castStarted = SpellEffects.castOrderNow();"), "taken before anything resolves");
+        assertTrue(fight.contains("CastCompletion.finish(player.getUniqueId(), casterSheet, spell, cost, mark, castId)"),
+                "a fight's afterCast, completing the cast it named before resolving anyone");
+        assertTrue(fight.contains("final long castId = SpellEffects.newCast();"), "taken before anything resolves");
         assertTrue(outside.contains("CastCompletion.finish(player.getUniqueId(), sheet, spell, cost, mark)"), "the out-of-combat commit");
         // The fight keeps what's its own, after the shared step.
         int shared = fight.indexOf("CastCompletion.finish(");

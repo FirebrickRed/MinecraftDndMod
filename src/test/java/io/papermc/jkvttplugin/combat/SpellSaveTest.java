@@ -33,20 +33,36 @@ import static org.junit.jupiter.api.Assertions.*;
  */
 class SpellSaveTest {
 
+    /** The caster of every save here: a real character the game can find, since a concentration spell's effect asks who holds it. */
+    private static CharacterSheet casterSheet;
+    private static final UUID CASTER = UUID.randomUUID();
+    private static UUID CASTER_CHARACTER;
+
     @BeforeAll
-    static void load() { TestContent.load(); }
+    static void load() {
+        TestContent.load();
+        casterSheet = character("human", null, "cleric", "acolyte", scores(Ability.WISDOM, 16));
+        io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader.storeCharacterInMemory(casterSheet);
+        casterSheet.setSavable(false);
+        CASTER_CHARACTER = casterSheet.getCharacterId();
+    }
 
-    private static final UUID CASTER = UUID.randomUUID(), CASTER_CHARACTER = UUID.randomUUID();
+    @org.junit.jupiter.api.AfterAll
+    static void forget() {
+        io.papermc.jkvttplugin.data.loader.CharacterPersistenceLoader.removeCharacter(casterSheet.getPlayerId(), casterSheet.getCharacterId());
+    }
 
+    /** The save a fresh cast of the spell calls for; a concentration spell's cast completes first, as it does in play. */
     private static SpellSave.Facts factsOf(String spellId) {
         DndSpell spell = SpellLoader.getSpell(spellId);
         assertNotNull(spell, spellId);
-        return SpellSave.Facts.of(spell, CASTER, CASTER_CHARACTER, 13, Ability.fromString(spell.getSaveType()), Set.of("magic"));
+        long castId = CastCompletion.finish(null, casterSheet, spell, null, null).castId();
+        return SpellSave.Facts.of(spell, CASTER, CASTER_CHARACTER, 13, Ability.fromString(spell.getSaveType()), Set.of("magic"), castId);
     }
 
     /** A save with just a condition on a fail, for conditions no level-1 spell applies. */
     private static SpellSave.Facts condition(String conditionId) {
-        return new SpellSave.Facts("Test Spell", CASTER, CASTER_CHARACTER, 13, Ability.WISDOM, null, null, null, conditionId, Set.of(), null);
+        return new SpellSave.Facts("Test Spell", CASTER, CASTER_CHARACTER, 13, Ability.WISDOM, null, null, null, conditionId, Set.of(), null, 0);
     }
 
     private static String text(List<Component> lines) {
@@ -115,6 +131,7 @@ class SpellSaveTest {
         assertEquals("-1d4", bane.rollBonusFor(ActiveEffect.ATTACKS));
         assertEquals("-1d4", bane.rollBonusFor(ActiveEffect.SAVES));
         assertEquals(CASTER_CHARACTER, bane.getCasterId(), "it hangs on the caster's concentration");
+        assertEquals(casterSheet.getConcentrationCastId(), bane.getCastId(), "and on the cast that called for the save");
         assertTrue(text(o.effectLines()).contains("is under Bane"), text(o.effectLines()));
         assertEquals(SpellSave.Owed.NONE, o.damage(), "Bane deals no damage");
         assertFalse(o.saved());
@@ -194,7 +211,7 @@ class SpellSaveTest {
         assertEquals(SpellSave.Owed.NONE, SpellSave.apply(factsOf("sacred_flame"), fighter(), true).damage());
         // No damage at all: nothing owed either way, even if it says "half".
         SpellSave.Facts halfOfNothing = new SpellSave.Facts("Odd", CASTER, CASTER_CHARACTER, 13, Ability.DEXTERITY,
-                " ", null, "half", null, Set.of(), null);
+                " ", null, "half", null, Set.of(), null, 0);
         assertEquals(SpellSave.Owed.NONE, SpellSave.apply(halfOfNothing, fighter(), false).damage());
         assertEquals(SpellSave.Owed.NONE, SpellSave.apply(halfOfNothing, fighter(), true).damage());
     }
@@ -203,7 +220,7 @@ class SpellSaveTest {
     void damageAndAConditionTogether() {
         // Thunderwave-like: damage on a fail, plus a condition.
         SpellSave.Facts f = new SpellSave.Facts("Shove Wave", CASTER, CASTER_CHARACTER, 13, Ability.CONSTITUTION,
-                "2d8", "thunder", "half", "prone", Set.of(), null);
+                "2d8", "thunder", "half", "prone", Set.of(), null, 0);
         OnSheet failed = fighter();
         SpellSave.Outcome o = SpellSave.apply(f, failed, false);
         assertEquals(SpellSave.Owed.FULL, o.damage());

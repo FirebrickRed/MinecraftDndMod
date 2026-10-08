@@ -138,6 +138,11 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] **Bless again on other people:** out of a fight, `/character cast bless A, B`, then `/character cast bless
       C` → A and B are told "Bless on you has ended.", C has it, and one more slot is gone. The same in a
       fight (`/combat cast bless A, B`, next turn `/combat cast bless B, C`): A loses it, B and C have it. (#269)
+- [ ] **A late Bane save (in a fight, two enemies):** cast Bane at enemy A and **don't** answer its save yet. Next
+      turn cast Bane at enemy B and answer B's save (fail) → B is under Bane. Now answer A's old save, failing
+      it → "Bane is no longer being held, so it doesn't take hold of A", and A has no −1d4. (#269)
+- [ ] The same, but instead of recasting, lose concentration (take damage and fail the CON save, or cast
+      Bless) before answering A's save → the same line, no Bane on A. (#269)
 - [ ] **A ritual replacing concentration:** concentrating on Bless out of a fight, `/character cast detect_magic
       ritual` → "Concentration on Bless ends." then "Concentrating on Detect Magic.", and no slot is spent. (#269)
 - [ ] **A readied spell is used up out of a fight:** click Sacred Flame in the spellbook (it's "ready"), cast it at

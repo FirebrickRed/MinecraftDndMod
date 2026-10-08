@@ -36,8 +36,9 @@ public final class CastCompletion {
      * What completing the cast did. {@code spent} is "level 1 slot (1 left)", "an innate use", or empty for
      * a cantrip or a ritual. {@code concentrationEnded} is the spell they were concentrating on before, when
      * this one replaced it. {@code concentrating} is whether they're now concentrating on this spell.
+     * {@code castId} is this cast's identity, for effects put on its targets afterwards.
      */
-    public record Done(String spent, DndSpell concentrationEnded, boolean concentrating) {}
+    public record Done(String spent, DndSpell concentrationEnded, boolean concentrating, long castId) {}
 
     /**
      * @param playerId the caster's player, whose readied spell and reach allowance this cast uses; null in tests of a sheet alone
@@ -45,19 +46,18 @@ public final class CastCompletion {
      * @param mark     for a mark spell, what it marks; null otherwise
      */
     public static Done finish(UUID playerId, CharacterSheet sheet, DndSpell spell, SpellCost cost, Mark mark) {
-        // Nothing of this cast has been put on anyone yet (out of a fight the effects go on afterwards), so
-        // every effect there is belongs to an earlier cast.
-        return finish(playerId, sheet, spell, cost, mark, SpellEffects.castOrderNow());
+        // A cast nobody has named yet: it gets its identity here, handed back for what it does afterwards
+        // (out of a fight a cast completes first and puts its effects on, or leaves its saves, after).
+        return finish(playerId, sheet, spell, cost, mark, SpellEffects.newCast());
     }
 
     /**
-     * @param castStarted {@link SpellEffects#castOrderNow()} from before this cast put any effect on anyone.
-     *                    A fight applies a spell's effects as it resolves each target, before it gets here,
-     *                    so it has to say where its own cast began: a recast of the same spell ends the
-     *                    earlier cast's effects and must leave the ones just applied.
+     * @param castId this cast's identity ({@link SpellEffects#newCast()}). A fight takes it before it
+     *               resolves anyone, because there the effects go on and the saves are left pending before
+     *               the cast completes; they carry this id, and completing gives the caster's
+     *               concentration to it.
      */
-    public static Done finish(UUID playerId, CharacterSheet sheet, DndSpell spell, SpellCost cost, Mark mark, long castStarted) {
-        if (playerId != null) {
+    public static Done finish(UUID playerId, CharacterSheet sheet, DndSpell spell, SpellCost cost, Mark mark, long castId) {        if (playerId != null) {
             SpellTargeting.clear(playerId); // a readied spell is cast
             Reach.spend(playerId);          // a DM's "close enough" covered this one cast
         }
@@ -73,17 +73,19 @@ public final class CastCompletion {
             // on others and a mark it held (CharacterSheet.setConcentratingOn), so the mark below comes after.
             boolean sameSpell = sheet.isConcentrating() && sheet.getConcentratingOn().getId().equalsIgnoreCase(spell.getId());
             if (sheet.isConcentrating() && !sameSpell) ended = sheet.getConcentratingOn();
-            // The same spell cast again is a new cast, not a continuation: the earlier one ends on everyone it
-            // was on (Bless on a second group used to leave the first group blessed). Only the effects from
-            // before this cast began, and only this caster's; a mark is simply replaced by the new one below.
-            if (sameSpell) SpellEffects.endEarlierCast(sheet.getCharacterId(), spell, castStarted);
-            sheet.setConcentratingOn(spell);
+            // The same spell cast again is a new cast, not a continuation: the caster's other casts of it end
+            // on everyone they were on (Bless on a second group used to leave the first group blessed). This
+            // cast's own effects are kept, and another caster's; a mark is simply replaced by the new one below.
+            if (sameSpell) SpellEffects.endOtherCasts(sheet.getCharacterId(), spell, castId);
+            // Concentration now belongs to THIS cast. A save an earlier cast left pending finds that out
+            // when it's answered (SpellEffects.ownsConcentration), and its effect doesn't go on.
+            sheet.setConcentratingOn(spell, castId);
             concentrating = true;
         }
         // A mark spell marks one creature at a time: a recast moves it, since the new mark overwrites the old.
         if (sheet != null && mark != null) {
             sheet.setSpellMark(mark.targetId(), mark.damage(), mark.damageType(), mark.disadvantageAbility());
         }
-        return new Done(spent, ended, concentrating);
+        return new Done(spent, ended, concentrating, castId);
     }
 }

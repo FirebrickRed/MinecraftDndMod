@@ -27,9 +27,13 @@ public class SpellCastHandler {
     /** A saving throw a target still owes from a save spell: the save's facts, until /combat save answers it. */
     private static final Map<UUID, SpellSave.Facts> pendingSaves = new HashMap<>();
 
-    /** @return true if the spell actually resolved (so the action is spent). */
+    /**
+     * @param castId this cast's identity ({@code SpellEffects.newCast()}), the same for every target of one cast:
+     *               its effects and the saves it leaves pending carry it (#269)
+     * @return true if the spell actually resolved (so the action is spent)
+     */
     public static boolean cast(Combatant caster, Combatant target, CombatSession session, Player player,
-                               DndSpell spell, Integer providedRoll, Integer providedTotal, boolean forceAuto) {
+                               DndSpell spell, Integer providedRoll, Integer providedTotal, boolean forceAuto, long castId) {
         CharacterSheet sheet = caster.getCharacterSheet();
         if (sheet == null) {
             player.sendMessage(Component.text("Only characters cast spells this way (an entity's spells are attacks — use /combat attack).", NamedTextColor.RED));
@@ -149,7 +153,7 @@ public class SpellCastHandler {
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " at " + target.getDisplayName(true) + " — DC " + sheet.getSpellSaveDcBreakdown(spell) + " " + saveAbility.getAbbreviation() + " save!", NamedTextColor.LIGHT_PURPLE));
             SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
             // The save's facts, effect included: Bane's -1d4 lands on a failed save (#225).
-            pendingSaves.put(target.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell)));
+            pendingSaves.put(target.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell), castId));
             promptSave(session, target, saveAbility);
             return true;
         }
@@ -157,7 +161,7 @@ public class SpellCastHandler {
         // A timed effect on the target (#225): Bless, Guidance, Shield of Faith. It lasts its rounds, or until
         // the caster's concentration ends (afterCast starts that).
         if (spell.hasEffect()) {
-            SpellEffects.apply(sheet.getCharacterId(), target, spell);
+            SpellEffects.apply(sheet.getCharacterId(), target, spell, castId);
             session.broadcast(spell.castLine("✨ " + caster.getDisplayName(true) + " casts ", " on " + target.getDisplayName(true)
                     + ": " + SpellEffects.describe(spell) + ".", NamedTextColor.LIGHT_PURPLE));
             SpellVisuals.play(spell, caster.getLocation(), target.getLocation()); // how it looks (#230)
@@ -208,7 +212,7 @@ public class SpellCastHandler {
      */
     public static boolean castAoe(Combatant caster, CombatSession session, Player player, DndSpell spell,
                                   Integer providedRoll, Integer providedTotal, Runnable afterConfirm,
-                                  java.util.function.Supplier<String> recheck) {
+                                  java.util.function.Supplier<String> recheck, long castId) {
         CharacterSheet sheet = caster.getCharacterSheet();
         if (sheet == null) {
             player.sendMessage(Component.text("Only characters cast spells this way.", NamedTextColor.RED));
@@ -222,7 +226,7 @@ public class SpellCastHandler {
         Ability ability = sheet.castingAbilityFor(spell);
         if (ability == null) { player.sendMessage(Component.text("No spellcasting ability to cast " + spell.getName() + " with.", NamedTextColor.RED)); return false; }
         Runnable onConfirm = () -> {
-            resolveAoeNow(caster, session, player, spell);
+            resolveAoeNow(caster, session, player, spell, castId);
             afterConfirm.run(); // the slot, concentration and the action, as for any cast (#179)
         };
         AreaTargeting.begin(player, session, caster, spell.getName(), spell.getAoeShape(), spell.getAoeSize(),
@@ -231,7 +235,7 @@ public class SpellCastHandler {
     }
 
     /** Resolve an area spell against everyone caught right now (run on aim-confirm). */
-    private static void resolveAoeNow(Combatant caster, CombatSession session, Player player, DndSpell spell) {
+    private static void resolveAoeNow(Combatant caster, CombatSession session, Player player, DndSpell spell, long castId) {
         CharacterSheet sheet = caster.getCharacterSheet();
         if (sheet == null) return;
         Ability ability = sheet.castingAbilityFor(spell);
@@ -259,7 +263,7 @@ public class SpellCastHandler {
             int dc = 8 + mod;
             session.broadcast(Component.text("DC " + dc + " " + saveAbility.getAbbreviation() + " save — each caught creature rolls:", NamedTextColor.GRAY));
             for (Combatant t : affected) {
-                pendingSaves.put(t.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell)));
+                pendingSaves.put(t.getId(), SpellSave.Facts.of(spell, caster.getId(), sheet.getCharacterId(), dc, saveAbility, SpellSave.tagsFor(spell), castId));
                 promptSave(session, t, saveAbility);
             }
         } else {
@@ -298,7 +302,7 @@ public class SpellCastHandler {
                 ? java.util.Set.of(damageType.toLowerCase()) : java.util.Set.of();
         for (Combatant t : affected) {
             pendingSaves.put(t.getId(), new SpellSave.Facts(sourceName, caster.getId(), null, dc, saveAbility,
-                    damage, damageType, saveEffect, null, tags, null)); // a feature's area (a breath weapon): damage only
+                    damage, damageType, saveEffect, null, tags, null, 0)); // a feature's area (a breath weapon): damage only, no cast
             promptSave(session, t, saveAbility);
         }
         return true;

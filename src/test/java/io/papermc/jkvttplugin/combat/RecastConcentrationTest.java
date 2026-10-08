@@ -28,6 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * nothing when the spell is unchanged, so out of a fight the first group stayed blessed (the old
  * out-of-combat code broke concentration first). In a fight it had always been so: there the new
  * effects go on before the cast completes, so the completion has to tell them from the old ones.
+ * It does by the cast's identity ({@code SpellEffects.newCast}), which every effect of a cast carries.
  *
  * <p>The recipients are real sheets and creatures the game can find, as a concentration ending looks
  * through everyone. The two orders below are the two the code has: out of a fight the cast completes
@@ -62,18 +63,23 @@ class RecastConcentrationTest {
         return c;
     }
 
-    private static final DndSpell BLESS() { return SpellLoader.getSpell("bless"); }
+    private static DndSpell bless() { return SpellLoader.getSpell("bless"); }
 
-    /** Put {@code caster}'s cast of the spell on a character, as casting it on them does. */
-    private static void on(CharacterSheet target, CharacterSheet caster, DndSpell spell) {
-        target.addEffect(SpellEffects.castEffect(caster.getCharacterId(), spell));
+    /** Put cast {@code castId} of the spell, by {@code caster}, on a character, as casting it on them does. */
+    private static void on(CharacterSheet target, CharacterSheet caster, DndSpell spell, long castId) {
+        target.addEffect(SpellEffects.castEffect(caster.getCharacterId(), spell, castId));
     }
 
     /** ...and on a creature (the same replace-then-add SpellEffects.give does for one). */
-    private static void on(DndEntityInstance target, CharacterSheet caster, DndSpell spell) {
-        var e = SpellEffects.castEffect(caster.getCharacterId(), spell);
+    private static void on(DndEntityInstance target, CharacterSheet caster, DndSpell spell, long castId) {
+        var e = SpellEffects.castEffect(caster.getCharacterId(), spell, castId);
         target.getEffects().removeIf(x -> x.getSourceId().equalsIgnoreCase(e.getSourceId()));
         target.getEffects().add(e);
+    }
+
+    /** A whole cast out of a fight: it completes (slot, concentration), and hands back its identity for its effects. */
+    private static long castOutOfAFight(CharacterSheet caster, DndSpell spell) {
+        return CastCompletion.finish(UUID.randomUUID(), caster, spell, SpellCost.of(caster, spell), null).castId();
     }
 
     private static boolean blessed(CharacterSheet s) { return s.hasEffect("spell:bless"); }
@@ -87,27 +93,30 @@ class RecastConcentrationTest {
     @Test
     void outOfAFightARecastEndsTheFirstGroupAndKeepsTheSecond() {
         CharacterSheet cleric = live("cleric"), a = live("fighter"), b = live("fighter"), c = live("fighter"), d = live("fighter");
-        DndSpell bless = BLESS();
+        DndSpell bless = bless();
         int slots = cleric.getSpellSlotsRemaining(1);
         assertTrue(slots >= 2, "a level-1 cleric has two 1st-level slots");
 
-        CastCompletion.finish(UUID.randomUUID(), cleric, bless, SpellCost.of(cleric, bless), null); // the first cast
-        on(a, cleric, bless);
-        on(b, cleric, bless);
+        long first = castOutOfAFight(cleric, bless);
+        on(a, cleric, bless, first);
+        on(b, cleric, bless, first);
         assertTrue(blessed(a) && blessed(b));
         assertEquals(slots - 1, cleric.getSpellSlotsRemaining(1));
 
-        CastCompletion.Done second = CastCompletion.finish(UUID.randomUUID(), cleric, bless, SpellCost.of(cleric, bless), null);
-        on(c, cleric, bless);
-        on(d, cleric, bless);
+        CastCompletion.Done done = CastCompletion.finish(UUID.randomUUID(), cleric, bless, SpellCost.of(cleric, bless), null);
+        long second = done.castId();
+        on(c, cleric, bless, second);
+        on(d, cleric, bless, second);
 
+        assertNotEquals(first, second, "two casts of one spell are two casts");
         assertFalse(blessed(a), "the first cast ended on its targets");
         assertFalse(blessed(b));
         assertTrue(blessed(c) && blessed(d), "the second cast's targets keep theirs");
         assertEquals(slots - 2, cleric.getSpellSlotsRemaining(1), "the recast cost one slot, once");
-        assertNull(second.concentrationEnded(), "it's the same spell: nothing 'ended' for the caster");
-        assertTrue(second.concentrating());
+        assertNull(done.concentrationEnded(), "it's the same spell: nothing 'ended' for the caster");
+        assertTrue(done.concentrating());
         assertSame(bless, cleric.getConcentratingOn());
+        assertEquals(second, cleric.getConcentrationCastId(), "and their concentration is the second cast's");
     }
 
     // ---------- in a fight: the effects go on as each target resolves, then the cast completes ----------
@@ -115,18 +124,18 @@ class RecastConcentrationTest {
     @Test
     void inAFightARecastEndsTheFirstGroupAndKeepsTheEffectsJustApplied() {
         CharacterSheet cleric = live("cleric"), a = live("fighter"), b = live("fighter"), c = live("fighter");
-        DndSpell bless = BLESS();
+        DndSpell bless = bless();
         int slots = cleric.getSpellSlotsRemaining(1);
 
-        long first = SpellEffects.castOrderNow();   // handleCast takes this before resolving anyone
-        on(a, cleric, bless);
-        on(b, cleric, bless);
+        long first = SpellEffects.newCast();   // handleCast takes this before resolving anyone
+        on(a, cleric, bless, first);
+        on(b, cleric, bless, first);
         CastCompletion.finish(UUID.randomUUID(), cleric, bless, SpellCost.of(cleric, bless), null, first);
         assertTrue(blessed(a) && blessed(b), "the first cast's own effects survive its own completion");
 
-        long second = SpellEffects.castOrderNow();
-        on(b, cleric, bless); // b is in both casts: the new one replaces the old on them
-        on(c, cleric, bless);
+        long second = SpellEffects.newCast();
+        on(b, cleric, bless, second); // b is in both casts: the new one replaces the old on them
+        on(c, cleric, bless, second);
         CastCompletion.finish(UUID.randomUUID(), cleric, bless, SpellCost.of(cleric, bless), null, second);
 
         assertFalse(blessed(a), "only in the first cast: it ended");
@@ -139,12 +148,12 @@ class RecastConcentrationTest {
     @Test
     void theCompletionDoesNotEraseTheCastItIsCompleting() {
         CharacterSheet cleric = live("cleric"), a = live("fighter");
-        DndSpell bless = BLESS();
+        DndSpell bless = bless();
         cleric.setConcentratingOn(bless); // already concentrating on an earlier Bless, whose targets are long gone
 
-        long started = SpellEffects.castOrderNow();
-        on(a, cleric, bless);
-        CastCompletion.finish(null, cleric, bless, SpellCost.of(cleric, bless), null, started);
+        long cast = SpellEffects.newCast();
+        on(a, cleric, bless, cast);
+        CastCompletion.finish(null, cleric, bless, SpellCost.of(cleric, bless), null, cast);
         assertTrue(blessed(a));
     }
 
@@ -152,12 +161,10 @@ class RecastConcentrationTest {
     void creaturesAreCleanedUpTheSameWay() {
         CharacterSheet cleric = live("cleric");
         DndEntityInstance wolf = creature("Wolf"), bear = creature("Bear");
-        DndSpell bless = BLESS();
+        DndSpell bless = bless();
 
-        CastCompletion.finish(null, cleric, bless, SpellCost.of(cleric, bless), null);
-        on(wolf, cleric, bless);
-        CastCompletion.finish(null, cleric, bless, SpellCost.of(cleric, bless), null);
-        on(bear, cleric, bless);
+        on(wolf, cleric, bless, castOutOfAFight(cleric, bless));
+        on(bear, cleric, bless, castOutOfAFight(cleric, bless));
         assertFalse(blessed(wolf));
         assertTrue(blessed(bear));
     }
@@ -167,15 +174,11 @@ class RecastConcentrationTest {
     @Test
     void anotherCastersBlessIsLeftAlone() {
         CharacterSheet cleric = live("cleric"), other = live("cleric"), a = live("fighter"), theirs = live("fighter"), c = live("fighter");
-        DndSpell bless = BLESS();
+        DndSpell bless = bless();
 
-        CastCompletion.finish(null, other, bless, SpellCost.of(other, bless), null);
-        on(theirs, other, bless);
-
-        CastCompletion.finish(null, cleric, bless, SpellCost.of(cleric, bless), null);
-        on(a, cleric, bless);
-        CastCompletion.finish(null, cleric, bless, SpellCost.of(cleric, bless), null); // the recast
-        on(c, cleric, bless);
+        on(theirs, other, bless, castOutOfAFight(other, bless));
+        on(a, cleric, bless, castOutOfAFight(cleric, bless));
+        on(c, cleric, bless, castOutOfAFight(cleric, bless)); // the recast
 
         assertFalse(blessed(a), "this cleric's first cast ended");
         assertTrue(blessed(theirs), "the other cleric's Bless didn't");
@@ -188,14 +191,13 @@ class RecastConcentrationTest {
     @Test
     void aDifferentConcentrationSpellEndsTheOldOneAndKeepsItsOwnEffects() {
         CharacterSheet cleric = live("cleric"), a = live("fighter"), b = live("fighter");
-        DndSpell bless = BLESS(), faith = SpellLoader.getSpell("shield_of_faith");
+        DndSpell bless = bless(), faith = SpellLoader.getSpell("shield_of_faith");
 
-        CastCompletion.finish(null, cleric, bless, SpellCost.of(cleric, bless), null);
-        on(a, cleric, bless);
+        on(a, cleric, bless, castOutOfAFight(cleric, bless));
 
-        long started = SpellEffects.castOrderNow(); // the fight's order: Shield of Faith goes on b first
-        on(b, cleric, faith);
-        CastCompletion.Done done = CastCompletion.finish(null, cleric, faith, SpellCost.of(cleric, faith), null, started);
+        long cast = SpellEffects.newCast(); // the fight's order: Shield of Faith goes on b first
+        on(b, cleric, faith, cast);
+        CastCompletion.Done done = CastCompletion.finish(null, cleric, faith, SpellCost.of(cleric, faith), null, cast);
 
         assertSame(bless, done.concentrationEnded(), "the caller is told Bless ended");
         assertFalse(blessed(a));
@@ -215,9 +217,8 @@ class RecastConcentrationTest {
         assertEquals("1d6", warlock.markRiderAgainst(goblin));
 
         warlock.setSpellSlotsRemaining(1, 1);
-        long started = SpellEffects.castOrderNow();
         CastCompletion.Done again = CastCompletion.finish(null, warlock, hex, SpellCost.of(warlock, hex),
-                CastCompletion.Mark.of(hex, orc, Ability.WISDOM), started);
+                CastCompletion.Mark.of(hex, orc, Ability.WISDOM), SpellEffects.newCast());
 
         assertNull(warlock.markRiderAgainst(goblin), "the old mark is gone");
         assertEquals("1d6", warlock.markRiderAgainst(orc), "the new one is established, not wiped with the old");
@@ -230,9 +231,8 @@ class RecastConcentrationTest {
     @Test
     void recastingAMarkDoesNotTouchAnyonesEffects() {
         CharacterSheet warlock = live("warlock"), cleric = live("cleric"), a = live("fighter");
-        DndSpell hex = SpellLoader.getSpell("hex"), bless = BLESS();
-        CastCompletion.finish(null, cleric, bless, SpellCost.of(cleric, bless), null);
-        on(a, cleric, bless);
+        DndSpell hex = SpellLoader.getSpell("hex"), bless = bless();
+        on(a, cleric, bless, castOutOfAFight(cleric, bless));
 
         CastCompletion.finish(null, warlock, hex, SpellCost.of(warlock, hex), CastCompletion.Mark.of(hex, UUID.randomUUID(), null));
         warlock.setSpellSlotsRemaining(1, 1);

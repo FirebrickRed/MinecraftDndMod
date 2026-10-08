@@ -40,12 +40,18 @@ public final class SpellSave {
      */
     public record Facts(String spellName, UUID casterId, UUID effectCasterId, int dc, Ability ability,
                         String damage, String damageType, String saveEffect, String conditionOnFail,
-                        Set<String> saveTags, String effectSpellId) {
+                        Set<String> saveTags, String effectSpellId, long castId) {
 
-        /** The facts of {@code spell}'s save, as cast by this caster at this DC. */
-        public static Facts of(DndSpell spell, UUID casterId, UUID effectCasterId, int dc, Ability ability, Set<String> saveTags) {
+        /**
+         * The facts of {@code spell}'s save, as cast by this caster at this DC.
+         *
+         * @param castId the cast that called for it ({@link SpellEffects#newCast()}): its effect, when the save
+         *               is answered, belongs to that cast and to no later cast of the same spell
+         */
+        public static Facts of(DndSpell spell, UUID casterId, UUID effectCasterId, int dc, Ability ability, Set<String> saveTags,
+                               long castId) {
             return new Facts(spell.getName(), casterId, effectCasterId, dc, ability, spell.getDamage(), spell.getDamageType(),
-                    spell.getSaveEffect(), spell.getConditionOnFail(), saveTags, spell.hasEffect() ? spell.getId() : null);
+                    spell.getSaveEffect(), spell.getConditionOnFail(), saveTags, spell.hasEffect() ? spell.getId() : null, castId);
         }
 
         boolean hasDamage() { return damage != null && !damage.isBlank(); }
@@ -128,9 +134,20 @@ public final class SpellSave {
         // The spell's structured effect lands on a failed save (Bane's -1d4, #225).
         DndSpell effectSpell = facts.effectSpellId() != null ? SpellLoader.getSpell(facts.effectSpellId()) : null;
         if (effectSpell != null && effectSpell.hasEffect()) {
-            target.give(SpellEffects.castEffect(facts.effectCasterId(), effectSpell));
-            effectLines.add(Component.text(target.name() + " is under " + effectSpell.getName() + ": "
-                    + SpellEffects.describe(effectSpell) + ".", NamedTextColor.YELLOW));
+            // A concentration spell's effect only exists while the cast that called for this save still holds
+            // the caster's concentration (#269). This save may be answered late: after that concentration
+            // ended, after another spell replaced it, or after the SAME spell was cast again, which is a
+            // different cast. Then there's nothing for the effect to hang on, and it doesn't go on. That is
+            // all that's skipped: the damage and the condition below are this save's own and still happen.
+            if (effectSpell.isConcentration()
+                    && !SpellEffects.ownsConcentration(facts.effectCasterId(), effectSpell, facts.castId())) {
+                effectLines.add(Component.text(effectSpell.getName() + " is no longer being held, so it doesn't take hold of "
+                        + target.name() + ".", NamedTextColor.GRAY));
+            } else {
+                target.give(SpellEffects.castEffect(facts.effectCasterId(), effectSpell, facts.castId()));
+                effectLines.add(Component.text(target.name() + " is under " + effectSpell.getName() + ": "
+                        + SpellEffects.describe(effectSpell) + ".", NamedTextColor.YELLOW));
+            }
         }
 
         boolean applied = false;

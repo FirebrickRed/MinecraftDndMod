@@ -1823,9 +1823,21 @@ public class CharacterSheet {
         return concentratingOn;
     }
 
+    // Which cast (SpellEffects.newCast) the concentration belongs to; 0 when that isn't known (set outside a
+    // cast, or loaded from disk). A save answered later asks this before its effect goes on (#269).
+    private long concentrationCastId;
+
+    public long getConcentrationCastId() { return concentrationCastId; }
+
     public void setConcentratingOn(DndSpell spell) {
+        setConcentratingOn(spell, 0);
+    }
+
+    /** @param castId the cast that now owns their concentration ({@code CastCompletion.finish}); 0 for none known */
+    public void setConcentratingOn(DndSpell spell, long castId) {
         DndSpell was = this.concentratingOn;
         this.concentratingOn = spell;
+        this.concentrationCastId = spell == null ? 0 : castId;
         // The same spell, by id: after a /dm reload the object is a new one, and treating that as a different
         // spell ended the effects a fight had just applied for this very cast.
         boolean another = was != null && (spell == null || !was.getId().equalsIgnoreCase(spell.getId()));
@@ -1845,6 +1857,7 @@ public class CharacterSheet {
     public void breakConcentration() {
         DndSpell was = concentratingOn;
         concentratingOn = null;
+        concentrationCastId = 0; // no cast owns it now: a late save from that cast finds nothing to hang on
         if (was != null) io.papermc.jkvttplugin.combat.SpellEffects.endConcentration(characterId, was); // #225
         clearSpellMark(); // Hex/Hunter's Mark end when concentration does
     }
