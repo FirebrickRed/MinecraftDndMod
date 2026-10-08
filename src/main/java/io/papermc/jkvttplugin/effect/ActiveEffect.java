@@ -85,6 +85,15 @@ public class ActiveEffect {
                 .withAura(aura);
     }
 
+    // ---- cast order (#269): which cast of a spell put this here ----
+    // A number that only grows, stamped when a spell's effect is made for a target (SpellEffects.castEffect).
+    // Recasting a concentration spell ends the effects of the cast before it, and "before" is this. Not
+    // saved: an effect loaded from disk reads 0, older than any cast made since.
+    private long castOrder;
+
+    public long getCastOrder() { return castOrder; }
+    public void setCastOrder(long castOrder) { this.castOrder = castOrder; }
+
     // ---- aura (#247): a colour shown as particles around whoever has it (Rage: red), seen by everyone ----
     private String aura;   // "red", "#ff3300", or null
 

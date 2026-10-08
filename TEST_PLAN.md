@@ -135,6 +135,9 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] Instead of rolling, the small grey **[failed]** / **[saved]** after the buttons rule it without a roll. (#245)
 - [ ] In a fight, a save spell's cast line shows the same DC breakdown. (#245)
 
+- [ ] **Bless again on other people:** out of a fight, `/character cast bless A, B`, then `/character cast bless
+      C` → A and B are told "Bless on you has ended.", C has it, and one more slot is gone. The same in a
+      fight (`/combat cast bless A, B`, next turn `/combat cast bless B, C`): A loses it, B and C have it. (#269)
 - [ ] **A ritual replacing concentration:** concentrating on Bless out of a fight, `/character cast detect_magic
       ritual` → "Concentration on Bless ends." then "Concentrating on Detect Magic.", and no slot is spent. (#269)
 - [ ] **A readied spell is used up out of a fight:** click Sacred Flame in the spellbook (it's "ready"), cast it at

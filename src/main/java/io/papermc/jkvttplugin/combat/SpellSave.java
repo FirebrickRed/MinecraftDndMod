@@ -128,9 +128,7 @@ public final class SpellSave {
         // The spell's structured effect lands on a failed save (Bane's -1d4, #225).
         DndSpell effectSpell = facts.effectSpellId() != null ? SpellLoader.getSpell(facts.effectSpellId()) : null;
         if (effectSpell != null && effectSpell.hasEffect()) {
-            ActiveEffect effect = effectSpell.getEffect().copy();
-            effect.setCasterId(facts.effectCasterId());
-            target.give(effect);
+            target.give(SpellEffects.castEffect(facts.effectCasterId(), effectSpell));
             effectLines.add(Component.text(target.name() + " is under " + effectSpell.getName() + ": "
                     + SpellEffects.describe(effectSpell) + ".", NamedTextColor.YELLOW));
         }

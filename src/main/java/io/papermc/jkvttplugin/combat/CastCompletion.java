@@ -45,6 +45,18 @@ public final class CastCompletion {
      * @param mark     for a mark spell, what it marks; null otherwise
      */
     public static Done finish(UUID playerId, CharacterSheet sheet, DndSpell spell, SpellCost cost, Mark mark) {
+        // Nothing of this cast has been put on anyone yet (out of a fight the effects go on afterwards), so
+        // every effect there is belongs to an earlier cast.
+        return finish(playerId, sheet, spell, cost, mark, SpellEffects.castOrderNow());
+    }
+
+    /**
+     * @param castStarted {@link SpellEffects#castOrderNow()} from before this cast put any effect on anyone.
+     *                    A fight applies a spell's effects as it resolves each target, before it gets here,
+     *                    so it has to say where its own cast began: a recast of the same spell ends the
+     *                    earlier cast's effects and must leave the ones just applied.
+     */
+    public static Done finish(UUID playerId, CharacterSheet sheet, DndSpell spell, SpellCost cost, Mark mark, long castStarted) {
         if (playerId != null) {
             SpellTargeting.clear(playerId); // a readied spell is cast
             Reach.spend(playerId);          // a DM's "close enough" covered this one cast
@@ -59,10 +71,16 @@ public final class CastCompletion {
         if (sheet != null && spell.isConcentration()) {
             // A second concentration spell replaces the first (PHB p.203). Replacing also ends its effects
             // on others and a mark it held (CharacterSheet.setConcentratingOn), so the mark below comes after.
-            if (sheet.isConcentrating() && sheet.getConcentratingOn() != spell) ended = sheet.getConcentratingOn();
+            boolean sameSpell = sheet.isConcentrating() && sheet.getConcentratingOn().getId().equalsIgnoreCase(spell.getId());
+            if (sheet.isConcentrating() && !sameSpell) ended = sheet.getConcentratingOn();
+            // The same spell cast again is a new cast, not a continuation: the earlier one ends on everyone it
+            // was on (Bless on a second group used to leave the first group blessed). Only the effects from
+            // before this cast began, and only this caster's; a mark is simply replaced by the new one below.
+            if (sameSpell) SpellEffects.endEarlierCast(sheet.getCharacterId(), spell, castStarted);
             sheet.setConcentratingOn(spell);
             concentrating = true;
         }
+        // A mark spell marks one creature at a time: a recast moves it, since the new mark overwrites the old.
         if (sheet != null && mark != null) {
             sheet.setSpellMark(mark.targetId(), mark.damage(), mark.damageType(), mark.disadvantageAbility());
         }

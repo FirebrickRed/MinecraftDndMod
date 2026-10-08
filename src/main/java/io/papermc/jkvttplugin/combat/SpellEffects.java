@@ -40,9 +40,27 @@ public final class SpellEffects {
 
     /** Put {@code spell}'s effect on {@code target}, cast by {@code casterId} (a character id). */
     public static void apply(UUID casterId, Combatant target, DndSpell spell) {
+        give(target, castEffect(casterId, spell));
+    }
+
+    private static final java.util.concurrent.atomic.AtomicLong CAST_ORDER = new java.util.concurrent.atomic.AtomicLong();
+
+    /**
+     * Where the order of casts stands: every effect put on anyone so far is at or before this. A cast
+     * that applies its effects before it completes (a fight does) takes this first, and completes with it,
+     * so the completion can tell the effects it has just applied from an earlier cast's (#269).
+     */
+    public static long castOrderNow() { return CAST_ORDER.get(); }
+
+    /**
+     * {@code spell}'s effect, ready to put on one target of a cast by {@code casterId}: a copy that knows
+     * its caster and where in the order of casts it was made. Every spell effect goes on through this.
+     */
+    public static ActiveEffect castEffect(UUID casterId, DndSpell spell) {
         ActiveEffect e = spell.getEffect().copy();
         e.setCasterId(casterId);
-        give(target, e);
+        e.setCastOrder(CAST_ORDER.incrementAndGet());
+        return e;
     }
 
     /**
@@ -87,21 +105,38 @@ public final class SpellEffects {
 
     /** The caster's concentration on {@code spell} ended: the spell ends on everyone it's on. */
     public static void endConcentration(UUID casterId, DndSpell spell) {
+        end(casterId, spell, e -> true, "concentration ended");
+    }
+
+    /**
+     * The caster cast {@code spell} again while still concentrating on it (#269): the earlier cast ends on
+     * everyone it was on, and the new one stays. "Earlier" is every effect of theirs from this spell made
+     * at or before {@code castStarted} ({@link #castOrderNow()} taken before the new cast applied anything).
+     * Someone in both casts already had their old effect replaced by the new one, so they keep it.
+     * Another caster's effects of the same spell aren't touched.
+     */
+    public static void endEarlierCast(UUID casterId, DndSpell spell, long castStarted) {
+        end(casterId, spell, e -> e.getCastOrder() <= castStarted, "cast again");
+    }
+
+    private static void end(UUID casterId, DndSpell spell, java.util.function.Predicate<ActiveEffect> which, String why) {
         if (casterId == null || spell == null || !spell.hasEffect()) return;
         String source = spell.getEffect().getSourceId();
+        java.util.function.Predicate<ActiveEffect> theirs =
+                e -> source.equalsIgnoreCase(e.getSourceId()) && casterId.equals(e.getCasterId()) && which.test(e);
         List<String> from = new ArrayList<>();
         for (CharacterSheet s : CharacterSheetManager.getAllCharacters()) {
-            if (!s.removeEffects(e -> source.equalsIgnoreCase(e.getSourceId()) && casterId.equals(e.getCasterId())).isEmpty()) {
+            if (!s.removeEffects(theirs).isEmpty()) {
                 from.add(s.getCharacterName());
                 tellHolder(s, spell.getName() + " on you has ended.");
             }
         }
         for (DndEntityInstance i : DndEntityInstance.getAll()) {
-            if (i.getEffects().removeIf(e -> source.equalsIgnoreCase(e.getSourceId()) && casterId.equals(e.getCasterId()))) {
+            if (i.getEffects().removeIf(theirs)) {
                 from.add(i.getDisplayName());
             }
         }
-        if (!from.isEmpty()) toDms(spell.getName() + " ends on " + String.join(", ", from) + " (concentration ended).");
+        if (!from.isEmpty()) toDms(spell.getName() + " ends on " + String.join(", ", from) + " (" + why + ").");
     }
 
     /**

@@ -1826,11 +1826,16 @@ public class CharacterSheet {
     public void setConcentratingOn(DndSpell spell) {
         DndSpell was = this.concentratingOn;
         this.concentratingOn = spell;
+        // The same spell, by id: after a /dm reload the object is a new one, and treating that as a different
+        // spell ended the effects a fight had just applied for this very cast.
+        boolean another = was != null && (spell == null || !was.getId().equalsIgnoreCase(spell.getId()));
         // A new concentration spell ends the old one, on everyone it was on (Bless → Bane, #225).
-        if (was != null && was != spell) io.papermc.jkvttplugin.combat.SpellEffects.endConcentration(characterId, was);
-        // ...and a Hex/Hunter's Mark it held: its rider damage went on after switching (#238). Casting the
-        // same mark again keeps it (castMark sets the new target right after).
-        if (was != null && was != spell) clearSpellMark();
+        if (another) io.papermc.jkvttplugin.combat.SpellEffects.endConcentration(characterId, was);
+        // ...and a Hex/Hunter's Mark it held: its rider damage went on after switching (#238).
+        // Casting the SAME spell again is left to the cast that does it (CastCompletion.finish, #269): only
+        // that knows which effects are the earlier cast's and which it has just applied, and it sets the
+        // new mark itself.
+        if (another) clearSpellMark();
     }
 
     public boolean isConcentrating() {
