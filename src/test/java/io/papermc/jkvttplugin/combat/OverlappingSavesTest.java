@@ -38,6 +38,9 @@ class OverlappingSavesTest {
     @BeforeAll
     static void load() { TestContent.load(); }
 
+    /** The one fight these saves are left in (two fights at once: TwoFightsSavesTest). */
+    private static final UUID FIGHT = UUID.randomUUID();
+
     private final List<CharacterSheet> registered = new ArrayList<>();
 
     @AfterEach
@@ -56,7 +59,7 @@ class OverlappingSavesTest {
 
     /** A spell leaves {@code target} a save, as SpellCastHandler.leavePending does; {@code ran} hears its outcome. */
     private static String leave(UUID target, SpellSave.Facts facts, List<Boolean> ran) {
-        return SaveOutcome.awaitInFight(target, facts.dc(), facts.ability(), facts.saveTags(), facts.spellName(), ran::add);
+        return SaveOutcome.awaitInFight(FIGHT, target, facts.dc(), facts.ability(), facts.saveTags(), facts.spellName(), ran::add);
     }
 
     private static SpellSave.Facts facts(String spellId, int dc) {
@@ -74,10 +77,10 @@ class OverlappingSavesTest {
         String first = leave(wolf, facts("bane", 13), bane);
         String second = leave(wolf, facts("sacred_flame", 14), flame);
 
-        assertEquals(2, SaveOutcome.inFightFor(wolf).size(), "the wolf owes two saves: Bane's and Sacred Flame's");
+        assertEquals(2, SaveOutcome.inFightFor(FIGHT, wolf).size(), "the wolf owes two saves: Bane's and Sacred Flame's");
         assertNotEquals(first, second);
-        assertTrue(SpellCastHandler.hasPendingSave(wolf));
-        assertEquals(List.of("Bane", "Sacred Flame"), SaveOutcome.inFightFor(wolf).stream().map(SaveOutcome.Request::label).toList(), "oldest first, each named");
+        assertTrue(SpellCastHandler.hasPendingSave(FIGHT, wolf));
+        assertEquals(List.of("Bane", "Sacred Flame"), SaveOutcome.inFightFor(FIGHT, wolf).stream().map(SaveOutcome.Request::label).toList(), "oldest first, each named");
     }
 
     @Test
@@ -88,7 +91,7 @@ class OverlappingSavesTest {
         String second = leave(wolf, facts("sacred_flame", 14), flame);
 
         // The newer one first.
-        SpellCastHandler.Picked p = SpellCastHandler.pickSave(wolf, "Wolf", second);
+        SpellCastHandler.Picked p = SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", second);
         assertNull(p.refusal());
         assertEquals(Ability.DEXTERITY, p.save().ability(), "Sacred Flame's ability,");
         assertEquals(14, p.save().dc(), "its DC,");
@@ -98,14 +101,14 @@ class OverlappingSavesTest {
         assertTrue(bane.isEmpty(), "Bane's save wasn't touched");
 
         // Then the older one, still there with its own facts.
-        SpellCastHandler.Picked q = SpellCastHandler.pickSave(wolf, "Wolf", first);
+        SpellCastHandler.Picked q = SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", first);
         assertEquals(Ability.CHARISMA, q.save().ability());
         assertEquals(13, q.save().dc());
         assertEquals(Set.of("magic"), q.save().tags());
         assertTrue(SaveOutcome.graded(q.save().id(), true));
         assertEquals(List.of(true), bane);
         assertEquals(List.of(false), flame, "and Sacred Flame's didn't run again");
-        assertFalse(SpellCastHandler.hasPendingSave(wolf));
+        assertFalse(SpellCastHandler.hasPendingSave(FIGHT, wolf));
     }
 
     @Test
@@ -114,10 +117,10 @@ class OverlappingSavesTest {
         List<Boolean> bane = new ArrayList<>(), flame = new ArrayList<>();
         String first = leave(wolf, facts("bane", 13), bane);
         String second = leave(wolf, facts("sacred_flame", 14), flame);
-        SaveOutcome.graded(SpellCastHandler.pickSave(wolf, "Wolf", first).save().id(), false);
+        SaveOutcome.graded(SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", first).save().id(), false);
         assertEquals(List.of(false), bane);
         assertTrue(flame.isEmpty());
-        SaveOutcome.graded(SpellCastHandler.pickSave(wolf, "Wolf", second).save().id(), true);
+        SaveOutcome.graded(SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", second).save().id(), true);
         assertEquals(List.of(true), flame);
     }
 
@@ -128,10 +131,10 @@ class OverlappingSavesTest {
         List<Boolean> one = new ArrayList<>(), two = new ArrayList<>();
         String first = leave(wolf, facts("sacred_flame", 13), one);
         String second = leave(wolf, facts("sacred_flame", 13), two);
-        SaveOutcome.graded(SpellCastHandler.pickSave(wolf, "Wolf", second).save().id(), false);
+        SaveOutcome.graded(SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", second).save().id(), false);
         assertTrue(one.isEmpty());
         assertEquals(List.of(false), two);
-        assertNotNull(SpellCastHandler.pickSave(wolf, "Wolf", first).save());
+        assertNotNull(SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", first).save());
     }
 
     // ---------- stale answers, and the wrong creature ----------
@@ -144,13 +147,13 @@ class OverlappingSavesTest {
         SaveOutcome.graded(first, false);
         String second = leave(wolf, facts("sacred_flame", 14), flame); // a new save arrives afterwards
 
-        SpellCastHandler.Picked again = SpellCastHandler.pickSave(wolf, "Wolf", first); // the old buttons, clicked again
+        SpellCastHandler.Picked again = SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", first); // the old buttons, clicked again
         assertNull(again.save(), "it isn't quietly taken as the answer to the newer save");
         assertEquals("That save has already been settled.", again.refusal());
         assertFalse(SaveOutcome.graded(first, false));
         assertEquals(List.of(false), bane, "nothing ran twice");
         assertTrue(flame.isEmpty(), "and the newer save is untouched");
-        assertNotNull(SpellCastHandler.pickSave(wolf, "Wolf", second).save());
+        assertNotNull(SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", second).save());
     }
 
     @Test
@@ -158,10 +161,10 @@ class OverlappingSavesTest {
         UUID wolf = UUID.randomUUID(), bear = UUID.randomUUID();
         List<Boolean> ran = new ArrayList<>();
         String wolfs = leave(wolf, facts("bane", 13), ran);
-        SpellCastHandler.Picked p = SpellCastHandler.pickSave(bear, "Bear", wolfs);
+        SpellCastHandler.Picked p = SpellCastHandler.pickSave(FIGHT, bear, "Bear", wolfs);
         assertNull(p.save());
         assertEquals("That save is someone else's.", p.refusal());
-        assertEquals("That save has already been settled.", SpellCastHandler.pickSave(wolf, "Wolf", "rmadeup").refusal());
+        assertEquals("That save has already been settled.", SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", "rmadeup").refusal());
         assertTrue(ran.isEmpty());
     }
 
@@ -171,9 +174,10 @@ class OverlappingSavesTest {
         UUID wolf = UUID.randomUUID();
         List<Boolean> ran = new ArrayList<>();
         String outside = SaveOutcome.await(wolf, 13, Ability.CHARISMA, Set.of("magic"), ran::add);
-        assertNull(SpellCastHandler.pickSave(wolf, "Wolf", outside).save());
-        assertFalse(SpellCastHandler.hasPendingSave(wolf));
-        assertEquals("Wolf has no pending save.", SpellCastHandler.pickSave(wolf, "Wolf", null).refusal());
+        assertNull(SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", outside).save());
+        assertEquals("That save isn't one a fight is waiting on.", SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", outside).refusal());
+        assertFalse(SpellCastHandler.hasPendingSave(FIGHT, wolf));
+        assertEquals("Wolf has no pending save.", SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", null).refusal());
         assertTrue(SaveOutcome.isWaiting(outside), "and it's still waiting on its own answer");
     }
 
@@ -182,14 +186,14 @@ class OverlappingSavesTest {
     @Test
     void aBareSaveStillWorksWhenOnlyOneIsOwed() {
         UUID wolf = UUID.randomUUID();
-        assertEquals("Wolf has no pending save.", SpellCastHandler.pickSave(wolf, "Wolf", null).refusal(), "none owed");
+        assertEquals("Wolf has no pending save.", SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", null).refusal(), "none owed");
 
         String only = leave(wolf, facts("bane", 13), new ArrayList<>());
-        SpellCastHandler.Picked one = SpellCastHandler.pickSave(wolf, "Wolf", null);
+        SpellCastHandler.Picked one = SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", null);
         assertEquals(only, one.save().id(), "an ordinary /combat save, typed by hand");
 
         leave(wolf, facts("sacred_flame", 14), new ArrayList<>());
-        SpellCastHandler.Picked two = SpellCastHandler.pickSave(wolf, "Wolf", null);
+        SpellCastHandler.Picked two = SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", null);
         assertNull(two.save(), "with two owed it doesn't guess");
         assertNull(two.refusal());
         assertEquals(2, two.several().size(), "it asks which");
@@ -205,7 +209,7 @@ class OverlappingSavesTest {
         String poison = leave(id, facts("poison_spray", 13), new ArrayList<>());
         String flame = leave(id, facts("sacred_flame", 13), new ArrayList<>());
 
-        SaveOutcome.Request p = SpellCastHandler.pickSave(id, "Zek", poison).save(), f = SpellCastHandler.pickSave(id, "Zek", flame).save();
+        SaveOutcome.Request p = SpellCastHandler.pickSave(FIGHT, id, "Zek", poison).save(), f = SpellCastHandler.pickSave(FIGHT, id, "Zek", flame).save();
         assertEquals("against poison", halfling.saveAdvantageSourceVs(p.ability(), p.tags()));
         assertNull(halfling.saveAdvantageSourceVs(f.ability(), f.tags()), "Sacred Flame isn't poison, however the other save reads");
     }
@@ -230,17 +234,17 @@ class OverlappingSavesTest {
         SpellSave.Facts a = SpellSave.Facts.of(bane, cleric.getPlayerId(), cleric.getCharacterId(), 13, Ability.CHARISMA, SpellSave.tagsFor(bane), castA);
         SpellSave.Facts b = SpellSave.Facts.of(bane, other.getPlayerId(), other.getCharacterId(), 14, Ability.CHARISMA, SpellSave.tagsFor(bane), castB);
         UUID id = target.getPlayerId();
-        String first = SaveOutcome.awaitInFight(id, a.dc(), a.ability(), a.saveTags(), a.spellName(), saved -> SpellSave.apply(a, subject, saved));
-        String second = SaveOutcome.awaitInFight(id, b.dc(), b.ability(), b.saveTags(), b.spellName(), saved -> SpellSave.apply(b, subject, saved));
+        String first = SaveOutcome.awaitInFight(FIGHT, id, a.dc(), a.ability(), a.saveTags(), a.spellName(), saved -> SpellSave.apply(a, subject, saved));
+        String second = SaveOutcome.awaitInFight(FIGHT, id, b.dc(), b.ability(), b.saveTags(), b.spellName(), saved -> SpellSave.apply(b, subject, saved));
 
         cleric.breakConcentration(); // the first cleric loses their Bane before its save is answered
 
-        SaveOutcome.graded(SpellCastHandler.pickSave(id, "Target", second).save().id(), false);
+        SaveOutcome.graded(SpellCastHandler.pickSave(FIGHT, id, "Target", second).save().id(), false);
         assertTrue(target.hasEffect("spell:bane"), "the second cleric's Bane lands: their cast is held");
         assertEquals(castB, target.getActiveEffects().get(0).getCastId());
         assertEquals(other.getCharacterId(), target.getActiveEffects().get(0).getCasterId());
 
-        SaveOutcome.graded(SpellCastHandler.pickSave(id, "Target", first).save().id(), false);
+        SaveOutcome.graded(SpellCastHandler.pickSave(FIGHT, id, "Target", first).save().id(), false);
         assertEquals(1, target.getActiveEffects().size(), "the first cleric's doesn't: nobody holds that cast");
         assertEquals(castB, target.getActiveEffects().get(0).getCastId(), "and it didn't displace the one that's held");
     }
@@ -254,9 +258,9 @@ class OverlappingSavesTest {
         String inFight = leave(wolf, facts("bane", 13), ran);
         String outside = SaveOutcome.await(wolf, 13, Ability.DEXTERITY, Set.of(), ran::add);
 
-        SaveOutcome.clearInFight();
+        SaveOutcome.clearInFight(FIGHT);
         assertFalse(SaveOutcome.isWaiting(inFight), "an unanswered save used to outlive its fight");
-        assertEquals("That save has already been settled.", SpellCastHandler.pickSave(wolf, "Wolf", inFight).refusal());
+        assertEquals("That save has already been settled.", SpellCastHandler.pickSave(FIGHT, wolf, "Wolf", inFight).refusal());
         assertTrue(SaveOutcome.isWaiting(outside), "a spell cast out of a fight is still waiting on its save");
         assertTrue(ran.isEmpty(), "and clearing ran nobody's outcome");
     }
@@ -275,7 +279,7 @@ class OverlappingSavesTest {
         assertTrue(command.contains("roll.forceAuto(), request);"), "which /combat save hands on");
 
         int resolve = handler.indexOf("public static void resolveSave(");
-        int pick = handler.indexOf("pickSave(target.getId(), target.getDisplayName(), requestId)", resolve);
+        int pick = handler.indexOf("pickSave(session.getSessionId(), target.getId(), target.getDisplayName(), requestId)", resolve);
         int roll = handler.indexOf("RollService.resolve(", resolve);
         int useUp = handler.indexOf("SpellEffects.useUp(", resolve);
         assertTrue(pick > resolve && pick < roll && pick < useUp, "which save is settled before the roll and before a one-use effect is spent");

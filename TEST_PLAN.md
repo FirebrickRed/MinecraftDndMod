@@ -638,6 +638,15 @@ Set these up, `/stop`, start the server, then check:
 - [ ] Out of a fight, they left-click The Kindler with a **shortbow**, then a **light crossbow** → you get
       the same [Start combat] / [Deny] question a sword gets. Before, nothing happened. (#152)
 
+## Two fights at once (two DMs)
+
+- [ ] Each DM runs their own fight. In fight A leave a save unanswered (Bane at a wolf); in fight B leave one too
+      (Sacred Flame at a bear). DM A types `/combat finished` → in fight B the bear's save prompt still works
+      and resolves Sacred Flame. (#273)
+- [ ] From fight B, type fight A's save by hand with its id (`/combat save Wolf request <id from A's prompt>`)
+      before A ends → refused: the wolf isn't in B ("Target not found"), or "That save belongs to another
+      fight." Nothing is rolled. (#273)
+
 ## Private rolls and group checks (#186)
 
 - [ ] They roll a skill from their own sheet → only they see it, with **[Show the DM]**. Click → you get it with

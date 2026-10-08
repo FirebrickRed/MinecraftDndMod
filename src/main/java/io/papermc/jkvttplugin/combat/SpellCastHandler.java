@@ -366,7 +366,7 @@ public class SpellCastHandler {
      * buttons; answering it runs this spell's outcome and no other's. It used to be one slot per target.
      */
     private static void leavePending(CombatSession session, Combatant target, SpellSave.Facts facts) {
-        String request = SaveOutcome.awaitInFight(target.getId(), facts.dc(), facts.ability(), facts.saveTags(), facts.spellName(),
+        String request = SaveOutcome.awaitInFight(session.getSessionId(), target.getId(), facts.dc(), facts.ability(), facts.saveTags(), facts.spellName(),
                 saved -> applyOutcome(session, target, facts, saved));
         promptSave(session, target, SaveOutcome.find(request));
     }
@@ -389,25 +389,25 @@ public class SpellCastHandler {
     }
 
     /**
-     * Which of the saves {@code targetId} owes an answer is for. With a request id: that one, or why not (it's
-     * gone, or it's someone else's). With none: the only one they owe; {@code several} when they owe more than
-     * one, for the caller to ask; a refusal when they owe none. Pure, so the isolation can be tested.
+     * Which of the saves {@code targetId} owes in fight {@code sessionId} an answer is for. With a request id:
+     * that one, or why not (it's gone, it's someone else's, or it's another fight's). With none: the only one
+     * they owe in this fight; {@code several} when they owe more than one, for the caller to ask; a refusal
+     * when they owe none. Pure, so the isolation can be tested.
      */
     record Picked(SaveOutcome.Request save, String refusal, java.util.List<SaveOutcome.Request> several) {}
 
-    static Picked pickSave(UUID targetId, String targetName, String requestId) {
+    static Picked pickSave(UUID sessionId, UUID targetId, String targetName, String requestId) {
         if (requestId != null) {
             SaveOutcome.Request r = SaveOutcome.find(requestId);
-            String refusal = SaveOutcome.refusal(requestId, targetId, true, r != null ? r.ability() : null, r != null ? r.dc() : null);
-            if (refusal == null && !r.inFight()) refusal = "That save isn't one a fight is waiting on.";
+            // Its own fight's /combat save answers it: an id can't be used to reach across fights, or in from outside one.
+            String refusal = SaveOutcome.refusalInFight(sessionId, requestId, targetId, r != null ? r.ability() : null, r != null ? r.dc() : null);
             return refusal != null ? new Picked(null, refusal, java.util.List.of()) : new Picked(r, null, java.util.List.of());
         }
-        java.util.List<SaveOutcome.Request> owed = SaveOutcome.inFightFor(targetId);
+        java.util.List<SaveOutcome.Request> owed = SaveOutcome.inFightFor(sessionId, targetId);
         if (owed.isEmpty()) return new Picked(null, targetName + " has no pending save.", java.util.List.of());
         if (owed.size() == 1) return new Picked(owed.get(0), null, java.util.List.of());
         return new Picked(null, null, owed);
     }
-
     /**
      * Resolve one save {@code target} owes. Players roll their own; the DM rolls for entities.
      *
@@ -417,7 +417,7 @@ public class SpellCastHandler {
                                    Integer providedRoll, Integer providedTotal, boolean forceAuto, String requestId) {
         // Which save this answers is settled first, before anything is rolled or a one-use effect is spent:
         // a stale id (answered, or from a fight that's over) resolves nothing (#273).
-        Picked picked = pickSave(target.getId(), target.getDisplayName(), requestId);
+        Picked picked = pickSave(session.getSessionId(), target.getId(), target.getDisplayName(), requestId);
         if (picked.refusal() != null) {
             roller.sendMessage(Component.text(picked.refusal(), NamedTextColor.RED));
             return;
@@ -483,7 +483,8 @@ public class SpellCastHandler {
         for (Component line : outcome.conditionLines()) session.broadcast(line);
         if (outcome.conditionApplied()) session.updateScoreboard();
     }
-    public static boolean hasPendingSave(UUID targetId) { return !SaveOutcome.inFightFor(targetId).isEmpty(); }
+    /** Whether this target still owes a save in fight {@code sessionId}. */
+    public static boolean hasPendingSave(UUID sessionId, UUID targetId) { return !SaveOutcome.inFightFor(sessionId, targetId).isEmpty(); }
     // ==================== HELPERS ====================
 
     /** A healing roll's amount and its result line. */
