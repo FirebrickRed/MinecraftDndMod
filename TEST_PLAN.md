@@ -97,47 +97,11 @@ Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rog
 - [ ] **Shield:** a Sneak Attack hit that Shield turns into a miss → the next hit that turn can still Sneak Attack. (#229)
 - [ ] `on_fail: always` / `never` in config.yml behave as named.
 
-## Wizard
-
-- [ ] Out of a fight, `/character cast blade_ward Wolf` → "Blade Ward only targets you (range: Self)…", no
-      "casts Blade Ward on Wolf". `/character cast false_life` (a wizard or sorcerer who knows it) → the dice
-      are shown, you gain that many temporary hit points, and the slot is spent; `… false_life Wolf` → refused.
-- [ ] `/combat cast blade_ward <someone else>` (and `/character cast` out of a fight) → "only targets you
-      (range: Self). Cast it without a name and it's on you." No [Do it anyway], even for you. No name → it's on you.
-- [ ] Start aiming Burning Hands, then `/combat nextturn` (or end your turn) → "Your turn is over. Your Burning
-      Hands aim is cancelled: nothing spent." Your 1st-level slot is still there. (#237)
-- [ ] Aim Burning Hands, then (without firing) cast another 1st-level spell with your last slot, then right-click
-      → "…doesn't go off: nothing spent." (#237)
-- [ ] In a fight, cast Fire Bolt and resolve it, then cast it again the same turn → "You've already used your
-      Action this turn". Nothing is rolled or spent. (#235)
-
-**Out of a fight**
-
-- [ ] A spell with range Self that targets (not an area) at someone else → "only targets you".
-
-**In a fight**
-
-- [ ] After Start combat, on your first turn → "Your opening move: Fire Bolt at The Kindler [do it]".
-- [ ] With a spell ready, [cancel] → left-click attacks with your weapon again. End your turn with one ready →
-      next turn, left-click is your weapon (it lapses with the turn). (#179)
-- [ ] Burning Hands / Thunderwave from the spellbook → the aim preview starts at once; right-click confirms.
-      **The slot is spent** (spellbook shows one fewer) and so is the Action. Cancel the aim instead → nothing
-      spent. (An area spell used to be free in a fight.) (#179)
-
 ## Cleric
 
 Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 
-- [ ] Out of a fight, Sacred Flame at a creature, [Let it happen], cast → the cast line reads "DC 13 (8 +2[Prof]
-      +3[WIS]) DEX save", and **you** get "You roll for …: DEX save, DC 13: [Roll it] [I rolled…] [My total…]". (#245)
-- [ ] Roll a fail → "… fails the save", and the caster gets the damage roll buttons; the damage lands. Roll a
-      success → "… saves, and resists Sacred Flame", no damage. No second click either way. (#245)
-- [ ] Instead of rolling, the small grey **[failed]** / **[saved]** after the buttons rule it without a roll. (#245)
 - [ ] In a fight, a save spell's cast line shows the same DC breakdown. (#245)
-
-- [ ] **Bless again on other people:** out of a fight, `/character cast bless A, B`, then `/character cast bless
-      C` → A and B are told "Bless on you has ended.", C has it, and one more slot is gone. The same in a
-      fight (`/combat cast bless A, B`, next turn `/combat cast bless B, C`): A loses it, B and C have it. (#269)
 - [ ] **Two save spells at one creature (in a fight):** cast Bane at a wolf and **don't** answer its save; then
       (another caster, or next turn) Sacred Flame at the same wolf. You now have **two** prompts, "…CHA save
       against Bane" and "…DEX save against Sacred Flame". Answer the **second** one first → Sacred Flame's
@@ -147,13 +111,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       with both prompts again; while it owes one → that one is rolled as before. (#273)
 - [ ] Leave a save unanswered, `/combat finished`, start a new fight with the same creature → `/combat save Wolf`
       says "has no pending save". (#273)
-- [ ] **A late Bane save (in a fight, two enemies):** cast Bane at enemy A and **don't** answer its save yet. Next
-      turn cast Bane at enemy B and answer B's save (fail) → B is under Bane. Now answer A's old save, failing
-      it → "Bane is no longer being held, so it doesn't take hold of A", and A has no −1d4. (#269)
-- [ ] The same, but instead of recasting, lose concentration (take damage and fail the CON save, or cast
-      Bless) before answering A's save → the same line, no Bane on A. (#269)
-- [ ] **A ritual replacing concentration:** concentrating on Bless out of a fight, `/character cast detect_magic
-      ritual` → "Concentration on Bless ends." then "Concentrating on Detect Magic.", and no slot is spent. (#269)
 - [ ] **A readied spell is used up out of a fight:** click Sacred Flame in the spellbook (it's "ready"), cast it at
       a creature with [Let it happen]. Left-click another creature afterwards → nothing is filled in; it isn't
       still readied. (#269)
@@ -167,38 +124,18 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] Out of a fight, cast Sacred Flame at a creature, [Let it happen] → "…needs no attack roll (the target
       saves instead): cast it again to go. [cast it]". Guiding Bolt instead → "…is an attack: roll to hit." (#247)
 
-**Out of a fight**
-
-- [ ] Sacred Flame with Let it happen → the DM sees the DC, **[Roll their save]**, **[Failed: damage]** / **[Saved: …]**.
-      [Roll their save] → "🎲 You roll for <creature>: Dexterity save, DC 13" with the three buttons.
-- [ ] **[Let it happen]** a Sacred Flame → you get **[cast it]**, not a d20 prompt (a save spell
-      doesn't roll to hit).
-
 **In a fight**
 
-- [ ] Cure Wounds → the dice show.
-- [ ] Cure Wounds → `+3[WIS]`, not "your spellcasting modifier"; **[Roll it]** heals
-      (it used to re-prompt in physical-dice mode); the table sees the roll line. (#216)
 - [ ] Touch spells reach one block further than before (5 ft of slack, same as out of a fight).
-- [ ] `/combat cast bless me, Town Guard` → "casts Bless on …: +1d4 to attacks and saves for 1 minute";
-      your sheet's Active Effects tile shows it. Four names → "takes up to 3 targets". (#225)
 - [ ] Blessed, you attack: the prompt's bonus reads `… +1d4[Bless]`, and the result shows the d4 it rolled
       (`+3[Bless 1d4]`). A save and a death save get it too; a skill check doesn't. The guard's attack (you roll
       for it) shows it too. (#225)
-- [ ] Blessed, attack with **[I rolled…]** and type `manualRoll 14 3` → the result shows `+3[Bless 1d4]` (your 3). Its
-      hover says to type the d20 then the d4. `manualRoll 14` alone, or `manualRoll 14 9` → a red "Bless adds 1d4 …" /
-      "9 isn't a 1d4 roll" and the buttons again; nothing rolled. `autoRoll` rolls both. (#225)
-- [ ] Spellbook → **Bless** → "left-click up to 3 targets (shift-click the last)". Click a guard →
-      "Bless: Town Guard (1 of 3) [Cast on these] [+ me] [cancel]"; click it again → off the list; **[+ me]** adds you;
-      **shift**-click a second creature → straight to "[Cast it]". Clicking three fills `/combat cast bless A, B, C`. (#179)
 - [ ] `/combat cast bane Goblin, Goblin 2` → each makes a CHA save (you roll for them); the one that fails is
       "under Bane" and its next attack/save shows `-2[Bane 1d4]`. (#225)
 - [ ] Cast another concentration spell, or fail a concentration save → "Bless ends on …". (#225)
 - [ ] Bless runs 10 rounds and ends on its own; your ◈ goes with it. (#225)
 - [ ] `/combat cast shield_of_faith me` → your AC +2 (sheet and `/combat status`), and it lasts past your
       next turn. On a creature, its AC goes up too. (#225)
-- [ ] **Spell looks:** Sacred Flame → a burst of white on the target; Cure Wounds → hearts rise around the
-      target; Bless → a gold ring; Bane → a dark red burst. (#230)
 
 ## Warlock
 
@@ -234,7 +171,6 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
 - [ ] **Stout halfling**, in a fight with something that casts Poison Spray at you (a second character, or
       `/combat cast poison_spray <the halfling>` as a caster): your CON save prompt says **2d20, keep the
       higher**. Sacred Flame at you → a plain d20. (Stout Resilience)
-- [ ] **Stout halfling:** `/dm adjust <you> hp -6 type poison` → 3 taken, "resists poison".
 - [ ] **Stout halfling, out of a fight:** someone casts Poison Spray at you and you [Let it happen], [Ask for their
       roll] → the save prompt says "↑ advantage: against poison" and **[Roll with advantage]** / [I also have
       disadvantage]; the roll is 2d20, keep the higher. Sacred Flame at them → the plain three buttons. (#266)
@@ -246,18 +182,12 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       answer the **first** prompt's buttons (scroll up) → the Poison Spray result, not Sacred Flame's; then the
       second prompt → Sacred Flame. Click an already-answered prompt's button again → "That save has already
       been settled." (#272)
-- [ ] `/dm trap <the halfling> constitution dc 13 1d12 type poison` → the same advantage. Without `type poison`
-      → none. (#266)
 - [ ] **Gnome:** `/dm trap <them> wisdom dc 13 2d6 magic` → advantage ("against magic"); the same trap as a
       `dexterity` save, or without the word `magic` → none. In a fight, Burning Hands (a DEX save) at a gnome is a
       plain d20 now; Cause Fear (WIS) still has advantage. (#266)
 
 **Darkvision** (a dwarf, elf or tiefling, and a human) (#148)
 - [ ] Drink a real night-vision potion as the human → it stays (the game only removes its own).
-- [ ] As the dwarf, walk into a dark cave (or stand outside at night): after ~3 s the world beyond ~2 chunks
-      fogs out. Step into torchlight or daylight → full view distance comes straight back. A human in the same
-      cave keeps full distance (they just see darkness). Tell me if 2 chunks feels too tight or the switch
-      too jumpy; `sight.darkvision_view_limit: false` turns it off.
 
 ---
 
@@ -343,7 +273,6 @@ label: the hover says "the game adds +3[INT] +2[Prof]", the result `🎲 d20 [14
       is one d20 (they cancel). Not poisoned → the usual [Normal] [Advantage] [Disadvantage]. (#175)
 - [ ] A raging barbarian's Strength check → **[Roll with advantage]** and **[I also have disadvantage]**. (#223)
 
-
 ## Death
 
 - [ ] Down yourself, fail three death saves → "has DIED", turn skipped.
@@ -413,7 +342,6 @@ wrong, and swap in your own anytime.
 
 ## Viewing & DM notes
 
-- [ ] View tool on your own character → race and class, concentration.
 - [ ] A DM AC adjustment plus Shield → the card's AC explains both.
 - [ ] A creature with its own AC → "own AC, stat block says 12".
 - [ ] A downed character → "Down, dying — death saves: 1 ✔ / 2 ✖".
@@ -573,15 +501,15 @@ Set these up, `/stop`, start the server, then check:
       (Put the id back afterwards → it restores on the next start.)
 - [ ] Half-orc dropped to 0 before (held at 1 by Relentless) → drop them again after, they fall.
 - [ ] A note on a **character** (`/dm note <character> add …`) is still there after.
-- [ ] **A fight survives** (set up: round 2, a condition on someone, a player at 0 HP; check
-      `plugins/jkvttplugin/CombatSessions/` has a file): console says "Restored combat … round 2, X's turn".
 - [ ] The scoreboard is back, the downed player is prone, the condition is listed.
+- [ ] Each character's HP on the scoreboard is their real HP once they're back on (it read 0/0 until something
+      changed).
+- [ ] The green movement ring is back around whoever's turn it is (it was gone after a restart).
 - [ ] The current combatant can attack → damage with no errors.
 - [ ] A raging barbarian is still raging (sheet, halved slashing, red tint).
 - [ ] `/combat finished` → the combat file is gone.
 - [ ] A wizard's prepared spells (changed before) → the same after (#218).
 - [ ] A Hit Die spent before (no long rest since) → still 0/1 (#52).
-- [ ] Bless on you before → still there with its rounds left; breaking your concentration still ends it (#225).
 
 ---
 

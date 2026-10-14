@@ -150,4 +150,29 @@ class CombatPersistenceTest {
         assertFalse(src.matches("(?s).*Map<UUID,\\s*CombatSession>.*"),
                 "CombatCommand keeps its own session map again; look fights up with CombatSession.getSessionForDm");
     }
+
+    /** The body of the CombatSession method starting at {@code signature}, up to its closing brace. */
+    private static String sessionMethod(String signature) throws Exception {
+        String src = Files.readString(Path.of("src/main/java/io/papermc/jkvttplugin/combat/CombatSession.java"));
+        int at = src.indexOf(signature);
+        assertTrue(at >= 0, "CombatSession has no " + signature);
+        int next = src.indexOf("\n    }\n", at);
+        return src.substring(at, next < 0 ? src.length() : next);
+    }
+
+    @Test
+    void aRestoredFightGetsItsMovementRingBack() throws Exception {
+        // Playtest: after a mid-fight restart the movement ring's particles were gone, because only
+        // starting a fight started it.
+        assertTrue(sessionMethod("void onRestored()").contains("startMovementRing()"),
+                "a fight restored at boot doesn't restart its movement ring");
+    }
+
+    @Test
+    void rejoiningAFightRewritesTheScoreboard() throws Exception {
+        // Playtest: the scoreboard was built at boot with every player offline, so a character's HP read
+        // 0/0 until something else changed. Rejoining has to write it again from the sheet.
+        assertTrue(sessionMethod("static void reattachScoreboardOnJoin(").contains("updateScoreboard()"),
+                "rejoining a restored fight shows the scoreboard written while they were offline");
+    }
 }

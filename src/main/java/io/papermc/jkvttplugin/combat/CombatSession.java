@@ -871,6 +871,9 @@ public class CombatSession {
         Combatant current = getCurrentCombatant(); // starts an entity's turn now if its chunk is loaded
         if (!isSetupPhase && current != null && current.isEntity()) applyGlowEffect(current);
         if (!isSetupPhase) io.papermc.jkvttplugin.sound.CombatMusic.start(this); // players hear it as they rejoin (#16)
+        // The movement ring (the green circle of how far the current combatant may move) only ever started
+        // when a fight began, so a fight brought back by a restart had none (playtest).
+        if (!isSetupPhase) startMovementRing();
         LOGGER_RESTORE.info("Restored combat " + sessionId + ": round " + roundNumber
                 + (current != null ? ", " + current.getDisplayName() + "'s turn" : "")
                 + ", " + combatants.size() + " combatants. The turn in progress restarts.");
@@ -1193,6 +1196,10 @@ public class CombatSession {
         // #165: the rest of what they saw before the restart — prone if downed, condition effects,
         // their turn glow — and, for the DM, where the fight picks up.
         session.restoreVisualsFor(player);
+        // The scoreboard's lines were written when the fight was rebuilt at boot, with every player
+        // offline, so a character's HP read 0/0 until something else changed (playtest). Now that this
+        // one is back, write them again from their sheet.
+        session.updateScoreboard();
         if (session.dmId.equals(pid)) {
             Combatant current = session.getCurrentCombatant();
             player.sendMessage(Component.text("⚔ Combat is still on: round " + session.roundNumber

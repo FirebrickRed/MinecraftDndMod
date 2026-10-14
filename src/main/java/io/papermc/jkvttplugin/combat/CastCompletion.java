@@ -57,7 +57,8 @@ public final class CastCompletion {
      *               the cast completes; they carry this id, and completing gives the caster's
      *               concentration to it.
      */
-    public static Done finish(UUID playerId, CharacterSheet sheet, DndSpell spell, SpellCost cost, Mark mark, long castId) {        if (playerId != null) {
+    public static Done finish(UUID playerId, CharacterSheet sheet, DndSpell spell, SpellCost cost, Mark mark, long castId) {
+        if (playerId != null) {
             SpellTargeting.clear(playerId); // a readied spell is cast
             Reach.spend(playerId);          // a DM's "close enough" covered this one cast
         }
