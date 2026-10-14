@@ -272,7 +272,8 @@ class SpellSaveTest {
         assertTrue(fight.contains("SpellSave.apply(") && outside.contains("SpellSave.apply("));
         assertTrue(fight.contains("SpellSave.saved(r.total(), ps.dc())"), "grading stays its own step (#268 will pause after it)");
         // Each path's own damage step and audience.
-        assertTrue(fight.contains("AttackHandler.promptDamage(session, damageSource, target, ps.damage()"));
+        assertTrue(fight.contains("oweDamage(session, target, ps, true)") && fight.contains("oweDamage(session, target, ps, false)"),
+                "a save's damage is owed to its own target (#274), not written onto the caster's turn");
         assertTrue(outside.contains("offerDamage(player, spell, false, aim.target, null, true)"), "half, out of a fight");
         // Nothing left that applies or hands off a condition outside SpellSave.
         assertFalse(fight.contains("target.addCondition(cond.getId())"), "the fight applies the condition itself again");

@@ -769,16 +769,19 @@ public class AttackHandler {
         String quoted = name.contains(" ") ? "\"" + name + "\"" : name;
         // The damage type is auto-grabbed from this hit by /combat damage — no 'type' needed (#183).
         DamageSplit d = splitDamage(damageStr, bonusLabel);
+        // The hit's own id (#274): this button answers this hit, never a later one.
+        String hitId = attacker.getTurnState() != null ? attacker.getTurnState().getPendingDamageId() : null;
+        String base = "/combat damage " + quoted + " " + (hitId != null ? "owed " + hitId + " " : "");
 
         Component prompt;
         if (d.hasDice()) {
             // autoRoll needs no dice typed: /combat damage remembers them from this hit.
             prompt = RollPrompt.line("💥 Roll " + d.dice() + " damage against " + name + ":", NamedTextColor.YELLOW,
-                    "/combat damage " + quoted + " ", d.dice(), d.bonus() == 0 ? null : d.label());
+                    base, d.dice(), d.bonus() == 0 ? null : d.label());
         } else {
             // Flat damage (e.g. unarmed): nothing to roll — one click applies it.
             String amt = (damageStr == null || damageStr.isEmpty()) ? "1" : damageStr;
-            String cmd = "/combat damage " + quoted + " " + amt;
+            String cmd = base + amt;
             prompt = Component.text("→ Apply damage (" + amt + "): ", NamedTextColor.YELLOW)
                     .append(Component.text("[click to apply]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                             .clickEvent(ClickEvent.suggestCommand(cmd))

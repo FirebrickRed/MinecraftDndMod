@@ -297,9 +297,12 @@ public class SpellCastHandler {
                 + " save — each caught creature rolls:", NamedTextColor.GRAY));
         java.util.Set<String> tags = damageType != null && !damageType.isBlank()
                 ? java.util.Set.of(damageType.toLowerCase()) : java.util.Set.of();
+        // A feature's area (a breath weapon): damage only, no spell effect. Its use still has an identity, so
+        // everyone it caught shares one damage roll (#274).
+        long use = SpellEffects.newCast();
         for (Combatant t : affected) {
             leavePending(session, t, new SpellSave.Facts(sourceName, caster.getId(), null, dc, saveAbility,
-                    damage, damageType, saveEffect, null, tags, null, 0)); // a feature's area (a breath weapon): damage only, no cast
+                    damage, damageType, saveEffect, null, tags, null, use));
         }
         return true;
     }
@@ -459,17 +462,14 @@ public class SpellCastHandler {
 
     /**
      * What a graded save does in a fight. The consequences are the shared ones (SpellSave, #267); rolling the
-     * damage and telling the table are this path's own: the caster's /combat damage step, and a broadcast.
+     * damage and telling the table are this path's own: the damage it owes ({@link #oweDamage}), and a broadcast.
      */
     private static void applyOutcome(CombatSession session, Combatant target, SpellSave.Facts ps, boolean success) {
-        Combatant caster = findById(session, ps.casterId());
-        Combatant damageSource = caster != null ? caster : target;
         SpellSave.Outcome outcome = SpellSave.apply(ps, SpellSave.subject(target, session, target.getDisplayName(true)), success);
         if (success) {
             if (outcome.damage() == SpellSave.Owed.HALF) {
                 session.broadcast(Component.text(ps.spellName() + " deals half on a save.", NamedTextColor.GRAY));
-                AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false, flatLabel(ps.damage(), ps.spellName()));
-                if (damageSource.getTurnState() != null) damageSource.getTurnState().setPendingDamageHalf(true);
+                oweDamage(session, target, ps, true);
             } else {
                 session.broadcast(Component.text(target.getDisplayName(true) + " shrugs it off.", NamedTextColor.GRAY));
             }
@@ -477,11 +477,30 @@ public class SpellCastHandler {
         }
         // Failed save: the effect, full damage, then any condition.
         for (Component line : outcome.effectLines()) session.broadcast(line);
-        if (outcome.damage() == SpellSave.Owed.FULL) {
-            AttackHandler.promptDamage(session, damageSource, target, ps.damage(), ps.damageType(), false, flatLabel(ps.damage(), ps.spellName()));
-        }
+        if (outcome.damage() == SpellSave.Owed.FULL) oweDamage(session, target, ps, false);
         for (Component line : outcome.conditionLines()) session.broadcast(line);
         if (outcome.conditionApplied()) session.updateScoreboard();
+    }
+
+    /**
+     * {@code target} owes damage from a graded save (#274): an entry of its own, full or {@code half}, answered
+     * by the buttons that carry its id, on the caster's turn or not. It used to be written onto the caster's
+     * turn as the one pending hit, so a second target's damage replaced the first's. The cast's damage is
+     * rolled once for everyone it caught: if another target's was already rolled, this one lands now.
+     */
+    private static void oweDamage(CombatSession session, Combatant target, SpellSave.Facts ps, boolean half) {
+        String formula = ps.damage() == null ? "" : ps.damage();
+        AttackHandler.DamageSplit d = AttackHandler.splitDamage(formula, flatLabel(formula, ps.spellName()));
+        OwedDamage.Arrival a = OwedDamage.arrive(session.getSessionId(), ps.casterId(), target.getId(), ps.spellName(),
+                d.hasDice() ? d.dice() : "", d.hasDice() ? "" : formula, d.hasDice() ? d.bonus() : 0, d.hasDice() ? d.label() : "",
+                ps.damageType(), half, ps.castId());
+        if (a.landing() != null) {
+            session.broadcast(Component.text("   " + ps.spellName() + "'s damage was already rolled: " + a.landing().full()
+                    + " (one roll for everyone it caught).", NamedTextColor.GRAY));
+            OwedDamage.land(session, java.util.List.of(a.landing()), null);
+            return;
+        }
+        OwedDamage.prompt(session, a.owed());
     }
     /** Whether this target still owes a save in fight {@code sessionId}. */
     public static boolean hasPendingSave(UUID sessionId, UUID targetId) { return !SaveOutcome.inFightFor(sessionId, targetId).isEmpty(); }
@@ -573,11 +592,6 @@ public class SpellCastHandler {
         if (name == null) return null;
         try { return Ability.valueOf(name.trim().toUpperCase()); }
         catch (IllegalArgumentException e) { return null; }
-    }
-
-    private static Combatant findById(CombatSession session, UUID id) {
-        for (Combatant c : session.getCombatants()) if (c.getId().equals(id)) return c;
-        return null;
     }
 
     private static String quoted(String name) { return name.contains(" ") ? "\"" + name + "\"" : name; }

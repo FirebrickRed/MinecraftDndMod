@@ -2524,6 +2524,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             if (RollService.isRollKeyword(args[i]) || args[i].equalsIgnoreCase("type")
                     || args[i].equalsIgnoreCase("level")
                     || args[i].equalsIgnoreCase("showModifiers")) break;
+            if (args[i].equalsIgnoreCase("owed")) { i++; continue; } // the damage's id (#274), not part of a name
             if (args[i].startsWith("--")) {
                 // Check if this is a flag with an attached value (e.g., --roll20)
                 // or a standalone flag like --showmods
@@ -2652,6 +2653,16 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
 
         // Players may apply damage only on their own turn; the DM may anytime.
         boolean isDM = isDM(dm) || dm.hasPermission("jkvtt.dm");
+        // Damage a save left owed (#274) is answered by its own id, by its caster (on any turn) or the DM.
+        // An id that isn't the current hit's is one of those, or a button whose damage was already dealt.
+        String owedId = valueAfterAny(args, "owed");
+        if (owedId != null) {
+            Combatant cur = session.getCurrentCombatant();
+            String hitId = cur != null && cur.getTurnState() != null ? cur.getTurnState().getPendingDamageId() : null;
+            if (!owedId.equals(hitId)) { answerOwed(dm, session, args, owedId, isDM); return; }
+        } else if (answeredOwedBare(dm, session, args, isDM)) {
+            return;
+        }
         if (!isDM) {
             Combatant current = session.getCurrentCombatant();
             if (current == null || !current.isPlayer() || !current.getId().equals(dm.getUniqueId())) {
@@ -2685,25 +2696,6 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // Damage roll: manualRoll <n> (you rolled it) / autoRoll [dice] (game rolls) / total <n>.
-        // For autoRoll the game rolls the damage dice: use the dice you gave, else the ones remembered
-        // from the hit that opened this window — so a normal hit needs nothing typed after 'autoRoll'.
-        String pendingDice = (attacker != null && attacker.getTurnState() != null)
-                ? attacker.getTurnState().getPendingDamageDice() : "";
-        String rollStr;
-        if (hasFlag(args, "autoRoll")) {
-            String given = valueAfterAny(args, "autoroll");
-            rollStr = (given != null && given.toLowerCase().contains("d")) ? given
-                    : (pendingDice != null && pendingDice.toLowerCase().contains("d")) ? pendingDice : null;
-            if (rollStr == null) {
-                dm.sendMessage(Component.text("autoRoll needs the damage dice — e.g. 'autoRoll 2d6'.", NamedTextColor.RED));
-                dm.sendMessage(Component.text("(No dice were remembered for this hit; type the dice, or use 'manualRoll <n>'.)", NamedTextColor.GRAY));
-                return;
-            }
-        } else {
-            rollStr = valueAfterAny(args, "manualroll"); // the number you physically rolled (dice tolerated)
-        }
-        Integer total = getFlagValueInt(args, "total");
         // Damage type: no need to type it — default to the type of the hit that opened this window.
         // 'type <t>' still overrides (e.g. a rider of a different type, like the Hex necrotic die).
         String type = valueAfterAny(args, "type");
@@ -2752,53 +2744,14 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             }
         }
 
-        // Consistent with attack rolls: --roll is what you physically rolled on the damage dice, and
-        // the game adds the pending bonus (e.g. +3 STR). A dice *formula* (contains 'd') is still
-        // rolled as-is for DM convenience; --total is the final number with nothing added.
-        int pendingBonus = (attacker != null && attacker.getTurnState() != null)
-                ? attacker.getTurnState().getPendingDamageBonus() : 0;
-        String pendingLabel = (attacker != null && attacker.getTurnState() != null)
-                ? attacker.getTurnState().getPendingDamageLabel() : "";
-        int damage;
-        if (rollStr != null) {
-            // Either way, add the pending bonus the attack promised (+STR, +Rage, …) — the prompt
-            // says "the game adds +N", so it must, whether the die was typed or auto-rolled (#168).
-            String bonusShow = pendingBonus == 0 ? null : !pendingLabel.isEmpty() ? pendingLabel
-                    : (pendingBonus > 0 ? "+" + pendingBonus : String.valueOf(pendingBonus));
-            String work;
-            if (rollStr.toLowerCase().contains("d")) { // the game rolls the dice
-                // Great Weapon Fighting (#229): 1s and 2s on the dice are rolled again, once.
-                boolean rerollLow = attacker != null && attacker.getTurnState() != null
-                        && attacker.getTurnState().isPendingDamageRerollLow();
-                DiceRoller.Rolled r = rerollLow ? DiceRoller.roll(rollStr, 2).orElse(null) : DiceRoller.rollOrFlat(rollStr);
-                if (r == null) { dm.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED)); return; }
-                if (rerollLow) dm.sendMessage(Component.text("(Great Weapon Fighting: any 1 or 2 was rolled again.)", NamedTextColor.DARK_GRAY));
-                damage = r.total() + pendingBonus;
-                work = RollPrompt.gameRolled(rollStr, r.shown(), bonusShow, damage);
-            } else {                                   // you rolled them
-                int rolled;
-                try { rolled = Integer.parseInt(rollStr.trim()); }
-                catch (NumberFormatException e) { dm.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED)); return; }
-                damage = rolled + pendingBonus;
-                work = RollPrompt.youRolled(rolled, bonusShow, damage);
-            }
-            dm.sendMessage(Component.text(work, NamedTextColor.GRAY));
-        } else if (total != null) {
-            damage = total;
-            dm.sendMessage(Component.text(RollPrompt.yourTotal(total), NamedTextColor.GRAY));
-        } else if (flat != null) {
-            damage = flat;
-        } else {
-            dm.sendMessage(Component.text("Provide an amount, manualRoll <n>, autoRoll <dice>, or total <n>.", NamedTextColor.RED));
-            return;
-        }
-
-        // Halve on a successful save vs a save spell (#123).
-        if (attacker != null && attacker.getTurnState() != null && attacker.getTurnState().isPendingDamageHalf()) {
-            int full = damage;
-            damage = Math.max(0, damage / 2);
-            dm.sendMessage(Component.text("Saved — half damage: " + full + " → " + damage + ".", NamedTextColor.GRAY));
-        }
+        TurnState hitTurn = attacker != null ? attacker.getTurnState() : null;
+        Integer rolled = damageAmount(dm, args, flat,
+                hitTurn != null ? hitTurn.getPendingDamageDice() : "",
+                hitTurn != null ? hitTurn.getPendingDamageBonus() : 0,
+                hitTurn != null ? hitTurn.getPendingDamageLabel() : "",
+                hitTurn != null && hitTurn.isPendingDamageRerollLow()); // Great Weapon Fighting (#229)
+        if (rolled == null) return;
+        int damage = rolled;
 
         // A player's damage waits for the DM's [Apply] (#175): after a reaction window by default, or
         // on every hit, or never (combat.damage_approval).
@@ -2811,6 +2764,150 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
             return;
         }
         applyHit(session, attacker, target, damage, type, crit);
+    }
+
+    /**
+     * What a {@code /combat damage} answer comes to, before any halving: {@code manualRoll <n>} (you rolled the
+     * dice, the game adds {@code bonus}), {@code autoRoll [dice]} (the game rolls them, the dice remembered from
+     * the hit or the save if none are typed, and adds {@code bonus}), {@code total <n>} (nothing added), or a
+     * flat amount. Null when it couldn't be read; the roller has been told why.
+     *
+     * @param rerollLow Great Weapon Fighting: 1s and 2s on the game's dice are rolled again, once
+     */
+    private Integer damageAmount(Player roller, String[] args, Integer flat, String pendingDice, int bonus, String bonusLabel,
+                                 boolean rerollLow) {
+        String rollStr;
+        if (hasFlag(args, "autoRoll")) {
+            String given = valueAfterAny(args, "autoroll");
+            rollStr = (given != null && given.toLowerCase().contains("d")) ? given
+                    : (pendingDice != null && pendingDice.toLowerCase().contains("d")) ? pendingDice : null;
+            if (rollStr == null) {
+                roller.sendMessage(Component.text("autoRoll needs the damage dice — e.g. 'autoRoll 2d6'.", NamedTextColor.RED));
+                roller.sendMessage(Component.text("(No dice were remembered for this hit; type the dice, or use 'manualRoll <n>'.)", NamedTextColor.GRAY));
+                return null;
+            }
+        } else {
+            rollStr = valueAfterAny(args, "manualroll"); // the number you physically rolled (dice tolerated)
+        }
+        Integer total = getFlagValueInt(args, "total");
+        if (rollStr != null) {
+            // Either way, add the bonus the prompt promised (+STR, +Rage, …): it says "the game adds +N",
+            // so it must, whether the die was typed or auto-rolled (#168).
+            String bonusShow = bonus == 0 ? null : bonusLabel != null && !bonusLabel.isEmpty() ? bonusLabel
+                    : (bonus > 0 ? "+" + bonus : String.valueOf(bonus));
+            int damage;
+            String work;
+            if (rollStr.toLowerCase().contains("d")) { // the game rolls the dice
+                DiceRoller.Rolled r = rerollLow ? DiceRoller.roll(rollStr, 2).orElse(null) : DiceRoller.rollOrFlat(rollStr);
+                if (r == null) { roller.sendMessage(Component.text("Invalid dice: " + rollStr, NamedTextColor.RED)); return null; }
+                if (rerollLow) roller.sendMessage(Component.text("(Great Weapon Fighting: any 1 or 2 was rolled again.)", NamedTextColor.DARK_GRAY));
+                damage = r.total() + bonus;
+                work = RollPrompt.gameRolled(rollStr, r.shown(), bonusShow, damage);
+            } else {                                   // you rolled them
+                int typed;
+                try { typed = Integer.parseInt(rollStr.trim()); }
+                catch (NumberFormatException e) { roller.sendMessage(Component.text("Invalid dice/amount: " + rollStr, NamedTextColor.RED)); return null; }
+                damage = typed + bonus;
+                work = RollPrompt.youRolled(typed, bonusShow, damage);
+            }
+            roller.sendMessage(Component.text(work, NamedTextColor.GRAY));
+            return damage;
+        }
+        if (total != null) {
+            roller.sendMessage(Component.text(RollPrompt.yourTotal(total), NamedTextColor.GRAY));
+            return total;
+        }
+        if (flat != null) return flat;
+        roller.sendMessage(Component.text("Provide an amount, manualRoll <n>, autoRoll <dice>, or total <n>.", NamedTextColor.RED));
+        return null;
+    }
+
+    /**
+     * Answer damage a save left owed (#274), by its id: the caster's roll (on their turn or not) or the DM's.
+     * It lands on that target and on every other target of the same cast still waiting, one roll for all
+     * (OwedDamage). A stale id, an answered one, another fight's or someone else's is refused with nothing
+     * dealt. With combat.damage_approval {@code always}, a player's answer goes to the DM first.
+     */
+    private void answerOwed(Player roller, CombatSession session, String[] args, String id, boolean isDM) {
+        String refusal = OwedDamage.refusal(session.getSessionId(), id, roller.getUniqueId(), isDM);
+        if (refusal != null) { roller.sendMessage(Component.text(refusal, NamedTextColor.RED)); return; }
+        OwedDamage.Owed o = OwedDamage.find(id);
+        Combatant target = session.getCombatantById(o.targetId());
+        if (target == null) { roller.sendMessage(Component.text("That creature has left the fight.", NamedTextColor.YELLOW)); return; }
+        Integer flat = null;
+        List<String> positional = collectPositionalArgs(args, 1);
+        if (!positional.isEmpty()) {
+            AmountAndTarget at = parseAmountAndTarget(session, roller, positional);
+            if (at == null) return;
+            if (!at.target().getId().equals(target.getId())) {
+                roller.sendMessage(Component.text("✗ That roll is for " + o.what() + "'s damage to " + target.getDisplayName()
+                        + ", not " + at.target().getDisplayName() + ".", NamedTextColor.RED));
+                return;
+            }
+            flat = at.flat();
+        }
+        Integer full = damageAmount(roller, args, flat, o.dice(), o.bonus(), o.label(), false);
+        if (full == null) return;
+        String type = valueAfterAny(args, "type");
+        if (!isDM && io.papermc.jkvttplugin.config.PluginConfig.getDamageApproval() == io.papermc.jkvttplugin.config.PluginConfig.DamageApproval.ALWAYS) {
+            holdOwedForDm(session, o, target, full, type, roller);
+            return;
+        }
+        OwedDamage.land(session, OwedDamage.answer(id, full), type);
+    }
+
+    /**
+     * A {@code /combat damage <target> …} typed without an id: when it isn't the current hit's damage but a
+     * save's this roller may answer, answer that (or, when the target owes several, ask which). False when
+     * there's none, for the usual hit path.
+     */
+    private boolean answeredOwedBare(Player roller, CombatSession session, String[] args, boolean isDM) {
+        List<OwedDamage.Owed> mine = OwedDamage.owedIn(session.getSessionId(), isDM ? null : roller.getUniqueId(), null);
+        if (mine.isEmpty()) return false;
+        List<String> positional = collectPositionalArgs(args, 1);
+        if (positional.isEmpty()) return false;
+        AmountAndTarget at = parseAmountAndTarget(session, roller, positional);
+        if (at == null) return true; // said why
+        Combatant cur = session.getCurrentCombatant();
+        TurnState cts = cur != null ? cur.getTurnState() : null;
+        boolean theirHit = cts != null && cts.isDamagePending() && at.target().getId().equals(cts.getPendingDamageTargetId())
+                && (isDM || cur.getId().equals(roller.getUniqueId()));
+        if (theirHit) return false;
+        List<OwedDamage.Owed> onIt = mine.stream().filter(o -> o.targetId().equals(at.target().getId())).toList();
+        if (onIt.isEmpty()) return false;
+        if (onIt.size() == 1) { answerOwed(roller, session, args, onIt.get(0).id(), isDM); return true; }
+        roller.sendMessage(Component.text(at.target().getDisplayName() + " is owed " + onIt.size() + " damage rolls. Which one?", NamedTextColor.YELLOW));
+        for (OwedDamage.Owed o : onIt) OwedDamage.prompt(session, o);
+        return true;
+    }
+
+    /** A player's answer to owed damage, sent to the DM for [Apply] / [Deny] (combat.damage_approval: always). */
+    private static void holdOwedForDm(CombatSession session, OwedDamage.Owed o, Combatant target, int full, String type, Player roller) {
+        OwedDamage.hold(o.id());
+        String what = OwedDamage.amount(full, o.half()) + " " + o.what() + " damage" + (o.half() ? " (saved: half of " + full + ")" : "")
+                + " to " + target.getDisplayName();
+        roller.sendMessage(Component.text("Sent to the DM: " + what + ".", NamedTextColor.GRAY));
+        var once = net.kyori.adventure.text.event.ClickCallback.Options.builder()
+                .uses(1).lifetime(java.time.Duration.ofMinutes(15)).build();
+        Component ask = Component.text("⚔ " + roller.getName() + " deals " + what + ". ", NamedTextColor.GOLD)
+                .append(Component.text("[Apply]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
+                        .hoverEvent(HoverEvent.showText(Component.text("It lands, and on anyone else the same cast caught who's still owed it")))
+                        .clickEvent(ClickEvent.callback(a -> {
+                            if (OwedDamage.find(o.id()) == null || !session.isActive()) {
+                                if (a instanceof Player p) p.sendMessage(Component.text("That damage was already dealt, or the fight is over.", NamedTextColor.GRAY));
+                                return;
+                            }
+                            OwedDamage.land(session, OwedDamage.answer(o.id(), full), type);
+                        }, once)))
+                .append(Component.text(" "))
+                .append(Component.text("[Deny]", NamedTextColor.RED, TextDecoration.UNDERLINED)
+                        .hoverEvent(HoverEvent.showText(Component.text("Doesn't land; they can roll the damage again")))
+                        .clickEvent(ClickEvent.callback(a -> {
+                            if (OwedDamage.find(o.id()) == null) return;
+                            OwedDamage.release(o.id());
+                            roller.sendMessage(Component.text("The DM didn't take that damage roll — roll it again.", NamedTextColor.YELLOW));
+                        }, once)));
+        for (Player dm : io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs()) dm.sendMessage(ask);
     }
 
     /** A refused /combat damage for a player: the reason, plus [Ask the DM] if there's something to ask for. */

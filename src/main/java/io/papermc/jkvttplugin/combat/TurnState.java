@@ -30,8 +30,9 @@ public class TurnState {
     // Whether the pending hit was a critical. Remembered from the attack so /combat damage applies
     // the "crit vs a downed creature = 2 death-save failures" rule without a user-facing flag.
     private boolean pendingDamageCrit;
-    // The pending damage should be halved when applied (e.g. a successful save vs a save spell). (#123)
-    private boolean pendingDamageHalf;
+    // This hit's own id (#274), carried by its damage buttons: a button from an earlier hit, whose damage
+    // was already dealt, can't answer this one. A save's damage isn't a hit: it's OwedDamage.
+    private String pendingDamageId;
     // A reaction window opened on this hit (#195), so its damage goes to the DM for [Apply] (#175).
     private boolean pendingDamageAfterReaction;
 
@@ -132,6 +133,7 @@ public class TurnState {
     public void markAttackHit(UUID targetId) { markAttackHit(targetId, 0, "", false); }
     /** As above, remembering the flat damage bonus, its labeled breakdown (#168), and crit. */
     public void markAttackHit(UUID targetId, int damageBonus, String damageBonusLabel, boolean crit) {
+        this.pendingDamageId = "h" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
         this.pendingDamageTargetId = targetId;
         this.pendingDamageBonus = damageBonus;
         this.pendingDamageLabel = damageBonusLabel == null ? "" : damageBonusLabel;
@@ -149,6 +151,8 @@ public class TurnState {
     public boolean isPendingDamageAfterReaction() { return pendingDamageAfterReaction; }
     public boolean isDamagePending() { return pendingDamageTargetId != null; }
     public UUID getPendingDamageTargetId() { return pendingDamageTargetId; }
+    /** The pending hit's id, in its damage buttons; null when no hit's damage is owed. */
+    public String getPendingDamageId() { return pendingDamageId; }
     public int getPendingDamageBonus() { return pendingDamageBonus; }
     public String getPendingDamageLabel() { return pendingDamageLabel; }
     public String getPendingDamageType() { return pendingDamageType; }
@@ -156,8 +160,6 @@ public class TurnState {
     public String getPendingDamageDice() { return pendingDamageDice; }
     public void setPendingDamageDice(String dice) { this.pendingDamageDice = dice == null ? "" : dice; }
     public boolean isPendingDamageCrit() { return pendingDamageCrit; }
-    public boolean isPendingDamageHalf() { return pendingDamageHalf; }
-    public void setPendingDamageHalf(boolean half) { this.pendingDamageHalf = half; }
 
     // Great Weapon Fighting (#229): the weapon attack being made says whether its hit rerolls 1s and
     // 2s; recording the hit takes that and resets it, so a spell's hit afterwards doesn't inherit it.
@@ -171,13 +173,14 @@ public class TurnState {
     public void clearDamagePending() {
         this.pendingDamageRerollLow = false;
         this.pendingSneak = null;
+        this.pendingDamageId = null;
         this.pendingDamageTargetId = null;
         this.pendingDamageBonus = 0;
         this.pendingDamageLabel = "";
         this.pendingDamageType = "";
         this.pendingDamageDice = "";
         this.pendingDamageCrit = false;
-        this.pendingDamageHalf = false;
+
         this.pendingDamageAfterReaction = false;
     }
 

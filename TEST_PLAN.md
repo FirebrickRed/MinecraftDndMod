@@ -62,6 +62,8 @@ rows (`/dm entity spawn alira "The Kindler"`).
 
 ## Fighter
 
+- [ ] **An old hit's button:** hit a kobold and apply the damage; next turn hit it again, then click the **first** hit's
+      [Roll it] → "That damage has already been dealt…", nothing applied; the new hit's button still works. (#274)
 - [ ] **Weapon switch:** start your turn holding a longsword, scroll to a handaxe and back a few times →
       nothing in chat, just a grey action-bar line. Attacking with the longsword rolls as normal. (#190)
 - [ ] Scroll to the handaxe and left-click a kobold → no roll buttons, but "⚠ You started your turn holding
@@ -88,14 +90,26 @@ rows (`/dm entity spawn alira "The Kindler"`).
 
 ## Rogue
 
-Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip) and a **Tiefling Rogue**.
+Make a **High Elf Rogue** (Fire Bolt as the Wizard Cantrip).
 
 - [ ] **High Elf Rogue:** `/character cast fire_bolt` works and uses INT.
-- [ ] **Tiefling Rogue:** right-click a chest holding thieves' tools → the chest's own [Open it] /
-      [Ask for a check] prompt, not a focus message. (I can't do this cuz I'm dm or op or something)
 - [ ] Once the Sneak Attack damage lands, a second hit that turn offers nothing. A club (not finesse) → nothing. (#229)
 - [ ] **Shield:** a Sneak Attack hit that Shield turns into a miss → the next hit that turn can still Sneak Attack. (#229)
 - [ ] `on_fail: always` / `never` in config.yml behave as named.
+
+## Wizard
+
+Spawn two kobolds (`kobold`) close together, in a fight.
+
+- [ ] **Burning Hands, both fail:** cast it at both. Roll Kobold A's save (fail) → you get "Roll 3d6 Burning Hands damage
+      against Kobold". Before rolling that, roll Kobold B's save (fail) → a second prompt, for B. Click **B's** [Roll it]
+      → one roll: B takes it, and "Kobold A takes the same Burning Hands roll (…)". Click **A's** old button →
+      "That damage has already been dealt…", and nothing more happens. (#274)
+- [ ] **One saves:** the same, but B saves → B's prompt says "(saved: half)". Answer either one → A takes the whole
+      roll, B half of it ("saved, half: 12 → 6"). (#274)
+- [ ] **A save answered later:** roll A's save (fail) and its damage now, end your turn, and only then roll B's save →
+      B takes the same roll at once (half if it saved), with no new prompt: "…damage was already rolled: 12 (one roll
+      for everyone it caught)". (#274)
 
 ## Cleric
 
@@ -111,6 +125,12 @@ Take the Life Domain. A couple of spawned `town_guard`s stand in for allies.
       with both prompts again; while it owes one → that one is rolled as before. (#273)
 - [ ] Leave a save unanswered, `/combat finished`, start a new fight with the same creature → `/combat save Wolf`
       says "has no pending save". (#273)
+- [ ] **Both of those fail:** Sacred Flame and then (another turn) Sacred Flame again at the wolf, both saves failed →
+      two damage prompts, rolled separately (two casts, two rolls); each lands once. (#274)
+- [ ] **Damage off your turn:** Sacred Flame at a wolf, then end your turn before the DM rolls its save. It fails → you
+      still get the damage prompt, and [Roll it] works though it isn't your turn. (#274)
+- [ ] Leave a save's **damage** unrolled, `/combat finished`, start a new fight → the old button says "already been
+      dealt (or its fight is over)". (#274)
 - [ ] **A readied spell is used up out of a fight:** click Sacred Flame in the spellbook (it's "ready"), cast it at
       a creature with [Let it happen]. Left-click another creature afterwards → nothing is filled in; it isn't
       still readied. (#269)
@@ -640,6 +660,8 @@ You play a bard; they're the one inspired.
 - [ ] They keep the key, and the chest stays open for everyone.
 - [ ] `key iron_key single-use` → the key is used up.
 - [ ] A trapped, keyed chest → the trap still springs first.
+- [ ] Their **tiefling rogue** right-clicks a chest while holding thieves' tools → the chest's own [Open it] /
+      [Ask for a check] prompt, not a focus message. (A DM gets a different prompt on chests, so it needs them.)
 
 ## Study checks (#231)
 
