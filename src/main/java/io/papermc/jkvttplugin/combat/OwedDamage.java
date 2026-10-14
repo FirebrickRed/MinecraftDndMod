@@ -9,12 +9,10 @@ import org.bukkit.entity.Player;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.UUID;
 
 /**
@@ -54,11 +52,23 @@ public final class OwedDamage {
     /** What became of a new entry: it waits ({@code owed}, to prompt for), or its cast already rolled ({@code landing}). */
     public record Arrival(Owed owed, Landing landing) {}
 
+    /**
+     * A player's roll waiting on the DM's [Apply] / [Deny] (combat.damage_approval: always). {@code token} is
+     * this submission's own: the buttons carry it, and only the current submission's token does anything.
+     * One per cast, since the cast's targets share the roll ({@code id} is the entry that was answered).
+     */
+    public record Submission(String token, UUID sessionId, String key, String id, int full, String type) {}
+
     private static final Map<String, Owed> owed = new LinkedHashMap<>();
     /** Per fight, per cast: the one roll its damage came to. */
     private static final Map<UUID, Map<Long, Integer>> rolled = new HashMap<>();
-    /** Answered, and waiting on the DM's [Apply] (combat.damage_approval: always). */
-    private static final Set<String> held = new HashSet<>();
+    /** Per cast (or per entry, with no cast): the roll waiting on the DM. */
+    private static final Map<String, Submission> submissions = new HashMap<>();
+
+    /** What a submission is held under: the cast's damage, shared by all its targets; an entry with no cast, itself. */
+    private static String key(Owed o) {
+        return o.sessionId() + "/" + (o.group() != 0 ? "cast " + o.group() : o.id());
+    }
 
     /**
      * A target owes damage from a save. When its cast's damage was already rolled (another target's came in
@@ -103,7 +113,9 @@ public final class OwedDamage {
         if (o == null) return "That damage has already been dealt (or its fight is over).";
         if (!o.sessionId().equals(sessionId)) return "That damage belongs to another fight.";
         if (!isDm && !answerer.equals(o.sourceId())) return "That isn't your damage to roll.";
-        if (held.contains(id)) return isDm ? "That damage is waiting on your [Apply] / [Deny]." : "That damage is with the DM: wait for them to apply it.";
+        // A roll for this cast is with the DM: no competing roll from another of its targets' buttons. The DM's
+        // own answer goes through, and replaces it.
+        if (!isDm && submissions.containsKey(key(o))) return "A roll for " + o.what() + " is with the DM: wait for them to apply it or turn it down.";
         return null;
     }
 
@@ -115,9 +127,9 @@ public final class OwedDamage {
      */
     public static List<Landing> answer(String id, int full) {
         Owed first = owed.remove(id);
-        held.remove(id);
         List<Landing> out = new ArrayList<>();
         if (first == null) return out;
+        submissions.remove(key(first)); // answered: a roll that was with the DM for it is void (its buttons do nothing)
         out.add(new Landing(first, full, amount(full, first.half())));
         if (first.group() == 0) return out;
         rolled.computeIfAbsent(first.sessionId(), k -> new HashMap<>()).put(first.group(), full);
@@ -125,31 +137,62 @@ public final class OwedDamage {
             Owed o = it.next();
             if (o.group() != first.group() || !o.sessionId().equals(first.sessionId())) continue;
             it.remove();
-            held.remove(o.id());
             out.add(new Landing(o, full, amount(full, o.half())));
         }
         return out;
     }
 
-    /** A player's answer went to the DM (#175): nothing else answers it until they rule. */
-    public static void hold(String id) { if (owed.containsKey(id)) held.add(id); }
-    /** The DM turned it down: it's owed again, for another roll. */
-    public static void release(String id) { held.remove(id); }
+    /**
+     * A player's roll for {@code id} goes to the DM (#175): nothing lands until they rule, and no other target of
+     * the same cast can submit a roll meanwhile. Null when {@code id} isn't owed, or its cast already has a roll
+     * with the DM.
+     */
+    public static Submission submit(String id, int full, String type) {
+        Owed o = owed.get(id);
+        if (o == null || submissions.containsKey(key(o))) return null;
+        String token = "s" + UUID.randomUUID().toString().replace("-", "").substring(0, 10);
+        Submission s = new Submission(token, o.sessionId(), key(o), id, full, type);
+        submissions.put(s.key(), s);
+        return s;
+    }
+
+    /** The submission with this token while it's the current one; null once it's ruled, replaced or its fight ended. */
+    private static Submission current(String token) {
+        for (Submission s : submissions.values()) if (s.token().equals(token)) return s;
+        return null;
+    }
+
+    /**
+     * The DM's [Apply]: the roll lands on its target and the cast's others still waiting (each by its own save),
+     * once. Empty when {@code token} isn't the current submission any more: already applied, denied, replaced
+     * by the DM's own roll, or its fight is over.
+     */
+    public static List<Landing> approve(String token) {
+        Submission s = current(token);
+        if (s == null) return List.of();
+        submissions.remove(s.key());
+        return answer(s.id(), s.full());
+    }
+
+    /** The DM's [Deny]: the roll is void and the damage is owed again, for a fresh roll. False when {@code token} isn't current. */
+    public static boolean deny(String token) {
+        Submission s = current(token);
+        if (s == null) return false;
+        submissions.remove(s.key());
+        return true;
+    }
 
     /** Fight {@code sessionId} ended: its owed damage and its casts' rolls go with it. Other fights' stay. */
     public static void clearInFight(UUID sessionId) {
         if (sessionId == null) return;
-        owed.values().removeIf(o -> {
-            boolean mine = sessionId.equals(o.sessionId());
-            if (mine) held.remove(o.id());
-            return mine;
-        });
+        owed.values().removeIf(o -> sessionId.equals(o.sessionId()));
+        submissions.values().removeIf(s -> sessionId.equals(s.sessionId())); // their [Apply] / [Deny] do nothing now
         rolled.remove(sessionId);
     }
 
     static int amount(int full, boolean half) { return half ? Math.max(0, full / 2) : full; }
 
-    static void clear() { owed.clear(); rolled.clear(); held.clear(); }
+    static void clear() { owed.clear(); rolled.clear(); submissions.clear(); }
 
     // ==================== IN THE FIGHT ====================
 

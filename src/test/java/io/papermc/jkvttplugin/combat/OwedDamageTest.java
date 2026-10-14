@@ -124,13 +124,102 @@ class OwedDamageTest {
         assertNotNull(OwedDamage.refusal(FIGHT, "hdeadbeef00", CASTER, true), "an attack hit's old button isn't owed damage");
     }
 
+    // ==================== WITH THE DM (combat.damage_approval: always) ====================
+
     @Test
-    void anAnswerWithTheDmIsNotAnsweredAgainUntilTheyRule() {
+    void aDeniedRollsButtonsDoNothingOnceItsRolledAgain() {
         OwedDamage.Owed a = burningHands(FIGHT, GOBLIN_A, false, 1).owed();
-        OwedDamage.hold(a.id());
+        OwedDamage.Submission first = OwedDamage.submit(a.id(), 15, null);
+        assertNotNull(first);
+        assertTrue(OwedDamage.deny(first.token()));
+        assertNull(OwedDamage.refusal(FIGHT, a.id(), CASTER, false), "denied: the caster may roll again");
+
+        OwedDamage.Submission second = OwedDamage.submit(a.id(), 4, null);
+        assertNotNull(second);
+        assertNotEquals(first.token(), second.token());
+        assertTrue(OwedDamage.approve(first.token()).isEmpty(), "the denied roll's [Apply] dealt its 15");
+        assertFalse(OwedDamage.deny(first.token()), "the denied roll's [Deny] turned down the new one");
+        assertNotNull(OwedDamage.find(a.id()), "a stale button settled the damage");
+
+        List<OwedDamage.Landing> landed = OwedDamage.approve(second.token());
+        assertEquals(1, landed.size());
+        assertEquals(4, landed.get(0).amount(), "the roll that lands is the current one");
+        assertTrue(OwedDamage.approve(second.token()).isEmpty(), "[Apply] twice dealt it twice");
+        assertFalse(OwedDamage.deny(second.token()), "[Deny] after [Apply] did something");
+    }
+
+    @Test
+    void anotherTargetOfTheCastCantSubmitAWhileOneIsWithTheDm() {
+        OwedDamage.Owed a = burningHands(FIGHT, GOBLIN_A, false, 1).owed();
+        OwedDamage.Owed b = burningHands(FIGHT, GOBLIN_B, false, 1).owed();
+        OwedDamage.Submission forA = OwedDamage.submit(a.id(), 12, null);
+        assertNotNull(forA);
+        assertNotNull(OwedDamage.refusal(FIGHT, b.id(), CASTER, false), "B's button could submit a competing roll for the same cast");
         assertNotNull(OwedDamage.refusal(FIGHT, a.id(), CASTER, false));
-        OwedDamage.release(a.id()); // [Deny]: roll again
-        assertNull(OwedDamage.refusal(FIGHT, a.id(), CASTER, false));
+        assertNull(OwedDamage.submit(b.id(), 3, null), "two rolls for one cast with the DM at once");
+
+        assertTrue(OwedDamage.deny(forA.token()));
+        OwedDamage.Submission forB = OwedDamage.submit(b.id(), 3, null);
+        assertNotNull(forB, "after the DM turned A's down, a fresh roll from B's button is fine");
+        assertEquals(List.of(GOBLIN_B, GOBLIN_A), OwedDamage.approve(forB.token()).stream().map(l -> l.owed().targetId()).toList());
+    }
+
+    @Test
+    void aDifferentCastIsNotHeldUp() {
+        OwedDamage.Owed a = burningHands(FIGHT, GOBLIN_A, false, 1).owed();
+        OwedDamage.Owed other = burningHands(FIGHT, GOBLIN_A, false, 2).owed();
+        assertNotNull(OwedDamage.submit(a.id(), 12, null));
+        assertNull(OwedDamage.refusal(FIGHT, other.id(), CASTER, false));
+        assertNotNull(OwedDamage.submit(other.id(), 5, null));
+    }
+
+    @Test
+    void aSaveThatArrivesWhileTheRollIsWithTheDmTakesItWhenApplied() {
+        OwedDamage.Owed a = burningHands(FIGHT, GOBLIN_A, false, 1).owed();
+        OwedDamage.Submission sub = OwedDamage.submit(a.id(), 10, "fire");
+        // B's save is graded now: nothing has been rolled for the cast yet (it's with the DM), so it waits.
+        OwedDamage.Arrival late = burningHands(FIGHT, GOBLIN_B, true, 1);
+        assertNull(late.landing(), "a roll the DM hasn't applied landed on B");
+        assertNotNull(OwedDamage.refusal(FIGHT, late.owed().id(), CASTER, false), "B's own prompt could submit a competing roll");
+
+        List<OwedDamage.Landing> landed = OwedDamage.approve(sub.token());
+        assertEquals(List.of(10, 5), landed.stream().map(OwedDamage.Landing::amount).toList(), "A all, B half, once each");
+        assertNull(OwedDamage.find(late.owed().id()));
+        assertNotNull(burningHands(FIGHT, UUID.randomUUID(), false, 1).landing(), "a save later still takes the applied roll");
+    }
+
+    @Test
+    void anApprovedRollLandsOnceWithEachTargetsOwnAmount() {
+        OwedDamage.Owed failed = burningHands(FIGHT, GOBLIN_A, false, 1).owed();
+        OwedDamage.Owed saved = burningHands(FIGHT, GOBLIN_B, true, 1).owed();
+        OwedDamage.Submission sub = OwedDamage.submit(saved.id(), 13, null);
+        List<OwedDamage.Landing> landed = OwedDamage.approve(sub.token());
+        assertEquals(2, landed.size());
+        assertEquals(6, landed.get(0).amount(), "B saved: half");
+        assertEquals(13, landed.get(1).amount(), "A failed: all of it");
+        assertTrue(OwedDamage.approve(sub.token()).isEmpty());
+        assertTrue(OwedDamage.answer(failed.id(), 13).isEmpty(), "A's own button dealt it again");
+        assertTrue(OwedDamage.answer(saved.id(), 13).isEmpty());
+    }
+
+    @Test
+    void theDmsOwnRollReplacesOneThatsWithThem() {
+        OwedDamage.Owed a = burningHands(FIGHT, GOBLIN_A, false, 1).owed();
+        OwedDamage.Owed b = burningHands(FIGHT, GOBLIN_B, false, 1).owed();
+        OwedDamage.Submission sub = OwedDamage.submit(a.id(), 12, null);
+        assertNull(OwedDamage.refusal(FIGHT, b.id(), UUID.randomUUID(), true), "the DM can always roll it themselves");
+        assertEquals(2, OwedDamage.answer(b.id(), 7).size());
+        assertTrue(OwedDamage.approve(sub.token()).isEmpty(), "the replaced roll's [Apply] dealt damage on top");
+        assertFalse(OwedDamage.deny(sub.token()));
+    }
+
+    @Test
+    void theFightEndingVoidsARollWithTheDm() {
+        OwedDamage.Owed a = burningHands(FIGHT, GOBLIN_A, false, 1).owed();
+        OwedDamage.Submission sub = OwedDamage.submit(a.id(), 12, null);
+        OwedDamage.clearInFight(FIGHT);
+        assertTrue(OwedDamage.approve(sub.token()).isEmpty());
+        assertFalse(OwedDamage.deny(sub.token()));
     }
 
     @Test
@@ -160,5 +249,15 @@ class OwedDamageTest {
         assertNull(ts.getPendingDamageId());
         ts.markAttackHit(GOBLIN_A, 3, "+3[STR]", false);
         assertNotEquals(first, ts.getPendingDamageId());
+    }
+
+    @Test
+    void anAttackHitsHeldRollIsCheckedByItsOwnHold() throws Exception {
+        // The hit path's [Apply] used to check only the turn, so a roll the DM denied, rolled again on the same turn,
+        // could still be applied by the first roll's button. Each hold is its own object now, checked by reference.
+        String src = java.nio.file.Files.readString(java.nio.file.Path.of("src/main/java/io/papermc/jkvttplugin/combat/CombatCommand.java"));
+        assertFalse(src.contains("awaitingDmApproval.put(attacker.getId(), heldTurn)"), "a hit's hold is keyed by its turn alone again");
+        assertEquals(2, src.split(java.util.regex.Pattern.quote("awaitingDmApproval.get(attacker.getId()) != hold)"), -1).length - 1,
+                "[Apply] and [Deny] both check that their own hold is still the current one");
     }
 }

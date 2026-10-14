@@ -2881,9 +2881,18 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
         return true;
     }
 
-    /** A player's answer to owed damage, sent to the DM for [Apply] / [Deny] (combat.damage_approval: always). */
+    /**
+     * A player's answer to owed damage, sent to the DM for [Apply] / [Deny] (combat.damage_approval: always).
+     * The buttons carry this submission's token, so they act on it alone: once it's applied, denied, replaced by
+     * the DM's own roll, or its fight is over, both do nothing. While it waits, no other target of the same cast
+     * can submit a roll (they share it).
+     */
     private static void holdOwedForDm(CombatSession session, OwedDamage.Owed o, Combatant target, int full, String type, Player roller) {
-        OwedDamage.hold(o.id());
+        OwedDamage.Submission sub = OwedDamage.submit(o.id(), full, type);
+        if (sub == null) {
+            roller.sendMessage(Component.text("A roll for " + o.what() + " is already with the DM.", NamedTextColor.YELLOW));
+            return;
+        }
         String what = OwedDamage.amount(full, o.half()) + " " + o.what() + " damage" + (o.half() ? " (saved: half of " + full + ")" : "")
                 + " to " + target.getDisplayName();
         roller.sendMessage(Component.text("Sent to the DM: " + what + ".", NamedTextColor.GRAY));
@@ -2893,18 +2902,21 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text("[Apply]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                         .hoverEvent(HoverEvent.showText(Component.text("It lands, and on anyone else the same cast caught who's still owed it")))
                         .clickEvent(ClickEvent.callback(a -> {
-                            if (OwedDamage.find(o.id()) == null || !session.isActive()) {
-                                if (a instanceof Player p) p.sendMessage(Component.text("That damage was already dealt, or the fight is over.", NamedTextColor.GRAY));
+                            List<OwedDamage.Landing> landed = OwedDamage.approve(sub.token());
+                            if (landed.isEmpty()) {
+                                if (a instanceof Player p) p.sendMessage(Component.text("That roll was already ruled on or replaced, or the fight is over.", NamedTextColor.GRAY));
                                 return;
                             }
-                            OwedDamage.land(session, OwedDamage.answer(o.id(), full), type);
+                            OwedDamage.land(session, landed, sub.type());
                         }, once)))
                 .append(Component.text(" "))
                 .append(Component.text("[Deny]", NamedTextColor.RED, TextDecoration.UNDERLINED)
                         .hoverEvent(HoverEvent.showText(Component.text("Doesn't land; they can roll the damage again")))
                         .clickEvent(ClickEvent.callback(a -> {
-                            if (OwedDamage.find(o.id()) == null) return;
-                            OwedDamage.release(o.id());
+                            if (!OwedDamage.deny(sub.token())) {
+                                if (a instanceof Player p) p.sendMessage(Component.text("That roll was already ruled on or replaced, or the fight is over.", NamedTextColor.GRAY));
+                                return;
+                            }
                             roller.sendMessage(Component.text("The DM didn't take that damage roll — roll it again.", NamedTextColor.YELLOW));
                         }, once)));
         for (Player dm : io.papermc.jkvttplugin.dm.DMManager.getOnlineDMs()) dm.sendMessage(ask);
@@ -2985,11 +2997,18 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
      * Damage a player rolled that's waiting on the DM, by attacker. Tied to the turn it came from: once
      * that turn is over (or its hit window closed) the hold is stale and nothing is waiting any more.
      */
-    private static final Map<UUID, TurnState> awaitingDmApproval = new HashMap<>();
+    private static final Map<UUID, AttackHold> awaitingDmApproval = new HashMap<>();
+
+    /**
+     * One roll with the DM: the turn it came from, and the hit it's for. A hold is the identity the buttons
+     * check (by reference), so a roll that was denied and rolled again can't be applied by the first one's [Apply].
+     */
+    private record AttackHold(TurnState turn, String hitId) {}
 
     private static boolean isAwaitingDm(Combatant attacker) {
-        TurnState held = awaitingDmApproval.get(attacker.getId());
-        if (held != null && held == attacker.getTurnState() && held.isDamagePending()) return true;
+        AttackHold held = awaitingDmApproval.get(attacker.getId());
+        if (held != null && held.turn() == attacker.getTurnState() && held.turn().isDamagePending()
+                && held.hitId().equals(held.turn().getPendingDamageId())) return true;
         awaitingDmApproval.remove(attacker.getId());
         return false;
     }
@@ -3001,7 +3020,8 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
     private static void holdForDm(CombatSession session, Combatant attacker, Combatant target, int damage,
                                   String type, boolean crit, Player roller) {
         TurnState heldTurn = attacker.getTurnState();
-        awaitingDmApproval.put(attacker.getId(), heldTurn);
+        AttackHold hold = new AttackHold(heldTurn, heldTurn.getPendingDamageId());
+        awaitingDmApproval.put(attacker.getId(), hold);
         String what = damage + (type != null && !type.isBlank() ? " " + type : "") + " damage"
                 + (crit ? " (crit)" : "") + " to " + target.getDisplayName();
         roller.sendMessage(Component.text("Sent to the DM: " + what + ".", NamedTextColor.GRAY));
@@ -3012,9 +3032,10 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text("[Apply]", NamedTextColor.GREEN, TextDecoration.UNDERLINED)
                         .hoverEvent(HoverEvent.showText(Component.text("It lands: " + target.getDisplayName() + " takes it")))
                         .clickEvent(ClickEvent.callback(a -> {
-                            if (awaitingDmApproval.get(attacker.getId()) != heldTurn) return; // superseded
+                            if (awaitingDmApproval.get(attacker.getId()) != hold) return; // denied, or superseded by a new roll
                             awaitingDmApproval.remove(attacker.getId());
-                            if (!session.isActive() || attacker.getTurnState() != heldTurn || !heldTurn.isDamagePending()) {
+                            if (!session.isActive() || attacker.getTurnState() != heldTurn || !heldTurn.isDamagePending()
+                                    || !hold.hitId().equals(heldTurn.getPendingDamageId())) {
                                 if (a instanceof Player p) p.sendMessage(Component.text("That hit's moment has passed (the turn or fight ended).", NamedTextColor.GRAY));
                                 return;
                             }
@@ -3024,7 +3045,7 @@ public class CombatCommand implements CommandExecutor, TabCompleter {
                 .append(Component.text("[Deny]", NamedTextColor.RED, TextDecoration.UNDERLINED)
                         .hoverEvent(HoverEvent.showText(Component.text("Doesn't land; they can roll the damage again")))
                         .clickEvent(ClickEvent.callback(a -> {
-                            if (awaitingDmApproval.get(attacker.getId()) != heldTurn) return;
+                            if (awaitingDmApproval.get(attacker.getId()) != hold) return;
                             awaitingDmApproval.remove(attacker.getId());
                             Player p = attacker.getPlayer();
                             if (p != null) p.sendMessage(Component.text("The DM didn't take that damage roll — roll it again.", NamedTextColor.YELLOW));

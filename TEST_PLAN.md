@@ -642,6 +642,15 @@ You play a bard; they're the one inspired.
 - [ ] Click [Ask the DM] → you get "X asks to deal 7 damage to Goblin (off their turn)".
 - [ ] [Apply] on that → lands as typed. [Deny] → they're told.
 - [ ] `combat.damage_approval: always` → every hit of theirs asks you.
+- [ ] Still on `always`: they hit, you [Deny], they roll again → click the **first** message's [Apply] → nothing
+      happens; the second message's [Apply] → only the new roll lands. (#274)
+- [ ] **Their Burning Hands at two kobolds, on `always`:** both fail; they roll Kobold A's damage → "Sent to the DM". While it
+      waits, they click Kobold B's [Roll it] → "A roll for Burning Hands is with the DM". Your [Deny] → they can roll again from
+      either button; they do, and your [Apply] → both kobolds take that one roll, once. (#274)
+- [ ] The same, but one kobold saves → your [Apply] gives one the whole roll and the other half of it. (#274)
+- [ ] **A save that comes in while you decide:** they roll Kobold A's damage (with you), and only then you roll Kobold B's
+      save → B gets no damage yet; your [Apply] → both take it (B half if it saved). (#274)
+- [ ] Their roll is with you and you `/combat finished` → the [Apply] / [Deny] say the fight is over; nothing lands. (#274)
 
 ## Locks, keys and thieves' tools (a DM walks through locks, so use their character)
 
